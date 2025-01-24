@@ -59,5 +59,17 @@
   "message.narcissus_farewell.tp_top_not_found": "§e在当前位置的顶部未找到有效的落脚点",
   "message.narcissus_farewell.tp_bottom_not_found": "§e在当前位置的底部未找到有效的落脚点",
   "message.narcissus_farewell.tp_up_not_found": "§e在当前位置的上方未找到有效的落脚点",
-  "message.narcissus_farewell.tp_down_not_found": "§e在当前位置的下方未找到有效的落脚点"
+  "message.narcissus_farewell.tp_down_not_found": "§e在当前位置的下方未找到有效的落脚点",
+  "message.narcissus_farewell.tp_view_not_found": "§e在所视方向未找到有效的落脚点",
+  "message.narcissus_farewell.tp_view_safe_not_found": "§e在所视方向未找到安全的落脚点",
+  "message.narcissus_farewell.home_not_found": "§e在当前维度未找到默认的传送点或默认传送点存在多个",
+  "message.narcissus_farewell.home_not_found_in_dimension": "§e在维度『%s§e』未找到默认的传送点",
+  "message.narcissus_farewell.home_not_found_with_name": "§e未找到名为『%s§e』的传送点或名为『%s§e』的传送点存在多个",
+  "message.narcissus_farewell.home_not_found_with_name_in_dimension": "§e在维度『%s§e』未找到名为『%s§e』的传送点",
+  "message.narcissus_farewell.home_limit": "§e传送点的数量超过服务器的限制『%s§e』，添加失败",
+  "message.narcissus_farewell.home_already_exists": "§e在维度『%s§e』已存在名为『%s§e』的传送点，添加失败",
+  "message.narcissus_farewell.home_set": "添加了新的传送点『%s』在坐标%s",
+  "message.narcissus_farewell.home_set_default": "添加了新的默认传送点『%s』在坐标%s",
+  "message.narcissus_farewell.home_default_remove": "§e已将当前维度名为『%s§e』的默认的传送点移除",
+  "message.narcissus_farewell.home_del": "§e已将维度『%s§e』名为『%s§e』的传送点移除"
 }

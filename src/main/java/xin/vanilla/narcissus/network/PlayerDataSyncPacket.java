@@ -8,6 +8,8 @@ import net.minecraftforge.fml.network.NetworkEvent;
 import xin.vanilla.narcissus.capability.IPlayerTeleportData;
 import xin.vanilla.narcissus.capability.PlayerTeleportData;
 import xin.vanilla.narcissus.capability.TeleportRecord;
+import xin.vanilla.narcissus.config.Coordinate;
+import xin.vanilla.narcissus.config.KeyValue;
 import xin.vanilla.narcissus.util.CollectionUtils;
 import xin.vanilla.narcissus.util.DateUtils;
 
@@ -22,6 +24,8 @@ public class PlayerDataSyncPacket extends SplitPacket {
     private final Date lastTpTime;
     private final int teleportCard;
     private final List<TeleportRecord> teleportRecords;
+    private final Map<KeyValue<String, String>, Coordinate> homeCoordinate;
+    private final Map<String, String> defaultHome;
 
     public PlayerDataSyncPacket(UUID playerUUID, IPlayerTeleportData data) {
         super();
@@ -30,6 +34,8 @@ public class PlayerDataSyncPacket extends SplitPacket {
         this.lastTpTime = data.getLastTpTime();
         this.teleportCard = data.getTeleportCard();
         this.teleportRecords = data.getTeleportRecords();
+        this.homeCoordinate = data.getHomeCoordinate();
+        this.defaultHome = data.getDefaultHome();
     }
 
     public PlayerDataSyncPacket(PacketBuffer buffer) {
@@ -38,10 +44,23 @@ public class PlayerDataSyncPacket extends SplitPacket {
         this.lastCardTime = DateUtils.format(buffer.readUtf());
         this.lastTpTime = DateUtils.format(buffer.readUtf());
         this.teleportCard = buffer.readInt();
+
         this.teleportRecords = new ArrayList<>();
         int size = buffer.readInt();
         for (int i = 0; i < size; i++) {
             this.teleportRecords.add(TeleportRecord.readFromNBT(Objects.requireNonNull(buffer.readNbt())));
+        }
+
+        this.homeCoordinate = new HashMap<>();
+        int homeSize = buffer.readInt();
+        for (int i = 0; i < homeSize; i++) {
+            this.homeCoordinate.put(new KeyValue<>(buffer.readUtf(), buffer.readUtf()), Coordinate.readFromNBT(Objects.requireNonNull(buffer.readNbt())));
+        }
+
+        this.defaultHome = new HashMap<>();
+        int defaultSize = buffer.readInt();
+        for (int i = 0; i < defaultSize; i++) {
+            this.defaultHome.put(buffer.readUtf(), buffer.readUtf());
         }
     }
 
@@ -56,6 +75,11 @@ public class PlayerDataSyncPacket extends SplitPacket {
                 .flatMap(Collection::stream)
                 .sorted(Comparator.comparing(TeleportRecord::getTeleportTime))
                 .collect(Collectors.toList());
+        this.homeCoordinate = packets.stream()
+                .map(PlayerDataSyncPacket::getHomeCoordinate)
+                .flatMap(map -> map.entrySet().stream())
+                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (v1, v2) -> v1));
+        this.defaultHome = packets.get(0).defaultHome;
     }
 
     private PlayerDataSyncPacket(UUID playerUUID, Date lastCardTime, Date lastTpTime, int teleportCard) {
@@ -65,6 +89,8 @@ public class PlayerDataSyncPacket extends SplitPacket {
         this.lastTpTime = lastTpTime;
         this.teleportCard = teleportCard;
         this.teleportRecords = new ArrayList<>();
+        this.homeCoordinate = new HashMap<>();
+        this.defaultHome = new HashMap<>();
     }
 
     public void toBytes(PacketBuffer buffer) {
@@ -76,6 +102,17 @@ public class PlayerDataSyncPacket extends SplitPacket {
         buffer.writeInt(this.teleportRecords.size());
         for (TeleportRecord record : this.teleportRecords) {
             buffer.writeNbt(record.writeToNBT());
+        }
+        buffer.writeInt(this.homeCoordinate.size());
+        for (Map.Entry<KeyValue<String, String>, Coordinate> entry : this.homeCoordinate.entrySet()) {
+            buffer.writeUtf(entry.getKey().getKey());
+            buffer.writeUtf(entry.getKey().getValue());
+            buffer.writeNbt(entry.getValue().writeToNBT());
+        }
+        buffer.writeInt(this.defaultHome.size());
+        for (Map.Entry<String, String> entry : this.defaultHome.entrySet()) {
+            buffer.writeUtf(entry.getKey());
+            buffer.writeUtf(entry.getValue());
         }
     }
 
@@ -102,18 +139,35 @@ public class PlayerDataSyncPacket extends SplitPacket {
      */
     public List<PlayerDataSyncPacket> split() {
         List<PlayerDataSyncPacket> result = new ArrayList<>();
-        for (int i = 0, index = 0; i < teleportRecords.size() / getChunkSize() + 1; i++) {
+        KeyValue<String, String>[] keyArray = this.homeCoordinate.keySet().toArray(new KeyValue[0]);
+        int teleportIndex = 0;
+        int homeIndex = 0;
+
+        int totalChunks = (int) Math.ceil((double) (teleportRecords.size() + homeCoordinate.size()) / getChunkSize());
+
+        for (int i = 0; i < totalChunks; i++) {
             PlayerDataSyncPacket packet = new PlayerDataSyncPacket(this.playerUUID, this.lastCardTime, this.lastTpTime, this.teleportCard);
-            for (int j = 0; j < getChunkSize(); j++) {
-                if (index >= teleportRecords.size()) break;
-                packet.teleportRecords.add(this.teleportRecords.get(index));
-                index++;
+            // teleportRecords
+            for (int j = 0; j < getChunkSize() && teleportIndex < teleportRecords.size(); j++) {
+                packet.teleportRecords.add(this.teleportRecords.get(teleportIndex));
+                teleportIndex++;
             }
-            packet.setId(this.getId());
+            // home
+            for (int j = 0; j < getChunkSize() && homeIndex < keyArray.length; j++) {
+                packet.homeCoordinate.put(keyArray[homeIndex], this.homeCoordinate.get(keyArray[homeIndex]));
+                homeIndex++;
+            }
+
+            if (i == 0) packet.defaultHome.putAll(this.defaultHome);
             packet.setSort(i);
             result.add(packet);
         }
-        result.forEach(packet -> packet.setTotal(result.size()));
+
+        int totalPackets = result.size();
+        for (PlayerDataSyncPacket packet : result) {
+            packet.setId(this.getId());
+            packet.setTotal(totalPackets);
+        }
         return result;
     }
 
@@ -123,6 +177,7 @@ public class PlayerDataSyncPacket extends SplitPacket {
         data.setLastTpTime(this.lastTpTime);
         data.setTeleportCard(this.teleportCard);
         data.setTeleportRecords(this.teleportRecords);
+        data.setHomeCoordinate(this.homeCoordinate);
         return data;
     }
 }

@@ -5,10 +5,13 @@ import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.network.PacketBuffer;
 import net.minecraftforge.common.util.INBTSerializable;
+import xin.vanilla.narcissus.config.Coordinate;
+import xin.vanilla.narcissus.config.KeyValue;
 import xin.vanilla.narcissus.enums.ETeleportType;
 
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 
 /**
  * 玩家传送数据
@@ -87,6 +90,20 @@ public interface IPlayerTeleportData extends INBTSerializable<CompoundNBT> {
      * 添加传送记录
      */
     void addTeleportRecords(TeleportRecord... records);
+
+    Map<KeyValue<String, String>, Coordinate> getHomeCoordinate();
+
+    void setHomeCoordinate(Map<KeyValue<String, String>, Coordinate> homeCoordinate);
+
+    void addHomeCoordinate(KeyValue<String, String> key, Coordinate coordinate);
+
+    Map<String, String> getDefaultHome();
+
+    void setDefaultHome(Map<String, String> defaultHome);
+
+    void addDefaultHome(String key, String value);
+
+    KeyValue<String, String> getDefaultHome(String key);
 
     void writeToBuffer(PacketBuffer buffer);
 

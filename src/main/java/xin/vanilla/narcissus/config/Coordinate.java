@@ -10,10 +10,12 @@ import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.util.RegistryKey;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.vector.Vector3d;
 import net.minecraft.util.registry.Registry;
 import net.minecraft.world.World;
 import xin.vanilla.narcissus.enums.ESafeMode;
 import xin.vanilla.narcissus.util.NarcissusUtils;
+import xin.vanilla.narcissus.util.StringUtils;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -124,10 +126,36 @@ public class Coordinate implements Serializable, Cloneable {
         return new BlockPos(x, y, z);
     }
 
+    public Vector3d toVector3d() {
+        return new Vector3d(x, y, z);
+    }
+
     public Coordinate fromBlockPos(BlockPos pos) {
         this.x = pos.getX();
         this.y = pos.getY();
         this.z = pos.getZ();
+        return this;
+    }
+
+    public Coordinate fromVector3d(Vector3d pos) {
+        this.x = pos.x();
+        this.y = pos.y();
+        this.z = pos.z();
+        return this;
+    }
+
+    public Coordinate addX(double x) {
+        this.x += x;
+        return this;
+    }
+
+    public Coordinate addY(double y) {
+        this.y += y;
+        return this;
+    }
+
+    public Coordinate addZ(double z) {
+        this.z += z;
         return this;
     }
 
@@ -139,8 +167,17 @@ public class Coordinate implements Serializable, Cloneable {
         tag.putDouble("x", x);
         tag.putDouble("y", y);
         tag.putDouble("z", z);
+        tag.putDouble("yaw", yaw);
+        tag.putDouble("pitch", pitch);
         tag.putString("dimension", dimension.location().toString());
         return tag;
+    }
+
+    public boolean equalsOfRange(Coordinate coordinate, int range) {
+        return Math.abs((int) coordinate.x - (int) x) <= range
+                && Math.abs((int) coordinate.y - (int) y) <= range
+                && Math.abs((int) coordinate.z - (int) z) <= range
+                && coordinate.dimension.equals(dimension);
     }
 
     /**
@@ -151,6 +188,8 @@ public class Coordinate implements Serializable, Cloneable {
         coordinate.x = tag.getDouble("x");
         coordinate.y = tag.getDouble("y");
         coordinate.z = tag.getDouble("z");
+        coordinate.yaw = tag.getDouble("yaw");
+        coordinate.pitch = tag.getDouble("pitch");
         coordinate.dimension = RegistryKey.create(Registry.DIMENSION_REGISTRY, new ResourceLocation(tag.getString("dimension")));
         return coordinate;
     }
@@ -163,9 +202,17 @@ public class Coordinate implements Serializable, Cloneable {
             cloned.x = this.x;
             cloned.y = this.y;
             cloned.z = this.z;
+            cloned.yaw = this.yaw;
+            cloned.pitch = this.pitch;
+            cloned.safe = this.safe;
+            cloned.safeMode = this.safeMode;
             return cloned;
         } catch (CloneNotSupportedException e) {
             throw new AssertionError();
         }
+    }
+
+    public String toXyzString() {
+        return StringUtils.toFixedEx(x, 1) + ", " + StringUtils.toFixedEx(y, 1) + ", " + StringUtils.toFixedEx(z, 1);
     }
 }

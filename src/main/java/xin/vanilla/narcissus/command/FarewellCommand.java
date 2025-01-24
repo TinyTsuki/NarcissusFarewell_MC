@@ -23,13 +23,17 @@ import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.util.RegistryKey;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.registry.Registry;
 import net.minecraft.util.text.TextFormatting;
 import net.minecraft.util.text.event.ClickEvent;
 import net.minecraft.world.World;
 import net.minecraft.world.biome.Biome;
 import net.minecraft.world.gen.feature.structure.Structure;
+import net.minecraft.world.server.ServerWorld;
 import net.minecraftforge.registries.ForgeRegistries;
 import xin.vanilla.narcissus.NarcissusFarewell;
+import xin.vanilla.narcissus.capability.IPlayerTeleportData;
+import xin.vanilla.narcissus.capability.PlayerTeleportDataCapability;
 import xin.vanilla.narcissus.config.Coordinate;
 import xin.vanilla.narcissus.config.KeyValue;
 import xin.vanilla.narcissus.config.ServerConfig;
@@ -175,12 +179,12 @@ public class FarewellCommand {
             return 1;
         };
 
-        // SuggestionProvider<CommandSource> dimensionSuggestions = (context, builder) -> {
-        //     for (ServerWorld level : context.getSource().getServer().getAllLevels()) {
-        //         builder.suggest(level.dimension().location().toString());
-        //     }
-        //     return builder.buildFuture();
-        // };
+        SuggestionProvider<CommandSource> dimensionSuggestions = (context, builder) -> {
+            for (ServerWorld level : context.getSource().getServer().getAllLevels()) {
+                builder.suggest(level.dimension().location().toString());
+            }
+            return builder.buildFuture();
+        };
 
         SuggestionProvider<CommandSource> safeSuggestions = (context, builder) -> {
             builder.suggest("safe");
@@ -211,6 +215,15 @@ public class FarewellCommand {
             ForgeRegistries.BIOMES.getValues().stream()
                     .filter(resourceLocation -> isInputEmpty || resourceLocation.toString().contains(input))
                     .forEach(biome -> builder.suggest(biome.toString()));
+            return builder.buildFuture();
+        };
+
+        SuggestionProvider<CommandSource> homeSuggestions = (context, builder) -> {
+            ServerPlayerEntity player = context.getSource().getPlayerOrException();
+            IPlayerTeleportData data = PlayerTeleportDataCapability.getData(player);
+            for (KeyValue<String, String> key : data.getHomeCoordinate().keySet()) {
+                builder.suggest(key.getValue());
+            }
             return builder.buildFuture();
         };
 
@@ -260,7 +273,7 @@ public class FarewellCommand {
             } catch (IllegalArgumentException ignored) {
                 range = ServerConfig.TELEPORT_RANDOM_DISTANCE_LIMIT.get();
             }
-            range = NarcissusUtils.checkRange(player, range);
+            range = NarcissusUtils.checkRange(player, ETeleportType.TP_STRUCTURE, range);
             try {
                 targetLevel = DimensionArgument.getDimension(context, "dimension").dimension();
             } catch (IllegalArgumentException ignored) {
@@ -469,7 +482,7 @@ public class FarewellCommand {
             } catch (IllegalArgumentException ignored) {
                 range = ServerConfig.TELEPORT_RANDOM_DISTANCE_LIMIT.get();
             }
-            range = NarcissusUtils.checkRange(player, range);
+            range = NarcissusUtils.checkRange(player, ETeleportType.TP_RANDOM, range);
             try {
                 targetLevel = DimensionArgument.getDimension(context, "dimension").dimension();
             } catch (IllegalArgumentException ignored) {
@@ -599,69 +612,143 @@ public class FarewellCommand {
             return 1;
         };
 
-        // Command<CommandSource> tpViewCommand = context -> {
-        //     ServerPlayerEntity player = context.getSource().getPlayerOrException();
-        //     // 传送功能前置校验
-        //     if (checkTeleportPre(player, ETeleportType.TP_VIEW)) return 0;
-        //     Coordinate coordinate = new Coordinate(player).setY(player.getY() + 10);
-        //     try {
-        //         coordinate.setSafe("safe".equalsIgnoreCase(StringArgumentType.getString(context, "safe")));
-        //     } catch (IllegalArgumentException ignored) {
-        //         coordinate.setSafe(true);
-        //     }
-        //     // 验证传送代价
-        //     if (checkTeleportPost(player, coordinate, ETeleportType.TP_VIEW, true)) return 0;
-        //     NarcissusUtils.teleportTo(player, coordinate, ETeleportType.TP_VIEW);
-        //     return 1;
-        // };
-        //
-        // Command<CommandSource> tpHomeCommand = context -> {
-        //     ServerPlayerEntity player = context.getSource().getPlayerOrException();
-        //     // 传送功能前置校验
-        //     if (checkTeleportPre(player, ETeleportType.TP_HOME)) return 0;
-        //     Coordinate coordinate = NarcissusUtils.getHome(player);
-        //     if (coordinate == null) {
-        //         NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EI18nType.MESSAGE, "home_not_found"));
-        //         return 0;
-        //     }
-        //     try {
-        //         coordinate.setSafe("safe".equalsIgnoreCase(StringArgumentType.getString(context, "safe")));
-        //     } catch (IllegalArgumentException ignored) {
-        //     }
-        //     // 验证传送代价
-        //     if (checkTeleportPost(player, coordinate, ETeleportType.TP_HOME, true)) return 0;
-        //     NarcissusUtils.teleportTo(player, coordinate, ETeleportType.TP_HOME);
-        //     return 1;
-        // };
-        //
-        // Command<CommandSource> setHomeCommand = context -> {
-        //     ServerPlayerEntity player = context.getSource().getPlayerOrException();
-        //     // 传送功能前置校验
-        //     if (checkTeleportPre(player, ETeleportType.SET_HOME)) return 0;
-        //     Coordinate coordinate = new Coordinate(player);
-        //     try {
-        //         coordinate.setSafe("safe".equalsIgnoreCase(StringArgumentType.getString(context, "safe")));
-        //     } catch (IllegalArgumentException ignored) {
-        //     }
-        //     // 验证传送代价
-        //     if (checkTeleportPost(player, coordinate, ETeleportType.SET_HOME, true)) return 0;
-        //     NarcissusUtils.setHome(player, coordinate);
-        //     return 1;
-        // };
-        //
-        // Command<CommandSource> delHomeCommand = context -> {
-        //     ServerPlayerEntity player = context.getSource().getPlayerOrException();
-        //     // 传送功能前置校验
-        //     if (checkTeleportPre(player, ETeleportType.DEL_HOME)) return 0;
-        //     Coordinate coordinate = NarcissusUtils.getHome(player);
-        //     if (coordinate == null) {
-        //         NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EI18nType.MESSAGE, "home_not_found"));
-        //         return 0;
-        //     }
-        //     NarcissusUtils.delHome(player);
-        //     return 1;
-        // };
-        //
+        Command<CommandSource> tpViewCommand = context -> {
+            ServerPlayerEntity player = context.getSource().getPlayerOrException();
+            // 传送功能前置校验
+            if (checkTeleportPre(player, ETeleportType.TP_VIEW)) return 0;
+            boolean safe = true;
+            int range;
+            try {
+                safe = "safe".equalsIgnoreCase(StringArgumentType.getString(context, "safe"));
+            } catch (IllegalArgumentException ignored) {
+            }
+            try {
+                range = IntegerArgumentType.getInteger(context, "range");
+            } catch (IllegalArgumentException ignored) {
+                range = ServerConfig.TELEPORT_VIEW_DISTANCE_LIMIT.get();
+            }
+            range = NarcissusUtils.checkRange(player, ETeleportType.TP_VIEW, range);
+            Coordinate coordinate = NarcissusUtils.findViewEndCandidate(player, safe, range);
+            if (coordinate == null) {
+                NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EI18nType.MESSAGE, safe ? "tp_view_safe_not_found" : "tp_view_not_found"));
+                return 0;
+            }
+            coordinate.setSafeMode(ESafeMode.Y_OFFSET_3);
+            // 验证传送代价
+            if (checkTeleportPost(player, coordinate, ETeleportType.TP_VIEW, true)) return 0;
+            NarcissusUtils.teleportTo(player, coordinate, ETeleportType.TP_VIEW);
+            return 1;
+        };
+
+        Command<CommandSource> tpHomeCommand = context -> {
+            ServerPlayerEntity player = context.getSource().getPlayerOrException();
+            // 传送功能前置校验
+            if (checkTeleportPre(player, ETeleportType.TP_HOME)) return 0;
+            RegistryKey<World> targetLevel = null;
+            String name = null;
+            try {
+                RegistryKey<World> targetDimension = RegistryKey.create(Registry.DIMENSION_REGISTRY, new ResourceLocation(StringArgumentType.getString(context, "dimension")));
+                ServerWorld level = context.getSource().getServer().getLevel(targetDimension);
+                if (level != null) {
+                    targetLevel = targetDimension;
+                }
+            } catch (IllegalArgumentException ignored) {
+            }
+            try {
+                name = StringArgumentType.getString(context, "name");
+            } catch (IllegalArgumentException ignored) {
+            }
+            Coordinate coordinate = NarcissusUtils.getPlayerHome(player, targetLevel, name);
+            if (coordinate == null) {
+                if (targetLevel == null && name == null) {
+                    NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EI18nType.MESSAGE, "home_not_found"));
+                } else if (targetLevel != null && name == null) {
+                    NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EI18nType.MESSAGE, "home_not_found_in_dimension"), targetLevel.location().toString());
+                } else if (targetLevel == null) {
+                    NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EI18nType.MESSAGE, "home_not_found_with_name"), name, name);
+                } else {
+                    NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EI18nType.MESSAGE, "home_not_found_with_name_in_dimension"), targetLevel.location().toString(), name);
+                }
+                return 0;
+            }
+            try {
+                coordinate.setSafe(BoolArgumentType.getBool(context, "safe"));
+            } catch (IllegalArgumentException ignored) {
+            }
+            // 验证传送代价
+            if (checkTeleportPost(player, coordinate, ETeleportType.TP_HOME, true)) return 0;
+            NarcissusUtils.teleportTo(player, coordinate, ETeleportType.TP_HOME);
+            return 1;
+        };
+
+        Command<CommandSource> setHomeCommand = context -> {
+            ServerPlayerEntity player = context.getSource().getPlayerOrException();
+            // 判断是否开启传送功能
+            if (!NarcissusUtils.isTeleportEnabled(ETeleportType.TP_HOME)) {
+                NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EI18nType.MESSAGE, "command_disabled"));
+                return 0;
+            }
+            IPlayerTeleportData data = PlayerTeleportDataCapability.getData(player);
+            if (data.getHomeCoordinate().size() >= ServerConfig.TELEPORT_HOME_LIMIT.get()) {
+                NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EI18nType.MESSAGE, "home_limit"), ServerConfig.TELEPORT_HOME_LIMIT.get());
+                return 0;
+            }
+            String name;
+            try {
+                name = StringArgumentType.getString(context, "name");
+            } catch (IllegalArgumentException ignored) {
+                name = "home";
+            }
+            boolean defaultHome = false;
+            try {
+                defaultHome = BoolArgumentType.getBool(context, "default");
+            } catch (IllegalArgumentException ignored) {
+            }
+            Coordinate coordinate = new Coordinate(player);
+            KeyValue<String, String> key = new KeyValue<>(player.getLevel().dimension().location().toString(), name);
+            if (data.getHomeCoordinate().containsKey(key)) {
+                NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EI18nType.MESSAGE, "home_already_exists"), key.getKey(), key.getValue());
+                return 0;
+            }
+            data.addHomeCoordinate(key, coordinate);
+            if (defaultHome) {
+                if (data.getDefaultHome().containsKey(player.getLevel().dimension().location().toString())) {
+                    NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EI18nType.MESSAGE, "home_default_remove"), data.getDefaultHome(player.getLevel().dimension().location().toString()).getValue());
+                }
+                data.addDefaultHome(player.getLevel().dimension().location().toString(), name);
+                NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EI18nType.MESSAGE, "home_set_default"), name, coordinate.toXyzString());
+            } else {
+                NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EI18nType.MESSAGE, "home_set"), name, coordinate.toXyzString());
+            }
+            return 1;
+        };
+
+        Command<CommandSource> delHomeCommand = context -> {
+            ServerPlayerEntity player = context.getSource().getPlayerOrException();
+            // 判断是否开启传送功能
+            if (!NarcissusUtils.isTeleportEnabled(ETeleportType.TP_HOME)) {
+                NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EI18nType.MESSAGE, "command_disabled"));
+                return 0;
+            }
+            String name = StringArgumentType.getString(context, "name");
+            RegistryKey<World> targetLevel = DimensionArgument.getDimension(context, "dimension").dimension();
+            KeyValue<String, String> playerHomeKey = NarcissusUtils.getPlayerHomeKey(player, targetLevel, name);
+            if (playerHomeKey == null) {
+                NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EI18nType.MESSAGE, "home_not_found_with_name_in_dimension"), targetLevel.location().toString(), name);
+                return 0;
+            }
+            IPlayerTeleportData data = PlayerTeleportDataCapability.getData(player);
+            data.getHomeCoordinate().remove(playerHomeKey);
+            if (data.getDefaultHome().containsKey(playerHomeKey.getKey())) {
+                if (data.getDefaultHome().get(playerHomeKey.getKey()).equals(playerHomeKey.getValue())) {
+                    String remove = data.getDefaultHome().remove(playerHomeKey.getKey());
+                    NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EI18nType.MESSAGE, "home_default_remove"), remove);
+                }
+            }
+            NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EI18nType.MESSAGE, "home_del"), playerHomeKey.getValue(), playerHomeKey.getKey());
+            return 1;
+        };
+
         // Command<CommandSource> tpStageCommand = context -> {
         //     ServerPlayerEntity player = context.getSource().getPlayerOrException();
         //     // 传送功能前置校验
@@ -900,6 +987,64 @@ public class FarewellCommand {
                         .executes(tpDownCommand)
                 );
 
+        LiteralArgumentBuilder<CommandSource> tpView = Commands.literal(ServerConfig.COMMAND_TP_VIEW.get())
+                .requires(source -> source.hasPermission(ServerConfig.PERMISSION_TP_VIEW.get()))
+                .executes(tpViewCommand)
+                .then(Commands.argument("safe", StringArgumentType.word())
+                        .suggests(safeSuggestions)
+                        .executes(tpViewCommand)
+                        .then(Commands.argument("range", IntegerArgumentType.integer(1))
+                                .suggests(rangeSuggestions)
+                                .executes(tpViewCommand)
+                        )
+                );
+
+        LiteralArgumentBuilder<CommandSource> tpHome = Commands.literal(ServerConfig.COMMAND_TP_HOME.get())
+                .requires(source -> source.hasPermission(ServerConfig.PERMISSION_TP_HOME.get()))
+                .executes(tpHomeCommand)
+                .then(Commands.argument("name", StringArgumentType.word())
+                        .suggests(homeSuggestions)
+                        .executes(tpHomeCommand)
+                        .then(Commands.argument("safe", BoolArgumentType.bool())
+                                .executes(tpHomeCommand)
+                                .then(Commands.argument("dimension", StringArgumentType.greedyString())
+                                        .suggests(dimensionSuggestions)
+                                        .executes(tpHomeCommand)
+                                )
+                        )
+                )
+                .then(Commands.argument("safe", BoolArgumentType.bool())
+                        .executes(tpHomeCommand)
+                        .then(Commands.argument("dimension", StringArgumentType.greedyString())
+                                .suggests(dimensionSuggestions)
+                                .executes(tpHomeCommand)
+                        )
+                );
+
+        LiteralArgumentBuilder<CommandSource> setHome = Commands.literal(ServerConfig.COMMAND_SET_HOME.get())
+                .requires(source -> source.hasPermission(ServerConfig.PERMISSION_TP_HOME.get()))
+                .executes(setHomeCommand)
+                .then(Commands.argument("name", StringArgumentType.word())
+                        .suggests((context, builder) -> {
+                            builder.suggest("home");
+                            builder.suggest("name");
+                            return builder.buildFuture();
+                        })
+                        .executes(setHomeCommand)
+                        .then(Commands.argument("default", BoolArgumentType.bool())
+                                .executes(setHomeCommand)
+                        )
+                );
+
+        LiteralArgumentBuilder<CommandSource> delHome = Commands.literal(ServerConfig.COMMAND_DEL_HOME.get())
+                .requires(source -> source.hasPermission(ServerConfig.PERMISSION_TP_HOME.get()))
+                .then(Commands.argument("name", StringArgumentType.word())
+                        .suggests(homeSuggestions)
+                        .then(Commands.argument("dimension", DimensionArgument.dimension())
+                                .executes(delHomeCommand)
+                        )
+                );
+
         // 注册简短的指令
         {
             // 传送至指定位置 /tpx
@@ -977,6 +1122,26 @@ public class FarewellCommand {
                 dispatcher.register(tpDown);
             }
 
+            // 传送至视线尽头 /tpv
+            if (ServerConfig.CONCISE_TP_VIEW.get()) {
+                dispatcher.register(tpView);
+            }
+
+            // 传送至传送点 /home
+            if (ServerConfig.CONCISE_TP_HOME.get()) {
+                dispatcher.register(tpHome);
+            }
+
+            // 添加传送点 /set_home
+            if (ServerConfig.CONCISE_SET_HOME.get()) {
+                dispatcher.register(setHome);
+            }
+
+            // 删除传送点 /del_home
+            if (ServerConfig.CONCISE_DEL_HOME.get()) {
+                dispatcher.register(delHome);
+            }
+
         }
 
         // 注册有前缀的指令
@@ -1026,6 +1191,14 @@ public class FarewellCommand {
                     .then(tpUp)
                     // 传送至脚下最近方块 /narcissus tpd
                     .then(tpDown)
+                    // 传送至视线尽头 /narcissus tpv
+                    .then(tpView)
+                    // 传送至传送点 /narcissus home
+                    .then(tpHome)
+                    // 添加传送点 /narcissus sethome
+                    .then(setHome)
+                    // 删除传送点 /narcissus delhome
+                    .then(delHome)
                     // 获取服务器配置 /narcissus config get
                     .then(Commands.literal("config")
                             .then(Commands.literal("get")

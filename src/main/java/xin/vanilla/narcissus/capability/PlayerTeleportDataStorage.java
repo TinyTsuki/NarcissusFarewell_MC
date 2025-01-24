@@ -6,10 +6,13 @@ import net.minecraft.nbt.ListNBT;
 import net.minecraft.util.Direction;
 import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.common.capabilities.Capability.IStorage;
+import xin.vanilla.narcissus.config.Coordinate;
+import xin.vanilla.narcissus.config.KeyValue;
 import xin.vanilla.narcissus.util.DateUtils;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 /**
  * 玩家传送数据存储类，实现了IStorage接口，用于对玩家传送数据(IPlayerTeleportData)的读写操作
@@ -40,6 +43,25 @@ public class PlayerTeleportDataStorage implements IStorage<IPlayerTeleportData> 
             recordsNBT.add(record.writeToNBT());
         }
         tag.put("teleportRecords", recordsNBT);
+        // 序列化家坐标
+        ListNBT homeCoordinateNBT = new ListNBT();
+        for (Map.Entry<KeyValue<String, String>, Coordinate> entry : instance.getHomeCoordinate().entrySet()) {
+            CompoundNBT homeCoordinateTag = new CompoundNBT();
+            homeCoordinateTag.putString("key", entry.getKey().getKey());
+            homeCoordinateTag.putString("value", entry.getKey().getValue());
+            homeCoordinateTag.put("coordinate", entry.getValue().writeToNBT());
+            homeCoordinateNBT.add(homeCoordinateTag);
+        }
+        tag.put("homeCoordinate", homeCoordinateNBT);
+        // 序列化默认家
+        ListNBT defaultHomeNBT = new ListNBT();
+        for (Map.Entry<String, String> entry : instance.getDefaultHome().entrySet()) {
+            CompoundNBT defaultHomeTag = new CompoundNBT();
+            defaultHomeTag.putString("key", entry.getKey());
+            defaultHomeTag.putString("value", entry.getValue());
+            defaultHomeNBT.add(defaultHomeTag);
+        }
+        tag.put("defaultHome", defaultHomeNBT);
         return tag;
     }
 
@@ -66,6 +88,23 @@ public class PlayerTeleportDataStorage implements IStorage<IPlayerTeleportData> 
                 records.add(TeleportRecord.readFromNBT(recordsNBT.getCompound(i)));
             }
             instance.setTeleportRecords(records);
+            // 反序列化家坐标
+            ListNBT homeCoordinateNBT = nbtTag.getList("homeCoordinate", 10);
+            Map<KeyValue<String, String>, Coordinate> homeCoordinate = instance.getHomeCoordinate();
+            for (int i = 0; i < homeCoordinateNBT.size(); i++) {
+                CompoundNBT homeCoordinateTag = homeCoordinateNBT.getCompound(i);
+                homeCoordinate.put(new KeyValue<>(homeCoordinateTag.getString("key"), homeCoordinateTag.getString("value")),
+                        Coordinate.readFromNBT(homeCoordinateTag.getCompound("coordinate")));
+            }
+            instance.setHomeCoordinate(homeCoordinate);
+            // 反序列化默认家
+            ListNBT defaultHomeNBT = nbtTag.getList("defaultHome", 10);
+            Map<String, String> defaultHome = instance.getDefaultHome();
+            for (int i = 0; i < defaultHomeNBT.size(); i++) {
+                CompoundNBT defaultHomeTag = defaultHomeNBT.getCompound(i);
+                defaultHome.put(defaultHomeTag.getString("key"), defaultHomeTag.getString("value"));
+            }
+            instance.setDefaultHome(defaultHome);
         }
     }
 }

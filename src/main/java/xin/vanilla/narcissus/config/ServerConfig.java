@@ -39,12 +39,12 @@ public class ServerConfig {
     /**
      * 传送代价中传送距离最大取值
      */
-    public static final ForgeConfigSpec.IntValue TELEPORT_DISTANCE_LIMIT;
+    public static final ForgeConfigSpec.IntValue TELEPORT_COST_DISTANCE_LIMIT;
 
     /**
      * 跨维度传送时传送代价中传送距离取值
      */
-    public static final ForgeConfigSpec.IntValue TELEPORT_DISTANCE_ACROSS_DIMENSION;
+    public static final ForgeConfigSpec.IntValue TELEPORT_COST_DISTANCE_ACROSS_DIMENSION;
 
     /**
      * 传送至视线尽头时最远传送距离限制
@@ -70,6 +70,11 @@ public class ServerConfig {
      * 随机传送距离限制
      */
     public static final ForgeConfigSpec.IntValue TELEPORT_RANDOM_DISTANCE_LIMIT;
+
+    /**
+     * 家的数量
+     */
+    public static final ForgeConfigSpec.IntValue TELEPORT_HOME_LIMIT;
 
     // endregion 基础设置
 
@@ -706,14 +711,14 @@ public class ServerConfig {
                     .define("teleportAcrossDimension", true);
 
             // 传送代价中传送距离计算限制
-            TELEPORT_DISTANCE_LIMIT = SERVER_BUILDER
+            TELEPORT_COST_DISTANCE_LIMIT = SERVER_BUILDER
                     .comment("The distance calculation limit for teleport cost, 0 means no limit.",
                             "(This config item is not the limit of teleport distance, but the limit of the distance multiplier used when calculating teleport cost.)"
                             , "传送代价中传送距离计算限制，值为0表示不限制。(此配置项并非限制传送距离，而是限制计算传送代价时使用的距离乘数。)")
                     .defineInRange("teleportDistanceLimit", 10000, 0, Integer.MAX_VALUE);
 
             // 跨维度传送时传送代价中传送距离取值
-            TELEPORT_DISTANCE_ACROSS_DIMENSION = SERVER_BUILDER
+            TELEPORT_COST_DISTANCE_ACROSS_DIMENSION = SERVER_BUILDER
                     .comment("The distance value for teleport cost when teleport across dimensions, 0 means no limit."
                             , "跨维度传送时传送代价中传送距离取值，值为0表示不限制。")
                     .defineInRange("teleportDistanceAcrossDimension", 10000, 0, Integer.MAX_VALUE);
@@ -722,7 +727,7 @@ public class ServerConfig {
             TELEPORT_VIEW_DISTANCE_LIMIT = SERVER_BUILDER
                     .comment("The distance limit for teleporting to the view, 0 means no limit."
                             , "传送至视线尽头时最远传送距离限制，值为0表示不限制。")
-                    .defineInRange("teleportViewDistanceLimit", 16 * 32, 0, Integer.MAX_VALUE);
+                    .defineInRange("teleportViewDistanceLimit", 16 * 64, 0, Integer.MAX_VALUE);
 
             // 传送请求过期时间
             TELEPORT_REQUEST_EXPIRE_TIME = SERVER_BUILDER
@@ -759,6 +764,12 @@ public class ServerConfig {
                     .comment("The maximum distance limit for random teleportation or teleportation to a specified structure.",
                             "随机传送与传送至指定结构的最大距离限制。")
                     .defineInRange("teleportRandomDistanceLimit", 10000, 5, Integer.MAX_VALUE);
+
+            // 玩家可设置的家的数量
+            TELEPORT_HOME_LIMIT = SERVER_BUILDER
+                    .comment("The maximum number of homes that can be set by the player.",
+                            "玩家可设置的家的数量。")
+                    .defineInRange("teleportHomeLimit", 5, 1, 9999);
 
             SERVER_BUILDER.pop();
         }
@@ -947,56 +958,56 @@ public class ServerConfig {
             }
             SERVER_BUILDER.pop();
 
-            SERVER_BUILDER.comment("Across dimensions Switch", "跨纬度权限").push("across");
+            SERVER_BUILDER.comment("Across dimensions Switch", "跨维度权限").push("across");
             {
                 PERMISSION_TP_COORDINATE_ACROSS_DIMENSION = SERVER_BUILDER
                         .comment("The permission level required to use the 'Teleport to the specified coordinates' command across dimensions, -1 means disabled."
-                                , "跨维度传送到指定坐标指令所需的权限等级，若为-1则禁用跨纬度传送。")
+                                , "跨维度传送到指定坐标指令所需的权限等级，若为-1则禁用跨维度传送。")
                         .defineInRange("permissionTpCoordinateAcrossDimension", 2, -1, 4);
 
                 PERMISSION_TP_STRUCTURE_ACROSS_DIMENSION = SERVER_BUILDER
                         .comment("The permission level required to use the 'Teleport to the specified structure' command across dimensions, -1 means disabled."
-                                , "跨维度传送到指定结构指令所需的权限等级，若为-1则禁用跨纬度传送。")
+                                , "跨维度传送到指定结构指令所需的权限等级，若为-1则禁用跨维度传送。")
                         .defineInRange("permissionTpStructureAcrossDimension", 2, -1, 4);
 
                 PERMISSION_TP_ASK_ACROSS_DIMENSION = SERVER_BUILDER
                         .comment("The permission level required to use the 'Request to teleport oneself to other players' command across dimensions, -1 means disabled."
-                                , "跨维度请求传送至玩家指令所需的权限等级，若为-1则禁用跨纬度传送。")
+                                , "跨维度请求传送至玩家指令所需的权限等级，若为-1则禁用跨维度传送。")
                         .defineInRange("permissionTpAskAcrossDimension", 0, -1, 4);
 
                 PERMISSION_TP_HERE_ACROSS_DIMENSION = SERVER_BUILDER
                         .comment("The permission level required to use the 'Teleport to the current position' command across dimensions, -1 means disabled."
-                                , "跨维度传送到当前位置指令所需的权限等级，若为-1则禁用跨纬度传送。")
+                                , "跨维度传送到当前位置指令所需的权限等级，若为-1则禁用跨维度传送。")
                         .defineInRange("permissionTpHereAcrossDimension", 0, -1, 4);
 
                 PERMISSION_TP_RANDOM_ACROSS_DIMENSION = SERVER_BUILDER
                         .comment("The permission level required to use the 'Teleport to the random position' command across dimensions, -1 means disabled."
-                                , "跨维度传送到随机位置指令所需的权限等级，若为-1则禁用跨纬度传送。")
+                                , "跨维度传送到随机位置指令所需的权限等级，若为-1则禁用跨维度传送。")
                         .defineInRange("permissionTpRandomAcrossDimension", 0, -1, 4);
 
                 PERMISSION_TP_SPAWN_ACROSS_DIMENSION = SERVER_BUILDER
                         .comment("The permission level required to use the 'Teleport to the spawn of the current dimension' command across dimensions, -1 means disabled."
-                                , "跨维度传送到当前维度的出生点指令所需的权限等级，若为-1则禁用跨纬度传送。")
+                                , "跨维度传送到当前维度的出生点指令所需的权限等级，若为-1则禁用跨维度传送。")
                         .defineInRange("permissionTpSpawnAcrossDimension", 0, -1, 4);
 
                 PERMISSION_TP_WORLD_SPAWN_ACROSS_DIMENSION = SERVER_BUILDER
                         .comment("The permission level required to use the 'Teleport to the world spawn of the current dimension' command across dimensions, -1 means disabled."
-                                , "跨维度传送到当前维度的世界出生点指令所需的权限等级，若为-1则禁用跨纬度传送。")
+                                , "跨维度传送到当前维度的世界出生点指令所需的权限等级，若为-1则禁用跨维度传送。")
                         .defineInRange("permissionTpWorldSpawnAcrossDimension", 0, -1, 4);
 
                 PERMISSION_TP_HOME_ACROSS_DIMENSION = SERVER_BUILDER
                         .comment("The permission level required to use the 'Teleport to the home' command across dimensions, -1 means disabled."
-                                , "跨维度传送到家指令所需的权限等级，若为-1则禁用跨纬度传送。")
+                                , "跨维度传送到家指令所需的权限等级，若为-1则禁用跨维度传送。")
                         .defineInRange("permissionTpHomeAcrossDimension", 0, -1, 4);
 
                 PERMISSION_TP_STAGE_ACROSS_DIMENSION = SERVER_BUILDER
                         .comment("The permission level required to use the 'Teleport to the stage' command across dimensions, -1 means disabled."
-                                , "跨维度传送到驿站指令所需的权限等级，若为-1则禁用跨纬度传送。")
+                                , "跨维度传送到驿站指令所需的权限等级，若为-1则禁用跨维度传送。")
                         .defineInRange("permissionTpStageAcrossDimension", 0, -1, 4);
 
                 PERMISSION_TP_BACK_ACROSS_DIMENSION = SERVER_BUILDER
                         .comment("The permission level required to use the 'Teleport to the previous location' command across dimensions, -1 means disabled."
-                                , "跨维度传送到上次传送点指令所需的权限等级，若为-1则禁用跨纬度传送。")
+                                , "跨维度传送到上次传送点指令所需的权限等级，若为-1则禁用跨维度传送。")
                         .defineInRange("permissionTpBackAcrossDimension", 0, -1, 4);
             }
             SERVER_BUILDER.pop();

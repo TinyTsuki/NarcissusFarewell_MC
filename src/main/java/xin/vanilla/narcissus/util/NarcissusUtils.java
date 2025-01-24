@@ -16,6 +16,7 @@ import net.minecraft.util.RegistryKey;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.Util;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.vector.Vector3d;
 import net.minecraft.util.registry.Registry;
 import net.minecraft.util.text.ChatType;
 import net.minecraft.util.text.TranslationTextComponent;
@@ -33,10 +34,7 @@ import xin.vanilla.narcissus.NarcissusFarewell;
 import xin.vanilla.narcissus.capability.IPlayerTeleportData;
 import xin.vanilla.narcissus.capability.PlayerTeleportDataCapability;
 import xin.vanilla.narcissus.capability.TeleportRecord;
-import xin.vanilla.narcissus.config.Coordinate;
-import xin.vanilla.narcissus.config.ServerConfig;
-import xin.vanilla.narcissus.config.TeleportCost;
-import xin.vanilla.narcissus.config.TeleportRequest;
+import xin.vanilla.narcissus.config.*;
 import xin.vanilla.narcissus.enums.*;
 
 import java.time.Duration;
@@ -50,14 +48,20 @@ public class NarcissusUtils {
     // region 安全坐标
 
     /**
-     * TODO 不安全的方块
+     * TODO 不安全的方块做成配置
      */
     private static final Set<Block> UNSAFE_BLOCKS = new HashSet<>(Arrays.asList(
             Blocks.LAVA,
             Blocks.FIRE,
             Blocks.CAMPFIRE,
+            Blocks.SOUL_FIRE,
+            Blocks.SOUL_CAMPFIRE,
             Blocks.CACTUS,
-            Blocks.MAGMA_BLOCK
+            Blocks.MAGMA_BLOCK,
+            Blocks.SWEET_BERRY_BUSH
+    ));
+    private static final Set<Block> SUFFOCATING_BLOCKS = new HashSet<>(Arrays.asList(
+            Blocks.WATER
     ));
 
     public static Coordinate findTopCandidate(ServerWorld world, Coordinate start) {
@@ -122,6 +126,68 @@ public class NarcissusUtils {
             }
         }
         return null;
+    }
+
+    public static Coordinate findViewEndCandidate(ServerPlayerEntity player, boolean safe, int range) {
+        double stepScale = 0.75;
+        Coordinate start = new Coordinate(player);
+        Coordinate result = null;
+
+        // 获取玩家的起始位置
+        Vector3d startPosition = player.getEyePosition(1.0F);
+
+        // 获取玩家的视线方向
+        Vector3d direction = player.getViewVector(1.0F).normalize();
+        // 步长
+        Vector3d stepVector = direction.scale(stepScale);
+
+        // 初始化变量
+        Vector3d currentPosition = startPosition;
+        World world = player.getLevel();
+
+        // 从近到远寻找碰撞点
+        for (int stepCount = 0; stepCount <= range; stepCount++) {
+            // 更新当前检测位置
+            currentPosition = startPosition.add(stepVector.scale(stepCount));
+            BlockPos currentBlockPos = new BlockPos(currentPosition.x, currentPosition.y, currentPosition.z);
+
+            // 获取当前方块状态
+            BlockState blockState = world.getBlockState(currentBlockPos);
+
+            // 检测方块是否不可穿过
+            if (blockState.getMaterial().blocksMotion()) {
+                result = start.clone().fromVector3d(startPosition.add(stepVector.scale(stepCount - 1)));
+                break;
+            }
+        }
+
+        // 如果未找到碰撞点，则使用射线的终点
+        if (result == null) {
+            result = start.clone().fromVector3d(currentPosition);
+        }
+
+        // 如果 safe 为 true，从碰撞点反向查找安全位置
+        if (safe) {
+            Vector3d collisionVector = result.toVector3d(); // 碰撞点的三维向量
+            for (int stepCount = (int) Math.ceil(collisionVector.distanceTo(startPosition) / stepScale); stepCount >= 0; stepCount--) {
+                currentPosition = startPosition.add(stepVector.scale(stepCount));
+                BlockPos currentBlockPos = new BlockPos(currentPosition.x, currentPosition.y, currentPosition.z);
+                for (int yOffset = -3; yOffset < 3; yOffset++) {
+                    Coordinate candidate = start.clone().fromBlockPos(currentBlockPos).addY(yOffset);
+                    // 判断当前候选坐标是否安全
+                    if (isSafeCoordinate(world, candidate)) {
+                        result = candidate.addX(0.5).addY(0.15).addZ(0.5); // 找到安全位置
+                        stepCount = 0; // 跳出循环
+                        break;
+                    }
+                }
+            }
+        }
+        // 如果起点与结果相同则返回null
+        if (start.equalsOfRange(result, 1)) {
+            result = null;
+        }
+        return result;
     }
 
     public static Coordinate findSafeCoordinate(Coordinate coordinate) {
@@ -189,7 +255,7 @@ public class NarcissusUtils {
             if (coordinate.getSafeMode() == ESafeMode.NONE && y <= 0 || (y <= 0 || y > world.getHeight())) continue;
             for (int x : xList) {
                 for (int z : zList) {
-                    Coordinate candidate = new Coordinate().setX(x + 0.25).setY(y + 0.1).setZ(z + 0.25)
+                    Coordinate candidate = new Coordinate().setX(x + 0.5).setY(y + 0.15).setZ(z + 0.5)
                             .setYaw(coordinate.getYaw()).setPitch(coordinate.getPitch())
                             .setDimension(coordinate.getDimension())
                             .setSafe(coordinate.isSafe()).setSafeMode(coordinate.getSafeMode());
@@ -210,8 +276,8 @@ public class NarcissusUtils {
     }
 
     private static boolean isSafeBlock(BlockState block, BlockState blockAbove, BlockState blockBelow) {
-        return (block.getBlock() == Blocks.AIR || block.getBlock() == Blocks.CAVE_AIR)
-                && (blockAbove.getBlock() == Blocks.AIR || blockAbove.getBlock() == Blocks.CAVE_AIR)
+        return (!block.getMaterial().blocksMotion() && !UNSAFE_BLOCKS.contains(block.getBlock()))
+                && (!blockAbove.getMaterial().blocksMotion() && !UNSAFE_BLOCKS.contains(blockAbove.getBlock()) && !SUFFOCATING_BLOCKS.contains(blockAbove.getBlock()))
                 && blockBelow.getMaterial().isSolid()
                 && !UNSAFE_BLOCKS.contains(blockBelow.getBlock());
     }
@@ -365,16 +431,79 @@ public class NarcissusUtils {
         return null;
     }
 
+    public static KeyValue<String, String> getPlayerHomeKey(ServerPlayerEntity player, RegistryKey<World> dimension, String name) {
+        IPlayerTeleportData data = PlayerTeleportDataCapability.getData(player);
+        Map<String, String> defaultHome = data.getDefaultHome();
+        if (defaultHome.isEmpty() && dimension == null && StringUtils.isNullOrEmpty(name) && data.getHomeCoordinate().size() != 1) {
+            return null;
+        }
+        KeyValue<String, String> keyValue = null;
+        if (dimension == null && StringUtils.isNotNullOrEmpty(name)) {
+            if (defaultHome.isEmpty() || !defaultHome.containsValue(name)) {
+                keyValue = data.getHomeCoordinate().keySet().stream()
+                        .filter(key -> key.getValue().equals(name))
+                        .filter(key -> key.getKey().equals(player.level.dimension().location().toString()))
+                        .findFirst().orElse(null);
+            } else if (defaultHome.containsValue(name)) {
+                List<Map.Entry<String, String>> entryList = defaultHome.entrySet().stream().filter(entry -> entry.getValue().equals(name)).collect(Collectors.toList());
+                if (entryList.size() == 1) {
+                    keyValue = new KeyValue<>(entryList.get(0).getKey(), entryList.get(0).getValue());
+                }
+            }
+        } else if (dimension != null && StringUtils.isNullOrEmpty(name)) {
+            if (defaultHome.containsKey(dimension.location().toString())) {
+                keyValue = new KeyValue<>(dimension.location().toString(), defaultHome.get(dimension.location().toString()));
+            }
+        } else if (dimension != null && StringUtils.isNotNullOrEmpty(name)) {
+            keyValue = data.getHomeCoordinate().keySet().stream()
+                    .filter(key -> key.getValue().equals(name))
+                    .filter(key -> key.getKey().equals(dimension.location().toString()))
+                    .findFirst().orElse(null);
+        } else if (!defaultHome.isEmpty() && dimension == null && StringUtils.isNullOrEmpty(name)) {
+            if (defaultHome.size() == 1) {
+                keyValue = new KeyValue<>(defaultHome.keySet().iterator().next(), defaultHome.values().iterator().next());
+            } else {
+                String value = defaultHome.getOrDefault(player.level.dimension().location().toString(), null);
+                if (value != null) {
+                    keyValue = new KeyValue<>(player.level.dimension().location().toString(), value);
+                }
+            }
+        } else if (defaultHome.isEmpty() && dimension == null && StringUtils.isNullOrEmpty(name) && data.getHomeCoordinate().size() == 1) {
+            keyValue = data.getHomeCoordinate().keySet().iterator().next();
+        }
+        return keyValue;
+    }
+
+    /**
+     * 获取指定玩家的家坐标
+     *
+     * @param player    玩家
+     * @param dimension 维度
+     * @param name      名称
+     */
+    public static Coordinate getPlayerHome(ServerPlayerEntity player, RegistryKey<World> dimension, String name) {
+        return PlayerTeleportDataCapability.getData(player).getHomeCoordinate().getOrDefault(getPlayerHomeKey(player, dimension, name), null);
+    }
+
     /**
      * 检查传送范围
      */
-    public static int checkRange(ServerPlayerEntity player, int range) {
-        if (range > ServerConfig.TELEPORT_RANDOM_DISTANCE_LIMIT.get()) {
-            NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EI18nType.MESSAGE, "range_too_large"), ServerConfig.TELEPORT_RANDOM_DISTANCE_LIMIT.get());
+    public static int checkRange(ServerPlayerEntity player, ETeleportType type, int range) {
+        int maxRange;
+        switch (type) {
+            case TP_VIEW:
+                maxRange = ServerConfig.TELEPORT_VIEW_DISTANCE_LIMIT.get();
+                break;
+            default:
+                maxRange = ServerConfig.TELEPORT_RANDOM_DISTANCE_LIMIT.get();
+                break;
+        }
+        if (range > maxRange) {
+            NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EI18nType.MESSAGE, "range_too_large"), maxRange);
         } else if (range <= 0) {
             NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EI18nType.MESSAGE, "range_too_small"), 1);
         }
-        return Math.min(Math.max(range, 1), ServerConfig.TELEPORT_RANDOM_DISTANCE_LIMIT.get());
+        return Math.min(Math.max(range, 1), maxRange);
     }
 
     /**
@@ -413,7 +542,9 @@ public class NarcissusUtils {
                 if (coordinate.isSafe()) {
                     coordinate = findSafeCoordinate(coordinate);
                 }
-                player.teleportTo(level, coordinate.getX(), coordinate.getY(), coordinate.getZ(), player.yRot, player.xRot);
+                player.teleportTo(level, coordinate.getX(), coordinate.getY(), coordinate.getZ()
+                        , coordinate.getYaw() == 0 ? player.yRot : (float) coordinate.getYaw()
+                        , coordinate.getPitch() == 0 ? player.xRot : (float) coordinate.getPitch());
                 TeleportRecord record = new TeleportRecord();
                 record.setTeleportTime(new Date());
                 record.setTeleportType(type);
@@ -858,9 +989,9 @@ public class NarcissusUtils {
 
         double adjustedDistance;
         if (player.getLevel().dimension() == targetDim) {
-            adjustedDistance = Math.min(ServerConfig.TELEPORT_DISTANCE_LIMIT.get(), distance);
+            adjustedDistance = Math.min(ServerConfig.TELEPORT_COST_DISTANCE_LIMIT.get(), distance);
         } else {
-            adjustedDistance = ServerConfig.TELEPORT_DISTANCE_ACROSS_DIMENSION.get();
+            adjustedDistance = ServerConfig.TELEPORT_COST_DISTANCE_ACROSS_DIMENSION.get();
         }
 
         double need = cost.getNum() * adjustedDistance * cost.getRate();
