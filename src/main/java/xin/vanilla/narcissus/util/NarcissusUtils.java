@@ -31,9 +31,10 @@ import net.minecraftforge.forgespi.language.IModInfo;
 import net.minecraftforge.registries.ForgeRegistries;
 import org.apache.maven.artifact.versioning.ArtifactVersion;
 import xin.vanilla.narcissus.NarcissusFarewell;
-import xin.vanilla.narcissus.capability.IPlayerTeleportData;
-import xin.vanilla.narcissus.capability.PlayerTeleportDataCapability;
 import xin.vanilla.narcissus.capability.TeleportRecord;
+import xin.vanilla.narcissus.capability.player.IPlayerTeleportData;
+import xin.vanilla.narcissus.capability.player.PlayerTeleportDataCapability;
+import xin.vanilla.narcissus.capability.world.WorldStageData;
 import xin.vanilla.narcissus.config.*;
 import xin.vanilla.narcissus.enums.*;
 
@@ -486,6 +487,53 @@ public class NarcissusUtils {
     }
 
     /**
+     * 获取距离玩家最近的驿站
+     *
+     * @param player 玩家
+     * @return 驿站key
+     */
+    public static KeyValue<String, String> findNearestStageKey(ServerPlayerEntity player) {
+        WorldStageData stageData = WorldStageData.get(player);
+        Map.Entry<KeyValue<String, String>, Coordinate> stageEntry = stageData.getStageCoordinate().entrySet().stream()
+                .filter(entry -> entry.getKey().getKey().equals(player.level.dimension().location().toString()))
+                .min(Comparator.comparingInt(entry -> {
+                    Coordinate value = entry.getValue();
+                    double dx = value.getX() - player.getX();
+                    double dy = value.getY() - player.getY();
+                    double dz = value.getZ() - player.getZ();
+                    // 返回欧几里得距离的平方（避免开方操作，提高性能）
+                    return (int) (dx * dx + dy * dy + dz * dz);
+                })).orElse(null);
+        return stageEntry != null ? stageEntry.getKey() : null;
+    }
+
+    /**
+     * 获取并移除玩家离开的坐标
+     *
+     * @param player    玩家
+     * @param type      传送类型
+     * @param dimension 维度
+     * @return 查询到的离开坐标（如果未找到则返回 null）
+     */
+    public static Coordinate getAndRemoveBackCoordinate(ServerPlayerEntity player, ETeleportType type, RegistryKey<World> dimension) {
+        Coordinate result = null;
+        // 获取玩家的传送数据
+        IPlayerTeleportData data = PlayerTeleportDataCapability.getData(player);
+        List<TeleportRecord> records = data.getTeleportRecords();
+        Optional<TeleportRecord> optionalRecord = records.stream()
+                .filter(record -> type == null || record.getTeleportType() == type)
+                .filter(record -> type == ETeleportType.TP_BACK || record.getTeleportType() != ETeleportType.TP_BACK)
+                .filter(record -> dimension == null || record.getBefore().getDimension().equals(dimension))
+                .max(Comparator.comparing(TeleportRecord::getTeleportTime));
+        if (optionalRecord.isPresent()) {
+            TeleportRecord record = optionalRecord.get();
+            result = record.getBefore().clone();
+            records.remove(record);
+        }
+        return result;
+    }
+
+    /**
      * 检查传送范围
      */
     public static int checkRange(ServerPlayerEntity player, ETeleportType type, int range) {
@@ -530,26 +578,27 @@ public class NarcissusUtils {
     /**
      * 传送玩家到指定坐标
      *
-     * @param player     玩家
-     * @param coordinate 坐标
+     * @param player 玩家
+     * @param after  坐标
      */
-    public static void teleportTo(@NonNull ServerPlayerEntity player, @NonNull Coordinate coordinate, ETeleportType type) {
+    public static void teleportTo(@NonNull ServerPlayerEntity player, @NonNull Coordinate after, ETeleportType type) {
+        Coordinate before = new Coordinate(player);
         World world = player.level;
         MinecraftServer server = player.getServer();
         if (world != null && server != null) {
-            ServerWorld level = server.getLevel(coordinate.getDimension());
+            ServerWorld level = server.getLevel(after.getDimension());
             if (level != null) {
-                if (coordinate.isSafe()) {
-                    coordinate = findSafeCoordinate(coordinate);
+                if (after.isSafe()) {
+                    after = findSafeCoordinate(after);
                 }
-                player.teleportTo(level, coordinate.getX(), coordinate.getY(), coordinate.getZ()
-                        , coordinate.getYaw() == 0 ? player.yRot : (float) coordinate.getYaw()
-                        , coordinate.getPitch() == 0 ? player.xRot : (float) coordinate.getPitch());
+                player.teleportTo(level, after.getX(), after.getY(), after.getZ()
+                        , after.getYaw() == 0 ? player.yRot : (float) after.getYaw()
+                        , after.getPitch() == 0 ? player.xRot : (float) after.getPitch());
                 TeleportRecord record = new TeleportRecord();
                 record.setTeleportTime(new Date());
                 record.setTeleportType(type);
-                record.setBefore(new Coordinate(player));
-                record.setAfter(coordinate);
+                record.setBefore(before);
+                record.setAfter(after);
                 PlayerTeleportDataCapability.getData(player).addTeleportRecords(record);
             }
         }

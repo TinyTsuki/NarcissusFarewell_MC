@@ -64,12 +64,19 @@
   "message.narcissus_farewell.tp_view_safe_not_found": "§eNo safe landing spot was found in the direction you are looking.",
   "message.narcissus_farewell.home_not_found": "§eNo default home was found at the current dimension, or multiple default homes exist.",
   "message.narcissus_farewell.home_not_found_in_dimension": "§eNo default home was found at the dimension '§c%s§e'.",
-  "message.narcissus_farewell.home_not_found_with_name": "§eNo home named '§c%s§e' was found, or multiple homes named '§c%s§e' exist.",
+  "message.narcissus_farewell.home_not_found_with_name": "§eNo home named '§c%1$s§e' was found, or multiple homes named '§c%1$s§e' exist.",
   "message.narcissus_farewell.home_not_found_with_name_in_dimension": "§eNo home named '§c%2$s§e' was found at the dimension '§c%1$s§e'.",
-  "message.narcissus_farewell.home_limit": "§eThe number of homes exceeds the server limit of '§c%s§e'. Adding failed.",
-  "message.narcissus_farewell.home_already_exists": "§eA home named '§c%2$s§e' already exists in the dimension '§c%1$s§e'. Adding failed.",
+  "message.narcissus_farewell.home_limit": "Adding failed. §eThe number of homes exceeds the server limit of '§c%s§e'.",
+  "message.narcissus_farewell.home_already_exists": "Adding failed. §eA home named '§c%2$s§e' already exists in the dimension '§c%1$s§e'.",
   "message.narcissus_farewell.home_set": "A new home named '§c%s§e' has been added at %s.",
   "message.narcissus_farewell.home_set_default": "A new default home named '§c%s§e' has been added at %s.",
   "message.narcissus_farewell.home_default_remove": "§eThe default home named '§c%s§e' at the current dimension has been removed.",
-  "message.narcissus_farewell.home_del": "§eThe home named '§c%2$s§e' in the dimension '§c%1$s§e' has been removed."
+  "message.narcissus_farewell.home_del": "§eThe home named '§c%2$s§e' in the dimension '§c%1$s§e' has been removed.",
+  "message.narcissus_farewell.stage_not_found": "§eNo station named '§c%1$s§e' was found, or multiple stations with the name '§c%1$s§e' exist.",
+  "message.narcissus_farewell.stage_nearest_not_found": "§eNo station was found nearby.",
+  "message.narcissus_farewell.stage_not_found_with_name_in_dimension": "§eNo station named '§c%2$s§e' was found in the dimension '§c%1$s§e'.",
+  "message.narcissus_farewell.stage_already_exists": "§eAdding failed. A station named '§c%2$s§e' already exists in the dimension '§c%1$s§e'.",
+  "message.narcissus_farewell.stage_set": "A new station named '§c%s§e' has been added at coordinates %s.",
+  "message.narcissus_farewell.stage_del": "§eThe station named '§c%2$s§e' in the dimension '§c%1$s§e' has been removed.",
+  "message.narcissus_farewell.back_not_found": "§eNo previous teleport record was found."
 }

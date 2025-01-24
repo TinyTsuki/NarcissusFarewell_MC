@@ -1,10 +1,11 @@
-package xin.vanilla.narcissus.capability;
+package xin.vanilla.narcissus.capability.player;
 
 import lombok.NonNull;
 import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.nbt.ListNBT;
 import net.minecraft.network.PacketBuffer;
+import xin.vanilla.narcissus.capability.TeleportRecord;
 import xin.vanilla.narcissus.config.Coordinate;
 import xin.vanilla.narcissus.config.KeyValue;
 import xin.vanilla.narcissus.config.ServerConfig;
@@ -86,7 +87,7 @@ public class PlayerTeleportData implements IPlayerTeleportData {
 
     @Override
     public @NonNull List<TeleportRecord> getTeleportRecords(ETeleportType type) {
-        return teleportRecords = CollectionUtils.isNullOrEmpty(teleportRecords) ? new ArrayList<>() :
+        return CollectionUtils.isNullOrEmpty(teleportRecords) ? teleportRecords = new ArrayList<>() :
                 teleportRecords.stream().filter(record -> record.getTeleportType() == type).collect(Collectors.toList());
     }
 

@@ -6,7 +6,7 @@ import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import xin.vanilla.narcissus.NarcissusFarewell;
-import xin.vanilla.narcissus.capability.PlayerTeleportDataCapability;
+import xin.vanilla.narcissus.capability.player.PlayerTeleportDataCapability;
 
 /**
  * Mod 事件处理器

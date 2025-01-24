@@ -18,10 +18,10 @@ import net.minecraftforge.fml.common.Mod;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import xin.vanilla.narcissus.NarcissusFarewell;
-import xin.vanilla.narcissus.capability.IPlayerTeleportData;
-import xin.vanilla.narcissus.capability.PlayerTeleportDataCapability;
-import xin.vanilla.narcissus.capability.PlayerTeleportDataProvider;
 import xin.vanilla.narcissus.capability.TeleportRecord;
+import xin.vanilla.narcissus.capability.player.IPlayerTeleportData;
+import xin.vanilla.narcissus.capability.player.PlayerTeleportDataCapability;
+import xin.vanilla.narcissus.capability.player.PlayerTeleportDataProvider;
 import xin.vanilla.narcissus.config.Coordinate;
 import xin.vanilla.narcissus.enums.ETeleportType;
 import xin.vanilla.narcissus.network.ClientModLoadedNotice;
@@ -62,6 +62,13 @@ public class ForgeEventHandler {
                 // 同步玩家传送数据到客户端
                 PlayerTeleportDataCapability.syncPlayerData((ServerPlayerEntity) player);
             }
+        }
+    }
+
+    @SubscribeEvent
+    public static void onServerTick(TickEvent.ServerTickEvent event) {
+        if (event.phase == TickEvent.Phase.END) {
+            // TODO 移除过期的传送请求
         }
     }
 

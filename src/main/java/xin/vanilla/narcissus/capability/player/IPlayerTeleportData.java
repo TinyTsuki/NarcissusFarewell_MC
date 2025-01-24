@@ -1,10 +1,11 @@
-package xin.vanilla.narcissus.capability;
+package xin.vanilla.narcissus.capability.player;
 
 import lombok.NonNull;
 import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.network.PacketBuffer;
 import net.minecraftforge.common.util.INBTSerializable;
+import xin.vanilla.narcissus.capability.TeleportRecord;
 import xin.vanilla.narcissus.config.Coordinate;
 import xin.vanilla.narcissus.config.KeyValue;
 import xin.vanilla.narcissus.enums.ETeleportType;

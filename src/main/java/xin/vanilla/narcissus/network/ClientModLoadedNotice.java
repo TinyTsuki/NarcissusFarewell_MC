@@ -4,7 +4,7 @@ import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.network.PacketBuffer;
 import net.minecraftforge.fml.network.NetworkEvent;
 import xin.vanilla.narcissus.NarcissusFarewell;
-import xin.vanilla.narcissus.capability.PlayerTeleportDataCapability;
+import xin.vanilla.narcissus.capability.player.PlayerTeleportDataCapability;
 
 import java.util.function.Supplier;
 

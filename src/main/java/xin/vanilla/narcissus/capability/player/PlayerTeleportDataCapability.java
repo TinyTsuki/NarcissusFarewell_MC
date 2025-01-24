@@ -1,4 +1,4 @@
-package xin.vanilla.narcissus.capability;
+package xin.vanilla.narcissus.capability.player;
 
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.ServerPlayerEntity;
