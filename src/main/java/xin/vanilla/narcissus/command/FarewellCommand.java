@@ -1099,7 +1099,7 @@ public class FarewellCommand {
                         )
                 );
         LiteralArgumentBuilder<CommandSource> setStage = Commands.literal(ServerConfig.COMMAND_SET_STAGE.get())
-                .requires(source -> source.hasPermission(ServerConfig.PERMISSION_TP_STAGE.get()))
+                .requires(source -> source.hasPermission(ServerConfig.PERMISSION_SET_STAGE.get()))
                 .then(Commands.argument("name", StringArgumentType.word())
                         .suggests((context, builder) -> {
                             builder.suggest("stage");
@@ -1113,7 +1113,7 @@ public class FarewellCommand {
                         )
                 );
         LiteralArgumentBuilder<CommandSource> delStage = Commands.literal(ServerConfig.COMMAND_DEL_STAGE.get())
-                .requires(source -> source.hasPermission(ServerConfig.PERMISSION_TP_STAGE.get()))
+                .requires(source -> source.hasPermission(ServerConfig.PERMISSION_DEL_STAGE.get()))
                 .then(Commands.argument("name", StringArgumentType.word())
                         .suggests(stageSuggestions)
                         .then(Commands.argument("dimension", DimensionArgument.dimension())
