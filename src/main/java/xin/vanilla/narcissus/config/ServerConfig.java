@@ -1,9 +1,15 @@
 package xin.vanilla.narcissus.config;
 
+import net.minecraft.block.Blocks;
+import net.minecraft.command.arguments.BlockStateParser;
 import net.minecraftforge.common.ForgeConfigSpec;
 import xin.vanilla.narcissus.enums.ECardType;
 import xin.vanilla.narcissus.enums.ECoolDownType;
 import xin.vanilla.narcissus.enums.ECostType;
+
+import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * 服务器配置
@@ -75,6 +81,21 @@ public class ServerConfig {
      * 家的数量
      */
     public static final ForgeConfigSpec.IntValue TELEPORT_HOME_LIMIT;
+
+    /**
+     * 命令前缀
+     */
+    public static final ForgeConfigSpec.ConfigValue<String> COMMAND_PREFIX;
+
+    /**
+     * 不安全的方块
+     */
+    public static final ForgeConfigSpec.ConfigValue<List<String>> UNSAFE_BLOCKS;
+
+    /**
+     * 窒息的方块
+     */
+    public static final ForgeConfigSpec.ConfigValue<List<String>> SUFFOCATING_BLOCKS;
 
     // endregion 基础设置
 
@@ -327,6 +348,11 @@ public class ServerConfig {
     // endregion 冷却时间
 
     // region 自定义指令
+
+    /**
+     * 获取当前世界的纬度ID
+     */
+    public static final ForgeConfigSpec.ConfigValue<String> COMMAND_DIMENSION;
 
     /**
      * 传送到指定坐标
@@ -771,6 +797,41 @@ public class ServerConfig {
                             "玩家可设置的家的数量。")
                     .defineInRange("teleportHomeLimit", 5, 1, 9999);
 
+            // 命令前缀
+            COMMAND_PREFIX = SERVER_BUILDER
+                    .comment("The prefix of the command, please only use English characters and underscores, otherwise it may cause problems.",
+                            "指令前缀，请仅使用英文字母及下划线，否则可能会出现问题。")
+                    .define("commandPrefix", "narcissus");
+
+
+            // 不安全的方块
+            UNSAFE_BLOCKS = SERVER_BUILDER
+                    .comment("The list of unsafe blocks, players will not be teleported to these blocks.",
+                            "不安全的方块列表，玩家不会传送到这些方块上。")
+                    .define("unsafeBlocks", Stream.of(
+                                            Blocks.LAVA,
+                                            Blocks.FIRE,
+                                            Blocks.CAMPFIRE,
+                                            Blocks.SOUL_FIRE,
+                                            Blocks.SOUL_CAMPFIRE,
+                                            Blocks.CACTUS,
+                                            Blocks.MAGMA_BLOCK,
+                                            Blocks.SWEET_BERRY_BUSH
+                                    ).map(block -> BlockStateParser.serialize(block.defaultBlockState()))
+                                    .collect(Collectors.toList())
+                    );
+
+            // 窒息的方块
+            SUFFOCATING_BLOCKS = SERVER_BUILDER
+                    .comment("The list of suffocating blocks, players will not be teleported to these blocks.",
+                            "窒息的方块列表，玩家头不会处于这些方块里面。")
+                    .define("suffocatingBlocks", Stream.of(
+                                            Blocks.LAVA,
+                                            Blocks.WATER
+                                    ).map(block -> BlockStateParser.serialize(block.defaultBlockState()))
+                                    .collect(Collectors.toList())
+                    );
+
             SERVER_BUILDER.pop();
         }
 
@@ -1102,6 +1163,12 @@ public class ServerConfig {
         // 定义自定义指令配置
         {
             SERVER_BUILDER.comment("Custom Command Settings, don't add prefix '/'", "自定义指令，请勿添加前缀'/'").push("command");
+
+            // 获取当前世界的维度ID
+            COMMAND_DIMENSION = SERVER_BUILDER
+                    .comment("This command is used to get the dimension ID of the current world."
+                            , "获取当前世界的维度ID的指令。")
+                    .define("commandDimension", "dim");
 
             // 传送到指定坐标
             COMMAND_TP_COORDINATE = SERVER_BUILDER

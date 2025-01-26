@@ -23,9 +23,13 @@ import xin.vanilla.narcissus.capability.player.IPlayerTeleportData;
 import xin.vanilla.narcissus.capability.player.PlayerTeleportDataCapability;
 import xin.vanilla.narcissus.capability.player.PlayerTeleportDataProvider;
 import xin.vanilla.narcissus.config.Coordinate;
+import xin.vanilla.narcissus.config.TeleportRequest;
+import xin.vanilla.narcissus.enums.EI18nType;
 import xin.vanilla.narcissus.enums.ETeleportType;
 import xin.vanilla.narcissus.network.ClientModLoadedNotice;
 import xin.vanilla.narcissus.network.ModNetworkHandler;
+import xin.vanilla.narcissus.util.I18nUtils;
+import xin.vanilla.narcissus.util.NarcissusUtils;
 
 import java.util.Date;
 
@@ -68,7 +72,21 @@ public class ForgeEventHandler {
     @SubscribeEvent
     public static void onServerTick(TickEvent.ServerTickEvent event) {
         if (event.phase == TickEvent.Phase.END) {
-            // TODO 移除过期的传送请求
+            if (NarcissusFarewell.getServerInstance().getTickCount() % 20 == 0) {
+                long currentTimeMillis = System.currentTimeMillis();
+                NarcissusFarewell.getTeleportRequest().entrySet().stream()
+                        .filter(entry -> entry.getValue().getExpireTime() < currentTimeMillis)
+                        .forEach(entry -> {
+                            TeleportRequest request = NarcissusFarewell.getTeleportRequest().remove(entry.getKey());
+                            if (request != null) {
+                                if (request.getTeleportType() == ETeleportType.TP_ASK) {
+                                    NarcissusUtils.sendTranslatableMessage(request.getRequester(), I18nUtils.getKey(EI18nType.MESSAGE, "tp_ask_expired"), request.getTarget().getDisplayName().getString());
+                                } else if (request.getTeleportType() == ETeleportType.TP_HERE) {
+                                    NarcissusUtils.sendTranslatableMessage(request.getRequester(), I18nUtils.getKey(EI18nType.MESSAGE, "tp_here_expired"), request.getTarget().getDisplayName().getString());
+                                }
+                            }
+                        });
+            }
         }
     }
 

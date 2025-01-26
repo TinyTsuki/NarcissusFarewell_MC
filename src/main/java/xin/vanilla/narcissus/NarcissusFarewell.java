@@ -32,7 +32,7 @@ import java.util.concurrent.ConcurrentHashMap;
 @Mod(NarcissusFarewell.MODID)
 public class NarcissusFarewell {
 
-    public final static String COMMAND_PREFIX = "narcissus";
+    public final static String DEFAULT_COMMAND_PREFIX = "narcissus";
 
     public static final String MODID = "narcissus_farewell";
 

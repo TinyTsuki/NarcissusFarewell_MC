@@ -20,7 +20,6 @@ public class TeleportRequest {
     @Setter
     private ServerPlayerEntity target;
     @Getter
-    @Setter
     private Date requestTime;
     @Getter
     @Setter
@@ -28,6 +27,14 @@ public class TeleportRequest {
     @Getter
     @Setter
     private boolean safe;
+    @Getter
+    private long expireTime;
+
+    public TeleportRequest setRequestTime(Date requestTime) {
+        this.requestTime = requestTime;
+        this.expireTime = requestTime.getTime() + ServerConfig.TELEPORT_REQUEST_EXPIRE_TIME.get() * 1000;
+        return this;
+    }
 
     public String getRequestId() {
         return DateUtils.toDateTimeInt(this.requestTime) + "_" + this.id;
