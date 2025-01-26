@@ -2,6 +2,7 @@ package xin.vanilla.narcissus.util;
 
 import com.mojang.brigadier.StringReader;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
+import io.netty.buffer.Unpooled;
 import lombok.NonNull;
 import net.minecraft.block.BlockState;
 import net.minecraft.client.Minecraft;
@@ -11,6 +12,8 @@ import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.inventory.IInventory;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.JsonToNBT;
+import net.minecraft.network.PacketBuffer;
+import net.minecraft.network.play.client.CClientSettingsPacket;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.DamageSource;
 import net.minecraft.util.RegistryKey;
@@ -42,6 +45,7 @@ import xin.vanilla.narcissus.config.*;
 import xin.vanilla.narcissus.enums.*;
 
 import javax.annotation.Nullable;
+import java.io.IOException;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.*;
@@ -1020,6 +1024,22 @@ public class NarcissusUtils {
             default:
                 return false;
         }
+    }
+
+    public static CClientSettingsPacket getCClientSettingsPacket(ServerPlayerEntity player){
+        CClientSettingsPacket result = new CClientSettingsPacket();
+        PacketBuffer buffer = new PacketBuffer(Unpooled.buffer());
+        try {
+            buffer.writeUtf(player.getLanguage());
+            buffer.writeByte(0);
+            buffer.writeEnum(player.getChatVisibility());
+            buffer.writeBoolean(false);
+            buffer.writeByte(0);
+            buffer.writeEnum(player.getMainArm());
+            result.read(buffer);
+        } catch (IOException ignored) {
+        }
+        return result;
     }
 
     /**

@@ -350,7 +350,7 @@ public class ServerConfig {
     // region 自定义指令
 
     /**
-     * 获取当前世界的纬度ID
+     * 获取当前世界的维度ID
      */
     public static final ForgeConfigSpec.ConfigValue<String> COMMAND_DIMENSION;
 

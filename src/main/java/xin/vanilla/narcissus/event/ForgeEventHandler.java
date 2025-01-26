@@ -112,8 +112,9 @@ public class ForgeEventHandler {
      */
     @SubscribeEvent
     public static void onPlayerCloned(PlayerEvent.Clone event) {
-        PlayerEntity original = event.getOriginal();
-        PlayerEntity newPlayer = event.getPlayer();
+        ServerPlayerEntity original = (ServerPlayerEntity) event.getOriginal();
+        ServerPlayerEntity newPlayer = (ServerPlayerEntity) event.getPlayer();
+        newPlayer.updateOptions(NarcissusUtils.getCClientSettingsPacket(original));
         original.revive();
         LazyOptional<IPlayerTeleportData> oldDataCap = original.getCapability(PlayerTeleportDataCapability.PLAYER_DATA);
         LazyOptional<IPlayerTeleportData> newDataCap = newPlayer.getCapability(PlayerTeleportDataCapability.PLAYER_DATA);

@@ -117,7 +117,6 @@ public class NarcissusFarewell {
 
     // 服务器启动时加载数据
     private void onServerStarting(FMLServerStartingEvent event) {
-        LOGGER.debug("SignIn data loaded.");
         serverInstance = event.getServer();
     }
 
