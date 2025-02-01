@@ -80,7 +80,7 @@ public class NarcissusUtils {
             })
             .filter(Objects::nonNull)
             .collect(Collectors.toSet());
-    private static final Set<BlockState> SUFFOCATING_BLOCKS = ServerConfig.UNSAFE_BLOCKS.get().stream()
+    private static final Set<BlockState> SUFFOCATING_BLOCKS = ServerConfig.SUFFOCATING_BLOCKS.get().stream()
             .map(block -> {
                 try {
                     return new BlockStateParser(new StringReader(block), false).parse(true).getState();

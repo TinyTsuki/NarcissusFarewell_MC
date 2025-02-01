@@ -9,6 +9,7 @@ import net.minecraftforge.fml.common.Mod;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import xin.vanilla.narcissus.NarcissusFarewell;
+import xin.vanilla.narcissus.network.*;
 
 /**
  * 客户端事件处理器
@@ -49,12 +50,16 @@ public class ClientEventHandler {
         // 检测并消费点击事件
         if (TP_HOME_KEY.consumeClick()) {
             // 快捷回家
+            ModNetworkHandler.INSTANCE.sendToServer(new TpHomeNotice());
         } else if (TP_BACK_KEY.consumeClick()) {
             // 快捷返回
+            ModNetworkHandler.INSTANCE.sendToServer(new TpBackNotice());
         } else if (TP_REQ_YES.consumeClick()) {
             // 快捷同意最近一条传送请求
+            ModNetworkHandler.INSTANCE.sendToServer(new TpYesNotice());
         } else if (TP_REQ_NO.consumeClick()) {
             // 快捷拒绝最近一条传送请求
+            ModNetworkHandler.INSTANCE.sendToServer(new TpNoNotice());
         }
     }
 }

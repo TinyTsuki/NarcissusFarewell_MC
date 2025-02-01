@@ -10,6 +10,7 @@ import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.RegisterCommandsEvent;
 import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.fml.ModList;
 import net.minecraftforge.fml.ModLoadingContext;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.config.ModConfig;
@@ -24,6 +25,7 @@ import xin.vanilla.narcissus.config.TeleportRequest;
 import xin.vanilla.narcissus.event.ClientEventHandler;
 import xin.vanilla.narcissus.network.ModNetworkHandler;
 import xin.vanilla.narcissus.network.SplitPacket;
+import xin.vanilla.narcissus.util.LogoModifier;
 
 import java.util.List;
 import java.util.Map;
@@ -113,6 +115,11 @@ public class NarcissusFarewell {
         // 注册键绑定
         LOGGER.debug("Registering key bindings");
         ClientEventHandler.registerKeyBindings();
+        // 修改logo为随机logo
+        ModList.get().getMods().stream()
+                .filter(info -> info.getModId().equals(MODID))
+                .findFirst()
+                .ifPresent(LogoModifier::modifyLogo);
     }
 
     // 服务器启动时加载数据

@@ -23,11 +23,13 @@ import xin.vanilla.narcissus.capability.player.IPlayerTeleportData;
 import xin.vanilla.narcissus.capability.player.PlayerTeleportDataCapability;
 import xin.vanilla.narcissus.capability.player.PlayerTeleportDataProvider;
 import xin.vanilla.narcissus.config.Coordinate;
+import xin.vanilla.narcissus.config.ServerConfig;
 import xin.vanilla.narcissus.config.TeleportRequest;
 import xin.vanilla.narcissus.enums.EI18nType;
 import xin.vanilla.narcissus.enums.ETeleportType;
 import xin.vanilla.narcissus.network.ClientModLoadedNotice;
 import xin.vanilla.narcissus.network.ModNetworkHandler;
+import xin.vanilla.narcissus.util.DateUtils;
 import xin.vanilla.narcissus.util.I18nUtils;
 import xin.vanilla.narcissus.util.NarcissusUtils;
 
@@ -139,9 +141,19 @@ public class ForgeEventHandler {
     @SubscribeEvent
     public static void onEntityJoinWorld(EntityJoinWorldEvent event) {
         if (event.getEntity() instanceof ServerPlayerEntity) {
-            PlayerEntity player = (ServerPlayerEntity) event.getEntity();
+            ServerPlayerEntity player = (ServerPlayerEntity) event.getEntity();
+            // 初始化能力同步状态
             if (NarcissusFarewell.getPlayerCapabilityStatus().containsKey(player.getUUID().toString())) {
                 NarcissusFarewell.getPlayerCapabilityStatus().put(player.getUUID().toString(), false);
+            }
+            // 给予传送卡
+            if (ServerConfig.TELEPORT_CARD.get()) {
+                IPlayerTeleportData data = PlayerTeleportDataCapability.getData(player);
+                Date current = new Date();
+                if (DateUtils.toDateInt(data.getLastCardTime()) < DateUtils.toDateInt(current)) {
+                    data.setLastCardTime(current);
+                    data.plusTeleportCard(ServerConfig.TELEPORT_CARD_DAILY.get());
+                }
             }
         }
     }

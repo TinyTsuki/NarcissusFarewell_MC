@@ -1,4 +1,9 @@
 {
+  "key.narcissus_farewell.categories": "水仙辞",
+  "key.narcissus_farewell.tp_home": "回到默认传送点（home）",
+  "key.narcissus_farewell.tp_back": "返回上次离开地点（back）",
+  "key.narcissus_farewell.tp_req_yes": "同意最近一次请求",
+  "key.narcissus_farewell.tp_req_no": "拒绝最近一次请求",
   "command.narcissus_farewell.help": "[<page>|<type>] 查询指令帮助信息",
   "command.narcissus_farewell.dimension": "获取当前所处世界的维度ID",
   "command.narcissus_farewell.tp_coordinate": "传送至指定坐标或玩家，可以指定目标维度",
