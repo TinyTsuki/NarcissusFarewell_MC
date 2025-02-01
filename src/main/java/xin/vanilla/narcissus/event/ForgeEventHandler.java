@@ -129,8 +129,8 @@ public class ForgeEventHandler {
             TeleportRecord record = new TeleportRecord();
             record.setTeleportTime(new Date());
             record.setTeleportType(ETeleportType.DEATH);
-            record.setBefore(new Coordinate().setX(original.getX()).setY(original.getY()).setZ(original.getZ()).setDimension(original.level.dimension()));
-            record.setAfter(new Coordinate().setX(newPlayer.getX()).setY(newPlayer.getY()).setZ(newPlayer.getZ()).setDimension(newPlayer.level.dimension()));
+            record.setBefore(new Coordinate().setX(original.getX()).setY(original.getY()).setZ(original.getZ()).setDimension(original.level.dimension.getType()));
+            record.setAfter(new Coordinate().setX(newPlayer.getX()).setY(newPlayer.getY()).setZ(newPlayer.getZ()).setDimension(newPlayer.level.dimension.getType()));
             PlayerTeleportDataCapability.getData(newPlayer).addTeleportRecords(record);
         }
     }

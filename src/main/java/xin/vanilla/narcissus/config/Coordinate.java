@@ -7,12 +7,10 @@ import lombok.experimental.Accessors;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.nbt.CompoundNBT;
-import net.minecraft.util.RegistryKey;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.vector.Vector3d;
-import net.minecraft.util.registry.Registry;
-import net.minecraft.world.World;
+import net.minecraft.util.math.Vec3d;
+import net.minecraft.world.dimension.DimensionType;
 import xin.vanilla.narcissus.enums.ESafeMode;
 import xin.vanilla.narcissus.util.NarcissusUtils;
 import xin.vanilla.narcissus.util.StringUtils;
@@ -32,7 +30,7 @@ public class Coordinate implements Serializable, Cloneable {
     private double z = 0;
     private double yaw = 0;
     private double pitch = 0;
-    private RegistryKey<World> dimension = World.OVERWORLD;
+    private DimensionType dimension = DimensionType.OVERWORLD;
     private boolean safe = false;
     private ESafeMode safeMode = ESafeMode.NONE;
 
@@ -42,7 +40,7 @@ public class Coordinate implements Serializable, Cloneable {
         this.z = player.getZ();
         this.yaw = player.yRot;
         this.pitch = player.xRot;
-        this.dimension = player.level.dimension();
+        this.dimension = player.level.dimension.getType();
     }
 
     public Coordinate(double x, double y, double z) {
@@ -51,7 +49,7 @@ public class Coordinate implements Serializable, Cloneable {
         this.z = z;
     }
 
-    public Coordinate(double x, double y, double z, RegistryKey<World> dimension) {
+    public Coordinate(double x, double y, double z, DimensionType dimension) {
         this.x = x;
         this.y = y;
         this.z = z;
@@ -66,7 +64,7 @@ public class Coordinate implements Serializable, Cloneable {
         this.pitch = pitch;
     }
 
-    public Coordinate(double x, double y, double z, double yaw, double pitch, RegistryKey<World> dimension) {
+    public Coordinate(double x, double y, double z, double yaw, double pitch, DimensionType dimension) {
         this.x = x;
         this.y = y;
         this.z = z;
@@ -111,10 +109,10 @@ public class Coordinate implements Serializable, Cloneable {
     }
 
     public static Coordinate random(ServerPlayerEntity player, int range) {
-        return random(player, range, player.level.dimension());
+        return random(player, range, player.level.dimension.getType());
     }
 
-    public static Coordinate random(ServerPlayerEntity player, int range, RegistryKey<World> dimension) {
+    public static Coordinate random(ServerPlayerEntity player, int range, DimensionType dimension) {
         range = Math.min(Math.max(range, 1), ServerConfig.TELEPORT_RANDOM_DISTANCE_LIMIT.get());
         double x = player.getX() + (Math.random() * 2 - 1) * range;
         double y = getRandomWithWeight(0, NarcissusUtils.getWorld(dimension).getMaxBuildHeight(), (int) player.getY(), 0.75);
@@ -126,8 +124,8 @@ public class Coordinate implements Serializable, Cloneable {
         return new BlockPos(x, y, z);
     }
 
-    public Vector3d toVector3d() {
-        return new Vector3d(x, y, z);
+    public Vec3d toVector3d() {
+        return new Vec3d(x, y, z);
     }
 
     public Coordinate fromBlockPos(BlockPos pos) {
@@ -137,7 +135,7 @@ public class Coordinate implements Serializable, Cloneable {
         return this;
     }
 
-    public Coordinate fromVector3d(Vector3d pos) {
+    public Coordinate fromVector3d(Vec3d pos) {
         this.x = pos.x();
         this.y = pos.y();
         this.z = pos.z();
@@ -169,7 +167,7 @@ public class Coordinate implements Serializable, Cloneable {
         tag.putDouble("z", z);
         tag.putDouble("yaw", yaw);
         tag.putDouble("pitch", pitch);
-        tag.putString("dimension", dimension.location().toString());
+        tag.putString("dimension", dimension.getRegistryName().toString());
         return tag;
     }
 
@@ -190,7 +188,7 @@ public class Coordinate implements Serializable, Cloneable {
         coordinate.z = tag.getDouble("z");
         coordinate.yaw = tag.getDouble("yaw");
         coordinate.pitch = tag.getDouble("pitch");
-        coordinate.dimension = RegistryKey.create(Registry.DIMENSION_REGISTRY, new ResourceLocation(tag.getString("dimension")));
+        coordinate.dimension = DimensionType.getByName(new ResourceLocation(tag.getString("dimension")));
         return coordinate;
     }
 

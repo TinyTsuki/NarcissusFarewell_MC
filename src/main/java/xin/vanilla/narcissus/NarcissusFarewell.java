@@ -7,7 +7,6 @@ import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.server.MinecraftServer;
 import net.minecraftforge.common.MinecraftForge;
-import net.minecraftforge.event.RegisterCommandsEvent;
 import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.ModList;
@@ -125,20 +124,8 @@ public class NarcissusFarewell {
     // 服务器启动时加载数据
     private void onServerStarting(FMLServerStartingEvent event) {
         serverInstance = event.getServer();
-    }
-
-    /**
-     * 注册命令事件的处理方法
-     * 当注册命令事件被触发时，此方法将被调用
-     * 该方法主要用于注册传送命令到事件调度器
-     *
-     * @param event 注册命令事件对象，通过该对象可以获取到事件调度器
-     */
-    @SubscribeEvent
-    public void onRegisterCommands(RegisterCommandsEvent event) {
         LOGGER.debug("Registering commands");
-        // 注册传送命令到事件调度器
-        FarewellCommand.register(event.getDispatcher());
+        FarewellCommand.register(event.getServer().getCommands().getDispatcher());
     }
 
     /**

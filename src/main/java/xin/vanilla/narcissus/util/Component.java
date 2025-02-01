@@ -348,16 +348,21 @@ public class Component {
     }
 
     public Style getStyle() {
-        Style style = Style.EMPTY;
-        if (!isColorEmpty())
-            style = style.withColor(Color.fromRgb(getColor()));
+        Style style = new Style();
+
+        if (!isColorEmpty()) {
+            TextFormatting code = TextFormatting.getByCode(StringUtils.rgbToMinecraftColor(getColor()).replace("§", "").toCharArray()[0]);
+            if (code != null) {
+                style = style.setColor(code);
+            }
+        }
         style = style.setUnderlined(this.isUnderlined())
                 .setStrikethrough(this.isStrikethrough())
                 .setObfuscated(this.isObfuscated())
-                .withBold(this.isBold())
-                .withItalic(this.isItalic())
-                .withClickEvent(this.clickEvent)
-                .withHoverEvent(this.hoverEvent);
+                .setBold(this.isBold())
+                .setItalic(this.isItalic())
+                .setClickEvent(this.clickEvent)
+                .setHoverEvent(this.hoverEvent);
         return style;
     }
 
@@ -419,13 +424,13 @@ public class Component {
      * @param languageCode 语言代码
      */
     public ITextComponent toTextComponent(String languageCode) {
-        List<IFormattableTextComponent> components = new ArrayList<>();
+        List<TextComponent> components = new ArrayList<>();
         String text;
         if (this.i18nType != EI18nType.PLAIN) {
             text = I18nUtils.getTranslation(I18nUtils.getKey(this.i18nType, this.text), languageCode);
             String[] split = text.split(StringUtils.FORMAT_REGEX);
             for (String s : split) {
-                components.add(new StringTextComponent(s).withStyle(this.getStyle()));
+                components.add((StringTextComponent) new StringTextComponent(s).setStyle(this.getStyle()));
             }
             Pattern pattern = Pattern.compile(StringUtils.FORMAT_REGEX);
             Matcher matcher = pattern.matcher(text);
@@ -455,21 +460,21 @@ public class Component {
                 i++;
             }
         } else {
-            components.add(new StringTextComponent(this.text).withStyle(this.getStyle()));
+            components.add((StringTextComponent) new StringTextComponent(this.text).setStyle(this.getStyle()));
         }
-        components.addAll(this.children.stream().map(component -> (IFormattableTextComponent) component.toTextComponent(languageCode)).collect(Collectors.toList()));
-        IFormattableTextComponent result = components.get(0);
+        components.addAll(this.children.stream().map(component -> (TextComponent) component.toTextComponent(languageCode)).collect(Collectors.toList()));
+        TextComponent result = components.get(0);
         for (int j = 1; j < components.size(); j++) {
             result.append(components.get(j));
         }
-        return result.withStyle(this.getStyle());
+        return result.setStyle(this.getStyle());
     }
 
     /**
      * 获取翻译文本组件
      */
     public ITextComponent toTranslatedTextComponent() {
-        IFormattableTextComponent result;
+        TextComponent result;
         if (this.i18nType != EI18nType.PLAIN) {
             Object[] args = this.args.stream().map(component -> {
                 if (component.i18nType == EI18nType.PLAIN) {
@@ -484,7 +489,7 @@ public class Component {
                 result = new TranslationTextComponent(I18nUtils.getKey(this.i18nType, this.text));
             }
         } else {
-            result = new StringTextComponent(this.text).withStyle(this.getStyle());
+            result = (StringTextComponent) new StringTextComponent(this.text).setStyle(this.getStyle());
         }
         for (Component child : this.children) {
             result.append(child.toTranslatedTextComponent());

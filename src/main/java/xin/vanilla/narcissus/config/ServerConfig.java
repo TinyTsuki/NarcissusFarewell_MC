@@ -812,8 +812,6 @@ public class ServerConfig {
                                             Blocks.LAVA,
                                             Blocks.FIRE,
                                             Blocks.CAMPFIRE,
-                                            Blocks.SOUL_FIRE,
-                                            Blocks.SOUL_CAMPFIRE,
                                             Blocks.CACTUS,
                                             Blocks.MAGMA_BLOCK,
                                             Blocks.SWEET_BERRY_BUSH
