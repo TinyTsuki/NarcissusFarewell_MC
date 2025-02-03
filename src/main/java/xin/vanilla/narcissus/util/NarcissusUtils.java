@@ -335,7 +335,7 @@ public class NarcissusUtils {
      * @param minDistance 最小距离
      */
     public static Coordinate findNearestBiome(ServerWorld world, Coordinate start, Biome biome, int radius, int minDistance) {
-        BlockPos pos = world.getChunkSource().getGenerator().getBiomeSource().findBiomeHorizontal((int) start.getX(), (int) start.getY(), (int) start.getZ(), radius, new ArrayList<Biome>() {{
+        BlockPos pos = world.getChunkSource().getGenerator().getBiomeSource().findBiome((int) start.getX(), (int) start.getZ(), radius, new ArrayList<Biome>() {{
             add(biome);
         }}, world.getRandom());
         if (pos != null) {
@@ -434,9 +434,9 @@ public class NarcissusUtils {
                 .filter(entry -> entry.getKey().getKey().equals(player.level.dimension.getType().getRegistryName().toString()))
                 .min(Comparator.comparingInt(entry -> {
                     Coordinate value = entry.getValue();
-                    double dx = value.getX() - player.getX();
-                    double dy = value.getY() - player.getY();
-                    double dz = value.getZ() - player.getZ();
+                    double dx = value.getX() - player.x;
+                    double dy = value.getY() - player.y;
+                    double dz = value.getZ() - player.z;
                     // 返回欧几里得距离的平方（避免开方操作，提高性能）
                     return (int) (dx * dx + dy * dy + dz * dz);
                 })).orElse(null);

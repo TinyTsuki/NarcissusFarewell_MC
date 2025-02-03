@@ -35,9 +35,9 @@ public class Coordinate implements Serializable, Cloneable {
     private ESafeMode safeMode = ESafeMode.NONE;
 
     public Coordinate(PlayerEntity player) {
-        this.x = player.getX();
-        this.y = player.getY();
-        this.z = player.getZ();
+        this.x = player.x;
+        this.y = player.y;
+        this.z = player.z;
         this.yaw = player.yRot;
         this.pitch = player.xRot;
         this.dimension = player.level.dimension.getType();
@@ -114,9 +114,9 @@ public class Coordinate implements Serializable, Cloneable {
 
     public static Coordinate random(ServerPlayerEntity player, int range, DimensionType dimension) {
         range = Math.min(Math.max(range, 1), ServerConfig.TELEPORT_RANDOM_DISTANCE_LIMIT.get());
-        double x = player.getX() + (Math.random() * 2 - 1) * range;
-        double y = getRandomWithWeight(0, NarcissusUtils.getWorld(dimension).getMaxBuildHeight(), (int) player.getY(), 0.75);
-        double z = player.getZ() + (Math.random() * 2 - 1) * range;
+        double x = player.x + (Math.random() * 2 - 1) * range;
+        double y = getRandomWithWeight(0, NarcissusUtils.getWorld(dimension).getMaxBuildHeight(), (int) player.y, 0.75);
+        double z = player.z + (Math.random() * 2 - 1) * range;
         return new Coordinate(x, y, z, player.yRot, player.xRot, dimension);
     }
 

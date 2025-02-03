@@ -223,7 +223,7 @@ public class FarewellCommand {
                 coordinate = new Coordinate(pos.getX(), pos.getY(), pos.getZ(), player.yRot, player.xRot, targetLevel);
             } catch (IllegalArgumentException ignored) {
                 ServerPlayerEntity target = EntityArgument.getPlayer(context, "player");
-                coordinate = new Coordinate(target.getX(), target.getY(), target.getZ(), target.yRot, target.xRot, target.getLevel().dimension.getType());
+                coordinate = new Coordinate(target.x, target.y, target.z, target.yRot, target.xRot, target.getLevel().dimension.getType());
             }
             try {
                 coordinate.setSafe("safe".equalsIgnoreCase(StringArgumentType.getString(context, "safe")));
