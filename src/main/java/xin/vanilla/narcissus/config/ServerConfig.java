@@ -1,7 +1,7 @@
 package xin.vanilla.narcissus.config;
 
-import net.minecraft.block.Blocks;
-import net.minecraft.command.arguments.BlockStateParser;
+import net.minecraft.commands.arguments.blocks.BlockStateParser;
+import net.minecraft.world.level.block.Blocks;
 import net.minecraftforge.common.ForgeConfigSpec;
 import xin.vanilla.narcissus.enums.ECardType;
 import xin.vanilla.narcissus.enums.ECoolDownType;
@@ -865,7 +865,7 @@ public class ServerConfig {
                             "当进行安全传送时，如果未找到安全坐标，放置方块的列表。若'getBlockFromInventory'为false，则始终使用列表中的第一个方块。")
                     .define("safeBlocks", Stream.of(
                                             Blocks.GRASS_BLOCK,
-                                            Blocks.GRASS_PATH,
+                                            Blocks.DIRT_PATH,
                                             Blocks.DIRT,
                                             Blocks.COBBLESTONE
                                     ).map(block -> BlockStateParser.serialize(block.defaultBlockState()))

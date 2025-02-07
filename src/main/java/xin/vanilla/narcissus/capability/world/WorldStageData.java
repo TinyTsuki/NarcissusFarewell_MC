@@ -2,15 +2,16 @@ package xin.vanilla.narcissus.capability.world;
 
 import lombok.Getter;
 import lombok.NonNull;
-import net.minecraft.entity.player.ServerPlayerEntity;
-import net.minecraft.nbt.CompoundNBT;
-import net.minecraft.nbt.ListNBT;
-import net.minecraft.world.server.ServerWorld;
-import net.minecraftforge.common.util.WorldCapabilityData;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.level.saveddata.SavedData;
 import xin.vanilla.narcissus.NarcissusFarewell;
 import xin.vanilla.narcissus.config.Coordinate;
 import xin.vanilla.narcissus.config.KeyValue;
 
+import javax.annotation.ParametersAreNonnullByDefault;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -19,34 +20,35 @@ import java.util.Map;
  * 世界驿站数据
  */
 @Getter
-public class WorldStageData extends WorldCapabilityData {
+public class WorldStageData extends SavedData {
     private static final String DATA_NAME = "world_stage_data";
 
     // dimension:name coordinate
     private Map<KeyValue<String, String>, Coordinate> stageCoordinate = new LinkedHashMap<>();
 
     public WorldStageData() {
-        super(DATA_NAME);
     }
 
-    public void load(CompoundNBT nbt) {
-        this.stageCoordinate = new LinkedHashMap<>();
-        ListNBT stageCoordinateNBT = nbt.getList("stageCoordinate", 10);
+    public static WorldStageData load(CompoundTag nbt) {
+        WorldStageData data = new WorldStageData();
+        ListTag stageCoordinateNBT = nbt.getList("stageCoordinate", 10);
         Map<KeyValue<String, String>, Coordinate> stageCoordinate = new HashMap<>();
         for (int i = 0; i < stageCoordinateNBT.size(); i++) {
-            CompoundNBT stageCoordinateTag = stageCoordinateNBT.getCompound(i);
+            CompoundTag stageCoordinateTag = stageCoordinateNBT.getCompound(i);
             stageCoordinate.put(new KeyValue<>(stageCoordinateTag.getString("key"), stageCoordinateTag.getString("value")),
                     Coordinate.readFromNBT(stageCoordinateTag.getCompound("coordinate")));
         }
-        this.setCoordinate(stageCoordinate);
+        data.setCoordinate(stageCoordinate);
+        return data;
     }
 
     @Override
     @NonNull
-    public CompoundNBT save(CompoundNBT nbt) {
-        ListNBT stageCoordinateNBT = new ListNBT();
+    @ParametersAreNonnullByDefault
+    public CompoundTag save(CompoundTag nbt) {
+        ListTag stageCoordinateNBT = new ListTag();
         for (Map.Entry<KeyValue<String, String>, Coordinate> entry : this.getStageCoordinate().entrySet()) {
-            CompoundNBT stageCoordinateTag = new CompoundNBT();
+            CompoundTag stageCoordinateTag = new CompoundTag();
             stageCoordinateTag.putString("key", entry.getKey().getKey());
             stageCoordinateTag.putString("value", entry.getKey().getValue());
             stageCoordinateTag.put("coordinate", entry.getValue().writeToNBT());
@@ -92,11 +94,11 @@ public class WorldStageData extends WorldCapabilityData {
         return get(NarcissusFarewell.getServerInstance().getAllLevels().iterator().next());
     }
 
-    public static WorldStageData get(ServerPlayerEntity player) {
+    public static WorldStageData get(ServerPlayer player) {
         return get(player.getLevel());
     }
 
-    public static WorldStageData get(ServerWorld world) {
-        return world.getDataStorage().computeIfAbsent(WorldStageData::new, DATA_NAME);
+    public static WorldStageData get(ServerLevel world) {
+        return world.getDataStorage().computeIfAbsent(WorldStageData::load, WorldStageData::new, DATA_NAME);
     }
 }

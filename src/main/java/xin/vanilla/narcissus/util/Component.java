@@ -5,9 +5,7 @@ import lombok.NoArgsConstructor;
 import lombok.NonNull;
 import lombok.Setter;
 import lombok.experimental.Accessors;
-import net.minecraft.util.text.*;
-import net.minecraft.util.text.event.ClickEvent;
-import net.minecraft.util.text.event.HoverEvent;
+import net.minecraft.network.chat.*;
 import xin.vanilla.narcissus.NarcissusFarewell;
 import xin.vanilla.narcissus.enums.EI18nType;
 
@@ -350,7 +348,7 @@ public class Component {
     public Style getStyle() {
         Style style = Style.EMPTY;
         if (!isColorEmpty())
-            style = style.withColor(Color.fromRgb(getColor()));
+            style = style.withColor(TextColor.fromRgb(getColor()));
         style = style.setUnderlined(this.isUnderlined())
                 .setStrikethrough(this.isStrikethrough())
                 .setObfuscated(this.isObfuscated())
@@ -409,7 +407,7 @@ public class Component {
     /**
      * 获取文本组件
      */
-    public ITextComponent toTextComponent() {
+    public net.minecraft.network.chat.Component toTextComponent() {
         return this.toTextComponent(this.getLanguageCode());
     }
 
@@ -418,14 +416,14 @@ public class Component {
      *
      * @param languageCode 语言代码
      */
-    public ITextComponent toTextComponent(String languageCode) {
-        List<IFormattableTextComponent> components = new ArrayList<>();
+    public net.minecraft.network.chat.Component toTextComponent(String languageCode) {
+        List<MutableComponent> components = new ArrayList<>();
         String text;
         if (this.i18nType != EI18nType.PLAIN) {
             text = I18nUtils.getTranslation(I18nUtils.getKey(this.i18nType, this.text), languageCode);
             String[] split = text.split(StringUtils.FORMAT_REGEX);
             for (String s : split) {
-                components.add(new StringTextComponent(s).withStyle(this.getStyle()));
+                components.add(new TextComponent(s).withStyle(this.getStyle()));
             }
             Pattern pattern = Pattern.compile(StringUtils.FORMAT_REGEX);
             Matcher matcher = pattern.matcher(text);
@@ -455,10 +453,10 @@ public class Component {
                 i++;
             }
         } else {
-            components.add(new StringTextComponent(this.text).withStyle(this.getStyle()));
+            components.add(new TextComponent(this.text).withStyle(this.getStyle()));
         }
-        components.addAll(this.children.stream().map(component -> (IFormattableTextComponent) component.toTextComponent(languageCode)).collect(Collectors.toList()));
-        IFormattableTextComponent result = components.get(0);
+        components.addAll(this.children.stream().map(component -> (MutableComponent) component.toTextComponent(languageCode)).collect(Collectors.toList()));
+        MutableComponent result = components.get(0);
         for (int j = 1; j < components.size(); j++) {
             result.append(components.get(j));
         }
@@ -468,8 +466,8 @@ public class Component {
     /**
      * 获取翻译文本组件
      */
-    public ITextComponent toTranslatedTextComponent() {
-        IFormattableTextComponent result;
+    public net.minecraft.network.chat.Component toTranslatedTextComponent() {
+        MutableComponent result;
         if (this.i18nType != EI18nType.PLAIN) {
             Object[] args = this.args.stream().map(component -> {
                 if (component.i18nType == EI18nType.PLAIN) {
@@ -479,12 +477,12 @@ public class Component {
                 }
             }).toArray();
             if (CollectionUtils.isNotNullOrEmpty(args)) {
-                result = new TranslationTextComponent(I18nUtils.getKey(this.i18nType, this.text), args);
+                result = new TranslatableComponent(I18nUtils.getKey(this.i18nType, this.text), args);
             } else {
-                result = new TranslationTextComponent(I18nUtils.getKey(this.i18nType, this.text));
+                result = new TranslatableComponent(I18nUtils.getKey(this.i18nType, this.text));
             }
         } else {
-            result = new StringTextComponent(this.text).withStyle(this.getStyle());
+            result = new TextComponent(this.text).withStyle(this.getStyle());
         }
         for (Component child : this.children) {
             result.append(child.toTranslatedTextComponent());

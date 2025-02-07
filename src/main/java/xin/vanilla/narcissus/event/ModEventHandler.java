@@ -1,12 +1,12 @@
 package xin.vanilla.narcissus.event;
 
+import net.minecraftforge.common.capabilities.RegisterCapabilitiesEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import xin.vanilla.narcissus.NarcissusFarewell;
-import xin.vanilla.narcissus.capability.player.PlayerTeleportDataCapability;
+import xin.vanilla.narcissus.capability.player.IPlayerTeleportData;
 
 /**
  * Mod 事件处理器
@@ -16,9 +16,9 @@ public class ModEventHandler {
     private static final Logger LOGGER = LogManager.getLogger();
 
     @SubscribeEvent
-    public static void onCommonSetup(FMLCommonSetupEvent event) {
+    public void registerCaps(RegisterCapabilitiesEvent event) {
         // 注册 PlayerDataCapability
-        PlayerTeleportDataCapability.register();
+        event.register(IPlayerTeleportData.class);
     }
 
 }

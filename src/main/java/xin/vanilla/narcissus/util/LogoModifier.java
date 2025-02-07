@@ -1,6 +1,7 @@
 package xin.vanilla.narcissus.util;
 
 import net.minecraftforge.fml.loading.moddiscovery.ModInfo;
+import net.minecraftforge.forgespi.language.IModInfo;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -11,7 +12,7 @@ public class LogoModifier {
 
     private static final Logger LOGGER = LogManager.getLogger();
 
-    public static void modifyLogo(ModInfo modInfo) {
+    public static void modifyLogo(IModInfo modInfo) {
         try {
             Field field = ModInfo.class.getDeclaredField("logoFile");
             field.setAccessible(true);

@@ -1,13 +1,13 @@
 package xin.vanilla.narcissus.network;
 
 import lombok.Getter;
-import net.minecraft.network.PacketBuffer;
+import net.minecraft.network.FriendlyByteBuf;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.fml.DistExecutor;
-import net.minecraftforge.fml.network.NetworkEvent;
+import net.minecraftforge.fmllegacy.network.NetworkEvent;
+import xin.vanilla.narcissus.capability.TeleportRecord;
 import xin.vanilla.narcissus.capability.player.IPlayerTeleportData;
 import xin.vanilla.narcissus.capability.player.PlayerTeleportData;
-import xin.vanilla.narcissus.capability.TeleportRecord;
 import xin.vanilla.narcissus.config.Coordinate;
 import xin.vanilla.narcissus.config.KeyValue;
 import xin.vanilla.narcissus.util.CollectionUtils;
@@ -38,7 +38,7 @@ public class PlayerDataSyncPacket extends SplitPacket {
         this.defaultHome = data.getDefaultHome();
     }
 
-    public PlayerDataSyncPacket(PacketBuffer buffer) {
+    public PlayerDataSyncPacket(FriendlyByteBuf buffer) {
         super(buffer);
         this.playerUUID = buffer.readUUID();
         this.lastCardTime = DateUtils.format(buffer.readUtf());
@@ -93,7 +93,7 @@ public class PlayerDataSyncPacket extends SplitPacket {
         this.defaultHome = new HashMap<>();
     }
 
-    public void toBytes(PacketBuffer buffer) {
+    public void toBytes(FriendlyByteBuf buffer) {
         super.toBytes(buffer);
         buffer.writeUUID(playerUUID);
         buffer.writeUtf(DateUtils.toDateTimeString(this.lastCardTime));

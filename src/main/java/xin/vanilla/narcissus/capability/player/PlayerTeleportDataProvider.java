@@ -1,7 +1,7 @@
 package xin.vanilla.narcissus.capability.player;
 
-import net.minecraft.nbt.CompoundNBT;
-import net.minecraft.util.Direction;
+import net.minecraft.core.Direction;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.common.capabilities.ICapabilityProvider;
 import net.minecraftforge.common.util.INBTSerializable;
@@ -14,7 +14,7 @@ import javax.annotation.Nullable;
  * 玩家传送数据提供者类，实现了ICapabilityProvider和INBTSerializable接口，
  * 用于管理和序列化玩家的传送数据
  */
-public class PlayerTeleportDataProvider implements ICapabilityProvider, INBTSerializable<CompoundNBT> {
+public class PlayerTeleportDataProvider implements ICapabilityProvider, INBTSerializable<CompoundTag> {
 
     // 玩家传送数据实例，使用PlayerTeleportData类进行管理
     private IPlayerTeleportData playerData;
@@ -48,24 +48,24 @@ public class PlayerTeleportDataProvider implements ICapabilityProvider, INBTSeri
     /**
      * 序列化玩家传送数据为NBT格式
      *
-     * @return 返回包含玩家传送数据的CompoundNBT对象
+     * @return 返回包含玩家传送数据的CompoundTag对象
      * <p>
      * 该方法实现了玩家传送数据的序列化，返回的数据可以用于存储或传输
      */
     @Override
-    public CompoundNBT serializeNBT() {
+    public CompoundTag serializeNBT() {
         return this.getOrCreateCapability().serializeNBT();
     }
 
     /**
      * 从NBT格式的数据中反序列化玩家传送数据
      *
-     * @param nbt 包含玩家传送数据的CompoundNBT对象
+     * @param nbt 包含玩家传送数据的CompoundTag对象
      *            <p>
      *            该方法实现了玩家传送数据的反序列化，从提供的NBT数据中恢复玩家传送信息
      */
     @Override
-    public void deserializeNBT(CompoundNBT nbt) {
+    public void deserializeNBT(CompoundTag nbt) {
         this.getOrCreateCapability().deserializeNBT(nbt);
     }
 }

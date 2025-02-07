@@ -3,7 +3,7 @@ package xin.vanilla.narcissus.config;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
-import net.minecraft.entity.player.ServerPlayerEntity;
+import net.minecraft.server.level.ServerPlayer;
 import xin.vanilla.narcissus.enums.ETeleportType;
 import xin.vanilla.narcissus.util.DateUtils;
 
@@ -15,10 +15,10 @@ public class TeleportRequest {
     private final int id = new Random().nextInt(Integer.MAX_VALUE);
     @Getter
     @Setter
-    private ServerPlayerEntity requester;
+    private ServerPlayer requester;
     @Getter
     @Setter
-    private ServerPlayerEntity target;
+    private ServerPlayer target;
     @Getter
     private Date requestTime;
     @Getter

@@ -1,12 +1,12 @@
 package xin.vanilla.narcissus.capability.player;
 
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.entity.player.ServerPlayerEntity;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.player.Player;
 import net.minecraftforge.common.capabilities.Capability;
-import net.minecraftforge.common.capabilities.CapabilityInject;
 import net.minecraftforge.common.capabilities.CapabilityManager;
+import net.minecraftforge.common.capabilities.CapabilityToken;
 import net.minecraftforge.common.util.LazyOptional;
-import net.minecraftforge.fml.network.PacketDistributor;
+import net.minecraftforge.fmllegacy.network.PacketDistributor;
 import xin.vanilla.narcissus.network.ModNetworkHandler;
 import xin.vanilla.narcissus.network.PlayerDataSyncPacket;
 
@@ -15,14 +15,8 @@ import xin.vanilla.narcissus.network.PlayerDataSyncPacket;
  */
 public class PlayerTeleportDataCapability {
     // 定义 Capability 实例
-    @CapabilityInject(IPlayerTeleportData.class)
-    public static Capability<IPlayerTeleportData> PLAYER_DATA;
-
-    // 注册方法，用于在模组初始化期间注册 Capability
-    public static void register() {
-        // 注册 Capability 时，绑定接口、存储以及默认实现类
-        CapabilityManager.INSTANCE.register(IPlayerTeleportData.class, new PlayerTeleportDataStorage(), PlayerTeleportData::new);
-    }
+    public static Capability<IPlayerTeleportData> PLAYER_DATA = CapabilityManager.get(new CapabilityToken<>() {
+    });
 
     /**
      * 获取玩家传送数据
@@ -30,11 +24,11 @@ public class PlayerTeleportDataCapability {
      * @param player 玩家实体
      * @return 玩家的传送数据
      */
-    public static IPlayerTeleportData getData(PlayerEntity player) {
+    public static IPlayerTeleportData getData(Player player) {
         return player.getCapability(PLAYER_DATA).orElseThrow(() -> new IllegalArgumentException("Player data capability is missing."));
     }
 
-    public static LazyOptional<IPlayerTeleportData> getDataOptional(ServerPlayerEntity player) {
+    public static LazyOptional<IPlayerTeleportData> getDataOptional(ServerPlayer player) {
         return player.getCapability(PLAYER_DATA);
     }
 
@@ -44,14 +38,14 @@ public class PlayerTeleportDataCapability {
      * @param player 玩家实体
      * @param data   玩家传送数据
      */
-    public static void setData(PlayerEntity player, IPlayerTeleportData data) {
+    public static void setData(Player player, IPlayerTeleportData data) {
         player.getCapability(PLAYER_DATA).ifPresent(capability -> capability.copyFrom(data));
     }
 
     /**
      * 同步玩家传送数据到客户端
      */
-    public static void syncPlayerData(ServerPlayerEntity player) {
+    public static void syncPlayerData(ServerPlayer player) {
         // 创建自定义包并发送到客户端
         PlayerDataSyncPacket packet = new PlayerDataSyncPacket(player.getUUID(), PlayerTeleportDataCapability.getData(player));
         for (PlayerDataSyncPacket syncPacket : packet.split()) {

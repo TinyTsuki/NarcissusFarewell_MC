@@ -1,9 +1,9 @@
 package xin.vanilla.narcissus.capability.player;
 
 import lombok.NonNull;
-import net.minecraft.entity.player.ServerPlayerEntity;
-import net.minecraft.nbt.CompoundNBT;
-import net.minecraft.network.PacketBuffer;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraftforge.common.util.INBTSerializable;
 import xin.vanilla.narcissus.capability.TeleportRecord;
 import xin.vanilla.narcissus.config.Coordinate;
@@ -17,7 +17,7 @@ import java.util.Map;
 /**
  * 玩家传送数据
  */
-public interface IPlayerTeleportData extends INBTSerializable<CompoundNBT> {
+public interface IPlayerTeleportData extends INBTSerializable<CompoundTag> {
     // TIPS 加完属性记得去 PlayerTeleportDataStorage 里注册
 
     /**
@@ -106,11 +106,11 @@ public interface IPlayerTeleportData extends INBTSerializable<CompoundNBT> {
 
     KeyValue<String, String> getDefaultHome(String key);
 
-    void writeToBuffer(PacketBuffer buffer);
+    void writeToBuffer(FriendlyByteBuf buffer);
 
-    void readFromBuffer(PacketBuffer buffer);
+    void readFromBuffer(FriendlyByteBuf buffer);
 
     void copyFrom(IPlayerTeleportData capability);
 
-    void save(ServerPlayerEntity player);
+    void save(ServerPlayer player);
 }

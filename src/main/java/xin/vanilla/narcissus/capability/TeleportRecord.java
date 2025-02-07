@@ -3,7 +3,7 @@ package xin.vanilla.narcissus.capability;
 import lombok.Data;
 import lombok.NonNull;
 import lombok.experimental.Accessors;
-import net.minecraft.nbt.CompoundNBT;
+import net.minecraft.nbt.CompoundTag;
 import xin.vanilla.narcissus.config.Coordinate;
 import xin.vanilla.narcissus.enums.ETeleportType;
 import xin.vanilla.narcissus.util.DateUtils;
@@ -43,8 +43,8 @@ public class TeleportRecord implements Serializable, Cloneable {
     /**
      * 序列化
      */
-    public CompoundNBT writeToNBT() {
-        CompoundNBT tag = new CompoundNBT();
+    public CompoundTag writeToNBT() {
+        CompoundTag tag = new CompoundTag();
         tag.putString("teleportTime", DateUtils.toDateTimeString(teleportTime));
         tag.putString("teleportType", teleportType.name());
         tag.put("before", before.writeToNBT());
@@ -55,7 +55,7 @@ public class TeleportRecord implements Serializable, Cloneable {
     /**
      * 反序列化
      */
-    public static TeleportRecord readFromNBT(CompoundNBT tag) {
+    public static TeleportRecord readFromNBT(CompoundTag tag) {
         TeleportRecord record = new TeleportRecord();
         record.teleportTime = DateUtils.format(tag.getString("teleportTime"));
         record.teleportType = ETeleportType.valueOf(tag.getString("teleportType"));

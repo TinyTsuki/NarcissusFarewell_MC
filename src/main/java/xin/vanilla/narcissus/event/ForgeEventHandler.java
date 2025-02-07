@@ -1,9 +1,9 @@
 package xin.vanilla.narcissus.event;
 
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.entity.player.ServerPlayerEntity;
-import net.minecraft.util.ResourceLocation;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.player.Player;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.client.event.ClientPlayerNetworkEvent;
@@ -11,7 +11,7 @@ import net.minecraftforge.common.util.LazyOptional;
 import net.minecraftforge.event.AttachCapabilitiesEvent;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.entity.EntityJoinWorldEvent;
-import net.minecraftforge.event.entity.living.EntityTeleportEvent;
+import net.minecraftforge.event.entity.EntityTeleportEvent;
 import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.LogicalSide;
@@ -63,12 +63,12 @@ public class ForgeEventHandler {
      */
     @SubscribeEvent
     public static void playerTickEvent(TickEvent.PlayerTickEvent event) {
-        PlayerEntity player = event.player;
+        Player player = event.player;
         if (event.side == LogicalSide.SERVER && event.phase == TickEvent.Phase.END) {
             // 不用给未安装mod的玩家发送数据包
             if (!NarcissusFarewell.getPlayerCapabilityStatus().getOrDefault(player.getUUID().toString(), true)) {
                 // 同步玩家传送数据到客户端
-                PlayerTeleportDataCapability.syncPlayerData((ServerPlayerEntity) player);
+                PlayerTeleportDataCapability.syncPlayerData((ServerPlayer) player);
             }
         }
     }
@@ -104,7 +104,7 @@ public class ForgeEventHandler {
     @SubscribeEvent
     public static void onAttachCapabilityEvent(AttachCapabilitiesEvent<Entity> event) {
         // 检查事件对象是否为玩家实体，因为我们的目标是为玩家附加能力
-        if (event.getObject() instanceof PlayerEntity) {
+        if (event.getObject() instanceof Player) {
             // 为玩家实体附加一个名为 "player_teleport_data" 的能力
             // 这个能力由 PlayerTeleportDataProvider 提供，用于管理玩家的传送数据
             event.addCapability(new ResourceLocation(NarcissusFarewell.MODID, "player_teleport_data"), new PlayerTeleportDataProvider());
@@ -116,8 +116,8 @@ public class ForgeEventHandler {
      */
     @SubscribeEvent
     public static void onPlayerCloned(PlayerEvent.Clone event) {
-        ServerPlayerEntity original = (ServerPlayerEntity) event.getOriginal();
-        ServerPlayerEntity newPlayer = (ServerPlayerEntity) event.getPlayer();
+        ServerPlayer original = (ServerPlayer) event.getOriginal();
+        ServerPlayer newPlayer = (ServerPlayer) event.getPlayer();
         newPlayer.updateOptions(NarcissusUtils.getCClientSettingsPacket(original));
         original.revive();
         LazyOptional<IPlayerTeleportData> oldDataCap = original.getCapability(PlayerTeleportDataCapability.PLAYER_DATA);
@@ -142,8 +142,7 @@ public class ForgeEventHandler {
      */
     @SubscribeEvent
     public static void onEntityJoinWorld(EntityJoinWorldEvent event) {
-        if (event.getEntity() instanceof ServerPlayerEntity) {
-            ServerPlayerEntity player = (ServerPlayerEntity) event.getEntity();
+        if (event.getEntity() instanceof ServerPlayer player) {
             // 初始化能力同步状态
             if (NarcissusFarewell.getPlayerCapabilityStatus().containsKey(player.getUUID().toString())) {
                 NarcissusFarewell.getPlayerCapabilityStatus().put(player.getUUID().toString(), false);
@@ -165,13 +164,12 @@ public class ForgeEventHandler {
      */
     @SubscribeEvent
     public static void onEntityTeleport(EntityTeleportEvent event) {
-        if (event.getEntity() instanceof ServerPlayerEntity) {
-            ServerPlayerEntity player = (ServerPlayerEntity) event.getEntity();
+        if (event.getEntity() instanceof ServerPlayer player) {
             TeleportRecord record = new TeleportRecord();
             record.setTeleportTime(new Date());
             record.setTeleportType(ETeleportType.OTHER);
-            record.setBefore(new Coordinate(player).fromVector3d(event.getPrev()));
-            record.setAfter(new Coordinate(player).fromVector3d(event.getTarget()));
+            record.setBefore(new Coordinate(player).fromVec3(event.getPrev()));
+            record.setAfter(new Coordinate(player).fromVec3(event.getTarget()));
             IPlayerTeleportData data = PlayerTeleportDataCapability.getData(player);
             TeleportRecord otherRecord = data.getTeleportRecords().stream().max(Comparator.comparing(o -> o.getTeleportTime().getTime())).orElse(null);
             if (otherRecord != null && otherRecord.getTeleportType() == ETeleportType.OTHER && otherRecord.getBefore().toXyzString().equals(record.getBefore().toXyzString())) {

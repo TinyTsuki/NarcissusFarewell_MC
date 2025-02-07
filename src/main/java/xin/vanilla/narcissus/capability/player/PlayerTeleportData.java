@@ -1,10 +1,10 @@
 package xin.vanilla.narcissus.capability.player;
 
 import lombok.NonNull;
-import net.minecraft.entity.player.ServerPlayerEntity;
-import net.minecraft.nbt.CompoundNBT;
-import net.minecraft.nbt.ListNBT;
-import net.minecraft.network.PacketBuffer;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.server.level.ServerPlayer;
 import xin.vanilla.narcissus.capability.TeleportRecord;
 import xin.vanilla.narcissus.config.Coordinate;
 import xin.vanilla.narcissus.config.KeyValue;
@@ -145,7 +145,7 @@ public class PlayerTeleportData implements IPlayerTeleportData {
         return null;
     }
 
-    public void writeToBuffer(PacketBuffer buffer) {
+    public void writeToBuffer(FriendlyByteBuf buffer) {
         buffer.writeUtf(DateUtils.toDateTimeString(this.getLastCardTime()));
         buffer.writeUtf(DateUtils.toDateTimeString(this.getLastTpTime()));
         buffer.writeInt(this.getTeleportCard());
@@ -166,7 +166,7 @@ public class PlayerTeleportData implements IPlayerTeleportData {
         }
     }
 
-    public void readFromBuffer(PacketBuffer buffer) {
+    public void readFromBuffer(FriendlyByteBuf buffer) {
         this.lastCardTime = DateUtils.format(buffer.readUtf());
         this.lastTpTime = DateUtils.format(buffer.readUtf());
         this.teleportCard.set(buffer.readInt());
@@ -194,21 +194,21 @@ public class PlayerTeleportData implements IPlayerTeleportData {
     }
 
     @Override
-    public CompoundNBT serializeNBT() {
-        CompoundNBT tag = new CompoundNBT();
+    public CompoundTag serializeNBT() {
+        CompoundTag tag = new CompoundTag();
         tag.putString("lastCardTime", DateUtils.toDateTimeString(this.getLastCardTime()));
         tag.putString("lastTpTime", DateUtils.toDateTimeString(this.getLastTpTime()));
         tag.putInt("teleportCard", this.getTeleportCard());
         // 序列化传送记录
-        ListNBT recordsNBT = new ListNBT();
+        ListTag recordsNBT = new ListTag();
         for (TeleportRecord record : this.getTeleportRecords()) {
             recordsNBT.add(record.writeToNBT());
         }
         tag.put("teleportRecords", recordsNBT);
         // 序列化家坐标
-        ListNBT homeCoordinateNBT = new ListNBT();
+        ListTag homeCoordinateNBT = new ListTag();
         for (Map.Entry<KeyValue<String, String>, Coordinate> entry : this.getHomeCoordinate().entrySet()) {
-            CompoundNBT homeCoordinateTag = new CompoundNBT();
+            CompoundTag homeCoordinateTag = new CompoundTag();
             homeCoordinateTag.putString("key", entry.getKey().getKey());
             homeCoordinateTag.putString("value", entry.getKey().getValue());
             homeCoordinateTag.put("coordinate", entry.getValue().writeToNBT());
@@ -216,9 +216,9 @@ public class PlayerTeleportData implements IPlayerTeleportData {
         }
         tag.put("homeCoordinate", homeCoordinateNBT);
         // 序列化默认家
-        ListNBT defaultHomeNBT = new ListNBT();
+        ListTag defaultHomeNBT = new ListTag();
         for (Map.Entry<String, String> entry : this.getDefaultHome().entrySet()) {
-            CompoundNBT defaultHomeTag = new CompoundNBT();
+            CompoundTag defaultHomeTag = new CompoundTag();
             defaultHomeTag.putString("key", entry.getKey());
             defaultHomeTag.putString("value", entry.getValue());
             defaultHomeNBT.add(defaultHomeTag);
@@ -228,38 +228,38 @@ public class PlayerTeleportData implements IPlayerTeleportData {
     }
 
     @Override
-    public void deserializeNBT(CompoundNBT nbt) {
+    public void deserializeNBT(CompoundTag nbt) {
         this.setLastCardTime(DateUtils.format(nbt.getString("lastCardTime")));
         this.setLastTpTime(DateUtils.format(nbt.getString("lastTpTime")));
         this.setTeleportCard(nbt.getInt("teleportCard"));
         // 反序列化传送记录
-        ListNBT recordsNBT = nbt.getList("teleportRecords", 10); // 10 是 CompoundNBT 的类型ID
+        ListTag recordsNBT = nbt.getList("teleportRecords", 10); // 10 是 CompoundTag 的类型ID
         List<TeleportRecord> records = new ArrayList<>();
         for (int i = 0; i < recordsNBT.size(); i++) {
             records.add(TeleportRecord.readFromNBT(recordsNBT.getCompound(i)));
         }
         this.setTeleportRecords(records);
         // 反序列化家坐标
-        ListNBT homeCoordinateNBT = nbt.getList("homeCoordinate", 10);
+        ListTag homeCoordinateNBT = nbt.getList("homeCoordinate", 10);
         Map<KeyValue<String, String>, Coordinate> homeCoordinate = new HashMap<>();
         for (int i = 0; i < homeCoordinateNBT.size(); i++) {
-            CompoundNBT homeCoordinateTag = homeCoordinateNBT.getCompound(i);
+            CompoundTag homeCoordinateTag = homeCoordinateNBT.getCompound(i);
             homeCoordinate.put(new KeyValue<>(homeCoordinateTag.getString("key"), homeCoordinateTag.getString("value")),
                     Coordinate.readFromNBT(homeCoordinateTag.getCompound("coordinate")));
         }
         this.setHomeCoordinate(homeCoordinate);
         // 反序列化默认家
-        ListNBT defaultHomeNBT = nbt.getList("defaultHome", 10);
+        ListTag defaultHomeNBT = nbt.getList("defaultHome", 10);
         Map<String, String> defaultHome = new HashMap<>();
         for (int i = 0; i < defaultHomeNBT.size(); i++) {
-            CompoundNBT defaultHomeTag = defaultHomeNBT.getCompound(i);
+            CompoundTag defaultHomeTag = defaultHomeNBT.getCompound(i);
             defaultHome.put(defaultHomeTag.getString("key"), defaultHomeTag.getString("value"));
         }
         this.setDefaultHome(defaultHome);
     }
 
     @Override
-    public void save(ServerPlayerEntity player) {
+    public void save(ServerPlayer player) {
         player.getCapability(PlayerTeleportDataCapability.PLAYER_DATA).ifPresent(this::copyFrom);
     }
 }
