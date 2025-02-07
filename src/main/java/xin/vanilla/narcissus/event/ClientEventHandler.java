@@ -1,5 +1,6 @@
 package xin.vanilla.narcissus.event;
 
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.settings.KeyBinding;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.event.TickEvent;
@@ -40,6 +41,8 @@ public class ClientEventHandler {
         ClientRegistry.registerKeyBinding(TP_REQ_NO);
     }
 
+    private static boolean keyDown = false;
+
     /**
      * 在客户端Tick事件触发时执行
      *
@@ -47,19 +50,37 @@ public class ClientEventHandler {
      */
     @SubscribeEvent
     public static void onClientTick(TickEvent.ClientTickEvent event) {
-        // 检测并消费点击事件
-        if (TP_HOME_KEY.consumeClick()) {
+        if (Minecraft.getInstance().screen == null && event.phase == TickEvent.Phase.END) {
             // 快捷回家
-            ModNetworkHandler.INSTANCE.sendToServer(new TpHomeNotice());
-        } else if (TP_BACK_KEY.consumeClick()) {
+            if (TP_HOME_KEY.consumeClick()) {
+                if (!keyDown) {
+                    ModNetworkHandler.INSTANCE.sendToServer(new TpHomeNotice());
+                    keyDown = true;
+                }
+            }
             // 快捷返回
-            ModNetworkHandler.INSTANCE.sendToServer(new TpBackNotice());
-        } else if (TP_REQ_YES.consumeClick()) {
+            else if (TP_BACK_KEY.consumeClick()) {
+                if (!keyDown) {
+                    ModNetworkHandler.INSTANCE.sendToServer(new TpBackNotice());
+                    keyDown = true;
+                }
+            }
             // 快捷同意最近一条传送请求
-            ModNetworkHandler.INSTANCE.sendToServer(new TpYesNotice());
-        } else if (TP_REQ_NO.consumeClick()) {
+            else if (TP_REQ_YES.consumeClick()) {
+                if (!keyDown) {
+                    ModNetworkHandler.INSTANCE.sendToServer(new TpYesNotice());
+                    keyDown = true;
+                }
+            }
             // 快捷拒绝最近一条传送请求
-            ModNetworkHandler.INSTANCE.sendToServer(new TpNoNotice());
+            else if (TP_REQ_NO.consumeClick()) {
+                if (!keyDown) {
+                    ModNetworkHandler.INSTANCE.sendToServer(new TpNoNotice());
+                    keyDown = true;
+                }
+            } else {
+                keyDown = false;
+            }
         }
     }
 }
