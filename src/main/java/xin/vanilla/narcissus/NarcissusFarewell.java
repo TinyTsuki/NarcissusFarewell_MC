@@ -27,6 +27,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+// 先运行 gradle tasks: generateBuildConfig 生成 BuildConfig
 @Mod(modid = BuildConfig.MODID, name = BuildConfig.NAME, version = BuildConfig.VERSION, useMetadata = true, acceptableRemoteVersions = "*")
 public class NarcissusFarewell {
     @Mod.Instance(BuildConfig.MODID)

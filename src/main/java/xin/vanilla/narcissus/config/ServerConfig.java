@@ -109,6 +109,27 @@ public class ServerConfig {
             ).map(block -> block.getRegistryName().toString())
             .toArray(String[]::new);
 
+    /**
+     * 当安全传送未找到安全坐标时，是否在脚下放置方块
+     */
+    public static boolean SETBLOCK_WHEN_SAFE_NOT_FOUND = false;
+
+    /**
+     * 当安全传送未找到安全坐标时，是否从背包中获取被放置的方块
+     */
+    public static boolean GETBLOCK_FROM_INVENTORY = true;
+
+    /**
+     * 当安全传送未找到安全坐标时，放置的方块类型
+     */
+    public static String[] SAFE_BLOCKS = Stream.of(
+                    Blocks.GRASS,
+                    Blocks.GRASS_PATH,
+                    Blocks.DIRT,
+                    Blocks.COBBLESTONE
+            ).map(block -> block.getRegistryName().toString())
+            .toArray(String[]::new);
+
     // endregion 基础设置
 
     // region 功能开关
@@ -804,10 +825,19 @@ public class ServerConfig {
             COMMAND_PREFIX = config.getString("commandPrefix", CATEGORY_BASE, COMMAND_PREFIX, "The prefix of the command, please only use English characters and underscores, otherwise it may cause problems.\n指令前缀，请仅使用英文字母及下划线，否则可能会出现问题。");
 
             // 不安全的方块
-            UNSAFE_BLOCKS = config.getStringList("unsafeBlocks", CATEGORY_BASE, UNSAFE_BLOCKS, "The list of unsafe blocks, players will not be teleported to these blocks.\n不安全的方块列表，玩家不会传送到这些方块上。");
+            UNSAFE_BLOCKS = config.getStringList("unsafeBlocks", CATEGORY_BASE + ".Safe", UNSAFE_BLOCKS, "The list of unsafe blocks, players will not be teleported to these blocks.\n不安全的方块列表，玩家不会传送到这些方块上。");
 
             // 窒息的方块
-            SUFFOCATING_BLOCKS = config.getStringList("suffocatingBlocks", CATEGORY_BASE, SUFFOCATING_BLOCKS, "The list of suffocating blocks, players will not be teleported to these blocks.\n窒息的方块列表，玩家头不会处于这些方块里面。");
+            SUFFOCATING_BLOCKS = config.getStringList("suffocatingBlocks", CATEGORY_BASE + ".Safe", SUFFOCATING_BLOCKS, "The list of suffocating blocks, players will not be teleported to these blocks.\n窒息的方块列表，玩家头不会处于这些方块里面。");
+
+            // 安全传送放置方块
+            SETBLOCK_WHEN_SAFE_NOT_FOUND = config.getBoolean("setBlockWhenSafeNotFound", CATEGORY_BASE + ".Safe", SETBLOCK_WHEN_SAFE_NOT_FOUND, "When performing a safe teleport, whether to place a block underfoot if a safe coordinate is not found.\n当进行安全传送时，如果未找到安全坐标，是否在脚下放置方块。");
+
+            // 从背包获取安全方块
+            GETBLOCK_FROM_INVENTORY = config.getBoolean("getBlockFromInventory", CATEGORY_BASE + ".Safe", GETBLOCK_FROM_INVENTORY, "When performing a safe teleport, whether to only use placeable blocks from the player's inventory if a safe coordinate is not found.\n当进行安全传送时，如果未找到安全坐标，是否仅从背包中获取可放置的方块。");
+
+            // 安全方块类型
+            SAFE_BLOCKS = config.getStringList("safeBlocks", CATEGORY_BASE + ".Safe", SAFE_BLOCKS, "When performing a safe teleport, the list of blocks to place if a safe coordinate is not found. If 'getBlockFromInventory' is set to false, the first block in the list will always be used.\n当进行安全传送时，如果未找到安全坐标，放置方块的列表。若'getBlockFromInventory'为false，则始终使用列表中的第一个方块。");
         }
 
         // 定义功能开关

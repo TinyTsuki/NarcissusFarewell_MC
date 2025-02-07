@@ -7,7 +7,10 @@ import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.Minecraft;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
+import net.minecraft.init.Blocks;
+import net.minecraft.init.Items;
 import net.minecraft.inventory.IInventory;
+import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.JsonToNBT;
 import net.minecraft.network.PacketBuffer;
@@ -64,14 +67,21 @@ public class NarcissusUtils {
     /**
      * 不安全的方块
      */
-    private static final Set<Block> UNSAFE_BLOCKS = Arrays.stream(ServerConfig.UNSAFE_BLOCKS)
+    private static final List<Block> UNSAFE_BLOCKS = Arrays.stream(ServerConfig.UNSAFE_BLOCKS)
             .map(Block::getBlockFromName)
             .filter(Objects::nonNull)
-            .collect(Collectors.toSet());
-    private static final Set<Block> SUFFOCATING_BLOCKS = Arrays.stream(ServerConfig.SUFFOCATING_BLOCKS)
+            .distinct()
+            .collect(Collectors.toList());
+    private static final List<Block> SUFFOCATING_BLOCKS = Arrays.stream(ServerConfig.SUFFOCATING_BLOCKS)
             .map(Block::getBlockFromName)
             .filter(Objects::nonNull)
-            .collect(Collectors.toSet());
+            .distinct()
+            .collect(Collectors.toList());
+    private static final List<Block> SAFE_BLOCKS = Arrays.stream(ServerConfig.SAFE_BLOCKS)
+            .map(Block::getBlockFromName)
+            .filter(Objects::nonNull)
+            .distinct()
+            .collect(Collectors.toList());
 
     public static Coordinate findTopCandidate(WorldServer world, Coordinate start) {
         if (start.getY() >= world.getHeight()) return null;
@@ -199,17 +209,17 @@ public class NarcissusUtils {
         return result;
     }
 
-    public static Coordinate findSafeCoordinate(Coordinate coordinate) {
+    public static Coordinate findSafeCoordinate(Coordinate coordinate, boolean belowAllowAir) {
         World world = getWorld(coordinate.getDimension());
 
         int chunkX = (int) coordinate.getX() >> 4;
         int chunkZ = (int) coordinate.getZ() >> 4;
 
         // 搜索安全位置，限制在目标区块内
-        return searchForSafeCoordinateInChunk(world, coordinate, chunkX, chunkZ);
+        return searchForSafeCoordinateInChunk(world, coordinate, chunkX, chunkZ, belowAllowAir);
     }
 
-    private static Coordinate searchForSafeCoordinateInChunk(World world, Coordinate coordinate, int chunkX, int chunkZ) {
+    private static Coordinate searchForSafeCoordinateInChunk(World world, Coordinate coordinate, int chunkX, int chunkZ, boolean belowAllowAir) {
         int chunkMinX = chunkX << 4;
         int chunkMinZ = chunkZ << 4;
         int chunkMaxX = chunkMinX + 15;
@@ -268,13 +278,28 @@ public class NarcissusUtils {
                             .setYaw(coordinate.getYaw()).setPitch(coordinate.getPitch())
                             .setDimension(coordinate.getDimension())
                             .setSafe(coordinate.isSafe()).setSafeMode(coordinate.getSafeMode());
-                    if (isSafeCoordinate(world, candidate)) {
-                        return candidate;
+                    if (belowAllowAir) {
+                        if (isAirCoordinate(world, candidate)) {
+                            return candidate;
+                        }
+                    } else {
+                        if (isSafeCoordinate(world, candidate)) {
+                            return candidate;
+                        }
                     }
                 }
             }
         }
         return coordinate;
+    }
+
+    private static boolean isAirCoordinate(World world, Coordinate coordinate) {
+        IBlockState block = world.getBlockState(coordinate.toBlockPos());
+        IBlockState blockAbove = world.getBlockState(coordinate.toBlockPos().add(0, 1, 0));
+        IBlockState blockBelow = world.getBlockState(coordinate.toBlockPos().add(0, -1, 0));
+        return (!block.getMaterial().blocksMovement() && !UNSAFE_BLOCKS.contains(block.getBlock()))
+                && (!blockAbove.getMaterial().blocksMovement() && !UNSAFE_BLOCKS.contains(blockAbove.getBlock()) && !SUFFOCATING_BLOCKS.contains(blockAbove.getBlock()))
+                && (blockBelow.getBlock() == Blocks.AIR);
     }
 
     private static boolean isSafeCoordinate(World world, Coordinate coordinate) {
@@ -520,7 +545,37 @@ public class NarcissusUtils {
         MinecraftServer server = player.getServer();
         if (world != null && server != null) {
             if (after.isSafe()) {
-                after = findSafeCoordinate(after);
+                after = findSafeCoordinate(after, false);
+                // 判断是否需要在脚下放置方块
+                if (ServerConfig.SETBLOCK_WHEN_SAFE_NOT_FOUND && !isSafeCoordinate(getWorld(after.getDimension()), after)) {
+                    IBlockState blockState = null;
+                    List<ItemStack> playerItemList = getPlayerItemList(player);
+                    if (CollectionUtils.isNotNullOrEmpty(SAFE_BLOCKS)) {
+                        if (ServerConfig.GETBLOCK_FROM_INVENTORY) {
+                            blockState = SAFE_BLOCKS.stream()
+                                    .filter(block -> playerItemList.stream().map(ItemStack::getItem).anyMatch(item -> new ItemStack(block).getItem().equals(item)))
+                                    .map(Block::getDefaultState)
+                                    .findFirst().orElse(null);
+                        } else {
+                            blockState = SAFE_BLOCKS.get(0).getDefaultState();
+                        }
+                    }
+                    if (blockState != null) {
+                        Coordinate airCoordinate = findSafeCoordinate(after, true);
+                        if (!airCoordinate.toXyzString().equals(after.toXyzString())) {
+                            after = airCoordinate;
+                            Item blockItem = new ItemStack(blockState.getBlock()).getItem();
+                            Item remove = playerItemList.stream().map(ItemStack::getItem).filter(blockItem::equals).findFirst().orElse(null);
+                            if (remove != null) {
+                                ItemStack itemStack = new ItemStack(remove);
+                                itemStack.setCount(1);
+                                if (removeItemFromPlayerInventory(player, itemStack)) {
+                                    getWorld(after.getDimension()).setBlockState(airCoordinate.toBlockPos().add(0, -1, 0), blockState.getBlock().getDefaultState());
+                                }
+                            }
+                        }
+                    }
+                }
             }
             after.setY(Math.floor(after.getY()) + 0.1);
             if (before.getDimension() == after.getDimension()) {
@@ -668,6 +723,17 @@ public class NarcissusUtils {
 
         // 是否成功移除所有物品
         return remainingAmount == 0;
+    }
+
+    public static List<ItemStack> getPlayerItemList(EntityPlayerMP player) {
+        List<ItemStack> result = new ArrayList<>();
+        if (player != null) {
+            result.addAll(player.inventory.mainInventory);
+            result.addAll(player.inventory.armorInventory);
+            result.addAll(player.inventory.offHandInventory);
+            result = result.stream().filter(itemStack -> !itemStack.isEmpty() && itemStack.getItem() != Items.AIR).collect(Collectors.toList());
+        }
+        return result;
     }
 
     /**
