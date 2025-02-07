@@ -98,7 +98,7 @@ minecraft {
         client {}
 
         server {
-            args '--nogui'
+            // args '--nogui'
         }
 
         data {

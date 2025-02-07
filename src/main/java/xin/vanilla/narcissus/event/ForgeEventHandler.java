@@ -11,6 +11,7 @@ import net.minecraftforge.common.util.LazyOptional;
 import net.minecraftforge.event.AttachCapabilitiesEvent;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.entity.EntityJoinWorldEvent;
+import net.minecraftforge.event.entity.living.EntityTeleportEvent;
 import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.LogicalSide;
@@ -33,6 +34,7 @@ import xin.vanilla.narcissus.util.DateUtils;
 import xin.vanilla.narcissus.util.I18nUtils;
 import xin.vanilla.narcissus.util.NarcissusUtils;
 
+import java.util.Comparator;
 import java.util.Date;
 
 /**
@@ -154,6 +156,28 @@ public class ForgeEventHandler {
                     data.setLastCardTime(current);
                     data.plusTeleportCard(ServerConfig.TELEPORT_CARD_DAILY.get());
                 }
+            }
+        }
+    }
+
+    /**
+     * 同纬度传送事件
+     */
+    @SubscribeEvent
+    public static void onEntityTeleport(EntityTeleportEvent event) {
+        if (event.getEntity() instanceof ServerPlayerEntity) {
+            ServerPlayerEntity player = (ServerPlayerEntity) event.getEntity();
+            TeleportRecord record = new TeleportRecord();
+            record.setTeleportTime(new Date());
+            record.setTeleportType(ETeleportType.OTHER);
+            record.setBefore(new Coordinate(player).fromVector3d(event.getPrev()));
+            record.setAfter(new Coordinate(player).fromVector3d(event.getTarget()));
+            IPlayerTeleportData data = PlayerTeleportDataCapability.getData(player);
+            TeleportRecord otherRecord = data.getTeleportRecords().stream().max(Comparator.comparing(o -> o.getTeleportTime().getTime())).orElse(null);
+            if (otherRecord != null && otherRecord.getTeleportType() == ETeleportType.OTHER && otherRecord.getBefore().toXyzString().equals(record.getBefore().toXyzString())) {
+                otherRecord.setAfter(record.getAfter());
+            } else {
+                data.addTeleportRecords(record);
             }
         }
     }

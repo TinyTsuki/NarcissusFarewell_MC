@@ -20,10 +20,12 @@ import net.minecraft.command.arguments.EntityArgument;
 import net.minecraft.command.arguments.ResourceLocationArgument;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.ServerPlayerEntity;
+import net.minecraft.network.play.server.SChatPacket;
 import net.minecraft.util.RegistryKey;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.registry.Registry;
+import net.minecraft.util.text.ChatType;
 import net.minecraft.util.text.TextFormatting;
 import net.minecraft.util.text.event.ClickEvent;
 import net.minecraft.world.World;
@@ -260,23 +262,28 @@ public class FarewellCommand {
             } catch (IllegalArgumentException ignored) {
                 targetLevel = player.getLevel().dimension();
             }
-            Coordinate coordinate;
-            if (biome != null) {
-                coordinate = NarcissusUtils.findNearestBiome(Objects.requireNonNull(NarcissusFarewell.getServerInstance().getLevel(targetLevel)), new Coordinate(player).setDimension(targetLevel), biome, range, 8);
-            } else {
-                coordinate = NarcissusUtils.findNearestStruct(Objects.requireNonNull(NarcissusFarewell.getServerInstance().getLevel(targetLevel)), new Coordinate(player).setDimension(targetLevel), structure, range);
-            }
-            if (coordinate == null) {
-                NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EI18nType.MESSAGE, "structure_biome_not_found_in_range"), structId);
-                return 0;
-            }
-            try {
-                coordinate.setSafe("safe".equalsIgnoreCase(StringArgumentType.getString(context, "safe")));
-            } catch (IllegalArgumentException ignored) {
-            }
-            // 验证传送代价
-            if (checkTeleportPost(player, coordinate, ETeleportType.TP_STRUCTURE, true)) return 0;
-            NarcissusUtils.teleportTo(player, coordinate, ETeleportType.TP_STRUCTURE);
+            RegistryKey<World> finalTargetLevel = targetLevel;
+            int finalRange = range;
+            player.connection.send(new SChatPacket(Component.translatable(player.getLanguage(), EI18nType.MESSAGE, "tp_structure_searching").toTextComponent(), ChatType.GAME_INFO, player.getUUID()));
+            new Thread(() -> {
+                Coordinate coordinate;
+                if (biome != null) {
+                    coordinate = NarcissusUtils.findNearestBiome(Objects.requireNonNull(NarcissusFarewell.getServerInstance().getLevel(finalTargetLevel)), new Coordinate(player).setDimension(finalTargetLevel), biome, finalRange, 8);
+                } else {
+                    coordinate = NarcissusUtils.findNearestStruct(Objects.requireNonNull(NarcissusFarewell.getServerInstance().getLevel(finalTargetLevel)), new Coordinate(player).setDimension(finalTargetLevel), structure, finalRange);
+                }
+                if (coordinate == null) {
+                    NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EI18nType.MESSAGE, "structure_biome_not_found_in_range"), structId);
+                    return;
+                }
+                try {
+                    coordinate.setSafe("safe".equalsIgnoreCase(StringArgumentType.getString(context, "safe")));
+                } catch (IllegalArgumentException ignored) {
+                }
+                // 验证传送代价
+                if (checkTeleportPost(player, coordinate, ETeleportType.TP_STRUCTURE, true)) return;
+                player.server.submit(() -> NarcissusUtils.teleportTo(player, coordinate, ETeleportType.TP_STRUCTURE));
+            }).start();
             return 1;
         };
 
@@ -480,11 +487,18 @@ public class FarewellCommand {
             ServerPlayerEntity player = context.getSource().getPlayerOrException();
             // 传送功能前置校验
             if (checkTeleportPre(player, ETeleportType.TP_SPAWN)) return 0;
+            Coordinate coordinate = new Coordinate(player);
             BlockPos respawnPosition = player.getRespawnPosition();
+            coordinate.setDimension(player.getRespawnDimension());
             if (respawnPosition == null) {
                 respawnPosition = player.getLevel().getSharedSpawnPos();
+                coordinate.setDimension(player.getLevel().dimension());
             }
-            Coordinate coordinate = new Coordinate(player).fromBlockPos(respawnPosition);
+            if (respawnPosition == null) {
+                respawnPosition = player.getServer().getLevel(World.OVERWORLD).getSharedSpawnPos();
+                coordinate.setDimension(World.OVERWORLD);
+            }
+            coordinate.fromBlockPos(respawnPosition);
             try {
                 coordinate.setSafe("safe".equalsIgnoreCase(StringArgumentType.getString(context, "safe")));
             } catch (IllegalArgumentException ignored) {
@@ -500,8 +514,14 @@ public class FarewellCommand {
             ServerPlayerEntity player = context.getSource().getPlayerOrException();
             // 传送功能前置校验
             if (checkTeleportPre(player, ETeleportType.TP_WORLD_SPAWN)) return 0;
+            Coordinate coordinate = new Coordinate(player);
             BlockPos respawnPosition = player.getLevel().getSharedSpawnPos();
-            Coordinate coordinate = new Coordinate(player).fromBlockPos(respawnPosition);
+            coordinate.setDimension(player.getLevel().dimension());
+            if (respawnPosition == null) {
+                respawnPosition = player.getServer().getLevel(World.OVERWORLD).getSharedSpawnPos();
+                coordinate.setDimension(World.OVERWORLD);
+            }
+            coordinate.fromBlockPos(respawnPosition);
             try {
                 coordinate.setSafe("safe".equalsIgnoreCase(StringArgumentType.getString(context, "safe")));
             } catch (IllegalArgumentException ignored) {
@@ -609,15 +629,20 @@ public class FarewellCommand {
                 range = ServerConfig.TELEPORT_VIEW_DISTANCE_LIMIT.get();
             }
             range = NarcissusUtils.checkRange(player, ETeleportType.TP_VIEW, range);
-            Coordinate coordinate = NarcissusUtils.findViewEndCandidate(player, safe, range);
-            if (coordinate == null) {
-                NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EI18nType.MESSAGE, safe ? "tp_view_safe_not_found" : "tp_view_not_found"));
-                return 0;
-            }
-            coordinate.setSafeMode(ESafeMode.Y_OFFSET_3);
-            // 验证传送代价
-            if (checkTeleportPost(player, coordinate, ETeleportType.TP_VIEW, true)) return 0;
-            NarcissusUtils.teleportTo(player, coordinate, ETeleportType.TP_VIEW);
+            player.connection.send(new SChatPacket(Component.translatable(player.getLanguage(), EI18nType.MESSAGE, "tp_view_searching").toTextComponent(), ChatType.GAME_INFO, player.getUUID()));
+            boolean finalSafe = safe;
+            int finalRange = range;
+            new Thread(() -> {
+                Coordinate coordinate = NarcissusUtils.findViewEndCandidate(player, finalSafe, finalRange);
+                if (coordinate == null) {
+                    NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EI18nType.MESSAGE, finalSafe ? "tp_view_safe_not_found" : "tp_view_not_found"));
+                    return;
+                }
+                coordinate.setSafeMode(ESafeMode.Y_OFFSET_3);
+                // 验证传送代价
+                if (checkTeleportPost(player, coordinate, ETeleportType.TP_VIEW, true)) return;
+                player.server.submit(() -> NarcissusUtils.teleportTo(player, coordinate, ETeleportType.TP_VIEW));
+            }).start();
             return 1;
         };
 
