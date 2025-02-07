@@ -2,40 +2,37 @@ package xin.vanilla.narcissus;
 
 import lombok.Getter;
 import lombok.Setter;
-import net.minecraft.client.Minecraft;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.entity.player.ServerPlayerEntity;
+import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.server.MinecraftServer;
-import net.minecraftforge.common.MinecraftForge;
-import net.minecraftforge.event.entity.player.PlayerEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.ModList;
-import net.minecraftforge.fml.ModLoadingContext;
+import net.minecraftforge.fml.common.Loader;
 import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.fml.config.ModConfig;
-import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
-import net.minecraftforge.fml.event.server.FMLServerStartingEvent;
-import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
+import net.minecraftforge.fml.common.event.FMLInitializationEvent;
+import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
+import net.minecraftforge.fml.common.event.FMLServerStartingEvent;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import xin.vanilla.narcissus.capability.player.PlayerTeleportDataCapability;
 import xin.vanilla.narcissus.command.FarewellCommand;
+import xin.vanilla.narcissus.command.concise.*;
 import xin.vanilla.narcissus.config.ServerConfig;
 import xin.vanilla.narcissus.config.TeleportRequest;
+import xin.vanilla.narcissus.enums.ECommandType;
 import xin.vanilla.narcissus.event.ClientEventHandler;
 import xin.vanilla.narcissus.network.ModNetworkHandler;
 import xin.vanilla.narcissus.network.SplitPacket;
 import xin.vanilla.narcissus.util.LogoModifier;
+import xin.vanilla.narcissus.util.NarcissusUtils;
 
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-@Mod(NarcissusFarewell.MODID)
+@Mod(modid = BuildConfig.MODID, name = BuildConfig.NAME, version = BuildConfig.VERSION, useMetadata = true, acceptableRemoteVersions = "*")
 public class NarcissusFarewell {
+    @Mod.Instance(BuildConfig.MODID)
+    public static NarcissusFarewell instance;
 
     public final static String DEFAULT_COMMAND_PREFIX = "narcissus";
-
-    public static final String MODID = "narcissus_farewell";
 
     private static final Logger LOGGER = LogManager.getLogger();
 
@@ -45,12 +42,6 @@ public class NarcissusFarewell {
     @Getter
     private static MinecraftServer serverInstance;
 
-    /**
-     * 是否有对应的服务端
-     */
-    @Getter
-    @Setter
-    private static boolean enabled;
     /**
      * 玩家权限等级
      */
@@ -80,71 +71,98 @@ public class NarcissusFarewell {
      * 最近一次传送请求
      */
     @Getter
-    private static final Map<ServerPlayerEntity, ServerPlayerEntity> lastTeleportRequest = new ConcurrentHashMap<>();
+    private static final Map<EntityPlayerMP, EntityPlayerMP> lastTeleportRequest = new ConcurrentHashMap<>();
 
     /**
      * 待处理的传送请求列表
+     * reqId:req
      */
     @Getter
     private static final Map<String, TeleportRequest> teleportRequest = new ConcurrentHashMap<>();
 
-    public NarcissusFarewell() {
+    // @SidedProxy(clientSide = "xin.vanilla.narcissus.proxy.ClientProxy", serverSide = "xin.vanilla.narcissus.proxy.ServerProxy")
+    // public static IProxy proxy;
 
+    @Mod.EventHandler
+    public void preInit(FMLPreInitializationEvent event) {
         // 注册网络通道
         ModNetworkHandler.registerPackets();
-        // 注册服务器启动和关闭事件
-        MinecraftForge.EVENT_BUS.addListener(this::onServerStarting);
 
-        // 注册当前实例到MinecraftForge的事件总线，以便监听和处理游戏内的各种事件
-        MinecraftForge.EVENT_BUS.register(this);
+        // 注册服务端配置
+        ServerConfig.init(event);
 
-        // 注册服务器和客户端配置
-        ModLoadingContext.get().registerConfig(ModConfig.Type.SERVER, ServerConfig.SERVER_CONFIG);
-
-        // 注册客户端设置事件到MOD事件总线
-        FMLJavaModLoadingContext.get().getModEventBus().addListener(this::onClientSetup);
+        // 注册 PlayerDataCapability
+        PlayerTeleportDataCapability.register();
     }
 
-    /**
-     * 在客户端设置阶段触发的事件处理方法
-     * 此方法主要用于接收 FML 客户端设置事件，并执行相应的初始化操作
-     */
-    @SubscribeEvent
-    public void onClientSetup(final FMLClientSetupEvent event) {
-        // 注册键绑定
-        LOGGER.debug("Registering key bindings");
-        ClientEventHandler.registerKeyBindings();
-        // 修改logo为随机logo
-        ModList.get().getMods().stream()
-                .filter(info -> info.getModId().equals(MODID))
-                .findFirst()
-                .ifPresent(LogoModifier::modifyLogo);
-    }
+    @Mod.EventHandler
+    public void init(FMLInitializationEvent event) {
+        // 仅在客户端执行的代码
+        if (event.getSide().isClient()) {
+            // 注册键盘按键绑定
+            ClientEventHandler.registerKeyBindings();
 
-    // 服务器启动时加载数据
-    private void onServerStarting(FMLServerStartingEvent event) {
-        serverInstance = event.getServer();
-        LOGGER.debug("Registering commands");
-        FarewellCommand.register(event.getServer().getCommands().getDispatcher());
-    }
-
-    /**
-     * 玩家注销事件
-     *
-     * @param event 玩家注销事件对象，通过该对象可以获取到注销的玩家对象
-     */
-    @SubscribeEvent
-    public void onPlayerLogout(PlayerEvent.PlayerLoggedOutEvent event) {
-        LOGGER.debug("Player has logged out.");
-        // 获取退出的玩家对象
-        PlayerEntity player = event.getPlayer();
-        // 判断是否在客户端并且退出的玩家是客户端的当前玩家
-        if (player.getCommandSenderWorld().isClientSide) {
-            if (Minecraft.getInstance().player.getUUID().equals(player.getUUID())) {
-                LOGGER.debug("Current player has logged out.");
-                // 当前客户端玩家与退出的玩家相同
-                enabled = false;
-            }
+            // 修改logo为随机logo
+            Loader.instance().getModList().stream()
+                    .filter(info -> info.getModId().equals(BuildConfig.MODID))
+                    .findFirst()
+                    .ifPresent(LogoModifier::modifyLogo);
         }
     }
+
+    @Mod.EventHandler
+    public void onServerStarting(FMLServerStartingEvent event) {
+        serverInstance = event.getServer();
+        LOGGER.debug("Registering commands");
+        event.registerServerCommand(new FarewellCommand());
+        if (NarcissusUtils.isConciseEnabled(ECommandType.DIMENSION))
+            event.registerServerCommand(new DimensionCommand());
+        if (NarcissusUtils.isConciseEnabled(ECommandType.TP_COORDINATE))
+            event.registerServerCommand(new CoordinateCommand());
+        if (NarcissusUtils.isConciseEnabled(ECommandType.TP_STRUCTURE))
+            event.registerServerCommand(new StructureCommand());
+        if (NarcissusUtils.isConciseEnabled(ECommandType.TP_ASK))
+            event.registerServerCommand(new AskCommand());
+        if (NarcissusUtils.isConciseEnabled(ECommandType.TP_ASK_YES))
+            event.registerServerCommand(new AskYesCommand());
+        if (NarcissusUtils.isConciseEnabled(ECommandType.TP_ASK_NO))
+            event.registerServerCommand(new AskNoCommand());
+        if (NarcissusUtils.isConciseEnabled(ECommandType.TP_HERE))
+            event.registerServerCommand(new HereCommand());
+        if (NarcissusUtils.isConciseEnabled(ECommandType.TP_HERE_YES))
+            event.registerServerCommand(new HereYesCommand());
+        if (NarcissusUtils.isConciseEnabled(ECommandType.TP_HERE_NO))
+            event.registerServerCommand(new HereNoCommand());
+        if (NarcissusUtils.isConciseEnabled(ECommandType.TP_RANDOM))
+            event.registerServerCommand(new RandomCommand());
+        if (NarcissusUtils.isConciseEnabled(ECommandType.TP_SPAWN))
+            event.registerServerCommand(new SpawnCommand());
+        if (NarcissusUtils.isConciseEnabled(ECommandType.TP_WORLD_SPAWN))
+            event.registerServerCommand(new WorldSpawnCommand());
+        if (NarcissusUtils.isConciseEnabled(ECommandType.TP_TOP))
+            event.registerServerCommand(new TopCommand());
+        if (NarcissusUtils.isConciseEnabled(ECommandType.TP_BOTTOM))
+            event.registerServerCommand(new BottomCommand());
+        if (NarcissusUtils.isConciseEnabled(ECommandType.TP_UP))
+            event.registerServerCommand(new UpCommand());
+        if (NarcissusUtils.isConciseEnabled(ECommandType.TP_DOWN))
+            event.registerServerCommand(new DownCommand());
+        if (NarcissusUtils.isConciseEnabled(ECommandType.TP_VIEW))
+            event.registerServerCommand(new ViewCommand());
+        if (NarcissusUtils.isConciseEnabled(ECommandType.TP_HOME))
+            event.registerServerCommand(new HomeCommand());
+        if (NarcissusUtils.isConciseEnabled(ECommandType.SET_HOME))
+            event.registerServerCommand(new SetHomeCommand());
+        if (NarcissusUtils.isConciseEnabled(ECommandType.DEL_HOME))
+            event.registerServerCommand(new DelHomeCommand());
+        if (NarcissusUtils.isConciseEnabled(ECommandType.TP_STAGE))
+            event.registerServerCommand(new StageCommand());
+        if (NarcissusUtils.isConciseEnabled(ECommandType.SET_STAGE))
+            event.registerServerCommand(new SetStageCommand());
+        if (NarcissusUtils.isConciseEnabled(ECommandType.DEL_STAGE))
+            event.registerServerCommand(new DelStageCommand());
+        if (NarcissusUtils.isConciseEnabled(ECommandType.TP_BACK))
+            event.registerServerCommand(new BackCommand());
+    }
+
 }

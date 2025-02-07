@@ -1,33 +1,37 @@
 package xin.vanilla.narcissus.network;
 
-import net.minecraft.entity.player.ServerPlayerEntity;
-import net.minecraft.network.PacketBuffer;
-import net.minecraftforge.fml.network.NetworkEvent;
+import io.netty.buffer.ByteBuf;
+import net.minecraft.entity.player.EntityPlayerMP;
+import net.minecraftforge.fml.common.network.simpleimpl.IMessage;
+import net.minecraftforge.fml.common.network.simpleimpl.IMessageHandler;
+import net.minecraftforge.fml.common.network.simpleimpl.MessageContext;
 import xin.vanilla.narcissus.NarcissusFarewell;
 
-import java.util.function.Supplier;
-
-public class PlayerDataReceivedNotice {
+public class PlayerDataReceivedNotice implements IMessage {
 
     public PlayerDataReceivedNotice() {
     }
 
-    public PlayerDataReceivedNotice(PacketBuffer buf) {
+    @Override
+    public void fromBytes(ByteBuf buf) {
     }
 
-    public void toBytes(PacketBuffer buf) {
+    @Override
+    public void toBytes(ByteBuf buf) {
     }
 
-    public static void handle(PlayerDataReceivedNotice packet, Supplier<NetworkEvent.Context> ctx) {
-        // 获取网络事件上下文并排队执行工作
-        ctx.get().enqueueWork(() -> {
-            // 获取发送数据包的玩家实体
-            ServerPlayerEntity player = ctx.get().getSender();
-            if (player != null) {
-                NarcissusFarewell.getPlayerCapabilityStatus().put(player.getUUID().toString(), true);
-            }
-        });
-        // 设置数据包已处理状态，防止重复处理
-        ctx.get().setPacketHandled(true);
+    public static class Handler implements IMessageHandler<PlayerDataReceivedNotice, IMessage> {
+        @Override
+        public IMessage onMessage(PlayerDataReceivedNotice packet, MessageContext ctx) {
+            // 排队工作到主线程
+            ctx.getServerHandler().player.getServerWorld().addScheduledTask(() -> {
+                EntityPlayerMP player = ctx.getServerHandler().player;
+                if (player != null) {
+                    // 更新玩家数据
+                    NarcissusFarewell.getPlayerCapabilityStatus().put(player.getUniqueID().toString(), true);
+                }
+            });
+            return null;
+        }
     }
 }

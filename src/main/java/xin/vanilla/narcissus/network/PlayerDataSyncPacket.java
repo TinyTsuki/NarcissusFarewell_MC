@@ -1,31 +1,35 @@
 package xin.vanilla.narcissus.network;
 
+import io.netty.buffer.ByteBuf;
 import lombok.Getter;
-import net.minecraft.network.PacketBuffer;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.fml.DistExecutor;
-import net.minecraftforge.fml.network.NetworkEvent;
+import net.minecraft.client.Minecraft;
+import net.minecraftforge.fml.common.network.ByteBufUtils;
+import net.minecraftforge.fml.common.network.simpleimpl.IMessage;
+import net.minecraftforge.fml.common.network.simpleimpl.IMessageHandler;
+import net.minecraftforge.fml.common.network.simpleimpl.MessageContext;
+import xin.vanilla.narcissus.capability.TeleportRecord;
 import xin.vanilla.narcissus.capability.player.IPlayerTeleportData;
 import xin.vanilla.narcissus.capability.player.PlayerTeleportData;
-import xin.vanilla.narcissus.capability.TeleportRecord;
 import xin.vanilla.narcissus.config.Coordinate;
 import xin.vanilla.narcissus.config.KeyValue;
-import xin.vanilla.narcissus.util.CollectionUtils;
+import xin.vanilla.narcissus.proxy.ClientProxy;
 import xin.vanilla.narcissus.util.DateUtils;
 
 import java.util.*;
-import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 @Getter
-public class PlayerDataSyncPacket extends SplitPacket {
-    private final UUID playerUUID;
-    private final Date lastCardTime;
-    private final Date lastTpTime;
-    private final int teleportCard;
-    private final List<TeleportRecord> teleportRecords;
-    private final Map<KeyValue<String, String>, Coordinate> homeCoordinate;
-    private final Map<String, String> defaultHome;
+public class PlayerDataSyncPacket extends SplitPacket implements IMessage {
+    private UUID playerUUID;
+    private Date lastCardTime;
+    private Date lastTpTime;
+    private int teleportCard;
+    private List<TeleportRecord> teleportRecords;
+    private Map<KeyValue<String, String>, Coordinate> homeCoordinate;
+    private Map<String, String> defaultHome;
+
+    public PlayerDataSyncPacket() {
+    }
 
     public PlayerDataSyncPacket(UUID playerUUID, IPlayerTeleportData data) {
         super();
@@ -38,29 +42,32 @@ public class PlayerDataSyncPacket extends SplitPacket {
         this.defaultHome = data.getDefaultHome();
     }
 
-    public PlayerDataSyncPacket(PacketBuffer buffer) {
-        super(buffer);
-        this.playerUUID = buffer.readUUID();
-        this.lastCardTime = DateUtils.format(buffer.readUtf());
-        this.lastTpTime = DateUtils.format(buffer.readUtf());
-        this.teleportCard = buffer.readInt();
+    public PlayerDataSyncPacket(ByteBuf buf) {
+        super(buf);
+        this.playerUUID = UUID.fromString(ByteBufUtils.readUTF8String(buf));
+        this.lastCardTime = DateUtils.format(ByteBufUtils.readUTF8String(buf));
+        this.lastTpTime = DateUtils.format(ByteBufUtils.readUTF8String(buf));
+        this.teleportCard = buf.readInt();
 
         this.teleportRecords = new ArrayList<>();
-        int size = buffer.readInt();
+        int size = buf.readInt();
         for (int i = 0; i < size; i++) {
-            this.teleportRecords.add(TeleportRecord.readFromNBT(Objects.requireNonNull(buffer.readNbt())));
+            this.teleportRecords.add(TeleportRecord.readFromNBT(Objects.requireNonNull(ByteBufUtils.readTag(buf))));
         }
 
         this.homeCoordinate = new HashMap<>();
-        int homeSize = buffer.readInt();
+        int homeSize = buf.readInt();
         for (int i = 0; i < homeSize; i++) {
-            this.homeCoordinate.put(new KeyValue<>(buffer.readUtf(), buffer.readUtf()), Coordinate.readFromNBT(Objects.requireNonNull(buffer.readNbt())));
+            this.homeCoordinate.put(
+                    new KeyValue<>(ByteBufUtils.readUTF8String(buf), ByteBufUtils.readUTF8String(buf)),
+                    Coordinate.readFromNBT(Objects.requireNonNull(ByteBufUtils.readTag(buf)))
+            );
         }
 
         this.defaultHome = new HashMap<>();
-        int defaultSize = buffer.readInt();
+        int defaultSize = buf.readInt();
         for (int i = 0; i < defaultSize; i++) {
-            this.defaultHome.put(buffer.readUtf(), buffer.readUtf());
+            this.defaultHome.put(ByteBufUtils.readUTF8String(buf), ByteBufUtils.readUTF8String(buf));
         }
     }
 
@@ -93,40 +100,61 @@ public class PlayerDataSyncPacket extends SplitPacket {
         this.defaultHome = new HashMap<>();
     }
 
-    public void toBytes(PacketBuffer buffer) {
-        super.toBytes(buffer);
-        buffer.writeUUID(playerUUID);
-        buffer.writeUtf(DateUtils.toDateTimeString(this.lastCardTime));
-        buffer.writeUtf(DateUtils.toDateTimeString(this.lastTpTime));
-        buffer.writeInt(this.teleportCard);
-        buffer.writeInt(this.teleportRecords.size());
+    public void fromBytes(ByteBuf buf) {
+        PlayerDataSyncPacket packet = new PlayerDataSyncPacket(buf);
+        this.setId(packet.getId());
+        this.setTotal(packet.getTotal());
+        this.setSort(packet.getSort());
+        this.playerUUID = packet.getPlayerUUID();
+        this.lastCardTime = packet.getLastCardTime();
+        this.lastTpTime = packet.getLastTpTime();
+        this.teleportCard = packet.getTeleportCard();
+        this.teleportRecords = packet.getTeleportRecords();
+        this.homeCoordinate = packet.getHomeCoordinate();
+        this.defaultHome = packet.getDefaultHome();
+    }
+
+    @Override
+    public void toBytes(ByteBuf buf) {
+        super.toBytes(buf);
+        ByteBufUtils.writeUTF8String(buf, playerUUID.toString());
+        ByteBufUtils.writeUTF8String(buf, DateUtils.toDateTimeString(this.lastCardTime));
+        ByteBufUtils.writeUTF8String(buf, DateUtils.toDateTimeString(this.lastTpTime));
+        buf.writeInt(this.teleportCard);
+
+        buf.writeInt(this.teleportRecords.size());
         for (TeleportRecord record : this.teleportRecords) {
-            buffer.writeNbt(record.writeToNBT());
+            ByteBufUtils.writeTag(buf, record.writeToNBT());
         }
-        buffer.writeInt(this.homeCoordinate.size());
+
+        buf.writeInt(this.homeCoordinate.size());
         for (Map.Entry<KeyValue<String, String>, Coordinate> entry : this.homeCoordinate.entrySet()) {
-            buffer.writeUtf(entry.getKey().getKey());
-            buffer.writeUtf(entry.getKey().getValue());
-            buffer.writeNbt(entry.getValue().writeToNBT());
+            ByteBufUtils.writeUTF8String(buf, entry.getKey().getKey());
+            ByteBufUtils.writeUTF8String(buf, entry.getKey().getValue());
+            ByteBufUtils.writeTag(buf, entry.getValue().writeToNBT());
         }
-        buffer.writeInt(this.defaultHome.size());
+
+        buf.writeInt(this.defaultHome.size());
         for (Map.Entry<String, String> entry : this.defaultHome.entrySet()) {
-            buffer.writeUtf(entry.getKey());
-            buffer.writeUtf(entry.getValue());
+            ByteBufUtils.writeUTF8String(buf, entry.getKey());
+            ByteBufUtils.writeUTF8String(buf, entry.getValue());
         }
     }
 
-    public static void handle(PlayerDataSyncPacket packet, Supplier<NetworkEvent.Context> ctx) {
-        ctx.get().enqueueWork(() -> {
-            if (ctx.get().getDirection().getReceptionSide().isClient()) {
-                // 获取玩家并更新 Capability 数据
-                List<PlayerDataSyncPacket> packets = SplitPacket.handle(packet);
-                if (CollectionUtils.isNotNullOrEmpty(packets)) {
-                    DistExecutor.runWhenOn(Dist.CLIENT, () -> () -> ClientProxy.handleSynPlayerData(new PlayerDataSyncPacket(packets)));
-                }
+    public static class Handler implements IMessageHandler<PlayerDataSyncPacket, IMessage> {
+        @Override
+        public IMessage onMessage(PlayerDataSyncPacket packet, MessageContext ctx) {
+            if (ctx.side.isClient()) {
+                Minecraft.getMinecraft().addScheduledTask(() -> {
+                    // 获取玩家并更新 Capability 数据
+                    List<PlayerDataSyncPacket> packets = SplitPacket.handle(packet);
+                    if (!packets.isEmpty()) {
+                        ClientProxy.handleSynPlayerData(new PlayerDataSyncPacket(packets));
+                    }
+                });
             }
-        });
-        ctx.get().setPacketHandled(true);
+            return null;
+        }
     }
 
     @Override

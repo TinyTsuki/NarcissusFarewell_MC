@@ -1,20 +1,22 @@
 package xin.vanilla.narcissus.event;
 
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.settings.KeyBinding;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.event.TickEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.client.registry.ClientRegistry;
 import net.minecraftforge.fml.common.Mod;
+import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
+import net.minecraftforge.fml.common.gameevent.TickEvent;
+import net.minecraftforge.fml.relauncher.Side;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import xin.vanilla.narcissus.NarcissusFarewell;
+import org.lwjgl.input.Keyboard;
+import xin.vanilla.narcissus.BuildConfig;
 import xin.vanilla.narcissus.network.*;
 
 /**
  * 客户端事件处理器
  */
-@Mod.EventBusSubscriber(modid = NarcissusFarewell.MODID, value = Dist.CLIENT)
+@Mod.EventBusSubscriber(modid = BuildConfig.MODID, value = Side.CLIENT)
 public class ClientEventHandler {
     private static final Logger LOGGER = LogManager.getLogger();
 
@@ -22,13 +24,13 @@ public class ClientEventHandler {
 
     // 定义按键绑定
     public static KeyBinding TP_HOME_KEY = new KeyBinding("key.narcissus_farewell.tp_home",
-            -1, CATEGORIES);
+            Keyboard.KEY_NONE, CATEGORIES);
     public static KeyBinding TP_BACK_KEY = new KeyBinding("key.narcissus_farewell.tp_back",
-            -1, CATEGORIES);
+            Keyboard.KEY_NONE, CATEGORIES);
     public static KeyBinding TP_REQ_YES = new KeyBinding("key.narcissus_farewell.tp_req_yes",
-            -1, CATEGORIES);
+            Keyboard.KEY_NONE, CATEGORIES);
     public static KeyBinding TP_REQ_NO = new KeyBinding("key.narcissus_farewell.tp_req_no",
-            -1, CATEGORIES);
+            Keyboard.KEY_NONE, CATEGORIES);
 
     /**
      * 注册键绑定
@@ -47,18 +49,15 @@ public class ClientEventHandler {
      */
     @SubscribeEvent
     public static void onClientTick(TickEvent.ClientTickEvent event) {
-        // 检测并消费点击事件
-        if (TP_HOME_KEY.consumeClick()) {
-            // 快捷回家
+        if (event.phase != TickEvent.Phase.END) return;
+        if (Minecraft.getMinecraft() != null && Minecraft.getMinecraft().currentScreen != null) return;
+        if (TP_HOME_KEY.isPressed()) {
             ModNetworkHandler.INSTANCE.sendToServer(new TpHomeNotice());
-        } else if (TP_BACK_KEY.consumeClick()) {
-            // 快捷返回
+        } else if (TP_BACK_KEY.isPressed()) {
             ModNetworkHandler.INSTANCE.sendToServer(new TpBackNotice());
-        } else if (TP_REQ_YES.consumeClick()) {
-            // 快捷同意最近一条传送请求
+        } else if (TP_REQ_YES.isPressed()) {
             ModNetworkHandler.INSTANCE.sendToServer(new TpYesNotice());
-        } else if (TP_REQ_NO.consumeClick()) {
-            // 快捷拒绝最近一条传送请求
+        } else if (TP_REQ_NO.isPressed()) {
             ModNetworkHandler.INSTANCE.sendToServer(new TpNoNotice());
         }
     }

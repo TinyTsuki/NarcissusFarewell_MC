@@ -2,12 +2,17 @@ package xin.vanilla.narcissus.util;
 
 
 import lombok.NonNull;
+import net.minecraft.util.text.TextFormatting;
 import xin.vanilla.narcissus.enums.EMCColor;
 
+import javax.annotation.Nullable;
+import java.lang.reflect.Field;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.security.SecureRandom;
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -415,6 +420,18 @@ public class StringUtils {
         return result;
     }
 
+    @Nullable
+    public static Integer toIntIfThen(String s, @NonNull String equals, int then) {
+        Integer result = equals.equals(s) ? then : null;
+        if (result == null && StringUtils.isNotNullOrEmpty(s)) {
+            try {
+                result = Integer.parseInt(s.trim());
+            } catch (NumberFormatException ignored) {
+            }
+        }
+        return result;
+    }
+
     public static long toLong(String s) {
         return toLong(s, 0);
     }
@@ -422,6 +439,17 @@ public class StringUtils {
     public static long toLong(String s, long defaultValue) {
         long result = defaultValue;
         if (StringUtils.isNotNullOrEmpty(s)) {
+            try {
+                result = Long.parseLong(s.trim());
+            } catch (NumberFormatException ignored) {
+            }
+        }
+        return result;
+    }
+
+    public static Long toLongIfThen(String s, @NonNull String equals, long then) {
+        Long result = equals.equals(s) ? then : null;
+        if (result == null && StringUtils.isNotNullOrEmpty(s)) {
             try {
                 result = Long.parseLong(s.trim());
             } catch (NumberFormatException ignored) {
@@ -445,6 +473,17 @@ public class StringUtils {
         return result;
     }
 
+    public static Float toFloatIfThen(String s, @NonNull String equals, float then) {
+        Float result = equals.equals(s) ? then : null;
+        if (result == null && StringUtils.isNotNullOrEmpty(s)) {
+            try {
+                result = Float.parseFloat(s.trim());
+            } catch (NumberFormatException ignored) {
+            }
+        }
+        return result;
+    }
+
     public static double toDouble(String s) {
         return toDouble(s, 0);
     }
@@ -460,6 +499,27 @@ public class StringUtils {
         return result;
     }
 
+    public static Double toDoubleIfThen(String s, @NonNull String equals, double then) {
+        Double result = equals.equals(s) ? then : null;
+        if (result == null && StringUtils.isNotNullOrEmpty(s)) {
+            try {
+                result = Double.parseDouble(s.trim());
+            } catch (NumberFormatException ignored) {
+            }
+        }
+        return result;
+    }
+
+    public static Double toCoordinate(String s, double base) {
+        if (StringUtils.isNotNullOrEmpty(s)) {
+            if (s.startsWith("~")) {
+                return base + toDouble(s.substring(1));
+            }
+            return toDouble(s);
+        }
+        return null;
+    }
+
     public static BigDecimal toBigDecimal(String s) {
         return toBigDecimal(s, BigDecimal.ZERO);
     }
@@ -467,6 +527,17 @@ public class StringUtils {
     public static BigDecimal toBigDecimal(String s, BigDecimal defaultValue) {
         BigDecimal result = defaultValue;
         if (StringUtils.isNotNullOrEmpty(s)) {
+            try {
+                result = new BigDecimal(s.trim());
+            } catch (NumberFormatException ignored) {
+            }
+        }
+        return result;
+    }
+
+    public static BigDecimal toBigDecimalIfThen(String s, @NonNull String equals, BigDecimal then) {
+        BigDecimal result = equals.equals(s) ? then : null;
+        if (result == null && StringUtils.isNotNullOrEmpty(s)) {
             try {
                 result = new BigDecimal(s.trim());
             } catch (NumberFormatException ignored) {
@@ -623,6 +694,28 @@ public class StringUtils {
             }
         }
         return "§" + closestColor;
+    }
+
+    public static TextFormatting getTextFormattingByCode(char c) {
+        String fieldName;
+        List<String> privateFieldNames = FieldUtils.getPrivateFieldNames(TextFormatting.class, char.class);
+        if (!CollectionUtils.isNullOrEmpty(privateFieldNames)) {
+            fieldName = privateFieldNames.get(0);
+        } else {
+            fieldName = "formattingCode";
+        }
+        return Arrays.stream(TextFormatting.values())
+                .filter(formatting -> {
+                    try {
+                        Class<?> clazz = formatting.getClass();
+                        Field secretField = clazz.getDeclaredField(fieldName);
+                        secretField.setAccessible(true);
+                        return (char) secretField.get(formatting) == c;
+                    } catch (Exception e) {
+                        return false;
+                    }
+                })
+                .findFirst().orElse(null);
     }
 
     public static void main(String[] args) {

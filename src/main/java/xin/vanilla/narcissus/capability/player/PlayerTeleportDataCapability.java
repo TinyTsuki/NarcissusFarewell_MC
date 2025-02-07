@@ -1,12 +1,10 @@
 package xin.vanilla.narcissus.capability.player;
 
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.entity.player.ServerPlayerEntity;
+import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.common.capabilities.CapabilityInject;
 import net.minecraftforge.common.capabilities.CapabilityManager;
-import net.minecraftforge.common.util.LazyOptional;
-import net.minecraftforge.fml.network.PacketDistributor;
 import xin.vanilla.narcissus.network.ModNetworkHandler;
 import xin.vanilla.narcissus.network.PlayerDataSyncPacket;
 
@@ -30,12 +28,12 @@ public class PlayerTeleportDataCapability {
      * @param player 玩家实体
      * @return 玩家的传送数据
      */
-    public static IPlayerTeleportData getData(PlayerEntity player) {
-        return player.getCapability(PLAYER_DATA).orElseThrow(() -> new IllegalArgumentException("Player data capability is missing."));
+    public static IPlayerTeleportData getData(EntityPlayer player) {
+        return player.getCapability(PLAYER_DATA, null);
     }
 
-    public static LazyOptional<IPlayerTeleportData> getDataOptional(ServerPlayerEntity player) {
-        return player.getCapability(PLAYER_DATA);
+    public static IPlayerTeleportData getDataOptional(EntityPlayerMP player) {
+        return player.getCapability(PLAYER_DATA, null);
     }
 
     /**
@@ -44,18 +42,21 @@ public class PlayerTeleportDataCapability {
      * @param player 玩家实体
      * @param data   玩家传送数据
      */
-    public static void setData(PlayerEntity player, IPlayerTeleportData data) {
-        player.getCapability(PLAYER_DATA).ifPresent(capability -> capability.copyFrom(data));
+    public static void setData(EntityPlayer player, IPlayerTeleportData data) {
+        IPlayerTeleportData capability1 = player.getCapability(PLAYER_DATA, null);
+        if (capability1 != null) {
+            capability1.copyFrom(data);
+        }
     }
 
     /**
      * 同步玩家传送数据到客户端
      */
-    public static void syncPlayerData(ServerPlayerEntity player) {
+    public static void syncPlayerData(EntityPlayerMP player) {
         // 创建自定义包并发送到客户端
-        PlayerDataSyncPacket packet = new PlayerDataSyncPacket(player.getUUID(), PlayerTeleportDataCapability.getData(player));
+        PlayerDataSyncPacket packet = new PlayerDataSyncPacket(player.getUniqueID(), PlayerTeleportDataCapability.getData(player));
         for (PlayerDataSyncPacket syncPacket : packet.split()) {
-            ModNetworkHandler.INSTANCE.send(PacketDistributor.PLAYER.with(() -> player), syncPacket);
+            ModNetworkHandler.INSTANCE.sendTo(syncPacket, player);
         }
     }
 }

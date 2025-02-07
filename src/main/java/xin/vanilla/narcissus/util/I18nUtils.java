@@ -1,10 +1,9 @@
 package xin.vanilla.narcissus.util;
 
 import com.google.gson.Gson;
-import com.google.gson.JsonObject;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import xin.vanilla.narcissus.NarcissusFarewell;
+import xin.vanilla.narcissus.BuildConfig;
 import xin.vanilla.narcissus.enums.EI18nType;
 
 import java.io.BufferedReader;
@@ -13,12 +12,12 @@ import java.nio.charset.StandardCharsets;
 import java.util.*;
 
 public class I18nUtils {
-    private static final Map<String, JsonObject> LANGUAGES = new HashMap<>();
+    private static final Map<String, Map<String, String>> LANGUAGES = new HashMap<>();
     private static final String DEFAULT_LANGUAGE = "en_us";
     private static final Gson GSON = new Gson();
     private static final Logger LOGGER = LogManager.getLogger();
-    private static final String LANG_PATH = String.format("/assets/%s/lang/", NarcissusFarewell.MODID);
-    private static final String LANG_FILE_PATH = String.format("%s%%s.json", LANG_PATH);
+    private static final String LANG_PATH = String.format("/assets/%s/lang/", BuildConfig.MODID);
+    private static final String LANG_FILE_PATH = String.format("%s%%s.lang", LANG_PATH);
 
     static {
         loadLanguage(DEFAULT_LANGUAGE);
@@ -32,8 +31,18 @@ public class I18nUtils {
         if (!LANGUAGES.containsKey(languageCode)) {
             try {
                 try (InputStreamReader reader = new InputStreamReader(Objects.requireNonNull(I18nUtils.class.getResourceAsStream(String.format(LANG_FILE_PATH, languageCode))), StandardCharsets.UTF_8)) {
-                    JsonObject jsonObject = GSON.fromJson(reader, JsonObject.class);
-                    LANGUAGES.put(languageCode, jsonObject);
+                    Map<String, String> language = new HashMap<>();
+                    BufferedReader bufferedReader = new BufferedReader(reader);
+                    String line;
+                    while ((line = bufferedReader.readLine()) != null) {
+                        if (StringUtils.isNotNullOrEmpty(line)) {
+                            String[] keyValue = line.split("=", 2);
+                            if (keyValue.length == 2) {
+                                language.put(keyValue[0], keyValue[1]);
+                            }
+                        }
+                    }
+                    LANGUAGES.put(languageCode, language);
                 }
             } catch (Exception e) {
                 LOGGER.error("Failed to load language file: {}", languageCode, e);
@@ -45,9 +54,9 @@ public class I18nUtils {
      * 获取翻译文本
      */
     public static String getTranslation(String key, String languageCode) {
-        JsonObject language = LANGUAGES.getOrDefault(languageCode, LANGUAGES.get(DEFAULT_LANGUAGE));
-        if (language != null && language.has(key)) {
-            return language.get(key).getAsString();
+        Map<String, String> language = LANGUAGES.getOrDefault(languageCode, LANGUAGES.get(DEFAULT_LANGUAGE));
+        if (language != null && language.containsKey(key)) {
+            return language.get(key);
         }
         return key;
     }
@@ -57,7 +66,7 @@ public class I18nUtils {
         if (type == EI18nType.PLAIN || type == EI18nType.NONE) {
             result = key;
         } else {
-            result = String.format("%s.%s.%s", type.name().toLowerCase(), NarcissusFarewell.MODID, key);
+            result = String.format("%s.%s.%s", type.name().toLowerCase(), BuildConfig.MODID, key);
         }
         return result;
     }

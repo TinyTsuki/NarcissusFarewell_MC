@@ -351,7 +351,7 @@ public class Component {
         Style style = new Style();
 
         if (!isColorEmpty()) {
-            TextFormatting code = TextFormatting.getByCode(StringUtils.rgbToMinecraftColor(getColor()).replace("§", "").toCharArray()[0]);
+            TextFormatting code = StringUtils.getTextFormattingByCode(StringUtils.rgbToMinecraftColor(getColor()).replace("§", "").toCharArray()[0]);
             if (code != null) {
                 style = style.setColor(code);
             }
@@ -424,13 +424,13 @@ public class Component {
      * @param languageCode 语言代码
      */
     public ITextComponent toTextComponent(String languageCode) {
-        List<TextComponent> components = new ArrayList<>();
+        List<TextComponentBase> components = new ArrayList<>();
         String text;
         if (this.i18nType != EI18nType.PLAIN) {
             text = I18nUtils.getTranslation(I18nUtils.getKey(this.i18nType, this.text), languageCode);
             String[] split = text.split(StringUtils.FORMAT_REGEX);
             for (String s : split) {
-                components.add((StringTextComponent) new StringTextComponent(s).setStyle(this.getStyle()));
+                components.add((TextComponentString) new TextComponentString(s).setStyle(this.getStyle()));
             }
             Pattern pattern = Pattern.compile(StringUtils.FORMAT_REGEX);
             Matcher matcher = pattern.matcher(text);
@@ -456,16 +456,16 @@ public class Component {
                         }
                     }
                 }
-                components.get(i).append(formattedArg.toTextComponent());
+                components.get(i).appendSibling(formattedArg.toTextComponent());
                 i++;
             }
         } else {
-            components.add((StringTextComponent) new StringTextComponent(this.text).setStyle(this.getStyle()));
+            components.add((TextComponentString) new TextComponentString(this.text).setStyle(this.getStyle()));
         }
-        components.addAll(this.children.stream().map(component -> (TextComponent) component.toTextComponent(languageCode)).collect(Collectors.toList()));
-        TextComponent result = components.get(0);
+        components.addAll(this.children.stream().map(component -> (TextComponentBase) component.toTextComponent(languageCode)).collect(Collectors.toList()));
+        ITextComponent result = components.get(0);
         for (int j = 1; j < components.size(); j++) {
-            result.append(components.get(j));
+            result.appendSibling(components.get(j));
         }
         return result.setStyle(this.getStyle());
     }
@@ -474,7 +474,7 @@ public class Component {
      * 获取翻译文本组件
      */
     public ITextComponent toTranslatedTextComponent() {
-        TextComponent result;
+        ITextComponent result;
         if (this.i18nType != EI18nType.PLAIN) {
             Object[] args = this.args.stream().map(component -> {
                 if (component.i18nType == EI18nType.PLAIN) {
@@ -484,15 +484,15 @@ public class Component {
                 }
             }).toArray();
             if (CollectionUtils.isNotNullOrEmpty(args)) {
-                result = new TranslationTextComponent(I18nUtils.getKey(this.i18nType, this.text), args);
+                result = new TextComponentTranslation(I18nUtils.getKey(this.i18nType, this.text), args);
             } else {
-                result = new TranslationTextComponent(I18nUtils.getKey(this.i18nType, this.text));
+                result = new TextComponentTranslation(I18nUtils.getKey(this.i18nType, this.text));
             }
         } else {
-            result = (StringTextComponent) new StringTextComponent(this.text).setStyle(this.getStyle());
+            result = new TextComponentString(this.text).setStyle(this.getStyle());
         }
         for (Component child : this.children) {
-            result.append(child.toTranslatedTextComponent());
+            result.appendSibling(child.toTranslatedTextComponent());
         }
         return result;
     }

@@ -1,31 +1,25 @@
 package xin.vanilla.narcissus.network;
 
-import net.minecraft.util.ResourceLocation;
-import net.minecraftforge.fml.network.NetworkRegistry;
-import net.minecraftforge.fml.network.simple.SimpleChannel;
-import xin.vanilla.narcissus.NarcissusFarewell;
+import net.minecraftforge.fml.common.network.NetworkRegistry;
+import net.minecraftforge.fml.common.network.simpleimpl.SimpleNetworkWrapper;
+import net.minecraftforge.fml.relauncher.Side;
 
 public class ModNetworkHandler {
-    private static final String PROTOCOL_VERSION = "1";
+    private static final String CHANNEL_NAME = "main_network";
+    public static final SimpleNetworkWrapper INSTANCE = NetworkRegistry.INSTANCE.newSimpleChannel(CHANNEL_NAME);
     private static int ID = 0;
-    public static final SimpleChannel INSTANCE = NetworkRegistry.newSimpleChannel(
-            new ResourceLocation(NarcissusFarewell.MODID, "main_network"),
-            () -> PROTOCOL_VERSION,
-            clientVersion -> true,      // 客户端版本始终有效
-            serverVersion -> true       // 服务端版本始终有效
-    );
 
-    public static int nextID() {
+    private static int nextID() {
         return ID++;
     }
 
     public static void registerPackets() {
-        INSTANCE.registerMessage(nextID(), PlayerDataSyncPacket.class, PlayerDataSyncPacket::toBytes, PlayerDataSyncPacket::new, PlayerDataSyncPacket::handle);
-        INSTANCE.registerMessage(nextID(), PlayerDataReceivedNotice.class, PlayerDataReceivedNotice::toBytes, PlayerDataReceivedNotice::new, PlayerDataReceivedNotice::handle);
-        INSTANCE.registerMessage(nextID(), ClientModLoadedNotice.class, ClientModLoadedNotice::toBytes, ClientModLoadedNotice::new, ClientModLoadedNotice::handle);
-        INSTANCE.registerMessage(nextID(), TpHomeNotice.class, TpHomeNotice::toBytes, TpHomeNotice::new, TpHomeNotice::handle);
-        INSTANCE.registerMessage(nextID(), TpBackNotice.class, TpBackNotice::toBytes, TpBackNotice::new, TpBackNotice::handle);
-        INSTANCE.registerMessage(nextID(), TpYesNotice.class, TpYesNotice::toBytes, TpYesNotice::new, TpYesNotice::handle);
-        INSTANCE.registerMessage(nextID(), TpNoNotice.class, TpNoNotice::toBytes, TpNoNotice::new, TpNoNotice::handle);
+        INSTANCE.registerMessage(PlayerDataSyncPacket.Handler.class, PlayerDataSyncPacket.class, nextID(), Side.CLIENT);
+        INSTANCE.registerMessage(PlayerDataReceivedNotice.Handler.class, PlayerDataReceivedNotice.class, nextID(), Side.SERVER);
+        INSTANCE.registerMessage(ClientModLoadedNotice.Handler.class, ClientModLoadedNotice.class, nextID(), Side.SERVER);
+        INSTANCE.registerMessage(TpHomeNotice.Handler.class, TpHomeNotice.class, nextID(), Side.SERVER);
+        INSTANCE.registerMessage(TpBackNotice.Handler.class, TpBackNotice.class, nextID(), Side.SERVER);
+        INSTANCE.registerMessage(TpYesNotice.Handler.class, TpYesNotice.class, nextID(), Side.SERVER);
+        INSTANCE.registerMessage(TpNoNotice.Handler.class, TpNoNotice.class, nextID(), Side.SERVER);
     }
 }

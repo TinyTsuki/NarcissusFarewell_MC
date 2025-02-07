@@ -4,14 +4,14 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.experimental.Accessors;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.entity.player.ServerPlayerEntity;
-import net.minecraft.nbt.CompoundNBT;
-import net.minecraft.util.ResourceLocation;
+import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.entity.player.EntityPlayerMP;
+import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
-import net.minecraft.world.dimension.DimensionType;
+import net.minecraft.world.DimensionType;
 import xin.vanilla.narcissus.enums.ESafeMode;
+import xin.vanilla.narcissus.util.DimensionUtils;
 import xin.vanilla.narcissus.util.NarcissusUtils;
 import xin.vanilla.narcissus.util.StringUtils;
 
@@ -34,13 +34,13 @@ public class Coordinate implements Serializable, Cloneable {
     private boolean safe = false;
     private ESafeMode safeMode = ESafeMode.NONE;
 
-    public Coordinate(PlayerEntity player) {
-        this.x = player.x;
-        this.y = player.y;
-        this.z = player.z;
-        this.yaw = player.yRot;
-        this.pitch = player.xRot;
-        this.dimension = player.level.dimension.getType();
+    public Coordinate(EntityPlayer player) {
+        this.x = player.posX;
+        this.y = player.posY;
+        this.z = player.posZ;
+        this.yaw = player.cameraYaw;
+        this.pitch = player.cameraPitch;
+        this.dimension = player.world.provider.getDimensionType();
     }
 
     public Coordinate(double x, double y, double z) {
@@ -104,20 +104,20 @@ public class Coordinate implements Serializable, Cloneable {
         return a;
     }
 
-    public static Coordinate random(ServerPlayerEntity player) {
-        return random(player, ServerConfig.TELEPORT_RANDOM_DISTANCE_LIMIT.get());
+    public static Coordinate random(EntityPlayerMP player) {
+        return random(player, ServerConfig.TELEPORT_RANDOM_DISTANCE_LIMIT);
     }
 
-    public static Coordinate random(ServerPlayerEntity player, int range) {
-        return random(player, range, player.level.dimension.getType());
+    public static Coordinate random(EntityPlayerMP player, int range) {
+        return random(player, range, player.world.provider.getDimensionType());
     }
 
-    public static Coordinate random(ServerPlayerEntity player, int range, DimensionType dimension) {
-        range = Math.min(Math.max(range, 1), ServerConfig.TELEPORT_RANDOM_DISTANCE_LIMIT.get());
-        double x = player.x + (Math.random() * 2 - 1) * range;
-        double y = getRandomWithWeight(0, NarcissusUtils.getWorld(dimension).getMaxBuildHeight(), (int) player.y, 0.75);
-        double z = player.z + (Math.random() * 2 - 1) * range;
-        return new Coordinate(x, y, z, player.yRot, player.xRot, dimension);
+    public static Coordinate random(EntityPlayerMP player, int range, DimensionType dimension) {
+        range = Math.min(Math.max(range, 1), ServerConfig.TELEPORT_RANDOM_DISTANCE_LIMIT);
+        double x = player.posX + (Math.random() * 2 - 1) * range;
+        double y = getRandomWithWeight(0, NarcissusUtils.getWorld(dimension).getHeight(), (int) player.posY, 0.75);
+        double z = player.posZ + (Math.random() * 2 - 1) * range;
+        return new Coordinate(x, y, z, player.cameraYaw, player.cameraPitch, dimension);
     }
 
     public BlockPos toBlockPos() {
@@ -136,9 +136,9 @@ public class Coordinate implements Serializable, Cloneable {
     }
 
     public Coordinate fromVector3d(Vec3d pos) {
-        this.x = pos.x();
-        this.y = pos.y();
-        this.z = pos.z();
+        this.x = pos.x;
+        this.y = pos.y;
+        this.z = pos.z;
         return this;
     }
 
@@ -160,14 +160,14 @@ public class Coordinate implements Serializable, Cloneable {
     /**
      * 序列化到 NBT
      */
-    public CompoundNBT writeToNBT() {
-        CompoundNBT tag = new CompoundNBT();
-        tag.putDouble("x", x);
-        tag.putDouble("y", y);
-        tag.putDouble("z", z);
-        tag.putDouble("yaw", yaw);
-        tag.putDouble("pitch", pitch);
-        tag.putString("dimension", dimension.getRegistryName().toString());
+    public NBTTagCompound writeToNBT() {
+        NBTTagCompound tag = new NBTTagCompound();
+        tag.setDouble("x", x);
+        tag.setDouble("y", y);
+        tag.setDouble("z", z);
+        tag.setDouble("yaw", yaw);
+        tag.setDouble("pitch", pitch);
+        tag.setString("dimension", DimensionUtils.getStringIdFromInt(dimension.getId()));
         return tag;
     }
 
@@ -181,14 +181,14 @@ public class Coordinate implements Serializable, Cloneable {
     /**
      * 反序列化
      */
-    public static Coordinate readFromNBT(CompoundNBT tag) {
+    public static Coordinate readFromNBT(NBTTagCompound tag) {
         Coordinate coordinate = new Coordinate();
         coordinate.x = tag.getDouble("x");
         coordinate.y = tag.getDouble("y");
         coordinate.z = tag.getDouble("z");
         coordinate.yaw = tag.getDouble("yaw");
         coordinate.pitch = tag.getDouble("pitch");
-        coordinate.dimension = DimensionType.getByName(new ResourceLocation(tag.getString("dimension")));
+        coordinate.dimension = DimensionUtils.getDimensionType(tag.getString("dimension"));
         return coordinate;
     }
 

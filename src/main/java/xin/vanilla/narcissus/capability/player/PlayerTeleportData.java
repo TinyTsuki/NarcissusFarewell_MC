@@ -1,9 +1,9 @@
 package xin.vanilla.narcissus.capability.player;
 
 import lombok.NonNull;
-import net.minecraft.entity.player.ServerPlayerEntity;
-import net.minecraft.nbt.CompoundNBT;
-import net.minecraft.nbt.ListNBT;
+import net.minecraft.entity.player.EntityPlayerMP;
+import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.nbt.NBTTagList;
 import net.minecraft.network.PacketBuffer;
 import xin.vanilla.narcissus.capability.TeleportRecord;
 import xin.vanilla.narcissus.config.Coordinate;
@@ -13,6 +13,7 @@ import xin.vanilla.narcissus.enums.ETeleportType;
 import xin.vanilla.narcissus.util.CollectionUtils;
 import xin.vanilla.narcissus.util.DateUtils;
 
+import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
@@ -100,7 +101,7 @@ public class PlayerTeleportData implements IPlayerTeleportData {
     public void addTeleportRecords(TeleportRecord... records) {
         this.getTeleportRecords().addAll(Arrays.asList((records)));
         this.getTeleportRecords().sort(Comparator.comparing(TeleportRecord::getTeleportTime));
-        int limit = ServerConfig.TELEPORT_RECORD_LIMIT.get();
+        int limit = ServerConfig.TELEPORT_RECORD_LIMIT;
         int size = this.getTeleportRecords().size();
         if (limit > 0 && limit < size) {
             this.getTeleportRecords().subList(0, size - limit).clear();
@@ -146,41 +147,47 @@ public class PlayerTeleportData implements IPlayerTeleportData {
     }
 
     public void writeToBuffer(PacketBuffer buffer) {
-        buffer.writeUtf(DateUtils.toDateTimeString(this.getLastCardTime()));
-        buffer.writeUtf(DateUtils.toDateTimeString(this.getLastTpTime()));
+        buffer.writeString(DateUtils.toDateTimeString(this.getLastCardTime()));
+        buffer.writeString(DateUtils.toDateTimeString(this.getLastTpTime()));
         buffer.writeInt(this.getTeleportCard());
         buffer.writeInt(this.teleportRecords.size());
         for (TeleportRecord teleportRecord : this.getTeleportRecords()) {
-            buffer.writeNbt(teleportRecord.writeToNBT());
+            buffer.writeCompoundTag(teleportRecord.writeToNBT());
         }
         buffer.writeInt(this.getHomeCoordinate().size());
         for (Map.Entry<KeyValue<String, String>, Coordinate> entry : this.getHomeCoordinate().entrySet()) {
-            buffer.writeUtf(entry.getKey().getKey());
-            buffer.writeUtf(entry.getKey().getValue());
-            buffer.writeNbt(entry.getValue().writeToNBT());
+            buffer.writeString(entry.getKey().getKey());
+            buffer.writeString(entry.getKey().getValue());
+            buffer.writeCompoundTag(entry.getValue().writeToNBT());
         }
         buffer.writeInt(this.getDefaultHome().size());
         for (Map.Entry<String, String> entry : this.getDefaultHome().entrySet()) {
-            buffer.writeUtf(entry.getKey());
-            buffer.writeUtf(entry.getValue());
+            buffer.writeString(entry.getKey());
+            buffer.writeString(entry.getValue());
         }
     }
 
     public void readFromBuffer(PacketBuffer buffer) {
-        this.lastCardTime = DateUtils.format(buffer.readUtf());
-        this.lastTpTime = DateUtils.format(buffer.readUtf());
+        this.lastCardTime = DateUtils.format(buffer.readString(32));
+        this.lastTpTime = DateUtils.format(buffer.readString(32));
         this.teleportCard.set(buffer.readInt());
         this.teleportRecords = new ArrayList<>();
         for (int i = 0; i < buffer.readInt(); i++) {
-            this.teleportRecords.add(TeleportRecord.readFromNBT(Objects.requireNonNull(buffer.readNbt())));
+            try {
+                this.teleportRecords.add(TeleportRecord.readFromNBT(Objects.requireNonNull(buffer.readCompoundTag())));
+            } catch (IOException ignored) {
+            }
         }
         this.homeCoordinate = new HashMap<>();
         for (int i = 0; i < buffer.readInt(); i++) {
-            this.homeCoordinate.put(new KeyValue<>(buffer.readUtf(), buffer.readUtf()), Coordinate.readFromNBT(Objects.requireNonNull(buffer.readNbt())));
+            try {
+                this.homeCoordinate.put(new KeyValue<>(buffer.readString(32), buffer.readString(32)), Coordinate.readFromNBT(Objects.requireNonNull(buffer.readCompoundTag())));
+            } catch (IOException ignored) {
+            }
         }
         this.defaultHome = new HashMap<>();
         for (int i = 0; i < buffer.readInt(); i++) {
-            this.defaultHome.put(buffer.readUtf(), buffer.readUtf());
+            this.defaultHome.put(buffer.readString(32), buffer.readString(32));
         }
     }
 
@@ -194,72 +201,75 @@ public class PlayerTeleportData implements IPlayerTeleportData {
     }
 
     @Override
-    public CompoundNBT serializeNBT() {
-        CompoundNBT tag = new CompoundNBT();
-        tag.putString("lastCardTime", DateUtils.toDateTimeString(this.getLastCardTime()));
-        tag.putString("lastTpTime", DateUtils.toDateTimeString(this.getLastTpTime()));
-        tag.putInt("teleportCard", this.getTeleportCard());
+    public NBTTagCompound serializeNBT() {
+        NBTTagCompound tag = new NBTTagCompound();
+        tag.setString("lastCardTime", DateUtils.toDateTimeString(this.getLastCardTime()));
+        tag.setString("lastTpTime", DateUtils.toDateTimeString(this.getLastTpTime()));
+        tag.setInteger("teleportCard", this.getTeleportCard());
         // 序列化传送记录
-        ListNBT recordsNBT = new ListNBT();
+        NBTTagList recordsNBT = new NBTTagList();
         for (TeleportRecord record : this.getTeleportRecords()) {
-            recordsNBT.add(record.writeToNBT());
+            recordsNBT.appendTag(record.writeToNBT());
         }
-        tag.put("teleportRecords", recordsNBT);
+        tag.setTag("teleportRecords", recordsNBT);
         // 序列化家坐标
-        ListNBT homeCoordinateNBT = new ListNBT();
+        NBTTagList homeCoordinateNBT = new NBTTagList();
         for (Map.Entry<KeyValue<String, String>, Coordinate> entry : this.getHomeCoordinate().entrySet()) {
-            CompoundNBT homeCoordinateTag = new CompoundNBT();
-            homeCoordinateTag.putString("key", entry.getKey().getKey());
-            homeCoordinateTag.putString("value", entry.getKey().getValue());
-            homeCoordinateTag.put("coordinate", entry.getValue().writeToNBT());
-            homeCoordinateNBT.add(homeCoordinateTag);
+            NBTTagCompound homeCoordinateTag = new NBTTagCompound();
+            homeCoordinateTag.setString("key", entry.getKey().getKey());
+            homeCoordinateTag.setString("value", entry.getKey().getValue());
+            homeCoordinateTag.setTag("coordinate", entry.getValue().writeToNBT());
+            homeCoordinateNBT.appendTag(homeCoordinateTag);
         }
-        tag.put("homeCoordinate", homeCoordinateNBT);
+        tag.setTag("homeCoordinate", homeCoordinateNBT);
         // 序列化默认家
-        ListNBT defaultHomeNBT = new ListNBT();
+        NBTTagList defaultHomeNBT = new NBTTagList();
         for (Map.Entry<String, String> entry : this.getDefaultHome().entrySet()) {
-            CompoundNBT defaultHomeTag = new CompoundNBT();
-            defaultHomeTag.putString("key", entry.getKey());
-            defaultHomeTag.putString("value", entry.getValue());
-            defaultHomeNBT.add(defaultHomeTag);
+            NBTTagCompound defaultHomeTag = new NBTTagCompound();
+            defaultHomeTag.setString("key", entry.getKey());
+            defaultHomeTag.setString("value", entry.getValue());
+            defaultHomeNBT.appendTag(defaultHomeTag);
         }
-        tag.put("defaultHome", defaultHomeNBT);
+        tag.setTag("defaultHome", defaultHomeNBT);
         return tag;
     }
 
     @Override
-    public void deserializeNBT(CompoundNBT nbt) {
+    public void deserializeNBT(NBTTagCompound nbt) {
         this.setLastCardTime(DateUtils.format(nbt.getString("lastCardTime")));
         this.setLastTpTime(DateUtils.format(nbt.getString("lastTpTime")));
-        this.setTeleportCard(nbt.getInt("teleportCard"));
+        this.setTeleportCard(nbt.getInteger("teleportCard"));
         // 反序列化传送记录
-        ListNBT recordsNBT = nbt.getList("teleportRecords", 10); // 10 是 CompoundNBT 的类型ID
+        NBTTagList recordsNBT = nbt.getTagList("teleportRecords", 10); // 10 是 NBTTagCompound 的类型ID
         List<TeleportRecord> records = new ArrayList<>();
-        for (int i = 0; i < recordsNBT.size(); i++) {
-            records.add(TeleportRecord.readFromNBT(recordsNBT.getCompound(i)));
+        for (int i = 0; i < recordsNBT.tagCount(); i++) {
+            records.add(TeleportRecord.readFromNBT(recordsNBT.getCompoundTagAt(i)));
         }
         this.setTeleportRecords(records);
         // 反序列化家坐标
-        ListNBT homeCoordinateNBT = nbt.getList("homeCoordinate", 10);
+        NBTTagList homeCoordinateNBT = nbt.getTagList("homeCoordinate", 10);
         Map<KeyValue<String, String>, Coordinate> homeCoordinate = new HashMap<>();
-        for (int i = 0; i < homeCoordinateNBT.size(); i++) {
-            CompoundNBT homeCoordinateTag = homeCoordinateNBT.getCompound(i);
+        for (int i = 0; i < homeCoordinateNBT.tagCount(); i++) {
+            NBTTagCompound homeCoordinateTag = homeCoordinateNBT.getCompoundTagAt(i);
             homeCoordinate.put(new KeyValue<>(homeCoordinateTag.getString("key"), homeCoordinateTag.getString("value")),
-                    Coordinate.readFromNBT(homeCoordinateTag.getCompound("coordinate")));
+                    Coordinate.readFromNBT(homeCoordinateTag.getCompoundTag("coordinate")));
         }
         this.setHomeCoordinate(homeCoordinate);
         // 反序列化默认家
-        ListNBT defaultHomeNBT = nbt.getList("defaultHome", 10);
+        NBTTagList defaultHomeNBT = nbt.getTagList("defaultHome", 10);
         Map<String, String> defaultHome = new HashMap<>();
-        for (int i = 0; i < defaultHomeNBT.size(); i++) {
-            CompoundNBT defaultHomeTag = defaultHomeNBT.getCompound(i);
+        for (int i = 0; i < defaultHomeNBT.tagCount(); i++) {
+            NBTTagCompound defaultHomeTag = defaultHomeNBT.getCompoundTagAt(i);
             defaultHome.put(defaultHomeTag.getString("key"), defaultHomeTag.getString("value"));
         }
         this.setDefaultHome(defaultHome);
     }
 
     @Override
-    public void save(ServerPlayerEntity player) {
-        player.getCapability(PlayerTeleportDataCapability.PLAYER_DATA).ifPresent(this::copyFrom);
+    public void save(EntityPlayerMP player) {
+        IPlayerTeleportData capability = player.getCapability(PlayerTeleportDataCapability.PLAYER_DATA, null);
+        if (capability != null) {
+            capability.copyFrom(this);
+        }
     }
 }

@@ -2,10 +2,10 @@ package xin.vanilla.narcissus.capability.world;
 
 import lombok.Getter;
 import lombok.NonNull;
-import net.minecraft.entity.player.ServerPlayerEntity;
-import net.minecraft.nbt.CompoundNBT;
-import net.minecraft.nbt.ListNBT;
-import net.minecraft.world.server.ServerWorld;
+import net.minecraft.entity.player.EntityPlayerMP;
+import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.nbt.NBTTagList;
+import net.minecraft.world.WorldServer;
 import net.minecraftforge.common.util.WorldCapabilityData;
 import xin.vanilla.narcissus.NarcissusFarewell;
 import xin.vanilla.narcissus.config.Coordinate;
@@ -29,41 +29,42 @@ public class WorldStageData extends WorldCapabilityData {
         super(DATA_NAME);
     }
 
-    public void load(CompoundNBT nbt) {
+    @Override
+    public void readFromNBT(NBTTagCompound nbt) {
         this.stageCoordinate = new LinkedHashMap<>();
-        ListNBT stageCoordinateNBT = nbt.getList("stageCoordinate", 10);
+        NBTTagList stageCoordinateNBT = nbt.getTagList("stageCoordinate", 10);
         Map<KeyValue<String, String>, Coordinate> stageCoordinate = new HashMap<>();
-        for (int i = 0; i < stageCoordinateNBT.size(); i++) {
-            CompoundNBT stageCoordinateTag = stageCoordinateNBT.getCompound(i);
+        for (int i = 0; i < stageCoordinateNBT.tagCount(); i++) {
+            NBTTagCompound stageCoordinateTag = stageCoordinateNBT.getCompoundTagAt(i);
             stageCoordinate.put(new KeyValue<>(stageCoordinateTag.getString("key"), stageCoordinateTag.getString("value")),
-                    Coordinate.readFromNBT(stageCoordinateTag.getCompound("coordinate")));
+                    Coordinate.readFromNBT(stageCoordinateTag.getCompoundTag("coordinate")));
         }
         this.setCoordinate(stageCoordinate);
     }
 
     @Override
     @NonNull
-    public CompoundNBT save(CompoundNBT nbt) {
-        ListNBT stageCoordinateNBT = new ListNBT();
+    public NBTTagCompound writeToNBT(NBTTagCompound nbt) {
+        NBTTagList stageCoordinateNBT = new NBTTagList();
         for (Map.Entry<KeyValue<String, String>, Coordinate> entry : this.getStageCoordinate().entrySet()) {
-            CompoundNBT stageCoordinateTag = new CompoundNBT();
-            stageCoordinateTag.putString("key", entry.getKey().getKey());
-            stageCoordinateTag.putString("value", entry.getKey().getValue());
-            stageCoordinateTag.put("coordinate", entry.getValue().writeToNBT());
-            stageCoordinateNBT.add(stageCoordinateTag);
+            NBTTagCompound stageCoordinateTag = new NBTTagCompound();
+            stageCoordinateTag.setString("key", entry.getKey().getKey());
+            stageCoordinateTag.setString("value", entry.getKey().getValue());
+            stageCoordinateTag.setTag("coordinate", entry.getValue().writeToNBT());
+            stageCoordinateNBT.appendTag(stageCoordinateTag);
         }
-        nbt.put("stageCoordinate", stageCoordinateNBT);
+        nbt.setTag("stageCoordinate", stageCoordinateNBT);
         return nbt;
     }
 
     public void setCoordinate(Map<KeyValue<String, String>, Coordinate> stageCoordinate) {
         this.stageCoordinate = stageCoordinate;
-        super.setDirty();
+        super.markDirty();
     }
 
     public void addCoordinate(KeyValue<String, String> key, Coordinate coordinate) {
         this.stageCoordinate.put(key, coordinate);
-        super.setDirty();
+        super.markDirty();
     }
 
     public int getCoordinateSize(String name) {
@@ -89,14 +90,19 @@ public class WorldStageData extends WorldCapabilityData {
     }
 
     public static WorldStageData get() {
-        return get(NarcissusFarewell.getServerInstance().getAllLevels().iterator().next());
+        return get(NarcissusFarewell.getServerInstance().worlds[0]);
     }
 
-    public static WorldStageData get(ServerPlayerEntity player) {
-        return get(player.getLevel());
+    public static WorldStageData get(EntityPlayerMP player) {
+        return get(player.getServerWorld());
     }
 
-    public static WorldStageData get(ServerWorld world) {
-        return world.getDataStorage().computeIfAbsent(WorldStageData::new, DATA_NAME);
+    public static WorldStageData get(WorldServer world) {
+        WorldStageData stageData = (WorldStageData) world.loadData(WorldStageData.class, DATA_NAME);
+        if (stageData == null) {
+            stageData = new WorldStageData();
+            world.setData(DATA_NAME, stageData);
+        }
+        return stageData;
     }
 }

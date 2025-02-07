@@ -3,7 +3,7 @@ package xin.vanilla.narcissus.capability;
 import lombok.Data;
 import lombok.NonNull;
 import lombok.experimental.Accessors;
-import net.minecraft.nbt.CompoundNBT;
+import net.minecraft.nbt.NBTTagCompound;
 import xin.vanilla.narcissus.config.Coordinate;
 import xin.vanilla.narcissus.enums.ETeleportType;
 import xin.vanilla.narcissus.util.DateUtils;
@@ -43,24 +43,24 @@ public class TeleportRecord implements Serializable, Cloneable {
     /**
      * 序列化
      */
-    public CompoundNBT writeToNBT() {
-        CompoundNBT tag = new CompoundNBT();
-        tag.putString("teleportTime", DateUtils.toDateTimeString(teleportTime));
-        tag.putString("teleportType", teleportType.name());
-        tag.put("before", before.writeToNBT());
-        tag.put("after", after.writeToNBT());
+    public NBTTagCompound writeToNBT() {
+        NBTTagCompound tag = new NBTTagCompound();
+        tag.setString("teleportTime", DateUtils.toDateTimeString(teleportTime));
+        tag.setString("teleportType", teleportType.name());
+        tag.setTag("before", before.writeToNBT());
+        tag.setTag("after", after.writeToNBT());
         return tag;
     }
 
     /**
      * 反序列化
      */
-    public static TeleportRecord readFromNBT(CompoundNBT tag) {
+    public static TeleportRecord readFromNBT(NBTTagCompound tag) {
         TeleportRecord record = new TeleportRecord();
         record.teleportTime = DateUtils.format(tag.getString("teleportTime"));
         record.teleportType = ETeleportType.valueOf(tag.getString("teleportType"));
-        record.before = Coordinate.readFromNBT(tag.getCompound("before"));
-        record.after = Coordinate.readFromNBT(tag.getCompound("after"));
+        record.before = Coordinate.readFromNBT(tag.getCompoundTag("before"));
+        record.after = Coordinate.readFromNBT(tag.getCompoundTag("after"));
         return record;
     }
 

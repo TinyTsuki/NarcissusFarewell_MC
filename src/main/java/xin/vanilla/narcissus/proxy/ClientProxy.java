@@ -1,18 +1,20 @@
-package xin.vanilla.narcissus.network;
+package xin.vanilla.narcissus.proxy;
 
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.entity.player.ClientPlayerEntity;
+import net.minecraft.client.entity.EntityPlayerSP;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import xin.vanilla.narcissus.NarcissusFarewell;
 import xin.vanilla.narcissus.capability.player.IPlayerTeleportData;
 import xin.vanilla.narcissus.capability.player.PlayerTeleportDataCapability;
+import xin.vanilla.narcissus.network.ModNetworkHandler;
+import xin.vanilla.narcissus.network.PlayerDataReceivedNotice;
+import xin.vanilla.narcissus.network.PlayerDataSyncPacket;
 
 public class ClientProxy {
     public static final Logger LOGGER = LogManager.getLogger();
 
     public static void handleSynPlayerData(PlayerDataSyncPacket packet) {
-        ClientPlayerEntity player = Minecraft.getInstance().player;
+        EntityPlayerSP player = Minecraft.getMinecraft().player;
         if (player != null) {
             try {
                 IPlayerTeleportData clientData = PlayerTeleportDataCapability.getData(player);
@@ -22,7 +24,6 @@ public class ClientProxy {
             } catch (Exception ignored) {
                 LOGGER.debug("Client: Player data received failed.");
             }
-            NarcissusFarewell.setEnabled(true);
         }
     }
 }

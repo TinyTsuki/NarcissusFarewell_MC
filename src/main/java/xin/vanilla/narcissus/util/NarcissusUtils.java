@@ -1,38 +1,34 @@
 package xin.vanilla.narcissus.util;
 
-import com.mojang.brigadier.StringReader;
-import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import io.netty.buffer.Unpooled;
 import lombok.NonNull;
-import net.minecraft.block.BlockState;
+import net.minecraft.block.Block;
+import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.Minecraft;
-import net.minecraft.command.arguments.BlockStateParser;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.entity.player.ServerPlayerEntity;
+import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.inventory.IInventory;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.JsonToNBT;
 import net.minecraft.network.PacketBuffer;
-import net.minecraft.network.play.client.CClientSettingsPacket;
+import net.minecraft.network.play.client.CPacketClientSettings;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.management.UserListOpsEntry;
 import net.minecraft.util.DamageSource;
+import net.minecraft.util.EnumHandSide;
+import net.minecraft.util.NonNullList;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
-import net.minecraft.util.text.TranslationTextComponent;
+import net.minecraft.util.text.TextComponentTranslation;
+import net.minecraft.world.DimensionType;
 import net.minecraft.world.World;
+import net.minecraft.world.WorldServer;
 import net.minecraft.world.biome.Biome;
-import net.minecraft.world.dimension.DimensionType;
-import net.minecraft.world.gen.feature.structure.Structure;
-import net.minecraft.world.server.ServerWorld;
-import net.minecraftforge.fml.ModContainer;
-import net.minecraftforge.fml.ModList;
-import net.minecraftforge.forgespi.language.IModInfo;
-import net.minecraftforge.registries.ForgeRegistries;
-import net.minecraftforge.registries.GameData;
+import net.minecraft.world.gen.structure.MapGenStructureIO;
+import net.minecraftforge.fml.common.registry.ForgeRegistries;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.apache.maven.artifact.versioning.ArtifactVersion;
 import xin.vanilla.narcissus.NarcissusFarewell;
 import xin.vanilla.narcissus.capability.TeleportRecord;
 import xin.vanilla.narcissus.capability.player.IPlayerTeleportData;
@@ -42,7 +38,6 @@ import xin.vanilla.narcissus.config.*;
 import xin.vanilla.narcissus.enums.*;
 
 import javax.annotation.Nullable;
-import java.io.IOException;
 import java.lang.reflect.Field;
 import java.time.Duration;
 import java.time.Instant;
@@ -52,14 +47,16 @@ import java.util.stream.IntStream;
 
 public class NarcissusUtils {
 
+    private static List<String> structureList = new ArrayList<>();
+
     private static final Logger LOGGER = LogManager.getLogger();
 
     public static String getCommandPrefix() {
-        String commandPrefix = ServerConfig.COMMAND_PREFIX.get();
+        String commandPrefix = ServerConfig.COMMAND_PREFIX;
         if (StringUtils.isNullOrEmptyEx(commandPrefix) || !commandPrefix.matches("^(\\w ?)+$")) {
-            ServerConfig.COMMAND_PREFIX.set(NarcissusFarewell.DEFAULT_COMMAND_PREFIX);
+            ServerConfig.COMMAND_PREFIX = NarcissusFarewell.DEFAULT_COMMAND_PREFIX;
         }
-        return ServerConfig.COMMAND_PREFIX.get().trim();
+        return ServerConfig.COMMAND_PREFIX.trim();
     }
 
     // region 安全坐标
@@ -67,32 +64,18 @@ public class NarcissusUtils {
     /**
      * 不安全的方块
      */
-    private static final Set<BlockState> UNSAFE_BLOCKS = ServerConfig.UNSAFE_BLOCKS.get().stream()
-            .map(block -> {
-                try {
-                    return new BlockStateParser(new StringReader(block), false).parse(true).getState();
-                } catch (CommandSyntaxException e) {
-                    LOGGER.error("Invalid unsafe block: {}", block, e);
-                    return null;
-                }
-            })
+    private static final Set<Block> UNSAFE_BLOCKS = Arrays.stream(ServerConfig.UNSAFE_BLOCKS)
+            .map(Block::getBlockFromName)
             .filter(Objects::nonNull)
             .collect(Collectors.toSet());
-    private static final Set<BlockState> SUFFOCATING_BLOCKS = ServerConfig.SUFFOCATING_BLOCKS.get().stream()
-            .map(block -> {
-                try {
-                    return new BlockStateParser(new StringReader(block), false).parse(true).getState();
-                } catch (CommandSyntaxException e) {
-                    LOGGER.error("Invalid unsafe block: {}", block, e);
-                    return null;
-                }
-            })
+    private static final Set<Block> SUFFOCATING_BLOCKS = Arrays.stream(ServerConfig.SUFFOCATING_BLOCKS)
+            .map(Block::getBlockFromName)
             .filter(Objects::nonNull)
             .collect(Collectors.toSet());
 
-    public static Coordinate findTopCandidate(ServerWorld world, Coordinate start) {
-        if (start.getY() >= world.getMaxBuildHeight()) return null;
-        for (int y : IntStream.range((int) start.getY() + 1, world.getMaxBuildHeight()).boxed()
+    public static Coordinate findTopCandidate(WorldServer world, Coordinate start) {
+        if (start.getY() >= world.getHeight()) return null;
+        for (int y : IntStream.range((int) start.getY() + 1, world.getHeight()).boxed()
                 .sorted(Comparator.comparingInt(Integer::intValue).reversed())
                 .collect(Collectors.toList())) {
             Coordinate candidate = new Coordinate().setX(start.getX()).setY(y).setZ(start.getZ())
@@ -106,7 +89,7 @@ public class NarcissusUtils {
         return null;
     }
 
-    public static Coordinate findBottomCandidate(ServerWorld world, Coordinate start) {
+    public static Coordinate findBottomCandidate(WorldServer world, Coordinate start) {
         if (start.getY() <= 0) return null;
         for (int y : IntStream.range(0, (int) start.getY() - 1).boxed()
                 .sorted(Comparator.comparingInt(Integer::intValue))
@@ -122,9 +105,9 @@ public class NarcissusUtils {
         return null;
     }
 
-    public static Coordinate findUpCandidate(ServerWorld world, Coordinate start) {
-        if (start.getY() >= world.getMaxBuildHeight()) return null;
-        for (int y : IntStream.range((int) start.getY() + 1, world.getMaxBuildHeight()).boxed()
+    public static Coordinate findUpCandidate(WorldServer world, Coordinate start) {
+        if (start.getY() >= world.getHeight()) return null;
+        for (int y : IntStream.range((int) start.getY() + 1, world.getHeight()).boxed()
                 .sorted(Comparator.comparingInt(a -> a - (int) start.getY()))
                 .collect(Collectors.toList())) {
             Coordinate candidate = new Coordinate().setX(start.getX()).setY(y).setZ(start.getZ())
@@ -138,7 +121,7 @@ public class NarcissusUtils {
         return null;
     }
 
-    public static Coordinate findDownCandidate(ServerWorld world, Coordinate start) {
+    public static Coordinate findDownCandidate(WorldServer world, Coordinate start) {
         if (start.getY() <= 0) return null;
         for (int y : IntStream.range(0, (int) start.getY() - 1).boxed()
                 .sorted(Comparator.comparingInt(a -> (int) start.getY() - a))
@@ -154,22 +137,22 @@ public class NarcissusUtils {
         return null;
     }
 
-    public static Coordinate findViewEndCandidate(ServerPlayerEntity player, boolean safe, int range) {
+    public static Coordinate findViewEndCandidate(EntityPlayerMP player, boolean safe, int range) {
         double stepScale = 0.75;
         Coordinate start = new Coordinate(player);
         Coordinate result = null;
 
         // 获取玩家的起始位置
-        Vec3d startPosition = player.getEyePosition(1.0F);
+        Vec3d startPosition = player.getPositionEyes(1.0F);
 
         // 获取玩家的视线方向
-        Vec3d direction = player.getViewVector(1.0F).normalize();
+        Vec3d direction = player.getLook(1.0F).normalize();
         // 步长
         Vec3d stepVector = direction.scale(stepScale);
 
         // 初始化变量
         Vec3d currentPosition = startPosition;
-        World world = player.getLevel();
+        World world = player.world;
 
         // 从近到远寻找碰撞点
         for (int stepCount = 0; stepCount <= range; stepCount++) {
@@ -178,10 +161,10 @@ public class NarcissusUtils {
             BlockPos currentBlockPos = new BlockPos(currentPosition.x, currentPosition.y, currentPosition.z);
 
             // 获取当前方块状态
-            BlockState blockState = world.getBlockState(currentBlockPos);
+            IBlockState blockState = world.getBlockState(currentBlockPos);
 
             // 检测方块是否不可穿过
-            if (blockState.getMaterial().blocksMotion()) {
+            if (blockState.getMaterial().blocksMovement()) {
                 result = start.clone().fromVector3d(startPosition.add(stepVector.scale(stepCount - 1)));
                 break;
             }
@@ -295,17 +278,17 @@ public class NarcissusUtils {
     }
 
     private static boolean isSafeCoordinate(World world, Coordinate coordinate) {
-        BlockState block = world.getBlockState(coordinate.toBlockPos());
-        BlockState blockAbove = world.getBlockState(coordinate.toBlockPos().above());
-        BlockState blockBelow = world.getBlockState(coordinate.toBlockPos().below());
+        IBlockState block = world.getBlockState(coordinate.toBlockPos());
+        IBlockState blockAbove = world.getBlockState(coordinate.toBlockPos().add(0, 1, 0));
+        IBlockState blockBelow = world.getBlockState(coordinate.toBlockPos().add(0, -1, 0));
         return isSafeBlock(block, blockAbove, blockBelow);
     }
 
-    private static boolean isSafeBlock(BlockState block, BlockState blockAbove, BlockState blockBelow) {
-        return (!block.getMaterial().blocksMotion() && !UNSAFE_BLOCKS.contains(block))
-                && (!blockAbove.getMaterial().blocksMotion() && !UNSAFE_BLOCKS.contains(blockAbove) && !SUFFOCATING_BLOCKS.contains(blockAbove))
+    private static boolean isSafeBlock(IBlockState block, IBlockState blockAbove, IBlockState blockBelow) {
+        return (!block.getMaterial().blocksMovement() && !UNSAFE_BLOCKS.contains(block.getBlock()))
+                && (!blockAbove.getMaterial().blocksMovement() && !UNSAFE_BLOCKS.contains(blockAbove.getBlock()) && !SUFFOCATING_BLOCKS.contains(blockAbove.getBlock()))
                 && blockBelow.getMaterial().isSolid()
-                && !UNSAFE_BLOCKS.contains(blockBelow);
+                && !UNSAFE_BLOCKS.contains(blockBelow.getBlock());
     }
 
     // endregion 安全坐标
@@ -313,8 +296,8 @@ public class NarcissusUtils {
     /**
      * 获取指定维度的世界实例
      */
-    public static ServerWorld getWorld(DimensionType dimension) {
-        return NarcissusFarewell.getServerInstance().getLevel(dimension);
+    public static WorldServer getWorld(DimensionType dimension) {
+        return NarcissusFarewell.getServerInstance().getWorld(dimension.getId());
     }
 
     public static Biome getBiome(String id) {
@@ -334,22 +317,14 @@ public class NarcissusUtils {
      * @param radius      搜索半径
      * @param minDistance 最小距离
      */
-    public static Coordinate findNearestBiome(ServerWorld world, Coordinate start, Biome biome, int radius, int minDistance) {
-        BlockPos pos = world.getChunkSource().getGenerator().getBiomeSource().findBiome((int) start.getX(), (int) start.getZ(), radius, new ArrayList<Biome>() {{
+    public static Coordinate findNearestBiome(WorldServer world, Coordinate start, Biome biome, int radius, int minDistance) {
+        BlockPos pos = world.getBiomeProvider().findBiomePosition((int) start.getX(), (int) start.getZ(), radius, new ArrayList<Biome>() {{
             add(biome);
-        }}, world.getRandom());
+        }}, world.rand);
         if (pos != null) {
             return start.clone().setX(pos.getX()).setZ(pos.getZ()).setSafe(true);
         }
         return null;
-    }
-
-    public static Structure<?> getStructure(String id) {
-        return getStructure(new ResourceLocation(id));
-    }
-
-    public static Structure<?> getStructure(ResourceLocation id) {
-        return GameData.getStructureFeatures().get(id);
     }
 
     /**
@@ -360,15 +335,30 @@ public class NarcissusUtils {
      * @param struct 目标结构
      * @param radius 搜索半径
      */
-    public static Coordinate findNearestStruct(ServerWorld world, Coordinate start, Structure<?> struct, int radius) {
-        BlockPos pos = world.findNearestMapFeature(struct.getRegistryName().toString().replace("minecraft:", ""), start.toBlockPos(), radius, true);
+    public static Coordinate findNearestStruct(WorldServer world, Coordinate start, String struct, int radius) {
+        BlockPos pos = world.findNearestStructure(struct, start.toBlockPos(), true);
         if (pos != null) {
             return start.clone().setX(pos.getX()).setZ(pos.getZ()).setSafe(true);
         }
         return null;
     }
 
-    public static KeyValue<String, String> getPlayerHomeKey(ServerPlayerEntity player, DimensionType dimension, String name) {
+    @SuppressWarnings("unchecked")
+    public static List<String> getStructureList() {
+        if (structureList.isEmpty()) {
+            try {
+                Field field = MapGenStructureIO.class.getDeclaredField(FieldUtils.getStartNameToClassMapFieldName());
+                field.setAccessible(true);
+                Map<String, Class<?>> map = (Map<String, Class<?>>) field.get(null);
+                structureList = new ArrayList<>(map.keySet());
+            } catch (Exception e) {
+                LOGGER.error(e);
+            }
+        }
+        return structureList;
+    }
+
+    public static KeyValue<String, String> getPlayerHomeKey(EntityPlayerMP player, DimensionType dimension, String name) {
         IPlayerTeleportData data = PlayerTeleportDataCapability.getData(player);
         Map<String, String> defaultHome = data.getDefaultHome();
         if (defaultHome.isEmpty() && dimension == null && StringUtils.isNullOrEmpty(name) && data.getHomeCoordinate().size() != 1) {
@@ -379,7 +369,7 @@ public class NarcissusUtils {
             if (defaultHome.isEmpty() || !defaultHome.containsValue(name)) {
                 keyValue = data.getHomeCoordinate().keySet().stream()
                         .filter(key -> key.getValue().equals(name))
-                        .filter(key -> key.getKey().equals(player.level.dimension.getType().getRegistryName().toString()))
+                        .filter(key -> key.getKey().equals(DimensionUtils.getStringIdFromInt(player.world.provider.getDimensionType().getId())))
                         .findFirst().orElse(null);
             } else if (defaultHome.containsValue(name)) {
                 List<Map.Entry<String, String>> entryList = defaultHome.entrySet().stream().filter(entry -> entry.getValue().equals(name)).collect(Collectors.toList());
@@ -388,21 +378,21 @@ public class NarcissusUtils {
                 }
             }
         } else if (dimension != null && StringUtils.isNullOrEmpty(name)) {
-            if (defaultHome.containsKey(dimension.getRegistryName().toString())) {
-                keyValue = new KeyValue<>(dimension.getRegistryName().toString(), defaultHome.get(dimension.getRegistryName().toString()));
+            if (defaultHome.containsKey(DimensionUtils.getStringIdFromInt(dimension.getId()))) {
+                keyValue = new KeyValue<>(DimensionUtils.getStringIdFromInt(dimension.getId()), defaultHome.get(DimensionUtils.getStringIdFromInt(dimension.getId())));
             }
         } else if (dimension != null && StringUtils.isNotNullOrEmpty(name)) {
             keyValue = data.getHomeCoordinate().keySet().stream()
                     .filter(key -> key.getValue().equals(name))
-                    .filter(key -> key.getKey().equals(dimension.getRegistryName().toString()))
+                    .filter(key -> key.getKey().equals(DimensionUtils.getStringIdFromInt(dimension.getId())))
                     .findFirst().orElse(null);
         } else if (!defaultHome.isEmpty() && dimension == null && StringUtils.isNullOrEmpty(name)) {
             if (defaultHome.size() == 1) {
                 keyValue = new KeyValue<>(defaultHome.keySet().iterator().next(), defaultHome.values().iterator().next());
             } else {
-                String value = defaultHome.getOrDefault(player.level.dimension.getType().getRegistryName().toString(), null);
+                String value = defaultHome.getOrDefault(DimensionUtils.getStringIdFromInt(player.world.provider.getDimensionType().getId()), null);
                 if (value != null) {
-                    keyValue = new KeyValue<>(player.level.dimension.getType().getRegistryName().toString(), value);
+                    keyValue = new KeyValue<>(DimensionUtils.getStringIdFromInt(player.world.provider.getDimensionType().getId()), value);
                 }
             }
         } else if (defaultHome.isEmpty() && dimension == null && StringUtils.isNullOrEmpty(name) && data.getHomeCoordinate().size() == 1) {
@@ -418,8 +408,13 @@ public class NarcissusUtils {
      * @param dimension 维度
      * @param name      名称
      */
-    public static Coordinate getPlayerHome(ServerPlayerEntity player, DimensionType dimension, String name) {
+    public static Coordinate getPlayerHome(EntityPlayerMP player, DimensionType dimension, String name) {
         return PlayerTeleportDataCapability.getData(player).getHomeCoordinate().getOrDefault(getPlayerHomeKey(player, dimension, name), null);
+    }
+
+    public static boolean isPlayerHome(EntityPlayerMP player, String name) {
+        return PlayerTeleportDataCapability.getData(player).getHomeCoordinate().keySet().stream()
+                .anyMatch(key -> key.getValue().equals(name));
     }
 
     /**
@@ -428,15 +423,15 @@ public class NarcissusUtils {
      * @param player 玩家
      * @return 驿站key
      */
-    public static KeyValue<String, String> findNearestStageKey(ServerPlayerEntity player) {
+    public static KeyValue<String, String> findNearestStageKey(EntityPlayerMP player) {
         WorldStageData stageData = WorldStageData.get();
         Map.Entry<KeyValue<String, String>, Coordinate> stageEntry = stageData.getStageCoordinate().entrySet().stream()
-                .filter(entry -> entry.getKey().getKey().equals(player.level.dimension.getType().getRegistryName().toString()))
+                .filter(entry -> entry.getKey().getKey().equals(DimensionUtils.getStringIdFromInt(player.world.provider.getDimensionType().getId())))
                 .min(Comparator.comparingInt(entry -> {
                     Coordinate value = entry.getValue();
-                    double dx = value.getX() - player.x;
-                    double dy = value.getY() - player.y;
-                    double dz = value.getZ() - player.z;
+                    double dx = value.getX() - player.posX;
+                    double dy = value.getY() - player.posY;
+                    double dz = value.getZ() - player.posZ;
                     // 返回欧几里得距离的平方（避免开方操作，提高性能）
                     return (int) (dx * dx + dy * dy + dz * dz);
                 })).orElse(null);
@@ -451,7 +446,7 @@ public class NarcissusUtils {
      * @param dimension 维度
      * @return 查询到的离开坐标（如果未找到则返回 null）
      */
-    public static TeleportRecord getBackTeleportRecord(ServerPlayerEntity player, @Nullable ETeleportType type, @Nullable DimensionType dimension) {
+    public static TeleportRecord getBackTeleportRecord(EntityPlayerMP player, @Nullable ETeleportType type, @Nullable DimensionType dimension) {
         TeleportRecord result = null;
         // 获取玩家的传送数据
         IPlayerTeleportData data = PlayerTeleportDataCapability.getData(player);
@@ -467,21 +462,21 @@ public class NarcissusUtils {
         return result;
     }
 
-    public static void removeBackTeleportRecord(ServerPlayerEntity player, TeleportRecord record) {
+    public static void removeBackTeleportRecord(EntityPlayerMP player, TeleportRecord record) {
         PlayerTeleportDataCapability.getData(player).getTeleportRecords().remove(record);
     }
 
     /**
      * 检查传送范围
      */
-    public static int checkRange(ServerPlayerEntity player, ETeleportType type, int range) {
+    public static int checkRange(EntityPlayerMP player, ETeleportType type, int range) {
         int maxRange;
         switch (type) {
             case TP_VIEW:
-                maxRange = ServerConfig.TELEPORT_VIEW_DISTANCE_LIMIT.get();
+                maxRange = ServerConfig.TELEPORT_VIEW_DISTANCE_LIMIT;
                 break;
             default:
-                maxRange = ServerConfig.TELEPORT_RANDOM_DISTANCE_LIMIT.get();
+                maxRange = ServerConfig.TELEPORT_RANDOM_DISTANCE_LIMIT;
                 break;
         }
         if (range > maxRange) {
@@ -505,7 +500,7 @@ public class NarcissusUtils {
      * @param from 传送者
      * @param to   目标玩家
      */
-    public static void teleportTo(@NonNull ServerPlayerEntity from, @NonNull ServerPlayerEntity to, ETeleportType type, boolean safe) {
+    public static void teleportTo(@NonNull EntityPlayerMP from, @NonNull EntityPlayerMP to, ETeleportType type, boolean safe) {
         if (ETeleportType.TP_HERE == type) {
             teleportTo(to, new Coordinate(from).setSafe(safe), type);
         } else {
@@ -519,35 +514,75 @@ public class NarcissusUtils {
      * @param player 玩家
      * @param after  坐标
      */
-    public static void teleportTo(@NonNull ServerPlayerEntity player, @NonNull Coordinate after, ETeleportType type) {
+    public static void teleportTo(@NonNull EntityPlayerMP player, @NonNull Coordinate after, ETeleportType type) {
         Coordinate before = new Coordinate(player);
-        World world = player.level;
+        World world = player.world;
         MinecraftServer server = player.getServer();
         if (world != null && server != null) {
-            ServerWorld level = server.getLevel(after.getDimension());
-            if (level != null) {
-                if (after.isSafe()) {
-                    after = findSafeCoordinate(after);
-                }
-                player.teleportTo(level, after.getX(), after.getY(), after.getZ()
-                        , after.getYaw() == 0 ? player.yRot : (float) after.getYaw()
-                        , after.getPitch() == 0 ? player.xRot : (float) after.getPitch());
-                TeleportRecord record = new TeleportRecord();
-                record.setTeleportTime(new Date());
-                record.setTeleportType(type);
-                record.setBefore(before);
-                record.setAfter(after);
-                PlayerTeleportDataCapability.getData(player).addTeleportRecords(record);
+            if (after.isSafe()) {
+                after = findSafeCoordinate(after);
             }
+            after.setY(Math.floor(after.getY()) + 0.1);
+            if (before.getDimension() == after.getDimension()) {
+                player.setPositionAndUpdate(after.getX(), after.getY(), after.getZ());
+                player.cameraYaw = after.getYaw() == 0 ? player.cameraYaw : (float) after.getYaw();
+                player.cameraPitch = after.getPitch() == 0 ? player.cameraPitch : (float) after.getPitch();
+            } else {
+                server.getPlayerList().transferPlayerToDimension(player, after.getDimension().getId(), new TeleporterCustom((WorldServer) world, after));
+            }
+            TeleportRecord record = new TeleportRecord();
+            record.setTeleportTime(new Date());
+            record.setTeleportType(type);
+            record.setBefore(before);
+            record.setAfter(after);
+            PlayerTeleportDataCapability.getData(player).addTeleportRecords(record);
         }
+    }
+
+    public static List<EntityPlayerMP> getPlayer(EntityPlayerMP player, String name) {
+        List<EntityPlayerMP> players = new ArrayList<>();
+        try {
+            if (StringUtils.isNotNullOrEmpty(name)) {
+                if (name.startsWith("@")) {
+                    switch (name.substring(1)) {
+                        case "a":
+                            players.addAll(NarcissusFarewell.getServerInstance().getPlayerList().getPlayers());
+                            break;
+                        case "r":
+                            players.add(getRandomPlayer());
+                            break;
+                        case "p":
+                            // 寻找距离玩家最近的其他玩家
+                            if (player != null) {
+                                players.add(NarcissusFarewell.getServerInstance().getPlayerList().getPlayers().stream()
+                                        .filter(p -> !p.getUniqueID().equals(player.getUniqueID()))
+                                        .min(Comparator.comparingInt(p -> {
+                                            double dx = p.posX - player.posX;
+                                            double dy = p.posY - player.posY;
+                                            double dz = p.posZ - player.posZ;
+                                            return (int) (dx * dx + dy * dy + dz * dz);
+                                        })).orElse(null));
+                            }
+                            break;
+                        case "s":
+                            players.add(player);
+                            break;
+                    }
+                } else {
+                    players.add(NarcissusFarewell.getServerInstance().getPlayerList().getPlayerByUsername(name));
+                }
+            }
+        } catch (Exception ignored) {
+        }
+        return players.stream().filter(Objects::nonNull).collect(Collectors.toList());
     }
 
     /**
      * 获取随机玩家
      */
-    public static ServerPlayerEntity getRandomPlayer() {
+    public static EntityPlayerMP getRandomPlayer() {
         try {
-            List<ServerPlayerEntity> players = NarcissusFarewell.getServerInstance().getPlayerList().getPlayers();
+            List<EntityPlayerMP> players = NarcissusFarewell.getServerInstance().getPlayerList().getPlayers();
             return players.get(new Random().nextInt(players.size()));
         } catch (Exception ignored) {
             return null;
@@ -558,8 +593,8 @@ public class NarcissusUtils {
      * 获取随机玩家UUID
      */
     public static UUID getRandomPlayerUUID() {
-        PlayerEntity randomPlayer = getRandomPlayer();
-        return randomPlayer != null ? randomPlayer.getUUID() : null;
+        EntityPlayer randomPlayer = getRandomPlayer();
+        return randomPlayer != null ? randomPlayer.getUniqueID() : null;
     }
 
     /**
@@ -567,9 +602,9 @@ public class NarcissusUtils {
      *
      * @param uuid 玩家UUID
      */
-    public static ServerPlayerEntity getPlayer(UUID uuid) {
+    public static EntityPlayerMP getPlayer(UUID uuid) {
         try {
-            return Minecraft.getInstance().level.getServer().getPlayerList().getPlayer(uuid);
+            return Minecraft.getMinecraft().world.getMinecraftServer().getPlayerList().getPlayerByUUID(uuid);
         } catch (Exception ignored) {
             return null;
         }
@@ -582,7 +617,7 @@ public class NarcissusUtils {
      * @param itemToRemove 要移除的物品
      * @return 是否全部移除成功
      */
-    public static boolean removeItemFromPlayerInventory(ServerPlayerEntity player, ItemStack itemToRemove) {
+    public static boolean removeItemFromPlayerInventory(EntityPlayerMP player, ItemStack itemToRemove) {
         IInventory inventory = player.inventory;
 
         // 剩余要移除的数量
@@ -591,14 +626,14 @@ public class NarcissusUtils {
         int successfullyRemoved = 0;
 
         // 遍历玩家背包的所有插槽
-        for (int i = 0; i < inventory.getContainerSize(); i++) {
+        for (int i = 0; i < inventory.getSizeInventory(); i++) {
             // 获取背包中的物品
-            ItemStack stack = inventory.getItem(i);
+            ItemStack stack = inventory.getStackInSlot(i);
             ItemStack copy = itemToRemove.copy();
             copy.setCount(stack.getCount());
 
             // 如果插槽中的物品是目标物品
-            if (stack.equals(copy, false)) {
+            if (ItemStack.areItemStacksEqual(stack, copy)) {
                 // 获取当前物品堆叠的数量
                 int stackSize = stack.getCount();
 
@@ -628,7 +663,7 @@ public class NarcissusUtils {
             ItemStack copy = itemToRemove.copy();
             copy.setCount(successfullyRemoved);
             // 将已移除的物品添加回背包
-            player.inventory.add(copy);
+            player.inventory.addItemStackToInventory(copy);
         }
 
         // 是否成功移除所有物品
@@ -641,8 +676,8 @@ public class NarcissusUtils {
      * @param player  发送者
      * @param message 消息
      */
-    public static void broadcastMessage(ServerPlayerEntity player, Component message) {
-        player.server.getPlayerList().broadcastMessage(new TranslationTextComponent("chat.type.announcement", player.getDisplayName(), message.toTextComponent(NarcissusUtils.getPlayerLanguage(player))), true);
+    public static void broadcastMessage(EntityPlayerMP player, Component message) {
+        player.server.getPlayerList().sendMessage(new TextComponentTranslation("chat.type.announcement", player.getDisplayName(), message.toTextComponent(NarcissusUtils.getPlayerLanguage(player))), true);
     }
 
     /**
@@ -651,7 +686,7 @@ public class NarcissusUtils {
      * @param player  玩家
      * @param message 消息
      */
-    public static void sendMessage(ServerPlayerEntity player, Component message) {
+    public static void sendMessage(EntityPlayerMP player, Component message) {
         player.sendMessage(message.toTextComponent(NarcissusUtils.getPlayerLanguage(player)));
     }
 
@@ -661,7 +696,7 @@ public class NarcissusUtils {
      * @param player  玩家
      * @param message 消息
      */
-    public static void sendMessage(ServerPlayerEntity player, String message) {
+    public static void sendMessage(EntityPlayerMP player, String message) {
         player.sendMessage(Component.literal(message).toTextComponent());
     }
 
@@ -672,7 +707,7 @@ public class NarcissusUtils {
      * @param key    翻译键
      * @param args   参数
      */
-    public static void sendTranslatableMessage(ServerPlayerEntity player, String key, Object... args) {
+    public static void sendTranslatableMessage(EntityPlayerMP player, String key, Object... args) {
         player.sendMessage(Component.translatable(key, args).setLanguageCode(NarcissusUtils.getPlayerLanguage(player)).toTextComponent());
     }
 
@@ -684,176 +719,370 @@ public class NarcissusUtils {
     public static boolean isTeleportEnabled(ETeleportType type) {
         switch (type) {
             case TP_COORDINATE:
-                return ServerConfig.SWITCH_TP_COORDINATE.get();
+                return ServerConfig.SWITCH_TP_COORDINATE;
             case TP_STRUCTURE:
-                return ServerConfig.SWITCH_TP_STRUCTURE.get();
+                return ServerConfig.SWITCH_TP_STRUCTURE;
             case TP_ASK:
-                return ServerConfig.SWITCH_TP_ASK.get();
+                return ServerConfig.SWITCH_TP_ASK;
             case TP_HERE:
-                return ServerConfig.SWITCH_TP_HERE.get();
+                return ServerConfig.SWITCH_TP_HERE;
             case TP_RANDOM:
-                return ServerConfig.SWITCH_TP_RANDOM.get();
+                return ServerConfig.SWITCH_TP_RANDOM;
             case TP_SPAWN:
-                return ServerConfig.SWITCH_TP_SPAWN.get();
+                return ServerConfig.SWITCH_TP_SPAWN;
             case TP_WORLD_SPAWN:
-                return ServerConfig.SWITCH_TP_WORLD_SPAWN.get();
+                return ServerConfig.SWITCH_TP_WORLD_SPAWN;
             case TP_TOP:
-                return ServerConfig.SWITCH_TP_TOP.get();
+                return ServerConfig.SWITCH_TP_TOP;
             case TP_BOTTOM:
-                return ServerConfig.SWITCH_TP_BOTTOM.get();
+                return ServerConfig.SWITCH_TP_BOTTOM;
             case TP_UP:
-                return ServerConfig.SWITCH_TP_UP.get();
+                return ServerConfig.SWITCH_TP_UP;
             case TP_DOWN:
-                return ServerConfig.SWITCH_TP_DOWN.get();
+                return ServerConfig.SWITCH_TP_DOWN;
             case TP_VIEW:
-                return ServerConfig.SWITCH_TP_VIEW.get();
+                return ServerConfig.SWITCH_TP_VIEW;
             case TP_HOME:
-                return ServerConfig.SWITCH_TP_HOME.get();
+                return ServerConfig.SWITCH_TP_HOME;
             case TP_STAGE:
-                return ServerConfig.SWITCH_TP_STAGE.get();
+                return ServerConfig.SWITCH_TP_STAGE;
             case TP_BACK:
-                return ServerConfig.SWITCH_TP_BACK.get();
+                return ServerConfig.SWITCH_TP_BACK;
             default:
                 return false;
+        }
+    }
+
+    /**
+     * 判断传送类型是否开启
+     *
+     * @param type 传送类型
+     */
+    public static boolean isTeleportEnabled(ECommandType type) {
+        switch (type) {
+            case TP_COORDINATE:
+            case TP_COORDINATE_CONCISE:
+                return ServerConfig.SWITCH_TP_COORDINATE;
+            case TP_STRUCTURE:
+            case TP_STRUCTURE_CONCISE:
+                return ServerConfig.SWITCH_TP_STRUCTURE;
+            case TP_ASK:
+            case TP_ASK_YES:
+            case TP_ASK_NO:
+            case TP_ASK_CONCISE:
+            case TP_ASK_YES_CONCISE:
+            case TP_ASK_NO_CONCISE:
+                return ServerConfig.SWITCH_TP_ASK;
+            case TP_HERE:
+            case TP_HERE_YES:
+            case TP_HERE_NO:
+            case TP_HERE_CONCISE:
+            case TP_HERE_YES_CONCISE:
+            case TP_HERE_NO_CONCISE:
+                return ServerConfig.SWITCH_TP_HERE;
+            case TP_RANDOM:
+            case TP_RANDOM_CONCISE:
+                return ServerConfig.SWITCH_TP_RANDOM;
+            case TP_SPAWN:
+            case TP_SPAWN_CONCISE:
+                return ServerConfig.SWITCH_TP_SPAWN;
+            case TP_WORLD_SPAWN:
+            case TP_WORLD_SPAWN_CONCISE:
+                return ServerConfig.SWITCH_TP_WORLD_SPAWN;
+            case TP_TOP:
+            case TP_TOP_CONCISE:
+                return ServerConfig.SWITCH_TP_TOP;
+            case TP_BOTTOM:
+            case TP_BOTTOM_CONCISE:
+                return ServerConfig.SWITCH_TP_BOTTOM;
+            case TP_UP:
+            case TP_UP_CONCISE:
+                return ServerConfig.SWITCH_TP_UP;
+            case TP_DOWN:
+            case TP_DOWN_CONCISE:
+                return ServerConfig.SWITCH_TP_DOWN;
+            case TP_VIEW:
+            case TP_VIEW_CONCISE:
+                return ServerConfig.SWITCH_TP_VIEW;
+            case TP_HOME:
+            case SET_HOME:
+            case DEL_HOME:
+            case TP_HOME_CONCISE:
+            case SET_HOME_CONCISE:
+            case DEL_HOME_CONCISE:
+                return ServerConfig.SWITCH_TP_HOME;
+            case TP_STAGE:
+            case SET_STAGE:
+            case DEL_STAGE:
+            case TP_STAGE_CONCISE:
+            case SET_STAGE_CONCISE:
+            case DEL_STAGE_CONCISE:
+                return ServerConfig.SWITCH_TP_STAGE;
+            case TP_BACK:
+            case TP_BACK_CONCISE:
+                return ServerConfig.SWITCH_TP_BACK;
+            default:
+                return true;
         }
     }
 
     public static String getCommand(ETeleportType type) {
         switch (type) {
             case TP_COORDINATE:
-                return ServerConfig.COMMAND_TP_COORDINATE.get();
+                return ServerConfig.COMMAND_TP_COORDINATE;
             case TP_STRUCTURE:
-                return ServerConfig.COMMAND_TP_STRUCTURE.get();
+                return ServerConfig.COMMAND_TP_STRUCTURE;
             case TP_ASK:
-                return ServerConfig.COMMAND_TP_ASK.get();
+                return ServerConfig.COMMAND_TP_ASK;
             case TP_HERE:
-                return ServerConfig.COMMAND_TP_HERE.get();
+                return ServerConfig.COMMAND_TP_HERE;
             case TP_RANDOM:
-                return ServerConfig.COMMAND_TP_RANDOM.get();
+                return ServerConfig.COMMAND_TP_RANDOM;
             case TP_SPAWN:
-                return ServerConfig.COMMAND_TP_SPAWN.get();
+                return ServerConfig.COMMAND_TP_SPAWN;
             case TP_WORLD_SPAWN:
-                return ServerConfig.COMMAND_TP_WORLD_SPAWN.get();
+                return ServerConfig.COMMAND_TP_WORLD_SPAWN;
             case TP_TOP:
-                return ServerConfig.COMMAND_TP_TOP.get();
+                return ServerConfig.COMMAND_TP_TOP;
             case TP_BOTTOM:
-                return ServerConfig.COMMAND_TP_BOTTOM.get();
+                return ServerConfig.COMMAND_TP_BOTTOM;
             case TP_UP:
-                return ServerConfig.COMMAND_TP_UP.get();
+                return ServerConfig.COMMAND_TP_UP;
             case TP_DOWN:
-                return ServerConfig.COMMAND_TP_DOWN.get();
+                return ServerConfig.COMMAND_TP_DOWN;
             case TP_VIEW:
-                return ServerConfig.COMMAND_TP_VIEW.get();
+                return ServerConfig.COMMAND_TP_VIEW;
             case TP_HOME:
-                return ServerConfig.COMMAND_TP_HOME.get();
+                return ServerConfig.COMMAND_TP_HOME;
             case TP_STAGE:
-                return ServerConfig.COMMAND_TP_STAGE.get();
+                return ServerConfig.COMMAND_TP_STAGE;
             case TP_BACK:
-                return ServerConfig.COMMAND_TP_BACK.get();
+                return ServerConfig.COMMAND_TP_BACK;
             default:
                 return "";
         }
     }
 
     public static String getCommand(ECommandType type) {
-        String prefix = NarcissusUtils.getCommandPrefix();
+        return getCommand(type, true);
+    }
+
+    public static int getCommandPermissionLevel(ECommandType type) {
+        switch (type) {
+            case TP_COORDINATE:
+            case TP_COORDINATE_CONCISE:
+                return ServerConfig.PERMISSION_TP_COORDINATE;
+            case TP_STRUCTURE:
+            case TP_STRUCTURE_CONCISE:
+                return ServerConfig.PERMISSION_TP_STRUCTURE;
+            case TP_ASK:
+                // case TP_ASK_YES:
+                // case TP_ASK_NO:
+            case TP_ASK_CONCISE:
+                // case TP_ASK_YES_CONCISE:
+                // case TP_ASK_NO_CONCISE:
+                return ServerConfig.PERMISSION_TP_ASK;
+            case TP_HERE:
+                // case TP_HERE_YES:
+                // case TP_HERE_NO:
+            case TP_HERE_CONCISE:
+                // case TP_HERE_YES_CONCISE:
+                // case TP_HERE_NO_CONCISE:
+                return ServerConfig.PERMISSION_TP_HERE;
+            case TP_RANDOM:
+            case TP_RANDOM_CONCISE:
+                return ServerConfig.PERMISSION_TP_RANDOM;
+            case TP_SPAWN:
+            case TP_SPAWN_CONCISE:
+                return ServerConfig.PERMISSION_TP_SPAWN;
+            case TP_WORLD_SPAWN:
+            case TP_WORLD_SPAWN_CONCISE:
+                return ServerConfig.PERMISSION_TP_WORLD_SPAWN;
+            case TP_TOP:
+            case TP_TOP_CONCISE:
+                return ServerConfig.PERMISSION_TP_TOP;
+            case TP_BOTTOM:
+            case TP_BOTTOM_CONCISE:
+                return ServerConfig.PERMISSION_TP_BOTTOM;
+            case TP_UP:
+            case TP_UP_CONCISE:
+                return ServerConfig.PERMISSION_TP_UP;
+            case TP_DOWN:
+            case TP_DOWN_CONCISE:
+                return ServerConfig.PERMISSION_TP_DOWN;
+            case TP_VIEW:
+            case TP_VIEW_CONCISE:
+                return ServerConfig.PERMISSION_TP_VIEW;
+            case TP_HOME:
+            case SET_HOME:
+            case DEL_HOME:
+            case TP_HOME_CONCISE:
+            case SET_HOME_CONCISE:
+            case DEL_HOME_CONCISE:
+                return ServerConfig.PERMISSION_TP_HOME;
+            case TP_STAGE:
+            case TP_STAGE_CONCISE:
+                return ServerConfig.PERMISSION_TP_STAGE;
+            case SET_STAGE:
+            case SET_STAGE_CONCISE:
+                return ServerConfig.PERMISSION_SET_STAGE;
+            case DEL_STAGE:
+            case DEL_STAGE_CONCISE:
+                return ServerConfig.PERMISSION_DEL_STAGE;
+            case TP_BACK:
+            case TP_BACK_CONCISE:
+                return ServerConfig.PERMISSION_TP_BACK;
+            default:
+                return 0;
+        }
+    }
+
+    public static int getCommandPermissionLevel(ETeleportType type) {
+        switch (type) {
+            case TP_COORDINATE:
+                return ServerConfig.PERMISSION_TP_COORDINATE;
+            case TP_STRUCTURE:
+                return ServerConfig.PERMISSION_TP_STRUCTURE;
+            case TP_ASK:
+                return ServerConfig.PERMISSION_TP_ASK;
+            case TP_HERE:
+                return ServerConfig.PERMISSION_TP_HERE;
+            case TP_RANDOM:
+                return ServerConfig.PERMISSION_TP_RANDOM;
+            case TP_SPAWN:
+                return ServerConfig.PERMISSION_TP_SPAWN;
+            case TP_WORLD_SPAWN:
+                return ServerConfig.PERMISSION_TP_WORLD_SPAWN;
+            case TP_TOP:
+                return ServerConfig.PERMISSION_TP_TOP;
+            case TP_BOTTOM:
+                return ServerConfig.PERMISSION_TP_BOTTOM;
+            case TP_UP:
+                return ServerConfig.PERMISSION_TP_UP;
+            case TP_DOWN:
+                return ServerConfig.PERMISSION_TP_DOWN;
+            case TP_VIEW:
+                return ServerConfig.PERMISSION_TP_VIEW;
+            case TP_HOME:
+                return ServerConfig.PERMISSION_TP_HOME;
+            case TP_STAGE:
+                return ServerConfig.PERMISSION_TP_STAGE;
+            case TP_BACK:
+                return ServerConfig.PERMISSION_TP_BACK;
+            default:
+                return 0;
+        }
+    }
+
+    public static boolean hasCommandPermission(EntityPlayer player, ECommandType type) {
+        int permission = getCommandPermissionLevel(type);
+        return permission > -1 && hasPermissions(player, permission);
+    }
+
+    public static boolean hasCommandPermission(EntityPlayer player, ETeleportType type) {
+        int permission = getCommandPermissionLevel(type);
+        return permission > -1 && hasPermissions(player, permission);
+    }
+
+    public static String getCommand(ECommandType type, boolean full) {
+        String prefix = full ? NarcissusUtils.getCommandPrefix() + " " : "";
         switch (type) {
             case HELP:
-                return prefix + " help";
+                return prefix + "help";
             case DIMENSION:
-                return prefix + " " + ServerConfig.COMMAND_DIMENSION.get();
+                return prefix + ServerConfig.COMMAND_DIMENSION;
             case TP_COORDINATE:
-                return prefix + " " + ServerConfig.COMMAND_TP_COORDINATE.get();
+                return prefix + ServerConfig.COMMAND_TP_COORDINATE;
             case TP_COORDINATE_CONCISE:
-                return isConciseEnabled(type) ? ServerConfig.COMMAND_TP_COORDINATE.get() : "";
+                return isConciseEnabled(type) ? ServerConfig.COMMAND_TP_COORDINATE : "";
             case TP_STRUCTURE:
-                return prefix + " " + ServerConfig.COMMAND_TP_STRUCTURE.get();
+                return prefix + ServerConfig.COMMAND_TP_STRUCTURE;
             case TP_STRUCTURE_CONCISE:
-                return isConciseEnabled(type) ? ServerConfig.COMMAND_TP_STRUCTURE.get() : "";
+                return isConciseEnabled(type) ? ServerConfig.COMMAND_TP_STRUCTURE : "";
             case TP_ASK:
-                return prefix + " " + ServerConfig.COMMAND_TP_ASK.get();
+                return prefix + ServerConfig.COMMAND_TP_ASK;
             case TP_ASK_CONCISE:
-                return isConciseEnabled(type) ? ServerConfig.COMMAND_TP_ASK.get() : "";
+                return isConciseEnabled(type) ? ServerConfig.COMMAND_TP_ASK : "";
             case TP_ASK_YES:
-                return prefix + " " + ServerConfig.COMMAND_TP_ASK_YES.get();
+                return prefix + ServerConfig.COMMAND_TP_ASK_YES;
             case TP_ASK_YES_CONCISE:
-                return isConciseEnabled(type) ? ServerConfig.COMMAND_TP_ASK_YES.get() : "";
+                return isConciseEnabled(type) ? ServerConfig.COMMAND_TP_ASK_YES : "";
             case TP_ASK_NO:
-                return prefix + " " + ServerConfig.COMMAND_TP_ASK_NO.get();
+                return prefix + ServerConfig.COMMAND_TP_ASK_NO;
             case TP_ASK_NO_CONCISE:
-                return isConciseEnabled(type) ? ServerConfig.COMMAND_TP_ASK_NO.get() : "";
+                return isConciseEnabled(type) ? ServerConfig.COMMAND_TP_ASK_NO : "";
             case TP_HERE:
-                return prefix + " " + ServerConfig.COMMAND_TP_HERE.get();
+                return prefix + ServerConfig.COMMAND_TP_HERE;
             case TP_HERE_CONCISE:
-                return isConciseEnabled(type) ? ServerConfig.COMMAND_TP_HERE.get() : "";
+                return isConciseEnabled(type) ? ServerConfig.COMMAND_TP_HERE : "";
             case TP_HERE_YES:
-                return prefix + " " + ServerConfig.COMMAND_TP_HERE_YES.get();
+                return prefix + ServerConfig.COMMAND_TP_HERE_YES;
             case TP_HERE_YES_CONCISE:
-                return isConciseEnabled(type) ? ServerConfig.COMMAND_TP_HERE_YES.get() : "";
+                return isConciseEnabled(type) ? ServerConfig.COMMAND_TP_HERE_YES : "";
             case TP_HERE_NO:
-                return prefix + " " + ServerConfig.COMMAND_TP_HERE_NO.get();
+                return prefix + ServerConfig.COMMAND_TP_HERE_NO;
             case TP_HERE_NO_CONCISE:
-                return isConciseEnabled(type) ? ServerConfig.COMMAND_TP_HERE_NO.get() : "";
+                return isConciseEnabled(type) ? ServerConfig.COMMAND_TP_HERE_NO : "";
             case TP_RANDOM:
-                return prefix + " " + ServerConfig.COMMAND_TP_RANDOM.get();
+                return prefix + ServerConfig.COMMAND_TP_RANDOM;
             case TP_RANDOM_CONCISE:
-                return isConciseEnabled(type) ? ServerConfig.COMMAND_TP_RANDOM.get() : "";
+                return isConciseEnabled(type) ? ServerConfig.COMMAND_TP_RANDOM : "";
             case TP_SPAWN:
-                return prefix + " " + ServerConfig.COMMAND_TP_SPAWN.get();
+                return prefix + ServerConfig.COMMAND_TP_SPAWN;
             case TP_SPAWN_CONCISE:
-                return isConciseEnabled(type) ? ServerConfig.COMMAND_TP_SPAWN.get() : "";
+                return isConciseEnabled(type) ? ServerConfig.COMMAND_TP_SPAWN : "";
             case TP_WORLD_SPAWN:
-                return prefix + " " + ServerConfig.COMMAND_TP_WORLD_SPAWN.get();
+                return prefix + ServerConfig.COMMAND_TP_WORLD_SPAWN;
             case TP_WORLD_SPAWN_CONCISE:
-                return isConciseEnabled(type) ? ServerConfig.COMMAND_TP_WORLD_SPAWN.get() : "";
+                return isConciseEnabled(type) ? ServerConfig.COMMAND_TP_WORLD_SPAWN : "";
             case TP_TOP:
-                return prefix + " " + ServerConfig.COMMAND_TP_TOP.get();
+                return prefix + ServerConfig.COMMAND_TP_TOP;
             case TP_TOP_CONCISE:
-                return isConciseEnabled(type) ? ServerConfig.COMMAND_TP_TOP.get() : "";
+                return isConciseEnabled(type) ? ServerConfig.COMMAND_TP_TOP : "";
             case TP_BOTTOM:
-                return prefix + " " + ServerConfig.COMMAND_TP_BOTTOM.get();
+                return prefix + ServerConfig.COMMAND_TP_BOTTOM;
             case TP_BOTTOM_CONCISE:
-                return isConciseEnabled(type) ? ServerConfig.COMMAND_TP_BOTTOM.get() : "";
+                return isConciseEnabled(type) ? ServerConfig.COMMAND_TP_BOTTOM : "";
             case TP_UP:
-                return prefix + " " + ServerConfig.COMMAND_TP_UP.get();
+                return prefix + ServerConfig.COMMAND_TP_UP;
             case TP_UP_CONCISE:
-                return isConciseEnabled(type) ? ServerConfig.COMMAND_TP_UP.get() : "";
+                return isConciseEnabled(type) ? ServerConfig.COMMAND_TP_UP : "";
             case TP_DOWN:
-                return prefix + " " + ServerConfig.COMMAND_TP_DOWN.get();
+                return prefix + ServerConfig.COMMAND_TP_DOWN;
             case TP_DOWN_CONCISE:
-                return isConciseEnabled(type) ? ServerConfig.COMMAND_TP_DOWN.get() : "";
+                return isConciseEnabled(type) ? ServerConfig.COMMAND_TP_DOWN : "";
             case TP_VIEW:
-                return prefix + " " + ServerConfig.COMMAND_TP_VIEW.get();
+                return prefix + ServerConfig.COMMAND_TP_VIEW;
             case TP_VIEW_CONCISE:
-                return isConciseEnabled(type) ? ServerConfig.COMMAND_TP_VIEW.get() : "";
+                return isConciseEnabled(type) ? ServerConfig.COMMAND_TP_VIEW : "";
             case TP_HOME:
-                return prefix + " " + ServerConfig.COMMAND_TP_HOME.get();
+                return prefix + ServerConfig.COMMAND_TP_HOME;
             case TP_HOME_CONCISE:
-                return isConciseEnabled(type) ? ServerConfig.COMMAND_TP_HOME.get() : "";
+                return isConciseEnabled(type) ? ServerConfig.COMMAND_TP_HOME : "";
             case SET_HOME:
-                return prefix + " " + ServerConfig.COMMAND_SET_HOME.get();
+                return prefix + ServerConfig.COMMAND_SET_HOME;
             case SET_HOME_CONCISE:
-                return isConciseEnabled(type) ? ServerConfig.COMMAND_SET_HOME.get() : "";
+                return isConciseEnabled(type) ? ServerConfig.COMMAND_SET_HOME : "";
             case DEL_HOME:
-                return prefix + " " + ServerConfig.COMMAND_DEL_HOME.get();
+                return prefix + ServerConfig.COMMAND_DEL_HOME;
             case DEL_HOME_CONCISE:
-                return isConciseEnabled(type) ? ServerConfig.COMMAND_DEL_HOME.get() : "";
+                return isConciseEnabled(type) ? ServerConfig.COMMAND_DEL_HOME : "";
             case TP_STAGE:
-                return prefix + " " + ServerConfig.COMMAND_TP_STAGE.get();
+                return prefix + ServerConfig.COMMAND_TP_STAGE;
             case TP_STAGE_CONCISE:
-                return isConciseEnabled(type) ? ServerConfig.COMMAND_TP_STAGE.get() : "";
+                return isConciseEnabled(type) ? ServerConfig.COMMAND_TP_STAGE : "";
             case SET_STAGE:
-                return prefix + " " + ServerConfig.COMMAND_SET_STAGE.get();
+                return prefix + ServerConfig.COMMAND_SET_STAGE;
             case SET_STAGE_CONCISE:
-                return isConciseEnabled(type) ? ServerConfig.COMMAND_SET_STAGE.get() : "";
+                return isConciseEnabled(type) ? ServerConfig.COMMAND_SET_STAGE : "";
             case DEL_STAGE:
-                return prefix + " " + ServerConfig.COMMAND_DEL_STAGE.get();
+                return prefix + ServerConfig.COMMAND_DEL_STAGE;
             case DEL_STAGE_CONCISE:
-                return isConciseEnabled(type) ? ServerConfig.COMMAND_DEL_STAGE.get() : "";
+                return isConciseEnabled(type) ? ServerConfig.COMMAND_DEL_STAGE : "";
             case TP_BACK:
-                return prefix + " " + ServerConfig.COMMAND_TP_BACK.get();
+                return prefix + ServerConfig.COMMAND_TP_BACK;
             case TP_BACK_CONCISE:
-                return isConciseEnabled(type) ? ServerConfig.COMMAND_TP_BACK.get() : "";
+                return isConciseEnabled(type) ? ServerConfig.COMMAND_TP_BACK : "";
             default:
                 return "";
         }
@@ -863,124 +1092,99 @@ public class NarcissusUtils {
         switch (type) {
             case TP_COORDINATE:
             case TP_COORDINATE_CONCISE:
-                return ServerConfig.CONCISE_TP_COORDINATE.get();
+                return ServerConfig.CONCISE_TP_COORDINATE;
             case TP_STRUCTURE:
             case TP_STRUCTURE_CONCISE:
-                return ServerConfig.CONCISE_TP_STRUCTURE.get();
+                return ServerConfig.CONCISE_TP_STRUCTURE;
             case TP_ASK:
             case TP_ASK_CONCISE:
-                return ServerConfig.CONCISE_TP_ASK.get();
+                return ServerConfig.CONCISE_TP_ASK;
             case TP_ASK_YES:
             case TP_ASK_YES_CONCISE:
-                return ServerConfig.CONCISE_TP_ASK_YES.get();
+                return ServerConfig.CONCISE_TP_ASK_YES;
             case TP_ASK_NO:
             case TP_ASK_NO_CONCISE:
-                return ServerConfig.CONCISE_TP_ASK_NO.get();
+                return ServerConfig.CONCISE_TP_ASK_NO;
             case TP_HERE:
             case TP_HERE_CONCISE:
-                return ServerConfig.CONCISE_TP_HERE.get();
+                return ServerConfig.CONCISE_TP_HERE;
             case TP_HERE_YES:
             case TP_HERE_YES_CONCISE:
-                return ServerConfig.CONCISE_TP_HERE_YES.get();
+                return ServerConfig.CONCISE_TP_HERE_YES;
             case TP_HERE_NO:
             case TP_HERE_NO_CONCISE:
-                return ServerConfig.CONCISE_TP_HERE_NO.get();
+                return ServerConfig.CONCISE_TP_HERE_NO;
             case TP_RANDOM:
             case TP_RANDOM_CONCISE:
-                return ServerConfig.CONCISE_TP_RANDOM.get();
+                return ServerConfig.CONCISE_TP_RANDOM;
             case TP_SPAWN:
             case TP_SPAWN_CONCISE:
-                return ServerConfig.CONCISE_TP_SPAWN.get();
+                return ServerConfig.CONCISE_TP_SPAWN;
             case TP_WORLD_SPAWN:
             case TP_WORLD_SPAWN_CONCISE:
-                return ServerConfig.CONCISE_TP_WORLD_SPAWN.get();
+                return ServerConfig.CONCISE_TP_WORLD_SPAWN;
             case TP_TOP:
             case TP_TOP_CONCISE:
-                return ServerConfig.CONCISE_TP_TOP.get();
+                return ServerConfig.CONCISE_TP_TOP;
             case TP_BOTTOM:
             case TP_BOTTOM_CONCISE:
-                return ServerConfig.CONCISE_TP_BOTTOM.get();
+                return ServerConfig.CONCISE_TP_BOTTOM;
             case TP_UP:
             case TP_UP_CONCISE:
-                return ServerConfig.CONCISE_TP_UP.get();
+                return ServerConfig.CONCISE_TP_UP;
             case TP_DOWN:
             case TP_DOWN_CONCISE:
-                return ServerConfig.CONCISE_TP_DOWN.get();
+                return ServerConfig.CONCISE_TP_DOWN;
             case TP_VIEW:
             case TP_VIEW_CONCISE:
-                return ServerConfig.CONCISE_TP_VIEW.get();
+                return ServerConfig.CONCISE_TP_VIEW;
             case TP_HOME:
             case TP_HOME_CONCISE:
-                return ServerConfig.CONCISE_TP_HOME.get();
+                return ServerConfig.CONCISE_TP_HOME;
             case SET_HOME:
             case SET_HOME_CONCISE:
-                return ServerConfig.CONCISE_SET_HOME.get();
+                return ServerConfig.CONCISE_SET_HOME;
             case DEL_HOME:
             case DEL_HOME_CONCISE:
-                return ServerConfig.CONCISE_DEL_HOME.get();
+                return ServerConfig.CONCISE_DEL_HOME;
             case TP_STAGE:
             case TP_STAGE_CONCISE:
-                return ServerConfig.CONCISE_TP_STAGE.get();
+                return ServerConfig.CONCISE_TP_STAGE;
             case SET_STAGE:
             case SET_STAGE_CONCISE:
-                return ServerConfig.CONCISE_SET_STAGE.get();
+                return ServerConfig.CONCISE_SET_STAGE;
             case DEL_STAGE:
             case DEL_STAGE_CONCISE:
-                return ServerConfig.CONCISE_DEL_STAGE.get();
+                return ServerConfig.CONCISE_DEL_STAGE;
             case TP_BACK:
             case TP_BACK_CONCISE:
-                return ServerConfig.CONCISE_TP_BACK.get();
+                return ServerConfig.CONCISE_TP_BACK;
             default:
                 return false;
         }
     }
 
-    public static CClientSettingsPacket getCClientSettingsPacket(ServerPlayerEntity player) {
-        CClientSettingsPacket result = new CClientSettingsPacket();
+    public static CPacketClientSettings getCClientSettingsPacket(EntityPlayerMP player) {
+        CPacketClientSettings result = new CPacketClientSettings();
         PacketBuffer buffer = new PacketBuffer(Unpooled.buffer());
         try {
-            buffer.writeUtf(NarcissusUtils.getPlayerLanguage(player));
+            buffer.writeString(NarcissusUtils.getPlayerLanguage(player));
             buffer.writeByte(0);
-            buffer.writeEnum(player.getChatVisibility());
+            buffer.writeEnumValue(player.getChatVisibility());
             buffer.writeBoolean(false);
             buffer.writeByte(0);
-            buffer.writeEnum(player.getMainArm());
-            result.read(buffer);
-        } catch (IOException ignored) {
+            buffer.writeEnumValue(EnumHandSide.LEFT);
+        } catch (Exception ignored) {
         }
         return result;
     }
 
-    /**
-     * 获取当前mod支持的mc版本
-     *
-     * @return 主版本*1000000+次版本*1000+修订版本， 如 1.16.5 -> 1 * 1000000 + 16 * 1000 + 5 = 10016005
-     */
-    public static int getMcVersion() {
-        int version = 0;
-        ModContainer container = ModList.get().getModContainerById(NarcissusFarewell.MODID).orElse(null);
-        if (container != null) {
-            IModInfo.ModVersion minecraftVersion = container.getModInfo().getDependencies().stream()
-                    .filter(dependency -> dependency.getModId().equalsIgnoreCase("minecraft"))
-                    .findFirst()
-                    .orElse(null);
-            if (minecraftVersion != null) {
-                ArtifactVersion lowerBound = minecraftVersion.getVersionRange().getRestrictions().get(0).getLowerBound();
-                int majorVersion = lowerBound.getMajorVersion();
-                int minorVersion = lowerBound.getMinorVersion();
-                int incrementalVersion = lowerBound.getIncrementalVersion();
-                version = majorVersion * 1000000 + minorVersion * 1000 + incrementalVersion;
-            }
-        }
-        return version;
-    }
-
     // region 跨维度传送
 
-    public static boolean isTeleportAcrossDimensionEnabled(ServerPlayerEntity player, DimensionType to, ETeleportType type) {
+    public static boolean isTeleportAcrossDimensionEnabled(EntityPlayerMP player, DimensionType to, ETeleportType type) {
         boolean result = true;
-        if (player.level.dimension.getType() != to) {
-            if (ServerConfig.TELEPORT_ACROSS_DIMENSION.get()) {
+        if (player.world.provider.getDimensionType() != to) {
+            if (ServerConfig.TELEPORT_ACROSS_DIMENSION) {
                 if (!NarcissusUtils.isTeleportTypeAcrossDimensionEnabled(player, type)) {
                     result = false;
                     NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EI18nType.MESSAGE, "across_dimension_not_enable_for"), getCommand(type));
@@ -996,44 +1200,44 @@ public class NarcissusUtils {
     /**
      * 判断传送类型跨维度传送是否开启
      */
-    public static boolean isTeleportTypeAcrossDimensionEnabled(ServerPlayerEntity player, ETeleportType type) {
+    public static boolean isTeleportTypeAcrossDimensionEnabled(EntityPlayerMP player, ETeleportType type) {
         int permission;
         switch (type) {
             case TP_COORDINATE:
-                permission = ServerConfig.PERMISSION_TP_COORDINATE_ACROSS_DIMENSION.get();
+                permission = ServerConfig.PERMISSION_TP_COORDINATE_ACROSS_DIMENSION;
                 break;
             case TP_STRUCTURE:
-                permission = ServerConfig.PERMISSION_TP_STRUCTURE_ACROSS_DIMENSION.get();
+                permission = ServerConfig.PERMISSION_TP_STRUCTURE_ACROSS_DIMENSION;
                 break;
             case TP_ASK:
-                permission = ServerConfig.PERMISSION_TP_ASK_ACROSS_DIMENSION.get();
+                permission = ServerConfig.PERMISSION_TP_ASK_ACROSS_DIMENSION;
                 break;
             case TP_HERE:
-                permission = ServerConfig.PERMISSION_TP_HERE_ACROSS_DIMENSION.get();
+                permission = ServerConfig.PERMISSION_TP_HERE_ACROSS_DIMENSION;
                 break;
             case TP_RANDOM:
-                permission = ServerConfig.PERMISSION_TP_RANDOM_ACROSS_DIMENSION.get();
+                permission = ServerConfig.PERMISSION_TP_RANDOM_ACROSS_DIMENSION;
                 break;
             case TP_SPAWN:
-                permission = ServerConfig.PERMISSION_TP_SPAWN_ACROSS_DIMENSION.get();
+                permission = ServerConfig.PERMISSION_TP_SPAWN_ACROSS_DIMENSION;
                 break;
             case TP_WORLD_SPAWN:
-                permission = ServerConfig.PERMISSION_TP_WORLD_SPAWN_ACROSS_DIMENSION.get();
+                permission = ServerConfig.PERMISSION_TP_WORLD_SPAWN_ACROSS_DIMENSION;
                 break;
             case TP_HOME:
-                permission = ServerConfig.PERMISSION_TP_HOME_ACROSS_DIMENSION.get();
+                permission = ServerConfig.PERMISSION_TP_HOME_ACROSS_DIMENSION;
                 break;
             case TP_STAGE:
-                permission = ServerConfig.PERMISSION_TP_STAGE_ACROSS_DIMENSION.get();
+                permission = ServerConfig.PERMISSION_TP_STAGE_ACROSS_DIMENSION;
                 break;
             case TP_BACK:
-                permission = ServerConfig.PERMISSION_TP_BACK_ACROSS_DIMENSION.get();
+                permission = ServerConfig.PERMISSION_TP_BACK_ACROSS_DIMENSION;
                 break;
             default:
                 permission = 0;
                 break;
         }
-        return permission > -1 && player.hasPermissions(permission);
+        return permission > -1 && hasPermissions(player, permission);
     }
 
     // endregion 跨维度传送
@@ -1046,9 +1250,9 @@ public class NarcissusUtils {
      * @param player 玩家
      * @param type   传送类型
      */
-    public static int getTeleportCoolDown(ServerPlayerEntity player, ETeleportType type) {
+    public static int getTeleportCoolDown(EntityPlayerMP player, ETeleportType type) {
         // 如果传送卡类型为抵消冷却时间，则不计算冷却时间
-        if (ServerConfig.TELEPORT_CARD_TYPE.get() == ECardType.REFUND_COOLDOWN || ServerConfig.TELEPORT_CARD_TYPE.get() == ECardType.REFUND_ALL_COST_AND_COOLDOWN) {
+        if (ServerConfig.TELEPORT_CARD_TYPE == ECardType.REFUND_COOLDOWN || ServerConfig.TELEPORT_CARD_TYPE == ECardType.REFUND_ALL_COST_AND_COOLDOWN) {
             if (PlayerTeleportDataCapability.getData(player).getTeleportCard() > 0) {
                 return 0;
             }
@@ -1059,15 +1263,15 @@ public class NarcissusUtils {
                 .map(TeleportRecord::getTeleportTime)
                 .max(Comparator.comparing(Date::toInstant))
                 .orElse(new Date(0)).toInstant();
-        switch (ServerConfig.TELEPORT_REQUEST_COOLDOWN_TYPE.get()) {
+        switch (ServerConfig.TELEPORT_REQUEST_COOLDOWN_TYPE) {
             case COMMON:
-                return calculateCooldown(player.getUUID(), current, lastTpTime, ServerConfig.TELEPORT_REQUEST_COOLDOWN.get(), null);
+                return calculateCooldown(player.getUniqueID(), current, lastTpTime, ServerConfig.TELEPORT_REQUEST_COOLDOWN, null);
             case INDIVIDUAL:
-                return calculateCooldown(player.getUUID(), current, lastTpTime, commandCoolDown, type);
+                return calculateCooldown(player.getUniqueID(), current, lastTpTime, commandCoolDown, type);
             case MIXED:
-                int globalCommandCoolDown = ServerConfig.TELEPORT_REQUEST_COOLDOWN.get();
-                int individualCooldown = calculateCooldown(player.getUUID(), current, lastTpTime, commandCoolDown, type);
-                int globalCooldown = calculateCooldown(player.getUUID(), current, lastTpTime, globalCommandCoolDown, null);
+                int globalCommandCoolDown = ServerConfig.TELEPORT_REQUEST_COOLDOWN;
+                int individualCooldown = calculateCooldown(player.getUniqueID(), current, lastTpTime, commandCoolDown, type);
+                int globalCooldown = calculateCooldown(player.getUniqueID(), current, lastTpTime, globalCommandCoolDown, null);
                 return Math.max(individualCooldown, globalCooldown);
             default:
                 return 0;
@@ -1082,35 +1286,35 @@ public class NarcissusUtils {
     public static int getCommandCoolDown(ETeleportType type) {
         switch (type) {
             case TP_COORDINATE:
-                return ServerConfig.COOLDOWN_TP_COORDINATE.get();
+                return ServerConfig.COOLDOWN_TP_COORDINATE;
             case TP_STRUCTURE:
-                return ServerConfig.COOLDOWN_TP_STRUCTURE.get();
+                return ServerConfig.COOLDOWN_TP_STRUCTURE;
             case TP_ASK:
-                return ServerConfig.COOLDOWN_TP_ASK.get();
+                return ServerConfig.COOLDOWN_TP_ASK;
             case TP_HERE:
-                return ServerConfig.COOLDOWN_TP_HERE.get();
+                return ServerConfig.COOLDOWN_TP_HERE;
             case TP_RANDOM:
-                return ServerConfig.COOLDOWN_TP_RANDOM.get();
+                return ServerConfig.COOLDOWN_TP_RANDOM;
             case TP_SPAWN:
-                return ServerConfig.COOLDOWN_TP_SPAWN.get();
+                return ServerConfig.COOLDOWN_TP_SPAWN;
             case TP_WORLD_SPAWN:
-                return ServerConfig.COOLDOWN_TP_WORLD_SPAWN.get();
+                return ServerConfig.COOLDOWN_TP_WORLD_SPAWN;
             case TP_TOP:
-                return ServerConfig.COOLDOWN_TP_TOP.get();
+                return ServerConfig.COOLDOWN_TP_TOP;
             case TP_BOTTOM:
-                return ServerConfig.COOLDOWN_TP_BOTTOM.get();
+                return ServerConfig.COOLDOWN_TP_BOTTOM;
             case TP_UP:
-                return ServerConfig.COOLDOWN_TP_UP.get();
+                return ServerConfig.COOLDOWN_TP_UP;
             case TP_DOWN:
-                return ServerConfig.COOLDOWN_TP_DOWN.get();
+                return ServerConfig.COOLDOWN_TP_DOWN;
             case TP_VIEW:
-                return ServerConfig.COOLDOWN_TP_VIEW.get();
+                return ServerConfig.COOLDOWN_TP_VIEW;
             case TP_HOME:
-                return ServerConfig.COOLDOWN_TP_HOME.get();
+                return ServerConfig.COOLDOWN_TP_HOME;
             case TP_STAGE:
-                return ServerConfig.COOLDOWN_TP_STAGE.get();
+                return ServerConfig.COOLDOWN_TP_STAGE;
             case TP_BACK:
-                return ServerConfig.COOLDOWN_TP_BACK.get();
+                return ServerConfig.COOLDOWN_TP_BACK;
             default:
                 return 0;
         }
@@ -1118,7 +1322,7 @@ public class NarcissusUtils {
 
     private static int calculateCooldown(UUID uuid, Instant current, Instant lastTpTime, int cooldown, ETeleportType type) {
         Optional<TeleportRequest> latestRequest = NarcissusFarewell.getTeleportRequest().values().stream()
-                .filter(request -> request.getRequester().getUUID().equals(uuid))
+                .filter(request -> request.getRequester().getUniqueID().equals(uuid))
                 .filter(request -> type == null || request.getTeleportType() == type)
                 .max(Comparator.comparing(TeleportRequest::getRequestTime));
 
@@ -1139,7 +1343,7 @@ public class NarcissusUtils {
      * @param submit 是否收取代价
      * @return 是否验证通过
      */
-    public static boolean validTeleportCost(ServerPlayerEntity player, Coordinate target, ETeleportType type, boolean submit) {
+    public static boolean validTeleportCost(EntityPlayerMP player, Coordinate target, ETeleportType type, boolean submit) {
         return validateCost(player, target.getDimension(), calculateDistance(new Coordinate(player), target), type, submit);
     }
 
@@ -1153,7 +1357,7 @@ public class NarcissusUtils {
     public static boolean validTeleportCost(TeleportRequest request, boolean submit) {
         Coordinate requesterCoordinate = new Coordinate(request.getRequester());
         Coordinate targetCoordinate = new Coordinate(request.getTarget());
-        return validateCost(request.getRequester(), request.getTarget().getLevel().dimension.getType(), calculateDistance(requesterCoordinate, targetCoordinate), request.getTeleportType(), submit);
+        return validateCost(request.getRequester(), request.getTarget().world.provider.getDimensionType(), calculateDistance(requesterCoordinate, targetCoordinate), request.getTeleportType(), submit);
     }
 
     /**
@@ -1166,30 +1370,30 @@ public class NarcissusUtils {
      * @param submit       是否收取代价
      * @return 是否验证通过
      */
-    private static boolean validateCost(ServerPlayerEntity player, DimensionType targetDim, double distance, ETeleportType teleportType, boolean submit) {
+    private static boolean validateCost(EntityPlayerMP player, DimensionType targetDim, double distance, ETeleportType teleportType, boolean submit) {
         TeleportCost cost = NarcissusUtils.getCommandCost(teleportType);
         if (cost.getType() == ECostType.NONE) return true;
 
         double adjustedDistance;
-        if (player.getLevel().dimension.getType() == targetDim) {
-            adjustedDistance = Math.min(ServerConfig.TELEPORT_COST_DISTANCE_LIMIT.get(), distance);
+        if (player.world.provider.getDimensionType() == targetDim) {
+            adjustedDistance = Math.min(ServerConfig.TELEPORT_COST_DISTANCE_LIMIT, distance);
         } else {
-            adjustedDistance = ServerConfig.TELEPORT_COST_DISTANCE_ACROSS_DIMENSION.get();
+            adjustedDistance = ServerConfig.TELEPORT_COST_DISTANCE_ACROSS_DIMENSION;
         }
 
         double need = cost.getNum() * adjustedDistance * cost.getRate();
         int costNeed = getTeleportCostNeedPost(player, need);
         int cardNeed = getTeleportCardNeedPost(player, need);
-        int cardNeedTotal = getTeleportCardNeedPre(player, need);
+        int cardNeedTotal = getTeleportCardNeedPre(need);
         boolean result = false;
 
         switch (cost.getType()) {
             case EXP_POINT:
-                result = player.totalExperience >= costNeed && cardNeed == 0;
+                result = player.experienceTotal >= costNeed && cardNeed == 0;
                 if (!result && cardNeed == 0) {
                     NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EI18nType.MESSAGE, "cost_not_enough"), Component.translatable(NarcissusUtils.getPlayerLanguage(player), EI18nType.WORD, "exp_point"), (int) Math.ceil(need));
                 } else if (result && submit) {
-                    player.giveExperiencePoints(-costNeed);
+                    player.addExperience(-costNeed);
                     PlayerTeleportDataCapability.getData(player).subTeleportCard(cardNeedTotal);
                 }
                 break;
@@ -1198,7 +1402,7 @@ public class NarcissusUtils {
                 if (!result && cardNeed == 0) {
                     NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EI18nType.MESSAGE, "cost_not_enough"), Component.translatable(NarcissusUtils.getPlayerLanguage(player), EI18nType.WORD, "exp_level"), (int) Math.ceil(need));
                 } else if (result && submit) {
-                    player.giveExperienceLevels(-costNeed);
+                    player.addExperienceLevel(-costNeed);
                     PlayerTeleportDataCapability.getData(player).subTeleportCard(cardNeedTotal);
                 }
                 break;
@@ -1207,23 +1411,23 @@ public class NarcissusUtils {
                 if (!result && cardNeed == 0) {
                     NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EI18nType.MESSAGE, "cost_not_enough"), Component.translatable(NarcissusUtils.getPlayerLanguage(player), EI18nType.WORD, "health"), (int) Math.ceil(need));
                 } else if (result && submit) {
-                    player.hurt(DamageSource.MAGIC, costNeed);
+                    player.attackEntityFrom(DamageSource.MAGIC, costNeed);
                     PlayerTeleportDataCapability.getData(player).subTeleportCard(cardNeedTotal);
                 }
                 break;
             case HUNGER:
-                result = player.getFoodData().getFoodLevel() >= costNeed && cardNeed == 0;
+                result = player.getFoodStats().getFoodLevel() >= costNeed && cardNeed == 0;
                 if (!result && cardNeed == 0) {
                     NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EI18nType.MESSAGE, "cost_not_enough"), Component.translatable(NarcissusUtils.getPlayerLanguage(player), EI18nType.WORD, "hunger"), (int) Math.ceil(need));
                 } else if (result && submit) {
-                    player.getFoodData().setFoodLevel(player.getFoodData().getFoodLevel() - costNeed);
+                    player.getFoodStats().setFoodLevel(player.getFoodStats().getFoodLevel() - costNeed);
                     PlayerTeleportDataCapability.getData(player).subTeleportCard(cardNeedTotal);
                 }
                 break;
             case ITEM:
                 try {
-                    ItemStack itemStack = ItemStack.of(JsonToNBT.parseTag(cost.getConf()));
-                    result = getItemCount(player.inventory.items, itemStack) >= costNeed && cardNeed == 0;
+                    ItemStack itemStack = new ItemStack(JsonToNBT.getTagFromJson(cost.getConf()));
+                    result = getItemCount(getPlayerInventory(player), itemStack) >= costNeed && cardNeed == 0;
                     if (!result && cardNeed == 0) {
                         NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EI18nType.MESSAGE, "cost_not_enough"), itemStack.getDisplayName(), (int) Math.ceil(need));
                     } else if (result && submit) {
@@ -1244,7 +1448,7 @@ public class NarcissusUtils {
                     result = cardNeed == 0;
                     if (result && submit) {
                         String command = cost.getConf().replaceAll("\\[num]", String.valueOf(costNeed));
-                        int commandResult = player.getServer().getCommands().performCommand(player.createCommandSourceStack(), command);
+                        int commandResult = player.getServer().getCommandManager().executeCommand(player, command);
                         if (commandResult > 0) {
                             PlayerTeleportDataCapability.getData(player).subTeleportCard(cardNeedTotal);
                         }
@@ -1263,11 +1467,11 @@ public class NarcissusUtils {
     /**
      * 使用传送卡后还须支付多少代价
      */
-    public static int getTeleportCostNeedPost(ServerPlayerEntity player, double need) {
+    public static int getTeleportCostNeedPost(EntityPlayerMP player, double need) {
         int ceil = (int) Math.ceil(need);
-        if (!ServerConfig.TELEPORT_CARD.get()) return ceil;
+        if (!ServerConfig.TELEPORT_CARD) return ceil;
         IPlayerTeleportData data = PlayerTeleportDataCapability.getData(player);
-        switch (ServerConfig.TELEPORT_CARD_TYPE.get()) {
+        switch (ServerConfig.TELEPORT_CARD_TYPE) {
             case NONE:
                 return data.getTeleportCard() > 0 ? ceil : -1;
             case LIKE_COST:
@@ -1287,11 +1491,10 @@ public class NarcissusUtils {
     /**
      * 须支付多少传送卡
      */
-    public static int getTeleportCardNeedPre(ServerPlayerEntity player, double need) {
+    public static int getTeleportCardNeedPre(double need) {
         int ceil = (int) Math.ceil(need);
-        if (!ServerConfig.TELEPORT_CARD.get()) return 0;
-        IPlayerTeleportData data = PlayerTeleportDataCapability.getData(player);
-        switch (ServerConfig.TELEPORT_CARD_TYPE.get()) {
+        if (!ServerConfig.TELEPORT_CARD) return 0;
+        switch (ServerConfig.TELEPORT_CARD_TYPE) {
             case LIKE_COST:
                 return ceil;
             case NONE:
@@ -1308,11 +1511,11 @@ public class NarcissusUtils {
     /**
      * 使用传送卡后还须支付多少传送卡
      */
-    public static int getTeleportCardNeedPost(ServerPlayerEntity player, double need) {
+    public static int getTeleportCardNeedPost(EntityPlayerMP player, double need) {
         int ceil = (int) Math.ceil(need);
-        if (!ServerConfig.TELEPORT_CARD.get()) return 0;
+        if (!ServerConfig.TELEPORT_CARD) return 0;
         IPlayerTeleportData data = PlayerTeleportDataCapability.getData(player);
-        switch (ServerConfig.TELEPORT_CARD_TYPE.get()) {
+        switch (ServerConfig.TELEPORT_CARD_TYPE) {
             case NONE:
                 return data.getTeleportCard() > 0 ? 0 : 1;
             case LIKE_COST:
@@ -1331,94 +1534,94 @@ public class NarcissusUtils {
         TeleportCost cost = new TeleportCost();
         switch (type) {
             case TP_COORDINATE:
-                cost.setType(ServerConfig.COST_TP_COORDINATE_TYPE.get());
-                cost.setNum(ServerConfig.COST_TP_COORDINATE_NUM.get());
-                cost.setRate(ServerConfig.COST_TP_COORDINATE_RATE.get());
-                cost.setConf(ServerConfig.COST_TP_COORDINATE_CONF.get());
+                cost.setType(ServerConfig.COST_TP_COORDINATE_TYPE);
+                cost.setNum(ServerConfig.COST_TP_COORDINATE_NUM);
+                cost.setRate(ServerConfig.COST_TP_COORDINATE_RATE);
+                cost.setConf(ServerConfig.COST_TP_COORDINATE_CONF);
                 break;
             case TP_STRUCTURE:
-                cost.setType(ServerConfig.COST_TP_STRUCTURE_TYPE.get());
-                cost.setNum(ServerConfig.COST_TP_STRUCTURE_NUM.get());
-                cost.setRate(ServerConfig.COST_TP_STRUCTURE_RATE.get());
-                cost.setConf(ServerConfig.COST_TP_STRUCTURE_CONF.get());
+                cost.setType(ServerConfig.COST_TP_STRUCTURE_TYPE);
+                cost.setNum(ServerConfig.COST_TP_STRUCTURE_NUM);
+                cost.setRate(ServerConfig.COST_TP_STRUCTURE_RATE);
+                cost.setConf(ServerConfig.COST_TP_STRUCTURE_CONF);
                 break;
             case TP_ASK:
-                cost.setType(ServerConfig.COST_TP_ASK_TYPE.get());
-                cost.setNum(ServerConfig.COST_TP_ASK_NUM.get());
-                cost.setRate(ServerConfig.COST_TP_ASK_RATE.get());
-                cost.setConf(ServerConfig.COST_TP_ASK_CONF.get());
+                cost.setType(ServerConfig.COST_TP_ASK_TYPE);
+                cost.setNum(ServerConfig.COST_TP_ASK_NUM);
+                cost.setRate(ServerConfig.COST_TP_ASK_RATE);
+                cost.setConf(ServerConfig.COST_TP_ASK_CONF);
                 break;
             case TP_HERE:
-                cost.setType(ServerConfig.COST_TP_HERE_TYPE.get());
-                cost.setNum(ServerConfig.COST_TP_HERE_NUM.get());
-                cost.setRate(ServerConfig.COST_TP_HERE_RATE.get());
-                cost.setConf(ServerConfig.COST_TP_HERE_CONF.get());
+                cost.setType(ServerConfig.COST_TP_HERE_TYPE);
+                cost.setNum(ServerConfig.COST_TP_HERE_NUM);
+                cost.setRate(ServerConfig.COST_TP_HERE_RATE);
+                cost.setConf(ServerConfig.COST_TP_HERE_CONF);
                 break;
             case TP_RANDOM:
-                cost.setType(ServerConfig.COST_TP_RANDOM_TYPE.get());
-                cost.setNum(ServerConfig.COST_TP_RANDOM_NUM.get());
-                cost.setRate(ServerConfig.COST_TP_RANDOM_RATE.get());
-                cost.setConf(ServerConfig.COST_TP_RANDOM_CONF.get());
+                cost.setType(ServerConfig.COST_TP_RANDOM_TYPE);
+                cost.setNum(ServerConfig.COST_TP_RANDOM_NUM);
+                cost.setRate(ServerConfig.COST_TP_RANDOM_RATE);
+                cost.setConf(ServerConfig.COST_TP_RANDOM_CONF);
                 break;
             case TP_SPAWN:
-                cost.setType(ServerConfig.COST_TP_SPAWN_TYPE.get());
-                cost.setNum(ServerConfig.COST_TP_SPAWN_NUM.get());
-                cost.setRate(ServerConfig.COST_TP_SPAWN_RATE.get());
-                cost.setConf(ServerConfig.COST_TP_SPAWN_CONF.get());
+                cost.setType(ServerConfig.COST_TP_SPAWN_TYPE);
+                cost.setNum(ServerConfig.COST_TP_SPAWN_NUM);
+                cost.setRate(ServerConfig.COST_TP_SPAWN_RATE);
+                cost.setConf(ServerConfig.COST_TP_SPAWN_CONF);
                 break;
             case TP_WORLD_SPAWN:
-                cost.setType(ServerConfig.COST_TP_WORLD_SPAWN_TYPE.get());
-                cost.setNum(ServerConfig.COST_TP_WORLD_SPAWN_NUM.get());
-                cost.setRate(ServerConfig.COST_TP_WORLD_SPAWN_RATE.get());
-                cost.setConf(ServerConfig.COST_TP_WORLD_SPAWN_CONF.get());
+                cost.setType(ServerConfig.COST_TP_WORLD_SPAWN_TYPE);
+                cost.setNum(ServerConfig.COST_TP_WORLD_SPAWN_NUM);
+                cost.setRate(ServerConfig.COST_TP_WORLD_SPAWN_RATE);
+                cost.setConf(ServerConfig.COST_TP_WORLD_SPAWN_CONF);
                 break;
             case TP_TOP:
-                cost.setType(ServerConfig.COST_TP_TOP_TYPE.get());
-                cost.setNum(ServerConfig.COST_TP_TOP_NUM.get());
-                cost.setRate(ServerConfig.COST_TP_TOP_RATE.get());
-                cost.setConf(ServerConfig.COST_TP_TOP_CONF.get());
+                cost.setType(ServerConfig.COST_TP_TOP_TYPE);
+                cost.setNum(ServerConfig.COST_TP_TOP_NUM);
+                cost.setRate(ServerConfig.COST_TP_TOP_RATE);
+                cost.setConf(ServerConfig.COST_TP_TOP_CONF);
                 break;
             case TP_BOTTOM:
-                cost.setType(ServerConfig.COST_TP_BOTTOM_TYPE.get());
-                cost.setNum(ServerConfig.COST_TP_BOTTOM_NUM.get());
-                cost.setRate(ServerConfig.COST_TP_BOTTOM_RATE.get());
-                cost.setConf(ServerConfig.COST_TP_BOTTOM_CONF.get());
+                cost.setType(ServerConfig.COST_TP_BOTTOM_TYPE);
+                cost.setNum(ServerConfig.COST_TP_BOTTOM_NUM);
+                cost.setRate(ServerConfig.COST_TP_BOTTOM_RATE);
+                cost.setConf(ServerConfig.COST_TP_BOTTOM_CONF);
                 break;
             case TP_UP:
-                cost.setType(ServerConfig.COST_TP_UP_TYPE.get());
-                cost.setNum(ServerConfig.COST_TP_UP_NUM.get());
-                cost.setRate(ServerConfig.COST_TP_UP_RATE.get());
-                cost.setConf(ServerConfig.COST_TP_UP_CONF.get());
+                cost.setType(ServerConfig.COST_TP_UP_TYPE);
+                cost.setNum(ServerConfig.COST_TP_UP_NUM);
+                cost.setRate(ServerConfig.COST_TP_UP_RATE);
+                cost.setConf(ServerConfig.COST_TP_UP_CONF);
                 break;
             case TP_DOWN:
-                cost.setType(ServerConfig.COST_TP_DOWN_TYPE.get());
-                cost.setNum(ServerConfig.COST_TP_DOWN_NUM.get());
-                cost.setRate(ServerConfig.COST_TP_DOWN_RATE.get());
-                cost.setConf(ServerConfig.COST_TP_DOWN_CONF.get());
+                cost.setType(ServerConfig.COST_TP_DOWN_TYPE);
+                cost.setNum(ServerConfig.COST_TP_DOWN_NUM);
+                cost.setRate(ServerConfig.COST_TP_DOWN_RATE);
+                cost.setConf(ServerConfig.COST_TP_DOWN_CONF);
                 break;
             case TP_VIEW:
-                cost.setType(ServerConfig.COST_TP_VIEW_TYPE.get());
-                cost.setNum(ServerConfig.COST_TP_VIEW_NUM.get());
-                cost.setRate(ServerConfig.COST_TP_VIEW_RATE.get());
-                cost.setConf(ServerConfig.COST_TP_VIEW_CONF.get());
+                cost.setType(ServerConfig.COST_TP_VIEW_TYPE);
+                cost.setNum(ServerConfig.COST_TP_VIEW_NUM);
+                cost.setRate(ServerConfig.COST_TP_VIEW_RATE);
+                cost.setConf(ServerConfig.COST_TP_VIEW_CONF);
                 break;
             case TP_HOME:
-                cost.setType(ServerConfig.COST_TP_HOME_TYPE.get());
-                cost.setNum(ServerConfig.COST_TP_HOME_NUM.get());
-                cost.setRate(ServerConfig.COST_TP_HOME_RATE.get());
-                cost.setConf(ServerConfig.COST_TP_HOME_CONF.get());
+                cost.setType(ServerConfig.COST_TP_HOME_TYPE);
+                cost.setNum(ServerConfig.COST_TP_HOME_NUM);
+                cost.setRate(ServerConfig.COST_TP_HOME_RATE);
+                cost.setConf(ServerConfig.COST_TP_HOME_CONF);
                 break;
             case TP_STAGE:
-                cost.setType(ServerConfig.COST_TP_STAGE_TYPE.get());
-                cost.setNum(ServerConfig.COST_TP_STAGE_NUM.get());
-                cost.setRate(ServerConfig.COST_TP_STAGE_RATE.get());
-                cost.setConf(ServerConfig.COST_TP_STAGE_CONF.get());
+                cost.setType(ServerConfig.COST_TP_STAGE_TYPE);
+                cost.setNum(ServerConfig.COST_TP_STAGE_NUM);
+                cost.setRate(ServerConfig.COST_TP_STAGE_RATE);
+                cost.setConf(ServerConfig.COST_TP_STAGE_CONF);
                 break;
             case TP_BACK:
-                cost.setType(ServerConfig.COST_TP_BACK_TYPE.get());
-                cost.setNum(ServerConfig.COST_TP_BACK_NUM.get());
-                cost.setRate(ServerConfig.COST_TP_BACK_RATE.get());
-                cost.setConf(ServerConfig.COST_TP_BACK_CONF.get());
+                cost.setType(ServerConfig.COST_TP_BACK_TYPE);
+                cost.setNum(ServerConfig.COST_TP_BACK_NUM);
+                cost.setRate(ServerConfig.COST_TP_BACK_RATE);
+                cost.setConf(ServerConfig.COST_TP_BACK_CONF);
                 break;
             default:
                 break;
@@ -1430,7 +1633,7 @@ public class NarcissusUtils {
         ItemStack copy = itemStack.copy();
         return items.stream().filter(item -> {
             copy.setCount(item.getCount());
-            return item.equals(copy, false);
+            return ItemStack.areItemStacksEqual(item, copy);
         }).mapToInt(ItemStack::getCount).sum();
     }
 
@@ -1443,19 +1646,59 @@ public class NarcissusUtils {
 
     // endregion 传送代价
 
+    public static String LANGUAGE_FIELD_NAME;
+
     /**
      * 获取玩家语言
      */
-    public static String getPlayerLanguage(ServerPlayerEntity player) {
-        String language = "en_us";
+    public static String getPlayerLanguage(EntityPlayerMP player) {
+        if (StringUtils.isNotNullOrEmpty(LANGUAGE_FIELD_NAME)) {
+            return LANGUAGE_FIELD_NAME;
+        }
         try {
-            Class<?> clazz = player.getClass();
-            Field secretField = clazz.getDeclaredField("language");
-            secretField.setAccessible(true);
-            language = ((String) secretField.get(player)).toLowerCase();
+            for (String field : FieldUtils.getPrivateFieldNames(EntityPlayerMP.class, String.class)) {
+                String lang = (String) FieldUtils.getPrivateField(EntityPlayerMP.class, player, field);
+                if (StringUtils.isNotNullOrEmpty(lang) && lang.matches("^[a-zA-Z]{2}_[a-zA-Z]{2}$")) {
+                    LANGUAGE_FIELD_NAME = lang;
+                }
+            }
         } catch (Exception e) {
+            LANGUAGE_FIELD_NAME = "en_us";
             LOGGER.error(e);
         }
-        return language;
+        return LANGUAGE_FIELD_NAME;
+    }
+
+    /**
+     * 判断玩家是否拥有指定的 OP 权限等级或更高权限
+     *
+     * @param player 目标玩家
+     * @param level  要求的最低权限等级
+     */
+    public static boolean hasPermissions(EntityPlayer player, int level) {
+        if (player == null || level < 0 || level > 4) {
+            return false;
+        }
+        MinecraftServer server = NarcissusFarewell.getServerInstance();
+        if (server == null) {
+            return false;
+        }
+        int permLevel = 0;
+        if (NarcissusFarewell.getServerInstance().getPlayerList().canSendCommands(player.getGameProfile())) {
+            UserListOpsEntry opsEntry = NarcissusFarewell.getServerInstance().getPlayerList().getOppedPlayers().getEntry(player.getGameProfile());
+            // idea又坑老实人，opsEntry是会为null的
+            if (opsEntry != null) {
+                permLevel = opsEntry.getPermissionLevel();
+            }
+        }
+        return permLevel >= level;
+    }
+
+    public static NonNullList<ItemStack> getPlayerInventory(EntityPlayerMP player) {
+        NonNullList<ItemStack> inventory = NonNullList.create();
+        inventory.addAll(player.inventory.mainInventory);
+        inventory.addAll(player.inventory.armorInventory);
+        inventory.addAll(player.inventory.offHandInventory);
+        return inventory;
     }
 }

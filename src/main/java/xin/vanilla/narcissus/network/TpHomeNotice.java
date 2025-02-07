@@ -1,36 +1,40 @@
 package xin.vanilla.narcissus.network;
 
-import net.minecraft.entity.player.ServerPlayerEntity;
-import net.minecraft.network.PacketBuffer;
-import net.minecraftforge.fml.network.NetworkEvent;
-import xin.vanilla.narcissus.NarcissusFarewell;
+import io.netty.buffer.ByteBuf;
+import net.minecraft.entity.player.EntityPlayerMP;
+import net.minecraftforge.fml.common.network.simpleimpl.IMessage;
+import net.minecraftforge.fml.common.network.simpleimpl.IMessageHandler;
+import net.minecraftforge.fml.common.network.simpleimpl.MessageContext;
 import xin.vanilla.narcissus.enums.ECommandType;
 import xin.vanilla.narcissus.util.NarcissusUtils;
 
 import java.util.Objects;
-import java.util.function.Supplier;
 
-public class TpHomeNotice {
+public class TpHomeNotice implements IMessage {
 
     public TpHomeNotice() {
     }
 
-    public TpHomeNotice(PacketBuffer buf) {
+    @Override
+    public void fromBytes(ByteBuf buf) {
     }
 
-    public void toBytes(PacketBuffer buf) {
+    @Override
+    public void toBytes(ByteBuf buf) {
     }
 
-    public static void handle(TpHomeNotice packet, Supplier<NetworkEvent.Context> ctx) {
-        // 获取网络事件上下文并排队执行工作
-        ctx.get().enqueueWork(() -> {
-            // 获取发送数据包的玩家实体
-            ServerPlayerEntity player = ctx.get().getSender();
-            if (player != null) {
-                 Objects.requireNonNull(player.getServer()).getCommands().performCommand(player.createCommandSourceStack(), NarcissusUtils.getCommand(ECommandType.TP_HOME));
-            }
-        });
-        // 设置数据包已处理状态，防止重复处理
-        ctx.get().setPacketHandled(true);
+    public static class Handler implements IMessageHandler<TpHomeNotice, IMessage> {
+        @Override
+        public IMessage onMessage(TpHomeNotice packet, MessageContext ctx) {
+            // 获取网络事件上下文并排队执行工作
+            ctx.getServerHandler().player.getServerWorld().addScheduledTask(() -> {
+                // 获取发送数据包的玩家实体
+                EntityPlayerMP player = ctx.getServerHandler().player;
+                if (player != null) {
+                    Objects.requireNonNull(player.getServer()).getCommandManager().executeCommand(player, NarcissusUtils.getCommand(ECommandType.TP_HOME));
+                }
+            });
+            return null;
+        }
     }
 }
