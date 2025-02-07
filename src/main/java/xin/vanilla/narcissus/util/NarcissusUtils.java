@@ -5,12 +5,15 @@ import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import io.netty.buffer.Unpooled;
 import lombok.NonNull;
 import net.minecraft.block.BlockState;
+import net.minecraft.block.Blocks;
 import net.minecraft.client.Minecraft;
 import net.minecraft.command.arguments.BlockStateParser;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.inventory.IInventory;
+import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
+import net.minecraft.item.Items;
 import net.minecraft.nbt.JsonToNBT;
 import net.minecraft.network.PacketBuffer;
 import net.minecraft.network.play.client.CClientSettingsPacket;
@@ -24,7 +27,6 @@ import net.minecraft.util.math.vector.Vector3d;
 import net.minecraft.util.registry.Registry;
 import net.minecraft.util.text.ChatType;
 import net.minecraft.util.text.TranslationTextComponent;
-import net.minecraft.world.LightType;
 import net.minecraft.world.World;
 import net.minecraft.world.biome.Biome;
 import net.minecraft.world.gen.feature.structure.Structure;
@@ -67,9 +69,24 @@ public class NarcissusUtils {
     // region 安全坐标
 
     /**
+     * 安全的方块
+     */
+    private static final List<BlockState> SAFE_BLOCKS = ServerConfig.SAFE_BLOCKS.get().stream()
+            .map(block -> {
+                try {
+                    return new BlockStateParser(new StringReader(block), false).parse(true).getState();
+                } catch (CommandSyntaxException e) {
+                    LOGGER.error("Invalid unsafe block: {}", block, e);
+                    return null;
+                }
+            })
+            .filter(Objects::nonNull)
+            .distinct()
+            .collect(Collectors.toList());
+    /**
      * 不安全的方块
      */
-    private static final Set<BlockState> UNSAFE_BLOCKS = ServerConfig.UNSAFE_BLOCKS.get().stream()
+    private static final List<BlockState> UNSAFE_BLOCKS = ServerConfig.UNSAFE_BLOCKS.get().stream()
             .map(block -> {
                 try {
                     return new BlockStateParser(new StringReader(block), false).parse(true).getState();
@@ -79,8 +96,9 @@ public class NarcissusUtils {
                 }
             })
             .filter(Objects::nonNull)
-            .collect(Collectors.toSet());
-    private static final Set<BlockState> SUFFOCATING_BLOCKS = ServerConfig.SUFFOCATING_BLOCKS.get().stream()
+            .distinct()
+            .collect(Collectors.toList());
+    private static final List<BlockState> SUFFOCATING_BLOCKS = ServerConfig.SUFFOCATING_BLOCKS.get().stream()
             .map(block -> {
                 try {
                     return new BlockStateParser(new StringReader(block), false).parse(true).getState();
@@ -90,7 +108,8 @@ public class NarcissusUtils {
                 }
             })
             .filter(Objects::nonNull)
-            .collect(Collectors.toSet());
+            .distinct()
+            .collect(Collectors.toList());
 
     public static Coordinate findTopCandidate(ServerWorld world, Coordinate start) {
         if (start.getY() >= world.getMaxBuildHeight()) return null;
@@ -218,17 +237,17 @@ public class NarcissusUtils {
         return result;
     }
 
-    public static Coordinate findSafeCoordinate(Coordinate coordinate) {
+    public static Coordinate findSafeCoordinate(Coordinate coordinate, boolean belowAllowAir) {
         World world = getWorld(coordinate.getDimension());
 
         int chunkX = (int) coordinate.getX() >> 4;
         int chunkZ = (int) coordinate.getZ() >> 4;
 
         // 搜索安全位置，限制在目标区块内
-        return searchForSafeCoordinateInChunk(world, coordinate, chunkX, chunkZ);
+        return searchForSafeCoordinateInChunk(world, coordinate, chunkX, chunkZ, belowAllowAir);
     }
 
-    private static Coordinate searchForSafeCoordinateInChunk(World world, Coordinate coordinate, int chunkX, int chunkZ) {
+    private static Coordinate searchForSafeCoordinateInChunk(World world, Coordinate coordinate, int chunkX, int chunkZ, boolean belowAllowAir) {
         int chunkMinX = chunkX << 4;
         int chunkMinZ = chunkZ << 4;
         int chunkMaxX = chunkMinX + 15;
@@ -287,13 +306,28 @@ public class NarcissusUtils {
                             .setYaw(coordinate.getYaw()).setPitch(coordinate.getPitch())
                             .setDimension(coordinate.getDimension())
                             .setSafe(coordinate.isSafe()).setSafeMode(coordinate.getSafeMode());
-                    if (isSafeCoordinate(world, candidate)) {
-                        return candidate;
+                    if (belowAllowAir) {
+                        if (isAirCoordinate(world, candidate)) {
+                            return candidate;
+                        }
+                    } else {
+                        if (isSafeCoordinate(world, candidate)) {
+                            return candidate;
+                        }
                     }
                 }
             }
         }
         return coordinate;
+    }
+
+    private static boolean isAirCoordinate(World world, Coordinate coordinate) {
+        BlockState block = world.getBlockState(coordinate.toBlockPos());
+        BlockState blockAbove = world.getBlockState(coordinate.toBlockPos().above());
+        BlockState blockBelow = world.getBlockState(coordinate.toBlockPos().below());
+        return (!block.getMaterial().blocksMotion() && !UNSAFE_BLOCKS.contains(block) && !UNSAFE_BLOCKS.contains(block.getBlock().defaultBlockState()))
+                && (!blockAbove.getMaterial().blocksMotion() && !UNSAFE_BLOCKS.contains(blockAbove) && !UNSAFE_BLOCKS.contains(blockAbove.getBlock().defaultBlockState()) && !SUFFOCATING_BLOCKS.contains(blockAbove) && !SUFFOCATING_BLOCKS.contains(blockAbove.getBlock().defaultBlockState()))
+                && (blockBelow.is(Blocks.AIR) || blockBelow.is(Blocks.CAVE_AIR));
     }
 
     private static boolean isSafeCoordinate(World world, Coordinate coordinate) {
@@ -304,88 +338,12 @@ public class NarcissusUtils {
     }
 
     private static boolean isSafeBlock(BlockState block, BlockState blockAbove, BlockState blockBelow) {
-        return (!block.getMaterial().blocksMotion() && !UNSAFE_BLOCKS.contains(block))
-                && (!blockAbove.getMaterial().blocksMotion() && !UNSAFE_BLOCKS.contains(blockAbove) && !SUFFOCATING_BLOCKS.contains(blockAbove))
-                && blockBelow.getMaterial().isSolid()
-                && !UNSAFE_BLOCKS.contains(blockBelow);
+        return (!block.getMaterial().blocksMotion() && !UNSAFE_BLOCKS.contains(block) && !UNSAFE_BLOCKS.contains(block.getBlock().defaultBlockState()))
+                && (!blockAbove.getMaterial().blocksMotion() && !UNSAFE_BLOCKS.contains(blockAbove) && !UNSAFE_BLOCKS.contains(blockAbove.getBlock().defaultBlockState()) && !SUFFOCATING_BLOCKS.contains(blockAbove) && !SUFFOCATING_BLOCKS.contains(blockAbove.getBlock().defaultBlockState()))
+                && (blockBelow.getMaterial().isSolid() && !UNSAFE_BLOCKS.contains(blockBelow) && !UNSAFE_BLOCKS.contains(blockBelow.getBlock().defaultBlockState()));
     }
 
     // endregion 安全坐标
-
-    /**
-     * 获取玩家当前位置的环境亮度
-     *
-     * @param player 当前玩家实体
-     * @return 当前环境亮度（范围0-15）
-     */
-    public static int getEnvironmentBrightness(PlayerEntity player) {
-        int result = 0;
-        if (player != null) {
-            World world = player.level;
-            BlockPos pos = player.blockPosition();
-            // 获取基础的天空光亮度和方块光亮度
-            int skyLight = world.getBrightness(LightType.SKY, pos);
-            int blockLight = world.getBrightness(LightType.BLOCK, pos);
-            // 获取世界时间、天气和维度的影响
-            boolean isDay = world.isDay();
-            boolean isRaining = world.isRaining();
-            boolean isThundering = world.isThundering();
-            boolean isUnderground = !world.canSeeSky(pos);
-            // 判断世界维度（地表、下界、末地）
-            if (world.dimension() == World.OVERWORLD) {
-                // 如果在地表
-                if (!isUnderground) {
-                    if (isDay) {
-                        // 白天地表：最高亮度
-                        result = isThundering ? 6 : isRaining ? 9 : 15;
-                    } else {
-                        // 夜晚地表
-                        // 获取月相，0表示满月，4表示新月
-                        int moonPhase = world.getMoonPhase();
-                        result = getMoonBrightness(moonPhase, isThundering, isRaining);
-                    }
-                } else {
-                    // 地下环境
-                    // 没有光源时最黑，有光源则受距离影响
-                    result = Math.max(Math.min(blockLight, 12), 0);
-                }
-            } else if (world.dimension() == World.NETHER) {
-                // 下界亮度较暗，但部分地方有熔岩光源
-                // 近光源则亮度提升，但不会超过10
-                result = Math.min(7 + blockLight / 2, 10);
-            } else if (world.dimension() == World.END) {
-                // 末地亮度通常较暗
-                // 即使贴近光源，末地的亮度上限设为10
-                result = Math.min(6 + blockLight / 2, 10);
-            } else {
-                result = Math.max(skyLight, blockLight);
-            }
-        }
-        // 其他维度或者无法判断的情况，返回环境和方块光的综合值
-        return result;
-    }
-
-    /**
-     * 根据月相、天气等条件获取夜间月光亮度
-     *
-     * @param moonPhase    月相（0到7，0为满月，4为新月）
-     * @param isThundering 是否雷暴
-     * @param isRaining    是否下雨
-     * @return 夜间月光亮度
-     */
-    private static int getMoonBrightness(int moonPhase, boolean isThundering, boolean isRaining) {
-        if (moonPhase == 0) {
-            // 满月
-            return isThundering ? 3 : isRaining ? 5 : 9;
-        } else if (moonPhase == 4) {
-            // 新月（最暗）
-            return isThundering ? 1 : 2;
-        } else {
-            // 其他月相，亮度随月相变化逐渐减小
-            int moonLight = 9 - moonPhase;
-            return isThundering ? Math.max(moonLight - 3, 1) : isRaining ? Math.max(moonLight - 2, 1) : moonLight;
-        }
-    }
 
     /**
      * 获取指定维度的世界实例
@@ -618,8 +576,38 @@ public class NarcissusUtils {
             ServerWorld level = server.getLevel(after.getDimension());
             if (level != null) {
                 if (after.isSafe()) {
-                    after = findSafeCoordinate(after);
+                    after = findSafeCoordinate(after, false);
+                    // 判断是否需要在脚下放置方块
+                    if (ServerConfig.SETBLOCK_WHEN_SAFE_NOT_FOUND.get() && !isSafeCoordinate(level, after)) {
+                        BlockState blockState = null;
+                        List<ItemStack> playerItemList = getPlayerItemList(player);
+                        if (CollectionUtils.isNotNullOrEmpty(SAFE_BLOCKS)) {
+                            if (ServerConfig.GETBLOCK_FROM_INVENTORY.get()) {
+                                blockState = SAFE_BLOCKS.stream()
+                                        .filter(block -> playerItemList.stream().map(ItemStack::getItem).anyMatch(item -> new ItemStack(block.getBlock()).getItem().equals(item)))
+                                        .findFirst().orElse(null);
+                            } else {
+                                blockState = SAFE_BLOCKS.get(0);
+                            }
+                        }
+                        if (blockState != null) {
+                            Coordinate airCoordinate = findSafeCoordinate(after, true);
+                            if (!airCoordinate.toXyzString().equals(after.toXyzString())) {
+                                after = airCoordinate;
+                                Item blockItem = new ItemStack(blockState.getBlock()).getItem();
+                                Item remove = playerItemList.stream().map(ItemStack::getItem).filter(blockItem::equals).findFirst().orElse(null);
+                                if (remove != null) {
+                                    ItemStack itemStack = new ItemStack(remove);
+                                    itemStack.setCount(1);
+                                    if (removeItemFromPlayerInventory(player, itemStack)) {
+                                        level.setBlockAndUpdate(airCoordinate.toBlockPos().below(), blockState.getBlock().defaultBlockState());
+                                    }
+                                }
+                            }
+                        }
+                    }
                 }
+                after.setY(Math.floor(after.getY()) + 0.1);
                 player.teleportTo(level, after.getX(), after.getY(), after.getZ()
                         , after.getYaw() == 0 ? player.yRot : (float) after.getYaw()
                         , after.getPitch() == 0 ? player.xRot : (float) after.getPitch());
@@ -724,6 +712,17 @@ public class NarcissusUtils {
 
         // 是否成功移除所有物品
         return remainingAmount == 0;
+    }
+
+    public static List<ItemStack> getPlayerItemList(ServerPlayerEntity player) {
+        List<ItemStack> result = new ArrayList<>();
+        if (player != null) {
+            result.addAll(player.inventory.items);
+            result.addAll(player.inventory.armor);
+            result.addAll(player.inventory.offhand);
+            result = result.stream().filter(itemStack -> !itemStack.isEmpty() && itemStack.getItem() != Items.AIR).collect(Collectors.toList());
+        }
+        return result;
     }
 
     /**
@@ -1026,7 +1025,7 @@ public class NarcissusUtils {
         }
     }
 
-    public static CClientSettingsPacket getCClientSettingsPacket(ServerPlayerEntity player){
+    public static CClientSettingsPacket getCClientSettingsPacket(ServerPlayerEntity player) {
         CClientSettingsPacket result = new CClientSettingsPacket();
         PacketBuffer buffer = new PacketBuffer(Unpooled.buffer());
         try {

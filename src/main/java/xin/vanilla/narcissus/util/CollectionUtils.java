@@ -1,7 +1,8 @@
 package xin.vanilla.narcissus.util;
 
 
-import java.util.*;
+import java.util.Collection;
+import java.util.Random;
 import java.util.concurrent.ThreadLocalRandom;
 
 public class CollectionUtils {
@@ -25,84 +26,6 @@ public class CollectionUtils {
 
     public static boolean isNullOrEmpty(int[] array) {
         return array == null || array.length == 0;
-    }
-
-    public static boolean equals(Object[] source, Object[] target) {
-        if (!isNullOrEmpty(source) && !isNullOrEmpty(target)) {
-            Object[] sourceEx = source.clone();
-            Object[] targetEx = target.clone();
-            Arrays.sort(sourceEx);
-            Arrays.sort(targetEx);
-            return Arrays.equals(sourceEx, targetEx);
-        } else {
-            return true;
-        }
-    }
-
-    public static boolean contains(final String[] keys, String targetValue) {
-        if (keys == null || keys.length == 0) {
-            return false;
-        }
-        return Arrays.asList(keys).contains(targetValue);
-    }
-
-    public static boolean contains(final String[] source, final String[] target) {
-        List<String> sourceList = Arrays.asList(source);
-        List<String> targetList = Arrays.asList(target);
-        return new HashSet<>(sourceList).containsAll(targetList);
-    }
-
-    public static String[] setArrayPrefix(String[] array, String prefix) {
-        String[] result = null;
-        if (!isNullOrEmpty(array)) {
-            result = new String[array.length];
-            for (int i = 0; i < array.length; i++) {
-                result[i] = prefix + array[i];
-            }
-        }
-        return result;
-    }
-
-    public static String[] setArraySuffix(String[] array, String suffix) {
-        String[] result = null;
-        if (!isNullOrEmpty(array)) {
-            result = new String[array.length];
-            for (int i = 0; i < array.length; i++) {
-                result[i] = array[i] + suffix;
-            }
-        }
-        return result;
-    }
-
-    public static String getMinLengthChar(String[] array) {
-        String result = null;
-        if (!CollectionUtils.isNullOrEmpty(array)) {
-            result = Arrays.stream(array).min(Comparator.comparing(String::length)).orElse(null);
-        }
-        return result;
-    }
-
-    /**
-     * 合并数组
-     *
-     * @param arrays 数据变量
-     * @param <T>    对象类型
-     */
-    public static <T> T[] mergeArrays(T[]... arrays) {
-        if (arrays == null || arrays.length == 0) {
-            throw new IllegalArgumentException("Input arrays must not be null or empty.");
-        }
-        int totalLength = 0;
-        for (T[] array : arrays) {
-            totalLength += array.length;
-        }
-        T[] mergedArray = Arrays.copyOf(arrays[0], totalLength);
-        int destPos = arrays[0].length;
-        for (int i = 1; i < arrays.length; i++) {
-            System.arraycopy(arrays[i], 0, mergedArray, destPos, arrays[i].length);
-            destPos += arrays[i].length;
-        }
-        return mergedArray;
     }
 
     /**
