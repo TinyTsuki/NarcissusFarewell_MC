@@ -2,12 +2,9 @@ package xin.vanilla.narcissus;
 
 import lombok.Getter;
 import lombok.Setter;
-import net.minecraft.client.Minecraft;
-import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.server.MinecraftServer;
 import net.minecraftforge.common.MinecraftForge;
-import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.ModList;
 import net.minecraftforge.fml.ModLoadingContext;
@@ -45,18 +42,6 @@ public class NarcissusFarewell {
     @Getter
     private static MinecraftServer serverInstance;
 
-    /**
-     * 是否有对应的服务端
-     */
-    @Getter
-    @Setter
-    private static boolean enabled;
-    /**
-     * 玩家权限等级
-     */
-    @Getter
-    @Setter
-    private static int permissionLevel;
     /**
      * 玩家默认语言
      */
@@ -98,7 +83,7 @@ public class NarcissusFarewell {
         // 注册当前实例到MinecraftForge的事件总线，以便监听和处理游戏内的各种事件
         MinecraftForge.EVENT_BUS.register(this);
 
-        // 注册服务器和客户端配置
+        // 注册服务端配置
         ModLoadingContext.get().registerConfig(ModConfig.Type.SERVER, ServerConfig.SERVER_CONFIG);
 
         // 注册客户端设置事件到MOD事件总线
@@ -128,23 +113,4 @@ public class NarcissusFarewell {
         FarewellCommand.register(event.getServer().getCommands().getDispatcher());
     }
 
-    /**
-     * 玩家注销事件
-     *
-     * @param event 玩家注销事件对象，通过该对象可以获取到注销的玩家对象
-     */
-    @SubscribeEvent
-    public void onPlayerLogout(PlayerEvent.PlayerLoggedOutEvent event) {
-        LOGGER.debug("Player has logged out.");
-        // 获取退出的玩家对象
-        PlayerEntity player = event.getPlayer();
-        // 判断是否在客户端并且退出的玩家是客户端的当前玩家
-        if (player.getCommandSenderWorld().isClientSide) {
-            if (Minecraft.getInstance().player.getUUID().equals(player.getUUID())) {
-                LOGGER.debug("Current player has logged out.");
-                // 当前客户端玩家与退出的玩家相同
-                enabled = false;
-            }
-        }
-    }
 }

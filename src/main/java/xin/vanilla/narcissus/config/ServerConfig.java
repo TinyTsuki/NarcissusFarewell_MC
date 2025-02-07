@@ -97,6 +97,21 @@ public class ServerConfig {
      */
     public static final ForgeConfigSpec.ConfigValue<List<String>> SUFFOCATING_BLOCKS;
 
+    /**
+     * 当安全传送未找到安全坐标时，是否在脚下放置方块
+     */
+    public static final ForgeConfigSpec.BooleanValue SETBLOCK_WHEN_SAFE_NOT_FOUND;
+
+    /**
+     * 当安全传送未找到安全坐标时，是否从背包中获取被放置的方块
+     */
+    public static final ForgeConfigSpec.BooleanValue GETBLOCK_FROM_INVENTORY;
+
+    /**
+     * 当安全传送未找到安全坐标时，放置的方块类型
+     */
+    public static final ForgeConfigSpec.ConfigValue<List<String>> SAFE_BLOCKS;
+
     // endregion 基础设置
 
     // region 功能开关
@@ -803,7 +818,7 @@ public class ServerConfig {
                             "指令前缀，请仅使用英文字母及下划线，否则可能会出现问题。")
                     .define("commandPrefix", "narcissus");
 
-
+            SERVER_BUILDER.comment("Safe Teleport", "安全传送").push("Safe");
             // 不安全的方块
             UNSAFE_BLOCKS = SERVER_BUILDER
                     .comment("The list of unsafe blocks, players will not be teleported to these blocks.",
@@ -830,6 +845,32 @@ public class ServerConfig {
                                     .collect(Collectors.toList())
                     );
 
+            // 安全传送放置方块
+            SETBLOCK_WHEN_SAFE_NOT_FOUND = SERVER_BUILDER
+                    .comment("When performing a safe teleport, whether to place a block underfoot if a safe coordinate is not found.",
+                            "当进行安全传送时，如果未找到安全坐标，是否在脚下放置方块。")
+                    .define("setBlockWhenSafeNotFound", false);
+
+            // 从背包获取安全方块
+            GETBLOCK_FROM_INVENTORY = SERVER_BUILDER
+                    .comment("When performing a safe teleport, whether to only use placeable blocks from the player's inventory if a safe coordinate is not found.",
+                            "当进行安全传送时，如果未找到安全坐标，是否仅从背包中获取可放置的方块。")
+                    .define("getBlockFromInventory", true);
+
+            // 安全方块类型
+            SAFE_BLOCKS = SERVER_BUILDER
+                    .comment("When performing a safe teleport, the list of blocks to place if a safe coordinate is not found. If 'getBlockFromInventory' is set to false, the first block in the list will always be used.",
+                            "当进行安全传送时，如果未找到安全坐标，放置方块的列表。若'getBlockFromInventory'为false，则始终使用列表中的第一个方块。")
+                    .define("safeBlocks", Stream.of(
+                                            Blocks.GRASS_BLOCK,
+                                            Blocks.GRASS_PATH,
+                                            Blocks.DIRT,
+                                            Blocks.COBBLESTONE
+                                    ).map(block -> BlockStateParser.serialize(block.defaultBlockState()))
+                                    .collect(Collectors.toList())
+                    );
+            SERVER_BUILDER.pop();
+
             SERVER_BUILDER.pop();
         }
 
@@ -838,37 +879,37 @@ public class ServerConfig {
             SERVER_BUILDER.comment("Function Switch", "功能开关").push("switch");
 
             SWITCH_TP_COORDINATE = SERVER_BUILDER
-                    .comment("Enable or disable the option to 'Teleport to the specified coordinates'"
+                    .comment("Enable or disable the option to 'Teleport to the specified coordinates'."
                             , "是否启用传送到指定坐标。")
                     .define("switchTpCoordinate", true);
 
             SWITCH_TP_STRUCTURE = SERVER_BUILDER
-                    .comment("Enable or disable the option to 'Teleport to the specified structure'"
+                    .comment("Enable or disable the option to 'Teleport to the specified structure'."
                             , "是否启用传送到指定结构。")
                     .define("switchTpStructure", true);
 
             SWITCH_TP_ASK = SERVER_BUILDER
-                    .comment("Enable or disable the option to 'Request to teleport oneself to other players'"
+                    .comment("Enable or disable the option to 'Request to teleport oneself to other players'."
                             , "是否启用传送请求。")
                     .define("switchTpAsk", true);
 
             SWITCH_TP_HERE = SERVER_BUILDER
-                    .comment("Enable or disable the option to 'Request the transfer of other players to oneself'"
+                    .comment("Enable or disable the option to 'Request the transfer of other players to oneself'."
                             , "是否启用请求将玩家传送至当前位置。")
                     .define("switchTpHere", true);
 
             SWITCH_TP_RANDOM = SERVER_BUILDER
-                    .comment("Enable or disable the option to 'Teleport to a random location'"
+                    .comment("Enable or disable the option to 'Teleport to a random location'."
                             , "是否启用随机传送。")
                     .define("switchTpRandom", true);
 
             SWITCH_TP_SPAWN = SERVER_BUILDER
-                    .comment("Enable or disable the option to 'Teleport to the spawn of the player'"
+                    .comment("Enable or disable the option to 'Teleport to the spawn of the player'."
                             , "是否启用传送到玩家重生点。")
                     .define("switchTpSpawn", true);
 
             SWITCH_TP_WORLD_SPAWN = SERVER_BUILDER
-                    .comment("Enable or disable the option to 'Teleport to the spawn of the world'"
+                    .comment("Enable or disable the option to 'Teleport to the spawn of the world'."
                             , "是否启用传送到世界重生点。")
                     .define("switchTpWorldSpawn", true);
 
@@ -900,12 +941,12 @@ public class ServerConfig {
                     .define("switchTpView", true);
 
             SWITCH_TP_HOME = SERVER_BUILDER
-                    .comment("Enable or disable the option to 'Teleport to the home'"
+                    .comment("Enable or disable the option to 'Teleport to the home'."
                             , "是否启用传送到家。")
                     .define("switchTpHome", true);
 
             SWITCH_TP_STAGE = SERVER_BUILDER
-                    .comment("Enable or disable the option to 'Teleport to the stage'"
+                    .comment("Enable or disable the option to 'Teleport to the stage'."
                             , "是否启用传送到驿站。")
                     .define("switchTpStage", true);
 
@@ -1485,8 +1526,8 @@ public class ServerConfig {
                         .define("costTpCoordinateConf", "");
 
                 COST_TP_COORDINATE_RATE = SERVER_BUILDER
-                        .comment("The cost rate for 'Teleport to the specified coordinates', the cost will be multiplied by the distance between the two players"
-                                , "传送到指定坐标的代价倍率，代价会乘以两个玩家之间的距离。")
+                        .comment("The cost rate for 'Teleport to the specified coordinates', the cost will be multiplied by the distance between the two coordinates."
+                                , "传送到指定坐标的代价倍率，代价会乘以传送前后坐标之间的距离。")
                         .defineInRange("costTpCoordinateRate", 0.001, 0, 9999);
             }
             SERVER_BUILDER.pop();
@@ -1515,8 +1556,8 @@ public class ServerConfig {
                         .define("costTpStructureConf", "");
 
                 COST_TP_STRUCTURE_RATE = SERVER_BUILDER
-                        .comment("The cost rate for 'Teleport to the specified structure', the cost will be multiplied by the distance between the two players"
-                                , "传送到指定结构的代价倍率，代价会乘以两个玩家之间的距离。")
+                        .comment("The cost rate for 'Teleport to the specified structure', the cost will be multiplied by the distance between the two coordinates."
+                                , "传送到指定结构的代价倍率，代价会乘以传送前后坐标之间的距离。")
                         .defineInRange("costTpStructureRate", 0.001, 0, 9999);
             }
             SERVER_BUILDER.pop();
@@ -1605,8 +1646,8 @@ public class ServerConfig {
                         .define("costTpRandomConf", "");
 
                 COST_TP_RANDOM_RATE = SERVER_BUILDER
-                        .comment("The cost rate for 'Teleport to a random location', the cost will be multiplied by the distance between the two players"
-                                , "随机传送的代价倍率，代价会乘以两个玩家之间的距离。")
+                        .comment("The cost rate for 'Teleport to a random location', the cost will be multiplied by the distance between the two coordinates."
+                                , "随机传送的代价倍率，代价会乘以传送前后坐标之间的距离。")
                         .defineInRange("costTpRandomRate", 0.001, 0, 9999);
             }
             SERVER_BUILDER.pop();
@@ -1635,8 +1676,8 @@ public class ServerConfig {
                         .define("costTpSpawnConf", "");
 
                 COST_TP_SPAWN_RATE = SERVER_BUILDER
-                        .comment("The cost rate for 'Teleport to the spawn of the player', the cost will be multiplied by the distance between the two players"
-                                , "传送到玩家重生点的代价倍率，代价会乘以两个玩家之间的距离。")
+                        .comment("The cost rate for 'Teleport to the spawn of the player', the cost will be multiplied by the distance between the two coordinates."
+                                , "传送到玩家重生点的代价倍率，代价会乘以传送前后坐标之间的距离。")
                         .defineInRange("costTpSpawnRate", 0.001, 0, 9999);
             }
             SERVER_BUILDER.pop();
@@ -1665,8 +1706,8 @@ public class ServerConfig {
                         .define("costTpWorldSpawnConf", "");
 
                 COST_TP_WORLD_SPAWN_RATE = SERVER_BUILDER
-                        .comment("The cost rate for 'Teleport to the spawn of the world', the cost will be multiplied by the distance between the two players"
-                                , "传送到世界重生点的代价倍率，代价会乘以两个玩家之间的距离。")
+                        .comment("The cost rate for 'Teleport to the spawn of the world', the cost will be multiplied by the distance between the two coordinates."
+                                , "传送到世界重生点的代价倍率，代价会乘以传送前后坐标之间的距离。")
                         .defineInRange("costTpWorldSpawnRate", 0.001, 0, 9999);
             }
             SERVER_BUILDER.pop();
@@ -1695,8 +1736,8 @@ public class ServerConfig {
                         .define("costTpTopConf", "");
 
                 COST_TP_TOP_RATE = SERVER_BUILDER
-                        .comment("The cost rate for 'Teleport to the top of current position', the cost will be multiplied by the distance between the two players"
-                                , "传送到顶部的代价倍率，代价会乘以两个玩家之间的距离。")
+                        .comment("The cost rate for 'Teleport to the top of current position', the cost will be multiplied by the distance between the two coordinates."
+                                , "传送到顶部的代价倍率，代价会乘以传送前后坐标之间的距离。")
                         .defineInRange("costTpTopRate", 0.001, 0, 9999);
             }
             SERVER_BUILDER.pop();
@@ -1725,8 +1766,8 @@ public class ServerConfig {
                         .define("costTpBottomConf", "");
 
                 COST_TP_BOTTOM_RATE = SERVER_BUILDER
-                        .comment("The cost rate for 'Teleport to the bottom of current position', the cost will be multiplied by the distance between the two players"
-                                , "传送到底部的代价倍率，代价会乘以两个玩家之间的距离。")
+                        .comment("The cost rate for 'Teleport to the bottom of current position', the cost will be multiplied by the distance between the two coordinates."
+                                , "传送到底部的代价倍率，代价会乘以传送前后坐标之间的距离。")
                         .defineInRange("costTpBottomRate", 0.001, 0, 9999);
             }
             SERVER_BUILDER.pop();
@@ -1755,8 +1796,8 @@ public class ServerConfig {
                         .define("costTpUpConf", "");
 
                 COST_TP_UP_RATE = SERVER_BUILDER
-                        .comment("The cost rate for 'Teleport to the upper of current position', the cost will be multiplied by the distance between the two players"
-                                , "传送到上方的代价倍率，代价会乘以两个玩家之间的距离。")
+                        .comment("The cost rate for 'Teleport to the upper of current position', the cost will be multiplied by the distance between the two coordinates."
+                                , "传送到上方的代价倍率，代价会乘以传送前后坐标之间的距离。")
                         .defineInRange("costTpUpRate", 0.001, 0, 9999);
             }
             SERVER_BUILDER.pop();
@@ -1785,8 +1826,8 @@ public class ServerConfig {
                         .define("costTpDownConf", "");
 
                 COST_TP_DOWN_RATE = SERVER_BUILDER
-                        .comment("The cost rate for 'Teleport to the lower of current position', the cost will be multiplied by the distance between the two players"
-                                , "传送到下方的代价倍率，代价会乘以两个玩家之间的距离。")
+                        .comment("The cost rate for 'Teleport to the lower of current position', the cost will be multiplied by the distance between the two coordinates."
+                                , "传送到下方的代价倍率，代价会乘以传送前后坐标之间的距离。")
                         .defineInRange("costTpDownRate", 0.001, 0, 9999);
             }
             SERVER_BUILDER.pop();
@@ -1815,8 +1856,8 @@ public class ServerConfig {
                         .define("costTpViewConf", "");
 
                 COST_TP_VIEW_RATE = SERVER_BUILDER
-                        .comment("The cost rate for 'Teleport to the end of the line of sight', the cost will be multiplied by the distance between the two players"
-                                , "传送至视线尽头的代价倍率，代价会乘以两个玩家之间的距离。")
+                        .comment("The cost rate for 'Teleport to the end of the line of sight', the cost will be multiplied by the distance between the two coordinates."
+                                , "传送至视线尽头的代价倍率，代价会乘以传送前后坐标之间的距离。")
                         .defineInRange("costTpViewRate", 0.001, 0, 9999);
             }
             SERVER_BUILDER.pop();
@@ -1845,8 +1886,8 @@ public class ServerConfig {
                         .define("costTpHomeConf", "");
 
                 COST_TP_HOME_RATE = SERVER_BUILDER
-                        .comment("The cost rate for 'Teleport to the home', the cost will be multiplied by the distance between the two players"
-                                , "传送到家的代价倍率，代价会乘以两个玩家之间的距离。")
+                        .comment("The cost rate for 'Teleport to the home', the cost will be multiplied by the distance between the two coordinates."
+                                , "传送到家的代价倍率，代价会乘以传送前后坐标之间的距离。")
                         .defineInRange("costTpHomeRate", 0.001, 0, 9999);
             }
             SERVER_BUILDER.pop();
@@ -1875,8 +1916,8 @@ public class ServerConfig {
                         .define("costTpStageConf", "");
 
                 COST_TP_STAGE_RATE = SERVER_BUILDER
-                        .comment("The cost rate for 'Teleport to the stage', the cost will be multiplied by the distance between the two players"
-                                , "传送到驿站的代价倍率，代价会乘以两个玩家之间的距离。")
+                        .comment("The cost rate for 'Teleport to the stage', the cost will be multiplied by the distance between the two coordinates."
+                                , "传送到驿站的代价倍率，代价会乘以传送前后坐标之间的距离。")
                         .defineInRange("costTpStageRate", 0.001, 0, 9999);
             }
             SERVER_BUILDER.pop();
@@ -1886,7 +1927,7 @@ public class ServerConfig {
                 COST_TP_BACK_TYPE = SERVER_BUILDER
                         .comment("The cost type for 'Teleport to the previous location'"
                                 , "传送到上次传送点的代价类型。")
-                        .defineEnum("costTpBackType", ECostType.EXP_POINT);
+                        .defineEnum("costTpBackType", ECostType.HUNGER);
 
                 COST_TP_BACK_NUM = SERVER_BUILDER
                         .comment("The number of cost for 'Teleport to the previous location'"
@@ -1905,8 +1946,8 @@ public class ServerConfig {
                         .define("costTpBackConf", "");
 
                 COST_TP_BACK_RATE = SERVER_BUILDER
-                        .comment("The cost rate for 'Teleport to the previous location', the cost will be multiplied by the distance between the two players"
-                                , "传送到上次传送点的代价倍率，代价会乘以两个玩家之间的距离。")
+                        .comment("The cost rate for 'Teleport to the previous location', the cost will be multiplied by the distance between the two coordinates."
+                                , "传送到上次传送点的代价倍率，代价会乘以传送前后坐标之间的距离。")
                         .defineInRange("costTpBackRate", 0.001, 0, 9999);
             }
             SERVER_BUILDER.pop();

@@ -6,190 +6,13 @@ import xin.vanilla.narcissus.enums.EMCColor;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.security.SecureRandom;
-import java.util.Collection;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 @SuppressWarnings("unused")
 public class StringUtils {
 
-    public static final String METHOD_SET_PREFIX = "set";
-    public static final String METHOD_GET_PREFIX = "get";
-    public static final String COMMON_MARK = ",<.>/?;:'\"[{]}\\|`~!@#$%^&*()-_=+，《。》、？；：‘“【】·~！￥…（）—";
     public static final String FORMAT_REGEX = "%(\\d+\\$)?([-#+ 0,(<]*)?(\\d+)?(\\.\\d+)?([tT])?([a-zA-Z%])";
-    /**
-     * NanoId默认随机字符串生成器
-     */
-    public static final SecureRandom DEFAULT_NUMBER_GENERATOR = new SecureRandom();
-
-    /**
-     * NanoId默认随机字符串序列
-     */
-    public static final char[] DEFAULT_ALPHABET = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ".toCharArray();
-
-    /**
-     * NanoId默认随机字符串序列
-     */
-    public static final char[] NUMBER_ALPHABET = "0123456789".toCharArray();
-
-    /**
-     * NanoId默认随机字符串长度
-     */
-    public static final int DEFAULT_SIZE = 21;
-
-    /**
-     * 字符串是否为常用标点符号
-     */
-    public static boolean isCommonMark(String s) {
-        if (s.length() != 1) return false;
-        return COMMON_MARK.contains(s);
-    }
-
-    /**
-     * 根据行号截取字符串
-     * <p>(开始堆粪</p>
-     *
-     * @param suffix 如果结尾还有内容, 是否需要添加的后缀, 例: "后面还有[num]行"
-     */
-    public static String getByLine(String s, int start, int end, String suffix) {
-        if (start > end) return s;
-        String code;
-        if (s.contains("\r\n")) code = "\r\n";
-        else if (s.contains("\r")) code = "\r";
-        else if (s.contains("\n")) code = "\n";
-        else return s;
-
-        String[] split = s.split(code);
-        if (start > split.length) return s;
-        if (end >= split.length) {
-            StringBuilder back = new StringBuilder();
-            for (int i = start - 1; i < split.length; i++) {
-                if (i != start - 1) back.append(code);
-                back.append(split[i]);
-            }
-            return back.toString();
-        }
-
-        StringBuilder back = new StringBuilder();
-        for (int i = start - 1; i < end; i++) {
-            if (i != start - 1) back.append(code);
-            back.append(split[i]);
-        }
-        if (!"".equals(suffix))
-            back.append(code).append(suffix.replace("[num]", split.length - end + ""));
-        return back.toString();
-    }
-
-    /**
-     * 将数值数组 <code>[123456789, 234567890]</code>
-     * <p>转换为形如 <code>123456789,234567890</code> 的字符串</p>
-     */
-    public static String toString(int[] a) {
-        return toString(a, ',');
-    }
-
-    /**
-     * 将数值数组 <code>[123456789, 234567890]</code>
-     * <p>转换为形如 <code>123456789,234567890</code> 的字符串</p>
-     *
-     * @param separator 分隔符
-     */
-    public static String toString(int[] a, char separator) {
-        if (a == null)
-            return "null";
-        // a = Arrays.stream(a).sorted().toArray();
-        int iMax = a.length - 1;
-        if (iMax == -1)
-            return "";
-
-        StringBuilder b = new StringBuilder();
-        for (int i = 0; ; i++) {
-            b.append(a[i]);
-            if (i == iMax)
-                return b.toString();
-            b.append(separator);
-        }
-    }
-
-    /**
-     * 将数值数组 <code>[123456789, 234567890]</code>
-     * <p>转换为形如 <code>123456789,234567890</code> 的字符串</p>
-     */
-    public static String toString(long[] a) {
-        return toString(a, ',');
-    }
-
-    /**
-     * 将数值数组 <code>[123456789, 234567890]</code>
-     * <p>转换为形如 <code>123456789,234567890</code> 的字符串</p>
-     *
-     * @param separator 分隔符
-     */
-    public static String toString(long[] a, char separator) {
-        if (a == null)
-            return "null";
-        // a = Arrays.stream(a).sorted().toArray();
-        int iMax = a.length - 1;
-        if (iMax == -1)
-            return "";
-
-        StringBuilder b = new StringBuilder();
-        for (int i = 0; ; i++) {
-            b.append(a[i]);
-            if (i == iMax)
-                return b.toString();
-            b.append(separator);
-        }
-    }
-
-    /**
-     * 将数值集合 <code>[123456789, 234567890]</code>
-     * <p>转换为形如 <code>123456789,234567890</code> 的字符串</p>
-     */
-    public static String toString(Collection<?> a) {
-        return toString(a, ',');
-    }
-
-    /**
-     * 将数值集合 <code>[123456789, 234567890]</code>
-     * <p>转换为形如 <code>123456789,234567890</code> 的字符串</p>
-     *
-     * @param separator 分隔符
-     */
-    public static String toString(Collection<?> a, char separator) {
-        if (a == null)
-            return "null";
-        // a = Arrays.stream(a).sorted().toArray();
-        int iMax = a.size() - 1;
-        if (iMax == -1)
-            return "";
-
-        StringBuilder b = new StringBuilder();
-        int i = 0;
-        for (Object o : a) {
-            b.append(o);
-            i++;
-            if (i <= iMax)
-                b.append(separator);
-        }
-        return b.toString();
-    }
-
-    /**
-     * 转义正则特殊字符  $()*+.[]?\^{},|
-     */
-    public static String escapeExprSpecialWord(String keyword) {
-        if (!StringUtils.isNullOrEmpty(keyword)) {
-            String[] fbsArr = {"\\", "$", "(", ")", "*", "+", ".", "[", "]", "?", "^", "{", "}", "|"};
-            for (String key : fbsArr) {
-                if (keyword.contains(key)) {
-                    keyword = keyword.replace(key, "\\" + key);
-                }
-            }
-        }
-        return keyword;
-    }
 
     /**
      * 将字符串转为逻辑真假
@@ -215,25 +38,6 @@ public class StringUtils {
             default:
                 return false;
         }
-    }
-
-    /**
-     * 将String[][] 格式化为 String
-     */
-    public static String convertToString(String[][] stringArray, String x, String y) {
-        StringBuilder sb = new StringBuilder();
-        for (int i = 0; i < stringArray.length; i++) {
-            for (int j = 0; j < stringArray[i].length; j++) {
-                sb.append(stringArray[i][j]);
-                if (j < stringArray[i].length - 1) {
-                    sb.append(x);
-                }
-            }
-            if (i < stringArray.length - 1) {
-                sb.append(y);
-            }
-        }
-        return sb.toString();
     }
 
     public static boolean isNullOrEmpty(String s) {
@@ -317,10 +121,6 @@ public class StringUtils {
     public static int getLineCount(String s) {
         if (StringUtils.isNullOrEmpty(s)) return 0;
         return StringUtils.replaceLine(s).split("\n").length;
-    }
-
-    public static String getAvatarUrl(long qq, int size) {
-        return "http://q.qlogo.cn/g?b=qq&nk=" + qq + "&s=" + size;
     }
 
     private static final String[] NUM = {"零", "壹", "贰", "叁", "肆", "伍", "陆", "柒", "捌", "玖"};
