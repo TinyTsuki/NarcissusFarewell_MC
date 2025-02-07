@@ -17,4 +17,5 @@ public enum ETeleportType {
     TP_STAGE,
     TP_BACK,
     DEATH,
+    OTHER,
 }

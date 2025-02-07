@@ -83,7 +83,7 @@ public class NarcissusFarewell {
         // 注册当前实例到MinecraftForge的事件总线，以便监听和处理游戏内的各种事件
         MinecraftForge.EVENT_BUS.register(this);
 
-        // 注册服务器和客户端配置
+        // 注册服务端配置
         ModLoadingContext.get().registerConfig(ModConfig.Type.SERVER, ServerConfig.SERVER_CONFIG);
 
         // 注册客户端设置事件到MOD事件总线
@@ -112,4 +112,5 @@ public class NarcissusFarewell {
         LOGGER.debug("Registering commands");
         FarewellCommand.register(event.getServer().getCommands().getDispatcher());
     }
+
 }
