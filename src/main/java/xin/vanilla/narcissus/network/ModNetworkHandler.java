@@ -1,8 +1,8 @@
 package xin.vanilla.narcissus.network;
 
 import net.minecraft.resources.ResourceLocation;
-import net.minecraftforge.fmllegacy.network.NetworkRegistry;
-import net.minecraftforge.fmllegacy.network.simple.SimpleChannel;
+import net.minecraftforge.network.NetworkRegistry;
+import net.minecraftforge.network.simple.SimpleChannel;
 import xin.vanilla.narcissus.NarcissusFarewell;
 
 public class ModNetworkHandler {

@@ -889,7 +889,7 @@ public class NarcissusUtils {
     }
 
     public static ServerboundClientInformationPacket getCClientSettingsPacket(ServerPlayer player) {
-        return new ServerboundClientInformationPacket(player.getLanguage(), 0, player.getChatVisibility(), false, 0, player.getMainArm(), player.isTextFilteringEnabled());
+        return new ServerboundClientInformationPacket(player.getLanguage(), 0, player.getChatVisibility(), false, 0, player.getMainArm(), player.isTextFilteringEnabled(), player.allowsListing());
     }
 
     /**

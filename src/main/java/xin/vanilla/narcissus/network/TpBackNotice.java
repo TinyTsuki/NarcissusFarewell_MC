@@ -2,7 +2,7 @@ package xin.vanilla.narcissus.network;
 
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraftforge.fmllegacy.network.NetworkEvent;
+import net.minecraftforge.network.NetworkEvent;
 import xin.vanilla.narcissus.enums.ECommandType;
 import xin.vanilla.narcissus.util.NarcissusUtils;
 
