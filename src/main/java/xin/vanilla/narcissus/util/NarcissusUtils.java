@@ -2,10 +2,12 @@ package xin.vanilla.narcissus.util;
 
 import com.mojang.brigadier.StringReader;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
+import com.mojang.datafixers.util.Pair;
 import lombok.NonNull;
 import net.minecraft.Util;
 import net.minecraft.commands.arguments.blocks.BlockStateParser;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Holder;
 import net.minecraft.core.Registry;
 import net.minecraft.nbt.TagParser;
 import net.minecraft.network.chat.ChatType;
@@ -16,6 +18,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.tags.TagKey;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
@@ -26,7 +29,7 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.levelgen.feature.StructureFeature;
+import net.minecraft.world.level.levelgen.feature.ConfiguredStructureFeature;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.fml.ModContainer;
 import net.minecraftforge.fml.ModList;
@@ -348,12 +351,14 @@ public class NarcissusUtils {
         return NarcissusFarewell.getServerInstance().getLevel(dimension);
     }
 
-    public static Biome getBiome(String id) {
+    public static ResourceKey<Biome> getBiome(String id) {
         return getBiome(new ResourceLocation(id));
     }
 
-    public static Biome getBiome(ResourceLocation id) {
-        return NarcissusFarewell.getServerInstance().registryAccess().registryOrThrow(Registry.BIOME_REGISTRY).getOptional(id).orElse(null);
+    public static ResourceKey<Biome> getBiome(@NonNull ResourceLocation id) {
+        // FIXME 应该有更好的判断方法
+        ResourceKey<Biome> key = ResourceKey.create(Registry.BIOME_REGISTRY, id);
+        return ForgeRegistries.BIOMES.getValues().stream().anyMatch(biome -> id.equals(biome.getRegistryName())) ? key : null;
     }
 
     /**
@@ -365,7 +370,7 @@ public class NarcissusUtils {
      * @param radius      搜索半径
      * @param minDistance 最小距离
      */
-    public static Coordinate findNearestBiome(ServerLevel world, Coordinate start, Biome biome, int radius, int minDistance) {
+    public static Coordinate findNearestBiome(ServerLevel world, Coordinate start, ResourceKey<Biome> biome, int radius, int minDistance) {
         // for (int x : IntStream.range((int) (start.getX() - radius), (int) (start.getX() + radius)).boxed()
         //         .sorted(Comparator.comparingInt(a -> Math.abs(a - (int) start.getX())))
         //         .collect(Collectors.toList())) {
@@ -382,19 +387,23 @@ public class NarcissusUtils {
         // }
         // // 未找到目标生物群系
         // return null;
-        BlockPos pos = world.findNearestBiome(biome, start.toBlockPos(), radius, minDistance);
-        if (pos != null) {
-            return start.clone().setX(pos.getX()).setZ(pos.getZ()).setSafe(true);
+        Pair<BlockPos, Holder<Biome>> nearestBiome = world.findNearestBiome(holder -> holder.is(biome), start.toBlockPos(), radius, minDistance);
+        if (nearestBiome != null) {
+            BlockPos pos = nearestBiome.getFirst();
+            if (pos != null) {
+                return start.clone().setX(pos.getX()).setZ(pos.getZ()).setSafe(true);
+            }
         }
         return null;
     }
 
-    public static StructureFeature<?> getStructure(String id) {
+    public static TagKey<ConfiguredStructureFeature<?, ?>> getStructure(String id) {
         return getStructure(new ResourceLocation(id));
     }
 
-    public static StructureFeature<?> getStructure(ResourceLocation id) {
-        return ForgeRegistries.STRUCTURE_FEATURES.getValue(id);
+    public static TagKey<ConfiguredStructureFeature<?, ?>> getStructure(ResourceLocation id) {
+        // FIXME 应该有更好的判断方法
+        return ForgeRegistries.STRUCTURE_FEATURES.getKeys().stream().anyMatch(id::equals) ? TagKey.create(Registry.CONFIGURED_STRUCTURE_FEATURE_REGISTRY, id) : null;
     }
 
     /**
@@ -405,7 +414,7 @@ public class NarcissusUtils {
      * @param struct 目标结构
      * @param radius 搜索半径
      */
-    public static Coordinate findNearestStruct(ServerLevel world, Coordinate start, StructureFeature<?> struct, int radius) {
+    public static Coordinate findNearestStruct(ServerLevel world, Coordinate start, TagKey<ConfiguredStructureFeature<?, ?>> struct, int radius) {
         BlockPos pos = world.findNearestMapFeature(struct, start.toBlockPos(), radius, true);
         if (pos != null) {
             return start.clone().setX(pos.getX()).setZ(pos.getZ()).setSafe(true);

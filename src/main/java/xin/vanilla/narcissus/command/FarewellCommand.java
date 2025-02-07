@@ -25,10 +25,11 @@ import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.tags.TagKey;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.biome.Biome;
-import net.minecraft.world.level.levelgen.feature.StructureFeature;
+import net.minecraft.world.level.levelgen.feature.ConfiguredStructureFeature;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.registries.ForgeRegistries;
 import xin.vanilla.narcissus.NarcissusFarewell;
@@ -189,8 +190,8 @@ public class FarewellCommand {
                     .filter(resourceLocation -> isInputEmpty || resourceLocation.toString().contains(input))
                     .forEach(location -> builder.suggest(location.toString()));
             ForgeRegistries.BIOMES.getValues().stream()
-                    .filter(resourceLocation -> isInputEmpty || resourceLocation.toString().contains(input))
-                    .forEach(biome -> builder.suggest(biome.toString()));
+                    .filter(biome -> isInputEmpty || biome.getRegistryName().toString().contains(input))
+                    .forEach(biome -> builder.suggest(biome.getRegistryName().toString()));
             return builder.buildFuture();
         };
 
@@ -243,8 +244,8 @@ public class FarewellCommand {
             // 传送功能前置校验
             if (checkTeleportPre(player, ETeleportType.TP_STRUCTURE)) return 0;
             ResourceLocation structId = ResourceLocationArgument.getId(context, "struct");
-            StructureFeature<?> structure = NarcissusUtils.getStructure(structId);
-            Biome biome = NarcissusUtils.getBiome(structId);
+            TagKey<ConfiguredStructureFeature<?, ?>> structure = NarcissusUtils.getStructure(structId);
+            ResourceKey<Biome> biome = NarcissusUtils.getBiome(structId);
             if (structure == null && biome == null) {
                 NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EI18nType.MESSAGE, "structure_biome_not_found"), structId);
                 return 0;

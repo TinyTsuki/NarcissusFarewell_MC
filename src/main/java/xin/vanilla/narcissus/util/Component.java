@@ -349,9 +349,9 @@ public class Component {
         Style style = Style.EMPTY;
         if (!isColorEmpty())
             style = style.withColor(TextColor.fromRgb(getColor()));
-        style = style.setUnderlined(this.isUnderlined())
-                .setStrikethrough(this.isStrikethrough())
-                .setObfuscated(this.isObfuscated())
+        style = style.withUnderlined(this.isUnderlined())
+                .withStrikethrough(this.isStrikethrough())
+                .withObfuscated(this.isObfuscated())
                 .withBold(this.isBold())
                 .withItalic(this.isItalic())
                 .withClickEvent(this.clickEvent)
