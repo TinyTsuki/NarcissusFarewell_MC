@@ -43,7 +43,6 @@ import xin.vanilla.narcissus.enums.*;
 
 import javax.annotation.Nullable;
 import java.io.IOException;
-import java.lang.reflect.Field;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.*;
@@ -1443,19 +1442,26 @@ public class NarcissusUtils {
 
     // endregion 传送代价
 
+    public static String LANGUAGE_FIELD_NAME;
+
     /**
      * 获取玩家语言
      */
     public static String getPlayerLanguage(ServerPlayerEntity player) {
-        String language = "en_us";
+        if (StringUtils.isNotNullOrEmpty(LANGUAGE_FIELD_NAME)) {
+            return LANGUAGE_FIELD_NAME;
+        }
         try {
-            Class<?> clazz = player.getClass();
-            Field secretField = clazz.getDeclaredField("language");
-            secretField.setAccessible(true);
-            language = ((String) secretField.get(player)).toLowerCase();
+            for (String field : FieldUtils.getPrivateFieldNames(ServerPlayerEntity.class, String.class)) {
+                String lang = (String) FieldUtils.getPrivateField(ServerPlayerEntity.class, player, field);
+                if (StringUtils.isNotNullOrEmpty(lang) && lang.matches("^[a-zA-Z]{2}_[a-zA-Z]{2}$")) {
+                    LANGUAGE_FIELD_NAME = lang;
+                }
+            }
         } catch (Exception e) {
+            LANGUAGE_FIELD_NAME = "en_us";
             LOGGER.error(e);
         }
-        return language;
+        return LANGUAGE_FIELD_NAME;
     }
 }
