@@ -2,7 +2,7 @@ package xin.vanilla.narcissus.network;
 
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraftforge.network.NetworkEvent;
+import net.minecraftforge.event.network.CustomPayloadEvent;
 import xin.vanilla.narcissus.NarcissusFarewell;
 import xin.vanilla.narcissus.config.TeleportRequest;
 import xin.vanilla.narcissus.enums.ECommandType;
@@ -13,7 +13,6 @@ import xin.vanilla.narcissus.util.NarcissusUtils;
 
 import java.util.Comparator;
 import java.util.Objects;
-import java.util.function.Supplier;
 
 public class TpYesNotice {
 
@@ -26,11 +25,11 @@ public class TpYesNotice {
     public void toBytes(FriendlyByteBuf buf) {
     }
 
-    public static void handle(TpYesNotice packet, Supplier<NetworkEvent.Context> ctx) {
+    public static void handle(TpYesNotice packet, CustomPayloadEvent.Context ctx) {
         // 获取网络事件上下文并排队执行工作
-        ctx.get().enqueueWork(() -> {
+        ctx.enqueueWork(() -> {
             // 获取发送数据包的玩家实体
-            ServerPlayer player = ctx.get().getSender();
+            ServerPlayer player = ctx.getSender();
             if (player != null) {
                 ETeleportType teleportType = NarcissusFarewell.getTeleportRequest().values().stream()
                         .filter(request -> request.getTarget().getUUID().equals(player.getUUID()))
@@ -46,6 +45,6 @@ public class TpYesNotice {
             }
         });
         // 设置数据包已处理状态，防止重复处理
-        ctx.get().setPacketHandled(true);
+        ctx.setPacketHandled(true);
     }
 }

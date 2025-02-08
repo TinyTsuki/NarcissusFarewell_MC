@@ -16,6 +16,7 @@ import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.LogicalSide;
 import net.minecraftforge.fml.common.Mod;
+import net.minecraftforge.network.PacketDistributor;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import xin.vanilla.narcissus.NarcissusFarewell;
@@ -49,7 +50,7 @@ public class ForgeEventHandler {
     public static void onPlayerLoggedIn(ClientPlayerNetworkEvent.LoggingIn event) {
         LOGGER.debug("Client: Player logged in.");
         // 同步客户端配置到服务器
-        ModNetworkHandler.INSTANCE.sendToServer(new ClientModLoadedNotice());
+        ModNetworkHandler.INSTANCE.send(new ClientModLoadedNotice(), PacketDistributor.SERVER.noArg());
     }
 
     @SubscribeEvent

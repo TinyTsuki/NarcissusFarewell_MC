@@ -2,10 +2,8 @@ package xin.vanilla.narcissus.network;
 
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraftforge.network.NetworkEvent;
+import net.minecraftforge.event.network.CustomPayloadEvent;
 import xin.vanilla.narcissus.NarcissusFarewell;
-
-import java.util.function.Supplier;
 
 public class PlayerDataReceivedNotice {
 
@@ -18,16 +16,16 @@ public class PlayerDataReceivedNotice {
     public void toBytes(FriendlyByteBuf buf) {
     }
 
-    public static void handle(PlayerDataReceivedNotice packet, Supplier<NetworkEvent.Context> ctx) {
+    public static void handle(PlayerDataReceivedNotice packet, CustomPayloadEvent.Context ctx) {
         // 获取网络事件上下文并排队执行工作
-        ctx.get().enqueueWork(() -> {
+        ctx.enqueueWork(() -> {
             // 获取发送数据包的玩家实体
-            ServerPlayer player = ctx.get().getSender();
+            ServerPlayer player = ctx.getSender();
             if (player != null) {
                 NarcissusFarewell.getPlayerCapabilityStatus().put(player.getUUID().toString(), true);
             }
         });
         // 设置数据包已处理状态，防止重复处理
-        ctx.get().setPacketHandled(true);
+        ctx.setPacketHandled(true);
     }
 }

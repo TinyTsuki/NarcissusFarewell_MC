@@ -3,8 +3,8 @@ package xin.vanilla.narcissus.network;
 import lombok.Getter;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.event.network.CustomPayloadEvent;
 import net.minecraftforge.fml.DistExecutor;
-import net.minecraftforge.network.NetworkEvent;
 import xin.vanilla.narcissus.capability.TeleportRecord;
 import xin.vanilla.narcissus.capability.player.IPlayerTeleportData;
 import xin.vanilla.narcissus.capability.player.PlayerTeleportData;
@@ -14,7 +14,6 @@ import xin.vanilla.narcissus.util.CollectionUtils;
 import xin.vanilla.narcissus.util.DateUtils;
 
 import java.util.*;
-import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 @Getter
@@ -116,9 +115,9 @@ public class PlayerDataSyncPacket extends SplitPacket {
         }
     }
 
-    public static void handle(PlayerDataSyncPacket packet, Supplier<NetworkEvent.Context> ctx) {
-        ctx.get().enqueueWork(() -> {
-            if (ctx.get().getDirection().getReceptionSide().isClient()) {
+    public static void handle(PlayerDataSyncPacket packet, CustomPayloadEvent.Context ctx) {
+        ctx.enqueueWork(() -> {
+            if (ctx.getDirection().getReceptionSide().isClient()) {
                 // 获取玩家并更新 Capability 数据
                 List<PlayerDataSyncPacket> packets = SplitPacket.handle(packet);
                 if (CollectionUtils.isNotNullOrEmpty(packets)) {
@@ -126,7 +125,7 @@ public class PlayerDataSyncPacket extends SplitPacket {
                 }
             }
         });
-        ctx.get().setPacketHandled(true);
+        ctx.setPacketHandled(true);
     }
 
     @Override

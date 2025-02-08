@@ -7,6 +7,7 @@ import net.minecraftforge.client.event.RegisterKeyMappingsEvent;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
+import net.minecraftforge.network.PacketDistributor;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import xin.vanilla.narcissus.NarcissusFarewell;
@@ -55,28 +56,28 @@ public class ClientEventHandler {
             // 快捷回家
             if (TP_HOME_KEY.consumeClick()) {
                 if (!keyDown) {
-                    ModNetworkHandler.INSTANCE.sendToServer(new TpHomeNotice());
+                    ModNetworkHandler.INSTANCE.send(new TpHomeNotice(), PacketDistributor.SERVER.noArg());
                     keyDown = true;
                 }
             }
             // 快捷返回
             else if (TP_BACK_KEY.consumeClick()) {
                 if (!keyDown) {
-                    ModNetworkHandler.INSTANCE.sendToServer(new TpBackNotice());
+                    ModNetworkHandler.INSTANCE.send(new TpBackNotice(), PacketDistributor.SERVER.noArg());
                     keyDown = true;
                 }
             }
             // 快捷同意最近一条传送请求
             else if (TP_REQ_YES.consumeClick()) {
                 if (!keyDown) {
-                    ModNetworkHandler.INSTANCE.sendToServer(new TpYesNotice());
+                    ModNetworkHandler.INSTANCE.send(new TpYesNotice(), PacketDistributor.SERVER.noArg());
                     keyDown = true;
                 }
             }
             // 快捷拒绝最近一条传送请求
             else if (TP_REQ_NO.consumeClick()) {
                 if (!keyDown) {
-                    ModNetworkHandler.INSTANCE.sendToServer(new TpNoNotice());
+                    ModNetworkHandler.INSTANCE.send(new TpNoNotice(), PacketDistributor.SERVER.noArg());
                     keyDown = true;
                 }
             } else {

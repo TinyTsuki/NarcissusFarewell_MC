@@ -2,6 +2,7 @@ package xin.vanilla.narcissus.network;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
+import net.minecraftforge.network.PacketDistributor;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import xin.vanilla.narcissus.capability.player.PlayerTeleportDataCapability;
@@ -14,7 +15,7 @@ public class ClientProxy {
         if (player != null) {
             try {
                 PlayerTeleportDataCapability.setData(player, packet.getData());
-                ModNetworkHandler.INSTANCE.sendToServer(new PlayerDataReceivedNotice());
+                ModNetworkHandler.INSTANCE.send(new PlayerDataReceivedNotice(), PacketDistributor.SERVER.noArg());
                 LOGGER.debug("Client: Player data received successfully.");
             } catch (Exception ignored) {
                 LOGGER.debug("Client: Player data received failed.");

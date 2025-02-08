@@ -49,7 +49,7 @@ public class PlayerTeleportDataCapability {
         // 创建自定义包并发送到客户端
         PlayerDataSyncPacket packet = new PlayerDataSyncPacket(player.getUUID(), PlayerTeleportDataCapability.getData(player));
         for (PlayerDataSyncPacket syncPacket : packet.split()) {
-            ModNetworkHandler.INSTANCE.send(PacketDistributor.PLAYER.with(() -> player), syncPacket);
+            ModNetworkHandler.INSTANCE.send(syncPacket, PacketDistributor.PLAYER.with(player));
         }
     }
 }

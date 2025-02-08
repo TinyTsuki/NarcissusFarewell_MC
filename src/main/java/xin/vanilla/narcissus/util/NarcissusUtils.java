@@ -12,10 +12,10 @@ import net.minecraft.core.HolderSet;
 import net.minecraft.core.Registry;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.TagParser;
-import net.minecraft.network.protocol.game.ServerboundClientInformationPacket;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.level.ClientInformation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.tags.TagKey;
@@ -935,8 +935,8 @@ public class NarcissusUtils {
         };
     }
 
-    public static ServerboundClientInformationPacket getCClientSettingsPacket(ServerPlayer player) {
-        return new ServerboundClientInformationPacket(player.getLanguage(), 0, player.getChatVisibility(), false, 0, player.getMainArm(), player.isTextFilteringEnabled(), player.allowsListing());
+    public static ClientInformation getCClientSettingsPacket(ServerPlayer player) {
+        return new ClientInformation(player.getLanguage(), 0, player.getChatVisibility(), false, 0, player.getMainArm(), player.isTextFilteringEnabled(), player.allowsListing());
     }
 
     /**

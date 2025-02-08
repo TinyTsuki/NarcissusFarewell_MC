@@ -6,6 +6,7 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.util.datafix.DataFixTypes;
 import net.minecraft.world.level.saveddata.SavedData;
 import xin.vanilla.narcissus.NarcissusFarewell;
 import xin.vanilla.narcissus.config.Coordinate;
@@ -99,6 +100,6 @@ public class WorldStageData extends SavedData {
     }
 
     public static WorldStageData get(ServerLevel world) {
-        return world.getDataStorage().computeIfAbsent(WorldStageData::load, WorldStageData::new, DATA_NAME);
+        return world.getDataStorage().computeIfAbsent(new Factory<>(WorldStageData::new, WorldStageData::load, DataFixTypes.SAVED_DATA_MAP_DATA), DATA_NAME);
     }
 }
