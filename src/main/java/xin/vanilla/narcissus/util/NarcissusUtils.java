@@ -19,7 +19,6 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.tags.TagKey;
-import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
@@ -199,7 +198,7 @@ public class NarcissusUtils {
         for (int stepCount = 0; stepCount <= range; stepCount++) {
             // 更新当前检测位置
             currentPosition = startPosition.add(stepVector.scale(stepCount));
-            BlockPos currentBlockPos = new BlockPos(currentPosition.x, currentPosition.y, currentPosition.z);
+            BlockPos currentBlockPos = new BlockPos((int) currentPosition.x, (int) currentPosition.y, (int) currentPosition.z);
 
             // 获取当前方块状态
             BlockState blockState = world.getBlockState(currentBlockPos);
@@ -221,7 +220,7 @@ public class NarcissusUtils {
             Vec3 collisionVector = result.toVec3(); // 碰撞点的三维向量
             for (int stepCount = (int) Math.ceil(collisionVector.distanceTo(startPosition) / stepScale); stepCount >= 0; stepCount--) {
                 currentPosition = startPosition.add(stepVector.scale(stepCount));
-                BlockPos currentBlockPos = new BlockPos(currentPosition.x, currentPosition.y, currentPosition.z);
+                BlockPos currentBlockPos = new BlockPos((int) currentPosition.x, (int) currentPosition.y, (int) currentPosition.z);
                 for (int yOffset = -3; yOffset < 3; yOffset++) {
                     Coordinate candidate = start.clone().fromBlockPos(currentBlockPos).addY(yOffset);
                     // 判断当前候选坐标是否安全
@@ -775,7 +774,7 @@ public class NarcissusUtils {
      * @param message 消息
      */
     public static void broadcastMessage(ServerPlayer player, Component message) {
-        player.server.getPlayerList().broadcastSystemMessage(net.minecraft.network.chat.Component.translatable("chat.type.announcement", player.getDisplayName(), message.toTextComponent(player.getLanguage())), true);
+        player.server.getPlayerList().broadcastSystemMessage(net.minecraft.network.chat.Component.translatable("chat.type.announcement", player.getDisplayName(), message.toTextComponent(player.getLanguage())), false);
     }
 
     /**
@@ -785,7 +784,7 @@ public class NarcissusUtils {
      * @param message 消息
      */
     public static void sendMessage(ServerPlayer player, Component message) {
-        player.sendSystemMessage(message.toTextComponent(player.getLanguage()), true);
+        player.sendSystemMessage(message.toTextComponent(player.getLanguage()), false);
     }
 
     /**
@@ -795,7 +794,7 @@ public class NarcissusUtils {
      * @param message 消息
      */
     public static void sendMessage(ServerPlayer player, String message) {
-        player.sendSystemMessage(Component.literal(message).toTextComponent(), true);
+        player.sendSystemMessage(Component.literal(message).toTextComponent(), false);
     }
 
     /**
@@ -806,7 +805,7 @@ public class NarcissusUtils {
      * @param args   参数
      */
     public static void sendTranslatableMessage(ServerPlayer player, String key, Object... args) {
-        player.sendSystemMessage(Component.translatable(key, args).setLanguageCode(player.getLanguage()).toTextComponent(), true);
+        player.sendSystemMessage(Component.translatable(key, args).setLanguageCode(player.getLanguage()).toTextComponent(), false);
     }
 
     /**
@@ -1160,7 +1159,7 @@ public class NarcissusUtils {
                 if (!result && cardNeed == 0) {
                     NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EI18nType.MESSAGE, "cost_not_enough"), Component.translatable(player.getLanguage(), EI18nType.WORD, "health"), (int) Math.ceil(need));
                 } else if (result && submit) {
-                    player.hurt(DamageSource.MAGIC, costNeed);
+                    player.hurt(player.level.damageSources().magic(), costNeed);
                     PlayerTeleportDataCapability.getData(player).subTeleportCard(cardNeedTotal);
                 }
                 break;

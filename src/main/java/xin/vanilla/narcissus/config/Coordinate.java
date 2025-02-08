@@ -123,7 +123,7 @@ public class Coordinate implements Serializable, Cloneable {
     }
 
     public BlockPos toBlockPos() {
-        return new BlockPos(x, y, z);
+        return new BlockPos((int) x, (int) y, (int) z);
     }
 
     public Vec3 toVec3() {
