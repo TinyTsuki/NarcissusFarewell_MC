@@ -35,8 +35,7 @@ public class ClientEventHandler {
     /**
      * 注册键绑定
      */
-    @SubscribeEvent
-    public static void onRegisterKeyMappings(RegisterKeyMappingsEvent event) {
+    public static void registerKeyMappings(RegisterKeyMappingsEvent event) {
         event.register(TP_HOME_KEY);
         event.register(TP_BACK_KEY);
         event.register(TP_REQ_YES);
