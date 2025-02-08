@@ -1,4 +1,4 @@
-# Suzuran Farewell (水仙辞)
+# Narcissus Farewell (水仙辞)
 
 一个 Minecraft Forge 传送指令 Mod。
 
