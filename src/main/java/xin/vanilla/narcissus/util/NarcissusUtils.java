@@ -192,7 +192,7 @@ public class NarcissusUtils {
 
         // 初始化变量
         Vec3 currentPosition = startPosition;
-        Level world = player.getLevel();
+        Level world = player.level();
 
         // 从近到远寻找碰撞点
         for (int stepCount = 0; stepCount <= range; stepCount++) {
@@ -204,7 +204,8 @@ public class NarcissusUtils {
             BlockState blockState = world.getBlockState(currentBlockPos);
 
             // 检测方块是否不可穿过
-            if (blockState.getMaterial().blocksMotion()) {
+            if (blockState.blocksMotion()) {
+                // if (blockState.isCollisionShapeFullBlock(player.level(), currentBlockPos)) {
                 result = start.clone().fromVec3(startPosition.add(stepVector.scale(stepCount - 1)));
                 break;
             }
@@ -327,8 +328,8 @@ public class NarcissusUtils {
         BlockState block = world.getBlockState(coordinate.toBlockPos());
         BlockState blockAbove = world.getBlockState(coordinate.toBlockPos().above());
         BlockState blockBelow = world.getBlockState(coordinate.toBlockPos().below());
-        return (!block.getMaterial().blocksMotion() && !UNSAFE_BLOCKS.contains(block) && !UNSAFE_BLOCKS.contains(block.getBlock().defaultBlockState()))
-                && (!blockAbove.getMaterial().blocksMotion() && !UNSAFE_BLOCKS.contains(blockAbove) && !UNSAFE_BLOCKS.contains(blockAbove.getBlock().defaultBlockState()) && !SUFFOCATING_BLOCKS.contains(blockAbove) && !SUFFOCATING_BLOCKS.contains(blockAbove.getBlock().defaultBlockState()))
+        return (!block.blocksMotion() && !UNSAFE_BLOCKS.contains(block) && !UNSAFE_BLOCKS.contains(block.getBlock().defaultBlockState()))
+                && (!blockAbove.blocksMotion() && !UNSAFE_BLOCKS.contains(blockAbove) && !UNSAFE_BLOCKS.contains(blockAbove.getBlock().defaultBlockState()) && !SUFFOCATING_BLOCKS.contains(blockAbove) && !SUFFOCATING_BLOCKS.contains(blockAbove.getBlock().defaultBlockState()))
                 && (blockBelow.is(Blocks.AIR) || blockBelow.is(Blocks.CAVE_AIR));
     }
 
@@ -336,13 +337,9 @@ public class NarcissusUtils {
         BlockState block = world.getBlockState(coordinate.toBlockPos());
         BlockState blockAbove = world.getBlockState(coordinate.toBlockPos().above());
         BlockState blockBelow = world.getBlockState(coordinate.toBlockPos().below());
-        return isSafeBlock(block, blockAbove, blockBelow);
-    }
-
-    private static boolean isSafeBlock(BlockState block, BlockState blockAbove, BlockState blockBelow) {
-        return (!block.getMaterial().blocksMotion() && !UNSAFE_BLOCKS.contains(block) && !UNSAFE_BLOCKS.contains(block.getBlock().defaultBlockState()))
-                && (!blockAbove.getMaterial().blocksMotion() && !UNSAFE_BLOCKS.contains(blockAbove) && !UNSAFE_BLOCKS.contains(blockAbove.getBlock().defaultBlockState()) && !SUFFOCATING_BLOCKS.contains(blockAbove) && !SUFFOCATING_BLOCKS.contains(blockAbove.getBlock().defaultBlockState()))
-                && (blockBelow.getMaterial().isSolid() && !UNSAFE_BLOCKS.contains(blockBelow) && !UNSAFE_BLOCKS.contains(blockBelow.getBlock().defaultBlockState()));
+        return (!block.blocksMotion() && !UNSAFE_BLOCKS.contains(block) && !UNSAFE_BLOCKS.contains(block.getBlock().defaultBlockState()))
+                && (!blockAbove.blocksMotion() && !UNSAFE_BLOCKS.contains(blockAbove) && !UNSAFE_BLOCKS.contains(blockAbove.getBlock().defaultBlockState()) && !SUFFOCATING_BLOCKS.contains(blockAbove) && !SUFFOCATING_BLOCKS.contains(blockAbove.getBlock().defaultBlockState()))
+                && (blockBelow.isSolid() && !UNSAFE_BLOCKS.contains(blockBelow) && !UNSAFE_BLOCKS.contains(blockBelow.getBlock().defaultBlockState()));
     }
 
     // endregion 安全坐标
@@ -474,7 +471,7 @@ public class NarcissusUtils {
             if (defaultHome.isEmpty() || !defaultHome.containsValue(name)) {
                 keyValue = data.getHomeCoordinate().keySet().stream()
                         .filter(key -> key.getValue().equals(name))
-                        .filter(key -> key.getKey().equals(player.level.dimension().location().toString()))
+                        .filter(key -> key.getKey().equals(player.level().dimension().location().toString()))
                         .findFirst().orElse(null);
             } else if (defaultHome.containsValue(name)) {
                 List<Map.Entry<String, String>> entryList = defaultHome.entrySet().stream().filter(entry -> entry.getValue().equals(name)).toList();
@@ -495,9 +492,9 @@ public class NarcissusUtils {
             if (defaultHome.size() == 1) {
                 keyValue = new KeyValue<>(defaultHome.keySet().iterator().next(), defaultHome.values().iterator().next());
             } else {
-                String value = defaultHome.getOrDefault(player.level.dimension().location().toString(), null);
+                String value = defaultHome.getOrDefault(player.level().dimension().location().toString(), null);
                 if (value != null) {
-                    keyValue = new KeyValue<>(player.level.dimension().location().toString(), value);
+                    keyValue = new KeyValue<>(player.level().dimension().location().toString(), value);
                 }
             }
         } else if (defaultHome.isEmpty() && dimension == null && StringUtils.isNullOrEmpty(name) && data.getHomeCoordinate().size() == 1) {
@@ -526,7 +523,7 @@ public class NarcissusUtils {
     public static KeyValue<String, String> findNearestStageKey(ServerPlayer player) {
         WorldStageData stageData = WorldStageData.get();
         Map.Entry<KeyValue<String, String>, Coordinate> stageEntry = stageData.getStageCoordinate().entrySet().stream()
-                .filter(entry -> entry.getKey().getKey().equals(player.level.dimension().location().toString()))
+                .filter(entry -> entry.getKey().getKey().equals(player.level().dimension().location().toString()))
                 .min(Comparator.comparingInt(entry -> {
                     Coordinate value = entry.getValue();
                     double dx = value.getX() - player.getX();
@@ -611,7 +608,7 @@ public class NarcissusUtils {
      */
     public static void teleportTo(@NonNull ServerPlayer player, @NonNull Coordinate after, ETeleportType type) {
         Coordinate before = new Coordinate(player);
-        Level world = player.level;
+        Level world = player.level();
         MinecraftServer server = player.getServer();
         // 别听Idea的
         if (world != null && server != null) {
@@ -970,7 +967,7 @@ public class NarcissusUtils {
 
     public static boolean isTeleportAcrossDimensionEnabled(ServerPlayer player, ResourceKey<Level> to, ETeleportType type) {
         boolean result = true;
-        if (player.level.dimension() != to) {
+        if (player.level().dimension() != to) {
             if (ServerConfig.TELEPORT_ACROSS_DIMENSION.get()) {
                 if (!NarcissusUtils.isTeleportTypeAcrossDimensionEnabled(player, type)) {
                     result = false;
@@ -1105,7 +1102,7 @@ public class NarcissusUtils {
     public static boolean validTeleportCost(TeleportRequest request, boolean submit) {
         Coordinate requesterCoordinate = new Coordinate(request.getRequester());
         Coordinate targetCoordinate = new Coordinate(request.getTarget());
-        return validateCost(request.getRequester(), request.getTarget().getLevel().dimension(), calculateDistance(requesterCoordinate, targetCoordinate), request.getTeleportType(), submit);
+        return validateCost(request.getRequester(), request.getTarget().level().dimension(), calculateDistance(requesterCoordinate, targetCoordinate), request.getTeleportType(), submit);
     }
 
     /**
@@ -1123,7 +1120,7 @@ public class NarcissusUtils {
         if (cost.getType() == ECostType.NONE) return true;
 
         double adjustedDistance;
-        if (player.getLevel().dimension() == targetDim) {
+        if (player.level().dimension() == targetDim) {
             adjustedDistance = Math.min(ServerConfig.TELEPORT_COST_DISTANCE_LIMIT.get(), distance);
         } else {
             adjustedDistance = ServerConfig.TELEPORT_COST_DISTANCE_ACROSS_DIMENSION.get();
@@ -1159,7 +1156,7 @@ public class NarcissusUtils {
                 if (!result && cardNeed == 0) {
                     NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EI18nType.MESSAGE, "cost_not_enough"), Component.translatable(player.getLanguage(), EI18nType.WORD, "health"), (int) Math.ceil(need));
                 } else if (result && submit) {
-                    player.hurt(player.level.damageSources().magic(), costNeed);
+                    player.hurt(player.level().damageSources().magic(), costNeed);
                     PlayerTeleportDataCapability.getData(player).subTeleportCard(cardNeedTotal);
                 }
                 break;

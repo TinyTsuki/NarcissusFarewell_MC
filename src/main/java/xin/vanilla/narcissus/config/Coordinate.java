@@ -42,7 +42,7 @@ public class Coordinate implements Serializable, Cloneable {
         this.z = player.getZ();
         this.yaw = player.getYRot();
         this.pitch = player.getXRot();
-        this.dimension = player.level.dimension();
+        this.dimension = player.level().dimension();
     }
 
     public Coordinate(double x, double y, double z) {
@@ -111,7 +111,7 @@ public class Coordinate implements Serializable, Cloneable {
     }
 
     public static Coordinate random(ServerPlayer player, int range) {
-        return random(player, range, player.level.dimension());
+        return random(player, range, player.level().dimension());
     }
 
     public static Coordinate random(ServerPlayer player, int range, ResourceKey<Level> dimension) {

@@ -227,12 +227,12 @@ public class FarewellCommand {
                 try {
                     targetLevel = DimensionArgument.getDimension(context, "dimension").dimension();
                 } catch (IllegalArgumentException ignored) {
-                    targetLevel = player.getLevel().dimension();
+                    targetLevel = player.level().dimension();
                 }
                 coordinate = new Coordinate(pos.x(), pos.y(), pos.z(), player.getYRot(), player.getXRot(), targetLevel);
             } catch (IllegalArgumentException ignored) {
                 ServerPlayer target = EntityArgument.getPlayer(context, "player");
-                coordinate = new Coordinate(target.getX(), target.getY(), target.getZ(), target.getYRot(), target.getXRot(), target.getLevel().dimension());
+                coordinate = new Coordinate(target.getX(), target.getY(), target.getZ(), target.getYRot(), target.getXRot(), target.level().dimension());
             }
             try {
                 coordinate.setSafe("safe".equalsIgnoreCase(StringArgumentType.getString(context, "safe")));
@@ -267,7 +267,7 @@ public class FarewellCommand {
             try {
                 targetLevel = DimensionArgument.getDimension(context, "dimension").dimension();
             } catch (IllegalArgumentException ignored) {
-                targetLevel = player.getLevel().dimension();
+                targetLevel = player.level().dimension();
             }
             ResourceKey<Level> finalTargetLevel = targetLevel;
             int finalRange = range;
@@ -310,7 +310,7 @@ public class FarewellCommand {
                         .filter(request -> {
                             ServerPlayer entity = request.getTarget();
                             return NarcissusUtils.isTeleportTypeAcrossDimensionEnabled(player, ETeleportType.TP_ASK)
-                                    || entity != null && entity.level.dimension() == player.getLevel().dimension();
+                                    || entity != null && entity.level().dimension() == player.level().dimension();
                         })
                         .max(Comparator.comparing(TeleportRequest::getRequestTime))
                         .orElse(new TeleportRequest().setTarget(NarcissusFarewell.getLastTeleportRequest()
@@ -396,7 +396,7 @@ public class FarewellCommand {
                         .filter(request -> {
                             Player entity = request.getTarget();
                             return NarcissusUtils.isTeleportTypeAcrossDimensionEnabled(player, ETeleportType.TP_HERE)
-                                    || entity != null && entity.level.dimension() == player.getLevel().dimension();
+                                    || entity != null && entity.level().dimension() == player.level().dimension();
                         })
                         .max(Comparator.comparing(TeleportRequest::getRequestTime))
                         .orElse(new TeleportRequest().setTarget(NarcissusFarewell.getLastTeleportRequest()
@@ -483,7 +483,7 @@ public class FarewellCommand {
             try {
                 targetLevel = DimensionArgument.getDimension(context, "dimension").dimension();
             } catch (IllegalArgumentException ignored) {
-                targetLevel = player.getLevel().dimension();
+                targetLevel = player.level().dimension();
             }
             Coordinate coordinate = Coordinate.random(player, range, targetLevel).setSafe(true);
             // 验证传送代价
@@ -500,8 +500,8 @@ public class FarewellCommand {
             BlockPos respawnPosition = player.getRespawnPosition();
             coordinate.setDimension(player.getRespawnDimension());
             if (respawnPosition == null) {
-                respawnPosition = player.getLevel().getSharedSpawnPos();
-                coordinate.setDimension(player.getLevel().dimension());
+                respawnPosition = player.level().getSharedSpawnPos();
+                coordinate.setDimension(player.level().dimension());
             }
             if (respawnPosition == null) {
                 respawnPosition = player.getServer().getLevel(Level.OVERWORLD).getSharedSpawnPos();
@@ -524,8 +524,8 @@ public class FarewellCommand {
             // 传送功能前置校验
             if (checkTeleportPre(player, ETeleportType.TP_WORLD_SPAWN)) return 0;
             Coordinate coordinate = new Coordinate(player);
-            BlockPos respawnPosition = player.getLevel().getSharedSpawnPos();
-            coordinate.setDimension(player.getLevel().dimension());
+            BlockPos respawnPosition = player.level().getSharedSpawnPos();
+            coordinate.setDimension(player.level().dimension());
             if (respawnPosition == null) {
                 respawnPosition = player.getServer().getLevel(Level.OVERWORLD).getSharedSpawnPos();
                 coordinate.setDimension(Level.OVERWORLD);
@@ -546,7 +546,7 @@ public class FarewellCommand {
             ServerPlayer player = context.getSource().getPlayerOrException();
             // 传送功能前置校验
             if (checkTeleportPre(player, ETeleportType.TP_TOP)) return 0;
-            Coordinate coordinate = NarcissusUtils.findTopCandidate(player.getLevel(), new Coordinate(player));
+            Coordinate coordinate = NarcissusUtils.findTopCandidate(player.serverLevel(), new Coordinate(player));
             if (coordinate == null) {
                 NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EI18nType.MESSAGE, "tp_top_not_found"));
                 return 0;
@@ -566,7 +566,7 @@ public class FarewellCommand {
             ServerPlayer player = context.getSource().getPlayerOrException();
             // 传送功能前置校验
             if (checkTeleportPre(player, ETeleportType.TP_BOTTOM)) return 0;
-            Coordinate coordinate = NarcissusUtils.findBottomCandidate(player.getLevel(), new Coordinate(player));
+            Coordinate coordinate = NarcissusUtils.findBottomCandidate(player.serverLevel(), new Coordinate(player));
             if (coordinate == null) {
                 NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EI18nType.MESSAGE, "tp_bottom_not_found"));
                 return 0;
@@ -586,7 +586,7 @@ public class FarewellCommand {
             ServerPlayer player = context.getSource().getPlayerOrException();
             // 传送功能前置校验
             if (checkTeleportPre(player, ETeleportType.TP_UP)) return 0;
-            Coordinate coordinate = NarcissusUtils.findUpCandidate(player.getLevel(), new Coordinate(player));
+            Coordinate coordinate = NarcissusUtils.findUpCandidate(player.serverLevel(), new Coordinate(player));
             if (coordinate == null) {
                 NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EI18nType.MESSAGE, "tp_up_not_found"));
                 return 0;
@@ -606,7 +606,7 @@ public class FarewellCommand {
             ServerPlayer player = context.getSource().getPlayerOrException();
             // 传送功能前置校验
             if (checkTeleportPre(player, ETeleportType.TP_DOWN)) return 0;
-            Coordinate coordinate = NarcissusUtils.findDownCandidate(player.getLevel(), new Coordinate(player));
+            Coordinate coordinate = NarcissusUtils.findDownCandidate(player.serverLevel(), new Coordinate(player));
             if (coordinate == null) {
                 NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EI18nType.MESSAGE, "tp_down_not_found"));
                 return 0;
@@ -721,17 +721,17 @@ public class FarewellCommand {
             } catch (IllegalArgumentException ignored) {
             }
             Coordinate coordinate = new Coordinate(player);
-            KeyValue<String, String> key = new KeyValue<>(player.getLevel().dimension().location().toString(), name);
+            KeyValue<String, String> key = new KeyValue<>(player.level().dimension().location().toString(), name);
             if (data.getHomeCoordinate().containsKey(key)) {
                 NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EI18nType.MESSAGE, "home_already_exists"), key.getKey(), key.getValue());
                 return 0;
             }
             data.addHomeCoordinate(key, coordinate);
             if (defaultHome) {
-                if (data.getDefaultHome().containsKey(player.getLevel().dimension().location().toString())) {
-                    NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EI18nType.MESSAGE, "home_default_remove"), data.getDefaultHome(player.getLevel().dimension().location().toString()).getValue());
+                if (data.getDefaultHome().containsKey(player.level().dimension().location().toString())) {
+                    NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EI18nType.MESSAGE, "home_default_remove"), data.getDefaultHome(player.level().dimension().location().toString()).getValue());
                 }
-                data.addDefaultHome(player.getLevel().dimension().location().toString(), name);
+                data.addDefaultHome(player.level().dimension().location().toString(), name);
                 NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EI18nType.MESSAGE, "home_set_default"), name, coordinate.toXyzString());
             } else {
                 NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EI18nType.MESSAGE, "home_set"), name, coordinate.toXyzString());
@@ -796,7 +796,7 @@ public class FarewellCommand {
                 if (coordinateSize == 1) {
                     coordinate = stageData.getCoordinate(name);
                 } else if (coordinateSize > 1) {
-                    coordinate = stageData.getCoordinate(player.getLevel().dimension().location().toString(), name);
+                    coordinate = stageData.getCoordinate(player.level().dimension().location().toString(), name);
                 }
                 if (coordinate == null) {
                     NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EI18nType.MESSAGE, "stage_not_found"), name);
@@ -832,7 +832,7 @@ public class FarewellCommand {
             try {
                 targetLevel = DimensionArgument.getDimension(context, "dimension").dimension();
             } catch (IllegalArgumentException ignored) {
-                targetLevel = player.getLevel().dimension();
+                targetLevel = player.level().dimension();
             }
             String dimension = targetLevel.location().toString();
             KeyValue<String, String> key = new KeyValue<>(dimension, name);
@@ -1307,7 +1307,7 @@ public class FarewellCommand {
                     .then(Commands.literal(ServerConfig.COMMAND_DIMENSION.get())
                             .executes((context) -> {
                                 ServerPlayer player = context.getSource().getPlayerOrException();
-                                Component msg = Component.translatable(player.getLanguage(), EI18nType.MESSAGE, "dimension_info", player.getLevel().dimension().location().toString());
+                                Component msg = Component.translatable(player.getLanguage(), EI18nType.MESSAGE, "dimension_info", player.level().dimension().location().toString());
                                 NarcissusUtils.sendMessage(player, msg);
                                 return 1;
                             })
@@ -1503,7 +1503,7 @@ public class FarewellCommand {
     private static boolean checkTeleportPost(TeleportRequest request, boolean submit) {
         boolean result;
         // 判断跨维度传送
-        result = NarcissusUtils.isTeleportAcrossDimensionEnabled(request.getRequester(), request.getTarget().getLevel().dimension(), request.getTeleportType());
+        result = NarcissusUtils.isTeleportAcrossDimensionEnabled(request.getRequester(), request.getTarget().level().dimension(), request.getTeleportType());
         // 判断是否有传送代价
         result = result && NarcissusUtils.validTeleportCost(request, submit);
         return !result;
