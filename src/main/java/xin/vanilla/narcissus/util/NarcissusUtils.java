@@ -775,7 +775,7 @@ public class NarcissusUtils {
      * @param message 消息
      */
     public static void broadcastMessage(ServerPlayer player, Component message) {
-        player.server.getPlayerList().broadcastSystemMessage(net.minecraft.network.chat.Component.translatable("chat.type.announcement", player.getDisplayName(), message.toTextComponent(player.getLanguage())), true);
+        player.server.getPlayerList().broadcastSystemMessage(net.minecraft.network.chat.Component.translatable("chat.type.announcement", player.getDisplayName(), message.toTextComponent(player.getLanguage())), false);
     }
 
     /**
@@ -785,7 +785,7 @@ public class NarcissusUtils {
      * @param message 消息
      */
     public static void sendMessage(ServerPlayer player, Component message) {
-        player.sendSystemMessage(message.toTextComponent(player.getLanguage()), true);
+        player.sendSystemMessage(message.toTextComponent(player.getLanguage()), false);
     }
 
     /**
@@ -795,7 +795,7 @@ public class NarcissusUtils {
      * @param message 消息
      */
     public static void sendMessage(ServerPlayer player, String message) {
-        player.sendSystemMessage(Component.literal(message).toTextComponent(), true);
+        player.sendSystemMessage(Component.literal(message).toTextComponent(), false);
     }
 
     /**
@@ -806,7 +806,7 @@ public class NarcissusUtils {
      * @param args   参数
      */
     public static void sendTranslatableMessage(ServerPlayer player, String key, Object... args) {
-        player.sendSystemMessage(Component.translatable(key, args).setLanguageCode(player.getLanguage()).toTextComponent(), true);
+        player.sendSystemMessage(Component.translatable(key, args).setLanguageCode(player.getLanguage()).toTextComponent(), false);
     }
 
     /**
