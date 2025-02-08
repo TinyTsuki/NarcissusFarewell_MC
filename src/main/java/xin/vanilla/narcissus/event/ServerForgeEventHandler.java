@@ -41,23 +41,9 @@ import java.util.Date;
 /**
  * Forge 事件处理
  */
-@Mod.EventBusSubscriber(modid = NarcissusFarewell.MODID, bus = Mod.EventBusSubscriber.Bus.FORGE)
-public class ForgeEventHandler {
+@Mod.EventBusSubscriber(modid = NarcissusFarewell.MODID, bus = Mod.EventBusSubscriber.Bus.FORGE, value = Dist.DEDICATED_SERVER)
+public class ServerForgeEventHandler {
     private static final Logger LOGGER = LogManager.getLogger();
-
-    @SubscribeEvent
-    @OnlyIn(Dist.CLIENT)
-    public static void onPlayerLoggedIn(ClientPlayerNetworkEvent.LoggingIn event) {
-        LOGGER.debug("Client: Player logged in.");
-        // 同步客户端配置到服务器
-        ModNetworkHandler.INSTANCE.send(new ClientModLoadedNotice(), PacketDistributor.SERVER.noArg());
-    }
-
-    @SubscribeEvent
-    @OnlyIn(Dist.CLIENT)
-    public static void onPlayerLoggedOut(ClientPlayerNetworkEvent.LoggingOut event) {
-        LOGGER.debug("Client: Player logged out.");
-    }
 
     /**
      * 同步客户端服务端数据

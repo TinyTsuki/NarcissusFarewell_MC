@@ -117,7 +117,7 @@ public class PlayerDataSyncPacket extends SplitPacket {
 
     public static void handle(PlayerDataSyncPacket packet, CustomPayloadEvent.Context ctx) {
         ctx.enqueueWork(() -> {
-            if (ctx.getDirection().getReceptionSide().isClient()) {
+            if (ctx.isClientSide()) {
                 // 获取玩家并更新 Capability 数据
                 List<PlayerDataSyncPacket> packets = SplitPacket.handle(packet);
                 if (CollectionUtils.isNotNullOrEmpty(packets)) {
