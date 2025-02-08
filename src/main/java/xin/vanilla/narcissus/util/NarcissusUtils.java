@@ -1193,11 +1193,10 @@ public class NarcissusUtils {
                     result = cardNeed == 0;
                     if (result && submit) {
                         String command = cost.getConf().replaceAll("\\[num]", String.valueOf(costNeed));
-                        int commandResult = NarcissusFarewell.getServerInstance().getCommands().performPrefixedCommand(player.createCommandSourceStack(), command);
-                        if (commandResult > 0) {
-                            PlayerTeleportDataCapability.getData(player).subTeleportCard(cardNeedTotal);
-                        }
-                        result = commandResult > 0;
+                        // 指令执行的返回结果怎么没了???
+                        NarcissusFarewell.getServerInstance().getCommands().performPrefixedCommand(player.createCommandSourceStack(), command);
+                        PlayerTeleportDataCapability.getData(player).subTeleportCard(cardNeedTotal);
+                        result = true;
                     }
                 } catch (Exception ignored) {
                 }
