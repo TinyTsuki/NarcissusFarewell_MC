@@ -39,7 +39,7 @@ public class TpYesNotice {
                         .getTeleportType();
                 if (ETeleportType.TP_ASK == teleportType || ETeleportType.TP_HERE == teleportType) {
                     ECommandType type = ETeleportType.TP_HERE == teleportType ? ECommandType.TP_HERE_YES : ECommandType.TP_ASK_YES;
-                    Objects.requireNonNull(player.getServer()).getCommands().performCommand(player.createCommandSourceStack(), NarcissusUtils.getCommand(type));
+                    Objects.requireNonNull(player.getServer()).getCommands().performPrefixedCommand(player.createCommandSourceStack(), NarcissusUtils.getCommand(type));
                 } else {
                     NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EI18nType.MESSAGE, "tp_ask_not_found"));
                 }

@@ -1,7 +1,9 @@
 package xin.vanilla.narcissus;
 
+import com.mojang.brigadier.CommandDispatcher;
 import lombok.Getter;
 import lombok.Setter;
+import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraftforge.common.MinecraftForge;
@@ -19,7 +21,6 @@ import org.apache.logging.log4j.Logger;
 import xin.vanilla.narcissus.command.FarewellCommand;
 import xin.vanilla.narcissus.config.ServerConfig;
 import xin.vanilla.narcissus.config.TeleportRequest;
-import xin.vanilla.narcissus.event.ClientEventHandler;
 import xin.vanilla.narcissus.network.ModNetworkHandler;
 import xin.vanilla.narcissus.network.SplitPacket;
 import xin.vanilla.narcissus.util.LogoModifier;
@@ -81,14 +82,14 @@ public class NarcissusFarewell {
         // 注册服务器启动和关闭事件
         MinecraftForge.EVENT_BUS.addListener(this::onServerStarting);
 
-        // 注册当前实例到MinecraftForge的事件总线，以便监听和处理游戏内的各种事件
-        MinecraftForge.EVENT_BUS.register(this);
-
         // 注册服务端配置
         ModLoadingContext.get().registerConfig(ModConfig.Type.SERVER, ServerConfig.SERVER_CONFIG);
 
         // 注册客户端设置事件到MOD事件总线
         FMLJavaModLoadingContext.get().getModEventBus().addListener(this::onClientSetup);
+
+        // 注册当前实例到MinecraftForge的事件总线，以便监听和处理游戏内的各种事件
+        MinecraftForge.EVENT_BUS.register(this);
     }
 
     /**
@@ -97,9 +98,6 @@ public class NarcissusFarewell {
      */
     @SubscribeEvent
     public void onClientSetup(final FMLClientSetupEvent event) {
-        // 注册键绑定
-        LOGGER.debug("Registering key bindings");
-        ClientEventHandler.registerKeyBindings();
         // 修改logo为随机logo
         ModList.get().getMods().stream()
                 .filter(info -> info.getModId().equals(MODID))
@@ -110,7 +108,12 @@ public class NarcissusFarewell {
     // 服务器启动时加载数据
     private void onServerStarting(ServerStartingEvent event) {
         serverInstance = event.getServer();
+        // 注册传送命令到事件调度器
+        LOGGER.debug("Registering commands");
+        FarewellCommand.register(commandDispatcher);
     }
+
+    private static CommandDispatcher<CommandSourceStack> commandDispatcher;
 
     /**
      * 注册命令事件的处理方法
@@ -121,9 +124,7 @@ public class NarcissusFarewell {
      */
     @SubscribeEvent
     public void onRegisterCommands(RegisterCommandsEvent event) {
-        LOGGER.debug("Registering commands");
-        // 注册传送命令到事件调度器
-        FarewellCommand.register(event.getDispatcher());
+        commandDispatcher = event.getDispatcher();
     }
 
 }

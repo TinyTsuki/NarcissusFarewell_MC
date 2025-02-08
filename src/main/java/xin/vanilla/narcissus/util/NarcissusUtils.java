@@ -2,16 +2,15 @@ package xin.vanilla.narcissus.util;
 
 import com.mojang.brigadier.StringReader;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
+import com.mojang.datafixers.util.Either;
 import com.mojang.datafixers.util.Pair;
 import lombok.NonNull;
-import net.minecraft.Util;
 import net.minecraft.commands.arguments.blocks.BlockStateParser;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
+import net.minecraft.core.HolderSet;
 import net.minecraft.core.Registry;
 import net.minecraft.nbt.TagParser;
-import net.minecraft.network.chat.ChatType;
-import net.minecraft.network.chat.TranslatableComponent;
 import net.minecraft.network.protocol.game.ServerboundClientInformationPacket;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
@@ -29,7 +28,7 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.levelgen.feature.ConfiguredStructureFeature;
+import net.minecraft.world.level.levelgen.structure.Structure;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.fml.ModContainer;
 import net.minecraftforge.fml.ModList;
@@ -73,7 +72,7 @@ public class NarcissusUtils {
     private static final List<BlockState> SAFE_BLOCKS = ServerConfig.SAFE_BLOCKS.get().stream()
             .map(block -> {
                 try {
-                    return new BlockStateParser(new StringReader(block), false).parse(true).getState();
+                    return BlockStateParser.parseForBlock(Registry.BLOCK, new StringReader(block), false).blockState();
                 } catch (CommandSyntaxException e) {
                     LOGGER.error("Invalid unsafe block: {}", block, e);
                     return null;
@@ -88,7 +87,7 @@ public class NarcissusUtils {
     private static final List<BlockState> UNSAFE_BLOCKS = ServerConfig.UNSAFE_BLOCKS.get().stream()
             .map(block -> {
                 try {
-                    return new BlockStateParser(new StringReader(block), false).parse(true).getState();
+                    return BlockStateParser.parseForBlock(Registry.BLOCK, new StringReader(block), false).blockState();
                 } catch (CommandSyntaxException e) {
                     LOGGER.error("Invalid unsafe block: {}", block, e);
                     return null;
@@ -100,7 +99,7 @@ public class NarcissusUtils {
     private static final List<BlockState> SUFFOCATING_BLOCKS = ServerConfig.SUFFOCATING_BLOCKS.get().stream()
             .map(block -> {
                 try {
-                    return new BlockStateParser(new StringReader(block), false).parse(true).getState();
+                    return BlockStateParser.parseForBlock(Registry.BLOCK, new StringReader(block), false).blockState();
                 } catch (CommandSyntaxException e) {
                     LOGGER.error("Invalid unsafe block: {}", block, e);
                     return null;
@@ -358,7 +357,7 @@ public class NarcissusUtils {
     public static ResourceKey<Biome> getBiome(@NonNull ResourceLocation id) {
         // FIXME 应该有更好的判断方法
         ResourceKey<Biome> key = ResourceKey.create(Registry.BIOME_REGISTRY, id);
-        return ForgeRegistries.BIOMES.getValues().stream().anyMatch(biome -> id.equals(biome.getRegistryName())) ? key : null;
+        return ForgeRegistries.BIOMES.getKeys().stream().anyMatch(id::equals) ? key : null;
     }
 
     /**
@@ -387,7 +386,7 @@ public class NarcissusUtils {
         // }
         // // 未找到目标生物群系
         // return null;
-        Pair<BlockPos, Holder<Biome>> nearestBiome = world.findNearestBiome(holder -> holder.is(biome), start.toBlockPos(), radius, minDistance);
+        Pair<BlockPos, Holder<Biome>> nearestBiome = world.findClosestBiome3d(holder -> holder.is(biome), start.toBlockPos(), radius, minDistance, 64);
         if (nearestBiome != null) {
             BlockPos pos = nearestBiome.getFirst();
             if (pos != null) {
@@ -397,13 +396,27 @@ public class NarcissusUtils {
         return null;
     }
 
-    public static TagKey<ConfiguredStructureFeature<?, ?>> getStructure(String id) {
+    public static ResourceKey<Structure> getStructure(String id) {
         return getStructure(new ResourceLocation(id));
     }
 
-    public static TagKey<ConfiguredStructureFeature<?, ?>> getStructure(ResourceLocation id) {
-        // FIXME 应该有更好的判断方法
-        return ForgeRegistries.STRUCTURE_FEATURES.getKeys().stream().anyMatch(id::equals) ? TagKey.create(Registry.CONFIGURED_STRUCTURE_FEATURE_REGISTRY, id) : null;
+    public static ResourceKey<Structure> getStructure(ResourceLocation id) {
+        Map.Entry<ResourceKey<Structure>, Structure> mapEntry = NarcissusFarewell.getServerInstance().registryAccess()
+                .registryOrThrow(Registry.STRUCTURE_REGISTRY).entrySet().stream()
+                .filter(entry -> entry.getKey().location().equals(id))
+                .findFirst().orElse(null);
+        return mapEntry != null ? mapEntry.getKey() : null;
+    }
+
+    public static TagKey<Structure> getStructureTag(String id) {
+        return getStructureTag(new ResourceLocation(id));
+    }
+
+    public static TagKey<Structure> getStructureTag(ResourceLocation id) {
+        return NarcissusFarewell.getServerInstance().registryAccess()
+                .registryOrThrow(Registry.STRUCTURE_REGISTRY).getTagNames()
+                .filter(tag -> tag.location().equals(id))
+                .findFirst().orElse(null);
     }
 
     /**
@@ -414,8 +427,32 @@ public class NarcissusUtils {
      * @param struct 目标结构
      * @param radius 搜索半径
      */
-    public static Coordinate findNearestStruct(ServerLevel world, Coordinate start, TagKey<ConfiguredStructureFeature<?, ?>> struct, int radius) {
-        BlockPos pos = world.findNearestMapFeature(struct, start.toBlockPos(), radius, true);
+    public static Coordinate findNearestStruct(ServerLevel world, Coordinate start, ResourceKey<Structure> struct, int radius) {
+        Registry<Structure> registry = world.registryAccess().registryOrThrow(Registry.STRUCTURE_REGISTRY);
+        Either<ResourceKey<Structure>, TagKey<Structure>> left = Either.left(struct);
+        HolderSet.ListBacked<Structure> holderSet = left.map((resourceKey) -> registry.getHolder(resourceKey).map(HolderSet::direct), registry::getTag).orElse(null);
+        if (holderSet != null) {
+            Pair<BlockPos, Holder<Structure>> pair = world.getChunkSource().getGenerator().findNearestMapStructure(world, holderSet, start.toBlockPos(), radius, true);
+            if (pair != null) {
+                BlockPos pos = pair.getFirst();
+                if (pos != null) {
+                    return start.clone().setX(pos.getX()).setZ(pos.getZ()).setSafe(true);
+                }
+            }
+        }
+        return null;
+    }
+
+    /**
+     * 获取指定范围内某个生物群系位置
+     *
+     * @param world  世界
+     * @param start  开始位置
+     * @param struct 目标结构
+     * @param radius 搜索半径
+     */
+    public static Coordinate findNearestStruct(ServerLevel world, Coordinate start, TagKey<Structure> struct, int radius) {
+        BlockPos pos = world.findNearestMapStructure(struct, start.toBlockPos(), radius, true);
         if (pos != null) {
             return start.clone().setX(pos.getX()).setZ(pos.getZ()).setSafe(true);
         }
@@ -733,7 +770,7 @@ public class NarcissusUtils {
      * @param message 消息
      */
     public static void broadcastMessage(ServerPlayer player, Component message) {
-        player.server.getPlayerList().broadcastMessage(new TranslatableComponent("chat.type.announcement", player.getDisplayName(), message.toTextComponent(player.getLanguage())), ChatType.SYSTEM, Util.NIL_UUID);
+        player.server.getPlayerList().broadcastSystemMessage(net.minecraft.network.chat.Component.translatable("chat.type.announcement", player.getDisplayName(), message.toTextComponent(player.getLanguage())), true);
     }
 
     /**
@@ -743,7 +780,7 @@ public class NarcissusUtils {
      * @param message 消息
      */
     public static void sendMessage(ServerPlayer player, Component message) {
-        player.sendMessage(message.toTextComponent(player.getLanguage()), player.getUUID());
+        player.sendSystemMessage(message.toTextComponent(player.getLanguage()), true);
     }
 
     /**
@@ -753,7 +790,7 @@ public class NarcissusUtils {
      * @param message 消息
      */
     public static void sendMessage(ServerPlayer player, String message) {
-        player.sendMessage(Component.literal(message).toTextComponent(), player.getUUID());
+        player.sendSystemMessage(Component.literal(message).toTextComponent(), true);
     }
 
     /**
@@ -764,7 +801,7 @@ public class NarcissusUtils {
      * @param args   参数
      */
     public static void sendTranslatableMessage(ServerPlayer player, String key, Object... args) {
-        player.sendMessage(Component.translatable(key, args).setLanguageCode(player.getLanguage()).toTextComponent(), player.getUUID());
+        player.sendSystemMessage(Component.translatable(key, args).setLanguageCode(player.getLanguage()).toTextComponent(), true);
     }
 
     /**
@@ -1155,7 +1192,7 @@ public class NarcissusUtils {
                     result = cardNeed == 0;
                     if (result && submit) {
                         String command = cost.getConf().replaceAll("\\[num]", String.valueOf(costNeed));
-                        int commandResult = NarcissusFarewell.getServerInstance().getCommands().performCommand(player.createCommandSourceStack(), command);
+                        int commandResult = NarcissusFarewell.getServerInstance().getCommands().performPrefixedCommand(player.createCommandSourceStack(), command);
                         if (commandResult > 0) {
                             PlayerTeleportDataCapability.getData(player).subTeleportCard(cardNeedTotal);
                         }

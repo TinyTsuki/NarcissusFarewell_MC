@@ -3,7 +3,7 @@ package xin.vanilla.narcissus.event;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.client.ClientRegistry;
+import net.minecraftforge.client.event.RegisterKeyMappingsEvent;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
@@ -34,11 +34,12 @@ public class ClientEventHandler {
     /**
      * 注册键绑定
      */
-    public static void registerKeyBindings() {
-        ClientRegistry.registerKeyBinding(TP_HOME_KEY);
-        ClientRegistry.registerKeyBinding(TP_BACK_KEY);
-        ClientRegistry.registerKeyBinding(TP_REQ_YES);
-        ClientRegistry.registerKeyBinding(TP_REQ_NO);
+    @SubscribeEvent
+    public static void onRegisterKeyMappings(RegisterKeyMappingsEvent event) {
+        event.register(TP_HOME_KEY);
+        event.register(TP_BACK_KEY);
+        event.register(TP_REQ_YES);
+        event.register(TP_REQ_NO);
     }
 
     private static boolean keyDown = false;

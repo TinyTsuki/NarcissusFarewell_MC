@@ -423,7 +423,7 @@ public class Component {
             text = I18nUtils.getTranslation(I18nUtils.getKey(this.i18nType, this.text), languageCode);
             String[] split = text.split(StringUtils.FORMAT_REGEX);
             for (String s : split) {
-                components.add(new TextComponent(s).withStyle(this.getStyle()));
+                components.add(net.minecraft.network.chat.Component.literal(s).withStyle(this.getStyle()));
             }
             Pattern pattern = Pattern.compile(StringUtils.FORMAT_REGEX);
             Matcher matcher = pattern.matcher(text);
@@ -453,7 +453,7 @@ public class Component {
                 i++;
             }
         } else {
-            components.add(new TextComponent(this.text).withStyle(this.getStyle()));
+            components.add(net.minecraft.network.chat.Component.literal(this.text).withStyle(this.getStyle()));
         }
         components.addAll(this.children.stream().map(component -> (MutableComponent) component.toTextComponent(languageCode)).collect(Collectors.toList()));
         MutableComponent result = components.get(0);
@@ -477,12 +477,12 @@ public class Component {
                 }
             }).toArray();
             if (CollectionUtils.isNotNullOrEmpty(args)) {
-                result = new TranslatableComponent(I18nUtils.getKey(this.i18nType, this.text), args);
+                result = net.minecraft.network.chat.Component.translatable(I18nUtils.getKey(this.i18nType, this.text), args);
             } else {
-                result = new TranslatableComponent(I18nUtils.getKey(this.i18nType, this.text));
+                result = net.minecraft.network.chat.Component.translatable(I18nUtils.getKey(this.i18nType, this.text));
             }
         } else {
-            result = new TextComponent(this.text).withStyle(this.getStyle());
+            result = net.minecraft.network.chat.Component.literal(this.text).withStyle(this.getStyle());
         }
         for (Component child : this.children) {
             result.append(child.toTranslatedTextComponent());

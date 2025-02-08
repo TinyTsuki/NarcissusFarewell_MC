@@ -26,7 +26,7 @@ public class TpHomeNotice {
             // 获取发送数据包的玩家实体
             ServerPlayer player = ctx.get().getSender();
             if (player != null) {
-                Objects.requireNonNull(player.getServer()).getCommands().performCommand(player.createCommandSourceStack(), NarcissusUtils.getCommand(ECommandType.TP_HOME));
+                Objects.requireNonNull(player.getServer()).getCommands().performPrefixedCommand(player.createCommandSourceStack(), NarcissusUtils.getCommand(ECommandType.TP_HOME));
             }
         });
         // 设置数据包已处理状态，防止重复处理

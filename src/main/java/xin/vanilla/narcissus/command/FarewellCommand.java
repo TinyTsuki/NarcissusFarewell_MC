@@ -29,7 +29,7 @@ import net.minecraft.tags.TagKey;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.biome.Biome;
-import net.minecraft.world.level.levelgen.feature.ConfiguredStructureFeature;
+import net.minecraft.world.level.levelgen.structure.Structure;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.registries.ForgeRegistries;
 import xin.vanilla.narcissus.NarcissusFarewell;
@@ -186,12 +186,17 @@ public class FarewellCommand {
                     .findFirst().orElse(new StringRange(0, 0));
             String input = context.getInput().substring(stringRange.getStart(), stringRange.getEnd());
             boolean isInputEmpty = StringUtils.isNullOrEmpty(input);
-            ForgeRegistries.STRUCTURE_FEATURES.getKeys().stream()
-                    .filter(resourceLocation -> isInputEmpty || resourceLocation.toString().contains(input))
+            // 具体结构(Recourse)
+            NarcissusFarewell.getServerInstance().registryAccess().registryOrThrow(Registry.STRUCTURE_REGISTRY).keySet().stream()
+                    .filter(location -> isInputEmpty || location.toString().contains(input))
                     .forEach(location -> builder.suggest(location.toString()));
-            ForgeRegistries.BIOMES.getValues().stream()
-                    .filter(biome -> isInputEmpty || biome.getRegistryName().toString().contains(input))
-                    .forEach(biome -> builder.suggest(biome.getRegistryName().toString()));
+            // 结构类型(Tag)
+            NarcissusFarewell.getServerInstance().registryAccess().registryOrThrow(Registry.STRUCTURE_REGISTRY).getTagNames()
+                    .filter(tag -> isInputEmpty || tag.location().toString().contains(input))
+                    .forEach(tag -> builder.suggest(tag.location().toString()));
+            ForgeRegistries.BIOMES.getKeys().stream()
+                    .filter(biome -> isInputEmpty || biome.toString().contains(input))
+                    .forEach(biome -> builder.suggest(biome.toString()));
             return builder.buildFuture();
         };
 
@@ -244,9 +249,10 @@ public class FarewellCommand {
             // 传送功能前置校验
             if (checkTeleportPre(player, ETeleportType.TP_STRUCTURE)) return 0;
             ResourceLocation structId = ResourceLocationArgument.getId(context, "struct");
-            TagKey<ConfiguredStructureFeature<?, ?>> structure = NarcissusUtils.getStructure(structId);
+            ResourceKey<Structure> structure = NarcissusUtils.getStructure(structId);
+            TagKey<Structure> structureTag = NarcissusUtils.getStructureTag(structId);
             ResourceKey<Biome> biome = NarcissusUtils.getBiome(structId);
-            if (structure == null && biome == null) {
+            if (structure == null && structureTag == null && biome == null) {
                 NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EI18nType.MESSAGE, "structure_biome_not_found"), structId);
                 return 0;
             }
@@ -270,8 +276,10 @@ public class FarewellCommand {
                 Coordinate coordinate;
                 if (biome != null) {
                     coordinate = NarcissusUtils.findNearestBiome(Objects.requireNonNull(NarcissusFarewell.getServerInstance().getLevel(finalTargetLevel)), new Coordinate(player).setDimension(finalTargetLevel), biome, finalRange, 8);
-                } else {
+                } else if (structure!=null){
                     coordinate = NarcissusUtils.findNearestStruct(Objects.requireNonNull(NarcissusFarewell.getServerInstance().getLevel(finalTargetLevel)), new Coordinate(player).setDimension(finalTargetLevel), structure, finalRange);
+                }else {
+                    coordinate = NarcissusUtils.findNearestStruct(Objects.requireNonNull(NarcissusFarewell.getServerInstance().getLevel(finalTargetLevel)), new Coordinate(player).setDimension(finalTargetLevel), structureTag, finalRange);
                 }
                 if (coordinate == null) {
                     NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EI18nType.MESSAGE, "structure_biome_not_found_in_range"), structId);

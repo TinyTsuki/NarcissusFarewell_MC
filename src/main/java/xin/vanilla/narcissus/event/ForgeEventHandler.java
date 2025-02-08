@@ -10,7 +10,7 @@ import net.minecraftforge.client.event.ClientPlayerNetworkEvent;
 import net.minecraftforge.common.util.LazyOptional;
 import net.minecraftforge.event.AttachCapabilitiesEvent;
 import net.minecraftforge.event.TickEvent;
-import net.minecraftforge.event.entity.EntityJoinWorldEvent;
+import net.minecraftforge.event.entity.EntityJoinLevelEvent;
 import net.minecraftforge.event.entity.EntityTeleportEvent;
 import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -46,7 +46,7 @@ public class ForgeEventHandler {
 
     @SubscribeEvent
     @OnlyIn(Dist.CLIENT)
-    public static void onPlayerLoggedIn(ClientPlayerNetworkEvent.LoggedInEvent event) {
+    public static void onPlayerLoggedIn(ClientPlayerNetworkEvent.LoggingIn event) {
         LOGGER.debug("Client: Player logged in.");
         // 同步客户端配置到服务器
         ModNetworkHandler.INSTANCE.sendToServer(new ClientModLoadedNotice());
@@ -54,7 +54,7 @@ public class ForgeEventHandler {
 
     @SubscribeEvent
     @OnlyIn(Dist.CLIENT)
-    public static void onPlayerLoggedOut(ClientPlayerNetworkEvent.LoggedOutEvent event) {
+    public static void onPlayerLoggedOut(ClientPlayerNetworkEvent.LoggingOut event) {
         LOGGER.debug("Client: Player logged out.");
     }
 
@@ -117,7 +117,7 @@ public class ForgeEventHandler {
     @SubscribeEvent
     public static void onPlayerCloned(PlayerEvent.Clone event) {
         ServerPlayer original = (ServerPlayer) event.getOriginal();
-        ServerPlayer newPlayer = (ServerPlayer) event.getPlayer();
+        ServerPlayer newPlayer = (ServerPlayer) event.getEntity();
         newPlayer.updateOptions(NarcissusUtils.getCClientSettingsPacket(original));
         original.revive();
         LazyOptional<IPlayerTeleportData> oldDataCap = original.getCapability(PlayerTeleportDataCapability.PLAYER_DATA);
@@ -141,7 +141,7 @@ public class ForgeEventHandler {
      * 玩家进入维度
      */
     @SubscribeEvent
-    public static void onEntityJoinWorld(EntityJoinWorldEvent event) {
+    public static void onEntityJoinWorld(EntityJoinLevelEvent event) {
         if (event.getEntity() instanceof ServerPlayer player) {
             // 初始化能力同步状态
             if (NarcissusFarewell.getPlayerCapabilityStatus().containsKey(player.getUUID().toString())) {
