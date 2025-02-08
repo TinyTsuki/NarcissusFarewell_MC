@@ -128,6 +128,7 @@ public class FarewellCommand extends CommandBase {
         if (args.length == 0) {
             Arrays.stream(ECommandType.values())
                     .filter(NarcissusUtils::isTeleportEnabled)
+                    .filter(type -> NarcissusUtils.hasCommandPermission(player, type))
                     .sorted(Comparator.comparing(ECommandType::getSort))
                     .map(value -> NarcissusUtils.getCommand(value, false))
                     .distinct()
@@ -135,6 +136,7 @@ public class FarewellCommand extends CommandBase {
         } else if (args.length == 1) {
             Arrays.stream(ECommandType.values())
                     .filter(NarcissusUtils::isTeleportEnabled)
+                    .filter(type -> NarcissusUtils.hasCommandPermission(player, type))
                     .sorted(Comparator.comparing(ECommandType::getSort))
                     .map(value -> NarcissusUtils.getCommand(value, false))
                     .filter(command -> StringUtils.isNullOrEmpty(args[0]) || command.startsWith(args[0]))
@@ -234,13 +236,13 @@ public class FarewellCommand extends CommandBase {
                 }
             }
             // 同意传送请求
-            else if (args[0].equals(ServerConfig.COMMAND_TP_ASK_YES) && NarcissusUtils.isTeleportEnabled(ECommandType.TP_ASK) && NarcissusUtils.hasCommandPermission(player, ECommandType.TP_ASK)) {
+            else if (args[0].equals(ServerConfig.COMMAND_TP_ASK_YES) && NarcissusUtils.isTeleportEnabled(ECommandType.TP_ASK) && NarcissusUtils.hasCommandPermission(player, ECommandType.TP_ASK_YES)) {
                 if (args.length == 2) {
                     suggestions.addAll(getReqIndexSuggestions(player, ETeleportType.TP_ASK, arg));
                 }
             }
             // 拒绝传送请求
-            else if (args[0].equals(ServerConfig.COMMAND_TP_ASK_NO) && NarcissusUtils.isTeleportEnabled(ECommandType.TP_ASK) && NarcissusUtils.hasCommandPermission(player, ECommandType.TP_ASK)) {
+            else if (args[0].equals(ServerConfig.COMMAND_TP_ASK_NO) && NarcissusUtils.isTeleportEnabled(ECommandType.TP_ASK) && NarcissusUtils.hasCommandPermission(player, ECommandType.TP_ASK_NO)) {
                 if (args.length == 2) {
                     suggestions.addAll(getReqIndexSuggestions(player, ETeleportType.TP_ASK, arg));
                 }
@@ -259,13 +261,13 @@ public class FarewellCommand extends CommandBase {
                 }
             }
             // 同意传送请求
-            else if (args[0].equals(ServerConfig.COMMAND_TP_HERE_YES) && NarcissusUtils.isTeleportEnabled(ECommandType.TP_HERE) && NarcissusUtils.hasCommandPermission(player, ECommandType.TP_HERE)) {
+            else if (args[0].equals(ServerConfig.COMMAND_TP_HERE_YES) && NarcissusUtils.isTeleportEnabled(ECommandType.TP_HERE) && NarcissusUtils.hasCommandPermission(player, ECommandType.TP_HERE_YES)) {
                 if (args.length == 2) {
                     suggestions.addAll(getReqIndexSuggestions(player, ETeleportType.TP_HERE, arg));
                 }
             }
             // 拒绝传送请求
-            else if (args[0].equals(ServerConfig.COMMAND_TP_HERE_NO) && NarcissusUtils.isTeleportEnabled(ECommandType.TP_HERE) && NarcissusUtils.hasCommandPermission(player, ECommandType.TP_HERE)) {
+            else if (args[0].equals(ServerConfig.COMMAND_TP_HERE_NO) && NarcissusUtils.isTeleportEnabled(ECommandType.TP_HERE) && NarcissusUtils.hasCommandPermission(player, ECommandType.TP_HERE_NO)) {
                 if (args.length == 2) {
                     suggestions.addAll(getReqIndexSuggestions(player, ETeleportType.TP_HERE, arg));
                 }
@@ -415,7 +417,7 @@ public class FarewellCommand extends CommandBase {
                 }
             }
             // 添加预设位置
-            else if (args[0].equals(ServerConfig.COMMAND_SET_HOME) && NarcissusUtils.isTeleportEnabled(ECommandType.TP_HOME) && NarcissusUtils.hasCommandPermission(player, ECommandType.TP_HOME)) {
+            else if (args[0].equals(ServerConfig.COMMAND_SET_HOME) && NarcissusUtils.isTeleportEnabled(ECommandType.TP_HOME) && NarcissusUtils.hasCommandPermission(player, ECommandType.SET_HOME)) {
                 if (args.length == 2) {
                     String name = "home";
                     int index = 0;
@@ -438,7 +440,7 @@ public class FarewellCommand extends CommandBase {
                 }
             }
             // 删除预设位置
-            else if (args[0].equals(ServerConfig.COMMAND_DEL_HOME) && NarcissusUtils.isTeleportEnabled(ECommandType.TP_HOME) && NarcissusUtils.hasCommandPermission(player, ECommandType.TP_HOME)) {
+            else if (args[0].equals(ServerConfig.COMMAND_DEL_HOME) && NarcissusUtils.isTeleportEnabled(ECommandType.TP_HOME) && NarcissusUtils.hasCommandPermission(player, ECommandType.DEL_HOME)) {
                 if (args.length == 2) {
                     PlayerTeleportDataCapability.getData(player).getHomeCoordinate().keySet().stream()
                             .filter(keyValue -> StringUtils.isNullOrEmpty(arg) || keyValue.getValue().startsWith(arg))
@@ -475,7 +477,7 @@ public class FarewellCommand extends CommandBase {
                 }
             }
             // 添加驿站
-            else if (args[0].equals(ServerConfig.COMMAND_SET_STAGE) && NarcissusUtils.isTeleportEnabled(ECommandType.TP_STAGE) && NarcissusUtils.hasCommandPermission(player, ECommandType.TP_STAGE)) {
+            else if (args[0].equals(ServerConfig.COMMAND_SET_STAGE) && NarcissusUtils.isTeleportEnabled(ECommandType.TP_STAGE) && NarcissusUtils.hasCommandPermission(player, ECommandType.SET_STAGE)) {
                 if (args.length == 2) {
                     String name = "stage";
                     int index = 0;
@@ -503,7 +505,7 @@ public class FarewellCommand extends CommandBase {
                 }
             }
             // 删除驿站
-            else if (args[0].equals(ServerConfig.COMMAND_DEL_STAGE) && NarcissusUtils.isTeleportEnabled(ECommandType.TP_STAGE) && NarcissusUtils.hasCommandPermission(player, ECommandType.TP_STAGE)) {
+            else if (args[0].equals(ServerConfig.COMMAND_DEL_STAGE) && NarcissusUtils.isTeleportEnabled(ECommandType.TP_STAGE) && NarcissusUtils.hasCommandPermission(player, ECommandType.DEL_STAGE)) {
                 if (args.length == 2) {
                     WorldStageData.get().getStageCoordinate().keySet().stream()
                             .filter(keyValue -> StringUtils.isNullOrEmpty(arg) || keyValue.getValue().contains(arg))
@@ -736,7 +738,7 @@ public class FarewellCommand extends CommandBase {
                         Component noButton = Component.translatable(NarcissusUtils.getPlayerLanguage(target), EI18nType.MESSAGE, "no_button", NarcissusUtils.getPlayerLanguage(target))
                                 .setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, String.format("/%s %s %s", NarcissusUtils.getCommandPrefix(), ServerConfig.COMMAND_TP_ASK_NO, request.getRequestId())));
                         Component msg = Component.translatable(NarcissusUtils.getPlayerLanguage(target), EI18nType.MESSAGE, "tp_ask_request_received"
-                                , target.getDisplayNameString(), yesButton, noButton);
+                                , player.getDisplayNameString(), yesButton, noButton);
                         NarcissusUtils.sendMessage(target, msg);
                     }
                     // 通知请求者
@@ -837,7 +839,7 @@ public class FarewellCommand extends CommandBase {
                         Component noButton = Component.translatable(NarcissusUtils.getPlayerLanguage(target), EI18nType.MESSAGE, "no_button", NarcissusUtils.getPlayerLanguage(target))
                                 .setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, String.format("/%s %s %s", NarcissusUtils.getCommandPrefix(), ServerConfig.COMMAND_TP_HERE_NO, request.getRequestId())));
                         Component msg = Component.translatable(NarcissusUtils.getPlayerLanguage(target), EI18nType.MESSAGE, "tp_here_request_received"
-                                , target.getDisplayNameString(), yesButton, noButton);
+                                , player.getDisplayNameString(), Component.translatable(NarcissusUtils.getPlayerLanguage(target), EI18nType.WORD, request.isSafe() ? "tp_here_safe" : "tp_here_unsafe"), yesButton, noButton);
                         NarcissusUtils.sendMessage(target, msg);
                     }
                     // 通知请求者
@@ -919,7 +921,7 @@ public class FarewellCommand extends CommandBase {
             // 传送到出生点
             else if (prefix.equals(ServerConfig.COMMAND_TP_SPAWN)) {
                 // 传送功能前置校验
-                if (checkTeleportPre(player, ECommandType.TP_RANDOM)) {
+                if (checkTeleportPre(player, ECommandType.TP_SPAWN)) {
                     return 0;
                 }
                 if (args.length <= 2) {
@@ -1272,7 +1274,7 @@ public class FarewellCommand extends CommandBase {
             // 添加驿站
             else if (prefix.equals(ServerConfig.COMMAND_SET_STAGE)) {
                 // 传送功能前置校验
-                if (checkTeleportPre(player, ECommandType.TP_STAGE)) {
+                if (checkTeleportPre(player, ECommandType.SET_STAGE)) {
                     return 0;
                 }
                 if (args.length > 1 && args.length <= 6) {
@@ -1309,7 +1311,7 @@ public class FarewellCommand extends CommandBase {
             // 删除驿站
             else if (prefix.equals(ServerConfig.COMMAND_DEL_STAGE)) {
                 // 传送功能前置校验
-                if (checkTeleportPre(player, ECommandType.TP_STAGE)) {
+                if (checkTeleportPre(player, ECommandType.DEL_STAGE)) {
                     return 0;
                 }
                 if (args.length == 3) {

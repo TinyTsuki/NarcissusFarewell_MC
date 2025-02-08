@@ -1,6 +1,5 @@
 package xin.vanilla.narcissus.util;
 
-import com.google.gson.Gson;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import xin.vanilla.narcissus.BuildConfig;
@@ -14,7 +13,6 @@ import java.util.*;
 public class I18nUtils {
     private static final Map<String, Map<String, String>> LANGUAGES = new HashMap<>();
     private static final String DEFAULT_LANGUAGE = "en_us";
-    private static final Gson GSON = new Gson();
     private static final Logger LOGGER = LogManager.getLogger();
     private static final String LANG_PATH = String.format("/assets/%s/lang/", BuildConfig.MODID);
     private static final String LANG_FILE_PATH = String.format("%s%%s.lang", LANG_PATH);
@@ -38,7 +36,7 @@ public class I18nUtils {
                         if (StringUtils.isNotNullOrEmpty(line)) {
                             String[] keyValue = line.split("=", 2);
                             if (keyValue.length == 2) {
-                                language.put(keyValue[0], keyValue[1]);
+                                language.put(keyValue[0], StringUtils.replaceLine(keyValue[1]));
                             }
                         }
                     }
