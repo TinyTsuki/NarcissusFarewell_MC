@@ -1,12 +1,11 @@
 package xin.vanilla.narcissus.config;
 
-import com.mojang.math.Vector3d;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.experimental.Accessors;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.Registry;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
@@ -127,10 +126,6 @@ public class Coordinate implements Serializable, Cloneable {
         return new BlockPos(x, y, z);
     }
 
-    public Vector3d toVector3d() {
-        return new Vector3d(x, y, z);
-    }
-
     public Vec3 toVec3() {
         return new Vec3(x, y, z);
     }
@@ -139,13 +134,6 @@ public class Coordinate implements Serializable, Cloneable {
         this.x = pos.getX();
         this.y = pos.getY();
         this.z = pos.getZ();
-        return this;
-    }
-
-    public Coordinate fromVector3d(Vector3d pos) {
-        this.x = pos.x;
-        this.y = pos.y;
-        this.z = pos.z;
         return this;
     }
 
@@ -202,7 +190,7 @@ public class Coordinate implements Serializable, Cloneable {
         coordinate.z = tag.getDouble("z");
         coordinate.yaw = tag.getDouble("yaw");
         coordinate.pitch = tag.getDouble("pitch");
-        coordinate.dimension = ResourceKey.create(Registry.DIMENSION_REGISTRY, new ResourceLocation(tag.getString("dimension")));
+        coordinate.dimension = ResourceKey.create(Registries.DIMENSION, new ResourceLocation(tag.getString("dimension")));
         return coordinate;
     }
 

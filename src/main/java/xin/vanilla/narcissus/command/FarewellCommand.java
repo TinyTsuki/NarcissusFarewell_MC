@@ -19,7 +19,7 @@ import net.minecraft.commands.arguments.EntityArgument;
 import net.minecraft.commands.arguments.ResourceLocationArgument;
 import net.minecraft.commands.arguments.coordinates.Vec3Argument;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.Registry;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.ClickEvent;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
@@ -187,11 +187,11 @@ public class FarewellCommand {
             String input = context.getInput().substring(stringRange.getStart(), stringRange.getEnd());
             boolean isInputEmpty = StringUtils.isNullOrEmpty(input);
             // 具体结构(Recourse)
-            NarcissusFarewell.getServerInstance().registryAccess().registryOrThrow(Registry.STRUCTURE_REGISTRY).keySet().stream()
+            NarcissusFarewell.getServerInstance().registryAccess().registryOrThrow(Registries.STRUCTURE).keySet().stream()
                     .filter(location -> isInputEmpty || location.toString().contains(input))
                     .forEach(location -> builder.suggest(location.toString()));
             // 结构类型(Tag)
-            NarcissusFarewell.getServerInstance().registryAccess().registryOrThrow(Registry.STRUCTURE_REGISTRY).getTagNames()
+            NarcissusFarewell.getServerInstance().registryAccess().registryOrThrow(Registries.STRUCTURE).getTagNames()
                     .filter(tag -> isInputEmpty || tag.location().toString().contains(input))
                     .forEach(tag -> builder.suggest(tag.location().toString()));
             ForgeRegistries.BIOMES.getKeys().stream()
@@ -276,9 +276,9 @@ public class FarewellCommand {
                 Coordinate coordinate;
                 if (biome != null) {
                     coordinate = NarcissusUtils.findNearestBiome(Objects.requireNonNull(NarcissusFarewell.getServerInstance().getLevel(finalTargetLevel)), new Coordinate(player).setDimension(finalTargetLevel), biome, finalRange, 8);
-                } else if (structure!=null){
+                } else if (structure != null) {
                     coordinate = NarcissusUtils.findNearestStruct(Objects.requireNonNull(NarcissusFarewell.getServerInstance().getLevel(finalTargetLevel)), new Coordinate(player).setDimension(finalTargetLevel), structure, finalRange);
-                }else {
+                } else {
                     coordinate = NarcissusUtils.findNearestStruct(Objects.requireNonNull(NarcissusFarewell.getServerInstance().getLevel(finalTargetLevel)), new Coordinate(player).setDimension(finalTargetLevel), structureTag, finalRange);
                 }
                 if (coordinate == null) {
@@ -662,7 +662,7 @@ public class FarewellCommand {
             ResourceKey<Level> targetLevel = null;
             String name = null;
             try {
-                ResourceKey<Level> targetDimension = ResourceKey.create(Registry.DIMENSION_REGISTRY, new ResourceLocation(StringArgumentType.getString(context, "dimension")));
+                ResourceKey<Level> targetDimension = ResourceKey.create(Registries.DIMENSION, new ResourceLocation(StringArgumentType.getString(context, "dimension")));
                 ServerLevel level = context.getSource().getServer().getLevel(targetDimension);
                 if (level != null) {
                     targetLevel = targetDimension;

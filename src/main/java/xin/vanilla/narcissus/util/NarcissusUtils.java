@@ -10,6 +10,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
 import net.minecraft.core.HolderSet;
 import net.minecraft.core.Registry;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.TagParser;
 import net.minecraft.network.protocol.game.ServerboundClientInformationPacket;
 import net.minecraft.resources.ResourceKey;
@@ -72,7 +73,7 @@ public class NarcissusUtils {
     private static final List<BlockState> SAFE_BLOCKS = ServerConfig.SAFE_BLOCKS.get().stream()
             .map(block -> {
                 try {
-                    return BlockStateParser.parseForBlock(Registry.BLOCK, new StringReader(block), false).blockState();
+                    return BlockStateParser.parseForBlock(getServerLevel().holderLookup(Registries.BLOCK), new StringReader(block), false).blockState();
                 } catch (CommandSyntaxException e) {
                     LOGGER.error("Invalid unsafe block: {}", block, e);
                     return null;
@@ -87,7 +88,7 @@ public class NarcissusUtils {
     private static final List<BlockState> UNSAFE_BLOCKS = ServerConfig.UNSAFE_BLOCKS.get().stream()
             .map(block -> {
                 try {
-                    return BlockStateParser.parseForBlock(Registry.BLOCK, new StringReader(block), false).blockState();
+                    return BlockStateParser.parseForBlock(getServerLevel().holderLookup(Registries.BLOCK), new StringReader(block), false).blockState();
                 } catch (CommandSyntaxException e) {
                     LOGGER.error("Invalid unsafe block: {}", block, e);
                     return null;
@@ -99,7 +100,7 @@ public class NarcissusUtils {
     private static final List<BlockState> SUFFOCATING_BLOCKS = ServerConfig.SUFFOCATING_BLOCKS.get().stream()
             .map(block -> {
                 try {
-                    return BlockStateParser.parseForBlock(Registry.BLOCK, new StringReader(block), false).blockState();
+                    return BlockStateParser.parseForBlock(getServerLevel().holderLookup(Registries.BLOCK), new StringReader(block), false).blockState();
                 } catch (CommandSyntaxException e) {
                     LOGGER.error("Invalid unsafe block: {}", block, e);
                     return null;
@@ -108,6 +109,10 @@ public class NarcissusUtils {
             .filter(Objects::nonNull)
             .distinct()
             .toList();
+
+    public static ServerLevel getServerLevel() {
+        return NarcissusFarewell.getServerInstance().getAllLevels().iterator().next();
+    }
 
     public static Coordinate findTopCandidate(ServerLevel world, Coordinate start) {
         if (start.getY() >= world.getMaxBuildHeight()) return null;
@@ -356,7 +361,7 @@ public class NarcissusUtils {
 
     public static ResourceKey<Biome> getBiome(@NonNull ResourceLocation id) {
         // FIXME 应该有更好的判断方法
-        ResourceKey<Biome> key = ResourceKey.create(Registry.BIOME_REGISTRY, id);
+        ResourceKey<Biome> key = ResourceKey.create(ForgeRegistries.Keys.BIOMES, id);
         return ForgeRegistries.BIOMES.getKeys().stream().anyMatch(id::equals) ? key : null;
     }
 
@@ -402,7 +407,7 @@ public class NarcissusUtils {
 
     public static ResourceKey<Structure> getStructure(ResourceLocation id) {
         Map.Entry<ResourceKey<Structure>, Structure> mapEntry = NarcissusFarewell.getServerInstance().registryAccess()
-                .registryOrThrow(Registry.STRUCTURE_REGISTRY).entrySet().stream()
+                .registryOrThrow(Registries.STRUCTURE).entrySet().stream()
                 .filter(entry -> entry.getKey().location().equals(id))
                 .findFirst().orElse(null);
         return mapEntry != null ? mapEntry.getKey() : null;
@@ -414,7 +419,7 @@ public class NarcissusUtils {
 
     public static TagKey<Structure> getStructureTag(ResourceLocation id) {
         return NarcissusFarewell.getServerInstance().registryAccess()
-                .registryOrThrow(Registry.STRUCTURE_REGISTRY).getTagNames()
+                .registryOrThrow(Registries.STRUCTURE).getTagNames()
                 .filter(tag -> tag.location().equals(id))
                 .findFirst().orElse(null);
     }
@@ -428,7 +433,7 @@ public class NarcissusUtils {
      * @param radius 搜索半径
      */
     public static Coordinate findNearestStruct(ServerLevel world, Coordinate start, ResourceKey<Structure> struct, int radius) {
-        Registry<Structure> registry = world.registryAccess().registryOrThrow(Registry.STRUCTURE_REGISTRY);
+        Registry<Structure> registry = world.registryAccess().registryOrThrow(Registries.STRUCTURE);
         Either<ResourceKey<Structure>, TagKey<Structure>> left = Either.left(struct);
         HolderSet.ListBacked<Structure> holderSet = left.map((resourceKey) -> registry.getHolder(resourceKey).map(HolderSet::direct), registry::getTag).orElse(null);
         if (holderSet != null) {
