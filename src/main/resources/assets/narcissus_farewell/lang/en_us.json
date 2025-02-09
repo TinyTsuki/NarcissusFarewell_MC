@@ -115,5 +115,9 @@
   "message.narcissus_farewell.stage_del": "§eThe station named '§c%2$s§e' in the dimension '§c%1$s§e' has been removed.",
   "message.narcissus_farewell.back_not_found": "§eNo previous teleport record was found.",
   "message.narcissus_farewell.tp_structure_searching": "Starting search for the specified structure/biome",
-  "message.narcissus_farewell.tp_view_searching": "Starting search for the target at the end of the line of sight"
+  "message.narcissus_farewell.tp_view_searching": "Starting search for the target at the end of the line of sight",
+  "message.narcissus_farewell.died_of_narcissus_1": "%s died from lycorine",
+  "message.narcissus_farewell.died_of_narcissus_2": "%s died from haemanthamine",
+  "message.narcissus_farewell.died_of_narcissus_3": "%s died from colchicine",
+  "message.narcissus_farewell.died_of_narcissus_4": "%s died from raphasatin"
 }
