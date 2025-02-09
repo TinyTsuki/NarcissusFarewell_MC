@@ -151,11 +151,13 @@ public class NarcissusUtils {
             case HELP:
                 return prefix + " help";
             case DIMENSION:
-            case DIMENSION_CONCISE:
                 return prefix + " " + ServerConfig.COMMAND_DIMENSION.get();
+            case DIMENSION_CONCISE:
+                return isConciseEnabled(type) ? ServerConfig.COMMAND_DIMENSION.get() : "";
             case FEED:
-            case FEED_CONCISE:
                 return prefix + " " + ServerConfig.COMMAND_FEED.get();
+            case FEED_CONCISE:
+                return isConciseEnabled(type) ? ServerConfig.COMMAND_FEED.get() : "";
             case TP_COORDINATE:
                 return prefix + " " + ServerConfig.COMMAND_TP_COORDINATE.get();
             case TP_COORDINATE_CONCISE:
