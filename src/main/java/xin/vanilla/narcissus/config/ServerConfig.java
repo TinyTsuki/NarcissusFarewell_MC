@@ -117,6 +117,11 @@ public class ServerConfig {
     // region 功能开关
 
     /**
+     * 自杀或毒杀 开关
+     */
+    public static final ForgeConfigSpec.BooleanValue SWITCH_FEED;
+
+    /**
      * 传送到指定坐标 开关
      */
     public static final ForgeConfigSpec.BooleanValue SWITCH_TP_COORDINATE;
@@ -196,6 +201,8 @@ public class ServerConfig {
     // region 指令权限
 
     public static final ForgeConfigSpec.IntValue PERMISSION_TP_COORDINATE;
+
+    public static final ForgeConfigSpec.IntValue PERMISSION_FEED_OTHER;
 
     public static final ForgeConfigSpec.IntValue PERMISSION_TP_STRUCTURE;
 
@@ -370,6 +377,11 @@ public class ServerConfig {
     public static final ForgeConfigSpec.ConfigValue<String> COMMAND_DIMENSION;
 
     /**
+     * 自杀或毒杀(水仙是有毒的可不能吃哦)
+     */
+    public static final ForgeConfigSpec.ConfigValue<String> COMMAND_FEED;
+
+    /**
      * 传送到指定坐标
      */
     public static final ForgeConfigSpec.ConfigValue<String> COMMAND_TP_COORDINATE;
@@ -487,6 +499,16 @@ public class ServerConfig {
     // endregion 自定义指令
 
     // region 简化指令
+
+    /**
+     * 获取当前世界的维度ID
+     */
+    public static final ForgeConfigSpec.BooleanValue CONCISE_DIMENSION;
+
+    /**
+     * 自杀或毒杀
+     */
+    public static final ForgeConfigSpec.BooleanValue CONCISE_FEED;
 
     /**
      * 传送到指定坐标
@@ -878,6 +900,11 @@ public class ServerConfig {
         {
             SERVER_BUILDER.comment("Function Switch", "功能开关").push("switch");
 
+            SWITCH_FEED = SERVER_BUILDER
+                    .comment("Enable or disable the option to 'Suicide or poisoning'."
+                            , "是否启用自杀或毒杀。")
+                    .define("switchFeed", true);
+
             SWITCH_TP_COORDINATE = SERVER_BUILDER
                     .comment("Enable or disable the option to 'Teleport to the specified coordinates'."
                             , "是否启用传送到指定坐标。")
@@ -964,6 +991,12 @@ public class ServerConfig {
 
             SERVER_BUILDER.comment("Command Permission", "指令权限").push("command");
             {
+
+                PERMISSION_FEED_OTHER = SERVER_BUILDER
+                        .comment("The permission level required to use the 'Poisoning others' command."
+                                , "毒杀指令所需的权限等级。")
+                        .defineInRange("permissionFeedOther", 2, 0, 4);
+
                 PERMISSION_TP_COORDINATE = SERVER_BUILDER
                         .comment("The permission level required to use the 'Teleport to the specified coordinates' command."
                                 , "传送到指定坐标指令所需的权限等级。")
@@ -1209,6 +1242,12 @@ public class ServerConfig {
                             , "获取当前世界的维度ID的指令。")
                     .define("commandDimension", "dim");
 
+            // 自杀或毒杀
+            COMMAND_FEED = SERVER_BUILDER
+                    .comment("This command is used to suicide or poisoning, narcissus are poisonous and should not be eaten."
+                            , "自杀或毒杀的指令，水仙是有毒的可不能食用哦。")
+                    .define("commandFeed", "feed");
+
             // 传送到指定坐标
             COMMAND_TP_COORDINATE = SERVER_BUILDER
                     .comment("This command is used to teleport to the specified coordinates."
@@ -1368,6 +1407,16 @@ public class ServerConfig {
         // 定义简化指令
         {
             SERVER_BUILDER.comment("Concise Command Settings", "简化指令").push("concise");
+
+            CONCISE_DIMENSION = SERVER_BUILDER
+                    .comment("Enable or disable the concise version of the 'Get the dimension ID of the current world' command.",
+                            "是否启用无前缀版本的 '获取当前世界的维度ID' 指令。")
+                    .define("conciseDimension", false);
+
+            CONCISE_FEED = SERVER_BUILDER
+                    .comment("Enable or disable the concise version of the 'Suicide or poisoning' command.",
+                            "是否启用无前缀版本的 '自杀或毒杀' 指令。")
+                    .define("conciseFeed", false);
 
             CONCISE_TP_COORDINATE = SERVER_BUILDER
                     .comment("Enable or disable the concise version of the 'Teleport to the specified coordinates' command.",

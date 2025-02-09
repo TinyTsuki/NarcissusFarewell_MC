@@ -115,5 +115,9 @@
   "message.narcissus_farewell.stage_del": "§e已将维度『%s§e』中名为『%s§e』的驿站移除",
   "message.narcissus_farewell.back_not_found": "§e未找到上次传送记录",
   "message.narcissus_farewell.tp_structure_searching": "开始搜索指定的结构/生物群系",
-  "message.narcissus_farewell.tp_view_searching": "开始搜索视线尽头的坐标"
+  "message.narcissus_farewell.tp_view_searching": "开始搜索视线尽头的坐标",
+  "message.narcissus_farewell.died_of_narcissus_1": "%s死于石蒜碱",
+  "message.narcissus_farewell.died_of_narcissus_2": "%s死于多花水仙碱",
+  "message.narcissus_farewell.died_of_narcissus_3": "%s死于秋水仙碱",
+  "message.narcissus_farewell.died_of_narcissus_4": "%s死于拉帕他汀"
 }
