@@ -66,7 +66,11 @@ public class ForgeEventHandler {
             // 不用给未安装mod的玩家发送数据包
             if (!NarcissusFarewell.getPlayerCapabilityStatus().getOrDefault(player.getUUID().toString(), true)) {
                 // 同步玩家传送数据到客户端
-                PlayerTeleportDataCapability.syncPlayerData((ServerPlayerEntity) player);
+                try {
+                    PlayerTeleportDataCapability.syncPlayerData((ServerPlayerEntity) player);
+                } catch (Exception e) {
+                    LOGGER.error("Failed to sync player data to client", e);
+                }
             }
         }
     }
