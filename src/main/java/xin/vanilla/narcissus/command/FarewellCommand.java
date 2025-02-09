@@ -216,6 +216,33 @@ public class FarewellCommand {
             return builder.buildFuture();
         };
 
+        Command<CommandSourceStack> dimCommand = (context) -> {
+            ServerPlayer player = context.getSource().getPlayerOrException();
+            Component msg = Component.translatable(player.getLanguage(), EI18nType.MESSAGE, "dimension_info", player.level().dimension().location().toString());
+            NarcissusUtils.sendMessage(player, msg);
+            return 1;
+        };
+
+        Command<CommandSourceStack> feedCommand = (context) -> {
+            ServerPlayer player = context.getSource().getPlayerOrException();
+            // 判断是否开启功能
+            if (!ServerConfig.SWITCH_FEED.get()) {
+                NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EI18nType.MESSAGE, "command_disabled"));
+                return 0;
+            }
+            List<ServerPlayer> targetList = new ArrayList<>();
+            try {
+                targetList.addAll(EntityArgument.getPlayers(context, "player"));
+            } catch (IllegalArgumentException ignored) {
+                targetList.add(player);
+            }
+            for (ServerPlayer target : targetList) {
+                if (NarcissusUtils.killPlayer(target)) {
+                    NarcissusUtils.broadcastMessage(player, Component.translatable(player.getLanguage(), EI18nType.MESSAGE, "died_of_narcissus_" + (new Random().nextInt(4) + 1), target.getDisplayName().getString()));
+                }
+            }
+            return 1;
+        };
         Command<CommandSourceStack> tpCoordinateCommand = context -> {
             ServerPlayer player = context.getSource().getPlayerOrException();
             // 传送功能前置校验
@@ -496,15 +523,21 @@ public class FarewellCommand {
             ServerPlayer player = context.getSource().getPlayerOrException();
             // 传送功能前置校验
             if (checkTeleportPre(player, ETeleportType.TP_SPAWN)) return 0;
-            Coordinate coordinate = new Coordinate(player);
-            BlockPos respawnPosition = player.getRespawnPosition();
-            coordinate.setDimension(player.getRespawnDimension());
+            ServerPlayer target;
+            try {
+                target = EntityArgument.getPlayer(context, "player");
+            } catch (IllegalArgumentException ignored) {
+                target = player;
+            }
+            Coordinate coordinate = new Coordinate(target);
+            BlockPos respawnPosition = target.getRespawnPosition();
+            coordinate.setDimension(target.getRespawnDimension());
             if (respawnPosition == null) {
-                respawnPosition = player.level().getSharedSpawnPos();
-                coordinate.setDimension(player.level().dimension());
+                respawnPosition = target.level().getSharedSpawnPos();
+                coordinate.setDimension(target.level().dimension());
             }
             if (respawnPosition == null) {
-                respawnPosition = player.getServer().getLevel(Level.OVERWORLD).getSharedSpawnPos();
+                respawnPosition = target.getServer().getLevel(Level.OVERWORLD).getSharedSpawnPos();
                 coordinate.setDimension(Level.OVERWORLD);
             }
             coordinate.fromBlockPos(respawnPosition);
@@ -904,6 +937,14 @@ public class FarewellCommand {
             return 1;
         };
 
+        LiteralArgumentBuilder<CommandSourceStack> dim = Commands.literal(ServerConfig.COMMAND_DIMENSION.get())
+                .executes(dimCommand);
+        LiteralArgumentBuilder<CommandSourceStack> feed = Commands.literal(ServerConfig.COMMAND_FEED.get())
+                .executes(feedCommand)
+                .then(Commands.argument("player", EntityArgument.players())
+                        .requires(source -> source.hasPermission(ServerConfig.PERMISSION_FEED_OTHER.get()))
+                        .executes(feedCommand)
+                );
         LiteralArgumentBuilder<CommandSourceStack> tpx = Commands.literal(ServerConfig.COMMAND_TP_COORDINATE.get())
                 .requires(source -> source.hasPermission(ServerConfig.PERMISSION_TP_COORDINATE.get()))
                 .then(Commands.argument("coordinate", Vec3Argument.vec3())
@@ -1028,6 +1069,10 @@ public class FarewellCommand {
                 .then(Commands.argument("safe", StringArgumentType.word())
                         .suggests(safeSuggestions)
                         .executes(tpSpawnCommand)
+                        .then(Commands.argument("player", EntityArgument.player())
+                                .requires(source -> source.hasPermission(ServerConfig.PERMISSION_TP_SPAWN_OTHER.get()))
+                                .executes(tpSpawnCommand)
+                        )
                 );
         LiteralArgumentBuilder<CommandSourceStack> tpWorldSpawn = Commands.literal(ServerConfig.COMMAND_TP_WORLD_SPAWN.get())
                 .requires(source -> source.hasPermission(ServerConfig.PERMISSION_TP_WORLD_SPAWN.get()))
@@ -1176,6 +1221,16 @@ public class FarewellCommand {
 
         // 注册简短的指令
         {
+            // 获取当前世界的维度ID /dim
+            if (ServerConfig.CONCISE_DIMENSION.get()) {
+                dispatcher.register(dim);
+            }
+
+            // 自杀或毒杀 /feed
+            if (ServerConfig.CONCISE_FEED.get()) {
+                dispatcher.register(feed);
+            }
+
             // 传送至指定位置 /tpx
             if (ServerConfig.CONCISE_TP_COORDINATE.get()) {
                 dispatcher.register(tpx);
@@ -1304,14 +1359,10 @@ public class FarewellCommand {
                                     .executes(helpCommand)
                             )
                     )
-                    .then(Commands.literal(ServerConfig.COMMAND_DIMENSION.get())
-                            .executes((context) -> {
-                                ServerPlayer player = context.getSource().getPlayerOrException();
-                                Component msg = Component.translatable(player.getLanguage(), EI18nType.MESSAGE, "dimension_info", player.level().dimension().location().toString());
-                                NarcissusUtils.sendMessage(player, msg);
-                                return 1;
-                            })
-                    )
+                    // 获取当前世界的维度ID /narcissus dim
+                    .then(dim)
+                    // 自杀或毒杀 /narcissus feed
+                    .then(feed)
                     // 传送至指定位置 /narcissus tpx
                     .then(tpx)
                     // 传送至指定结构或生物群系 /narcissus tpst
