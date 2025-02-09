@@ -67,7 +67,11 @@ public class ForgeEventHandler {
         EntityPlayer player = event.player;
         if (!player.world.isRemote && event.phase == TickEvent.Phase.END) {
             if (!NarcissusFarewell.getPlayerCapabilityStatus().getOrDefault(player.getUniqueID().toString(), true)) {
-                PlayerTeleportDataCapability.syncPlayerData((EntityPlayerMP) player);
+                try {
+                    PlayerTeleportDataCapability.syncPlayerData((EntityPlayerMP) player);
+                } catch (Exception e) {
+                    LOGGER.error("Failed to sync player data to client", e);
+                }
             }
         }
     }
