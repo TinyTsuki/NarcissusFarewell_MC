@@ -6,6 +6,9 @@ import lombok.Getter;
 public enum ECommandType {
     HELP(0),
     DIMENSION(0),
+    DIMENSION_CONCISE(0),
+    FEED(0),
+    FEED_CONCISE(0),
     TP_COORDINATE(1),
     TP_COORDINATE_CONCISE(2),
     TP_STRUCTURE(3),
