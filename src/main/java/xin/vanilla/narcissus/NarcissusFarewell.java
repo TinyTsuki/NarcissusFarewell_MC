@@ -118,6 +118,8 @@ public class NarcissusFarewell {
         event.registerServerCommand(new FarewellCommand());
         if (NarcissusUtils.isConciseEnabled(ECommandType.DIMENSION))
             event.registerServerCommand(new DimensionCommand());
+        if (NarcissusUtils.isConciseEnabled(ECommandType.FEED))
+            event.registerServerCommand(new FeedCommand());
         if (NarcissusUtils.isConciseEnabled(ECommandType.TP_COORDINATE))
             event.registerServerCommand(new CoordinateCommand());
         if (NarcissusUtils.isConciseEnabled(ECommandType.TP_STRUCTURE))

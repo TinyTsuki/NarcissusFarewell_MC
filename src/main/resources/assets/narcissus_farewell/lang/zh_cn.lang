@@ -117,3 +117,7 @@ message.narcissus_farewell.command_no_permission=§c阁下没有使用此命令�
 message.narcissus_farewell.command_failed=§c命令执行失败，请检查参数的正确性
 message.narcissus_farewell.tp_structure_searching=开始搜索指定的结构/生物群系
 message.narcissus_farewell.tp_view_searching=开始搜索视线尽头的坐标
+message.narcissus_farewell.died_of_narcissus_1=%s死于石蒜碱
+message.narcissus_farewell.died_of_narcissus_2=%s死于多花水仙碱
+message.narcissus_farewell.died_of_narcissus_3=%s死于秋水仙碱
+message.narcissus_farewell.died_of_narcissus_4=%s死于拉帕他汀

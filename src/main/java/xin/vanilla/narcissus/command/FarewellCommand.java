@@ -163,6 +163,13 @@ public class FarewellCommand extends CommandBase {
                             .forEach(type -> suggestions.add(type.name()));
                 }
             }
+            // 毒杀玩家
+            else if (args[0].equals(ServerConfig.COMMAND_FEED) && NarcissusUtils.isTeleportEnabled(ECommandType.FEED) && NarcissusUtils.hasCommandPermission(player, ECommandType.FEED)) {
+                if (args.length == 2) {
+                    suggestions.addAll(getPlayerNameSuggestions(server, args));
+                    suggestions.add("@a");
+                }
+            }
             // 传送到指定坐标
             else if (args[0].equals(ServerConfig.COMMAND_TP_COORDINATE) && NarcissusUtils.isTeleportEnabled(ECommandType.TP_COORDINATE) && NarcissusUtils.hasCommandPermission(player, ECommandType.TP_COORDINATE)) {
                 if (args.length == 2) {
@@ -601,6 +608,38 @@ public class FarewellCommand extends CommandBase {
                 NarcissusUtils.sendMessage(player, msg);
                 return 1;
             }
+            // 自杀或毒杀
+            else if (prefix.equals(ServerConfig.COMMAND_FEED)) {
+                // 判断是否开启功能
+                if (!ServerConfig.SWITCH_FEED) {
+                    NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EI18nType.MESSAGE, "command_disabled"));
+                    return 0;
+                }
+                if (args.length <= 2) {
+                    List<EntityPlayerMP> targetList = new ArrayList<>();
+                    if (args.length == 1) {
+                        targetList.add(player);
+                    } else {
+                        // 判断是否有毒杀权限
+                        boolean hasPermission = ServerConfig.PERMISSION_FEED_OTHER > -1 && NarcissusUtils.hasPermissions(player, ServerConfig.PERMISSION_FEED_OTHER);
+                        if (!hasPermission) {
+                            NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EI18nType.MESSAGE, "command_no_permission"));
+                            return 0;
+                        }
+                        targetList.addAll(NarcissusUtils.getPlayer(player, args[1]));
+                    }
+                    if (CollectionUtils.isNullOrEmpty(targetList)) {
+                        NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EI18nType.MESSAGE, "player_not_found"));
+                        return 0;
+                    }
+                    for (EntityPlayerMP target : targetList) {
+                        if (NarcissusUtils.killPlayer(target)) {
+                            NarcissusUtils.broadcastMessage(player, Component.translatable(NarcissusUtils.getPlayerLanguage(player), EI18nType.MESSAGE, "died_of_narcissus_" + (new Random().nextInt(4) + 1), target.getDisplayNameString()));
+                        }
+                    }
+                    return 1;
+                }
+            }
             // 传送到指定坐标
             else if (prefix.equals(ServerConfig.COMMAND_TP_COORDINATE)) {
                 if (args.length <= 6) {
@@ -924,17 +963,28 @@ public class FarewellCommand extends CommandBase {
                 if (checkTeleportPre(player, ECommandType.TP_SPAWN)) {
                     return 0;
                 }
-                if (args.length <= 2) {
-                    Coordinate coordinate = new Coordinate(player);
-                    BlockPos respawnPosition = player.getBedLocation(player.world.provider.getDimensionType().getId());
+                if (args.length <= 3) {
+                    EntityPlayerMP target = player;
+                    boolean hasPermission = ServerConfig.PERMISSION_TP_SPAWN_OTHER > -1 && NarcissusUtils.hasPermissions(player, ServerConfig.PERMISSION_TP_SPAWN_OTHER);
+                    if (hasPermission) {
+                        List<EntityPlayerMP> targetList = NarcissusUtils.getPlayer(player, args[1]);
+                        if (CollectionUtils.isNotNullOrEmpty(targetList)) {
+                            target = targetList.get(0);
+                        }
+                    } else if (args.length == 3) {
+                        NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EI18nType.MESSAGE, "command_no_permission"));
+                        return 0;
+                    }
+                    Coordinate coordinate = new Coordinate(target);
+                    BlockPos respawnPosition = target.getBedLocation(player.world.provider.getDimensionType().getId());
                     // idea很烦诶，明明就会是null非警告我不会为null
-                    if (respawnPosition == null && player.world.provider.getDimensionType().getId() != DimensionType.OVERWORLD.getId()) {
-                        respawnPosition = player.getBedLocation(DimensionType.OVERWORLD.getId());
+                    if (respawnPosition == null && target.world.provider.getDimensionType().getId() != DimensionType.OVERWORLD.getId()) {
+                        respawnPosition = target.getBedLocation(DimensionType.OVERWORLD.getId());
                         coordinate.setDimension(DimensionType.OVERWORLD);
                     }
                     if (respawnPosition == null) {
-                        respawnPosition = player.world.getSpawnPoint();
-                        coordinate.setDimension(player.world.provider.getDimensionType());
+                        respawnPosition = target.world.getSpawnPoint();
+                        coordinate.setDimension(target.world.provider.getDimensionType());
                     }
                     if (respawnPosition == null) {
                         respawnPosition = NarcissusFarewell.getServerInstance().getWorld(DimensionType.OVERWORLD.getId()).getSpawnPoint();

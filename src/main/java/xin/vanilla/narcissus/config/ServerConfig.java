@@ -137,6 +137,11 @@ public class ServerConfig {
     private final static String CATEGORY_SWITCH = "switch";
 
     /**
+     * 自杀或毒杀 开关
+     */
+    public static boolean SWITCH_FEED = true;
+
+    /**
      * 传送到指定坐标 开关
      */
     public static boolean SWITCH_TP_COORDINATE = true;
@@ -216,6 +221,8 @@ public class ServerConfig {
     // region 指令权限
 
     private final static String CATEGORY_PERMISSION = "permission";
+
+    public static int PERMISSION_FEED_OTHER = 2;
 
     public static int PERMISSION_TP_COORDINATE = 2;
 
@@ -396,6 +403,11 @@ public class ServerConfig {
     public static String COMMAND_DIMENSION = "dim";
 
     /**
+     * 自杀或毒杀(水仙是有毒的可不能吃哦)
+     */
+    public static String COMMAND_FEED = "feed";
+
+    /**
      * 传送到指定坐标
      */
     public static String COMMAND_TP_COORDINATE = "tpx";
@@ -515,6 +527,16 @@ public class ServerConfig {
     // region 简化指令
 
     private final static String CATEGORY_CONCISE = "concise";
+
+    /**
+     * 获取当前世界的维度ID
+     */
+    public static boolean CONCISE_DIMENSION = false;
+
+    /**
+     * 自杀或毒杀
+     */
+    public static boolean CONCISE_FEED = false;
 
     /**
      * 传送到指定坐标
@@ -842,6 +864,8 @@ public class ServerConfig {
 
         // 定义功能开关
         {
+            SWITCH_FEED = config.getBoolean("switchFeed", CATEGORY_SWITCH, SWITCH_FEED, "Enable or disable the option to 'Suicide or poisoning'.\n是否启用自杀或毒杀。");
+
             SWITCH_TP_COORDINATE = config.getBoolean("switchTpCoordinate", CATEGORY_SWITCH, SWITCH_TP_COORDINATE, "Enable or disable the option to 'Teleport to the specified coordinates'.\n是否启用传送到指定坐标。");
 
             SWITCH_TP_STRUCTURE = config.getBoolean("switchTpStructure", CATEGORY_SWITCH, SWITCH_TP_STRUCTURE, "Enable or disable the option to 'Teleport to the specified structure'.\n是否启用传送到指定结构。");
@@ -877,6 +901,8 @@ public class ServerConfig {
         {
 
             {
+                PERMISSION_FEED_OTHER = config.getInt("permissionFeedOther", CATEGORY_PERMISSION + ".command", PERMISSION_FEED_OTHER, 0, 4, "The permission level required to use the 'Poisoning others' command.\n毒杀指令所需的权限等级。");
+
                 PERMISSION_TP_COORDINATE = config.getInt("permissionTpCoordinate", CATEGORY_PERMISSION + ".command", PERMISSION_TP_COORDINATE, 0, 4, "The permission level required to use the 'Teleport to the specified coordinates' command.\n传送到指定坐标指令所需的权限等级。");
 
                 PERMISSION_TP_STRUCTURE = config.getInt("permissionTpStructure", CATEGORY_PERMISSION + ".command", PERMISSION_TP_STRUCTURE, 0, 4, "The permission level required to use the 'Teleport to the specified structure' command.\n传送到指定结构指令所需的权限等级。");
@@ -973,6 +999,9 @@ public class ServerConfig {
 
         // 定义自定义指令配置
         {
+            // 自杀或毒杀
+            COMMAND_FEED = config.getString("commandFeed", CATEGORY_COMMAND, COMMAND_FEED, "This command is used to suicide or poisoning, narcissus are poisonous and should not be eaten.\n自杀或毒杀的指令，水仙是有毒的可不能食用哦。");
+
             // 获取当前世界的维度ID
             COMMAND_DIMENSION = config.getString("commandDimension", CATEGORY_COMMAND, COMMAND_DIMENSION, "This command is used to get the dimension ID of the current world.\n获取当前世界的维度ID的指令。");
 
@@ -1044,6 +1073,10 @@ public class ServerConfig {
 
         // 定义简化指令
         {
+            CONCISE_DIMENSION = config.getBoolean("conciseDimension", CATEGORY_CONCISE, CONCISE_DIMENSION, "Enable or disable the concise version of the 'Get the dimension ID of the current world' command.\n是否启用无前缀版本的 '获取当前世界的维度ID' 指令。");
+
+            CONCISE_FEED = config.getBoolean("conciseFeed", CATEGORY_CONCISE, CONCISE_FEED, "Enable or disable the concise version of the 'Suicide or poisoning' command.\n是否启用无前缀版本的 '自杀或毒杀' 指令。");
+
             CONCISE_TP_COORDINATE = config.getBoolean("conciseTpCoordinate", CATEGORY_CONCISE, CONCISE_TP_COORDINATE, "Enable or disable the concise version of the 'Teleport to the specified coordinates' command.\n是否启用无前缀版本的 '传送到指定坐标' 指令。");
 
             CONCISE_TP_STRUCTURE = config.getBoolean("conciseTpStructure", CATEGORY_CONCISE, CONCISE_TP_STRUCTURE, "Enable or disable the concise version of the 'Teleport to the specified structure' command.\n是否启用无前缀版本的 '传送到指定结构' 指令。");
