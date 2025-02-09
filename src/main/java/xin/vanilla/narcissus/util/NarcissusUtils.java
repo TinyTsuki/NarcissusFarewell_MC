@@ -116,8 +116,10 @@ public class NarcissusUtils {
         String prefix = NarcissusUtils.getCommandPrefix();
         return switch (type) {
             case HELP -> prefix + " help";
-            case DIMENSION, DIMENSION_CONCISE -> prefix + " " + ServerConfig.COMMAND_DIMENSION.get();
-            case FEED, FEED_CONCISE -> prefix + " " + ServerConfig.COMMAND_FEED.get();
+            case DIMENSION -> prefix + " " + ServerConfig.COMMAND_DIMENSION.get();
+            case DIMENSION_CONCISE -> isConciseEnabled(type) ? ServerConfig.COMMAND_DIMENSION.get() : "";
+            case FEED -> prefix + " " + ServerConfig.COMMAND_FEED.get();
+            case FEED_CONCISE -> isConciseEnabled(type) ? ServerConfig.COMMAND_FEED.get() : "";
             case TP_COORDINATE -> prefix + " " + ServerConfig.COMMAND_TP_COORDINATE.get();
             case TP_COORDINATE_CONCISE -> isConciseEnabled(type) ? ServerConfig.COMMAND_TP_COORDINATE.get() : "";
             case TP_STRUCTURE -> prefix + " " + ServerConfig.COMMAND_TP_STRUCTURE.get();

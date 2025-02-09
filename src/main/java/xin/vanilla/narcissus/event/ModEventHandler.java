@@ -16,7 +16,7 @@ public class ModEventHandler {
     private static final Logger LOGGER = LogManager.getLogger();
 
     @SubscribeEvent
-    public void registerCaps(RegisterCapabilitiesEvent event) {
+    public static void registerCaps(RegisterCapabilitiesEvent event) {
         // 注册 PlayerDataCapability
         event.register(IPlayerTeleportData.class);
     }
