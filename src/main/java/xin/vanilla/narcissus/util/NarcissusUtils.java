@@ -1269,7 +1269,7 @@ public class NarcissusUtils {
      * @param message 消息
      */
     public static void broadcastMessage(MinecraftServer server, Component message) {
-        server.getPlayerList().sendMessage(new TextComponentTranslation("chat.type.announcement", "[Server]", message.toTextComponent()), true);
+        server.getPlayerList().sendMessage(new TextComponentTranslation("chat.type.announcement", "Server", message.toTextComponent()), true);
     }
 
     /**
