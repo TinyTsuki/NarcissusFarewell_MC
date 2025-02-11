@@ -1007,6 +1007,16 @@ public class NarcissusUtils {
     }
 
     /**
+     * 广播消息
+     *
+     * @param server  发送者
+     * @param message 消息
+     */
+    public static void broadcastMessage(MinecraftServer server, Component message) {
+        server.getPlayerList().broadcastMessage(new TranslationTextComponent("chat.type.announcement", "[Server]", message.toTextComponent()), true);
+    }
+
+    /**
      * 发送消息
      *
      * @param player  玩家
