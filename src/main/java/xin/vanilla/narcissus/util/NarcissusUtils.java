@@ -897,7 +897,7 @@ public class NarcissusUtils {
      * @param message 消息
      */
     public static void broadcastMessage(MinecraftServer server, Component message) {
-        server.getPlayerList().broadcastMessage(new TranslatableComponent("chat.type.announcement", "[Server]", message.toTextComponent()), ChatType.SYSTEM, Util.NIL_UUID);
+        server.getPlayerList().broadcastMessage(new TranslatableComponent("chat.type.announcement", "Server", message.toTextComponent()), ChatType.SYSTEM, Util.NIL_UUID);
     }
 
     /**
