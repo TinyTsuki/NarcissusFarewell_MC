@@ -1019,7 +1019,17 @@ public class NarcissusUtils {
      * @param message 消息
      */
     public static void broadcastMessage(ServerPlayerEntity player, Component message) {
-        player.server.getPlayerList().broadcastMessage(new TranslationTextComponent("chat.type.announcement", player.getDisplayName(), message.toTextComponent(player.getLanguage())), ChatType.SYSTEM, Util.NIL_UUID);
+        player.server.getPlayerList().broadcastMessage(new TranslationTextComponent("chat.type.announcement", player.getDisplayName(), message.toTextComponent()), ChatType.SYSTEM, Util.NIL_UUID);
+    }
+
+    /**
+     * 广播消息
+     *
+     * @param server  发送者
+     * @param message 消息
+     */
+    public static void broadcastMessage(MinecraftServer server, Component message) {
+        server.getPlayerList().broadcastMessage(new TranslationTextComponent("chat.type.announcement", "[Server]", message.toTextComponent()), ChatType.SYSTEM, Util.NIL_UUID);
     }
 
     /**
