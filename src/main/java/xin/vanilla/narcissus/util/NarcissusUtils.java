@@ -4,6 +4,7 @@ import lombok.NonNull;
 import net.minecraft.block.Block;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.Minecraft;
+import net.minecraft.command.ICommandSender;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
@@ -533,7 +534,7 @@ public class NarcissusUtils {
      * @param player 目标玩家
      * @param level  要求的最低权限等级
      */
-    public static boolean hasPermissions(EntityPlayer player, int level) {
+    public static boolean hasPermissions(ICommandSender player, int level) {
         // if (player == null || level < 0 || level > 4) {
         //     return false;
         // }
@@ -1262,6 +1263,16 @@ public class NarcissusUtils {
     }
 
     /**
+     * 广播消息
+     *
+     * @param server  发送者
+     * @param message 消息
+     */
+    public static void broadcastMessage(MinecraftServer server, Component message) {
+        server.getPlayerList().sendMessage(new TextComponentTranslation("chat.type.announcement", "[Server]", message.toTextComponent()), true);
+    }
+
+    /**
      * 发送消息
      *
      * @param player  玩家
@@ -1278,6 +1289,16 @@ public class NarcissusUtils {
      * @param message 消息
      */
     public static void sendMessage(EntityPlayerMP player, String message) {
+        player.sendMessage(Component.literal(message).toTextComponent());
+    }
+
+    /**
+     * 发送消息
+     *
+     * @param player  玩家
+     * @param message 消息
+     */
+    public static void sendMessage(ICommandSender player, String message) {
         player.sendMessage(Component.literal(message).toTextComponent());
     }
 

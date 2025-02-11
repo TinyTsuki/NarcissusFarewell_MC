@@ -3,7 +3,9 @@ package xin.vanilla.narcissus.command;
 
 import lombok.NonNull;
 import net.minecraft.command.CommandBase;
+import net.minecraft.command.CommandException;
 import net.minecraft.command.ICommandSender;
+import net.minecraft.command.PlayerNotFoundException;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.network.play.server.SPacketChat;
@@ -39,6 +41,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 public class FarewellCommand extends CommandBase {
+    // 才发现CommandBase里面有很多工具方法，但是懒得改了，就这样吧
 
     // region 实现CommandBase
 
@@ -63,7 +66,7 @@ public class FarewellCommand extends CommandBase {
     @Override
     @ParametersAreNonnullByDefault
     public boolean checkPermission(MinecraftServer server, ICommandSender sender) {
-        return NarcissusUtils.hasPermissions((EntityPlayerMP) sender, this.getRequiredPermissionLevel());
+        return NarcissusUtils.hasPermissions(sender, this.getRequiredPermissionLevel());
     }
 
     @Override
@@ -87,7 +90,7 @@ public class FarewellCommand extends CommandBase {
 
     @Override
     @ParametersAreNonnullByDefault
-    public void execute(@NonNull MinecraftServer server, @NonNull ICommandSender sender, @ParametersAreNonnullByDefault String[] args) {
+    public void execute(@NonNull MinecraftServer server, @NonNull ICommandSender sender, @ParametersAreNonnullByDefault String[] args) throws PlayerNotFoundException {
         verifyExecuteResult(sender, executeCommand(server, sender, args));
     }
 
@@ -558,8 +561,16 @@ public class FarewellCommand extends CommandBase {
      * @param sender 指令发送者
      * @param args   指令参数
      */
-    public static int executeCommand(@NonNull MinecraftServer server, @NonNull ICommandSender sender, @ParametersAreNonnullByDefault String[] args) {
-        EntityPlayerMP player = (EntityPlayerMP) sender;
+    public static int executeCommand(@NonNull MinecraftServer server, @NonNull ICommandSender sender, @ParametersAreNonnullByDefault String[] args) throws PlayerNotFoundException {
+        EntityPlayerMP player;
+        if (sender instanceof EntityPlayerMP) {
+            player = (EntityPlayerMP) sender;
+        } else {
+            player = null;
+            if (!(args.length == 2 && args[0].equals(ServerConfig.COMMAND_FEED))) {
+                throw new PlayerNotFoundException("commands.generic.player.unspecified");
+            }
+        }
         // 帮助信息
         if (args.length == 0 || ((args.length == 1 || args.length == 2) && args[0].equals("help"))) {
             String command;
@@ -621,20 +632,33 @@ public class FarewellCommand extends CommandBase {
                         targetList.add(player);
                     } else {
                         // 判断是否有毒杀权限
-                        boolean hasPermission = ServerConfig.PERMISSION_FEED_OTHER > -1 && NarcissusUtils.hasPermissions(player, ServerConfig.PERMISSION_FEED_OTHER);
-                        if (!hasPermission) {
-                            NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EI18nType.MESSAGE, "command_no_permission"));
-                            return 0;
+                        if (player != null) {
+                            boolean hasPermission = ServerConfig.PERMISSION_FEED_OTHER > -1 && NarcissusUtils.hasPermissions(player, ServerConfig.PERMISSION_FEED_OTHER);
+                            if (!hasPermission) {
+                                NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EI18nType.MESSAGE, "command_no_permission"));
+                                return 0;
+                            }
                         }
-                        targetList.addAll(NarcissusUtils.getPlayer(player, args[1]));
+                        try {
+                            targetList.addAll(CommandBase.getPlayers(server, sender, args[1]));
+                        } catch (CommandException ignored) {
+                        }
+                        // targetList.addAll(NarcissusUtils.getPlayer(player, args[1]));
                     }
                     if (CollectionUtils.isNullOrEmpty(targetList)) {
-                        NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EI18nType.MESSAGE, "player_not_found"));
+                        if (player != null)
+                            NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EI18nType.MESSAGE, "player_not_found"));
+                        else
+                            NarcissusUtils.sendMessage(sender, Component.translatable(I18nUtils.getKey(EI18nType.MESSAGE, "player_not_found")).getString(NarcissusFarewell.getDefaultLanguage()));
                         return 0;
                     }
                     for (EntityPlayerMP target : targetList) {
                         if (NarcissusUtils.killPlayer(target)) {
-                            NarcissusUtils.broadcastMessage(player, Component.translatable(NarcissusUtils.getPlayerLanguage(player), EI18nType.MESSAGE, "died_of_narcissus_" + (new Random().nextInt(4) + 1), target.getDisplayNameString()));
+                            if (player != null) {
+                                NarcissusUtils.broadcastMessage(player, Component.translatable(NarcissusUtils.getPlayerLanguage(target), EI18nType.MESSAGE, "died_of_narcissus_" + (new Random().nextInt(4) + 1), target.getDisplayNameString()));
+                            } else {
+                                NarcissusUtils.broadcastMessage(server, Component.translatable(NarcissusUtils.getPlayerLanguage(target), EI18nType.MESSAGE, "died_of_narcissus_" + (new Random().nextInt(4) + 1), target.getDisplayNameString()));
+                            }
                         }
                     }
                     return 1;
@@ -647,7 +671,12 @@ public class FarewellCommand extends CommandBase {
                     if (checkTeleportPre(player, ECommandType.TP_COORDINATE)) return 0;
                     Coordinate coordinate = null;
                     if (args.length == 2 || args.length == 3) {
-                        List<EntityPlayerMP> targetList = NarcissusUtils.getPlayer(player, args[1]);
+                        List<EntityPlayerMP> targetList = new ArrayList<>();
+                        try {
+                            targetList.addAll(CommandBase.getPlayers(server, sender, args[1]));
+                        } catch (CommandException ignored) {
+                        }
+                        // List<EntityPlayerMP> targetList = NarcissusUtils.getPlayer(player, args[1]);
                         if (CollectionUtils.isNotNullOrEmpty(targetList)) {
                             coordinate = new Coordinate(targetList.get(0)).setSafe(args[args.length - 1].equals("safe"));
                         } else {
@@ -746,7 +775,12 @@ public class FarewellCommand extends CommandBase {
                                         .getOrDefault(player, NarcissusUtils.getRandomPlayer())))
                                 .getTarget();
                     } else {
-                        List<EntityPlayerMP> targetList = NarcissusUtils.getPlayer(player, args[1]);
+                        List<EntityPlayerMP> targetList = new ArrayList<>();
+                        try {
+                            targetList.addAll(CommandBase.getPlayers(server, sender, args[1]));
+                        } catch (CommandException ignored) {
+                        }
+                        // List<EntityPlayerMP> targetList = NarcissusUtils.getPlayer(player, args[1]);
                         if (CollectionUtils.isNotNullOrEmpty(targetList)) {
                             target = targetList.get(0);
                         }
@@ -847,7 +881,12 @@ public class FarewellCommand extends CommandBase {
                                         .getOrDefault(player, NarcissusUtils.getRandomPlayer())))
                                 .getTarget();
                     } else {
-                        List<EntityPlayerMP> targetList = NarcissusUtils.getPlayer(player, args[1]);
+                        List<EntityPlayerMP> targetList = new ArrayList<>();
+                        try {
+                            targetList.addAll(CommandBase.getPlayers(server, sender, args[1]));
+                        } catch (CommandException ignored) {
+                        }
+                        // List<EntityPlayerMP> targetList = NarcissusUtils.getPlayer(player, args[1]);
                         if (CollectionUtils.isNotNullOrEmpty(targetList)) {
                             target = targetList.get(0);
                         }
@@ -967,7 +1006,12 @@ public class FarewellCommand extends CommandBase {
                     EntityPlayerMP target = player;
                     boolean hasPermission = ServerConfig.PERMISSION_TP_SPAWN_OTHER > -1 && NarcissusUtils.hasPermissions(player, ServerConfig.PERMISSION_TP_SPAWN_OTHER);
                     if (hasPermission) {
-                        List<EntityPlayerMP> targetList = NarcissusUtils.getPlayer(player, args[1]);
+                        List<EntityPlayerMP> targetList = new ArrayList<>();
+                        try {
+                            targetList.addAll(CommandBase.getPlayers(server, sender, args[1]));
+                        } catch (CommandException ignored) {
+                        }
+                        // List<EntityPlayerMP> targetList = NarcissusUtils.getPlayer(player, args[1]);
                         if (CollectionUtils.isNotNullOrEmpty(targetList)) {
                             target = targetList.get(0);
                         }
@@ -1565,7 +1609,12 @@ public class FarewellCommand extends CommandBase {
     private static String getRequestId(EntityPlayerMP player, String arg, ETeleportType teleportType) {
         String result = null;
         try {
-            List<EntityPlayerMP> playerMPList = NarcissusUtils.getPlayer(player, arg);
+            List<EntityPlayerMP> playerMPList = new ArrayList<>();
+            try {
+                playerMPList.addAll(CommandBase.getPlayers(player.getServer(), player, arg));
+            } catch (CommandException ignored) {
+            }
+            // List<EntityPlayerMP> playerMPList = NarcissusUtils.getPlayer(player, arg);
             if (CollectionUtils.isNotNullOrEmpty(playerMPList)) {
                 EntityPlayerMP requester = playerMPList.get(0);
                 Map.Entry<String, TeleportRequest> entry1 = NarcissusFarewell.getTeleportRequest().entrySet().stream()

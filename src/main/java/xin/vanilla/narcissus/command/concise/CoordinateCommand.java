@@ -3,6 +3,7 @@ package xin.vanilla.narcissus.command.concise;
 import lombok.NonNull;
 import net.minecraft.command.CommandBase;
 import net.minecraft.command.ICommandSender;
+import net.minecraft.command.PlayerNotFoundException;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.math.BlockPos;
@@ -40,7 +41,7 @@ public class CoordinateCommand extends CommandBase {
 
     @Override
     @ParametersAreNonnullByDefault
-    public void execute(@NonNull MinecraftServer server, @NonNull ICommandSender sender, @ParametersAreNonnullByDefault String[] args) {
+    public void execute(@NonNull MinecraftServer server, @NonNull ICommandSender sender, @ParametersAreNonnullByDefault String[] args) throws PlayerNotFoundException {
         FarewellCommand.verifyExecuteResult(sender, FarewellCommand.executeCommand(server, sender, Stream.concat(Stream.of(this.getName()), Arrays.stream(args)).toArray(String[]::new)));
     }
 
@@ -52,6 +53,6 @@ public class CoordinateCommand extends CommandBase {
     @Override
     @ParametersAreNonnullByDefault
     public boolean checkPermission(MinecraftServer server, ICommandSender sender) {
-        return NarcissusUtils.hasPermissions((EntityPlayerMP) sender, this.getRequiredPermissionLevel());
+        return NarcissusUtils.hasPermissions(sender, this.getRequiredPermissionLevel());
     }
 }
