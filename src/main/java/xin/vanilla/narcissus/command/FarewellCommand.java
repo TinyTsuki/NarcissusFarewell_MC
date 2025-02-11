@@ -219,21 +219,37 @@ public class FarewellCommand {
         };
 
         Command<CommandSourceStack> feedCommand = (context) -> {
-            ServerPlayer player = context.getSource().getPlayerOrException();
-            // 判断是否开启功能
-            if (!ServerConfig.SWITCH_FEED.get()) {
-                NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EI18nType.MESSAGE, "command_disabled"));
-                return 0;
-            }
-            List<ServerPlayer> targetList = new ArrayList<>();
-            try {
-                targetList.addAll(EntityArgument.getPlayers(context, "player"));
-            } catch (IllegalArgumentException ignored) {
-                targetList.add(player);
-            }
-            for (ServerPlayer target : targetList) {
-                if (NarcissusUtils.killPlayer(target)) {
-                    NarcissusUtils.broadcastMessage(player, Component.translatable(player.getLanguage(), EI18nType.MESSAGE, "died_of_narcissus_" + (new Random().nextInt(4) + 1), target.getDisplayName().getString()));
+            CommandSourceStack source = context.getSource();
+            // 如果命令来自玩家
+            if (source.getEntity() instanceof ServerPlayer) {
+                ServerPlayer player = source.getPlayerOrException();
+                // 判断是否开启功能
+                if (!ServerConfig.SWITCH_FEED.get()) {
+                    NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EI18nType.MESSAGE, "command_disabled"));
+                    return 0;
+                }
+                List<ServerPlayer> targetList = new ArrayList<>();
+                try {
+                    targetList.addAll(EntityArgument.getPlayers(context, "player"));
+                } catch (IllegalArgumentException ignored) {
+                    targetList.add(player);
+                }
+                for (ServerPlayer target : targetList) {
+                    if (NarcissusUtils.killPlayer(target)) {
+                        NarcissusUtils.broadcastMessage(player, Component.translatable(target.getLanguage(), EI18nType.MESSAGE, "died_of_narcissus_" + (new Random().nextInt(4) + 1), target.getDisplayName().getString()));
+                    }
+                }
+            } else {
+                List<ServerPlayer> targetList;
+                try {
+                    targetList = new ArrayList<>(EntityArgument.getPlayers(context, "player"));
+                } catch (IllegalArgumentException ignored) {
+                    throw CommandSourceStack.ERROR_NOT_PLAYER.create();
+                }
+                for (ServerPlayer target : targetList) {
+                    if (NarcissusUtils.killPlayer(target)) {
+                        NarcissusUtils.broadcastMessage(source.getServer(), Component.translatable(target.getLanguage(), EI18nType.MESSAGE, "died_of_narcissus_" + (new Random().nextInt(4) + 1), target.getDisplayName().getString()));
+                    }
                 }
             }
             return 1;
