@@ -929,7 +929,17 @@ public class NarcissusUtils {
      * @param message 消息
      */
     public static void broadcastMessage(ServerPlayer player, Component message) {
-        player.server.getPlayerList().broadcastSystemMessage(net.minecraft.network.chat.Component.translatable("chat.type.announcement", player.getDisplayName(), message.toTextComponent(player.getLanguage())), false);
+        player.server.getPlayerList().broadcastSystemMessage(net.minecraft.network.chat.Component.translatable("chat.type.announcement", player.getDisplayName(), message.toTextComponent()), false);
+    }
+
+    /**
+     * 广播消息
+     *
+     * @param server  发送者
+     * @param message 消息
+     */
+    public static void broadcastMessage(MinecraftServer server, Component message) {
+        server.getPlayerList().broadcastSystemMessage(net.minecraft.network.chat.Component.translatable("chat.type.announcement", "[Server]", message.toTextComponent()), false);
     }
 
     /**
