@@ -1,7 +1,9 @@
 package xin.vanilla.narcissus.event;
 
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.entity.EntityPlayerSP;
 import net.minecraft.client.settings.KeyBinding;
+import net.minecraftforge.event.entity.EntityJoinWorldEvent;
 import net.minecraftforge.fml.client.registry.ClientRegistry;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
@@ -59,6 +61,24 @@ public class ClientEventHandler {
             ModNetworkHandler.INSTANCE.sendToServer(new TpYesNotice());
         } else if (TP_REQ_NO.isPressed()) {
             ModNetworkHandler.INSTANCE.sendToServer(new TpNoNotice());
+        }
+    }
+
+    /**
+     * 玩家进入世界
+     */
+    @SubscribeEvent
+    public static void onEntityJoinWorld(EntityJoinWorldEvent event) {
+        if (event.getEntity() instanceof EntityPlayerSP) {
+            if (event.getEntity().isEntityAlive()) {
+                LOGGER.debug("Client: Player join world.");
+                // 同步客户端配置到服务器
+                try {
+                    ModNetworkHandler.INSTANCE.sendToServer(new ClientModLoadedNotice());
+                } catch (Exception e) {
+                    LOGGER.error("Failed to send ClientModLoadedNotice", e);
+                }
+            }
         }
     }
 }

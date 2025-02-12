@@ -1,6 +1,5 @@
 package xin.vanilla.narcissus.event;
 
-import net.minecraft.client.entity.EntityPlayerSP;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
@@ -27,8 +26,6 @@ import xin.vanilla.narcissus.config.ServerConfig;
 import xin.vanilla.narcissus.config.TeleportRequest;
 import xin.vanilla.narcissus.enums.EI18nType;
 import xin.vanilla.narcissus.enums.ETeleportType;
-import xin.vanilla.narcissus.network.ClientModLoadedNotice;
-import xin.vanilla.narcissus.network.ModNetworkHandler;
 import xin.vanilla.narcissus.util.DateUtils;
 import xin.vanilla.narcissus.util.I18nUtils;
 import xin.vanilla.narcissus.util.NarcissusUtils;
@@ -179,16 +176,6 @@ public class ForgeEventHandler {
                 if (DateUtils.toDateInt(data.getLastCardTime()) < DateUtils.toDateInt(current)) {
                     data.setLastCardTime(current);
                     data.plusTeleportCard(ServerConfig.TELEPORT_CARD_DAILY);
-                }
-            }
-        } else if (event.getEntity() instanceof EntityPlayerSP) {
-            if (event.getEntity().isEntityAlive()) {
-                LOGGER.debug("Client: Player join world.");
-                // 同步客户端配置到服务器
-                try {
-                    ModNetworkHandler.INSTANCE.sendToServer(new ClientModLoadedNotice());
-                } catch (Exception e) {
-                    LOGGER.error("Failed to send ClientModLoadedNotice", e);
                 }
             }
         }
