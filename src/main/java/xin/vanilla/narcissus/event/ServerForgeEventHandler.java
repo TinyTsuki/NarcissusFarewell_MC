@@ -47,10 +47,17 @@ public class ServerForgeEventHandler {
     public static void playerTickEvent(TickEvent.PlayerTickEvent event) {
         Player player = event.player;
         if (event.side == LogicalSide.SERVER && event.phase == TickEvent.Phase.END) {
-            // 不用给未安装mod的玩家发送数据包
-            if (!NarcissusFarewell.getPlayerCapabilityStatus().getOrDefault(player.getUUID().toString(), true)) {
-                // 同步玩家传送数据到客户端
-                PlayerTeleportDataCapability.syncPlayerData((ServerPlayer) player);
+            // 仅给安装了mod的玩家发送数据包
+            if (NarcissusFarewell.getPlayerCapabilityStatus().containsKey(player.getUUID().toString())
+                    && !NarcissusFarewell.getPlayerCapabilityStatus().get(player.getStringUUID())) {
+                // 如果玩家还活着则同步玩家传送数据到客户端
+                if (player.isAlive()) {
+                    try {
+                        PlayerTeleportDataCapability.syncPlayerData((ServerPlayer) player);
+                    } catch (Exception e) {
+                        LOGGER.error("Failed to sync player data to client", e);
+                    }
+                }
             }
         }
     }
@@ -106,7 +113,7 @@ public class ServerForgeEventHandler {
         LazyOptional<IPlayerTeleportData> newDataCap = newPlayer.getCapability(PlayerTeleportDataCapability.PLAYER_DATA);
         oldDataCap.ifPresent(oldData -> newDataCap.ifPresent(newData -> newData.copyFrom(oldData)));
         if (NarcissusFarewell.getPlayerCapabilityStatus().containsKey(newPlayer.getUUID().toString())) {
-            NarcissusFarewell.getPlayerCapabilityStatus().put(newPlayer.getUUID().toString(), false);
+            NarcissusFarewell.getPlayerCapabilityStatus().put(newPlayer.getStringUUID(), false);
         }
         // 如果是死亡，则记录死亡记录
         if (event.isWasDeath()) {
@@ -126,8 +133,8 @@ public class ServerForgeEventHandler {
     public static void onEntityJoinWorld(EntityJoinLevelEvent event) {
         if (event.getEntity() instanceof ServerPlayer player) {
             // 初始化能力同步状态
-            if (NarcissusFarewell.getPlayerCapabilityStatus().containsKey(player.getUUID().toString())) {
-                NarcissusFarewell.getPlayerCapabilityStatus().put(player.getUUID().toString(), false);
+            if (NarcissusFarewell.getPlayerCapabilityStatus().containsKey(player.getStringUUID())) {
+                NarcissusFarewell.getPlayerCapabilityStatus().put(player.getStringUUID(), false);
             }
             // 给予传送卡
             if (ServerConfig.TELEPORT_CARD.get()) {
@@ -159,6 +166,17 @@ public class ServerForgeEventHandler {
             } else {
                 data.addTeleportRecords(record);
             }
+        }
+    }
+
+    /**
+     * 玩家登出事件
+     */
+    @SubscribeEvent
+    public static void onPlayerLoggedOut(PlayerEvent.PlayerLoggedOutEvent event) {
+        // 玩家退出服务器时移除键(移除mod安装状态)
+        if (event.getEntity() instanceof ServerPlayer) {
+            NarcissusFarewell.getPlayerCapabilityStatus().remove(event.getEntity().getStringUUID());
         }
     }
 }
