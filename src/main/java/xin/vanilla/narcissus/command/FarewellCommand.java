@@ -1005,19 +1005,21 @@ public class FarewellCommand extends CommandBase {
                 if (args.length <= 3) {
                     EntityPlayerMP target = player;
                     boolean hasPermission = ServerConfig.PERMISSION_TP_SPAWN_OTHER > -1 && NarcissusUtils.hasPermissions(player, ServerConfig.PERMISSION_TP_SPAWN_OTHER);
-                    if (hasPermission) {
-                        List<EntityPlayerMP> targetList = new ArrayList<>();
-                        try {
-                            targetList.addAll(CommandBase.getPlayers(server, sender, args[1]));
-                        } catch (CommandException ignored) {
+                    if (args.length == 3) {
+                        if (hasPermission) {
+                            List<EntityPlayerMP> targetList = new ArrayList<>();
+                            try {
+                                targetList.addAll(CommandBase.getPlayers(server, sender, args[1]));
+                            } catch (CommandException ignored) {
+                            }
+                            // List<EntityPlayerMP> targetList = NarcissusUtils.getPlayer(player, args[1]);
+                            if (CollectionUtils.isNotNullOrEmpty(targetList)) {
+                                target = targetList.get(0);
+                            }
+                        } else {
+                            NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EI18nType.MESSAGE, "command_no_permission"));
+                            return 0;
                         }
-                        // List<EntityPlayerMP> targetList = NarcissusUtils.getPlayer(player, args[1]);
-                        if (CollectionUtils.isNotNullOrEmpty(targetList)) {
-                            target = targetList.get(0);
-                        }
-                    } else if (args.length == 3) {
-                        NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EI18nType.MESSAGE, "command_no_permission"));
-                        return 0;
                     }
                     Coordinate coordinate = new Coordinate(target);
                     BlockPos respawnPosition = target.getBedLocation(player.world.provider.getDimensionType().getId());

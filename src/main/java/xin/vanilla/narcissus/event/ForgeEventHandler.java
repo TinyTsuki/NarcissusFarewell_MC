@@ -1,5 +1,6 @@
 package xin.vanilla.narcissus.event;
 
+import net.minecraft.client.entity.EntityPlayerSP;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
@@ -44,33 +45,22 @@ public class ForgeEventHandler {
     private static final Logger LOGGER = LogManager.getLogger();
 
     /**
-     * 客户端玩家登录
-     */
-    @SubscribeEvent
-    public static void onPlayerLoggedIn(net.minecraftforge.fml.common.gameevent.PlayerEvent.PlayerLoggedInEvent event) {
-        if (event.player instanceof EntityPlayerMP) {
-            LOGGER.debug("Client: Player logged in.");
-            // 同步客户端配置到服务器
-            try {
-                ModNetworkHandler.INSTANCE.sendToServer(new ClientModLoadedNotice());
-            } catch (Exception e) {
-                LOGGER.error("Failed to send ClientModLoadedNotice", e);
-            }
-        }
-    }
-
-    /**
      * 服务器端玩家 Tick 事件
      */
     @SubscribeEvent
     public static void onPlayerTick(TickEvent.PlayerTickEvent event) {
         EntityPlayer player = event.player;
         if (!player.world.isRemote && event.phase == TickEvent.Phase.END) {
-            if (!NarcissusFarewell.getPlayerCapabilityStatus().getOrDefault(player.getUniqueID().toString(), true)) {
-                try {
-                    PlayerTeleportDataCapability.syncPlayerData((EntityPlayerMP) player);
-                } catch (Exception e) {
-                    LOGGER.error("Failed to sync player data to client", e);
+            // 仅给安装了mod的玩家发送数据包
+            if (NarcissusFarewell.getPlayerCapabilityStatus().containsKey(player.getUniqueID().toString())
+                    && !NarcissusFarewell.getPlayerCapabilityStatus().get(player.getUniqueID().toString())) {
+                // 如果玩家还活着则同步玩家传送数据到客户端
+                if (player.isEntityAlive()) {
+                    try {
+                        PlayerTeleportDataCapability.syncPlayerData((EntityPlayerMP) player);
+                    } catch (Exception e) {
+                        LOGGER.error("Failed to sync player data to client", e);
+                    }
                 }
             }
         }
@@ -191,6 +181,27 @@ public class ForgeEventHandler {
                     data.plusTeleportCard(ServerConfig.TELEPORT_CARD_DAILY);
                 }
             }
+        } else if (event.getEntity() instanceof EntityPlayerSP) {
+            if (event.getEntity().isEntityAlive()) {
+                LOGGER.debug("Client: Player join world.");
+                // 同步客户端配置到服务器
+                try {
+                    ModNetworkHandler.INSTANCE.sendToServer(new ClientModLoadedNotice());
+                } catch (Exception e) {
+                    LOGGER.error("Failed to send ClientModLoadedNotice", e);
+                }
+            }
+        }
+    }
+
+    /**
+     * 玩家登出事件
+     */
+    @SubscribeEvent
+    public static void onPlayerLoggedOut(net.minecraftforge.fml.common.gameevent.PlayerEvent.PlayerLoggedOutEvent event) {
+        // 玩家退出服务器时移除键(移除mod安装状态)
+        if (event.player instanceof EntityPlayerMP) {
+            NarcissusFarewell.getPlayerCapabilityStatus().remove(event.player.getUniqueID().toString());
         }
     }
 }

@@ -16,6 +16,7 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.JsonToNBT;
 import net.minecraft.network.datasync.DataParameter;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.stats.StatList;
 import net.minecraft.util.DamageSource;
 import net.minecraft.util.NonNullList;
 import net.minecraft.util.ResourceLocation;
@@ -27,6 +28,8 @@ import net.minecraft.world.World;
 import net.minecraft.world.WorldServer;
 import net.minecraft.world.biome.Biome;
 import net.minecraft.world.gen.structure.MapGenStructureIO;
+import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.event.entity.player.PlayerDropsEvent;
 import net.minecraftforge.fml.common.registry.ForgeRegistries;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -1801,8 +1804,10 @@ public class NarcissusUtils {
         FieldUtils.setPrivateFieldValue(EntityPlayerMP.class, targetPlayer, FieldUtils.getPlayerLanguageFieldName(originalPlayer), getPlayerLanguage(originalPlayer));
     }
 
+    public static final DamageSource DAMAGE_SOURCE = new DamageSource("narcissus");
+
     /**
-     * 使玩家死亡
+     * 强行使玩家死亡
      */
     @SuppressWarnings("unchecked")
     public static boolean killPlayer(EntityPlayerMP player) {
@@ -1810,8 +1815,24 @@ public class NarcissusUtils {
             DataParameter<? super Float> value = (DataParameter<? super Float>) FieldUtils.getPrivateFieldValue(EntityLivingBase.class, null, FieldUtils.getEntityHealthFieldName());
             if (value != null) {
                 player.getDataManager().set(value, 0f);
+                if (!player.world.getGameRules().getBoolean("keepInventory") && !player.isSpectator()) {
+                    player.captureDrops = true;
+                    player.capturedDrops.clear();
+                    player.inventory.dropAllItems();
+                    player.captureDrops = false;
+                    PlayerDropsEvent event = new PlayerDropsEvent(player, DAMAGE_SOURCE, player.capturedDrops, false);
+                    if (!MinecraftForge.EVENT_BUS.post(event)) {
+                        for (net.minecraft.entity.item.EntityItem item : player.capturedDrops) {
+                            player.world.spawnEntity(item);
+                        }
+                    }
+                }
+                player.addStat(StatList.DEATHS);
+                player.takeStat(StatList.TIME_SINCE_DEATH);
+                player.extinguish();
+                player.getCombatTracker().reset();
             } else {
-                player.setDead();
+                player.onDeath(new DamageSource("narcissus"));
             }
         } catch (Exception ignored) {
             return false;
