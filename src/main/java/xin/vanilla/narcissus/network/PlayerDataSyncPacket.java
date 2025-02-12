@@ -8,6 +8,7 @@ import net.minecraftforge.fml.common.network.simpleimpl.IMessage;
 import net.minecraftforge.fml.common.network.simpleimpl.IMessageHandler;
 import net.minecraftforge.fml.common.network.simpleimpl.MessageContext;
 import xin.vanilla.narcissus.capability.TeleportRecord;
+import xin.vanilla.narcissus.capability.TeleportRecord;
 import xin.vanilla.narcissus.capability.player.IPlayerTeleportData;
 import xin.vanilla.narcissus.capability.player.PlayerTeleportData;
 import xin.vanilla.narcissus.config.Coordinate;
@@ -195,6 +196,13 @@ public class PlayerDataSyncPacket extends SplitPacket implements IMessage {
         for (PlayerDataSyncPacket packet : result) {
             packet.setId(this.getId());
             packet.setTotal(totalPackets);
+        }
+        if (result.isEmpty()) {
+            PlayerDataSyncPacket packet = new PlayerDataSyncPacket(this.playerUUID, this.lastCardTime, this.lastTpTime, this.teleportCard);
+            packet.setSort(0);
+            packet.setId(this.getId());
+            packet.setTotal(1);
+            result.add(packet);
         }
         return result;
     }
