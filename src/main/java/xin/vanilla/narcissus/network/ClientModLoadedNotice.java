@@ -25,7 +25,7 @@ public class ClientModLoadedNotice {
             // 获取发送数据包的玩家实体
             ServerPlayerEntity player = ctx.get().getSender();
             if (player != null) {
-                NarcissusFarewell.getPlayerCapabilityStatus().put(player.getUUID().toString(), false);
+                NarcissusFarewell.getPlayerCapabilityStatus().put(player.getStringUUID(), false);
                 // 同步玩家传送数据到客户端
                 PlayerTeleportDataCapability.syncPlayerData(player);
             }
