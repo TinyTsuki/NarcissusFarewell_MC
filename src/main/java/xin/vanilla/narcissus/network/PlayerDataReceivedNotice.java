@@ -24,7 +24,7 @@ public class PlayerDataReceivedNotice {
             // 获取发送数据包的玩家实体
             ServerPlayer player = ctx.get().getSender();
             if (player != null) {
-                NarcissusFarewell.getPlayerCapabilityStatus().put(player.getUUID().toString(), true);
+                NarcissusFarewell.getPlayerCapabilityStatus().put(player.getStringUUID(), true);
             }
         });
         // 设置数据包已处理状态，防止重复处理
