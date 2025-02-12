@@ -9,13 +9,16 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Registry;
 import net.minecraft.nbt.TagParser;
 import net.minecraft.network.chat.ChatType;
+import net.minecraft.network.chat.TextComponent;
 import net.minecraft.network.chat.TranslatableComponent;
+import net.minecraft.network.protocol.game.ClientboundPlayerCombatKillPacket;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.stats.Stats;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Inventory;
@@ -23,6 +26,7 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.level.GameRules;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.block.Blocks;
@@ -1342,12 +1346,27 @@ public class NarcissusUtils {
     }
 
     /**
-     * 使玩家死亡
+     * 强行使玩家死亡
      */
     @SuppressWarnings("unchecked")
     public static boolean killPlayer(ServerPlayer player) {
         try {
+            if (player.isSleeping() && !player.level.isClientSide) {
+                player.stopSleeping();
+            }
             player.getEntityData().set((EntityDataAccessor<? super Float>) FieldUtils.getPrivateFieldValue(LivingEntity.class, null, FieldUtils.getEntityHealthFieldName()), 0f);
+            player.connection.send(new ClientboundPlayerCombatKillPacket(player.getCombatTracker(), TextComponent.EMPTY));
+            if (!player.isSpectator()) {
+                if (!player.level.getGameRules().getBoolean(GameRules.RULE_KEEPINVENTORY)) {
+                    player.getInventory().dropAll();
+                }
+            }
+            player.level.broadcastEntityEvent(player, (byte) 3);
+            player.awardStat(Stats.DEATHS);
+            player.resetStat(Stats.CUSTOM.get(Stats.TIME_SINCE_DEATH));
+            player.resetStat(Stats.CUSTOM.get(Stats.TIME_SINCE_REST));
+            player.clearFire();
+            player.getCombatTracker().recheckStatus();
         } catch (Exception ignored) {
             return false;
         }
