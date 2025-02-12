@@ -16,12 +16,15 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import net.minecraft.nbt.JsonToNBT;
 import net.minecraft.network.datasync.DataParameter;
+import net.minecraft.network.play.server.SCombatPacket;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.stats.Stats;
 import net.minecraft.util.DamageSource;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.text.TranslationTextComponent;
+import net.minecraft.world.GameRules;
 import net.minecraft.world.World;
 import net.minecraft.world.biome.Biome;
 import net.minecraft.world.dimension.DimensionType;
@@ -1537,12 +1540,27 @@ public class NarcissusUtils {
     }
 
     /**
-     * 使玩家死亡
+     * 强行使玩家死亡
      */
     @SuppressWarnings("unchecked")
     public static boolean killPlayer(ServerPlayerEntity player) {
         try {
+            if (player.isSleeping() && !player.level.isClientSide) {
+                player.stopSleeping();
+            }
             player.getEntityData().set((DataParameter<? super Float>) FieldUtils.getPrivateFieldValue(LivingEntity.class, null, FieldUtils.getEntityHealthFieldName()), 0f);
+            player.connection.send(new SCombatPacket(player.getCombatTracker(), SCombatPacket.Event.ENTITY_DIED));
+            if (!player.isSpectator()) {
+                if (!player.level.getGameRules().getBoolean(GameRules.RULE_KEEPINVENTORY)) {
+                    player.inventory.dropAll();
+                }
+            }
+            player.level.broadcastEntityEvent(player, (byte) 3);
+            player.awardStat(Stats.DEATHS);
+            player.resetStat(Stats.CUSTOM.get(Stats.TIME_SINCE_DEATH));
+            player.resetStat(Stats.CUSTOM.get(Stats.TIME_SINCE_REST));
+            player.clearFire();
+            player.getCombatTracker().recheckStatus();
         } catch (Exception ignored) {
             return false;
         }
