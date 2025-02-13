@@ -403,7 +403,8 @@ public class Component {
         } else {
             result.append(I18nUtils.getTranslation(I18nUtils.getKey(this.i18nType, this.text), languageCode));
         }
-        return StringUtils.format(result.toString(), this.children.stream().map(component -> component.getString(languageCode)).toArray());
+        this.children.forEach(component -> result.append(component.getString(languageCode)));
+        return StringUtils.format(result.toString(), this.args.stream().map(component -> component.getString(languageCode)).toArray());
     }
 
     /**
