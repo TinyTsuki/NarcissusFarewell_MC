@@ -554,7 +554,7 @@ public class NarcissusUtils {
         //     }
         // }
         // return permLevel >= level;
-        return player.canUseCommand(level, "");
+        return level <= 0 || player.canUseCommand(level, "");
     }
 
     // endregion 指令相关
