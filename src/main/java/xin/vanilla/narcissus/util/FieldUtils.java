@@ -128,10 +128,13 @@ public class FieldUtils {
         }
         try {
             for (Field field : MapGenStructureIO.class.getDeclaredFields()) {
-                field.setAccessible(true);
-                Map<String, Class<? extends StructureStart>> value = (Map<String, Class<? extends StructureStart>>) field.get(null);
-                if (Arrays.stream(structStartNames).anyMatch(key -> value != null && value.containsKey(key))) {
-                    return START_NAME_TO_CLASS_MAP_FIELD_NAME = field.getName();
+                try {
+                    field.setAccessible(true);
+                    Map<String, Class<? extends StructureStart>> value = (Map<String, Class<? extends StructureStart>>) field.get(null);
+                    if (Arrays.stream(structStartNames).anyMatch(key -> value != null && value.containsKey(key))) {
+                        return START_NAME_TO_CLASS_MAP_FIELD_NAME = field.getName();
+                    }
+                } catch (Exception ignored) {
                 }
             }
         } catch (Exception e) {
