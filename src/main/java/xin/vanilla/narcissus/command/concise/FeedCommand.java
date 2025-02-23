@@ -47,12 +47,12 @@ public class FeedCommand extends CommandBase {
 
     @Override
     public int getRequiredPermissionLevel() {
-        return 0;
+        return NarcissusUtils.getCommandPermissionLevel(ECommandType.FEED);
     }
 
     @Override
     @ParametersAreNonnullByDefault
     public boolean checkPermission(MinecraftServer server, ICommandSender sender) {
-        return NarcissusUtils.hasPermissions(sender, this.getRequiredPermissionLevel());
+        return NarcissusUtils.hasCommandPermission(sender, ECommandType.FEED);
     }
 }

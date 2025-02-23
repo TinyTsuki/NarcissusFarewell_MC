@@ -4,7 +4,6 @@ import lombok.NonNull;
 import net.minecraft.command.CommandBase;
 import net.minecraft.command.ICommandSender;
 import net.minecraft.command.PlayerNotFoundException;
-import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.math.BlockPos;
 import xin.vanilla.narcissus.command.FarewellCommand;
@@ -53,6 +52,6 @@ public class BottomCommand extends CommandBase {
     @Override
     @ParametersAreNonnullByDefault
     public boolean checkPermission(MinecraftServer server, ICommandSender sender) {
-        return NarcissusUtils.hasPermissions(sender, this.getRequiredPermissionLevel());
+        return NarcissusUtils.hasCommandPermission(sender, ECommandType.TP_BOTTOM);
     }
 }

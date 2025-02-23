@@ -4,7 +4,6 @@ import lombok.NonNull;
 import net.minecraft.command.CommandBase;
 import net.minecraft.command.ICommandSender;
 import net.minecraft.command.PlayerNotFoundException;
-import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.math.BlockPos;
 import xin.vanilla.narcissus.command.FarewellCommand;
@@ -18,12 +17,12 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Stream;
 
-public class HomeCommand extends CommandBase {
+public class UuidCommand extends CommandBase {
 
     @Override
     @NonNull
     public String getName() {
-        return ServerConfig.COMMAND_TP_HOME;
+        return ServerConfig.COMMAND_UUID;
     }
 
     @Override
@@ -47,12 +46,12 @@ public class HomeCommand extends CommandBase {
 
     @Override
     public int getRequiredPermissionLevel() {
-        return NarcissusUtils.getCommandPermissionLevel(ECommandType.TP_HOME);
+        return NarcissusUtils.getCommandPermissionLevel(ECommandType.UUID);
     }
 
     @Override
     @ParametersAreNonnullByDefault
     public boolean checkPermission(MinecraftServer server, ICommandSender sender) {
-        return NarcissusUtils.hasCommandPermission(sender, ECommandType.TP_HOME);
+        return NarcissusUtils.hasCommandPermission(sender, ECommandType.UUID);
     }
 }

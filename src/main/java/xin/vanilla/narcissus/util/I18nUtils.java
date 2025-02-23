@@ -1,5 +1,8 @@
 package xin.vanilla.narcissus.util;
 
+import com.google.gson.Gson;
+import com.google.gson.JsonObject;
+import lombok.NonNull;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import xin.vanilla.narcissus.BuildConfig;
@@ -25,7 +28,8 @@ public class I18nUtils {
     /**
      * 加载语言文件
      */
-    public static void loadLanguage(String languageCode) {
+    public static void loadLanguage(@NonNull String languageCode) {
+        languageCode = languageCode.toLowerCase(Locale.ROOT);
         if (!LANGUAGES.containsKey(languageCode)) {
             try {
                 try (InputStreamReader reader = new InputStreamReader(Objects.requireNonNull(I18nUtils.class.getResourceAsStream(String.format(LANG_FILE_PATH, languageCode))), StandardCharsets.UTF_8)) {
@@ -51,7 +55,22 @@ public class I18nUtils {
     /**
      * 获取翻译文本
      */
-    public static String getTranslation(String key, String languageCode) {
+    public static String getTranslationClient(@NonNull EI18nType type, @NonNull String key) {
+        return getTranslation(getKey(type, key), NarcissusUtils.getClientLanguage());
+    }
+
+    /**
+     * 获取翻译文本
+     */
+    public static String getTranslation(@NonNull EI18nType type, @NonNull String key, @NonNull String languageCode) {
+        return getTranslation(getKey(type, key), languageCode);
+    }
+
+    /**
+     * 获取翻译文本
+     */
+    public static String getTranslation(@NonNull String key, @NonNull String languageCode) {
+        languageCode = languageCode.toLowerCase(Locale.ROOT);
         Map<String, String> language = LANGUAGES.getOrDefault(languageCode, LANGUAGES.get(DEFAULT_LANGUAGE));
         if (language != null && language.containsKey(key)) {
             return language.get(key);
@@ -59,7 +78,7 @@ public class I18nUtils {
         return key;
     }
 
-    public static String getKey(EI18nType type, String key) {
+    public static String getKey(@NonNull EI18nType type, @NonNull String key) {
         String result;
         if (type == EI18nType.PLAIN || type == EI18nType.NONE) {
             result = key;
@@ -69,7 +88,7 @@ public class I18nUtils {
         return result;
     }
 
-    public static Component enabled(String languageCode, boolean enabled) {
+    public static Component enabled(@NonNull String languageCode, boolean enabled) {
         return Component.translatable(languageCode, EI18nType.WORD, enabled ? "enabled" : "disabled");
     }
 

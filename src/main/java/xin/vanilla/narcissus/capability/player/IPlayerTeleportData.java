@@ -92,12 +92,18 @@ public interface IPlayerTeleportData extends INBTSerializable<NBTTagCompound> {
      */
     void addTeleportRecords(TeleportRecord... records);
 
+    /**
+     * dimension:name coordinate
+     */
     Map<KeyValue<String, String>, Coordinate> getHomeCoordinate();
 
     void setHomeCoordinate(Map<KeyValue<String, String>, Coordinate> homeCoordinate);
 
     void addHomeCoordinate(KeyValue<String, String> key, Coordinate coordinate);
 
+    /**
+     * dimension:name
+     */
     Map<String, String> getDefaultHome();
 
     void setDefaultHome(Map<String, String> defaultHome);

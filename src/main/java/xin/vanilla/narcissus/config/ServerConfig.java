@@ -130,6 +130,21 @@ public class ServerConfig {
             ).map(block -> block.getRegistryName().toString())
             .toArray(String[]::new);
 
+    /**
+     * 寻找安全坐标的区块范围
+     */
+    public static int SAFE_CHUNK_RANGE = 1;
+
+    /**
+     * 虚拟权限
+     */
+    public static String OP_LIST = "";
+
+    /**
+     * 帮助指令信息头部内容
+     */
+    public static String HELP_HEADER = "-----==== Narcissus Farewell Help (%d/%d) ====-----";
+
     // endregion 基础设置
 
     // region 功能开关
@@ -258,7 +273,11 @@ public class ServerConfig {
 
     public static int PERMISSION_DEL_STAGE = 2;
 
+    public static int PERMISSION_GET_STAGE = 0;
+
     public static int PERMISSION_TP_BACK = 0;
+
+    public static int PERMISSION_VIRTUAL_OP = 4;
 
     /**
      * 跨维度传送到指定坐标权限
@@ -398,6 +417,11 @@ public class ServerConfig {
     private final static String CATEGORY_COMMAND = "command";
 
     /**
+     * 获取玩家的UUID
+     */
+    public static String COMMAND_UUID = "uuid";
+
+    /**
      * 获取当前世界的维度ID
      */
     public static String COMMAND_DIMENSION = "dim";
@@ -503,6 +527,11 @@ public class ServerConfig {
     public static String COMMAND_DEL_HOME = "delhome";
 
     /**
+     * 查询家
+     */
+    public static String COMMAND_GET_HOME = "gethome";
+
+    /**
      * 传送到驿站
      */
     public static String COMMAND_TP_STAGE = "stage";
@@ -518,15 +547,30 @@ public class ServerConfig {
     public static String COMMAND_DEL_STAGE = "delstage";
 
     /**
+     * 查询驿站
+     */
+    public static String COMMAND_GET_STAGE = "getstage";
+
+    /**
      * 传送到上次传送点
      */
     public static String COMMAND_TP_BACK = "back";
+
+    /**
+     * 设置虚拟权限
+     */
+    public static String COMMAND_VIRTUAL_OP = "opv";
 
     // endregion 自定义指令
 
     // region 简化指令
 
     private final static String CATEGORY_CONCISE = "concise";
+
+    /**
+     * 获取玩家的UUID
+     */
+    public static boolean CONCISE_UUID = false;
 
     /**
      * 获取当前世界的维度ID
@@ -634,6 +678,11 @@ public class ServerConfig {
     public static boolean CONCISE_DEL_HOME = false;
 
     /**
+     * 查询家
+     */
+    public static boolean CONCISE_GET_HOME = false;
+
+    /**
      * 传送到驿站
      */
     public static boolean CONCISE_TP_STAGE = true;
@@ -649,9 +698,19 @@ public class ServerConfig {
     public static boolean CONCISE_DEL_STAGE = false;
 
     /**
+     * 查询驿站
+     */
+    public static boolean CONCISE_GET_STAGE = false;
+
+    /**
      * 传送到上次传送点
      */
     public static boolean CONCISE_TP_BACK = true;
+
+    /**
+     * 设置虚拟权限
+     */
+    public static boolean CONCISE_VIRTUAL_OP = false;
 
     // endregion 简化指令
 
@@ -846,6 +905,12 @@ public class ServerConfig {
             // 命令前缀
             COMMAND_PREFIX = config.getString("commandPrefix", CATEGORY_BASE, COMMAND_PREFIX, "The prefix of the command, please only use English characters and underscores, otherwise it may cause problems.\n指令前缀，请仅使用英文字母及下划线，否则可能会出现问题。");
 
+            // 虚拟权限
+            OP_LIST = config.getString("opList", CATEGORY_BASE, OP_LIST, "Virtual permission list, in this list you can directly specify which players can use which mod commands without enabling cheat mode or setting the player as OP.\nFormat: \"player UUID\":\"a comma-separated list of commands that the player can use\". \n虚拟权限列表，在这里可以直接指定某个玩家能够使用哪些mod内的指令，而不需要开启作弊模式或将他设置为OP。\n格式：\"玩家UUID\":\"逗号分隔的能够使用的指令列表\"\nExample: {\\\"23a23a23-od0o-23aa-2333-0d0o0d0033aa\\\":[\\\"VIRTUAL_OP\\\",\\\"TP_BACK\\\",\\\"TP_HOME\\\",\\\"TP_STAGE\\\",\\\"TP_ASK\\\",\\\"TP_HERE\\\",\\\"TP_SPAWN\\\",\\\"TP_SPAWN_OTHER\\\",\\\"DIMENSION\\\",\\\"TP_COORDINATE\\\",\\\"TP_STRUCTURE\\\",\\\"TP_TOP\\\",\\\"TP_DOWN\\\",\\\"TP_RANDOM\\\",\\\"FEED\\\",\\\"FEED_OTHER\\\",\\\"SET_STAGE\\\",\\\"DEL_STAGE\\\"]}。");
+
+            // 帮助指令信息头部内容
+            HELP_HEADER = config.getString("helpHeader", CATEGORY_BASE, HELP_HEADER, "The header content of the help command.\n帮助指令信息头部内容。");
+
             // 不安全的方块
             UNSAFE_BLOCKS = config.getStringList("unsafeBlocks", CATEGORY_BASE + ".Safe", UNSAFE_BLOCKS, "The list of unsafe blocks, players will not be teleported to these blocks.\n不安全的方块列表，玩家不会传送到这些方块上。");
 
@@ -857,6 +922,9 @@ public class ServerConfig {
 
             // 从背包获取安全方块
             GETBLOCK_FROM_INVENTORY = config.getBoolean("getBlockFromInventory", CATEGORY_BASE + ".Safe", GETBLOCK_FROM_INVENTORY, "When performing a safe teleport, whether to only use placeable blocks from the player's inventory if a safe coordinate is not found.\n当进行安全传送时，如果未找到安全坐标，是否仅从背包中获取可放置的方块。");
+
+            // 寻找安全坐标的区块范围
+            SAFE_CHUNK_RANGE = config.getInt("safeChunkRange", CATEGORY_BASE + ".Safe", SAFE_CHUNK_RANGE, 1, 16, "The chunk range for finding a safe coordinate, in chunks.\n当进行安全传送时，寻找安全坐标的半径，单位为区块。");
 
             // 安全方块类型
             SAFE_BLOCKS = config.getStringList("safeBlocks", CATEGORY_BASE + ".Safe", SAFE_BLOCKS, "When performing a safe teleport, the list of blocks to place if a safe coordinate is not found. If 'getBlockFromInventory' is set to false, the first block in the list will always be used.\n当进行安全传送时，如果未找到安全坐标，放置方块的列表。若'getBlockFromInventory'为false，则始终使用列表中的第一个方块。");
@@ -937,7 +1005,11 @@ public class ServerConfig {
 
                 PERMISSION_DEL_STAGE = config.getInt("permissionDelStage", CATEGORY_PERMISSION + ".command", PERMISSION_DEL_STAGE, 0, 4, "The permission level required to use the 'Delete the stage' command.\n删除驿站指令所需的权限等级。");
 
+                PERMISSION_GET_STAGE = config.getInt("permissionTpStageGet", CATEGORY_PERMISSION + ".command", PERMISSION_GET_STAGE, 0, 4, "The permission level required to use the 'Get the stage info' command.\n查询驿站指令所需的权限等级。");
+
                 PERMISSION_TP_BACK = config.getInt("permissionTpBack", CATEGORY_PERMISSION + ".command", PERMISSION_TP_BACK, 0, 4, "The permission level required to use the 'Teleport to the previous location' command.\n传送到上次传送点指令所需的权限等级。");
+
+                PERMISSION_VIRTUAL_OP = config.getInt("permissionVirtualOp", CATEGORY_PERMISSION + ".command", PERMISSION_VIRTUAL_OP, 0, 4, "The permission level required to use the 'Set virtual permission' command, and also used as the permission level for modifying server configuration.\n设置虚拟权限指令所需的权限等级，同时用于控制使用'修改服务器配置指令'的权限。");
             }
 
             {
@@ -999,11 +1071,14 @@ public class ServerConfig {
 
         // 定义自定义指令配置
         {
-            // 自杀或毒杀
-            COMMAND_FEED = config.getString("commandFeed", CATEGORY_COMMAND, COMMAND_FEED, "This command is used to suicide or poisoning, narcissus are poisonous and should not be eaten.\n自杀或毒杀的指令，水仙是有毒的可不能食用哦。");
+            // 获取玩家的UUID
+            COMMAND_UUID = config.getString("commandUuid", CATEGORY_COMMAND, COMMAND_UUID, "This command is used to get the UUID of the player.\n获取玩家的UUID的指令。");
 
             // 获取当前世界的维度ID
             COMMAND_DIMENSION = config.getString("commandDimension", CATEGORY_COMMAND, COMMAND_DIMENSION, "This command is used to get the dimension ID of the current world.\n获取当前世界的维度ID的指令。");
+
+            // 自杀或毒杀
+            COMMAND_FEED = config.getString("commandFeed", CATEGORY_COMMAND, COMMAND_FEED, "This command is used to suicide or poisoning, narcissus are poisonous and should not be eaten.\n自杀或毒杀的指令，水仙是有毒的可不能食用哦。");
 
             // 传送到指定坐标
             COMMAND_TP_COORDINATE = config.getString("commandTpCoordinate", CATEGORY_COMMAND, COMMAND_TP_COORDINATE, "This command is used to teleport to the specified coordinates.\n传送到指定坐标的指令。");
@@ -1058,6 +1133,9 @@ public class ServerConfig {
             // 删除家
             COMMAND_DEL_HOME = config.getString("commandTpHomeDel", CATEGORY_COMMAND + ".TpHome", COMMAND_DEL_HOME, "The command to delete the home.\n删除家的指令。");
 
+            // 查询家
+            COMMAND_GET_HOME = config.getString("commandTpHomeGet", CATEGORY_COMMAND + ".TpHome", COMMAND_GET_HOME, "The command to get the home info.\n查询家的信息的指令。");
+
             // 传送到驿站
             COMMAND_TP_STAGE = config.getString("commandTpStage", CATEGORY_COMMAND + ".TpStage", COMMAND_TP_STAGE, "The command to teleport to the stage.\n传送到驿站的指令。");
 
@@ -1067,12 +1145,20 @@ public class ServerConfig {
             // 删除驿站
             COMMAND_DEL_STAGE = config.getString("commandTpStageDel", CATEGORY_COMMAND + ".TpStage", COMMAND_DEL_STAGE, "The command to delete the stage.\n删除驿站的指令。");
 
+            // 查询驿站
+            COMMAND_GET_STAGE = config.getString("commandTpStageGet", CATEGORY_COMMAND + ".TpStage", COMMAND_GET_STAGE, "The command to get the stage info.\n查询驿站的信息的的指令。");
+
             // 传送到上次传送点
             COMMAND_TP_BACK = config.getString("commandTpBack", CATEGORY_COMMAND, COMMAND_TP_BACK, "The command to teleport to the previous location.\n传送到上次传送点的指令。");
+
+            // 设置虚拟权限
+            COMMAND_VIRTUAL_OP = config.getString("commandVirtualOp", CATEGORY_COMMAND, COMMAND_VIRTUAL_OP, "The command to set virtual permission.\n设置虚拟权限的指令。");
         }
 
         // 定义简化指令
         {
+            CONCISE_UUID = config.getBoolean("conciseUuid", CATEGORY_CONCISE, CONCISE_UUID, "Enable or disable the concise version of the 'Get the UUID of the player' command.\n是否启用无前缀版本的 '获取玩家的UUID' 指令。");
+
             CONCISE_DIMENSION = config.getBoolean("conciseDimension", CATEGORY_CONCISE, CONCISE_DIMENSION, "Enable or disable the concise version of the 'Get the dimension ID of the current world' command.\n是否启用无前缀版本的 '获取当前世界的维度ID' 指令。");
 
             CONCISE_FEED = config.getBoolean("conciseFeed", CATEGORY_CONCISE, CONCISE_FEED, "Enable or disable the concise version of the 'Suicide or poisoning' command.\n是否启用无前缀版本的 '自杀或毒杀' 指令。");
@@ -1115,13 +1201,19 @@ public class ServerConfig {
 
             CONCISE_DEL_HOME = config.getBoolean("conciseTpHomeDel", CATEGORY_CONCISE + ".TpHome", CONCISE_DEL_HOME, "Enable or disable the concise version of the 'Delete the home' command.\n是否启用无前缀版本的 '删除家' 指令。");
 
+            CONCISE_GET_HOME = config.getBoolean("conciseTpHomeGet", CATEGORY_CONCISE + ".TpHome", CONCISE_GET_HOME, "Enable or disable the concise version of the 'Get the home info' command.\n是否启用无前缀版本的 '查询家' 指令。");
+
             CONCISE_TP_STAGE = config.getBoolean("conciseTpStage", CATEGORY_CONCISE + ".TpStage", CONCISE_TP_STAGE, "Enable or disable the concise version of the 'Teleport to the stage' command.\n是否启用无前缀版本的 '传送到驿站' 指令。");
 
             CONCISE_SET_STAGE = config.getBoolean("conciseTpStageSet", CATEGORY_CONCISE + ".TpStage", CONCISE_SET_STAGE, "Enable or disable the concise version of the 'Set the stage' command.\n是否启用无前缀版本的 '设置驿站' 指令。");
 
             CONCISE_DEL_STAGE = config.getBoolean("conciseTpStageDel", CATEGORY_CONCISE + ".TpStage", CONCISE_DEL_STAGE, "Enable or disable the concise version of the 'Delete the stage' command.\n是否启用无前缀版本的 '删除驿站' 指令。");
 
+            CONCISE_GET_STAGE = config.getBoolean("conciseTpStageGet", CATEGORY_CONCISE + ".TpStage", CONCISE_GET_STAGE, "Enable or disable the concise version of the 'Get the stage info' command.\n是否启用无前缀版本的 '查询驿站' 指令。");
+
             CONCISE_TP_BACK = config.getBoolean("conciseTpBack", CATEGORY_CONCISE, CONCISE_TP_BACK, "Enable or disable the concise version of the 'Teleport to the previous location' command.\n是否启用无前缀版本的 '传送到上次传送点' 指令。");
+
+            CONCISE_VIRTUAL_OP = config.getBoolean("conciseVirtualOp", CATEGORY_CONCISE, CONCISE_VIRTUAL_OP, "Enable or disable the concise version of the 'Set virtual permission' command.\n是否启用无前缀版本的 '设置虚拟权限' 指令。");
         }
 
         // 定义传送代价

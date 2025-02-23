@@ -1,7 +1,6 @@
 package xin.vanilla.narcissus;
 
 import lombok.Getter;
-import lombok.Setter;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.server.MinecraftServer;
 import net.minecraftforge.fml.common.Loader;
@@ -44,17 +43,9 @@ public class NarcissusFarewell {
     private static MinecraftServer serverInstance;
 
     /**
-     * 玩家权限等级
+     * 默认语言
      */
-    @Getter
-    @Setter
-    private static int permissionLevel;
-    /**
-     * 玩家默认语言
-     */
-    @Getter
-    @Setter
-    private static String defaultLanguage = "en_us";
+    public static final String DEFAULT_LANGUAGE = "en_us";
 
     /**
      * 分片网络包缓存
@@ -116,6 +107,8 @@ public class NarcissusFarewell {
         serverInstance = event.getServer();
         LOGGER.debug("Registering commands");
         event.registerServerCommand(new FarewellCommand());
+        if (NarcissusUtils.isConciseEnabled(ECommandType.UUID))
+            event.registerServerCommand(new UuidCommand());
         if (NarcissusUtils.isConciseEnabled(ECommandType.DIMENSION))
             event.registerServerCommand(new DimensionCommand());
         if (NarcissusUtils.isConciseEnabled(ECommandType.FEED))
@@ -158,14 +151,20 @@ public class NarcissusFarewell {
             event.registerServerCommand(new SetHomeCommand());
         if (NarcissusUtils.isConciseEnabled(ECommandType.DEL_HOME))
             event.registerServerCommand(new DelHomeCommand());
+        if (NarcissusUtils.isConciseEnabled(ECommandType.GET_HOME))
+            event.registerServerCommand(new GetHomeCommand());
         if (NarcissusUtils.isConciseEnabled(ECommandType.TP_STAGE))
             event.registerServerCommand(new StageCommand());
         if (NarcissusUtils.isConciseEnabled(ECommandType.SET_STAGE))
             event.registerServerCommand(new SetStageCommand());
         if (NarcissusUtils.isConciseEnabled(ECommandType.DEL_STAGE))
             event.registerServerCommand(new DelStageCommand());
+        if (NarcissusUtils.isConciseEnabled(ECommandType.GET_STAGE))
+            event.registerServerCommand(new GetStageCommand());
         if (NarcissusUtils.isConciseEnabled(ECommandType.TP_BACK))
             event.registerServerCommand(new BackCommand());
+        if (NarcissusUtils.isConciseEnabled(ECommandType.VIRTUAL_OP))
+            event.registerServerCommand(new VirtualOpCommand());
     }
 
 }

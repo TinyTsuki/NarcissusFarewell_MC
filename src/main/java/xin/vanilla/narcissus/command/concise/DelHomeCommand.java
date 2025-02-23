@@ -53,6 +53,6 @@ public class DelHomeCommand extends CommandBase {
     @Override
     @ParametersAreNonnullByDefault
     public boolean checkPermission(MinecraftServer server, ICommandSender sender) {
-        return NarcissusUtils.hasPermissions(sender, this.getRequiredPermissionLevel());
+        return NarcissusUtils.hasCommandPermission(sender, ECommandType.DEL_HOME);
     }
 }

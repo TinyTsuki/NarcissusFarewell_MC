@@ -53,6 +53,6 @@ public class AskYesCommand extends CommandBase {
     @Override
     @ParametersAreNonnullByDefault
     public boolean checkPermission(MinecraftServer server, ICommandSender sender) {
-        return NarcissusUtils.hasPermissions(sender, this.getRequiredPermissionLevel());
+        return NarcissusUtils.hasCommandPermission(sender, ECommandType.TP_ASK_YES);
     }
 }
