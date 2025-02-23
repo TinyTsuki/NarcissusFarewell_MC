@@ -872,7 +872,7 @@ public class FarewellCommand {
                         dimension.append(name);
                         dimension.append(Component.literal(", ").setColor(EMCColor.GRAY.getColor()));
                     }
-                    info.append(dimension);
+                    info.append(dimension).append("\n");
                 }
                 component = Component.translatable(language, EI18nType.MESSAGE, "home_is", info);
             }
@@ -1021,7 +1021,7 @@ public class FarewellCommand {
                         dimension.append(name);
                         dimension.append(Component.literal(", ").setColor(EMCColor.GRAY.getColor()));
                     }
-                    info.append(dimension);
+                    info.append(dimension).append("\n");
                 }
                 component = Component.translatable(language, EI18nType.MESSAGE, "stage_is", info);
             }
