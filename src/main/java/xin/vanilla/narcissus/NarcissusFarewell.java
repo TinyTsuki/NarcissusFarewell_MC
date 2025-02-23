@@ -1,7 +1,6 @@
 package xin.vanilla.narcissus;
 
 import lombok.Getter;
-import lombok.Setter;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraftforge.common.MinecraftForge;
@@ -44,11 +43,9 @@ public class NarcissusFarewell {
     private static MinecraftServer serverInstance;
 
     /**
-     * 玩家默认语言
+     * 默认语言
      */
-    @Getter
-    @Setter
-    private static String defaultLanguage = "en_us";
+    public static final String DEFAULT_LANGUAGE = "en_us";
 
     /**
      * 分片网络包缓存
