@@ -1,14 +1,19 @@
 package xin.vanilla.narcissus.util;
 
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.NonNull;
 import lombok.Setter;
 import lombok.experimental.Accessors;
 import net.minecraft.network.chat.*;
+import net.minecraft.server.level.ServerPlayer;
 import xin.vanilla.narcissus.NarcissusFarewell;
 import xin.vanilla.narcissus.enums.EI18nType;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
@@ -17,7 +22,8 @@ import java.util.stream.Collectors;
 
 @Accessors(chain = true)
 @NoArgsConstructor
-public class Component {
+// TODO 优化掉这玩意
+public class Component implements Cloneable, Serializable {
 
     // region 属性定义
     /**
@@ -55,13 +61,13 @@ public class Component {
     /**
      * 文本颜色
      */
-    @Setter
-    private Integer color;
+    @Getter
+    private Integer color = 0xFFFFFFFF;
     /**
      * 文本背景色
      */
-    @Setter
-    private Integer bgColor;
+    @Getter
+    private Integer bgColor = 0xFFFFFFFF;
     /**
      * 是否有阴影
      */
@@ -118,27 +124,43 @@ public class Component {
         this.i18nType = i18nType;
     }
 
+    /**
+     * 设置文本颜色，若为RGB，则转换为ARGB
+     * 无法判断全透明的情况，全透明直接设置为null
+     *
+     * @param color 颜色
+     */
+    public Component setColor(Integer color) {
+        if (color == null || (color >> 24) != 0) {
+            this.color = color;
+        } else {
+            this.color = color | 0xFF000000;
+        }
+        return this;
+    }
+
+    /**
+     * 设置文本颜色，若为RGB，则转换为ARGB
+     * 无法判断全透明的情况，全透明直接设置为null
+     *
+     * @param bgColor 颜色
+     */
+    public Component setBgColor(Integer bgColor) {
+        if (bgColor == null || (bgColor >> 24) != 0) {
+            this.bgColor = bgColor;
+        } else {
+            this.bgColor = bgColor | 0xFF000000;
+        }
+        return this;
+    }
+
     // region NonNull Getter
 
     /**
      * 获取语言代码
      */
     public @NonNull String getLanguageCode() {
-        return this.languageCode == null ? NarcissusFarewell.getDefaultLanguage() : this.languageCode;
-    }
-
-    /**
-     * 获取文本颜色
-     */
-    public int getColor() {
-        return this.color == null ? 0xFFFFFFFF : this.color;
-    }
-
-    /**
-     * 获取文本背景色
-     */
-    public int getBgColor() {
-        return this.bgColor == null ? 0x00000000 : this.bgColor;
+        return this.languageCode == null ? NarcissusFarewell.DEFAULT_LANGUAGE : this.languageCode;
     }
 
     /**
@@ -252,9 +274,14 @@ public class Component {
 
     // endregion 样式元素是否为空(用于父组件样式传递)
 
-    public Component copy() {
-        Component component = new Component()
-                .setText(this.text)
+    public Component clone() {
+        Component component;
+        try {
+            component = (Component) super.clone();
+        } catch (CloneNotSupportedException e) {
+            component = new Component();
+        }
+        component.setText(this.text)
                 .setI18nType(this.i18nType)
                 .setLanguageCode(this.languageCode)
                 .setColor(this.color)
@@ -268,7 +295,7 @@ public class Component {
                 .setClickEvent(this.clickEvent)
                 .setHoverEvent(this.hoverEvent);
         for (Component child : this.children) {
-            component.getChildren().add(child.copy());
+            component.getChildren().add(child.clone());
         }
         return component;
     }
@@ -312,10 +339,10 @@ public class Component {
         if (this.isLanguageCodeEmpty() && !component.isLanguageCodeEmpty()) {
             this.setLanguageCode(component.getLanguageCode());
         }
-        if (this.isColorEmpty() && !component.isColorEmpty()) {
+        if ((this.isColorEmpty() || this.getColor() == 0xFFFFFFFF) && !component.isColorEmpty()) {
             this.setColor(component.getColor());
         }
-        if (this.isBgColorEmpty() && !component.isBgColorEmpty()) {
+        if ((this.isBgColorEmpty() || this.getBgColor() == 0xFFFFFFFF) && !component.isBgColorEmpty()) {
             this.setBgColor(component.getBgColor());
         }
         if (this.isShadowEmpty() && !component.isShadowEmpty()) {
@@ -347,7 +374,7 @@ public class Component {
 
     public Style getStyle() {
         Style style = Style.EMPTY;
-        if (!isColorEmpty())
+        if (!isColorEmpty() && getColor() != 0xFFFFFFFF)
             style = style.withColor(TextColor.fromRgb(getColor()));
         style = style.withUnderlined(this.isUnderlined())
                 .withStrikethrough(this.isStrikethrough())
@@ -363,7 +390,16 @@ public class Component {
      * 获取文本
      */
     public String toString() {
-        return this.getString(this.getLanguageCode());
+        return this.getString(this.getLanguageCode(), false, true);
+    }
+
+    /**
+     * 获取文本
+     *
+     * @param igStyle 是否忽略样式
+     */
+    public String toString(boolean igStyle) {
+        return this.getString(this.getLanguageCode(), igStyle, true);
     }
 
     /**
@@ -372,36 +408,56 @@ public class Component {
      * @param languageCode 语言代码
      */
     public String getString(String languageCode) {
+        return this.getString(languageCode, false, true);
+    }
+
+    /**
+     * 获取指定语言文本
+     *
+     * @param languageCode 语言代码
+     * @param igStyle      是否忽略样式
+     * @param igColor      是否忽略颜色
+     */
+    public String getString(String languageCode, boolean igStyle, boolean igColor) {
         StringBuilder result = new StringBuilder();
-        if (!isColorEmpty()) {
-            result.append(StringUtils.rgbToMinecraftColor(getColor()));
+        String colorStr = isColorEmpty() ? "§f" : StringUtils.argbToMinecraftColorString(getColor());
+        igColor = igColor && colorStr.equalsIgnoreCase("§f");
+        // 如果颜色值为null则说明为透明，则不显示内容，所以返回空文本
+        if (!this.isColorEmpty()) {
+            if (!igStyle) {
+                if (!igColor) {
+                    result.append(colorStr);
+                }
+                // 添加样式：粗体
+                if (isBold()) {
+                    result.append("§l");
+                }
+                // 添加样式：斜体
+                if (isItalic()) {
+                    result.append("§o");
+                }
+                // 添加样式：下划线
+                if (isUnderlined()) {
+                    result.append("§n");
+                }
+                // 添加样式：中划线
+                if (isStrikethrough()) {
+                    result.append("§m");
+                }
+                // 添加样式：混淆
+                if (isObfuscated()) {
+                    result.append("§k");
+                }
+            }
+            if (this.i18nType == EI18nType.PLAIN) {
+                result.append(this.text);
+            } else {
+                result.append(I18nUtils.getTranslation(I18nUtils.getKey(this.i18nType, this.text), languageCode));
+            }
         }
-        // 添加样式：粗体
-        if (isBold()) {
-            result.append("§l");
-        }
-        // 添加样式：斜体
-        if (isItalic()) {
-            result.append("§o");
-        }
-        // 添加样式：下划线
-        if (isUnderlined()) {
-            result.append("§n");
-        }
-        // 添加样式：中划线
-        if (isStrikethrough()) {
-            result.append("§m");
-        }
-        // 添加样式：混淆
-        if (isObfuscated()) {
-            result.append("§k");
-        }
-        if (this.i18nType == EI18nType.PLAIN) {
-            result.append(this.text);
-        } else {
-            result.append(I18nUtils.getTranslation(I18nUtils.getKey(this.i18nType, this.text), languageCode));
-        }
-        return StringUtils.format(result.toString(), this.children.stream().map(component -> component.getString(languageCode)).toArray());
+        boolean finalIgColor = igColor;
+        this.children.forEach(component -> result.append(component.getString(languageCode, igStyle, finalIgColor)));
+        return StringUtils.format(result.toString(), this.args.stream().map(component -> component.getString(languageCode, igStyle, finalIgColor)).toArray());
     }
 
     /**
@@ -418,42 +474,56 @@ public class Component {
      */
     public net.minecraft.network.chat.Component toTextComponent(String languageCode) {
         List<MutableComponent> components = new ArrayList<>();
-        String text;
-        if (this.i18nType != EI18nType.PLAIN) {
-            text = I18nUtils.getTranslation(I18nUtils.getKey(this.i18nType, this.text), languageCode);
-            String[] split = text.split(StringUtils.FORMAT_REGEX);
-            for (String s : split) {
-                components.add(new TextComponent(s).withStyle(this.getStyle()));
-            }
-            Pattern pattern = Pattern.compile(StringUtils.FORMAT_REGEX);
-            Matcher matcher = pattern.matcher(text);
-            int i = 0;
-            while (matcher.find()) {
-                String placeholder = matcher.group();
-                int index = placeholder.contains("$") ? StringUtils.toInt(placeholder.split("\\$")[0].substring(1)) - 1 : -1;
-                if (index == -1) {
-                    index = i;
+        // 如果颜色值为null则说明为透明，则不显示内容，所以返回空文本组件
+        if (!this.isColorEmpty()) {
+            if (this.i18nType != EI18nType.PLAIN) {
+                String text = I18nUtils.getTranslation(I18nUtils.getKey(this.i18nType, this.text), languageCode);
+                String[] split = text.split(StringUtils.FORMAT_REGEX);
+                for (String s : split) {
+                    components.add(new TextComponent(s).withStyle(this.getStyle()));
                 }
-                Component formattedArg = new Component(placeholder).withStyle(this);
-                if (index < this.args.size()) {
-                    if (this.args.get(index) == null) {
-                        formattedArg = new Component();
-                    } else {
-                        Component argComponent = this.args.get(index);
-                        try {
-                            // 颜色代码传递
-                            String colorCode = split[i].replaceAll("^.*?((?:§[\\da-fA-FKLMNORklmnor])*)$", "$1");
-                            formattedArg = new Component(String.format(placeholder.replaceAll("^%\\d+\\$", "%"), colorCode + argComponent.toString())).withStyle(argComponent);
-                        } catch (Exception e) {
-                            formattedArg = argComponent;
+                Pattern pattern = Pattern.compile(StringUtils.FORMAT_REGEX);
+                Matcher matcher = pattern.matcher(text);
+                int i = 0;
+                while (matcher.find()) {
+                    String placeholder = matcher.group();
+                    int index = placeholder.contains("$") ? StringUtils.toInt(placeholder.split("\\$")[0].substring(1)) - 1 : -1;
+                    if (index == -1) {
+                        index = i;
+                    }
+                    Component formattedArg = new Component(placeholder).withStyle(this);
+                    if (index < this.args.size()) {
+                        if (this.args.get(index) == null) {
+                            formattedArg = new Component();
+                        } else {
+                            Component argComponent = this.args.get(index);
+                            if (argComponent.getI18nType() != EI18nType.PLAIN) {
+                                try {
+                                    // 颜色代码传递
+                                    String colorCode = split[i].replaceAll("^.*?((?:§[\\da-fA-FKLMNORklmnor])*)$", "$1");
+                                    formattedArg = new Component(String.format(placeholder.replaceAll("^%\\d+\\$", "%"), colorCode + argComponent)).withStyle(argComponent);
+                                } catch (Exception e) {
+                                    // 颜色传递
+                                    if (argComponent.isColorEmpty()) {
+                                        argComponent.setColor(this.color);
+                                    }
+                                    formattedArg = argComponent;
+                                }
+                            } else {
+                                // 颜色传递
+                                if (argComponent.isColorEmpty()) {
+                                    argComponent.setColor(this.color);
+                                }
+                                formattedArg = argComponent;
+                            }
                         }
                     }
+                    components.get(i).append(formattedArg.toTextComponent());
+                    i++;
                 }
-                components.get(i).append(formattedArg.toTextComponent());
-                i++;
+            } else {
+                components.add(new TextComponent(this.text).withStyle(this.getStyle()));
             }
-        } else {
-            components.add(new TextComponent(this.text).withStyle(this.getStyle()));
         }
         components.addAll(this.children.stream().map(component -> (MutableComponent) component.toTextComponent(languageCode)).collect(Collectors.toList()));
         MutableComponent result = components.get(0);
@@ -467,27 +537,69 @@ public class Component {
      * 获取翻译文本组件
      */
     public net.minecraft.network.chat.Component toTranslatedTextComponent() {
-        MutableComponent result;
-        if (this.i18nType != EI18nType.PLAIN) {
-            Object[] args = this.args.stream().map(component -> {
-                if (component.i18nType == EI18nType.PLAIN) {
-                    return component.toTextComponent();
+        MutableComponent result = new TranslatableComponent("");
+        if (!this.isColorEmpty() || !this.isBgColorEmpty()) {
+            if (this.i18nType != EI18nType.PLAIN) {
+                Object[] args = this.args.stream().map(component -> {
+                    if (component.i18nType == EI18nType.PLAIN) {
+                        return component.toTextComponent();
+                    } else {
+                        return component.toTranslatedTextComponent();
+                    }
+                }).toArray();
+                if (CollectionUtils.isNotNullOrEmpty(args)) {
+                    result = new TranslatableComponent(I18nUtils.getKey(this.i18nType, this.text), args);
                 } else {
-                    return component.toTranslatedTextComponent();
+                    result = new TranslatableComponent(I18nUtils.getKey(this.i18nType, this.text));
                 }
-            }).toArray();
-            if (CollectionUtils.isNotNullOrEmpty(args)) {
-                result = new TranslatableComponent(I18nUtils.getKey(this.i18nType, this.text), args);
             } else {
-                result = new TranslatableComponent(I18nUtils.getKey(this.i18nType, this.text));
+                result = new TextComponent(this.text).withStyle(this.getStyle());
             }
-        } else {
-            result = new TextComponent(this.text).withStyle(this.getStyle());
         }
         for (Component child : this.children) {
             result.append(child.toTranslatedTextComponent());
         }
         return result;
+    }
+
+    /**
+     * 获取聊天文本组件
+     *
+     * @return 格式化颜色后的文本组件
+     */
+    public net.minecraft.network.chat.Component toChatComponent() {
+        return this.toChatComponent(this.getLanguageCode());
+    }
+
+    /**
+     * 获取聊天文本组件
+     *
+     * @return 格式化颜色后的文本组件
+     */
+    public net.minecraft.network.chat.Component toChatComponent(String languageCode) {
+        return rewriteColor(this.toTextComponent(languageCode));
+    }
+
+    // 😵‍💫
+    public static net.minecraft.network.chat.Component rewriteColor(net.minecraft.network.chat.Component component) {
+        if (component instanceof MutableComponent) {
+            TextColor color = component.getStyle().getColor();
+            if (color != null && color.serialize().startsWith("#")) {
+                Style style = component.getStyle().withColor(TextColor.parseColor(StringUtils.argbToMinecraftColor(StringUtils.argbToHex(color.serialize())).name().toLowerCase()));
+                ((MutableComponent) component).setStyle(style);
+            }
+        }
+        for (net.minecraft.network.chat.Component sibling : component.getSiblings()) {
+            rewriteColor(sibling);
+        }
+        return component;
+    }
+
+    /**
+     * 获取空文本组件
+     */
+    public static Component empty() {
+        return new Component();
     }
 
     /**
@@ -523,6 +635,27 @@ public class Component {
     /**
      * 获取翻译文本组件
      *
+     * @param key  翻译键
+     * @param args 参数
+     */
+    public static Component translatableClient(String key, Object... args) {
+        return new Component(key, EI18nType.NONE).setLanguageCode(NarcissusUtils.getClientLanguage()).appendArg(args);
+    }
+
+    /**
+     * 获取翻译文本组件
+     *
+     * @param type 翻译类型
+     * @param key  翻译键
+     * @param args 参数
+     */
+    public static Component translatableClient(EI18nType type, String key, Object... args) {
+        return new Component(key, type).setLanguageCode(NarcissusUtils.getClientLanguage()).appendArg(args);
+    }
+
+    /**
+     * 获取翻译文本组件
+     *
      * @param languageCode 语言代码
      * @param type         翻译类型
      * @param key          翻译键
@@ -530,6 +663,79 @@ public class Component {
      */
     public static Component translatable(String languageCode, EI18nType type, String key, Object... args) {
         return new Component(key, type).setLanguageCode(languageCode).appendArg(args);
+    }
+
+    /**
+     * 获取翻译文本组件
+     *
+     * @param player 玩家
+     * @param type   翻译类型
+     * @param key    翻译键
+     * @param args   参数
+     */
+    public static Component translatable(ServerPlayer player, EI18nType type, String key, Object... args) {
+        return new Component(key, type).setLanguageCode(NarcissusUtils.getPlayerLanguage(player)).appendArg(args);
+    }
+
+    public static Component deserialize(JsonObject jsonObject) {
+        Component result = new Component();
+        result.setText(jsonObject.get("text").getAsString());
+        result.setI18nType(EI18nType.valueOf(jsonObject.get("i18nType").getAsString()));
+        result.setLanguageCode(jsonObject.get("languageCode").getAsString());
+        result.setColor(jsonObject.get("color").getAsInt());
+        result.setBgColor(jsonObject.get("bgColor").getAsInt());
+        result.setShadow(jsonObject.get("shadow").getAsBoolean());
+        result.setBold(jsonObject.get("bold").getAsBoolean());
+        result.setItalic(jsonObject.get("italic").getAsBoolean());
+        result.setUnderlined(jsonObject.get("underlined").getAsBoolean());
+        result.setStrikethrough(jsonObject.get("strikethrough").getAsBoolean());
+        result.setObfuscated(jsonObject.get("obfuscated").getAsBoolean());
+        if (jsonObject.has("clickEvent.action") && jsonObject.has("clickEvent.value")) {
+            result.setClickEvent(new ClickEvent(ClickEvent.Action.valueOf(jsonObject.get("clickEvent.action").getAsString()), jsonObject.get("clickEvent.value").getAsString()));
+        }
+        if (jsonObject.has("hoverEvent")) {
+            result.setHoverEvent(HoverEvent.deserialize(jsonObject.get("hoverEvent").getAsJsonObject()));
+        }
+        for (JsonElement childJson : jsonObject.getAsJsonArray("children")) {
+            result.getChildren().add(deserialize((JsonObject) childJson));
+        }
+        for (JsonElement argJson : jsonObject.getAsJsonArray("args")) {
+            result.getArgs().add(deserialize((JsonObject) argJson));
+        }
+        return result;
+    }
+
+    public static JsonObject serialize(Component reward) {
+        JsonObject result = new JsonObject();
+        result.addProperty("text", reward.getText());
+        result.addProperty("i18nType", reward.getI18nType().name());
+        result.addProperty("languageCode", reward.getLanguageCode());
+        result.addProperty("color", reward.getColor());
+        result.addProperty("bgColor", reward.getBgColor());
+        result.addProperty("shadow", reward.isShadow());
+        result.addProperty("bold", reward.isBold());
+        result.addProperty("italic", reward.isItalic());
+        result.addProperty("underlined", reward.isUnderlined());
+        result.addProperty("strikethrough", reward.isStrikethrough());
+        result.addProperty("obfuscated", reward.isObfuscated());
+        if (reward.getClickEvent() != null) {
+            result.addProperty("clickEvent.action", reward.getClickEvent().getAction().getName());
+            result.addProperty("clickEvent.value", reward.getClickEvent().getValue());
+        }
+        if (reward.getHoverEvent() != null) {
+            result.add("hoverEvent", reward.getHoverEvent().serialize());
+        }
+        JsonArray children = new JsonArray();
+        for (Component child : reward.getChildren()) {
+            children.add(serialize(child));
+        }
+        result.add("children", children);
+        JsonArray args = new JsonArray();
+        for (Component arg : reward.getArgs()) {
+            args.add(serialize(arg));
+        }
+        result.add("args", args);
+        return result;
     }
 
 }

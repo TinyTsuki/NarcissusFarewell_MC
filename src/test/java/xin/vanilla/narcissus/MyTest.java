@@ -11,7 +11,7 @@ public class MyTest {
     public void testColor() {
         for (EMCColor value : EMCColor.values()) {
             System.out.print(value.getCode());
-            System.out.println(StringUtils.rgbToMinecraftColor(value.getColor()));
+            System.out.println(StringUtils.argbToMinecraftColorString(value.getColor()));
         }
     }
 
