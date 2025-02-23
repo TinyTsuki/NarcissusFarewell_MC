@@ -25,9 +25,13 @@ public class PlayerTeleportData implements IPlayerTeleportData {
     private Date lastTpTime;
     private final AtomicInteger teleportCard = new AtomicInteger();
     private List<TeleportRecord> teleportRecords;
-    // dimension:name coordinate
+    /**
+     * dimension:name coordinate
+     */
     private Map<KeyValue<String, String>, Coordinate> homeCoordinate;
-    // dimension:name
+    /**
+     * dimension:name
+     */
     private Map<String, String> defaultHome;
 
     @Override

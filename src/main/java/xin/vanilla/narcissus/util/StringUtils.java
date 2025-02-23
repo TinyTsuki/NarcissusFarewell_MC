@@ -393,36 +393,52 @@ public class StringUtils {
         }
     }
 
+    public static int argbToHex(String argb) {
+        try {
+            if (argb.startsWith("#")) {
+                return (int) Long.parseLong(argb.substring(1), 16);
+            } else if (argb.startsWith("0x")) {
+                return (int) Long.parseLong(argb.substring(2), 16);
+            } else {
+                return (int) Long.parseLong(argb, 16);
+            }
+        } catch (Exception e) {
+            return 0;
+        }
+    }
+
     /**
      * RGB颜色转换为Minecraft颜色代码
      *
-     * @param color 颜色值
+     * @param color 颜色值 (ARGB: 0xAARRGGBB 或 RGB: 0xRRGGBB)
      * @return 颜色代码
      */
-    public static String rgbToMinecraftColor(int color) {
-        int rgb = color >> 24 != 0 ? color : color & 0xFFFFFF;
-        // 获取RGB各分量
-        int red = (rgb >> 16) & 0xFF;
-        int green = (rgb >> 8) & 0xFF;
-        int blue = rgb & 0xFF;
-        // 计算与每个Minecraft颜色的差异
-        int closestDistance = Integer.MAX_VALUE;
+    public static String argbToMinecraftColorString(int color) {
+        return "§" + argbToMinecraftColor(color).getCode();
+    }
+
+    public static EMCColor argbToMinecraftColor(int color) {
+        // 获取 RGB 分量
+        int red = (color >> 16) & 0xFF;
+        int green = (color >> 8) & 0xFF;
+        int blue = color & 0xFF;
+        // 颜色匹配
+        double closestDistance = Double.MAX_VALUE;
         // 默认为白色
-        char closestColor = 'f';
+        EMCColor result = EMCColor.WHITE;
         for (EMCColor mcColor : EMCColor.values()) {
-            // 获取对应的RGB值
             int colorRGB = mcColor.getColor();
             int r = (colorRGB >> 16) & 0xFF;
             int g = (colorRGB >> 8) & 0xFF;
             int b = colorRGB & 0xFF;
-            // 计算色差，使用欧几里得距离公式
-            int distance = (int) Math.sqrt(Math.pow(red - r, 2) + Math.pow(green - g, 2) + Math.pow(blue - b, 2));
+            // 加权欧几里得距离计算
+            double distance = Math.sqrt(2 * Math.pow(red - r, 2) + 4 * Math.pow(green - g, 2) + 3 * Math.pow(blue - b, 2));
             if (distance < closestDistance) {
                 closestDistance = distance;
-                closestColor = mcColor.getCode();
+                result = mcColor;
             }
         }
-        return "§" + closestColor;
+        return result;
     }
 
     public static void main(String[] args) {
