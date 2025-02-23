@@ -112,6 +112,21 @@ public class ServerConfig {
      */
     public static final ForgeConfigSpec.ConfigValue<List<String>> SAFE_BLOCKS;
 
+    /**
+     * 寻找安全坐标的区块范围
+     */
+    public static final ForgeConfigSpec.IntValue SAFE_CHUNK_RANGE;
+
+    /**
+     * 虚拟权限
+     */
+    public static final ForgeConfigSpec.ConfigValue<String> OP_LIST;
+
+    /**
+     * 帮助指令信息头部内容
+     */
+    public static final ForgeConfigSpec.ConfigValue<String> HELP_HEADER;
+
     // endregion 基础设置
 
     // region 功能开关
@@ -236,7 +251,11 @@ public class ServerConfig {
 
     public static final ForgeConfigSpec.IntValue PERMISSION_DEL_STAGE;
 
+    public static final ForgeConfigSpec.IntValue PERMISSION_GET_STAGE;
+
     public static final ForgeConfigSpec.IntValue PERMISSION_TP_BACK;
+
+    public static final ForgeConfigSpec.IntValue PERMISSION_VIRTUAL_OP;
 
     /**
      * 跨维度传送到指定坐标权限
@@ -372,6 +391,11 @@ public class ServerConfig {
     // region 自定义指令
 
     /**
+     * 获取玩家的UUID
+     */
+    public static final ForgeConfigSpec.ConfigValue<String> COMMAND_UUID;
+
+    /**
      * 获取当前世界的维度ID
      */
     public static final ForgeConfigSpec.ConfigValue<String> COMMAND_DIMENSION;
@@ -477,6 +501,11 @@ public class ServerConfig {
     public static final ForgeConfigSpec.ConfigValue<String> COMMAND_DEL_HOME;
 
     /**
+     * 查询家
+     */
+    public static final ForgeConfigSpec.ConfigValue<String> COMMAND_GET_HOME;
+
+    /**
      * 传送到驿站
      */
     public static final ForgeConfigSpec.ConfigValue<String> COMMAND_TP_STAGE;
@@ -492,13 +521,28 @@ public class ServerConfig {
     public static final ForgeConfigSpec.ConfigValue<String> COMMAND_DEL_STAGE;
 
     /**
+     * 查询驿站
+     */
+    public static final ForgeConfigSpec.ConfigValue<String> COMMAND_GET_STAGE;
+
+    /**
      * 传送到上次传送点
      */
     public static final ForgeConfigSpec.ConfigValue<String> COMMAND_TP_BACK;
 
+    /**
+     * 设置虚拟权限
+     */
+    public static final ForgeConfigSpec.ConfigValue<String> COMMAND_VIRTUAL_OP;
+
     // endregion 自定义指令
 
     // region 简化指令
+
+    /**
+     * 获取玩家的UUID
+     */
+    public static final ForgeConfigSpec.BooleanValue CONCISE_UUID;
 
     /**
      * 获取当前世界的维度ID
@@ -606,6 +650,11 @@ public class ServerConfig {
     public static final ForgeConfigSpec.BooleanValue CONCISE_DEL_HOME;
 
     /**
+     * 查询家
+     */
+    public static final ForgeConfigSpec.BooleanValue CONCISE_GET_HOME;
+
+    /**
      * 传送到驿站
      */
     public static final ForgeConfigSpec.BooleanValue CONCISE_TP_STAGE;
@@ -621,9 +670,19 @@ public class ServerConfig {
     public static final ForgeConfigSpec.BooleanValue CONCISE_DEL_STAGE;
 
     /**
+     * 查询驿站
+     */
+    public static final ForgeConfigSpec.BooleanValue CONCISE_GET_STAGE;
+
+    /**
      * 传送到上次传送点
      */
     public static final ForgeConfigSpec.BooleanValue CONCISE_TP_BACK;
+
+    /**
+     * 设置虚拟权限
+     */
+    public static final ForgeConfigSpec.BooleanValue CONCISE_VIRTUAL_OP;
 
     // endregion 简化指令
 
@@ -840,6 +899,21 @@ public class ServerConfig {
                             "指令前缀，请仅使用英文字母及下划线，否则可能会出现问题。")
                     .define("commandPrefix", "narcissus");
 
+            // 虚拟权限
+            OP_LIST = SERVER_BUILDER
+                    .comment("Virtual permission list, in this list you can directly specify which players can use which mod commands without enabling cheat mode or setting the player as OP.",
+                            "Format: \"player UUID\":\"a comma-separated list of commands that the player can use\". ",
+                            "虚拟权限列表，在这里可以直接指定某个玩家能够使用哪些mod内的指令，而不需要开启作弊模式或将他设置为OP。",
+                            "格式：\"玩家UUID\":\"逗号分隔的能够使用的指令列表\"",
+                            "Example: {\\\"23a23a23-od0o-23aa-2333-0d0o0d0033aa\\\":[\\\"VIRTUAL_OP\\\",\\\"TP_BACK\\\",\\\"TP_HOME\\\",\\\"TP_STAGE\\\",\\\"TP_ASK\\\",\\\"TP_HERE\\\",\\\"TP_SPAWN\\\",\\\"TP_SPAWN_OTHER\\\",\\\"DIMENSION\\\",\\\"TP_COORDINATE\\\",\\\"TP_STRUCTURE\\\",\\\"TP_TOP\\\",\\\"TP_DOWN\\\",\\\"TP_RANDOM\\\",\\\"FEED\\\",\\\"FEED_OTHER\\\",\\\"SET_STAGE\\\",\\\"DEL_STAGE\\\"]}。")
+                    .define("opList", "");
+
+            // 帮助指令信息头部内容
+            HELP_HEADER = SERVER_BUILDER
+                    .comment("The header content of the help command.",
+                            "帮助指令信息头部内容。")
+                    .define("helpHeader", "-----==== Narcissus Farewell Help (%d/%d) ====-----");
+
             SERVER_BUILDER.comment("Safe Teleport", "安全传送").push("Safe");
             // 不安全的方块
             UNSAFE_BLOCKS = SERVER_BUILDER
@@ -893,6 +967,12 @@ public class ServerConfig {
                                     ).map(block -> BlockStateParser.serialize(block.defaultBlockState()))
                                     .collect(Collectors.toList())
                     );
+
+            // 寻找安全坐标的区块范围
+            SAFE_CHUNK_RANGE = SERVER_BUILDER
+                    .comment("The chunk range for finding a safe coordinate, in chunks.",
+                            "当进行安全传送时，寻找安全坐标的半径，单位为区块。")
+                    .defineInRange("safeChunkRange", 1, 1, 16);
             SERVER_BUILDER.pop();
 
             SERVER_BUILDER.pop();
@@ -1086,10 +1166,20 @@ public class ServerConfig {
                                 , "删除驿站指令所需的权限等级。")
                         .defineInRange("permissionTpStageDel", 2, 0, 4);
 
+                PERMISSION_GET_STAGE = SERVER_BUILDER
+                        .comment("The permission level required to use the 'Get the stage info' command."
+                                , "查询驿站指令所需的权限等级。")
+                        .defineInRange("permissionTpStageGet", 0, 0, 4);
+
                 PERMISSION_TP_BACK = SERVER_BUILDER
                         .comment("The permission level required to use the 'Teleport to the previous location' command."
                                 , "传送到上次传送点指令所需的权限等级。")
                         .defineInRange("permissionTpBack", 0, 0, 4);
+
+                PERMISSION_VIRTUAL_OP = SERVER_BUILDER
+                        .comment("The permission level required to use the 'Set virtual permission' command, and also used as the permission level for modifying server configuration."
+                                , "设置虚拟权限指令所需的权限等级，同时用于控制使用'修改服务器配置指令'的权限。")
+                        .defineInRange("permissionVirtualOp", 4, 0, 4);
             }
             SERVER_BUILDER.pop();
 
@@ -1238,6 +1328,12 @@ public class ServerConfig {
         {
             SERVER_BUILDER.comment("Custom Command Settings, don't add prefix '/'", "自定义指令，请勿添加前缀'/'").push("command");
 
+            // 获取玩家的UUID
+            COMMAND_UUID = SERVER_BUILDER
+                    .comment("This command is used to get the UUID of the player."
+                            , "获取玩家的UUID的指令。")
+                    .define("commandUuid", "uuid");
+
             // 获取当前世界的维度ID
             COMMAND_DIMENSION = SERVER_BUILDER
                     .comment("This command is used to get the dimension ID of the current world."
@@ -1374,6 +1470,12 @@ public class ServerConfig {
                     .comment("The command to delete the home."
                             , "删除家的指令。")
                     .define("commandTpHomeDel", "delhome");
+
+            // 查询家
+            COMMAND_GET_HOME = SERVER_BUILDER
+                    .comment("The command to get the home info."
+                            , "查询家的信息的指令。")
+                    .define("commandTpHomeGet", "gethome");
             SERVER_BUILDER.pop();
 
             SERVER_BUILDER.comment("Teleport to the stage", "传送到驿站").push("TpStage");
@@ -1394,6 +1496,12 @@ public class ServerConfig {
                     .comment("The command to delete the stage."
                             , "删除驿站的指令。")
                     .define("commandTpStageDel", "delstage");
+
+            // 查询驿站
+            COMMAND_GET_STAGE = SERVER_BUILDER
+                    .comment("The command to get the stage info."
+                            , "查询驿站的信息的的指令。")
+                    .define("commandTpStageGet", "getstage");
             SERVER_BUILDER.pop();
 
             // 传送到上次传送点
@@ -1402,6 +1510,11 @@ public class ServerConfig {
                             , "传送到上次传送点的指令。")
                     .define("commandTpBack", "back");
 
+            // 设置虚拟权限
+            COMMAND_VIRTUAL_OP = SERVER_BUILDER
+                    .comment("The command to set virtual permission."
+                            , "设置虚拟权限的指令。")
+                    .define("commandVirtualOp", "opv");
 
             SERVER_BUILDER.pop();
         }
@@ -1409,6 +1522,11 @@ public class ServerConfig {
         // 定义简化指令
         {
             SERVER_BUILDER.comment("Concise Command Settings", "简化指令").push("concise");
+
+            CONCISE_UUID = SERVER_BUILDER
+                    .comment("Enable or disable the concise version of the 'Get the UUID of the player' command.",
+                            "是否启用无前缀版本的 '获取玩家的UUID' 指令。")
+                    .define("conciseUuid", false);
 
             CONCISE_DIMENSION = SERVER_BUILDER
                     .comment("Enable or disable the concise version of the 'Get the dimension ID of the current world' command.",
@@ -1521,6 +1639,11 @@ public class ServerConfig {
                     .comment("Enable or disable the concise version of the 'Delete the home' command.",
                             "是否启用无前缀版本的 '删除家' 指令。")
                     .define("conciseTpHomeDel", false);
+
+            CONCISE_GET_HOME = SERVER_BUILDER
+                    .comment("Enable or disable the concise version of the 'Get the home info' command.",
+                            "是否启用无前缀版本的 '查询家' 指令。")
+                    .define("conciseTpHomeGet", false);
             SERVER_BUILDER.pop();
 
             SERVER_BUILDER.comment("Teleport to the stage", "传送到驿站").push("TpStage");
@@ -1538,12 +1661,22 @@ public class ServerConfig {
                     .comment("Enable or disable the concise version of the 'Delete the stage' command.",
                             "是否启用无前缀版本的 '删除驿站' 指令。")
                     .define("conciseTpStageDel", false);
+
+            CONCISE_GET_STAGE = SERVER_BUILDER
+                    .comment("Enable or disable the concise version of the 'Get the stage info' command.",
+                            "是否启用无前缀版本的 '查询驿站' 指令。")
+                    .define("conciseTpStageGet", false);
             SERVER_BUILDER.pop();
 
             CONCISE_TP_BACK = SERVER_BUILDER
                     .comment("Enable or disable the concise version of the 'Teleport to the previous location' command.",
                             "是否启用无前缀版本的 '传送到上次传送点' 指令。")
                     .define("conciseTpBack", true);
+
+            CONCISE_VIRTUAL_OP = SERVER_BUILDER
+                    .comment("Enable or disable the concise version of the 'Set virtual permission' command.",
+                            "是否启用无前缀版本的 '设置虚拟权限' 指令。")
+                    .define("conciseVirtualOp", false);
 
             SERVER_BUILDER.pop();
 
