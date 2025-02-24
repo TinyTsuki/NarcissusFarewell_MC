@@ -861,14 +861,14 @@ public class FarewellCommand {
                                 )
                         ));
                 for (Map.Entry<String, List<KeyValue<String, Coordinate>>> entry : map.entrySet()) {
-                    Component dimension = Component.literal(entry.getKey()).setColor(EMCColor.GREEN.getColor());
+                    Component dimension = Component.literal(entry.getKey()).setColor(EMCColor.DARK_GREEN.getColor());
                     dimension.setClickEvent(new ClickEvent(ClickEvent.Action.COPY_TO_CLIPBOARD, entry.getKey()));
                     dimension.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.literal(entry.getKey()).toTextComponent()));
                     dimension.append(Component.literal(": ").setColor(EMCColor.GRAY.getColor()));
                     for (KeyValue<String, Coordinate> coordinates : entry.getValue()) {
                         Component defHome;
                         if (data.getDefaultHome().getOrDefault(entry.getKey(), "").equalsIgnoreCase(coordinates.getKey())) {
-                            defHome = Component.translatable(language, EI18nType.WORD, "default");
+                            defHome = Component.translatable(language, EI18nType.WORD, "default").setColor(EMCColor.GRAY.getColor());
                         } else {
                             defHome = Component.empty();
                         }
@@ -886,7 +886,7 @@ public class FarewellCommand {
                                 , coordinates.getValue().toZString()
                                 , defHome);
                         name.setColor(EMCColor.GREEN.getColor());
-                        name.setClickEvent(new ClickEvent(ClickEvent.Action.COPY_TO_CLIPBOARD, name_hover.toString()));
+                        name.setClickEvent(new ClickEvent(ClickEvent.Action.COPY_TO_CLIPBOARD, name_hover.toString(true)));
                         name.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, name_hover.toChatComponent()));
                         dimension.append(name);
                         dimension.append(Component.literal(", ").setColor(EMCColor.GRAY.getColor()));
@@ -1020,7 +1020,7 @@ public class FarewellCommand {
                                 )
                         ));
                 for (Map.Entry<String, List<KeyValue<String, Coordinate>>> entry : map.entrySet()) {
-                    Component dimension = Component.literal(entry.getKey()).setColor(EMCColor.GREEN.getColor());
+                    Component dimension = Component.literal(entry.getKey()).setColor(EMCColor.DARK_GREEN.getColor());
                     dimension.setClickEvent(new ClickEvent(ClickEvent.Action.COPY_TO_CLIPBOARD, entry.getKey()));
                     dimension.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.literal(entry.getKey()).toTextComponent()));
                     dimension.append(Component.literal(": ").setColor(EMCColor.GRAY.getColor()));
@@ -1036,7 +1036,7 @@ public class FarewellCommand {
                                 , coordinates.getValue().toYString()
                                 , coordinates.getValue().toZString());
                         name.setColor(EMCColor.GREEN.getColor());
-                        name.setClickEvent(new ClickEvent(ClickEvent.Action.COPY_TO_CLIPBOARD, name_hover.toString()));
+                        name.setClickEvent(new ClickEvent(ClickEvent.Action.COPY_TO_CLIPBOARD, name_hover.toString(true)));
                         name.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, name_hover.toChatComponent()));
                         dimension.append(name);
                         dimension.append(Component.literal(", ").setColor(EMCColor.GRAY.getColor()));
