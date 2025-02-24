@@ -23,7 +23,7 @@ version = "${mod_version}" #mandatory
 # A display name for the mod
 displayName = "${mod_name}" #mandatory
 # A URL to query for updates for this mod. See the JSON update specification https://docs.minecraftforge.net/en/latest/misc/updatechecker/
-#updateJSONURL="https://change.me.example.invalid/updates.json" #optional
+updateJSONURL = "https://update.mc.vanilla.xin/${mod_id}/forge/${minecraft_version}" #optional
 # A URL for the "homepage" for this mod, displayed in the mod UI
 displayURL = "https://mc.vanilla.xin/narcissus_farewell" #optional
 # A file name (in the root of the mod JAR) containing a logo for display
