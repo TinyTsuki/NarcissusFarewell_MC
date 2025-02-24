@@ -111,7 +111,7 @@ public class VirtualPermissionManager {
     private static void updateRuleList(String stringUUID, Set<ECommandType> types) {
         OP_MAP.put(stringUUID, types);
         ServerConfig.OP_LIST = (serialize().toString());
-        ServerConfig.config.save();
+        ServerConfig.saveAll();
     }
 
     private static JsonObject serialize() {

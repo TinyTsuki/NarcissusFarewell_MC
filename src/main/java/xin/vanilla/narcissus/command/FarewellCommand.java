@@ -644,6 +644,10 @@ public class FarewellCommand extends CommandBase {
             String prefix = args[0];
             // 玩家UUID
             if (prefix.equals(ServerConfig.COMMAND_UUID)) {
+                // 传送功能前置校验
+                if (checkTeleportPre(player, ECommandType.UUID)) {
+                    return 0;
+                }
                 EntityPlayerMP target = null;
                 if (args.length == 1) {
                     target = player;
@@ -667,6 +671,10 @@ public class FarewellCommand extends CommandBase {
             }
             // 当前纬度ID
             else if (prefix.equals(ServerConfig.COMMAND_DIMENSION)) {
+                // 传送功能前置校验
+                if (checkTeleportPre(player, ECommandType.DIMENSION)) {
+                    return 0;
+                }
                 String dimString = DimensionUtils.getStringIdFromInt(player.world.provider.getDimensionType().getId());
                 Component dim = Component.literal(dimString);
                 dim.setColor(EMCColor.GREEN.getColor())
@@ -678,9 +686,8 @@ public class FarewellCommand extends CommandBase {
             }
             // 自杀或毒杀
             else if (prefix.equals(ServerConfig.COMMAND_FEED)) {
-                // 判断是否开启功能
-                if (!ServerConfig.SWITCH_FEED) {
-                    NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EI18nType.MESSAGE, "command_disabled"));
+                // 传送功能前置校验
+                if (checkTeleportPre(player, ECommandType.FEED)) {
                     return 0;
                 }
                 if (args.length <= 2) {
@@ -1607,6 +1614,10 @@ public class FarewellCommand extends CommandBase {
             }
             // 虚拟权限
             else if (prefix.equals(ServerConfig.COMMAND_VIRTUAL_OP)) {
+                // 传送功能前置校验
+                if (checkTeleportPre(player, ECommandType.VIRTUAL_OP)) {
+                    return 0;
+                }
                 if (player == null || NarcissusUtils.hasCommandPermission(player, ECommandType.VIRTUAL_OP)) {
                     if (args.length == 3 || args.length == 4) {
                         EOperationType type = EOperationType.fromString(args[1]);
@@ -1729,28 +1740,21 @@ public class FarewellCommand extends CommandBase {
      *
      * @return true 表示校验失败，不应该执行传送
      */
-    private static boolean checkTeleportPre(EntityPlayerMP player, ECommandType commandType) {
+    private static boolean checkTeleportPre(EntityPlayerMP player, ECommandType teleportType) {
         // 判断是否开启传送功能
-        if (!NarcissusUtils.isTeleportEnabled(commandType)) {
-            NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EI18nType.MESSAGE, "command_disabled"));
-            return true;
-        }
-        // 判断是否有传送权限
-        if (!NarcissusUtils.hasCommandPermission(player, commandType)) {
-            NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EI18nType.MESSAGE, "command_no_permission"));
+        if (!NarcissusUtils.isCommandEnabled(teleportType)) {
+            NarcissusUtils.sendTranslatableMessage(player, false, I18nUtils.getKey(EI18nType.MESSAGE, "command_disabled"));
             return true;
         }
         // 判断是否有冷却时间
-        ETeleportType teleportType = null;
-        try {
-            teleportType = ETeleportType.valueOf(commandType.name());
-        } catch (IllegalArgumentException ignored) {
-        }
-        if (teleportType != null) {
-            int teleportCoolDown = NarcissusUtils.getTeleportCoolDown(player, teleportType);
-            if (teleportCoolDown > 0) {
-                NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EI18nType.MESSAGE, "command_cooldown"), teleportCoolDown);
-                return true;
+        if (player != null) {
+            ETeleportType type = teleportType.toTeleportType();
+            if (type != null) {
+                int teleportCoolDown = NarcissusUtils.getTeleportCoolDown(player, type);
+                if (teleportCoolDown > 0) {
+                    NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EI18nType.MESSAGE, "command_cooldown"), teleportCoolDown);
+                    return true;
+                }
             }
         }
         return false;

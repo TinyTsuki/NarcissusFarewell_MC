@@ -6,7 +6,7 @@
     "version": "${mod_version}",
     "mcversion": "${minecraft_version}",
     "url": "https://mc.vanilla.xin/narcissus_farewell",
-    "updateUrl": "",
+    "updateUrl": "https://update.mc.vanilla.xin/${mod_id}/forge/${minecraft_version}",
     "authorList": [
       "${mod_authors}"
     ],

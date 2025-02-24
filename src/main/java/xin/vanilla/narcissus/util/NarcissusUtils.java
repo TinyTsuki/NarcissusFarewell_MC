@@ -15,6 +15,7 @@ import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.JsonToNBT;
 import net.minecraft.network.datasync.DataParameter;
+import net.minecraft.network.play.server.SPacketChat;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.stats.StatList;
 import net.minecraft.util.DamageSource;
@@ -22,12 +23,14 @@ import net.minecraft.util.NonNullList;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
+import net.minecraft.util.text.ChatType;
 import net.minecraft.util.text.TextComponentTranslation;
 import net.minecraft.world.DimensionType;
 import net.minecraft.world.World;
 import net.minecraft.world.WorldServer;
 import net.minecraft.world.biome.Biome;
 import net.minecraft.world.gen.structure.MapGenStructureIO;
+import net.minecraftforge.common.DimensionManager;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.entity.player.PlayerDropsEvent;
 import net.minecraftforge.fml.common.registry.ForgeRegistries;
@@ -66,44 +69,86 @@ public class NarcissusUtils {
     }
 
     /**
-     * 判断传送类型是否开启
+     * 判断指令类型是否开启
      *
-     * @param type 传送类型
+     * @param type 指令类型
      */
-    public static boolean isTeleportEnabled(ETeleportType type) {
+    public static boolean isCommandEnabled(ECommandType type) {
         switch (type) {
+            case FEED:
+            case FEED_OTHER:
+            case FEED_CONCISE:
+            case FEED_OTHER_CONCISE:
+                return ServerConfig.SWITCH_FEED;
             case TP_COORDINATE:
+            case TP_COORDINATE_CONCISE:
                 return ServerConfig.SWITCH_TP_COORDINATE;
             case TP_STRUCTURE:
+            case TP_STRUCTURE_CONCISE:
                 return ServerConfig.SWITCH_TP_STRUCTURE;
             case TP_ASK:
+            case TP_ASK_YES:
+            case TP_ASK_NO:
+            case TP_ASK_CONCISE:
+            case TP_ASK_YES_CONCISE:
+            case TP_ASK_NO_CONCISE:
                 return ServerConfig.SWITCH_TP_ASK;
             case TP_HERE:
+            case TP_HERE_YES:
+            case TP_HERE_NO:
+            case TP_HERE_CONCISE:
+            case TP_HERE_YES_CONCISE:
+            case TP_HERE_NO_CONCISE:
                 return ServerConfig.SWITCH_TP_HERE;
             case TP_RANDOM:
+            case TP_RANDOM_CONCISE:
                 return ServerConfig.SWITCH_TP_RANDOM;
             case TP_SPAWN:
+            case TP_SPAWN_OTHER:
+            case TP_SPAWN_CONCISE:
+            case TP_SPAWN_OTHER_CONCISE:
                 return ServerConfig.SWITCH_TP_SPAWN;
             case TP_WORLD_SPAWN:
+            case TP_WORLD_SPAWN_CONCISE:
                 return ServerConfig.SWITCH_TP_WORLD_SPAWN;
             case TP_TOP:
+            case TP_TOP_CONCISE:
                 return ServerConfig.SWITCH_TP_TOP;
             case TP_BOTTOM:
+            case TP_BOTTOM_CONCISE:
                 return ServerConfig.SWITCH_TP_BOTTOM;
             case TP_UP:
+            case TP_UP_CONCISE:
                 return ServerConfig.SWITCH_TP_UP;
             case TP_DOWN:
+            case TP_DOWN_CONCISE:
                 return ServerConfig.SWITCH_TP_DOWN;
             case TP_VIEW:
+            case TP_VIEW_CONCISE:
                 return ServerConfig.SWITCH_TP_VIEW;
             case TP_HOME:
+            case SET_HOME:
+            case DEL_HOME:
+            case GET_HOME:
+            case TP_HOME_CONCISE:
+            case SET_HOME_CONCISE:
+            case DEL_HOME_CONCISE:
+            case GET_HOME_CONCISE:
                 return ServerConfig.SWITCH_TP_HOME;
             case TP_STAGE:
+            case SET_STAGE:
+            case DEL_STAGE:
+            case GET_STAGE:
+            case TP_STAGE_CONCISE:
+            case SET_STAGE_CONCISE:
+            case DEL_STAGE_CONCISE:
+            case GET_STAGE_CONCISE:
                 return ServerConfig.SWITCH_TP_STAGE;
             case TP_BACK:
+            case TP_BACK_CONCISE:
                 return ServerConfig.SWITCH_TP_BACK;
             default:
-                return false;
+                return true;
         }
     }
 
@@ -769,20 +814,22 @@ public class NarcissusUtils {
     }
 
     public static Coordinate findSafeCoordinate(Coordinate coordinate, boolean belowAllowAir) {
-        World world = getWorld(coordinate.getDimension());
+        World world = DimensionManager.getWorld(coordinate.getDimension().getId(), true);
+        DimensionManager.keepDimensionLoaded(coordinate.getDimension().getId(), true);
 
         int chunkX = (int) coordinate.getX() >> 4;
         int chunkZ = (int) coordinate.getZ() >> 4;
 
-        // 搜索安全位置，限制在目标区块内
         return searchForSafeCoordinateInChunk(world, coordinate, chunkX, chunkZ, belowAllowAir);
     }
 
     private static Coordinate searchForSafeCoordinateInChunk(World world, Coordinate coordinate, int chunkX, int chunkZ, boolean belowAllowAir) {
-        int chunkMinX = chunkX << 4;
-        int chunkMinZ = chunkZ << 4;
-        int chunkMaxX = chunkMinX + 15;
-        int chunkMaxZ = chunkMinZ + 15;
+        // 搜索安全位置，限制在目标范围区块内
+        int offset = (ServerConfig.SAFE_CHUNK_RANGE - 1) * 16;
+        int chunkMinX = (chunkX << 4) - offset;
+        int chunkMinZ = (chunkZ << 4) - offset;
+        int chunkMaxX = chunkMinX + 15 + offset;
+        int chunkMaxZ = chunkMinZ + 15 + offset;
 
         // FIXME 1.18及之后版本range应该为(-64, world.getHeight())
         List<Integer> yList;
@@ -883,6 +930,7 @@ public class NarcissusUtils {
      * 获取指定维度的世界实例
      */
     public static WorldServer getWorld(DimensionType dimension) {
+        // return DimensionManager.getWorld(NarcissusFarewell.getServerInstance(), dimension, true, true);
         return NarcissusFarewell.getServerInstance().getWorld(dimension.getId());
     }
 
@@ -1109,54 +1157,84 @@ public class NarcissusUtils {
         World world = player.world;
         MinecraftServer server = player.getServer();
         if (world != null && server != null) {
-            if (after.isSafe()) {
-                after = findSafeCoordinate(after, false);
-                // 判断是否需要在脚下放置方块
-                if (ServerConfig.SETBLOCK_WHEN_SAFE_NOT_FOUND && !isSafeCoordinate(getWorld(after.getDimension()), after)) {
-                    IBlockState blockState = null;
-                    List<ItemStack> playerItemList = getPlayerItemList(player);
-                    if (CollectionUtils.isNotNullOrEmpty(SAFE_BLOCKS)) {
-                        if (ServerConfig.GETBLOCK_FROM_INVENTORY) {
-                            blockState = SAFE_BLOCKS.stream()
-                                    .filter(block -> playerItemList.stream().map(ItemStack::getItem).anyMatch(item -> new ItemStack(block).getItem().equals(item)))
-                                    .map(Block::getDefaultState)
-                                    .findFirst().orElse(null);
-                        } else {
-                            blockState = SAFE_BLOCKS.get(0).getDefaultState();
-                        }
-                    }
-                    if (blockState != null) {
-                        Coordinate airCoordinate = findSafeCoordinate(after, true);
-                        if (!airCoordinate.toXyzString().equals(after.toXyzString())) {
-                            after = airCoordinate;
-                            Item blockItem = new ItemStack(blockState.getBlock()).getItem();
-                            Item remove = playerItemList.stream().map(ItemStack::getItem).filter(blockItem::equals).findFirst().orElse(null);
-                            if (remove != null) {
-                                ItemStack itemStack = new ItemStack(remove);
-                                itemStack.setCount(1);
-                                if (removeItemFromPlayerInventory(player, itemStack)) {
-                                    getWorld(after.getDimension()).setBlockState(airCoordinate.toBlockPos().add(0, -1, 0), blockState.getBlock().getDefaultState());
+            WorldServer level = server.getWorld(after.getDimension().getId());
+            if (level != null) {
+                if (after.isSafe()) {
+                    // 异步的代价就是粪吗
+                    player.connection.sendPacket(new SPacketChat(Component.translatable(NarcissusUtils.getPlayerLanguage(player), EI18nType.MESSAGE, "safe_searching").toTextComponent(), ChatType.GAME_INFO));
+                    new Thread(() -> {
+                        Coordinate finalAfter = after.clone();
+                        finalAfter = findSafeCoordinate(finalAfter, false);
+                        Runnable runnable;
+                        // 判断是否需要在脚下放置方块
+                        if (ServerConfig.SETBLOCK_WHEN_SAFE_NOT_FOUND && !isSafeCoordinate(level, finalAfter)) {
+                            IBlockState blockState;
+                            List<ItemStack> playerItemList = getPlayerItemList(player);
+                            if (CollectionUtils.isNotNullOrEmpty(SAFE_BLOCKS)) {
+                                if (ServerConfig.GETBLOCK_FROM_INVENTORY) {
+                                    blockState = SAFE_BLOCKS.stream()
+                                            .filter(block -> playerItemList.stream().map(ItemStack::getItem).anyMatch(item -> new ItemStack(block).getItem().equals(item)))
+                                            .map(Block::getDefaultState)
+                                            .findFirst().orElse(null);
+                                } else {
+                                    blockState = SAFE_BLOCKS.get(0).getDefaultState();
                                 }
+                            } else {
+                                blockState = null;
                             }
+                            if (blockState != null) {
+                                Coordinate airCoordinate = findSafeCoordinate(finalAfter, true);
+                                if (!airCoordinate.toXyzString().equals(finalAfter.toXyzString())) {
+                                    finalAfter = airCoordinate;
+                                    runnable = () -> {
+                                        Item blockItem = new ItemStack(blockState.getBlock()).getItem();
+                                        Item remove = playerItemList.stream().map(ItemStack::getItem).filter(blockItem::equals).findFirst().orElse(null);
+                                        if (remove != null) {
+                                            ItemStack itemStack = new ItemStack(remove);
+                                            itemStack.setCount(1);
+                                            if (removeItemFromPlayerInventory(player, itemStack)) {
+                                                getWorld(after.getDimension()).setBlockState(airCoordinate.toBlockPos().add(0, -1, 0), blockState.getBlock().getDefaultState());
+                                            }
+                                        }
+                                    };
+                                } else {
+                                    runnable = null;
+                                }
+                            } else {
+                                runnable = null;
+                            }
+                        } else {
+                            runnable = null;
                         }
-                    }
+                        Coordinate finalAfter1 = finalAfter;
+                        server.addScheduledTask(() -> {
+                            if (runnable != null) runnable.run();
+                            doTeleport(player, finalAfter1, type, before, level);
+                            DimensionManager.unloadWorld(finalAfter1.getDimension().getId());
+                        });
+                    }).start();
+                } else {
+                    doTeleport(player, after, type, before, level);
                 }
             }
-            after.setY(Math.floor(after.getY()) + 0.1);
-            if (before.getDimension() == after.getDimension()) {
-                player.setPositionAndUpdate(after.getX(), after.getY(), after.getZ());
-                player.cameraYaw = after.getYaw() == 0 ? player.cameraYaw : (float) after.getYaw();
-                player.cameraPitch = after.getPitch() == 0 ? player.cameraPitch : (float) after.getPitch();
-            } else {
-                server.getPlayerList().transferPlayerToDimension(player, after.getDimension().getId(), new TeleporterCustom((WorldServer) world, after));
-            }
-            TeleportRecord record = new TeleportRecord();
-            record.setTeleportTime(new Date());
-            record.setTeleportType(type);
-            record.setBefore(before);
-            record.setAfter(after);
-            PlayerTeleportDataCapability.getData(player).addTeleportRecords(record);
         }
+    }
+
+    private static void doTeleport(@NonNull EntityPlayerMP player, @NonNull Coordinate after, ETeleportType type, Coordinate before, WorldServer level) {
+        after.setY(Math.floor(after.getY()) + 0.1);
+        if (before.getDimension() == after.getDimension()) {
+            player.setPositionAndUpdate(after.getX(), after.getY(), after.getZ());
+            player.cameraYaw = after.getYaw() == 0 ? player.cameraYaw : (float) after.getYaw();
+            player.cameraPitch = after.getPitch() == 0 ? player.cameraPitch : (float) after.getPitch();
+        } else {
+            player.server.getPlayerList().transferPlayerToDimension(player, after.getDimension().getId(), new TeleporterCustom(level, after));
+        }
+        TeleportRecord record = new TeleportRecord();
+        record.setTeleportTime(new Date());
+        record.setTeleportType(type);
+        record.setBefore(before);
+        record.setAfter(after);
+        PlayerTeleportDataCapability.getData(player).addTeleportRecords(record);
     }
 
     public static List<EntityPlayerMP> getPlayer(EntityPlayerMP player, String name) {
@@ -1376,6 +1454,22 @@ public class NarcissusUtils {
      */
     public static void sendTranslatableMessage(EntityPlayerMP player, String key, Object... args) {
         player.sendMessage(Component.translatable(key, args).setLanguageCode(NarcissusUtils.getPlayerLanguage(player)).toChatComponent());
+    }
+
+    /**
+     * 发送翻译消息
+     *
+     * @param source  指令来源
+     * @param success 是否成功
+     * @param key     翻译键
+     * @param args    参数
+     */
+    public static void sendTranslatableMessage(ICommandSender source, boolean success, String key, Object... args) {
+        if (source instanceof EntityPlayerMP) {
+            sendTranslatableMessage((EntityPlayerMP) source, key, args);
+        } else {
+            source.sendMessage(Component.translatable(key, args).setLanguageCode(NarcissusFarewell.DEFAULT_LANGUAGE).toChatComponent());
+        }
     }
 
     // endregion 消息相关
