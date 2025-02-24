@@ -1398,17 +1398,33 @@ public class FarewellCommand extends CommandBase {
                                         )
                                 ));
                         for (Map.Entry<String, List<KeyValue<String, Coordinate>>> entry : map.entrySet()) {
-                            Component dimension = Component.literal(entry.getKey()).setColor(EMCColor.GREEN.getColor());
+                            Component dimension = Component.literal(entry.getKey()).setColor(EMCColor.DARK_GREEN.getColor());
                             dimension.setClickEvent(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, entry.getKey()));
                             dimension.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.literal(entry.getKey()).toTextComponent()));
                             dimension.append(Component.literal(": ").setColor(EMCColor.GRAY.getColor()));
                             for (KeyValue<String, Coordinate> coordinates : entry.getValue()) {
-                                Component name = Component.literal(coordinates.getKey()).setColor(EMCColor.GREEN.getColor());
-                                name.setClickEvent(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, coordinates.getKey() + ": " + coordinates.getValue().toXyzString()));
-                                name.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.literal(coordinates.getKey() + ": " + coordinates.getValue().toXyzString()).toTextComponent()));
+                                Component defHome;
                                 if (data.getDefaultHome().getOrDefault(entry.getKey(), "").equalsIgnoreCase(coordinates.getKey())) {
-                                    name.append(Component.literal("(default)").setColor(EMCColor.GRAY.getColor()));
+                                    defHome = Component.translatable(language, EI18nType.WORD, "default").setColor(EMCColor.GRAY.getColor());
+                                } else {
+                                    defHome = Component.empty();
                                 }
+                                Component name = Component.translatable(language, EI18nType.MESSAGE, "home_info"
+                                        , coordinates.getKey()
+                                        , coordinates.getValue().toXString()
+                                        , coordinates.getValue().toYString()
+                                        , coordinates.getValue().toZString()
+                                        , defHome);
+                                name.toChatComponent();
+                                Component name_hover = Component.translatable(language, EI18nType.MESSAGE, "home_info_hover"
+                                        , coordinates.getKey()
+                                        , coordinates.getValue().toXString()
+                                        , coordinates.getValue().toYString()
+                                        , coordinates.getValue().toZString()
+                                        , defHome);
+                                name.setColor(EMCColor.GREEN.getColor());
+                                name.setClickEvent(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, name_hover.toString(true)));
+                                name.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, name_hover.toChatComponent()));
                                 dimension.append(name);
                                 dimension.append(Component.literal(", ").setColor(EMCColor.GRAY.getColor()));
                             }
@@ -1562,14 +1578,24 @@ public class FarewellCommand extends CommandBase {
                                     )
                             ));
                     for (Map.Entry<String, List<KeyValue<String, Coordinate>>> entry : map.entrySet()) {
-                        Component dimension = Component.literal(entry.getKey()).setColor(EMCColor.GREEN.getColor());
+                        Component dimension = Component.literal(entry.getKey()).setColor(EMCColor.DARK_GREEN.getColor());
                         dimension.setClickEvent(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, entry.getKey()));
                         dimension.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.literal(entry.getKey()).toTextComponent()));
                         dimension.append(Component.literal(": ").setColor(EMCColor.GRAY.getColor()));
                         for (KeyValue<String, Coordinate> coordinates : entry.getValue()) {
-                            Component name = Component.literal(coordinates.getKey()).setColor(EMCColor.GREEN.getColor());
-                            name.setClickEvent(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, coordinates.getKey() + ": " + coordinates.getValue().toXyzString()));
-                            name.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.literal(coordinates.getKey() + ": " + coordinates.getValue().toXyzString()).toTextComponent()));
+                            Component name = Component.translatable(language, EI18nType.MESSAGE, "stage_info"
+                                    , coordinates.getKey()
+                                    , coordinates.getValue().toXString()
+                                    , coordinates.getValue().toYString()
+                                    , coordinates.getValue().toZString());
+                            Component name_hover = Component.translatable(language, EI18nType.MESSAGE, "stage_info_hover"
+                                    , coordinates.getKey()
+                                    , coordinates.getValue().toXString()
+                                    , coordinates.getValue().toYString()
+                                    , coordinates.getValue().toZString());
+                            name.setColor(EMCColor.GREEN.getColor());
+                            name.setClickEvent(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, name_hover.toString(true)));
+                            name.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, name_hover.toChatComponent()));
                             dimension.append(name);
                             dimension.append(Component.literal(", ").setColor(EMCColor.GRAY.getColor()));
                         }

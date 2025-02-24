@@ -142,5 +142,5 @@ message.narcissus_farewell.stage_is_empty=No public waypoint available.
 message.narcissus_farewell.stage_is=The list of public waypoint is as follows:\n%s
 message.narcissus_farewell.home_info=%1$s
 message.narcissus_farewell.stage_info=%1$s
-message.narcissus_farewell.home_info_hover=%1$s[%2$s, %3$s, %4$s]§7§7%5$s§7
+message.narcissus_farewell.home_info_hover=%1$s[%2$s, %3$s, %4$s]%5$s
 message.narcissus_farewell.stage_info_hover=%1$s[%2$s, %3$s, %4$s]
