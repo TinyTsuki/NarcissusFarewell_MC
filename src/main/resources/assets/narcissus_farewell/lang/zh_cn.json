@@ -74,6 +74,7 @@
   "word.narcissus_farewell.teleport_card": "传送卡",
   "word.narcissus_farewell.tp_here_safe": "§a安全地",
   "word.narcissus_farewell.tp_here_unsafe": "§e不安全地",
+  "word.narcissus_farewell.default": "§7(默认)",
   "message.narcissus_farewell.command_disabled": "§e该指令已被服务器禁用！",
   "message.narcissus_farewell.command_cooldown": "§e传送冷却中，请在%s§e秒后再试！",
   "message.narcissus_farewell.across_dimension_not_enable": "§e服务器未启用跨维度传送！",
@@ -126,6 +127,7 @@
   "message.narcissus_farewell.back_not_found": "§e未找到上次传送记录",
   "message.narcissus_farewell.tp_structure_searching": "开始搜索指定的结构/生物群系",
   "message.narcissus_farewell.tp_view_searching": "开始搜索视线尽头的坐标",
+  "message.narcissus_farewell.safe_searching": "开始搜索安全的落脚点",
   "message.narcissus_farewell.died_of_narcissus_1": "%s死于石蒜碱",
   "message.narcissus_farewell.died_of_narcissus_2": "%s死于多花水仙碱",
   "message.narcissus_farewell.died_of_narcissus_3": "%s死于秋水仙碱",
@@ -136,5 +138,9 @@
   "message.narcissus_farewell.home_is_empty": "私人传送点空空如也。",
   "message.narcissus_farewell.home_is": "私人传送点列表如下：\n%s",
   "message.narcissus_farewell.stage_is_empty": "公共驿站空空如也。",
-  "message.narcissus_farewell.stage_is": "公共驿站列表如下：\n%s"
+  "message.narcissus_farewell.stage_is": "公共驿站列表如下：\n%s",
+  "message.narcissus_farewell.home_info": "%1$s",
+  "message.narcissus_farewell.stage_info": "%1$s",
+  "message.narcissus_farewell.home_info_hover": "%1$s[%2$s, %3$s, %4$s]§7§7%5$s§7",
+  "message.narcissus_farewell.stage_info_hover": "%1$s[%2$s, %3$s, %4$s]"
 }

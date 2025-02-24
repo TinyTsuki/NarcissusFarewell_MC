@@ -207,6 +207,8 @@ public class FarewellCommand {
         };
 
         Command<CommandSource> dimCommand = (context) -> {
+            // 传送功能前置校验
+            if (checkTeleportPre(context.getSource(), ECommandType.DIMENSION)) return 0;
             ServerPlayerEntity player = context.getSource().getPlayerOrException();
             String dimString = player.getLevel().dimension.getType().getRegistryName().toString();
             Component dim = Component.literal(dimString);
@@ -219,6 +221,8 @@ public class FarewellCommand {
         };
 
         Command<CommandSource> uuidCommand = (context) -> {
+            // 传送功能前置校验
+            if (checkTeleportPre(context.getSource(), ECommandType.UUID)) return 0;
             CommandSource source = context.getSource();
             ServerPlayerEntity target;
             try {
@@ -245,6 +249,8 @@ public class FarewellCommand {
 
         Command<CommandSource> feedCommand = (context) -> {
             CommandSource source = context.getSource();
+            // 传送功能前置校验
+            if (checkTeleportPre(source, ECommandType.FEED)) return 0;
             if (source.getEntity() == null) {
                 List<ServerPlayerEntity> targetList;
                 try {
@@ -284,7 +290,7 @@ public class FarewellCommand {
         Command<CommandSource> tpCoordinateCommand = context -> {
             ServerPlayerEntity player = context.getSource().getPlayerOrException();
             // 传送功能前置校验
-            if (checkTeleportPre(player, ETeleportType.TP_COORDINATE)) return 0;
+            if (checkTeleportPre(context.getSource(), ECommandType.TP_COORDINATE)) return 0;
             Coordinate coordinate;
             try {
                 BlockPos pos = BlockPosArgument.getOrLoadBlockPos(context, "coordinate");
@@ -312,7 +318,7 @@ public class FarewellCommand {
         Command<CommandSource> tpStructureCommand = context -> {
             ServerPlayerEntity player = context.getSource().getPlayerOrException();
             // 传送功能前置校验
-            if (checkTeleportPre(player, ETeleportType.TP_STRUCTURE)) return 0;
+            if (checkTeleportPre(context.getSource(), ECommandType.TP_STRUCTURE)) return 0;
             ResourceLocation structId = ResourceLocationArgument.getId(context, "struct");
             Structure<?> structure = NarcissusUtils.getStructure(structId);
             Biome biome = NarcissusUtils.getBiome(structId);
@@ -361,7 +367,7 @@ public class FarewellCommand {
         Command<CommandSource> tpAskCommand = context -> {
             ServerPlayerEntity player = context.getSource().getPlayerOrException();
             // 传送功能前置校验
-            if (checkTeleportPre(player, ETeleportType.TP_ASK)) return 0;
+            if (checkTeleportPre(context.getSource(), ECommandType.TP_ASK)) return 0;
             ServerPlayerEntity target;
             try {
                 target = EntityArgument.getPlayer(context, "player");
@@ -417,6 +423,8 @@ public class FarewellCommand {
         };
 
         Command<CommandSource> tpAskYesCommand = context -> {
+            // 传送功能前置校验
+            if (checkTeleportPre(context.getSource(), ECommandType.TP_ASK_YES)) return 0;
             ServerPlayerEntity player = context.getSource().getPlayerOrException();
             String id = getRequestId(context, ETeleportType.TP_ASK);
             if (StringUtils.isNullOrEmpty(id) || !NarcissusFarewell.getTeleportRequest().containsKey(id)) {
@@ -433,6 +441,8 @@ public class FarewellCommand {
         };
 
         Command<CommandSource> tpAskNoCommand = context -> {
+            // 传送功能前置校验
+            if (checkTeleportPre(context.getSource(), ECommandType.TP_ASK_NO)) return 0;
             ServerPlayerEntity player = context.getSource().getPlayerOrException();
             String id = getRequestId(context, ETeleportType.TP_ASK);
             if (StringUtils.isNullOrEmpty(id) || !NarcissusFarewell.getTeleportRequest().containsKey(id)) {
@@ -447,7 +457,7 @@ public class FarewellCommand {
         Command<CommandSource> tpHereCommand = context -> {
             ServerPlayerEntity player = context.getSource().getPlayerOrException();
             // 传送功能前置校验
-            if (checkTeleportPre(player, ETeleportType.TP_HERE)) return 0;
+            if (checkTeleportPre(context.getSource(), ECommandType.TP_HERE)) return 0;
             ServerPlayerEntity target;
             try {
                 target = EntityArgument.getPlayer(context, "player");
@@ -504,6 +514,8 @@ public class FarewellCommand {
 
         Command<CommandSource> tpHereYesCommand = context -> {
             ServerPlayerEntity player = context.getSource().getPlayerOrException();
+            // 传送功能前置校验
+            if (checkTeleportPre(context.getSource(), ECommandType.TP_HERE_YES)) return 0;
             String id = getRequestId(context, ETeleportType.TP_HERE);
             if (StringUtils.isNullOrEmpty(id) || !NarcissusFarewell.getTeleportRequest().containsKey(id)) {
                 NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EI18nType.MESSAGE, "tp_here_not_found"));
@@ -520,6 +532,8 @@ public class FarewellCommand {
 
         Command<CommandSource> tpHereNoCommand = context -> {
             ServerPlayerEntity player = context.getSource().getPlayerOrException();
+            // 传送功能前置校验
+            if (checkTeleportPre(context.getSource(), ECommandType.TP_HERE_YES)) return 0;
             String id = getRequestId(context, ETeleportType.TP_HERE);
             if (StringUtils.isNullOrEmpty(id) || !NarcissusFarewell.getTeleportRequest().containsKey(id)) {
                 NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EI18nType.MESSAGE, "tp_here_not_found"));
@@ -533,7 +547,7 @@ public class FarewellCommand {
         Command<CommandSource> tpRandomCommand = context -> {
             ServerPlayerEntity player = context.getSource().getPlayerOrException();
             // 传送功能前置校验
-            if (checkTeleportPre(player, ETeleportType.TP_RANDOM)) return 0;
+            if (checkTeleportPre(context.getSource(), ECommandType.TP_RANDOM)) return 0;
             DimensionType targetLevel;
             int range;
             try {
@@ -557,7 +571,7 @@ public class FarewellCommand {
         Command<CommandSource> tpSpawnCommand = context -> {
             ServerPlayerEntity player = context.getSource().getPlayerOrException();
             // 传送功能前置校验
-            if (checkTeleportPre(player, ETeleportType.TP_SPAWN)) return 0;
+            if (checkTeleportPre(context.getSource(), ECommandType.TP_SPAWN)) return 0;
             ServerPlayerEntity target;
             try {
                 target = EntityArgument.getPlayer(context, "player");
@@ -590,7 +604,7 @@ public class FarewellCommand {
         Command<CommandSource> tpWorldSpawnCommand = context -> {
             ServerPlayerEntity player = context.getSource().getPlayerOrException();
             // 传送功能前置校验
-            if (checkTeleportPre(player, ETeleportType.TP_WORLD_SPAWN)) return 0;
+            if (checkTeleportPre(context.getSource(), ECommandType.TP_WORLD_SPAWN)) return 0;
             Coordinate coordinate = new Coordinate(player);
             BlockPos respawnPosition = player.getLevel().getSharedSpawnPos();
             coordinate.setDimension(player.getLevel().getDimension().getType());
@@ -613,7 +627,7 @@ public class FarewellCommand {
         Command<CommandSource> tpTopCommand = context -> {
             ServerPlayerEntity player = context.getSource().getPlayerOrException();
             // 传送功能前置校验
-            if (checkTeleportPre(player, ETeleportType.TP_TOP)) return 0;
+            if (checkTeleportPre(context.getSource(), ECommandType.TP_TOP)) return 0;
             Coordinate coordinate = NarcissusUtils.findTopCandidate(player.getLevel(), new Coordinate(player));
             if (coordinate == null) {
                 NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EI18nType.MESSAGE, "tp_top_not_found"));
@@ -633,7 +647,7 @@ public class FarewellCommand {
         Command<CommandSource> tpBottomCommand = context -> {
             ServerPlayerEntity player = context.getSource().getPlayerOrException();
             // 传送功能前置校验
-            if (checkTeleportPre(player, ETeleportType.TP_BOTTOM)) return 0;
+            if (checkTeleportPre(context.getSource(), ECommandType.TP_BOTTOM)) return 0;
             Coordinate coordinate = NarcissusUtils.findBottomCandidate(player.getLevel(), new Coordinate(player));
             if (coordinate == null) {
                 NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EI18nType.MESSAGE, "tp_bottom_not_found"));
@@ -653,7 +667,7 @@ public class FarewellCommand {
         Command<CommandSource> tpUpCommand = context -> {
             ServerPlayerEntity player = context.getSource().getPlayerOrException();
             // 传送功能前置校验
-            if (checkTeleportPre(player, ETeleportType.TP_UP)) return 0;
+            if (checkTeleportPre(context.getSource(), ECommandType.TP_UP)) return 0;
             Coordinate coordinate = NarcissusUtils.findUpCandidate(player.getLevel(), new Coordinate(player));
             if (coordinate == null) {
                 NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EI18nType.MESSAGE, "tp_up_not_found"));
@@ -673,7 +687,7 @@ public class FarewellCommand {
         Command<CommandSource> tpDownCommand = context -> {
             ServerPlayerEntity player = context.getSource().getPlayerOrException();
             // 传送功能前置校验
-            if (checkTeleportPre(player, ETeleportType.TP_DOWN)) return 0;
+            if (checkTeleportPre(context.getSource(), ECommandType.TP_DOWN)) return 0;
             Coordinate coordinate = NarcissusUtils.findDownCandidate(player.getLevel(), new Coordinate(player));
             if (coordinate == null) {
                 NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EI18nType.MESSAGE, "tp_down_not_found"));
@@ -693,7 +707,7 @@ public class FarewellCommand {
         Command<CommandSource> tpViewCommand = context -> {
             ServerPlayerEntity player = context.getSource().getPlayerOrException();
             // 传送功能前置校验
-            if (checkTeleportPre(player, ETeleportType.TP_VIEW)) return 0;
+            if (checkTeleportPre(context.getSource(), ECommandType.TP_VIEW)) return 0;
             boolean safe = true;
             int range;
             try {
@@ -726,7 +740,7 @@ public class FarewellCommand {
         Command<CommandSource> tpHomeCommand = context -> {
             ServerPlayerEntity player = context.getSource().getPlayerOrException();
             // 传送功能前置校验
-            if (checkTeleportPre(player, ETeleportType.TP_HOME)) return 0;
+            if (checkTeleportPre(context.getSource(), ECommandType.TP_HOME)) return 0;
             DimensionType targetLevel = null;
             String name = null;
             try {
@@ -765,11 +779,8 @@ public class FarewellCommand {
 
         Command<CommandSource> setHomeCommand = context -> {
             ServerPlayerEntity player = context.getSource().getPlayerOrException();
-            // 判断是否开启传送功能
-            if (!NarcissusUtils.isTeleportEnabled(ETeleportType.TP_HOME)) {
-                NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EI18nType.MESSAGE, "command_disabled"));
-                return 0;
-            }
+            // 传送功能前置校验
+            if (checkTeleportPre(context.getSource(), ECommandType.SET_HOME)) return 0;
             // 判断设置数量是否超过限制
             IPlayerTeleportData data = PlayerTeleportDataCapability.getData(player);
             if (data.getHomeCoordinate().size() >= ServerConfig.TELEPORT_HOME_LIMIT.get()) {
@@ -808,11 +819,8 @@ public class FarewellCommand {
 
         Command<CommandSource> delHomeCommand = context -> {
             ServerPlayerEntity player = context.getSource().getPlayerOrException();
-            // 判断是否开启传送功能
-            if (!NarcissusUtils.isTeleportEnabled(ETeleportType.TP_HOME)) {
-                NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EI18nType.MESSAGE, "command_disabled"));
-                return 0;
-            }
+            // 传送功能前置校验
+            if (checkTeleportPre(context.getSource(), ECommandType.DEL_HOME)) return 0;
             IPlayerTeleportData data = PlayerTeleportDataCapability.getData(player);
             String name = StringArgumentType.getString(context, "name");
             DimensionType targetLevel = DimensionArgument.getDimension(context, "dimension");
@@ -834,11 +842,8 @@ public class FarewellCommand {
 
         Command<CommandSource> getHomeCommand = context -> {
             ServerPlayerEntity player = context.getSource().getPlayerOrException();
-            // 判断是否开启传送功能
-            if (!NarcissusUtils.isTeleportEnabled(ETeleportType.TP_HOME)) {
-                NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EI18nType.MESSAGE, "command_disabled"));
-                return 0;
-            }
+            // 传送功能前置校验
+            if (checkTeleportPre(context.getSource(), ECommandType.GET_HOME)) return 0;
             Component component;
             IPlayerTeleportData data = PlayerTeleportDataCapability.getData(player);
             String language = NarcissusUtils.getPlayerLanguage(player);
@@ -861,12 +866,28 @@ public class FarewellCommand {
                     dimension.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.literal(entry.getKey()).toTextComponent()));
                     dimension.append(Component.literal(": ").setColor(EMCColor.GRAY.getColor()));
                     for (KeyValue<String, Coordinate> coordinates : entry.getValue()) {
-                        Component name = Component.literal(coordinates.getKey()).setColor(EMCColor.GREEN.getColor());
-                        name.setClickEvent(new ClickEvent(ClickEvent.Action.COPY_TO_CLIPBOARD, coordinates.getKey() + ": " + coordinates.getValue().toXyzString()));
-                        name.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.literal(coordinates.getKey() + ": " + coordinates.getValue().toXyzString()).toTextComponent()));
+                        Component defHome;
                         if (data.getDefaultHome().getOrDefault(entry.getKey(), "").equalsIgnoreCase(coordinates.getKey())) {
-                            name.append(Component.literal("(default)").setColor(EMCColor.GRAY.getColor()));
+                            defHome = Component.translatable(language, EI18nType.WORD, "default");
+                        } else {
+                            defHome = Component.empty();
                         }
+                        Component name = Component.translatable(language, EI18nType.MESSAGE, "home_info"
+                                , coordinates.getKey()
+                                , coordinates.getValue().toXString()
+                                , coordinates.getValue().toYString()
+                                , coordinates.getValue().toZString()
+                                , defHome);
+                        name.toChatComponent();
+                        Component name_hover = Component.translatable(language, EI18nType.MESSAGE, "home_info_hover"
+                                , coordinates.getKey()
+                                , coordinates.getValue().toXString()
+                                , coordinates.getValue().toYString()
+                                , coordinates.getValue().toZString()
+                                , defHome);
+                        name.setColor(EMCColor.GREEN.getColor());
+                        name.setClickEvent(new ClickEvent(ClickEvent.Action.COPY_TO_CLIPBOARD, name_hover.toString()));
+                        name.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, name_hover.toChatComponent()));
                         dimension.append(name);
                         dimension.append(Component.literal(", ").setColor(EMCColor.GRAY.getColor()));
                     }
@@ -881,7 +902,7 @@ public class FarewellCommand {
         Command<CommandSource> tpStageCommand = context -> {
             ServerPlayerEntity player = context.getSource().getPlayerOrException();
             // 传送功能前置校验
-            if (checkTeleportPre(player, ETeleportType.TP_STAGE)) return 0;
+            if (checkTeleportPre(context.getSource(), ECommandType.TP_STAGE)) return 0;
             DimensionType targetLevel = null;
             String name = null;
             try {
@@ -934,11 +955,8 @@ public class FarewellCommand {
 
         Command<CommandSource> setStageCommand = context -> {
             ServerPlayerEntity player = context.getSource().getPlayerOrException();
-            // 判断是否开启传送功能
-            if (!NarcissusUtils.isTeleportEnabled(ETeleportType.TP_STAGE)) {
-                NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EI18nType.MESSAGE, "command_disabled"));
-                return 0;
-            }
+            // 传送功能前置校验
+            if (checkTeleportPre(context.getSource(), ECommandType.SET_STAGE)) return 0;
             WorldStageData stageData = WorldStageData.get();
             String name = StringArgumentType.getString(context, "name");
             DimensionType targetLevel;
@@ -965,11 +983,8 @@ public class FarewellCommand {
 
         Command<CommandSource> delStageCommand = context -> {
             ServerPlayerEntity player = context.getSource().getPlayerOrException();
-            // 判断是否开启传送功能
-            if (!NarcissusUtils.isTeleportEnabled(ETeleportType.TP_STAGE)) {
-                NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EI18nType.MESSAGE, "command_disabled"));
-                return 0;
-            }
+            // 传送功能前置校验
+            if (checkTeleportPre(context.getSource(), ECommandType.DEL_STAGE)) return 0;
             String name = StringArgumentType.getString(context, "name");
             DimensionType targetLevel = DimensionArgument.getDimension(context, "dimension");
             WorldStageData stageData = WorldStageData.get();
@@ -986,11 +1001,8 @@ public class FarewellCommand {
 
         Command<CommandSource> getStageCommand = context -> {
             ServerPlayerEntity player = context.getSource().getPlayerOrException();
-            // 判断是否开启传送功能
-            if (!NarcissusUtils.isTeleportEnabled(ETeleportType.TP_STAGE)) {
-                NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EI18nType.MESSAGE, "command_disabled"));
-                return 0;
-            }
+            // 传送功能前置校验
+            if (checkTeleportPre(context.getSource(), ECommandType.GET_STAGE)) return 0;
             Component component;
             WorldStageData data = WorldStageData.get();
             String language = NarcissusUtils.getPlayerLanguage(player);
@@ -1013,9 +1025,19 @@ public class FarewellCommand {
                     dimension.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.literal(entry.getKey()).toTextComponent()));
                     dimension.append(Component.literal(": ").setColor(EMCColor.GRAY.getColor()));
                     for (KeyValue<String, Coordinate> coordinates : entry.getValue()) {
-                        Component name = Component.literal(coordinates.getKey()).setColor(EMCColor.GREEN.getColor());
-                        name.setClickEvent(new ClickEvent(ClickEvent.Action.COPY_TO_CLIPBOARD, coordinates.getKey() + ": " + coordinates.getValue().toXyzString()));
-                        name.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.literal(coordinates.getKey() + ": " + coordinates.getValue().toXyzString()).toTextComponent()));
+                        Component name = Component.translatable(language, EI18nType.MESSAGE, "stage_info"
+                                , coordinates.getKey()
+                                , coordinates.getValue().toXString()
+                                , coordinates.getValue().toYString()
+                                , coordinates.getValue().toZString());
+                        Component name_hover = Component.translatable(language, EI18nType.MESSAGE, "stage_info_hover"
+                                , coordinates.getKey()
+                                , coordinates.getValue().toXString()
+                                , coordinates.getValue().toYString()
+                                , coordinates.getValue().toZString());
+                        name.setColor(EMCColor.GREEN.getColor());
+                        name.setClickEvent(new ClickEvent(ClickEvent.Action.COPY_TO_CLIPBOARD, name_hover.toString()));
+                        name.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, name_hover.toChatComponent()));
                         dimension.append(name);
                         dimension.append(Component.literal(", ").setColor(EMCColor.GRAY.getColor()));
                     }
@@ -1030,7 +1052,7 @@ public class FarewellCommand {
         Command<CommandSource> tpBackCommand = context -> {
             ServerPlayerEntity player = context.getSource().getPlayerOrException();
             // 传送功能前置校验
-            if (checkTeleportPre(player, ETeleportType.TP_BACK)) return 0;
+            if (checkTeleportPre(context.getSource(), ECommandType.TP_BACK)) return 0;
             ETeleportType type = null;
             try {
                 type = ETeleportType.valueOf(StringArgumentType.getString(context, "type"));
@@ -1062,6 +1084,8 @@ public class FarewellCommand {
 
         Command<CommandSource> virtualOpCommand = context -> {
             CommandSource source = context.getSource();
+            // 传送功能前置校验
+            if (checkTeleportPre(context.getSource(), ECommandType.VIRTUAL_OP)) return 0;
             // 如果命令来自玩家
             if (source.getEntity() == null || source.getEntity() instanceof ServerPlayerEntity) {
                 EOperationType type = EOperationType.fromString(StringArgumentType.getString(context, "operation"));
@@ -1787,17 +1811,23 @@ public class FarewellCommand {
      *
      * @return true 表示校验失败，不应该执行传送
      */
-    private static boolean checkTeleportPre(ServerPlayerEntity player, ETeleportType teleportType) {
+    private static boolean checkTeleportPre(CommandSource source, ECommandType teleportType) {
         // 判断是否开启传送功能
-        if (!NarcissusUtils.isTeleportEnabled(teleportType)) {
-            NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EI18nType.MESSAGE, "command_disabled"));
+        if (!NarcissusUtils.isCommandEnabled(teleportType)) {
+            NarcissusUtils.sendTranslatableMessage(source, false, I18nUtils.getKey(EI18nType.MESSAGE, "command_disabled"));
             return true;
         }
         // 判断是否有冷却时间
-        int teleportCoolDown = NarcissusUtils.getTeleportCoolDown(player, teleportType);
-        if (teleportCoolDown > 0) {
-            NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EI18nType.MESSAGE, "command_cooldown"), teleportCoolDown);
-            return true;
+        if (source.getEntity() != null && source.getEntity() instanceof ServerPlayerEntity) {
+            ServerPlayerEntity player = (ServerPlayerEntity) source.getEntity();
+            ETeleportType type = teleportType.toTeleportType();
+            if (type != null) {
+                int teleportCoolDown = NarcissusUtils.getTeleportCoolDown(player, type);
+                if (teleportCoolDown > 0) {
+                    NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EI18nType.MESSAGE, "command_cooldown"), teleportCoolDown);
+                    return true;
+                }
+            }
         }
         return false;
     }
