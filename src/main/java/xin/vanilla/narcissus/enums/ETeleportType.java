@@ -17,5 +17,26 @@ public enum ETeleportType {
     TP_STAGE,
     TP_BACK,
     DEATH,
-    OTHER,
+    OTHER;
+
+    public ECommandType toCommandType() {
+        return switch (this) {
+            case TP_COORDINATE -> ECommandType.TP_COORDINATE;
+            case TP_STRUCTURE -> ECommandType.TP_STRUCTURE;
+            case TP_ASK -> ECommandType.TP_ASK;
+            case TP_HERE -> ECommandType.TP_HERE;
+            case TP_RANDOM -> ECommandType.TP_RANDOM;
+            case TP_SPAWN -> ECommandType.TP_SPAWN;
+            case TP_WORLD_SPAWN -> ECommandType.TP_WORLD_SPAWN;
+            case TP_TOP -> ECommandType.TP_TOP;
+            case TP_BOTTOM -> ECommandType.TP_BOTTOM;
+            case TP_UP -> ECommandType.TP_UP;
+            case TP_DOWN -> ECommandType.TP_DOWN;
+            case TP_VIEW -> ECommandType.TP_VIEW;
+            case TP_HOME -> ECommandType.TP_HOME;
+            case TP_STAGE -> ECommandType.TP_STAGE;
+            case TP_BACK -> ECommandType.TP_BACK;
+            default -> null;
+        };
+    }
 }
