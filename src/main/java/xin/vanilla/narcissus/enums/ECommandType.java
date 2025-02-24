@@ -97,4 +97,29 @@ public enum ECommandType {
         }
         return this;
     }
+
+    public ETeleportType toTeleportType() {
+        return switch (this) {
+            case TP_COORDINATE, TP_COORDINATE_CONCISE -> ETeleportType.TP_COORDINATE;
+            case TP_STRUCTURE, TP_STRUCTURE_CONCISE -> ETeleportType.TP_STRUCTURE;
+            case TP_ASK, TP_ASK_YES, TP_ASK_NO, TP_ASK_CONCISE, TP_ASK_YES_CONCISE, TP_ASK_NO_CONCISE ->
+                    ETeleportType.TP_ASK;
+            case TP_HERE, TP_HERE_YES, TP_HERE_NO, TP_HERE_CONCISE, TP_HERE_YES_CONCISE, TP_HERE_NO_CONCISE ->
+                    ETeleportType.TP_HERE;
+            case TP_RANDOM, TP_RANDOM_CONCISE -> ETeleportType.TP_RANDOM;
+            case TP_SPAWN, TP_SPAWN_OTHER, TP_SPAWN_CONCISE, TP_SPAWN_OTHER_CONCISE -> ETeleportType.TP_SPAWN;
+            case TP_WORLD_SPAWN, TP_WORLD_SPAWN_CONCISE -> ETeleportType.TP_WORLD_SPAWN;
+            case TP_TOP, TP_TOP_CONCISE -> ETeleportType.TP_TOP;
+            case TP_BOTTOM, TP_BOTTOM_CONCISE -> ETeleportType.TP_BOTTOM;
+            case TP_UP, TP_UP_CONCISE -> ETeleportType.TP_UP;
+            case TP_DOWN, TP_DOWN_CONCISE -> ETeleportType.TP_DOWN;
+            case TP_VIEW, TP_VIEW_CONCISE -> ETeleportType.TP_VIEW;
+            case TP_HOME, SET_HOME, DEL_HOME, GET_HOME, TP_HOME_CONCISE, SET_HOME_CONCISE, DEL_HOME_CONCISE,
+                 GET_HOME_CONCISE -> ETeleportType.TP_HOME;
+            case TP_STAGE, SET_STAGE, DEL_STAGE, GET_STAGE, TP_STAGE_CONCISE, SET_STAGE_CONCISE, DEL_STAGE_CONCISE,
+                 GET_STAGE_CONCISE -> ETeleportType.TP_STAGE;
+            case TP_BACK, TP_BACK_CONCISE -> ETeleportType.TP_BACK;
+            default -> null;
+        };
+    }
 }
