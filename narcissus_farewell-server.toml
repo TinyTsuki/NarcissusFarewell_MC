@@ -19,6 +19,15 @@
 	#传送代价中传送距离计算限制，值为0表示不限制。(此配置项并非限制传送距离，而是限制计算传送代价时使用的距离乘数。)
 	#Range: > 0
 	teleportDistanceLimit = 10000
+	#The header content of the help command.
+	#帮助指令信息头部内容。
+	helpHeader = "-----==== Narcissus Farewell Help (%d/%d) ====-----"
+	#Virtual permission list, in this list you can directly specify which players can use which mod commands without enabling cheat mode or setting the player as OP.
+	#Format: "player UUID":"a comma-separated list of commands that the player can use". 
+	#虚拟权限列表，在这里可以直接指定某个玩家能够使用哪些mod内的指令，而不需要开启作弊模式或将他设置为OP。
+	#格式："玩家UUID":"逗号分隔的能够使用的指令列表"
+	#Example: opList = "{\"23a23a23-od0o-23aa-2333-0d0o0d0033aa\":[\"VIRTUAL_OP\",\"TP_BACK\",\"TP_HOME\",\"TP_STAGE\",\"TP_ASK\",\"TP_HERE\",\"TP_SPAWN\",\"TP_SPAWN_OTHER\",\"DIMENSION\",\"TP_COORDINATE\",\"TP_STRUCTURE\",\"TP_TOP\",\"TP_DOWN\",\"TP_RANDOM\",\"FEED\",\"FEED_OTHER\",\"SET_STAGE\",\"DEL_STAGE\"]}"
+	opList = ""
 	#The expire time for teleport request, in seconds.
 	#传送请求过期时间，单位为秒。
 	#Range: 0 ~ 3600
@@ -63,6 +72,10 @@
 		#When performing a safe teleport, whether to only use placeable blocks from the player's inventory if a safe coordinate is not found.
 		#当进行安全传送时，如果未找到安全坐标，是否仅从背包中获取可放置的方块。
 		getBlockFromInventory = true
+		#The chunk range for finding a safe coordinate, in chunks.
+		#当进行安全传送时，寻找安全坐标的半径，单位为区块。
+		#Range: 1 ~ 16
+		safeChunkRange = 1
 		#When performing a safe teleport, whether to place a block underfoot if a safe coordinate is not found.
 		#当进行安全传送时，如果未找到安全坐标，是否在脚下放置方块。
 		setBlockWhenSafeNotFound = false
@@ -149,6 +162,9 @@
 	#Enable or disable the option to 'Teleport to the spawn of the world'.
 	#是否启用传送到世界重生点。
 	switchTpWorldSpawn = true
+	#Enable or disable the option to 'Suicide or poisoning'.
+	#是否启用自杀或毒杀。
+	switchFeed = true
 	#Enable or disable the option to 'Teleport to a random location'.
 	#是否启用随机传送。
 	switchTpRandom = true
@@ -217,6 +233,10 @@
 		#传送到家指令所需的权限等级。
 		#Range: 0 ~ 4
 		permissionTpHome = 0
+		#The permission level required to use the 'Poisoning others' command.
+		#毒杀指令所需的权限等级。
+		#Range: 0 ~ 4
+		permissionFeedOther = 2
 		#The permission level required to use the 'Teleport to the bottom of current position' command.
 		#传送到底部指令所需的权限等级。
 		#Range: 0 ~ 4
@@ -229,6 +249,10 @@
 		#删除驿站指令所需的权限等级。
 		#Range: 0 ~ 4
 		permissionTpStageDel = 2
+		#The permission level required to use the 'Set virtual permission' command, and also used as the permission level for modifying server configuration.
+		#设置虚拟权限指令所需的权限等级，同时用于控制使用'修改服务器配置指令'的权限。
+		#Range: 0 ~ 4
+		permissionVirtualOp = 4
 		#The permission level required to use the 'Teleport to the spawn of the other player' command.
 		#传送到其他玩家重生点指令所需的权限等级。
 		#Range: 0 ~ 4
@@ -281,6 +305,10 @@
 		#传送到指定坐标指令所需的权限等级。
 		#Range: 0 ~ 4
 		permissionTpCoordinate = 2
+		#The permission level required to use the 'Get the stage info' command.
+		#查询驿站指令所需的权限等级。
+		#Range: 0 ~ 4
+		permissionTpStageGet = 0
 
 #Cooldown Time
 #冷却时间
@@ -354,6 +382,9 @@
 	#The command to teleport to the bottom of current position.
 	#传送到底部的指令。
 	commandTpBottom = "tpb"
+	#This command is used to get the UUID of the player.
+	#获取玩家的UUID的指令。
+	commandUuid = "uuid"
 	#This command is used to teleport to the specified structure.
 	#传送到指定结构的指令。
 	commandTpStructure = "tpst"
@@ -363,6 +394,9 @@
 	#This command is used to teleport to the specified coordinates.
 	#传送到指定坐标的指令。
 	commandTpCoordinate = "tpx"
+	#This command is used to suicide or poisoning, narcissus are poisonous and should not be eaten.
+	#自杀或毒杀的指令，水仙是有毒的可不能食用哦。
+	commandFeed = "feed"
 	#The command to teleport to the end of the line of sight.
 	#This function is independent of the player's render distance setting.
 	#传送至视线尽头的指令。
@@ -383,6 +417,9 @@
 	#The command to teleport to the previous location.
 	#传送到上次传送点的指令。
 	commandTpBack = "back"
+	#The command to set virtual permission.
+	#设置虚拟权限的指令。
+	commandVirtualOp = "opv"
 	#The command to teleport to a random location.
 	#随机传送的指令。
 	commandTpRandom = "tpr"
@@ -430,6 +467,9 @@
 		#The command to set the stage.
 		#设置驿站的指令。
 		commandTpStageSet = "setstage"
+		#The command to get the stage info.
+		#查询驿站的信息的的指令。
+		commandTpStageGet = "getstage"
 		#The command to teleport to the stage.
 		#传送到驿站的指令。
 		commandTpStage = "stage"
@@ -443,6 +483,9 @@
 		#The command to set the home.
 		#设置家的指令。
 		commandTpHomeSet = "sethome"
+		#The command to get the home info.
+		#查询家的信息的指令。
+		commandTpHomeGet = "gethome"
 		#The command to teleport to the home.
 		#传送到家的指令。
 		commandTpHome = "home"
@@ -456,6 +499,9 @@
 	#Enable or disable the concise version of the 'Teleport to the specified structure' command.
 	#是否启用无前缀版本的 '传送到指定结构' 指令。
 	conciseTpStructure = true
+	#Enable or disable the concise version of the 'Get the dimension ID of the current world' command.
+	#是否启用无前缀版本的 '获取当前世界的维度ID' 指令。
+	conciseDimension = false
 	#Enable or disable the concise version of the 'Teleport to the top of current position' command.
 	#是否启用无前缀版本的 '传送到顶部' 指令。
 	conciseTpTop = false
@@ -470,6 +516,9 @@
 	#Enable or disable the concise version of the 'Teleport to the previous location' command.
 	#是否启用无前缀版本的 '传送到上次传送点' 指令。
 	conciseTpBack = true
+	#Enable or disable the concise version of the 'Set virtual permission' command.
+	#是否启用无前缀版本的 '设置虚拟权限' 指令。
+	conciseVirtualOp = false
 	#Enable or disable the concise version of the 'Teleport to the lower of current position' command.
 	#是否启用无前缀版本的 '传送到下方' 指令。
 	conciseTpDown = false
@@ -479,12 +528,18 @@
 	#Enable or disable the concise version of the 'Teleport to the spawn of the world' command.
 	#是否启用无前缀版本的 '传送到世界重生点' 指令。
 	conciseTpWorldSpawn = false
+	#Enable or disable the concise version of the 'Suicide or poisoning' command.
+	#是否启用无前缀版本的 '自杀或毒杀' 指令。
+	conciseFeed = false
 	#Enable or disable the concise version of the 'Teleport to a random location' command.
 	#是否启用无前缀版本的 '随机传送' 指令。
 	conciseTpRandom = false
 	#Enable or disable the concise version of the 'Teleport to the spawn of the player' command.
 	#是否启用无前缀版本的 '传送到玩家重生点' 指令。
 	conciseTpSpawn = true
+	#Enable or disable the concise version of the 'Get the UUID of the player' command.
+	#是否启用无前缀版本的 '获取玩家的UUID' 指令。
+	conciseUuid = false
 	#Enable or disable the concise version of the 'Teleport to the bottom of current position' command.
 	#是否启用无前缀版本的 '传送到底部' 指令。
 	conciseTpBottom = false
@@ -527,6 +582,9 @@
 		#Enable or disable the concise version of the 'Set the stage' command.
 		#是否启用无前缀版本的 '设置驿站' 指令。
 		conciseTpStageSet = false
+		#Enable or disable the concise version of the 'Get the stage info' command.
+		#是否启用无前缀版本的 '查询驿站' 指令。
+		conciseTpStageGet = false
 
 	#Teleport to the home
 	#传送到家
@@ -534,6 +592,9 @@
 		#Enable or disable the concise version of the 'Set the home' command.
 		#是否启用无前缀版本的 '设置家' 指令。
 		conciseTpHomeSet = false
+		#Enable or disable the concise version of the 'Get the home info' command.
+		#是否启用无前缀版本的 '查询家' 指令。
+		conciseTpHomeGet = false
 		#Enable or disable the concise version of the 'Teleport to the home' command.
 		#是否启用无前缀版本的 '传送到家' 指令。
 		conciseTpHome = true

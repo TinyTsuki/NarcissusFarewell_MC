@@ -18,6 +18,7 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import net.minecraft.nbt.JsonToNBT;
 import net.minecraft.network.datasync.DataParameter;
+import net.minecraft.network.play.server.SChatPacket;
 import net.minecraft.network.play.server.SCombatPacket;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.stats.Stats;
@@ -72,44 +73,86 @@ public class NarcissusUtils {
     }
 
     /**
-     * 判断传送类型是否开启
+     * 判断指令类型是否开启
      *
-     * @param type 传送类型
+     * @param type 指令类型
      */
-    public static boolean isTeleportEnabled(ETeleportType type) {
+    public static boolean isCommandEnabled(ECommandType type) {
         switch (type) {
+            case FEED:
+            case FEED_OTHER:
+            case FEED_CONCISE:
+            case FEED_OTHER_CONCISE:
+                return ServerConfig.SWITCH_FEED.get();
             case TP_COORDINATE:
+            case TP_COORDINATE_CONCISE:
                 return ServerConfig.SWITCH_TP_COORDINATE.get();
             case TP_STRUCTURE:
+            case TP_STRUCTURE_CONCISE:
                 return ServerConfig.SWITCH_TP_STRUCTURE.get();
             case TP_ASK:
+            case TP_ASK_YES:
+            case TP_ASK_NO:
+            case TP_ASK_CONCISE:
+            case TP_ASK_YES_CONCISE:
+            case TP_ASK_NO_CONCISE:
                 return ServerConfig.SWITCH_TP_ASK.get();
             case TP_HERE:
+            case TP_HERE_YES:
+            case TP_HERE_NO:
+            case TP_HERE_CONCISE:
+            case TP_HERE_YES_CONCISE:
+            case TP_HERE_NO_CONCISE:
                 return ServerConfig.SWITCH_TP_HERE.get();
             case TP_RANDOM:
+            case TP_RANDOM_CONCISE:
                 return ServerConfig.SWITCH_TP_RANDOM.get();
             case TP_SPAWN:
+            case TP_SPAWN_OTHER:
+            case TP_SPAWN_CONCISE:
+            case TP_SPAWN_OTHER_CONCISE:
                 return ServerConfig.SWITCH_TP_SPAWN.get();
             case TP_WORLD_SPAWN:
+            case TP_WORLD_SPAWN_CONCISE:
                 return ServerConfig.SWITCH_TP_WORLD_SPAWN.get();
             case TP_TOP:
+            case TP_TOP_CONCISE:
                 return ServerConfig.SWITCH_TP_TOP.get();
             case TP_BOTTOM:
+            case TP_BOTTOM_CONCISE:
                 return ServerConfig.SWITCH_TP_BOTTOM.get();
             case TP_UP:
+            case TP_UP_CONCISE:
                 return ServerConfig.SWITCH_TP_UP.get();
             case TP_DOWN:
+            case TP_DOWN_CONCISE:
                 return ServerConfig.SWITCH_TP_DOWN.get();
             case TP_VIEW:
+            case TP_VIEW_CONCISE:
                 return ServerConfig.SWITCH_TP_VIEW.get();
             case TP_HOME:
+            case SET_HOME:
+            case DEL_HOME:
+            case GET_HOME:
+            case TP_HOME_CONCISE:
+            case SET_HOME_CONCISE:
+            case DEL_HOME_CONCISE:
+            case GET_HOME_CONCISE:
                 return ServerConfig.SWITCH_TP_HOME.get();
             case TP_STAGE:
+            case SET_STAGE:
+            case DEL_STAGE:
+            case GET_STAGE:
+            case TP_STAGE_CONCISE:
+            case SET_STAGE_CONCISE:
+            case DEL_STAGE_CONCISE:
+            case GET_STAGE_CONCISE:
                 return ServerConfig.SWITCH_TP_STAGE.get();
             case TP_BACK:
+            case TP_BACK_CONCISE:
                 return ServerConfig.SWITCH_TP_BACK.get();
             default:
-                return false;
+                return true;
         }
     }
 
@@ -693,15 +736,16 @@ public class NarcissusUtils {
         int chunkX = (int) coordinate.getX() >> 4;
         int chunkZ = (int) coordinate.getZ() >> 4;
 
-        // 搜索安全位置，限制在目标区块内
         return searchForSafeCoordinateInChunk(world, coordinate, chunkX, chunkZ, belowAllowAir);
     }
 
     private static Coordinate searchForSafeCoordinateInChunk(World world, Coordinate coordinate, int chunkX, int chunkZ, boolean belowAllowAir) {
-        int chunkMinX = chunkX << 4;
-        int chunkMinZ = chunkZ << 4;
-        int chunkMaxX = chunkMinX + 15;
-        int chunkMaxZ = chunkMinZ + 15;
+        // 搜索安全位置，限制在目标范围区块内
+        int offset = (ServerConfig.SAFE_CHUNK_RANGE.get() - 1) * 16;
+        int chunkMinX = (chunkX << 4) - offset;
+        int chunkMinZ = (chunkZ << 4) - offset;
+        int chunkMaxX = chunkMinX + 15 + offset;
+        int chunkMaxZ = chunkMinZ + 15 + offset;
 
         // FIXME 1.18及之后版本range应该为(-64, world.getHeight())
         List<Integer> yList;
@@ -1032,49 +1076,75 @@ public class NarcissusUtils {
             ServerWorld level = server.getLevel(after.getDimension());
             if (level != null) {
                 if (after.isSafe()) {
-                    after = findSafeCoordinate(after, false);
-                    // 判断是否需要在脚下放置方块
-                    if (ServerConfig.SETBLOCK_WHEN_SAFE_NOT_FOUND.get() && !isSafeCoordinate(level, after)) {
-                        BlockState blockState = null;
-                        List<ItemStack> playerItemList = getPlayerItemList(player);
-                        if (CollectionUtils.isNotNullOrEmpty(SAFE_BLOCKS)) {
-                            if (ServerConfig.GETBLOCK_FROM_INVENTORY.get()) {
-                                blockState = SAFE_BLOCKS.stream()
-                                        .filter(block -> playerItemList.stream().map(ItemStack::getItem).anyMatch(item -> new ItemStack(block.getBlock()).getItem().equals(item)))
-                                        .findFirst().orElse(null);
-                            } else {
-                                blockState = SAFE_BLOCKS.get(0);
-                            }
-                        }
-                        if (blockState != null) {
-                            Coordinate airCoordinate = findSafeCoordinate(after, true);
-                            if (!airCoordinate.toXyzString().equals(after.toXyzString())) {
-                                after = airCoordinate;
-                                Item blockItem = new ItemStack(blockState.getBlock()).getItem();
-                                Item remove = playerItemList.stream().map(ItemStack::getItem).filter(blockItem::equals).findFirst().orElse(null);
-                                if (remove != null) {
-                                    ItemStack itemStack = new ItemStack(remove);
-                                    itemStack.setCount(1);
-                                    if (removeItemFromPlayerInventory(player, itemStack)) {
-                                        level.setBlockAndUpdate(airCoordinate.toBlockPos().below(), blockState.getBlock().defaultBlockState());
-                                    }
+                    // 异步的代价就是粪吗
+                    player.connection.send(new SChatPacket(Component.translatable(NarcissusUtils.getPlayerLanguage(player), EI18nType.MESSAGE, "safe_searching").toTextComponent(), ChatType.GAME_INFO, player.getUUID()));
+                    new Thread(() -> {
+                        Coordinate finalAfter = after.clone();
+                        finalAfter = findSafeCoordinate(finalAfter, false);
+                        Runnable runnable;
+                        // 判断是否需要在脚下放置方块
+                        if (ServerConfig.SETBLOCK_WHEN_SAFE_NOT_FOUND.get() && !isSafeCoordinate(level, finalAfter)) {
+                            BlockState blockState;
+                            List<ItemStack> playerItemList = getPlayerItemList(player);
+                            if (CollectionUtils.isNotNullOrEmpty(SAFE_BLOCKS)) {
+                                if (ServerConfig.GETBLOCK_FROM_INVENTORY.get()) {
+                                    blockState = SAFE_BLOCKS.stream()
+                                            .filter(block -> playerItemList.stream().map(ItemStack::getItem).anyMatch(item -> new ItemStack(block.getBlock()).getItem().equals(item)))
+                                            .findFirst().orElse(null);
+                                } else {
+                                    blockState = SAFE_BLOCKS.get(0);
                                 }
+                            } else {
+                                blockState = null;
                             }
+                            if (blockState != null) {
+                                Coordinate airCoordinate = findSafeCoordinate(finalAfter, true);
+                                if (!airCoordinate.toXyzString().equals(finalAfter.toXyzString())) {
+                                    finalAfter = airCoordinate;
+                                    runnable = () -> {
+                                        Item blockItem = new ItemStack(blockState.getBlock()).getItem();
+                                        Item remove = playerItemList.stream().map(ItemStack::getItem).filter(blockItem::equals).findFirst().orElse(null);
+                                        if (remove != null) {
+                                            ItemStack itemStack = new ItemStack(remove);
+                                            itemStack.setCount(1);
+                                            if (removeItemFromPlayerInventory(player, itemStack)) {
+                                                level.setBlockAndUpdate(airCoordinate.toBlockPos().below(), blockState.getBlock().defaultBlockState());
+                                            }
+                                        }
+                                    };
+                                } else {
+                                    runnable = null;
+                                }
+                            } else {
+                                runnable = null;
+                            }
+                        } else {
+                            runnable = null;
                         }
-                    }
+                        Coordinate finalAfter1 = finalAfter;
+                        player.server.submit(() -> {
+                            if (runnable != null) runnable.run();
+                            doTeleport(player, finalAfter1, type, before, level);
+                        });
+                    }).start();
+                } else {
+                    doTeleport(player, after, type, before, level);
                 }
-                after.setY(Math.floor(after.getY()) + 0.1);
-                player.teleportTo(level, after.getX(), after.getY(), after.getZ()
-                        , after.getYaw() == 0 ? player.yRot : (float) after.getYaw()
-                        , after.getPitch() == 0 ? player.xRot : (float) after.getPitch());
-                TeleportRecord record = new TeleportRecord();
-                record.setTeleportTime(new Date());
-                record.setTeleportType(type);
-                record.setBefore(before);
-                record.setAfter(after);
-                PlayerTeleportDataCapability.getData(player).addTeleportRecords(record);
             }
         }
+    }
+
+    private static void doTeleport(@NonNull ServerPlayerEntity player, @NonNull Coordinate after, ETeleportType type, Coordinate before, ServerWorld level) {
+        after.setY(Math.floor(after.getY()) + 0.1);
+        player.teleportTo(level, after.getX(), after.getY(), after.getZ()
+                , after.getYaw() == 0 ? player.yRot : (float) after.getYaw()
+                , after.getPitch() == 0 ? player.xRot : (float) after.getPitch());
+        TeleportRecord record = new TeleportRecord();
+        record.setTeleportTime(new Date());
+        record.setTeleportType(type);
+        record.setBefore(before);
+        record.setAfter(after);
+        PlayerTeleportDataCapability.getData(player).addTeleportRecords(record);
     }
 
     // endregion 传送相关
@@ -1238,6 +1308,27 @@ public class NarcissusUtils {
      */
     public static void sendTranslatableMessage(ServerPlayerEntity player, String key, Object... args) {
         player.sendMessage(Component.translatable(key, args).setLanguageCode(NarcissusUtils.getPlayerLanguage(player)).toChatComponent(), player.getUUID());
+    }
+
+    /**
+     * 发送翻译消息
+     *
+     * @param source  指令来源
+     * @param success 是否成功
+     * @param key     翻译键
+     * @param args    参数
+     */
+    public static void sendTranslatableMessage(CommandSource source, boolean success, String key, Object... args) {
+        if (source.getEntity() != null && source.getEntity() instanceof ServerPlayerEntity) {
+            try {
+                sendTranslatableMessage(source.getPlayerOrException(), key, args);
+            } catch (CommandSyntaxException ignored) {
+            }
+        } else if (success) {
+            source.sendSuccess(Component.translatable(key, args).setLanguageCode(NarcissusFarewell.DEFAULT_LANGUAGE).toChatComponent(), false);
+        } else {
+            source.sendFailure(Component.translatable(key, args).setLanguageCode(NarcissusFarewell.DEFAULT_LANGUAGE).toChatComponent());
+        }
     }
 
     // endregion 消息相关
