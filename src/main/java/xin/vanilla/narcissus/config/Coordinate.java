@@ -224,6 +224,18 @@ public class Coordinate implements Serializable, Cloneable {
         }
     }
 
+    public String toXString() {
+        return StringUtils.toFixedEx(x, 1);
+    }
+
+    public String toYString() {
+        return StringUtils.toFixedEx(y, 1);
+    }
+
+    public String toZString() {
+        return StringUtils.toFixedEx(z, 1);
+    }
+
     public String toXyzString() {
         return StringUtils.toFixedEx(x, 1) + ", " + StringUtils.toFixedEx(y, 1) + ", " + StringUtils.toFixedEx(z, 1);
     }

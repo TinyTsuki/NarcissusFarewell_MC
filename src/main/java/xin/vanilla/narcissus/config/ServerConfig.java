@@ -905,7 +905,7 @@ public class ServerConfig {
                             "Format: \"player UUID\":\"a comma-separated list of commands that the player can use\". ",
                             "虚拟权限列表，在这里可以直接指定某个玩家能够使用哪些mod内的指令，而不需要开启作弊模式或将他设置为OP。",
                             "格式：\"玩家UUID\":\"逗号分隔的能够使用的指令列表\"",
-                            "Example: {\\\"23a23a23-od0o-23aa-2333-0d0o0d0033aa\\\":[\\\"VIRTUAL_OP\\\",\\\"TP_BACK\\\",\\\"TP_HOME\\\",\\\"TP_STAGE\\\",\\\"TP_ASK\\\",\\\"TP_HERE\\\",\\\"TP_SPAWN\\\",\\\"TP_SPAWN_OTHER\\\",\\\"DIMENSION\\\",\\\"TP_COORDINATE\\\",\\\"TP_STRUCTURE\\\",\\\"TP_TOP\\\",\\\"TP_DOWN\\\",\\\"TP_RANDOM\\\",\\\"FEED\\\",\\\"FEED_OTHER\\\",\\\"SET_STAGE\\\",\\\"DEL_STAGE\\\"]}。")
+                            "Example: opList = \"{\\\"23a23a23-od0o-23aa-2333-0d0o0d0033aa\\\":[\\\"VIRTUAL_OP\\\",\\\"TP_BACK\\\",\\\"TP_HOME\\\",\\\"TP_STAGE\\\",\\\"TP_ASK\\\",\\\"TP_HERE\\\",\\\"TP_SPAWN\\\",\\\"TP_SPAWN_OTHER\\\",\\\"DIMENSION\\\",\\\"TP_COORDINATE\\\",\\\"TP_STRUCTURE\\\",\\\"TP_TOP\\\",\\\"TP_DOWN\\\",\\\"TP_RANDOM\\\",\\\"FEED\\\",\\\"FEED_OTHER\\\",\\\"SET_STAGE\\\",\\\"DEL_STAGE\\\"]}\"")
                     .define("opList", "");
 
             // 帮助指令信息头部内容
