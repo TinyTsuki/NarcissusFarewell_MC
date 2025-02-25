@@ -375,7 +375,7 @@ public class NarcissusUtils {
 
     public static Coordinate findBottomCandidate(ServerLevel world, Coordinate start) {
         if (start.getY() <= 0) return null;
-        for (int y : IntStream.range(0, (int) start.getY() - 1).boxed()
+        for (int y : IntStream.range(world.getMinBuildHeight(), (int) start.getY() - 1).boxed()
                 .sorted(Comparator.comparingInt(Integer::intValue))
                 .toList()) {
             Coordinate candidate = new Coordinate().setX(start.getX()).setY(y).setZ(start.getZ())
@@ -407,7 +407,7 @@ public class NarcissusUtils {
 
     public static Coordinate findDownCandidate(ServerLevel world, Coordinate start) {
         if (start.getY() <= 0) return null;
-        for (int y : IntStream.range(0, (int) start.getY() - 1).boxed()
+        for (int y : IntStream.range(world.getMinBuildHeight(), (int) start.getY() - 1).boxed()
                 .sorted(Comparator.comparingInt(a -> (int) start.getY() - a))
                 .toList()) {
             Coordinate candidate = new Coordinate().setX(start.getX()).setY(y).setZ(start.getZ())
@@ -499,8 +499,9 @@ public class NarcissusUtils {
         int chunkMinZ = (chunkZ << 4) - offset;
         int chunkMaxX = chunkMinX + 15 + offset;
         int chunkMaxZ = chunkMinZ + 15 + offset;
+        int minY = world.getMinBuildHeight();
+        int maxY = world.getMaxBuildHeight();
 
-        // FIXME 1.18及之后版本range应该为(-64, world.getHeight())
         List<Integer> yList;
         List<Integer> xList;
         List<Integer> zList;
@@ -521,7 +522,7 @@ public class NarcissusUtils {
             zList = new ArrayList<>() {{
                 add((int) coordinate.getZ());
             }};
-            yList = IntStream.range((int) coordinate.getY(), world.getHeight()).boxed()
+            yList = IntStream.range((int) coordinate.getY(), maxY).boxed()
                     .sorted(Comparator.comparingInt(a -> a - (int) coordinate.getY()))
                     .collect(Collectors.toList());
         } else if (coordinate.getSafeMode() == ESafeMode.Y_OFFSET_3) {
@@ -541,12 +542,12 @@ public class NarcissusUtils {
             zList = IntStream.range(chunkMinZ, chunkMaxZ).boxed()
                     .sorted(Comparator.comparingInt(a -> Math.abs(a - (int) coordinate.getZ())))
                     .toList();
-            yList = IntStream.range(0, world.getHeight()).boxed()
+            yList = IntStream.range(minY, maxY).boxed()
                     .sorted(Comparator.comparingInt(a -> Math.abs(a - (int) coordinate.getY())))
                     .collect(Collectors.toList());
         }
         for (int y : yList) {
-            if (coordinate.getSafeMode() == ESafeMode.NONE && y <= 0 || (y <= 0 || y > world.getHeight())) continue;
+            if (coordinate.getSafeMode() == ESafeMode.NONE && y <= minY || (y <= minY || y > maxY)) continue;
             for (int x : xList) {
                 for (int z : zList) {
                     Coordinate candidate = new Coordinate().setX(x + 0.5).setY(y + 0.15).setZ(z + 0.5)
