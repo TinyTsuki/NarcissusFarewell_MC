@@ -185,13 +185,13 @@ public class FarewellCommand {
             String input = context.getInput().substring(stringRange.getStart(), stringRange.getEnd());
             boolean isInputEmpty = StringUtils.isNullOrEmpty(input);
             // 具体结构(Recourse)
-            NarcissusFarewell.getServerInstance().registryAccess().registryOrThrow(Registries.STRUCTURE).keySet().stream()
+            NarcissusFarewell.getServerInstance().registryAccess().lookupOrThrow(Registries.STRUCTURE).keySet().stream()
                     .filter(location -> isInputEmpty || location.toString().contains(input))
                     .forEach(location -> builder.suggest(location.toString()));
             // 结构类型(Tag)
-            NarcissusFarewell.getServerInstance().registryAccess().registryOrThrow(Registries.STRUCTURE).getTagNames()
-                    .filter(tag -> isInputEmpty || tag.location().toString().contains(input))
-                    .forEach(tag -> builder.suggest(tag.location().toString()));
+            NarcissusFarewell.getServerInstance().registryAccess().lookupOrThrow(Registries.STRUCTURE).getTags()
+                    .filter(tag -> isInputEmpty || tag.key().location().toString().contains(input))
+                    .forEach(tag -> builder.suggest(tag.key().location().toString()));
             ForgeRegistries.BIOMES.getKeys().stream()
                     .filter(biome -> isInputEmpty || biome.toString().contains(input))
                     .forEach(biome -> builder.suggest(biome.toString()));

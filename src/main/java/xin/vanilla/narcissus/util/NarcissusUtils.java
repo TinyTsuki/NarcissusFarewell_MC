@@ -356,8 +356,8 @@ public class NarcissusUtils {
     }
 
     public static Coordinate findTopCandidate(ServerLevel world, Coordinate start) {
-        if (start.getY() >= world.getMaxBuildHeight()) return null;
-        for (int y : IntStream.range((int) start.getY() + 1, world.getMaxBuildHeight()).boxed()
+        if (start.getY() >= world.getMaxY()) return null;
+        for (int y : IntStream.range((int) start.getY() + 1, world.getMaxY()).boxed()
                 .sorted(Comparator.comparingInt(Integer::intValue).reversed())
                 .toList()) {
             Coordinate candidate = new Coordinate().setX(start.getX()).setY(y).setZ(start.getZ())
@@ -388,8 +388,8 @@ public class NarcissusUtils {
     }
 
     public static Coordinate findUpCandidate(ServerLevel world, Coordinate start) {
-        if (start.getY() >= world.getMaxBuildHeight()) return null;
-        for (int y : IntStream.range((int) start.getY() + 1, world.getMaxBuildHeight()).boxed()
+        if (start.getY() >= world.getMaxY()) return null;
+        for (int y : IntStream.range((int) start.getY() + 1, world.getMaxY()).boxed()
                 .sorted(Comparator.comparingInt(a -> a - (int) start.getY()))
                 .toList()) {
             Coordinate candidate = new Coordinate().setX(start.getX()).setY(y).setZ(start.getZ())
@@ -498,8 +498,8 @@ public class NarcissusUtils {
         int chunkMinZ = (chunkZ << 4) - offset;
         int chunkMaxX = chunkMinX + 15 + offset;
         int chunkMaxZ = chunkMinZ + 15 + offset;
+        int minY = world.getMinY();
 
-        // FIXME 1.18及之后版本range应该为(-64, world.getHeight())
         List<Integer> yList;
         List<Integer> xList;
         List<Integer> zList;
@@ -520,7 +520,7 @@ public class NarcissusUtils {
             zList = new ArrayList<>() {{
                 add((int) coordinate.getZ());
             }};
-            yList = IntStream.range((int) coordinate.getY(), world.getHeight()).boxed()
+            yList = IntStream.range((int) coordinate.getY(), world.getMaxY()).boxed()
                     .sorted(Comparator.comparingInt(a -> a - (int) coordinate.getY()))
                     .collect(Collectors.toList());
         } else if (coordinate.getSafeMode() == ESafeMode.Y_OFFSET_3) {
@@ -540,12 +540,12 @@ public class NarcissusUtils {
             zList = IntStream.range(chunkMinZ, chunkMaxZ).boxed()
                     .sorted(Comparator.comparingInt(a -> Math.abs(a - (int) coordinate.getZ())))
                     .toList();
-            yList = IntStream.range(0, world.getHeight()).boxed()
+            yList = IntStream.range(minY, world.getMaxY()).boxed()
                     .sorted(Comparator.comparingInt(a -> Math.abs(a - (int) coordinate.getY())))
                     .collect(Collectors.toList());
         }
         for (int y : yList) {
-            if (coordinate.getSafeMode() == ESafeMode.NONE && y <= 0 || (y <= 0 || y > world.getHeight())) continue;
+            if (coordinate.getSafeMode() == ESafeMode.NONE && y <= minY || (y <= minY || y > world.getMaxY())) continue;
             for (int x : xList) {
                 for (int z : zList) {
                     Coordinate candidate = new Coordinate().setX(x + 0.5).setY(y + 0.15).setZ(z + 0.5)
@@ -648,7 +648,7 @@ public class NarcissusUtils {
 
     public static ResourceKey<Structure> getStructure(ResourceLocation id) {
         Map.Entry<ResourceKey<Structure>, Structure> mapEntry = NarcissusFarewell.getServerInstance().registryAccess()
-                .registryOrThrow(Registries.STRUCTURE).entrySet().stream()
+                .lookupOrThrow(Registries.STRUCTURE).entrySet().stream()
                 .filter(entry -> entry.getKey().location().equals(id))
                 .findFirst().orElse(null);
         return mapEntry != null ? mapEntry.getKey() : null;
@@ -660,8 +660,9 @@ public class NarcissusUtils {
 
     public static TagKey<Structure> getStructureTag(ResourceLocation id) {
         return NarcissusFarewell.getServerInstance().registryAccess()
-                .registryOrThrow(Registries.STRUCTURE).getTagNames()
-                .filter(tag -> tag.location().equals(id))
+                .lookupOrThrow(Registries.STRUCTURE).getTags()
+                .filter(tag -> tag.key().location().equals(id))
+                .map(HolderSet.Named::key)
                 .findFirst().orElse(null);
     }
 
@@ -674,9 +675,9 @@ public class NarcissusUtils {
      * @param radius 搜索半径
      */
     public static Coordinate findNearestStruct(ServerLevel world, Coordinate start, ResourceKey<Structure> struct, int radius) {
-        Registry<Structure> registry = world.registryAccess().registryOrThrow(Registries.STRUCTURE);
+        Registry<Structure> registry = world.registryAccess().lookupOrThrow(Registries.STRUCTURE);
         Either<ResourceKey<Structure>, TagKey<Structure>> left = Either.left(struct);
-        HolderSet.ListBacked<Structure> holderSet = left.map((resourceKey) -> registry.getHolder(resourceKey).map(HolderSet::direct), registry::getTag).orElse(null);
+        HolderSet.ListBacked<Structure> holderSet = (HolderSet.ListBacked<Structure>) left.map((resourceKey) -> registry.get(resourceKey).map(HolderSet::direct).get(), registry::get);
         if (holderSet != null) {
             Pair<BlockPos, Holder<Structure>> pair = world.getChunkSource().getGenerator().findNearestMapStructure(world, holderSet, start.toBlockPos(), radius, true);
             if (pair != null) {
@@ -924,9 +925,9 @@ public class NarcissusUtils {
 
     private static void doTeleport(@NonNull ServerPlayer player, @NonNull Coordinate after, ETeleportType type, Coordinate before, ServerLevel level) {
         after.setY(Math.floor(after.getY()) + 0.1);
-        player.teleportTo(level, after.getX(), after.getY(), after.getZ()
+        player.teleportTo(level, after.getX(), after.getY(), after.getZ(), Set.of()
                 , after.getYaw() == 0 ? player.getYRot() : (float) after.getYaw()
-                , after.getPitch() == 0 ? player.getXRot() : (float) after.getPitch());
+                , after.getPitch() == 0 ? player.getXRot() : (float) after.getPitch(), true);
         TeleportRecord record = new TeleportRecord();
         record.setTeleportTime(new Date());
         record.setTeleportType(type);
@@ -1556,7 +1557,7 @@ public class NarcissusUtils {
             player.getEntityData().set((EntityDataAccessor<? super Float>) FieldUtils.getPrivateFieldValue(LivingEntity.class, null, FieldUtils.getEntityHealthFieldName()), 0f);
             player.connection.send(new ClientboundPlayerCombatKillPacket(player.getId(), CommonComponents.EMPTY));
             if (!player.isSpectator()) {
-                if (!player.level().getGameRules().getBoolean(GameRules.RULE_KEEPINVENTORY)) {
+                if (!player.serverLevel().getGameRules().getBoolean(GameRules.RULE_KEEPINVENTORY)) {
                     player.getInventory().dropAll();
                 }
             }
