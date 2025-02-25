@@ -12,7 +12,6 @@ import net.minecraftforge.event.RegisterCommandsEvent;
 import net.minecraftforge.event.server.ServerStartingEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.ModList;
-import net.minecraftforge.fml.ModLoadingContext;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.config.ModConfig;
 import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
@@ -75,7 +74,8 @@ public class NarcissusFarewell {
     @Getter
     private static final Map<String, TeleportRequest> teleportRequest = new ConcurrentHashMap<>();
 
-    public NarcissusFarewell() {
+    public NarcissusFarewell(FMLJavaModLoadingContext context) {
+        // IEventBus modEventBus = context.getModEventBus();
 
         // 注册网络通道
         ModNetworkHandler.registerPackets();
@@ -83,11 +83,11 @@ public class NarcissusFarewell {
         MinecraftForge.EVENT_BUS.addListener(this::onServerStarting);
 
         // 注册服务端配置
-        ModLoadingContext.get().registerConfig(ModConfig.Type.SERVER, ServerConfig.SERVER_CONFIG);
+        context.registerConfig(ModConfig.Type.SERVER, ServerConfig.SERVER_CONFIG);
 
         if (FMLEnvironment.dist == Dist.CLIENT) {
-            FMLJavaModLoadingContext.get().getModEventBus().addListener(ClientEventHandler::registerKeyMappings);
-            FMLJavaModLoadingContext.get().getModEventBus().addListener(this::onClientSetup);
+            context.getModEventBus().addListener(ClientEventHandler::registerKeyMappings);
+            context.getModEventBus().addListener(this::onClientSetup);
         }
 
         // 注册当前实例到MinecraftForge的事件总线，以便监听和处理游戏内的各种事件
