@@ -4,6 +4,7 @@ import lombok.NonNull;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraftforge.common.capabilities.AutoRegisterCapability;
 import net.minecraftforge.common.util.INBTSerializable;
 import xin.vanilla.narcissus.capability.TeleportRecord;
 import xin.vanilla.narcissus.config.Coordinate;
@@ -17,6 +18,7 @@ import java.util.Map;
 /**
  * 玩家传送数据
  */
+@AutoRegisterCapability
 public interface IPlayerTeleportData extends INBTSerializable<CompoundTag> {
     // TIPS 加完属性记得去 PlayerTeleportDataStorage 里注册
 

@@ -112,7 +112,7 @@ public class ClientForgeEventHandler {
         if (event.getObject() instanceof Player) {
             // 为玩家实体附加一个名为 "player_teleport_data" 的能力
             // 这个能力由 PlayerTeleportDataProvider 提供，用于管理玩家的传送数据
-            event.addCapability(new ResourceLocation(NarcissusFarewell.MODID, "player_teleport_data"), new PlayerTeleportDataProvider());
+            event.addCapability( ResourceLocation.fromNamespaceAndPath(NarcissusFarewell.MODID, "player_teleport_data"), new PlayerTeleportDataProvider());
         }
     }
 

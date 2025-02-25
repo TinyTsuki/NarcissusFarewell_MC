@@ -1,6 +1,7 @@
 package xin.vanilla.narcissus.capability.player;
 
 import lombok.NonNull;
+import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.network.FriendlyByteBuf;
@@ -198,7 +199,7 @@ public class PlayerTeleportData implements IPlayerTeleportData {
     }
 
     @Override
-    public CompoundTag serializeNBT() {
+    public CompoundTag serializeNBT(HolderLookup.Provider registryAccess) {
         CompoundTag tag = new CompoundTag();
         tag.putString("lastCardTime", DateUtils.toDateTimeString(this.getLastCardTime()));
         tag.putString("lastTpTime", DateUtils.toDateTimeString(this.getLastTpTime()));
@@ -232,7 +233,7 @@ public class PlayerTeleportData implements IPlayerTeleportData {
     }
 
     @Override
-    public void deserializeNBT(CompoundTag nbt) {
+    public void deserializeNBT(HolderLookup.Provider registryAccess, CompoundTag nbt) {
         this.setLastCardTime(DateUtils.format(nbt.getString("lastCardTime")));
         this.setLastTpTime(DateUtils.format(nbt.getString("lastTpTime")));
         this.setTeleportCard(nbt.getInt("teleportCard"));

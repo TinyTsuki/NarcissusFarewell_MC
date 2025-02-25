@@ -1,6 +1,7 @@
 package xin.vanilla.narcissus.capability.player;
 
 import net.minecraft.core.Direction;
+import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.common.capabilities.ICapabilityProvider;
@@ -53,8 +54,8 @@ public class PlayerTeleportDataProvider implements ICapabilityProvider, INBTSeri
      * 该方法实现了玩家传送数据的序列化，返回的数据可以用于存储或传输
      */
     @Override
-    public CompoundTag serializeNBT() {
-        return this.getOrCreateCapability().serializeNBT();
+    public CompoundTag serializeNBT(HolderLookup.Provider registryAccess) {
+        return this.getOrCreateCapability().serializeNBT(registryAccess);
     }
 
     /**
@@ -65,7 +66,7 @@ public class PlayerTeleportDataProvider implements ICapabilityProvider, INBTSeri
      *            该方法实现了玩家传送数据的反序列化，从提供的NBT数据中恢复玩家传送信息
      */
     @Override
-    public void deserializeNBT(CompoundTag nbt) {
-        this.getOrCreateCapability().deserializeNBT(nbt);
+    public void deserializeNBT(HolderLookup.Provider registryAccess, CompoundTag nbt) {
+        this.getOrCreateCapability().deserializeNBT(registryAccess, nbt);
     }
 }
