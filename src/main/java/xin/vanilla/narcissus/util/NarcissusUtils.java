@@ -597,7 +597,7 @@ public class NarcissusUtils {
     }
 
     public static ResourceKey<Biome> getBiome(String id) {
-        return getBiome(ResourceLocation.parse(id));
+        return getBiome(new ResourceLocation(id));
     }
 
     public static ResourceKey<Biome> getBiome(@NonNull ResourceLocation id) {
@@ -642,7 +642,7 @@ public class NarcissusUtils {
     }
 
     public static ResourceKey<Structure> getStructure(String id) {
-        return getStructure(ResourceLocation.parse(id));
+        return getStructure(new ResourceLocation(id));
     }
 
     public static ResourceKey<Structure> getStructure(ResourceLocation id) {
@@ -654,7 +654,7 @@ public class NarcissusUtils {
     }
 
     public static TagKey<Structure> getStructureTag(String id) {
-        return getStructureTag(ResourceLocation.parse(id));
+        return getStructureTag(new ResourceLocation(id));
     }
 
     public static TagKey<Structure> getStructureTag(ResourceLocation id) {

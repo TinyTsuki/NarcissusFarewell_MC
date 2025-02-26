@@ -12,7 +12,7 @@ import xin.vanilla.narcissus.NarcissusFarewell;
 import xin.vanilla.narcissus.data.player.PlayerDataAttachment;
 
 public class ClientModLoadedNotice implements CustomPacketPayload {
-    public final static CustomPacketPayload.Type<ClientModLoadedNotice> TYPE = new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath(NarcissusFarewell.MODID, "client_mod_loaded"));
+    public final static CustomPacketPayload.Type<ClientModLoadedNotice> TYPE = new CustomPacketPayload.Type<>(new ResourceLocation(NarcissusFarewell.MODID, "client_mod_loaded"));
     public final static StreamCodec<ByteBuf, ClientModLoadedNotice> STREAM_CODEC = new StreamCodec<>() {
         public @NotNull ClientModLoadedNotice decode(@NotNull ByteBuf byteBuf) {
             return new ClientModLoadedNotice((new FriendlyByteBuf(byteBuf)));

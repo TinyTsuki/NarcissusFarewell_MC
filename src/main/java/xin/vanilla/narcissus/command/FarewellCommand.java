@@ -757,7 +757,7 @@ public class FarewellCommand {
             ResourceKey<Level> targetLevel = null;
             String name = null;
             try {
-                ResourceKey<Level> targetDimension = ResourceKey.create(Registries.DIMENSION, ResourceLocation.parse(StringArgumentType.getString(context, "dimension")));
+                ResourceKey<Level> targetDimension = ResourceKey.create(Registries.DIMENSION, new ResourceLocation(StringArgumentType.getString(context, "dimension")));
                 ServerLevel level = context.getSource().getServer().getLevel(targetDimension);
                 if (level != null) {
                     targetLevel = targetDimension;

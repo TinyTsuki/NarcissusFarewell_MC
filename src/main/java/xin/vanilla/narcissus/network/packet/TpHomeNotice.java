@@ -15,7 +15,7 @@ import xin.vanilla.narcissus.util.NarcissusUtils;
 import java.util.Objects;
 
 public class TpHomeNotice implements CustomPacketPayload {
-    public final static CustomPacketPayload.Type<TpHomeNotice> TYPE = new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath(NarcissusFarewell.MODID, "tp_home"));
+    public final static CustomPacketPayload.Type<TpHomeNotice> TYPE = new CustomPacketPayload.Type<>(new ResourceLocation(NarcissusFarewell.MODID, "tp_home"));
     public final static StreamCodec<ByteBuf, TpHomeNotice> STREAM_CODEC = new StreamCodec<>() {
         public @NotNull TpHomeNotice decode(@NotNull ByteBuf byteBuf) {
             return new TpHomeNotice((new FriendlyByteBuf(byteBuf)));

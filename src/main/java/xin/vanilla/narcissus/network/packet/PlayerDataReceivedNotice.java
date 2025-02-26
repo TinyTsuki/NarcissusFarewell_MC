@@ -11,7 +11,7 @@ import org.jetbrains.annotations.NotNull;
 import xin.vanilla.narcissus.NarcissusFarewell;
 
 public class PlayerDataReceivedNotice implements CustomPacketPayload {
-    public final static CustomPacketPayload.Type<PlayerDataReceivedNotice> TYPE = new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath(NarcissusFarewell.MODID, "player_data_received"));
+    public final static CustomPacketPayload.Type<PlayerDataReceivedNotice> TYPE = new CustomPacketPayload.Type<>(new ResourceLocation(NarcissusFarewell.MODID, "player_data_received"));
     public final static StreamCodec<ByteBuf, PlayerDataReceivedNotice> STREAM_CODEC = new StreamCodec<>() {
         public @NotNull PlayerDataReceivedNotice decode(@NotNull ByteBuf byteBuf) {
             return new PlayerDataReceivedNotice((new FriendlyByteBuf(byteBuf)));

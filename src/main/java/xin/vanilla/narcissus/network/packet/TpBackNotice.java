@@ -15,7 +15,7 @@ import xin.vanilla.narcissus.util.NarcissusUtils;
 import java.util.Objects;
 
 public class TpBackNotice implements CustomPacketPayload {
-    public final static CustomPacketPayload.Type<TpBackNotice> TYPE = new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath(NarcissusFarewell.MODID, "tp_back"));
+    public final static CustomPacketPayload.Type<TpBackNotice> TYPE = new CustomPacketPayload.Type<>(new ResourceLocation(NarcissusFarewell.MODID, "tp_back"));
     public final static StreamCodec<ByteBuf, TpBackNotice> STREAM_CODEC = new StreamCodec<>() {
         public @NotNull TpBackNotice decode(@NotNull ByteBuf byteBuf) {
             return new TpBackNotice((new FriendlyByteBuf(byteBuf)));

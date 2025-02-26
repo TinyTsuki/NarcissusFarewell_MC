@@ -20,7 +20,7 @@ import java.util.Comparator;
 import java.util.Objects;
 
 public class TpYesNotice implements CustomPacketPayload {
-    public final static CustomPacketPayload.Type<TpYesNotice> TYPE = new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath(NarcissusFarewell.MODID, "tp_yes"));
+    public final static CustomPacketPayload.Type<TpYesNotice> TYPE = new CustomPacketPayload.Type<>(new ResourceLocation(NarcissusFarewell.MODID, "tp_yes"));
     public final static StreamCodec<ByteBuf, TpYesNotice> STREAM_CODEC = new StreamCodec<>() {
         public @NotNull TpYesNotice decode(@NotNull ByteBuf byteBuf) {
             return new TpYesNotice((new FriendlyByteBuf(byteBuf)));
