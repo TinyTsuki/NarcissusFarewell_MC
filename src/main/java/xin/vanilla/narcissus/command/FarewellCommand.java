@@ -32,16 +32,15 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.levelgen.structure.Structure;
 import net.minecraft.world.phys.Vec3;
-import net.minecraftforge.registries.ForgeRegistries;
 import xin.vanilla.narcissus.NarcissusFarewell;
-import xin.vanilla.narcissus.capability.TeleportRecord;
-import xin.vanilla.narcissus.capability.player.IPlayerTeleportData;
-import xin.vanilla.narcissus.capability.player.PlayerTeleportDataCapability;
-import xin.vanilla.narcissus.capability.world.WorldStageData;
 import xin.vanilla.narcissus.config.Coordinate;
 import xin.vanilla.narcissus.config.KeyValue;
 import xin.vanilla.narcissus.config.ServerConfig;
 import xin.vanilla.narcissus.config.TeleportRequest;
+import xin.vanilla.narcissus.data.TeleportRecord;
+import xin.vanilla.narcissus.data.player.PlayerDataAttachment;
+import xin.vanilla.narcissus.data.player.PlayerTeleportData;
+import xin.vanilla.narcissus.data.world.WorldStageData;
 import xin.vanilla.narcissus.enums.*;
 import xin.vanilla.narcissus.util.Component;
 import xin.vanilla.narcissus.util.*;
@@ -185,22 +184,22 @@ public class FarewellCommand {
             String input = context.getInput().substring(stringRange.getStart(), stringRange.getEnd());
             boolean isInputEmpty = StringUtils.isNullOrEmpty(input);
             // 具体结构(Recourse)
-            NarcissusFarewell.getServerInstance().registryAccess().registryOrThrow(Registries.STRUCTURE).keySet().stream()
+            NarcissusFarewell.getServerInstance().registryAccess().lookupOrThrow(Registries.STRUCTURE).keySet().stream()
                     .filter(location -> isInputEmpty || location.toString().contains(input))
                     .forEach(location -> builder.suggest(location.toString()));
             // 结构类型(Tag)
-            NarcissusFarewell.getServerInstance().registryAccess().registryOrThrow(Registries.STRUCTURE).getTagNames()
-                    .filter(tag -> isInputEmpty || tag.location().toString().contains(input))
-                    .forEach(tag -> builder.suggest(tag.location().toString()));
-            ForgeRegistries.BIOMES.getKeys().stream()
-                    .filter(biome -> isInputEmpty || biome.toString().contains(input))
-                    .forEach(biome -> builder.suggest(biome.toString()));
+            NarcissusFarewell.getServerInstance().registryAccess().lookupOrThrow(Registries.STRUCTURE).getTags()
+                    .filter(tag -> isInputEmpty || tag.key().location().toString().contains(input))
+                    .forEach(tag -> builder.suggest(tag.key().location().toString()));
+            NarcissusFarewell.getServerInstance().registryAccess().lookupOrThrow(Registries.BIOME).getTags()
+                    .filter(biome -> isInputEmpty || biome.key().location().toString().contains(input))
+                    .forEach(biome -> builder.suggest(biome.key().location().toString()));
             return builder.buildFuture();
         };
 
         SuggestionProvider<CommandSourceStack> homeSuggestions = (context, builder) -> {
             ServerPlayer player = context.getSource().getPlayerOrException();
-            IPlayerTeleportData data = PlayerTeleportDataCapability.getData(player);
+            PlayerTeleportData data = PlayerDataAttachment.getData(player);
             for (KeyValue<String, String> key : data.getHomeCoordinate().keySet()) {
                 builder.suggest(key.getValue());
             }
@@ -355,12 +354,12 @@ public class FarewellCommand {
             player.displayClientMessage(Component.translatable(NarcissusUtils.getPlayerLanguage(player), EI18nType.MESSAGE, "tp_structure_searching").toTextComponent(), true);
             new Thread(() -> {
                 Coordinate coordinate;
-                if (biome != null) {
-                    coordinate = NarcissusUtils.findNearestBiome(Objects.requireNonNull(NarcissusFarewell.getServerInstance().getLevel(finalTargetLevel)), new Coordinate(player).setDimension(finalTargetLevel), biome, finalRange, 8);
-                } else if (structure != null) {
+                if (structure != null) {
                     coordinate = NarcissusUtils.findNearestStruct(Objects.requireNonNull(NarcissusFarewell.getServerInstance().getLevel(finalTargetLevel)), new Coordinate(player).setDimension(finalTargetLevel), structure, finalRange);
-                } else {
+                } else if (structureTag != null) {
                     coordinate = NarcissusUtils.findNearestStruct(Objects.requireNonNull(NarcissusFarewell.getServerInstance().getLevel(finalTargetLevel)), new Coordinate(player).setDimension(finalTargetLevel), structureTag, finalRange);
+                } else {
+                    coordinate = NarcissusUtils.findNearestBiome(Objects.requireNonNull(NarcissusFarewell.getServerInstance().getLevel(finalTargetLevel)), new Coordinate(player).setDimension(finalTargetLevel), biome, finalRange, 8);
                 }
                 if (coordinate == null) {
                     NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EI18nType.MESSAGE, "structure_biome_not_found_in_range"), structId);
@@ -757,7 +756,7 @@ public class FarewellCommand {
             ResourceKey<Level> targetLevel = null;
             String name = null;
             try {
-                ResourceKey<Level> targetDimension = ResourceKey.create(Registries.DIMENSION, new ResourceLocation(StringArgumentType.getString(context, "dimension")));
+                ResourceKey<Level> targetDimension = ResourceKey.create(Registries.DIMENSION, ResourceLocation.parse(StringArgumentType.getString(context, "dimension")));
                 ServerLevel level = context.getSource().getServer().getLevel(targetDimension);
                 if (level != null) {
                     targetLevel = targetDimension;
@@ -796,7 +795,7 @@ public class FarewellCommand {
             // 传送功能前置校验
             if (checkTeleportPre(context.getSource(), ECommandType.SET_HOME)) return 0;
             // 判断设置数量是否超过限制
-            IPlayerTeleportData data = PlayerTeleportDataCapability.getData(player);
+            PlayerTeleportData data = PlayerDataAttachment.getData(player);
             if (data.getHomeCoordinate().size() >= ServerConfig.TELEPORT_HOME_LIMIT.get()) {
                 NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EI18nType.MESSAGE, "home_limit"), ServerConfig.TELEPORT_HOME_LIMIT.get());
                 return 0;
@@ -835,7 +834,7 @@ public class FarewellCommand {
             ServerPlayer player = context.getSource().getPlayerOrException();
             // 传送功能前置校验
             if (checkTeleportPre(context.getSource(), ECommandType.DEL_HOME)) return 0;
-            IPlayerTeleportData data = PlayerTeleportDataCapability.getData(player);
+            PlayerTeleportData data = PlayerDataAttachment.getData(player);
             String name = StringArgumentType.getString(context, "name");
             ResourceKey<Level> targetLevel = DimensionArgument.getDimension(context, "dimension").dimension();
             String dimension = targetLevel.location().toString();
@@ -859,7 +858,7 @@ public class FarewellCommand {
             // 传送功能前置校验
             if (checkTeleportPre(context.getSource(), ECommandType.GET_HOME)) return 0;
             Component component;
-            IPlayerTeleportData data = PlayerTeleportDataCapability.getData(player);
+            PlayerTeleportData data = PlayerDataAttachment.getData(player);
             String language = NarcissusUtils.getPlayerLanguage(player);
             if (data.getHomeCoordinate().isEmpty()) {
                 component = Component.translatable(language, EI18nType.MESSAGE, "home_is_empty");
@@ -1834,8 +1833,7 @@ public class FarewellCommand {
             return true;
         }
         // 判断是否有冷却时间
-        if (source.getEntity() != null && source.getEntity() instanceof ServerPlayer) {
-            ServerPlayer player = (ServerPlayer) source.getEntity();
+        if (source.getEntity() != null && source.getEntity() instanceof ServerPlayer player) {
             ETeleportType type = teleportType.toTeleportType();
             if (type != null) {
                 int teleportCoolDown = NarcissusUtils.getTeleportCoolDown(player, type);

@@ -38,19 +38,18 @@ import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.levelgen.structure.Structure;
 import net.minecraft.world.phys.Vec3;
-import net.minecraftforge.fml.ModContainer;
-import net.minecraftforge.fml.ModList;
-import net.minecraftforge.forgespi.language.IModInfo;
-import net.minecraftforge.registries.ForgeRegistries;
+import net.neoforged.fml.ModContainer;
+import net.neoforged.fml.ModList;
+import net.neoforged.neoforgespi.language.IModInfo;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.maven.artifact.versioning.ArtifactVersion;
 import xin.vanilla.narcissus.NarcissusFarewell;
-import xin.vanilla.narcissus.capability.TeleportRecord;
-import xin.vanilla.narcissus.capability.player.IPlayerTeleportData;
-import xin.vanilla.narcissus.capability.player.PlayerTeleportDataCapability;
-import xin.vanilla.narcissus.capability.world.WorldStageData;
 import xin.vanilla.narcissus.config.*;
+import xin.vanilla.narcissus.data.TeleportRecord;
+import xin.vanilla.narcissus.data.player.PlayerDataAttachment;
+import xin.vanilla.narcissus.data.player.PlayerTeleportData;
+import xin.vanilla.narcissus.data.world.WorldStageData;
 import xin.vanilla.narcissus.enums.*;
 
 import javax.annotation.Nullable;
@@ -356,8 +355,8 @@ public class NarcissusUtils {
     }
 
     public static Coordinate findTopCandidate(ServerLevel world, Coordinate start) {
-        if (start.getY() >= world.getMaxBuildHeight()) return null;
-        for (int y : IntStream.range((int) start.getY() + 1, world.getMaxBuildHeight()).boxed()
+        if (start.getY() >= world.getMaxY()) return null;
+        for (int y : IntStream.range((int) start.getY() + 1, world.getMaxY()).boxed()
                 .sorted(Comparator.comparingInt(Integer::intValue).reversed())
                 .toList()) {
             Coordinate candidate = new Coordinate().setX(start.getX()).setY(y).setZ(start.getZ())
@@ -373,7 +372,7 @@ public class NarcissusUtils {
 
     public static Coordinate findBottomCandidate(ServerLevel world, Coordinate start) {
         if (start.getY() <= 0) return null;
-        for (int y : IntStream.range(world.getMinBuildHeight(), (int) start.getY() - 1).boxed()
+        for (int y : IntStream.range(world.getMaxY(), (int) start.getY() - 1).boxed()
                 .sorted(Comparator.comparingInt(Integer::intValue))
                 .toList()) {
             Coordinate candidate = new Coordinate().setX(start.getX()).setY(y).setZ(start.getZ())
@@ -388,8 +387,8 @@ public class NarcissusUtils {
     }
 
     public static Coordinate findUpCandidate(ServerLevel world, Coordinate start) {
-        if (start.getY() >= world.getMaxBuildHeight()) return null;
-        for (int y : IntStream.range((int) start.getY() + 1, world.getMaxBuildHeight()).boxed()
+        if (start.getY() >= world.getMaxY()) return null;
+        for (int y : IntStream.range((int) start.getY() + 1, world.getMaxY()).boxed()
                 .sorted(Comparator.comparingInt(a -> a - (int) start.getY()))
                 .toList()) {
             Coordinate candidate = new Coordinate().setX(start.getX()).setY(y).setZ(start.getZ())
@@ -405,7 +404,7 @@ public class NarcissusUtils {
 
     public static Coordinate findDownCandidate(ServerLevel world, Coordinate start) {
         if (start.getY() <= 0) return null;
-        for (int y : IntStream.range(world.getMinBuildHeight(), (int) start.getY() - 1).boxed()
+        for (int y : IntStream.range(world.getMaxY(), (int) start.getY() - 1).boxed()
                 .sorted(Comparator.comparingInt(a -> (int) start.getY() - a))
                 .toList()) {
             Coordinate candidate = new Coordinate().setX(start.getX()).setY(y).setZ(start.getZ())
@@ -498,8 +497,8 @@ public class NarcissusUtils {
         int chunkMinZ = (chunkZ << 4) - offset;
         int chunkMaxX = chunkMinX + 15 + offset;
         int chunkMaxZ = chunkMinZ + 15 + offset;
-        int minY = world.getMinBuildHeight();
-        int maxY = world.getMaxBuildHeight();
+        int minY = world.getMinY();
+        int maxY = world.getMaxY();
 
         List<Integer> yList;
         List<Integer> xList;
@@ -598,13 +597,12 @@ public class NarcissusUtils {
     }
 
     public static ResourceKey<Biome> getBiome(String id) {
-        return getBiome(new ResourceLocation(id));
+        return getBiome(ResourceLocation.parse(id));
     }
 
     public static ResourceKey<Biome> getBiome(@NonNull ResourceLocation id) {
-        // FIXME 应该有更好的判断方法
-        ResourceKey<Biome> key = ResourceKey.create(ForgeRegistries.Keys.BIOMES, id);
-        return ForgeRegistries.BIOMES.getKeys().stream().anyMatch(id::equals) ? key : null;
+        ResourceKey<Biome> key = ResourceKey.create(Registries.BIOME, id);
+        return key.isFor(Registries.BIOME) ? key : null;
     }
 
     /**
@@ -644,25 +642,26 @@ public class NarcissusUtils {
     }
 
     public static ResourceKey<Structure> getStructure(String id) {
-        return getStructure(new ResourceLocation(id));
+        return getStructure(ResourceLocation.parse(id));
     }
 
     public static ResourceKey<Structure> getStructure(ResourceLocation id) {
         Map.Entry<ResourceKey<Structure>, Structure> mapEntry = NarcissusFarewell.getServerInstance().registryAccess()
-                .registryOrThrow(Registries.STRUCTURE).entrySet().stream()
+                .lookupOrThrow(Registries.STRUCTURE).entrySet().stream()
                 .filter(entry -> entry.getKey().location().equals(id))
                 .findFirst().orElse(null);
         return mapEntry != null ? mapEntry.getKey() : null;
     }
 
     public static TagKey<Structure> getStructureTag(String id) {
-        return getStructureTag(new ResourceLocation(id));
+        return getStructureTag(ResourceLocation.parse(id));
     }
 
     public static TagKey<Structure> getStructureTag(ResourceLocation id) {
         return NarcissusFarewell.getServerInstance().registryAccess()
-                .registryOrThrow(Registries.STRUCTURE).getTagNames()
-                .filter(tag -> tag.location().equals(id))
+                .lookupOrThrow(Registries.STRUCTURE).getTags()
+                .filter(tag -> tag.key().location().equals(id))
+                .map(HolderSet.Named::key)
                 .findFirst().orElse(null);
     }
 
@@ -675,9 +674,9 @@ public class NarcissusUtils {
      * @param radius 搜索半径
      */
     public static Coordinate findNearestStruct(ServerLevel world, Coordinate start, ResourceKey<Structure> struct, int radius) {
-        Registry<Structure> registry = world.registryAccess().registryOrThrow(Registries.STRUCTURE);
+        Registry<Structure> registry = world.registryAccess().lookupOrThrow(Registries.STRUCTURE);
         Either<ResourceKey<Structure>, TagKey<Structure>> left = Either.left(struct);
-        HolderSet.ListBacked<Structure> holderSet = left.map((resourceKey) -> registry.getHolder(resourceKey).map(HolderSet::direct), registry::getTag).orElse(null);
+        HolderSet.ListBacked<Structure> holderSet = (HolderSet.ListBacked<Structure>) left.map((resourceKey) -> registry.get(resourceKey).map(HolderSet::direct).get(), registry::get);
         if (holderSet != null) {
             Pair<BlockPos, Holder<Structure>> pair = world.getChunkSource().getGenerator().findNearestMapStructure(world, holderSet, start.toBlockPos(), radius, true);
             if (pair != null) {
@@ -707,7 +706,7 @@ public class NarcissusUtils {
     }
 
     public static KeyValue<String, String> getPlayerHomeKey(ServerPlayer player, ResourceKey<Level> dimension, String name) {
-        IPlayerTeleportData data = PlayerTeleportDataCapability.getData(player);
+        PlayerTeleportData data = PlayerDataAttachment.getData(player);
         Map<String, String> defaultHome = data.getDefaultHome();
         if (defaultHome.isEmpty() && dimension == null && StringUtils.isNullOrEmpty(name) && data.getHomeCoordinate().size() != 1) {
             return null;
@@ -722,7 +721,7 @@ public class NarcissusUtils {
             } else if (defaultHome.containsValue(name)) {
                 List<Map.Entry<String, String>> entryList = defaultHome.entrySet().stream().filter(entry -> entry.getValue().equals(name)).toList();
                 if (entryList.size() == 1) {
-                    keyValue = new KeyValue<>(entryList.get(0).getKey(), entryList.get(0).getValue());
+                    keyValue = new KeyValue<>(entryList.getFirst().getKey(), entryList.getFirst().getValue());
                 }
             }
         } else if (dimension != null && StringUtils.isNullOrEmpty(name)) {
@@ -757,7 +756,7 @@ public class NarcissusUtils {
      * @param name      名称
      */
     public static Coordinate getPlayerHome(ServerPlayer player, ResourceKey<Level> dimension, String name) {
-        return PlayerTeleportDataCapability.getData(player).getHomeCoordinate().getOrDefault(getPlayerHomeKey(player, dimension, name), null);
+        return PlayerDataAttachment.getData(player).getHomeCoordinate().getOrDefault(getPlayerHomeKey(player, dimension, name), null);
     }
 
     /**
@@ -792,7 +791,7 @@ public class NarcissusUtils {
     public static TeleportRecord getBackTeleportRecord(ServerPlayer player, @Nullable ETeleportType type, @Nullable ResourceKey<Level> dimension) {
         TeleportRecord result = null;
         // 获取玩家的传送数据
-        IPlayerTeleportData data = PlayerTeleportDataCapability.getData(player);
+        PlayerTeleportData data = PlayerDataAttachment.getData(player);
         List<TeleportRecord> records = data.getTeleportRecords();
         Optional<TeleportRecord> optionalRecord = records.stream()
                 .filter(record -> type == null || record.getTeleportType() == type)
@@ -806,7 +805,7 @@ public class NarcissusUtils {
     }
 
     public static void removeBackTeleportRecord(ServerPlayer player, TeleportRecord record) {
-        PlayerTeleportDataCapability.getData(player).getTeleportRecords().remove(record);
+        PlayerDataAttachment.getData(player).getTeleportRecords().remove(record);
     }
 
     // endregion 坐标查找
@@ -881,7 +880,7 @@ public class NarcissusUtils {
                                             .filter(block -> playerItemList.stream().map(ItemStack::getItem).anyMatch(item -> new ItemStack(block.getBlock()).getItem().equals(item)))
                                             .findFirst().orElse(null);
                                 } else {
-                                    blockState = SAFE_BLOCKS.get(0);
+                                    blockState = SAFE_BLOCKS.getFirst();
                                 }
                             } else {
                                 blockState = null;
@@ -925,15 +924,15 @@ public class NarcissusUtils {
 
     private static void doTeleport(@NonNull ServerPlayer player, @NonNull Coordinate after, ETeleportType type, Coordinate before, ServerLevel level) {
         after.setY(Math.floor(after.getY()) + 0.1);
-        player.teleportTo(level, after.getX(), after.getY(), after.getZ()
+        player.teleportTo(level, after.getX(), after.getY(), after.getZ(), Set.of()
                 , after.getYaw() == 0 ? player.getYRot() : (float) after.getYaw()
-                , after.getPitch() == 0 ? player.getXRot() : (float) after.getPitch());
+                , after.getPitch() == 0 ? player.getXRot() : (float) after.getPitch(), true);
         TeleportRecord record = new TeleportRecord();
         record.setTeleportTime(new Date());
         record.setTeleportType(type);
         record.setBefore(before);
         record.setAfter(after);
-        PlayerTeleportDataCapability.getData(player).addTeleportRecords(record);
+        PlayerDataAttachment.getData(player).addTeleportRecords(record);
     }
 
     // endregion 传送相关
@@ -996,7 +995,7 @@ public class NarcissusUtils {
             copy.setCount(stack.getCount());
 
             // 如果插槽中的物品是目标物品
-            if (stack.equals(copy, false)) {
+            if (ItemStack.isSameItem(copy, stack)) {
                 // 获取当前物品堆叠的数量
                 int stackSize = stack.getCount();
 
@@ -1173,13 +1172,13 @@ public class NarcissusUtils {
     public static int getTeleportCoolDown(ServerPlayer player, ETeleportType type) {
         // 如果传送卡类型为抵消冷却时间，则不计算冷却时间
         if (ServerConfig.TELEPORT_CARD_TYPE.get() == ECardType.REFUND_COOLDOWN || ServerConfig.TELEPORT_CARD_TYPE.get() == ECardType.REFUND_ALL_COST_AND_COOLDOWN) {
-            if (PlayerTeleportDataCapability.getData(player).getTeleportCard() > 0) {
+            if (PlayerDataAttachment.getData(player).getTeleportCard() > 0) {
                 return 0;
             }
         }
         Instant current = Instant.now();
         int commandCoolDown = getCommandCoolDown(type);
-        Instant lastTpTime = PlayerTeleportDataCapability.getData(player).getTeleportRecords(type).stream()
+        Instant lastTpTime = PlayerDataAttachment.getData(player).getTeleportRecords(type).stream()
                 .map(TeleportRecord::getTeleportTime)
                 .max(Comparator.comparing(Date::toInstant))
                 .orElse(new Date(0)).toInstant();
@@ -1298,7 +1297,7 @@ public class NarcissusUtils {
                     NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EI18nType.MESSAGE, "cost_not_enough"), Component.translatable(NarcissusUtils.getPlayerLanguage(player), EI18nType.WORD, "exp_point"), (int) Math.ceil(need));
                 } else if (result && submit) {
                     player.giveExperiencePoints(-costNeed);
-                    PlayerTeleportDataCapability.getData(player).subTeleportCard(cardNeedTotal);
+                    PlayerDataAttachment.getData(player).subTeleportCard(cardNeedTotal);
                 }
                 break;
             case EXP_LEVEL:
@@ -1307,7 +1306,7 @@ public class NarcissusUtils {
                     NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EI18nType.MESSAGE, "cost_not_enough"), Component.translatable(NarcissusUtils.getPlayerLanguage(player), EI18nType.WORD, "exp_level"), (int) Math.ceil(need));
                 } else if (result && submit) {
                     player.giveExperienceLevels(-costNeed);
-                    PlayerTeleportDataCapability.getData(player).subTeleportCard(cardNeedTotal);
+                    PlayerDataAttachment.getData(player).subTeleportCard(cardNeedTotal);
                 }
                 break;
             case HEALTH:
@@ -1316,7 +1315,7 @@ public class NarcissusUtils {
                     NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EI18nType.MESSAGE, "cost_not_enough"), Component.translatable(NarcissusUtils.getPlayerLanguage(player), EI18nType.WORD, "health"), (int) Math.ceil(need));
                 } else if (result && submit) {
                     player.hurt(player.level().damageSources().magic(), costNeed);
-                    PlayerTeleportDataCapability.getData(player).subTeleportCard(cardNeedTotal);
+                    PlayerDataAttachment.getData(player).subTeleportCard(cardNeedTotal);
                 }
                 break;
             case HUNGER:
@@ -1325,12 +1324,12 @@ public class NarcissusUtils {
                     NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EI18nType.MESSAGE, "cost_not_enough"), Component.translatable(NarcissusUtils.getPlayerLanguage(player), EI18nType.WORD, "hunger"), (int) Math.ceil(need));
                 } else if (result && submit) {
                     player.getFoodData().setFoodLevel(player.getFoodData().getFoodLevel() - costNeed);
-                    PlayerTeleportDataCapability.getData(player).subTeleportCard(cardNeedTotal);
+                    PlayerDataAttachment.getData(player).subTeleportCard(cardNeedTotal);
                 }
                 break;
             case ITEM:
                 try {
-                    ItemStack itemStack = ItemStack.of(TagParser.parseTag(cost.getConf()));
+                    ItemStack itemStack = ItemStack.parseOptional(player.registryAccess(), TagParser.parseTag(cost.getConf()));
                     result = getItemCount(player.getInventory().items, itemStack) >= costNeed && cardNeed == 0;
                     if (!result && cardNeed == 0) {
                         NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EI18nType.MESSAGE, "cost_not_enough"), itemStack.getDisplayName(), (int) Math.ceil(need));
@@ -1339,7 +1338,7 @@ public class NarcissusUtils {
                         result = removeItemFromPlayerInventory(player, itemStack);
                         // 代价不足
                         if (result) {
-                            PlayerTeleportDataCapability.getData(player).subTeleportCard(cardNeedTotal);
+                            PlayerDataAttachment.getData(player).subTeleportCard(cardNeedTotal);
                         } else {
                             NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EI18nType.MESSAGE, "cost_not_enough"), itemStack.getDisplayName(), (int) Math.ceil(need));
                         }
@@ -1352,11 +1351,9 @@ public class NarcissusUtils {
                     result = cardNeed == 0;
                     if (result && submit) {
                         String command = cost.getConf().replaceAll("\\[num]", String.valueOf(costNeed));
-                        int commandResult = NarcissusFarewell.getServerInstance().getCommands().performPrefixedCommand(player.createCommandSourceStack(), command);
-                        if (commandResult > 0) {
-                            PlayerTeleportDataCapability.getData(player).subTeleportCard(cardNeedTotal);
-                        }
-                        result = commandResult > 0;
+                        // 指令执行的返回结果怎么没了???
+                        NarcissusFarewell.getServerInstance().getCommands().performPrefixedCommand(player.createCommandSourceStack(), command);
+                        PlayerDataAttachment.getData(player).subTeleportCard(cardNeedTotal);
                     }
                 } catch (Exception ignored) {
                 }
@@ -1374,7 +1371,7 @@ public class NarcissusUtils {
     public static int getTeleportCostNeedPost(ServerPlayer player, double need) {
         int ceil = (int) Math.ceil(need);
         if (!ServerConfig.TELEPORT_CARD.get()) return ceil;
-        IPlayerTeleportData data = PlayerTeleportDataCapability.getData(player);
+        PlayerTeleportData data = PlayerDataAttachment.getData(player);
         return switch (ServerConfig.TELEPORT_CARD_TYPE.get()) {
             case NONE -> data.getTeleportCard() > 0 ? ceil : -1;
             case LIKE_COST -> data.getTeleportCard() >= ceil ? ceil : -1;
@@ -1402,7 +1399,7 @@ public class NarcissusUtils {
     public static int getTeleportCardNeedPost(ServerPlayer player, double need) {
         int ceil = (int) Math.ceil(need);
         if (!ServerConfig.TELEPORT_CARD.get()) return 0;
-        IPlayerTeleportData data = PlayerTeleportDataCapability.getData(player);
+        PlayerTeleportData data = PlayerDataAttachment.getData(player);
         return switch (ServerConfig.TELEPORT_CARD_TYPE.get()) {
             case NONE -> data.getTeleportCard() > 0 ? 0 : 1;
             case LIKE_COST -> Math.max(0, ceil - data.getTeleportCard());
@@ -1513,7 +1510,7 @@ public class NarcissusUtils {
         ItemStack copy = itemStack.copy();
         return items.stream().filter(item -> {
             copy.setCount(item.getCount());
-            return item.equals(copy, false);
+            return ItemStack.isSameItem(copy, item);
         }).mapToInt(ItemStack::getCount).sum();
     }
 
@@ -1558,7 +1555,7 @@ public class NarcissusUtils {
             player.getEntityData().set((EntityDataAccessor<? super Float>) FieldUtils.getPrivateFieldValue(LivingEntity.class, null, FieldUtils.getEntityHealthFieldName()), 0f);
             player.connection.send(new ClientboundPlayerCombatKillPacket(player.getId(), CommonComponents.EMPTY));
             if (!player.isSpectator()) {
-                if (!player.level().getGameRules().getBoolean(GameRules.RULE_KEEPINVENTORY)) {
+                if (!player.serverLevel().getGameRules().getBoolean(GameRules.RULE_KEEPINVENTORY)) {
                     player.getInventory().dropAll();
                 }
             }
@@ -1588,7 +1585,7 @@ public class NarcissusUtils {
                     .findFirst()
                     .orElse(null);
             if (minecraftVersion != null) {
-                ArtifactVersion lowerBound = minecraftVersion.getVersionRange().getRestrictions().get(0).getLowerBound();
+                ArtifactVersion lowerBound = minecraftVersion.getVersionRange().getRestrictions().getFirst().getLowerBound();
                 int majorVersion = lowerBound.getMajorVersion();
                 int minorVersion = lowerBound.getMinorVersion();
                 int incrementalVersion = lowerBound.getIncrementalVersion();

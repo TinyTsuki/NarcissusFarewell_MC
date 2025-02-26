@@ -1,4 +1,4 @@
-package xin.vanilla.narcissus.network;
+package xin.vanilla.narcissus.network.packet;
 
 import lombok.Data;
 import net.minecraft.network.FriendlyByteBuf;

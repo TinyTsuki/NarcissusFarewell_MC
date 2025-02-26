@@ -1,14 +1,17 @@
-package xin.vanilla.narcissus.capability.player;
+package xin.vanilla.narcissus.data.player;
 
 import lombok.NonNull;
+import lombok.Setter;
+import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.server.level.ServerPlayer;
-import xin.vanilla.narcissus.capability.TeleportRecord;
+import net.neoforged.neoforge.common.util.INBTSerializable;
+import org.jetbrains.annotations.NotNull;
 import xin.vanilla.narcissus.config.Coordinate;
 import xin.vanilla.narcissus.config.KeyValue;
 import xin.vanilla.narcissus.config.ServerConfig;
+import xin.vanilla.narcissus.data.TeleportRecord;
 import xin.vanilla.narcissus.enums.ETeleportType;
 import xin.vanilla.narcissus.util.CollectionUtils;
 import xin.vanilla.narcissus.util.DateUtils;
@@ -20,87 +23,67 @@ import java.util.stream.Collectors;
 /**
  * 玩家传送数据
  */
-public class PlayerTeleportData implements IPlayerTeleportData {
+public class PlayerTeleportData implements INBTSerializable<CompoundTag> {
+
+    @Setter
     private Date lastCardTime;
+    @Setter
     private Date lastTpTime;
     private final AtomicInteger teleportCard = new AtomicInteger();
+    @Setter
     private List<TeleportRecord> teleportRecords;
     /**
      * dimension:name coordinate
      */
+    @Setter
     private Map<KeyValue<String, String>, Coordinate> homeCoordinate;
     /**
      * dimension:name
      */
+    @Setter
     private Map<String, String> defaultHome;
 
-    @Override
     public int getTeleportCard() {
         return this.teleportCard.get();
     }
 
-    @Override
     public int plusTeleportCard() {
         return this.teleportCard.incrementAndGet();
     }
 
-    @Override
     public int plusTeleportCard(int num) {
         return this.teleportCard.addAndGet(num);
     }
 
-    @Override
     public int subTeleportCard() {
         return this.teleportCard.decrementAndGet();
     }
 
-    @Override
     public int subTeleportCard(int num) {
         return this.teleportCard.addAndGet(-num);
     }
 
-    @Override
     public void setTeleportCard(int num) {
         this.teleportCard.set(num);
     }
 
-    @Override
     public @NonNull Date getLastCardTime() {
         return this.lastCardTime = this.lastCardTime == null ? DateUtils.getDate(0, 1, 1) : this.lastCardTime;
     }
 
-    @Override
-    public void setLastCardTime(Date time) {
-        this.lastCardTime = time;
-    }
-
-    @Override
     public @NonNull Date getLastTpTime() {
         return this.lastTpTime = this.lastTpTime == null ? DateUtils.getDate(0, 1, 1) : this.lastTpTime;
     }
 
-    @Override
-    public void setLastTpTime(Date time) {
-        this.lastTpTime = time;
-    }
-
-    @Override
     public @NonNull List<TeleportRecord> getTeleportRecords() {
         return teleportRecords = CollectionUtils.isNullOrEmpty(teleportRecords) ? new ArrayList<>() : teleportRecords;
     }
 
-    @Override
     public @NonNull List<TeleportRecord> getTeleportRecords(ETeleportType type) {
         return CollectionUtils.isNullOrEmpty(teleportRecords) ? teleportRecords = new ArrayList<>() :
                 teleportRecords.stream().filter(record -> record.getTeleportType() == type).collect(Collectors.toList());
     }
 
-    @Override
-    public void setTeleportRecords(List<TeleportRecord> records) {
-        this.teleportRecords = records;
-    }
-
-    @Override
     public void addTeleportRecords(TeleportRecord... records) {
         this.getTeleportRecords().addAll(Arrays.asList((records)));
         this.getTeleportRecords().sort(Comparator.comparing(TeleportRecord::getTeleportTime));
@@ -111,37 +94,22 @@ public class PlayerTeleportData implements IPlayerTeleportData {
         }
     }
 
-    @Override
     public Map<KeyValue<String, String>, Coordinate> getHomeCoordinate() {
         return homeCoordinate = homeCoordinate == null ? new HashMap<>() : homeCoordinate;
     }
 
-    @Override
-    public void setHomeCoordinate(Map<KeyValue<String, String>, Coordinate> homeCoordinate) {
-        this.homeCoordinate = homeCoordinate;
-    }
-
-    @Override
     public void addHomeCoordinate(KeyValue<String, String> key, Coordinate coordinate) {
         this.getHomeCoordinate().put(key, coordinate);
     }
 
-    @Override
     public Map<String, String> getDefaultHome() {
         return defaultHome = defaultHome == null ? new HashMap<>() : defaultHome;
     }
 
-    @Override
-    public void setDefaultHome(Map<String, String> defaultHome) {
-        this.defaultHome = defaultHome;
-    }
-
-    @Override
     public void addDefaultHome(String key, String value) {
         this.getDefaultHome().put(key, value);
     }
 
-    @Override
     public KeyValue<String, String> getDefaultHome(String dimension) {
         if (this.getDefaultHome().containsKey(dimension)) {
             return new KeyValue<>(dimension, this.getDefaultHome().get(dimension));
@@ -188,7 +156,7 @@ public class PlayerTeleportData implements IPlayerTeleportData {
         }
     }
 
-    public void copyFrom(IPlayerTeleportData capability) {
+    public void copyFrom(PlayerTeleportData capability) {
         this.lastCardTime = capability.getLastCardTime();
         this.lastTpTime = capability.getLastTpTime();
         this.teleportCard.set(capability.getTeleportCard());
@@ -198,7 +166,7 @@ public class PlayerTeleportData implements IPlayerTeleportData {
     }
 
     @Override
-    public CompoundTag serializeNBT() {
+    public CompoundTag serializeNBT(HolderLookup.@NotNull Provider provider) {
         CompoundTag tag = new CompoundTag();
         tag.putString("lastCardTime", DateUtils.toDateTimeString(this.getLastCardTime()));
         tag.putString("lastTpTime", DateUtils.toDateTimeString(this.getLastTpTime()));
@@ -232,7 +200,7 @@ public class PlayerTeleportData implements IPlayerTeleportData {
     }
 
     @Override
-    public void deserializeNBT(CompoundTag nbt) {
+    public void deserializeNBT(HolderLookup.@NotNull Provider provider, CompoundTag nbt) {
         this.setLastCardTime(DateUtils.format(nbt.getString("lastCardTime")));
         this.setLastTpTime(DateUtils.format(nbt.getString("lastTpTime")));
         this.setTeleportCard(nbt.getInt("teleportCard"));
@@ -260,10 +228,5 @@ public class PlayerTeleportData implements IPlayerTeleportData {
             defaultHome.put(defaultHomeTag.getString("key"), defaultHomeTag.getString("value"));
         }
         this.setDefaultHome(defaultHome);
-    }
-
-    @Override
-    public void save(ServerPlayer player) {
-        player.getCapability(PlayerTeleportDataCapability.PLAYER_DATA).ifPresent(this::copyFrom);
     }
 }

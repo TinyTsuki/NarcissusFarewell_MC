@@ -2,7 +2,7 @@ package xin.vanilla.narcissus.config;
 
 import net.minecraft.commands.arguments.blocks.BlockStateParser;
 import net.minecraft.world.level.block.Blocks;
-import net.minecraftforge.common.ForgeConfigSpec;
+import net.neoforged.neoforge.common.ModConfigSpec;
 import xin.vanilla.narcissus.enums.ECardType;
 import xin.vanilla.narcissus.enums.ECoolDownType;
 import xin.vanilla.narcissus.enums.ECostType;
@@ -16,116 +16,116 @@ import java.util.stream.Stream;
  */
 public class ServerConfig {
 
-    public static final ForgeConfigSpec SERVER_CONFIG;
+    public static final ModConfigSpec SERVER_CONFIG;
 
     // region 基础设置
 
     /**
      * 传送卡
      */
-    public static final ForgeConfigSpec.BooleanValue TELEPORT_CARD;
+    public static final ModConfigSpec.BooleanValue TELEPORT_CARD;
     /**
      * 每日传送卡数量
      */
-    public static final ForgeConfigSpec.IntValue TELEPORT_CARD_DAILY;
+    public static final ModConfigSpec.IntValue TELEPORT_CARD_DAILY;
     /**
      * 传送卡应用方式
      */
-    public static final ForgeConfigSpec.EnumValue<ECardType> TELEPORT_CARD_TYPE;
+    public static final ModConfigSpec.EnumValue<ECardType> TELEPORT_CARD_TYPE;
 
     /**
      * 历史传送记录数量限制
      */
-    public static final ForgeConfigSpec.IntValue TELEPORT_RECORD_LIMIT;
+    public static final ModConfigSpec.IntValue TELEPORT_RECORD_LIMIT;
     /**
      * 跨维度传送
      */
-    public static final ForgeConfigSpec.BooleanValue TELEPORT_ACROSS_DIMENSION;
+    public static final ModConfigSpec.BooleanValue TELEPORT_ACROSS_DIMENSION;
 
     /**
      * 传送代价中传送距离最大取值
      */
-    public static final ForgeConfigSpec.IntValue TELEPORT_COST_DISTANCE_LIMIT;
+    public static final ModConfigSpec.IntValue TELEPORT_COST_DISTANCE_LIMIT;
 
     /**
      * 跨维度传送时传送代价中传送距离取值
      */
-    public static final ForgeConfigSpec.IntValue TELEPORT_COST_DISTANCE_ACROSS_DIMENSION;
+    public static final ModConfigSpec.IntValue TELEPORT_COST_DISTANCE_ACROSS_DIMENSION;
 
     /**
      * 传送至视线尽头时最远传送距离限制
      */
-    public static final ForgeConfigSpec.IntValue TELEPORT_VIEW_DISTANCE_LIMIT;
+    public static final ModConfigSpec.IntValue TELEPORT_VIEW_DISTANCE_LIMIT;
 
     /**
      * 传送请求过期时间
      */
-    public static final ForgeConfigSpec.IntValue TELEPORT_REQUEST_EXPIRE_TIME;
+    public static final ModConfigSpec.IntValue TELEPORT_REQUEST_EXPIRE_TIME;
 
     /**
      * 传送请求冷却时间计算方式
      */
-    public static final ForgeConfigSpec.EnumValue<ECoolDownType> TELEPORT_REQUEST_COOLDOWN_TYPE;
+    public static final ModConfigSpec.EnumValue<ECoolDownType> TELEPORT_REQUEST_COOLDOWN_TYPE;
 
     /**
      * 传送请求冷却时间
      */
-    public static final ForgeConfigSpec.IntValue TELEPORT_REQUEST_COOLDOWN;
+    public static final ModConfigSpec.IntValue TELEPORT_REQUEST_COOLDOWN;
 
     /**
      * 随机传送距离限制
      */
-    public static final ForgeConfigSpec.IntValue TELEPORT_RANDOM_DISTANCE_LIMIT;
+    public static final ModConfigSpec.IntValue TELEPORT_RANDOM_DISTANCE_LIMIT;
 
     /**
      * 家的数量
      */
-    public static final ForgeConfigSpec.IntValue TELEPORT_HOME_LIMIT;
+    public static final ModConfigSpec.IntValue TELEPORT_HOME_LIMIT;
 
     /**
      * 命令前缀
      */
-    public static final ForgeConfigSpec.ConfigValue<String> COMMAND_PREFIX;
+    public static final ModConfigSpec.ConfigValue<String> COMMAND_PREFIX;
 
     /**
      * 不安全的方块
      */
-    public static final ForgeConfigSpec.ConfigValue<List<String>> UNSAFE_BLOCKS;
+    public static final ModConfigSpec.ConfigValue<List<String>> UNSAFE_BLOCKS;
 
     /**
      * 窒息的方块
      */
-    public static final ForgeConfigSpec.ConfigValue<List<String>> SUFFOCATING_BLOCKS;
+    public static final ModConfigSpec.ConfigValue<List<String>> SUFFOCATING_BLOCKS;
 
     /**
      * 当安全传送未找到安全坐标时，是否在脚下放置方块
      */
-    public static final ForgeConfigSpec.BooleanValue SETBLOCK_WHEN_SAFE_NOT_FOUND;
+    public static final ModConfigSpec.BooleanValue SETBLOCK_WHEN_SAFE_NOT_FOUND;
 
     /**
      * 当安全传送未找到安全坐标时，是否从背包中获取被放置的方块
      */
-    public static final ForgeConfigSpec.BooleanValue GETBLOCK_FROM_INVENTORY;
+    public static final ModConfigSpec.BooleanValue GETBLOCK_FROM_INVENTORY;
 
     /**
      * 当安全传送未找到安全坐标时，放置的方块类型
      */
-    public static final ForgeConfigSpec.ConfigValue<List<String>> SAFE_BLOCKS;
+    public static final ModConfigSpec.ConfigValue<List<String>> SAFE_BLOCKS;
 
     /**
      * 寻找安全坐标的区块范围
      */
-    public static final ForgeConfigSpec.IntValue SAFE_CHUNK_RANGE;
+    public static final ModConfigSpec.IntValue SAFE_CHUNK_RANGE;
 
     /**
      * 虚拟权限
      */
-    public static final ForgeConfigSpec.ConfigValue<String> OP_LIST;
+    public static final ModConfigSpec.ConfigValue<String> OP_LIST;
 
     /**
      * 帮助指令信息头部内容
      */
-    public static final ForgeConfigSpec.ConfigValue<String> HELP_HEADER;
+    public static final ModConfigSpec.ConfigValue<String> HELP_HEADER;
 
     // endregion 基础设置
 
@@ -134,178 +134,178 @@ public class ServerConfig {
     /**
      * 自杀或毒杀 开关
      */
-    public static final ForgeConfigSpec.BooleanValue SWITCH_FEED;
+    public static final ModConfigSpec.BooleanValue SWITCH_FEED;
 
     /**
      * 传送到指定坐标 开关
      */
-    public static final ForgeConfigSpec.BooleanValue SWITCH_TP_COORDINATE;
+    public static final ModConfigSpec.BooleanValue SWITCH_TP_COORDINATE;
 
     /**
      * 传送到指定结构 开关
      */
-    public static final ForgeConfigSpec.BooleanValue SWITCH_TP_STRUCTURE;
+    public static final ModConfigSpec.BooleanValue SWITCH_TP_STRUCTURE;
 
     /**
      * 请求传送至玩家 开关
      */
-    public static final ForgeConfigSpec.BooleanValue SWITCH_TP_ASK;
+    public static final ModConfigSpec.BooleanValue SWITCH_TP_ASK;
 
     /**
      * 请求将玩家传送至当前位置 开关
      */
-    public static final ForgeConfigSpec.BooleanValue SWITCH_TP_HERE;
+    public static final ModConfigSpec.BooleanValue SWITCH_TP_HERE;
 
     /**
      * 随机传送 开关
      */
-    public static final ForgeConfigSpec.BooleanValue SWITCH_TP_RANDOM;
+    public static final ModConfigSpec.BooleanValue SWITCH_TP_RANDOM;
 
     /**
      * 传送到玩家重生点 开关
      */
-    public static final ForgeConfigSpec.BooleanValue SWITCH_TP_SPAWN;
+    public static final ModConfigSpec.BooleanValue SWITCH_TP_SPAWN;
 
     /**
      * 传送到世界重生点 开关
      */
-    public static final ForgeConfigSpec.BooleanValue SWITCH_TP_WORLD_SPAWN;
+    public static final ModConfigSpec.BooleanValue SWITCH_TP_WORLD_SPAWN;
 
     /**
      * 传送到顶部 开关
      */
-    public static final ForgeConfigSpec.BooleanValue SWITCH_TP_TOP;
+    public static final ModConfigSpec.BooleanValue SWITCH_TP_TOP;
 
     /**
      * 传送到底部 开关
      */
-    public static final ForgeConfigSpec.BooleanValue SWITCH_TP_BOTTOM;
+    public static final ModConfigSpec.BooleanValue SWITCH_TP_BOTTOM;
 
     /**
      * 传送到上方 开关
      */
-    public static final ForgeConfigSpec.BooleanValue SWITCH_TP_UP;
+    public static final ModConfigSpec.BooleanValue SWITCH_TP_UP;
 
     /**
      * 传送到下方 开关
      */
-    public static final ForgeConfigSpec.BooleanValue SWITCH_TP_DOWN;
+    public static final ModConfigSpec.BooleanValue SWITCH_TP_DOWN;
 
     /**
      * 传送至视线尽头 开关
      */
-    public static final ForgeConfigSpec.BooleanValue SWITCH_TP_VIEW;
+    public static final ModConfigSpec.BooleanValue SWITCH_TP_VIEW;
 
     /**
      * 传送到家 开关
      */
-    public static final ForgeConfigSpec.BooleanValue SWITCH_TP_HOME;
+    public static final ModConfigSpec.BooleanValue SWITCH_TP_HOME;
 
     /**
      * 传送到驿站 开关
      */
-    public static final ForgeConfigSpec.BooleanValue SWITCH_TP_STAGE;
+    public static final ModConfigSpec.BooleanValue SWITCH_TP_STAGE;
 
     /**
      * 传送到上次传送点 开关
      */
-    public static final ForgeConfigSpec.BooleanValue SWITCH_TP_BACK;
+    public static final ModConfigSpec.BooleanValue SWITCH_TP_BACK;
 
     // endregion 功能开关
 
     // region 指令权限
 
-    public static final ForgeConfigSpec.IntValue PERMISSION_TP_COORDINATE;
+    public static final ModConfigSpec.IntValue PERMISSION_TP_COORDINATE;
 
-    public static final ForgeConfigSpec.IntValue PERMISSION_FEED_OTHER;
+    public static final ModConfigSpec.IntValue PERMISSION_FEED_OTHER;
 
-    public static final ForgeConfigSpec.IntValue PERMISSION_TP_STRUCTURE;
+    public static final ModConfigSpec.IntValue PERMISSION_TP_STRUCTURE;
 
-    public static final ForgeConfigSpec.IntValue PERMISSION_TP_ASK;
+    public static final ModConfigSpec.IntValue PERMISSION_TP_ASK;
 
-    public static final ForgeConfigSpec.IntValue PERMISSION_TP_HERE;
+    public static final ModConfigSpec.IntValue PERMISSION_TP_HERE;
 
-    public static final ForgeConfigSpec.IntValue PERMISSION_TP_RANDOM;
+    public static final ModConfigSpec.IntValue PERMISSION_TP_RANDOM;
 
-    public static final ForgeConfigSpec.IntValue PERMISSION_TP_SPAWN;
+    public static final ModConfigSpec.IntValue PERMISSION_TP_SPAWN;
 
-    public static final ForgeConfigSpec.IntValue PERMISSION_TP_SPAWN_OTHER;
+    public static final ModConfigSpec.IntValue PERMISSION_TP_SPAWN_OTHER;
 
-    public static final ForgeConfigSpec.IntValue PERMISSION_TP_WORLD_SPAWN;
+    public static final ModConfigSpec.IntValue PERMISSION_TP_WORLD_SPAWN;
 
-    public static final ForgeConfigSpec.IntValue PERMISSION_TP_TOP;
+    public static final ModConfigSpec.IntValue PERMISSION_TP_TOP;
 
-    public static final ForgeConfigSpec.IntValue PERMISSION_TP_BOTTOM;
+    public static final ModConfigSpec.IntValue PERMISSION_TP_BOTTOM;
 
-    public static final ForgeConfigSpec.IntValue PERMISSION_TP_UP;
+    public static final ModConfigSpec.IntValue PERMISSION_TP_UP;
 
-    public static final ForgeConfigSpec.IntValue PERMISSION_TP_DOWN;
+    public static final ModConfigSpec.IntValue PERMISSION_TP_DOWN;
 
-    public static final ForgeConfigSpec.IntValue PERMISSION_TP_VIEW;
+    public static final ModConfigSpec.IntValue PERMISSION_TP_VIEW;
 
-    public static final ForgeConfigSpec.IntValue PERMISSION_TP_HOME;
+    public static final ModConfigSpec.IntValue PERMISSION_TP_HOME;
 
-    public static final ForgeConfigSpec.IntValue PERMISSION_TP_STAGE;
+    public static final ModConfigSpec.IntValue PERMISSION_TP_STAGE;
 
-    public static final ForgeConfigSpec.IntValue PERMISSION_SET_STAGE;
+    public static final ModConfigSpec.IntValue PERMISSION_SET_STAGE;
 
-    public static final ForgeConfigSpec.IntValue PERMISSION_DEL_STAGE;
+    public static final ModConfigSpec.IntValue PERMISSION_DEL_STAGE;
 
-    public static final ForgeConfigSpec.IntValue PERMISSION_GET_STAGE;
+    public static final ModConfigSpec.IntValue PERMISSION_GET_STAGE;
 
-    public static final ForgeConfigSpec.IntValue PERMISSION_TP_BACK;
+    public static final ModConfigSpec.IntValue PERMISSION_TP_BACK;
 
-    public static final ForgeConfigSpec.IntValue PERMISSION_VIRTUAL_OP;
+    public static final ModConfigSpec.IntValue PERMISSION_VIRTUAL_OP;
 
     /**
      * 跨维度传送到指定坐标权限
      */
-    public static final ForgeConfigSpec.IntValue PERMISSION_TP_COORDINATE_ACROSS_DIMENSION;
+    public static final ModConfigSpec.IntValue PERMISSION_TP_COORDINATE_ACROSS_DIMENSION;
 
     /**
      * 跨维度传送到指定结构权限
      */
-    public static final ForgeConfigSpec.IntValue PERMISSION_TP_STRUCTURE_ACROSS_DIMENSION;
+    public static final ModConfigSpec.IntValue PERMISSION_TP_STRUCTURE_ACROSS_DIMENSION;
 
     /**
      * 跨维度请求传送至玩家权限
      */
-    public static final ForgeConfigSpec.IntValue PERMISSION_TP_ASK_ACROSS_DIMENSION;
+    public static final ModConfigSpec.IntValue PERMISSION_TP_ASK_ACROSS_DIMENSION;
 
     /**
      * 跨维度请求将玩家传送至当前位置权限
      */
-    public static final ForgeConfigSpec.IntValue PERMISSION_TP_HERE_ACROSS_DIMENSION;
+    public static final ModConfigSpec.IntValue PERMISSION_TP_HERE_ACROSS_DIMENSION;
 
     /**
      * 跨维度随机传送权限
      */
-    public static final ForgeConfigSpec.IntValue PERMISSION_TP_RANDOM_ACROSS_DIMENSION;
+    public static final ModConfigSpec.IntValue PERMISSION_TP_RANDOM_ACROSS_DIMENSION;
 
     /**
      * 跨维度传送到玩家重生点权限
      */
-    public static final ForgeConfigSpec.IntValue PERMISSION_TP_SPAWN_ACROSS_DIMENSION;
+    public static final ModConfigSpec.IntValue PERMISSION_TP_SPAWN_ACROSS_DIMENSION;
 
     /**
      * 跨维度传送到世界重生点权限
      */
-    public static final ForgeConfigSpec.IntValue PERMISSION_TP_WORLD_SPAWN_ACROSS_DIMENSION;
+    public static final ModConfigSpec.IntValue PERMISSION_TP_WORLD_SPAWN_ACROSS_DIMENSION;
 
     /**
      * 跨维度传送到家权限
      */
-    public static final ForgeConfigSpec.IntValue PERMISSION_TP_HOME_ACROSS_DIMENSION;
+    public static final ModConfigSpec.IntValue PERMISSION_TP_HOME_ACROSS_DIMENSION;
 
     /**
      * 跨维度传送到驿站权限
      */
-    public static final ForgeConfigSpec.IntValue PERMISSION_TP_STAGE_ACROSS_DIMENSION;
+    public static final ModConfigSpec.IntValue PERMISSION_TP_STAGE_ACROSS_DIMENSION;
 
     /**
      * 跨维度传送到上次传送点权限
      */
-    public static final ForgeConfigSpec.IntValue PERMISSION_TP_BACK_ACROSS_DIMENSION;
+    public static final ModConfigSpec.IntValue PERMISSION_TP_BACK_ACROSS_DIMENSION;
 
     // endregion 指令权限
 
@@ -314,77 +314,77 @@ public class ServerConfig {
     /**
      * 传送到指定坐标冷却时间
      */
-    public static final ForgeConfigSpec.IntValue COOLDOWN_TP_COORDINATE;
+    public static final ModConfigSpec.IntValue COOLDOWN_TP_COORDINATE;
 
     /**
      * 传送到指定结构冷却时间
      */
-    public static final ForgeConfigSpec.IntValue COOLDOWN_TP_STRUCTURE;
+    public static final ModConfigSpec.IntValue COOLDOWN_TP_STRUCTURE;
 
     /**
      * 请求传送至玩家冷却时间
      */
-    public static final ForgeConfigSpec.IntValue COOLDOWN_TP_ASK;
+    public static final ModConfigSpec.IntValue COOLDOWN_TP_ASK;
 
     /**
      * 请求将玩家传送至当前位置冷却时间
      */
-    public static final ForgeConfigSpec.IntValue COOLDOWN_TP_HERE;
+    public static final ModConfigSpec.IntValue COOLDOWN_TP_HERE;
 
     /**
      * 随机传送冷却时间
      */
-    public static final ForgeConfigSpec.IntValue COOLDOWN_TP_RANDOM;
+    public static final ModConfigSpec.IntValue COOLDOWN_TP_RANDOM;
 
     /**
      * 传送到玩家重生点冷却时间
      */
-    public static final ForgeConfigSpec.IntValue COOLDOWN_TP_SPAWN;
+    public static final ModConfigSpec.IntValue COOLDOWN_TP_SPAWN;
 
     /**
      * 传送到世界重生点冷却时间
      */
-    public static final ForgeConfigSpec.IntValue COOLDOWN_TP_WORLD_SPAWN;
+    public static final ModConfigSpec.IntValue COOLDOWN_TP_WORLD_SPAWN;
 
     /**
      * 传送到顶部冷却时间
      */
-    public static final ForgeConfigSpec.IntValue COOLDOWN_TP_TOP;
+    public static final ModConfigSpec.IntValue COOLDOWN_TP_TOP;
 
     /**
      * 传送到底部冷却时间
      */
-    public static final ForgeConfigSpec.IntValue COOLDOWN_TP_BOTTOM;
+    public static final ModConfigSpec.IntValue COOLDOWN_TP_BOTTOM;
 
     /**
      * 传送到上方冷却时间
      */
-    public static final ForgeConfigSpec.IntValue COOLDOWN_TP_UP;
+    public static final ModConfigSpec.IntValue COOLDOWN_TP_UP;
 
     /**
      * 传送到下方冷却时间
      */
-    public static final ForgeConfigSpec.IntValue COOLDOWN_TP_DOWN;
+    public static final ModConfigSpec.IntValue COOLDOWN_TP_DOWN;
 
     /**
      * 传送至视线尽头冷却时间
      */
-    public static final ForgeConfigSpec.IntValue COOLDOWN_TP_VIEW;
+    public static final ModConfigSpec.IntValue COOLDOWN_TP_VIEW;
 
     /**
      * 传送到家冷却时间
      */
-    public static final ForgeConfigSpec.IntValue COOLDOWN_TP_HOME;
+    public static final ModConfigSpec.IntValue COOLDOWN_TP_HOME;
 
     /**
      * 传送到驿站冷却时间
      */
-    public static final ForgeConfigSpec.IntValue COOLDOWN_TP_STAGE;
+    public static final ModConfigSpec.IntValue COOLDOWN_TP_STAGE;
 
     /**
      * 传送到上次传送点冷却时间
      */
-    public static final ForgeConfigSpec.IntValue COOLDOWN_TP_BACK;
+    public static final ModConfigSpec.IntValue COOLDOWN_TP_BACK;
 
     // endregion 冷却时间
 
@@ -393,147 +393,147 @@ public class ServerConfig {
     /**
      * 获取玩家的UUID
      */
-    public static final ForgeConfigSpec.ConfigValue<String> COMMAND_UUID;
+    public static final ModConfigSpec.ConfigValue<String> COMMAND_UUID;
 
     /**
      * 获取当前世界的维度ID
      */
-    public static final ForgeConfigSpec.ConfigValue<String> COMMAND_DIMENSION;
+    public static final ModConfigSpec.ConfigValue<String> COMMAND_DIMENSION;
 
     /**
      * 自杀或毒杀(水仙是有毒的可不能吃哦)
      */
-    public static final ForgeConfigSpec.ConfigValue<String> COMMAND_FEED;
+    public static final ModConfigSpec.ConfigValue<String> COMMAND_FEED;
 
     /**
      * 传送到指定坐标
      */
-    public static final ForgeConfigSpec.ConfigValue<String> COMMAND_TP_COORDINATE;
+    public static final ModConfigSpec.ConfigValue<String> COMMAND_TP_COORDINATE;
 
     /**
      * 传送到指定结构
      */
-    public static final ForgeConfigSpec.ConfigValue<String> COMMAND_TP_STRUCTURE;
+    public static final ModConfigSpec.ConfigValue<String> COMMAND_TP_STRUCTURE;
 
     /**
      * 请求传送至玩家
      */
-    public static final ForgeConfigSpec.ConfigValue<String> COMMAND_TP_ASK;
+    public static final ModConfigSpec.ConfigValue<String> COMMAND_TP_ASK;
 
     /**
      * 接受请求传送至玩家
      */
-    public static final ForgeConfigSpec.ConfigValue<String> COMMAND_TP_ASK_YES;
+    public static final ModConfigSpec.ConfigValue<String> COMMAND_TP_ASK_YES;
 
     /**
      * 拒绝请求传送至玩家
      */
-    public static final ForgeConfigSpec.ConfigValue<String> COMMAND_TP_ASK_NO;
+    public static final ModConfigSpec.ConfigValue<String> COMMAND_TP_ASK_NO;
 
     /**
      * 请求将玩家传送至当前位置
      */
-    public static final ForgeConfigSpec.ConfigValue<String> COMMAND_TP_HERE;
+    public static final ModConfigSpec.ConfigValue<String> COMMAND_TP_HERE;
 
     /**
      * 接受请求将玩家传送至当前位置
      */
-    public static final ForgeConfigSpec.ConfigValue<String> COMMAND_TP_HERE_YES;
+    public static final ModConfigSpec.ConfigValue<String> COMMAND_TP_HERE_YES;
 
     /**
      * 拒绝请求将玩家传送至当前位置
      */
-    public static final ForgeConfigSpec.ConfigValue<String> COMMAND_TP_HERE_NO;
+    public static final ModConfigSpec.ConfigValue<String> COMMAND_TP_HERE_NO;
 
     /**
      * 随机传送
      */
-    public static final ForgeConfigSpec.ConfigValue<String> COMMAND_TP_RANDOM;
+    public static final ModConfigSpec.ConfigValue<String> COMMAND_TP_RANDOM;
 
     /**
      * 传送到玩家重生点
      */
-    public static final ForgeConfigSpec.ConfigValue<String> COMMAND_TP_SPAWN;
+    public static final ModConfigSpec.ConfigValue<String> COMMAND_TP_SPAWN;
 
     /**
      * 传送到世界重生点
      */
-    public static final ForgeConfigSpec.ConfigValue<String> COMMAND_TP_WORLD_SPAWN;
+    public static final ModConfigSpec.ConfigValue<String> COMMAND_TP_WORLD_SPAWN;
 
     /**
      * 传送到顶部
      */
-    public static final ForgeConfigSpec.ConfigValue<String> COMMAND_TP_TOP;
+    public static final ModConfigSpec.ConfigValue<String> COMMAND_TP_TOP;
 
     /**
      * 传送到底部
      */
-    public static final ForgeConfigSpec.ConfigValue<String> COMMAND_TP_BOTTOM;
+    public static final ModConfigSpec.ConfigValue<String> COMMAND_TP_BOTTOM;
 
     /**
      * 传送到上方
      */
-    public static final ForgeConfigSpec.ConfigValue<String> COMMAND_TP_UP;
+    public static final ModConfigSpec.ConfigValue<String> COMMAND_TP_UP;
 
     /**
      * 传送到下方
      */
-    public static final ForgeConfigSpec.ConfigValue<String> COMMAND_TP_DOWN;
+    public static final ModConfigSpec.ConfigValue<String> COMMAND_TP_DOWN;
 
     /**
      * 传送至视线尽头
      */
-    public static final ForgeConfigSpec.ConfigValue<String> COMMAND_TP_VIEW;
+    public static final ModConfigSpec.ConfigValue<String> COMMAND_TP_VIEW;
 
     /**
      * 传送到家
      */
-    public static final ForgeConfigSpec.ConfigValue<String> COMMAND_TP_HOME;
+    public static final ModConfigSpec.ConfigValue<String> COMMAND_TP_HOME;
 
     /**
      * 设置家
      */
-    public static final ForgeConfigSpec.ConfigValue<String> COMMAND_SET_HOME;
+    public static final ModConfigSpec.ConfigValue<String> COMMAND_SET_HOME;
 
     /**
      * 删除家
      */
-    public static final ForgeConfigSpec.ConfigValue<String> COMMAND_DEL_HOME;
+    public static final ModConfigSpec.ConfigValue<String> COMMAND_DEL_HOME;
 
     /**
      * 查询家
      */
-    public static final ForgeConfigSpec.ConfigValue<String> COMMAND_GET_HOME;
+    public static final ModConfigSpec.ConfigValue<String> COMMAND_GET_HOME;
 
     /**
      * 传送到驿站
      */
-    public static final ForgeConfigSpec.ConfigValue<String> COMMAND_TP_STAGE;
+    public static final ModConfigSpec.ConfigValue<String> COMMAND_TP_STAGE;
 
     /**
      * 设置驿站
      */
-    public static final ForgeConfigSpec.ConfigValue<String> COMMAND_SET_STAGE;
+    public static final ModConfigSpec.ConfigValue<String> COMMAND_SET_STAGE;
 
     /**
      * 删除驿站
      */
-    public static final ForgeConfigSpec.ConfigValue<String> COMMAND_DEL_STAGE;
+    public static final ModConfigSpec.ConfigValue<String> COMMAND_DEL_STAGE;
 
     /**
      * 查询驿站
      */
-    public static final ForgeConfigSpec.ConfigValue<String> COMMAND_GET_STAGE;
+    public static final ModConfigSpec.ConfigValue<String> COMMAND_GET_STAGE;
 
     /**
      * 传送到上次传送点
      */
-    public static final ForgeConfigSpec.ConfigValue<String> COMMAND_TP_BACK;
+    public static final ModConfigSpec.ConfigValue<String> COMMAND_TP_BACK;
 
     /**
      * 设置虚拟权限
      */
-    public static final ForgeConfigSpec.ConfigValue<String> COMMAND_VIRTUAL_OP;
+    public static final ModConfigSpec.ConfigValue<String> COMMAND_VIRTUAL_OP;
 
     // endregion 自定义指令
 
@@ -542,147 +542,147 @@ public class ServerConfig {
     /**
      * 获取玩家的UUID
      */
-    public static final ForgeConfigSpec.BooleanValue CONCISE_UUID;
+    public static final ModConfigSpec.BooleanValue CONCISE_UUID;
 
     /**
      * 获取当前世界的维度ID
      */
-    public static final ForgeConfigSpec.BooleanValue CONCISE_DIMENSION;
+    public static final ModConfigSpec.BooleanValue CONCISE_DIMENSION;
 
     /**
      * 自杀或毒杀
      */
-    public static final ForgeConfigSpec.BooleanValue CONCISE_FEED;
+    public static final ModConfigSpec.BooleanValue CONCISE_FEED;
 
     /**
      * 传送到指定坐标
      */
-    public static final ForgeConfigSpec.BooleanValue CONCISE_TP_COORDINATE;
+    public static final ModConfigSpec.BooleanValue CONCISE_TP_COORDINATE;
 
     /**
      * 传送到指定结构
      */
-    public static final ForgeConfigSpec.BooleanValue CONCISE_TP_STRUCTURE;
+    public static final ModConfigSpec.BooleanValue CONCISE_TP_STRUCTURE;
 
     /**
      * 请求传送至玩家
      */
-    public static final ForgeConfigSpec.BooleanValue CONCISE_TP_ASK;
+    public static final ModConfigSpec.BooleanValue CONCISE_TP_ASK;
 
     /**
      * 接受请求传送至玩家
      */
-    public static final ForgeConfigSpec.BooleanValue CONCISE_TP_ASK_YES;
+    public static final ModConfigSpec.BooleanValue CONCISE_TP_ASK_YES;
 
     /**
      * 拒绝请求传送至玩家
      */
-    public static final ForgeConfigSpec.BooleanValue CONCISE_TP_ASK_NO;
+    public static final ModConfigSpec.BooleanValue CONCISE_TP_ASK_NO;
 
     /**
      * 请求将玩家传送至当前位置
      */
-    public static final ForgeConfigSpec.BooleanValue CONCISE_TP_HERE;
+    public static final ModConfigSpec.BooleanValue CONCISE_TP_HERE;
 
     /**
      * 接受请求将玩家传送至当前位置
      */
-    public static final ForgeConfigSpec.BooleanValue CONCISE_TP_HERE_YES;
+    public static final ModConfigSpec.BooleanValue CONCISE_TP_HERE_YES;
 
     /**
      * 拒绝请求将玩家传送至当前位置
      */
-    public static final ForgeConfigSpec.BooleanValue CONCISE_TP_HERE_NO;
+    public static final ModConfigSpec.BooleanValue CONCISE_TP_HERE_NO;
 
     /**
      * 随机传送
      */
-    public static final ForgeConfigSpec.BooleanValue CONCISE_TP_RANDOM;
+    public static final ModConfigSpec.BooleanValue CONCISE_TP_RANDOM;
 
     /**
      * 传送到玩家重生点
      */
-    public static final ForgeConfigSpec.BooleanValue CONCISE_TP_SPAWN;
+    public static final ModConfigSpec.BooleanValue CONCISE_TP_SPAWN;
 
     /**
      * 传送到世界重生点
      */
-    public static final ForgeConfigSpec.BooleanValue CONCISE_TP_WORLD_SPAWN;
+    public static final ModConfigSpec.BooleanValue CONCISE_TP_WORLD_SPAWN;
 
     /**
      * 传送到顶部
      */
-    public static final ForgeConfigSpec.BooleanValue CONCISE_TP_TOP;
+    public static final ModConfigSpec.BooleanValue CONCISE_TP_TOP;
 
     /**
      * 传送到底部
      */
-    public static final ForgeConfigSpec.BooleanValue CONCISE_TP_BOTTOM;
+    public static final ModConfigSpec.BooleanValue CONCISE_TP_BOTTOM;
 
     /**
      * 传送到上方
      */
-    public static final ForgeConfigSpec.BooleanValue CONCISE_TP_UP;
+    public static final ModConfigSpec.BooleanValue CONCISE_TP_UP;
 
     /**
      * 传送到下方
      */
-    public static final ForgeConfigSpec.BooleanValue CONCISE_TP_DOWN;
+    public static final ModConfigSpec.BooleanValue CONCISE_TP_DOWN;
 
     /**
      * 传送至视线尽头
      */
-    public static final ForgeConfigSpec.BooleanValue CONCISE_TP_VIEW;
+    public static final ModConfigSpec.BooleanValue CONCISE_TP_VIEW;
 
     /**
      * 传送到家
      */
-    public static final ForgeConfigSpec.BooleanValue CONCISE_TP_HOME;
+    public static final ModConfigSpec.BooleanValue CONCISE_TP_HOME;
 
     /**
      * 设置家
      */
-    public static final ForgeConfigSpec.BooleanValue CONCISE_SET_HOME;
+    public static final ModConfigSpec.BooleanValue CONCISE_SET_HOME;
 
     /**
      * 删除家
      */
-    public static final ForgeConfigSpec.BooleanValue CONCISE_DEL_HOME;
+    public static final ModConfigSpec.BooleanValue CONCISE_DEL_HOME;
 
     /**
      * 查询家
      */
-    public static final ForgeConfigSpec.BooleanValue CONCISE_GET_HOME;
+    public static final ModConfigSpec.BooleanValue CONCISE_GET_HOME;
 
     /**
      * 传送到驿站
      */
-    public static final ForgeConfigSpec.BooleanValue CONCISE_TP_STAGE;
+    public static final ModConfigSpec.BooleanValue CONCISE_TP_STAGE;
 
     /**
      * 设置驿站
      */
-    public static final ForgeConfigSpec.BooleanValue CONCISE_SET_STAGE;
+    public static final ModConfigSpec.BooleanValue CONCISE_SET_STAGE;
 
     /**
      * 删除驿站
      */
-    public static final ForgeConfigSpec.BooleanValue CONCISE_DEL_STAGE;
+    public static final ModConfigSpec.BooleanValue CONCISE_DEL_STAGE;
 
     /**
      * 查询驿站
      */
-    public static final ForgeConfigSpec.BooleanValue CONCISE_GET_STAGE;
+    public static final ModConfigSpec.BooleanValue CONCISE_GET_STAGE;
 
     /**
      * 传送到上次传送点
      */
-    public static final ForgeConfigSpec.BooleanValue CONCISE_TP_BACK;
+    public static final ModConfigSpec.BooleanValue CONCISE_TP_BACK;
 
     /**
      * 设置虚拟权限
      */
-    public static final ForgeConfigSpec.BooleanValue CONCISE_VIRTUAL_OP;
+    public static final ModConfigSpec.BooleanValue CONCISE_VIRTUAL_OP;
 
     // endregion 简化指令
 
@@ -691,94 +691,94 @@ public class ServerConfig {
     /**
      * 代价类型
      */
-    public static final ForgeConfigSpec.EnumValue<ECostType> COST_TP_COORDINATE_TYPE;
+    public static final ModConfigSpec.EnumValue<ECostType> COST_TP_COORDINATE_TYPE;
     /**
      * 代价数量
      */
-    public static final ForgeConfigSpec.IntValue COST_TP_COORDINATE_NUM;
+    public static final ModConfigSpec.IntValue COST_TP_COORDINATE_NUM;
     /**
      * 代价配置
      */
-    public static final ForgeConfigSpec.ConfigValue<String> COST_TP_COORDINATE_CONF;
+    public static final ModConfigSpec.ConfigValue<String> COST_TP_COORDINATE_CONF;
     /**
      * 代价倍率(以距离为基准)
      */
-    public static final ForgeConfigSpec.DoubleValue COST_TP_COORDINATE_RATE;
+    public static final ModConfigSpec.DoubleValue COST_TP_COORDINATE_RATE;
 
-    public static final ForgeConfigSpec.EnumValue<ECostType> COST_TP_STRUCTURE_TYPE;
-    public static final ForgeConfigSpec.IntValue COST_TP_STRUCTURE_NUM;
-    public static final ForgeConfigSpec.ConfigValue<String> COST_TP_STRUCTURE_CONF;
-    public static final ForgeConfigSpec.DoubleValue COST_TP_STRUCTURE_RATE;
+    public static final ModConfigSpec.EnumValue<ECostType> COST_TP_STRUCTURE_TYPE;
+    public static final ModConfigSpec.IntValue COST_TP_STRUCTURE_NUM;
+    public static final ModConfigSpec.ConfigValue<String> COST_TP_STRUCTURE_CONF;
+    public static final ModConfigSpec.DoubleValue COST_TP_STRUCTURE_RATE;
 
-    public static final ForgeConfigSpec.EnumValue<ECostType> COST_TP_ASK_TYPE;
-    public static final ForgeConfigSpec.IntValue COST_TP_ASK_NUM;
-    public static final ForgeConfigSpec.ConfigValue<String> COST_TP_ASK_CONF;
-    public static final ForgeConfigSpec.DoubleValue COST_TP_ASK_RATE;
+    public static final ModConfigSpec.EnumValue<ECostType> COST_TP_ASK_TYPE;
+    public static final ModConfigSpec.IntValue COST_TP_ASK_NUM;
+    public static final ModConfigSpec.ConfigValue<String> COST_TP_ASK_CONF;
+    public static final ModConfigSpec.DoubleValue COST_TP_ASK_RATE;
 
-    public static final ForgeConfigSpec.EnumValue<ECostType> COST_TP_HERE_TYPE;
-    public static final ForgeConfigSpec.IntValue COST_TP_HERE_NUM;
-    public static final ForgeConfigSpec.ConfigValue<String> COST_TP_HERE_CONF;
-    public static final ForgeConfigSpec.DoubleValue COST_TP_HERE_RATE;
+    public static final ModConfigSpec.EnumValue<ECostType> COST_TP_HERE_TYPE;
+    public static final ModConfigSpec.IntValue COST_TP_HERE_NUM;
+    public static final ModConfigSpec.ConfigValue<String> COST_TP_HERE_CONF;
+    public static final ModConfigSpec.DoubleValue COST_TP_HERE_RATE;
 
-    public static final ForgeConfigSpec.EnumValue<ECostType> COST_TP_RANDOM_TYPE;
-    public static final ForgeConfigSpec.IntValue COST_TP_RANDOM_NUM;
-    public static final ForgeConfigSpec.ConfigValue<String> COST_TP_RANDOM_CONF;
-    public static final ForgeConfigSpec.DoubleValue COST_TP_RANDOM_RATE;
+    public static final ModConfigSpec.EnumValue<ECostType> COST_TP_RANDOM_TYPE;
+    public static final ModConfigSpec.IntValue COST_TP_RANDOM_NUM;
+    public static final ModConfigSpec.ConfigValue<String> COST_TP_RANDOM_CONF;
+    public static final ModConfigSpec.DoubleValue COST_TP_RANDOM_RATE;
 
-    public static final ForgeConfigSpec.EnumValue<ECostType> COST_TP_SPAWN_TYPE;
-    public static final ForgeConfigSpec.IntValue COST_TP_SPAWN_NUM;
-    public static final ForgeConfigSpec.ConfigValue<String> COST_TP_SPAWN_CONF;
-    public static final ForgeConfigSpec.DoubleValue COST_TP_SPAWN_RATE;
+    public static final ModConfigSpec.EnumValue<ECostType> COST_TP_SPAWN_TYPE;
+    public static final ModConfigSpec.IntValue COST_TP_SPAWN_NUM;
+    public static final ModConfigSpec.ConfigValue<String> COST_TP_SPAWN_CONF;
+    public static final ModConfigSpec.DoubleValue COST_TP_SPAWN_RATE;
 
-    public static final ForgeConfigSpec.EnumValue<ECostType> COST_TP_WORLD_SPAWN_TYPE;
-    public static final ForgeConfigSpec.IntValue COST_TP_WORLD_SPAWN_NUM;
-    public static final ForgeConfigSpec.ConfigValue<String> COST_TP_WORLD_SPAWN_CONF;
-    public static final ForgeConfigSpec.DoubleValue COST_TP_WORLD_SPAWN_RATE;
+    public static final ModConfigSpec.EnumValue<ECostType> COST_TP_WORLD_SPAWN_TYPE;
+    public static final ModConfigSpec.IntValue COST_TP_WORLD_SPAWN_NUM;
+    public static final ModConfigSpec.ConfigValue<String> COST_TP_WORLD_SPAWN_CONF;
+    public static final ModConfigSpec.DoubleValue COST_TP_WORLD_SPAWN_RATE;
 
-    public static final ForgeConfigSpec.EnumValue<ECostType> COST_TP_TOP_TYPE;
-    public static final ForgeConfigSpec.IntValue COST_TP_TOP_NUM;
-    public static final ForgeConfigSpec.ConfigValue<String> COST_TP_TOP_CONF;
-    public static final ForgeConfigSpec.DoubleValue COST_TP_TOP_RATE;
+    public static final ModConfigSpec.EnumValue<ECostType> COST_TP_TOP_TYPE;
+    public static final ModConfigSpec.IntValue COST_TP_TOP_NUM;
+    public static final ModConfigSpec.ConfigValue<String> COST_TP_TOP_CONF;
+    public static final ModConfigSpec.DoubleValue COST_TP_TOP_RATE;
 
-    public static final ForgeConfigSpec.EnumValue<ECostType> COST_TP_BOTTOM_TYPE;
-    public static final ForgeConfigSpec.IntValue COST_TP_BOTTOM_NUM;
-    public static final ForgeConfigSpec.ConfigValue<String> COST_TP_BOTTOM_CONF;
-    public static final ForgeConfigSpec.DoubleValue COST_TP_BOTTOM_RATE;
+    public static final ModConfigSpec.EnumValue<ECostType> COST_TP_BOTTOM_TYPE;
+    public static final ModConfigSpec.IntValue COST_TP_BOTTOM_NUM;
+    public static final ModConfigSpec.ConfigValue<String> COST_TP_BOTTOM_CONF;
+    public static final ModConfigSpec.DoubleValue COST_TP_BOTTOM_RATE;
 
-    public static final ForgeConfigSpec.EnumValue<ECostType> COST_TP_UP_TYPE;
-    public static final ForgeConfigSpec.IntValue COST_TP_UP_NUM;
-    public static final ForgeConfigSpec.ConfigValue<String> COST_TP_UP_CONF;
-    public static final ForgeConfigSpec.DoubleValue COST_TP_UP_RATE;
+    public static final ModConfigSpec.EnumValue<ECostType> COST_TP_UP_TYPE;
+    public static final ModConfigSpec.IntValue COST_TP_UP_NUM;
+    public static final ModConfigSpec.ConfigValue<String> COST_TP_UP_CONF;
+    public static final ModConfigSpec.DoubleValue COST_TP_UP_RATE;
 
-    public static final ForgeConfigSpec.EnumValue<ECostType> COST_TP_DOWN_TYPE;
-    public static final ForgeConfigSpec.IntValue COST_TP_DOWN_NUM;
-    public static final ForgeConfigSpec.ConfigValue<String> COST_TP_DOWN_CONF;
-    public static final ForgeConfigSpec.DoubleValue COST_TP_DOWN_RATE;
+    public static final ModConfigSpec.EnumValue<ECostType> COST_TP_DOWN_TYPE;
+    public static final ModConfigSpec.IntValue COST_TP_DOWN_NUM;
+    public static final ModConfigSpec.ConfigValue<String> COST_TP_DOWN_CONF;
+    public static final ModConfigSpec.DoubleValue COST_TP_DOWN_RATE;
 
-    public static final ForgeConfigSpec.EnumValue<ECostType> COST_TP_VIEW_TYPE;
-    public static final ForgeConfigSpec.IntValue COST_TP_VIEW_NUM;
-    public static final ForgeConfigSpec.ConfigValue<String> COST_TP_VIEW_CONF;
-    public static final ForgeConfigSpec.DoubleValue COST_TP_VIEW_RATE;
+    public static final ModConfigSpec.EnumValue<ECostType> COST_TP_VIEW_TYPE;
+    public static final ModConfigSpec.IntValue COST_TP_VIEW_NUM;
+    public static final ModConfigSpec.ConfigValue<String> COST_TP_VIEW_CONF;
+    public static final ModConfigSpec.DoubleValue COST_TP_VIEW_RATE;
 
-    public static final ForgeConfigSpec.EnumValue<ECostType> COST_TP_HOME_TYPE;
-    public static final ForgeConfigSpec.IntValue COST_TP_HOME_NUM;
-    public static final ForgeConfigSpec.ConfigValue<String> COST_TP_HOME_CONF;
-    public static final ForgeConfigSpec.DoubleValue COST_TP_HOME_RATE;
+    public static final ModConfigSpec.EnumValue<ECostType> COST_TP_HOME_TYPE;
+    public static final ModConfigSpec.IntValue COST_TP_HOME_NUM;
+    public static final ModConfigSpec.ConfigValue<String> COST_TP_HOME_CONF;
+    public static final ModConfigSpec.DoubleValue COST_TP_HOME_RATE;
 
-    public static final ForgeConfigSpec.EnumValue<ECostType> COST_TP_STAGE_TYPE;
-    public static final ForgeConfigSpec.IntValue COST_TP_STAGE_NUM;
-    public static final ForgeConfigSpec.ConfigValue<String> COST_TP_STAGE_CONF;
-    public static final ForgeConfigSpec.DoubleValue COST_TP_STAGE_RATE;
+    public static final ModConfigSpec.EnumValue<ECostType> COST_TP_STAGE_TYPE;
+    public static final ModConfigSpec.IntValue COST_TP_STAGE_NUM;
+    public static final ModConfigSpec.ConfigValue<String> COST_TP_STAGE_CONF;
+    public static final ModConfigSpec.DoubleValue COST_TP_STAGE_RATE;
 
-    public static final ForgeConfigSpec.EnumValue<ECostType> COST_TP_BACK_TYPE;
-    public static final ForgeConfigSpec.IntValue COST_TP_BACK_NUM;
-    public static final ForgeConfigSpec.ConfigValue<String> COST_TP_BACK_CONF;
-    public static final ForgeConfigSpec.DoubleValue COST_TP_BACK_RATE;
+    public static final ModConfigSpec.EnumValue<ECostType> COST_TP_BACK_TYPE;
+    public static final ModConfigSpec.IntValue COST_TP_BACK_NUM;
+    public static final ModConfigSpec.ConfigValue<String> COST_TP_BACK_CONF;
+    public static final ModConfigSpec.DoubleValue COST_TP_BACK_RATE;
 
     // endregion 传送代价
 
     static {
-        ForgeConfigSpec.Builder SERVER_BUILDER = new ForgeConfigSpec.Builder();
+        ModConfigSpec.Builder SERVER_BUILDER = new ModConfigSpec.Builder();
         // 定义服务器基础设置
         {
             SERVER_BUILDER.comment("Base Settings", "基础设置").push("common");

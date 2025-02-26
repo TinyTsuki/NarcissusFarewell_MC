@@ -1,7 +1,8 @@
-package xin.vanilla.narcissus.capability.world;
+package xin.vanilla.narcissus.data.world;
 
 import lombok.Getter;
 import lombok.NonNull;
+import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.server.level.ServerLevel;
@@ -30,7 +31,7 @@ public class WorldStageData extends SavedData {
     public WorldStageData() {
     }
 
-    public static WorldStageData load(CompoundTag nbt) {
+    public static WorldStageData load(CompoundTag nbt, HolderLookup.Provider provider) {
         WorldStageData data = new WorldStageData();
         ListTag stageCoordinateNBT = nbt.getList("stageCoordinate", 10);
         Map<KeyValue<String, String>, Coordinate> stageCoordinate = new HashMap<>();
@@ -46,7 +47,7 @@ public class WorldStageData extends SavedData {
     @Override
     @NonNull
     @ParametersAreNonnullByDefault
-    public CompoundTag save(CompoundTag nbt) {
+    public CompoundTag save(CompoundTag nbt, HolderLookup.Provider provider) {
         ListTag stageCoordinateNBT = new ListTag();
         for (Map.Entry<KeyValue<String, String>, Coordinate> entry : this.getStageCoordinate().entrySet()) {
             CompoundTag stageCoordinateTag = new CompoundTag();

@@ -1,30 +1,21 @@
 package xin.vanilla.narcissus.network;
 
-import net.minecraft.resources.ResourceLocation;
-import net.minecraftforge.network.ChannelBuilder;
-import net.minecraftforge.network.SimpleChannel;
-import xin.vanilla.narcissus.NarcissusFarewell;
+import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
+import net.neoforged.neoforge.network.registration.PayloadRegistrar;
+import xin.vanilla.narcissus.network.packet.*;
 
 public class ModNetworkHandler {
-    private static final int PROTOCOL_VERSION = 1;
-    private static int ID = 0;
-    public static final SimpleChannel INSTANCE = ChannelBuilder.named(new ResourceLocation(NarcissusFarewell.MODID, "main_network"))
-            .networkProtocolVersion(PROTOCOL_VERSION)
-            .clientAcceptedVersions((status, version) -> true)    // 客户端版本始终有效
-            .serverAcceptedVersions((status, version) -> true)    // 服务端版本始终有效
-            .simpleChannel();
+    private static final String PROTOCOL_VERSION = "1";
 
-    public static int nextID() {
-        return ID++;
-    }
+    public static void registerPackets(final RegisterPayloadHandlersEvent event) {
+        final PayloadRegistrar registrar = event.registrar(PROTOCOL_VERSION).optional();
 
-    public static void registerPackets() {
-        INSTANCE.messageBuilder(PlayerDataSyncPacket.class, nextID()).encoder(PlayerDataSyncPacket::toBytes).decoder(PlayerDataSyncPacket::new).consumerMainThread(PlayerDataSyncPacket::handle).add();
-        INSTANCE.messageBuilder(PlayerDataReceivedNotice.class, nextID()).encoder(PlayerDataReceivedNotice::toBytes).decoder(PlayerDataReceivedNotice::new).consumerMainThread(PlayerDataReceivedNotice::handle).add();
-        INSTANCE.messageBuilder(ClientModLoadedNotice.class, nextID()).encoder(ClientModLoadedNotice::toBytes).decoder(ClientModLoadedNotice::new).consumerMainThread(ClientModLoadedNotice::handle).add();
-        INSTANCE.messageBuilder(TpHomeNotice.class, nextID()).encoder(TpHomeNotice::toBytes).decoder(TpHomeNotice::new).consumerMainThread(TpHomeNotice::handle).add();
-        INSTANCE.messageBuilder(TpBackNotice.class, nextID()).encoder(TpBackNotice::toBytes).decoder(TpBackNotice::new).consumerMainThread(TpBackNotice::handle).add();
-        INSTANCE.messageBuilder(TpYesNotice.class, nextID()).encoder(TpYesNotice::toBytes).decoder(TpYesNotice::new).consumerMainThread(TpYesNotice::handle).add();
-        INSTANCE.messageBuilder(TpNoNotice.class, nextID()).encoder(TpNoNotice::toBytes).decoder(TpNoNotice::new).consumerMainThread(TpNoNotice::handle).add();
+        registrar.playToClient(PlayerDataSyncPacket.TYPE, PlayerDataSyncPacket.STREAM_CODEC, PlayerDataSyncPacket::handle);
+        registrar.playToServer(PlayerDataReceivedNotice.TYPE, PlayerDataReceivedNotice.STREAM_CODEC, PlayerDataReceivedNotice::handle);
+        registrar.playToServer(ClientModLoadedNotice.TYPE, ClientModLoadedNotice.STREAM_CODEC, ClientModLoadedNotice::handle);
+        registrar.playToServer(TpHomeNotice.TYPE, TpHomeNotice.STREAM_CODEC, TpHomeNotice::handle);
+        registrar.playToServer(TpBackNotice.TYPE, TpBackNotice.STREAM_CODEC, TpBackNotice::handle);
+        registrar.playToServer(TpYesNotice.TYPE, TpYesNotice.STREAM_CODEC, TpYesNotice::handle);
+        registrar.playToServer(TpNoNotice.TYPE, TpNoNotice.STREAM_CODEC, TpNoNotice::handle);
     }
 }

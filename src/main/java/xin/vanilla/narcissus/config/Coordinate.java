@@ -117,7 +117,7 @@ public class Coordinate implements Serializable, Cloneable {
     public static Coordinate random(ServerPlayer player, int range, ResourceKey<Level> dimension) {
         range = Math.min(Math.max(range, 1), ServerConfig.TELEPORT_RANDOM_DISTANCE_LIMIT.get());
         double x = player.getX() + (Math.random() * 2 - 1) * range;
-        double y = getRandomWithWeight(NarcissusUtils.getWorld(dimension).getMinBuildHeight(), NarcissusUtils.getWorld(dimension).getMaxBuildHeight(), (int) player.getY(), 0.75);
+        double y = getRandomWithWeight(NarcissusUtils.getWorld(dimension).getMaxY(), NarcissusUtils.getWorld(dimension).getMaxY(), (int) player.getY(), 0.75);
         double z = player.getZ() + (Math.random() * 2 - 1) * range;
         return new Coordinate(x, y, z, player.getYRot(), player.getXRot(), dimension);
     }
@@ -190,7 +190,7 @@ public class Coordinate implements Serializable, Cloneable {
         coordinate.z = tag.getDouble("z");
         coordinate.yaw = tag.getDouble("yaw");
         coordinate.pitch = tag.getDouble("pitch");
-        coordinate.dimension = ResourceKey.create(Registries.DIMENSION, new ResourceLocation(tag.getString("dimension")));
+        coordinate.dimension = ResourceKey.create(Registries.DIMENSION, ResourceLocation.parse(tag.getString("dimension")));
         return coordinate;
     }
 

@@ -5,27 +5,25 @@ import lombok.Getter;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.common.MinecraftForge;
-import net.minecraftforge.event.RegisterCommandsEvent;
-import net.minecraftforge.event.server.ServerStartingEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.ModList;
-import net.minecraftforge.fml.ModLoadingContext;
-import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.fml.config.ModConfig;
-import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
-import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
-import net.minecraftforge.fml.loading.FMLEnvironment;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.bus.api.IEventBus;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.ModContainer;
+import net.neoforged.fml.common.Mod;
+import net.neoforged.fml.config.ModConfig;
+import net.neoforged.fml.loading.FMLEnvironment;
+import net.neoforged.neoforge.common.NeoForge;
+import net.neoforged.neoforge.event.RegisterCommandsEvent;
+import net.neoforged.neoforge.event.server.ServerStartingEvent;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import xin.vanilla.narcissus.command.FarewellCommand;
 import xin.vanilla.narcissus.config.ServerConfig;
 import xin.vanilla.narcissus.config.TeleportRequest;
+import xin.vanilla.narcissus.data.player.PlayerDataAttachment;
 import xin.vanilla.narcissus.event.ClientEventHandler;
 import xin.vanilla.narcissus.network.ModNetworkHandler;
-import xin.vanilla.narcissus.network.SplitPacket;
-import xin.vanilla.narcissus.util.LogoModifier;
+import xin.vanilla.narcissus.network.packet.SplitPacket;
 
 import java.util.List;
 import java.util.Map;
@@ -75,36 +73,24 @@ public class NarcissusFarewell {
     @Getter
     private static final Map<String, TeleportRequest> teleportRequest = new ConcurrentHashMap<>();
 
-    public NarcissusFarewell() {
+    public NarcissusFarewell(IEventBus modEventBus, ModContainer modContainer) {
 
         // 注册网络通道
-        ModNetworkHandler.registerPackets();
+        modEventBus.addListener(ModNetworkHandler::registerPackets);
         // 注册服务器启动和关闭事件
-        MinecraftForge.EVENT_BUS.addListener(this::onServerStarting);
+        NeoForge.EVENT_BUS.addListener(this::onServerStarting);
 
         // 注册服务端配置
-        ModLoadingContext.get().registerConfig(ModConfig.Type.SERVER, ServerConfig.SERVER_CONFIG);
+        modContainer.registerConfig(ModConfig.Type.SERVER, ServerConfig.SERVER_CONFIG);
+        // 注册数据附件
+        PlayerDataAttachment.ATTACHMENT_TYPES.register(modEventBus);
 
         if (FMLEnvironment.dist == Dist.CLIENT) {
-            FMLJavaModLoadingContext.get().getModEventBus().addListener(ClientEventHandler::registerKeyMappings);
-            FMLJavaModLoadingContext.get().getModEventBus().addListener(this::onClientSetup);
+            NeoForge.EVENT_BUS.addListener(ClientEventHandler::onClientTick);
         }
 
         // 注册当前实例到MinecraftForge的事件总线，以便监听和处理游戏内的各种事件
-        MinecraftForge.EVENT_BUS.register(this);
-    }
-
-    /**
-     * 在客户端设置阶段触发的事件处理方法
-     * 此方法主要用于接收 FML 客户端设置事件，并执行相应的初始化操作
-     */
-    @SubscribeEvent
-    public void onClientSetup(final FMLClientSetupEvent event) {
-        // 修改logo为随机logo
-        ModList.get().getMods().stream()
-                .filter(info -> info.getModId().equals(MODID))
-                .findFirst()
-                .ifPresent(LogoModifier::modifyLogo);
+        NeoForge.EVENT_BUS.register(this);
     }
 
     // 服务器启动时加载数据

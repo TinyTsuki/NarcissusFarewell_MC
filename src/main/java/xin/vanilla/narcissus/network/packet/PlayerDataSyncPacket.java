@@ -1,15 +1,19 @@
-package xin.vanilla.narcissus.network;
+package xin.vanilla.narcissus.network.packet;
 
+import io.netty.buffer.ByteBuf;
 import lombok.Getter;
 import net.minecraft.network.FriendlyByteBuf;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.event.network.CustomPayloadEvent;
-import net.minecraftforge.fml.DistExecutor;
-import xin.vanilla.narcissus.capability.TeleportRecord;
-import xin.vanilla.narcissus.capability.player.IPlayerTeleportData;
-import xin.vanilla.narcissus.capability.player.PlayerTeleportData;
+import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.minecraft.resources.ResourceLocation;
+import net.neoforged.neoforge.network.handling.IPayloadContext;
+import org.jetbrains.annotations.NotNull;
+import xin.vanilla.narcissus.NarcissusFarewell;
 import xin.vanilla.narcissus.config.Coordinate;
 import xin.vanilla.narcissus.config.KeyValue;
+import xin.vanilla.narcissus.data.TeleportRecord;
+import xin.vanilla.narcissus.data.player.PlayerTeleportData;
+import xin.vanilla.narcissus.network.ClientProxy;
 import xin.vanilla.narcissus.util.CollectionUtils;
 import xin.vanilla.narcissus.util.DateUtils;
 
@@ -17,7 +21,18 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 @Getter
-public class PlayerDataSyncPacket extends SplitPacket {
+public class PlayerDataSyncPacket extends SplitPacket implements CustomPacketPayload {
+    public final static Type<PlayerDataSyncPacket> TYPE = new Type<>(ResourceLocation.fromNamespaceAndPath(NarcissusFarewell.MODID, "player_data_sync"));
+    public final static StreamCodec<ByteBuf, PlayerDataSyncPacket> STREAM_CODEC = new StreamCodec<>() {
+        public @NotNull PlayerDataSyncPacket decode(@NotNull ByteBuf byteBuf) {
+            return new PlayerDataSyncPacket((new FriendlyByteBuf(byteBuf)));
+        }
+
+        public void encode(@NotNull ByteBuf byteBuf, @NotNull PlayerDataSyncPacket packet) {
+            packet.toBytes(new FriendlyByteBuf(byteBuf));
+        }
+    };
+
     private final UUID playerUUID;
     private final Date lastCardTime;
     private final Date lastTpTime;
@@ -26,7 +41,7 @@ public class PlayerDataSyncPacket extends SplitPacket {
     private final Map<KeyValue<String, String>, Coordinate> homeCoordinate;
     private final Map<String, String> defaultHome;
 
-    public PlayerDataSyncPacket(UUID playerUUID, IPlayerTeleportData data) {
+    public PlayerDataSyncPacket(UUID playerUUID, PlayerTeleportData data) {
         super();
         this.playerUUID = playerUUID;
         this.lastCardTime = data.getLastCardTime();
@@ -65,10 +80,10 @@ public class PlayerDataSyncPacket extends SplitPacket {
 
     public PlayerDataSyncPacket(List<PlayerDataSyncPacket> packets) {
         super();
-        this.playerUUID = packets.get(0).playerUUID;
-        this.lastCardTime = packets.get(0).lastCardTime;
-        this.lastTpTime = packets.get(0).lastTpTime;
-        this.teleportCard = packets.get(0).teleportCard;
+        this.playerUUID = packets.getFirst().playerUUID;
+        this.lastCardTime = packets.getFirst().lastCardTime;
+        this.lastTpTime = packets.getFirst().lastTpTime;
+        this.teleportCard = packets.getFirst().teleportCard;
         this.teleportRecords = packets.stream()
                 .map(PlayerDataSyncPacket::getTeleportRecords)
                 .flatMap(Collection::stream)
@@ -78,7 +93,7 @@ public class PlayerDataSyncPacket extends SplitPacket {
                 .map(PlayerDataSyncPacket::getHomeCoordinate)
                 .flatMap(map -> map.entrySet().stream())
                 .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (v1, v2) -> v1));
-        this.defaultHome = packets.get(0).defaultHome;
+        this.defaultHome = packets.getFirst().defaultHome;
     }
 
     private PlayerDataSyncPacket(UUID playerUUID, Date lastCardTime, Date lastTpTime, int teleportCard) {
@@ -90,6 +105,11 @@ public class PlayerDataSyncPacket extends SplitPacket {
         this.teleportRecords = new ArrayList<>();
         this.homeCoordinate = new HashMap<>();
         this.defaultHome = new HashMap<>();
+    }
+
+    @Override
+    public @NotNull Type<? extends CustomPacketPayload> type() {
+        return TYPE;
     }
 
     public void toBytes(FriendlyByteBuf buffer) {
@@ -115,17 +135,16 @@ public class PlayerDataSyncPacket extends SplitPacket {
         }
     }
 
-    public static void handle(PlayerDataSyncPacket packet, CustomPayloadEvent.Context ctx) {
-        ctx.enqueueWork(() -> {
-            if (ctx.getDirection().getReceptionSide().isClient()) {
+    public static void handle(PlayerDataSyncPacket packet, IPayloadContext ctx) {
+        if (ctx.flow().isClientbound()) {
+            ctx.enqueueWork(() -> {
                 // 获取玩家并更新 Capability 数据
                 List<PlayerDataSyncPacket> packets = SplitPacket.handle(packet);
                 if (CollectionUtils.isNotNullOrEmpty(packets)) {
-                    DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> ClientProxy.handleSynPlayerData(new PlayerDataSyncPacket(packets)));
+                    ClientProxy.handleSynPlayerData(new PlayerDataSyncPacket(packets));
                 }
-            }
-        });
-        ctx.setPacketHandled(true);
+            });
+        }
     }
 
     @Override
@@ -177,8 +196,8 @@ public class PlayerDataSyncPacket extends SplitPacket {
         return result;
     }
 
-    public IPlayerTeleportData getData() {
-        IPlayerTeleportData data = new PlayerTeleportData();
+    public PlayerTeleportData getData() {
+        PlayerTeleportData data = new PlayerTeleportData();
         data.setLastCardTime(this.lastCardTime);
         data.setLastTpTime(this.lastTpTime);
         data.setTeleportCard(this.teleportCard);

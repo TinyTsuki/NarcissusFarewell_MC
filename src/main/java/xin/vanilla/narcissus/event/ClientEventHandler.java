@@ -2,21 +2,28 @@ package xin.vanilla.narcissus.event;
 
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.client.event.RegisterKeyMappingsEvent;
-import net.minecraftforge.event.TickEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.network.PacketDistributor;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.ModList;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent;
+import net.neoforged.neoforge.client.event.ClientTickEvent;
+import net.neoforged.neoforge.client.event.RegisterKeyMappingsEvent;
+import net.neoforged.neoforge.common.NeoForge;
+import net.neoforged.neoforge.network.PacketDistributor;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import xin.vanilla.narcissus.NarcissusFarewell;
-import xin.vanilla.narcissus.network.*;
+import xin.vanilla.narcissus.network.packet.TpBackNotice;
+import xin.vanilla.narcissus.network.packet.TpHomeNotice;
+import xin.vanilla.narcissus.network.packet.TpNoNotice;
+import xin.vanilla.narcissus.network.packet.TpYesNotice;
+import xin.vanilla.narcissus.util.LogoModifier;
 
 /**
  * 客户端事件处理器
  */
-@Mod.EventBusSubscriber(modid = NarcissusFarewell.MODID, value = Dist.CLIENT)
+@EventBusSubscriber(bus = EventBusSubscriber.Bus.MOD, modid = NarcissusFarewell.MODID, value = Dist.CLIENT)
 public class ClientEventHandler {
     private static final Logger LOGGER = LogManager.getLogger();
 
@@ -33,8 +40,22 @@ public class ClientEventHandler {
             -1, CATEGORIES);
 
     /**
+     * 在客户端设置阶段触发的事件处理方法
+     * 此方法主要用于接收 FML 客户端设置事件，并执行相应的初始化操作
+     */
+    @SubscribeEvent
+    public static void onClientSetup(FMLClientSetupEvent event) {
+        // 修改logo为随机logo
+        ModList.get().getMods().stream()
+                .filter(info -> info.getModId().equals(NarcissusFarewell.MODID))
+                .findFirst()
+                .ifPresent(LogoModifier::modifyLogo);
+    }
+
+    /**
      * 注册键绑定
      */
+    @SubscribeEvent
     public static void registerKeyMappings(RegisterKeyMappingsEvent event) {
         event.register(TP_HOME_KEY);
         event.register(TP_BACK_KEY);
@@ -49,34 +70,34 @@ public class ClientEventHandler {
      *
      * @param event 客户端Tick事件
      */
-    @SubscribeEvent
-    public static void onClientTick(TickEvent.ClientTickEvent event) {
-        if (Minecraft.getInstance().screen == null && event.phase == TickEvent.Phase.END) {
+    // @SubscribeEvent
+    public static void onClientTick(ClientTickEvent.Post event) {
+        if (Minecraft.getInstance().screen == null) {
             // 快捷回家
             if (TP_HOME_KEY.consumeClick()) {
                 if (!keyDown) {
-                    ModNetworkHandler.INSTANCE.send(new TpHomeNotice(), PacketDistributor.SERVER.noArg());
+                    PacketDistributor.sendToServer(new TpHomeNotice());
                     keyDown = true;
                 }
             }
             // 快捷返回
             else if (TP_BACK_KEY.consumeClick()) {
                 if (!keyDown) {
-                    ModNetworkHandler.INSTANCE.send(new TpBackNotice(), PacketDistributor.SERVER.noArg());
+                    PacketDistributor.sendToServer(new TpBackNotice());
                     keyDown = true;
                 }
             }
             // 快捷同意最近一条传送请求
             else if (TP_REQ_YES.consumeClick()) {
                 if (!keyDown) {
-                    ModNetworkHandler.INSTANCE.send(new TpYesNotice(), PacketDistributor.SERVER.noArg());
+                    PacketDistributor.sendToServer(new TpYesNotice());
                     keyDown = true;
                 }
             }
             // 快捷拒绝最近一条传送请求
             else if (TP_REQ_NO.consumeClick()) {
                 if (!keyDown) {
-                    ModNetworkHandler.INSTANCE.send(new TpNoNotice(), PacketDistributor.SERVER.noArg());
+                    PacketDistributor.sendToServer(new TpNoNotice());
                     keyDown = true;
                 }
             } else {
