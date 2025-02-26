@@ -32,15 +32,14 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.levelgen.structure.Structure;
 import net.minecraft.world.phys.Vec3;
-import net.neoforged.neoforge.registries.NeoForgeRegistries;
 import xin.vanilla.narcissus.NarcissusFarewell;
 import xin.vanilla.narcissus.config.Coordinate;
 import xin.vanilla.narcissus.config.KeyValue;
 import xin.vanilla.narcissus.config.ServerConfig;
 import xin.vanilla.narcissus.config.TeleportRequest;
 import xin.vanilla.narcissus.data.TeleportRecord;
-import xin.vanilla.narcissus.data.player.PlayerDataAttachment;
-import xin.vanilla.narcissus.data.player.PlayerTeleportData;
+import xin.vanilla.narcissus.data.player.IPlayerTeleportData;
+import xin.vanilla.narcissus.data.player.PlayerTeleportDataCapability;
 import xin.vanilla.narcissus.data.world.WorldStageData;
 import xin.vanilla.narcissus.enums.*;
 import xin.vanilla.narcissus.util.Component;
@@ -200,7 +199,7 @@ public class FarewellCommand {
 
         SuggestionProvider<CommandSourceStack> homeSuggestions = (context, builder) -> {
             ServerPlayer player = context.getSource().getPlayerOrException();
-            PlayerTeleportData data = PlayerDataAttachment.getData(player);
+            IPlayerTeleportData data = PlayerTeleportDataCapability.getData(player);
             for (KeyValue<String, String> key : data.getHomeCoordinate().keySet()) {
                 builder.suggest(key.getValue());
             }
@@ -796,7 +795,7 @@ public class FarewellCommand {
             // 传送功能前置校验
             if (checkTeleportPre(context.getSource(), ECommandType.SET_HOME)) return 0;
             // 判断设置数量是否超过限制
-            PlayerTeleportData data = PlayerDataAttachment.getData(player);
+            IPlayerTeleportData data = PlayerTeleportDataCapability.getData(player);
             if (data.getHomeCoordinate().size() >= ServerConfig.TELEPORT_HOME_LIMIT.get()) {
                 NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EI18nType.MESSAGE, "home_limit"), ServerConfig.TELEPORT_HOME_LIMIT.get());
                 return 0;
@@ -835,7 +834,7 @@ public class FarewellCommand {
             ServerPlayer player = context.getSource().getPlayerOrException();
             // 传送功能前置校验
             if (checkTeleportPre(context.getSource(), ECommandType.DEL_HOME)) return 0;
-            PlayerTeleportData data = PlayerDataAttachment.getData(player);
+            IPlayerTeleportData data = PlayerTeleportDataCapability.getData(player);
             String name = StringArgumentType.getString(context, "name");
             ResourceKey<Level> targetLevel = DimensionArgument.getDimension(context, "dimension").dimension();
             String dimension = targetLevel.location().toString();
@@ -859,7 +858,7 @@ public class FarewellCommand {
             // 传送功能前置校验
             if (checkTeleportPre(context.getSource(), ECommandType.GET_HOME)) return 0;
             Component component;
-            PlayerTeleportData data = PlayerDataAttachment.getData(player);
+            IPlayerTeleportData data = PlayerTeleportDataCapability.getData(player);
             String language = NarcissusUtils.getPlayerLanguage(player);
             if (data.getHomeCoordinate().isEmpty()) {
                 component = Component.translatable(language, EI18nType.MESSAGE, "home_is_empty");

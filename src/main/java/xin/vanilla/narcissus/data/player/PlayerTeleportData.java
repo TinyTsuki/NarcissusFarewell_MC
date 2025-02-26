@@ -5,7 +5,6 @@ import lombok.Setter;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.network.FriendlyByteBuf;
-import net.neoforged.neoforge.common.util.INBTSerializable;
 import xin.vanilla.narcissus.config.Coordinate;
 import xin.vanilla.narcissus.config.KeyValue;
 import xin.vanilla.narcissus.config.ServerConfig;
@@ -21,7 +20,7 @@ import java.util.stream.Collectors;
 /**
  * 玩家传送数据
  */
-public class PlayerTeleportData implements INBTSerializable<CompoundTag> {
+public class PlayerTeleportData implements IPlayerTeleportData {
 
     @Setter
     private Date lastCardTime;
@@ -154,7 +153,7 @@ public class PlayerTeleportData implements INBTSerializable<CompoundTag> {
         }
     }
 
-    public void copyFrom(PlayerTeleportData capability) {
+    public void copyFrom(IPlayerTeleportData capability) {
         this.lastCardTime = capability.getLastCardTime();
         this.lastTpTime = capability.getLastTpTime();
         this.teleportCard.set(capability.getTeleportCard());

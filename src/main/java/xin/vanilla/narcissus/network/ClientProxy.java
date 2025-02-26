@@ -5,7 +5,7 @@ import net.minecraft.client.player.LocalPlayer;
 import net.neoforged.neoforge.network.PacketDistributor;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import xin.vanilla.narcissus.data.player.PlayerDataAttachment;
+import xin.vanilla.narcissus.data.player.PlayerTeleportDataCapability;
 import xin.vanilla.narcissus.network.packet.PlayerDataReceivedNotice;
 import xin.vanilla.narcissus.network.packet.PlayerDataSyncPacket;
 
@@ -16,8 +16,8 @@ public class ClientProxy {
         LocalPlayer player = Minecraft.getInstance().player;
         if (player != null) {
             try {
-                player.setData(PlayerDataAttachment.PLAYER_DATA, packet.getData());
-                PacketDistributor.SERVER.noArg().send(new PlayerDataReceivedNotice());
+                PlayerTeleportDataCapability.setData(player, packet.getData());
+                ModNetworkHandler.INSTANCE.send(PacketDistributor.SERVER.noArg(), new PlayerDataReceivedNotice());
                 LOGGER.debug("Client: Player data received successfully.");
             } catch (Exception ignored) {
                 LOGGER.debug("Client: Player data received failed.");

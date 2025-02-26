@@ -20,7 +20,6 @@ import org.apache.logging.log4j.Logger;
 import xin.vanilla.narcissus.command.FarewellCommand;
 import xin.vanilla.narcissus.config.ServerConfig;
 import xin.vanilla.narcissus.config.TeleportRequest;
-import xin.vanilla.narcissus.data.player.PlayerDataAttachment;
 import xin.vanilla.narcissus.event.ClientEventHandler;
 import xin.vanilla.narcissus.network.ModNetworkHandler;
 import xin.vanilla.narcissus.network.packet.SplitPacket;
@@ -76,14 +75,12 @@ public class NarcissusFarewell {
     public NarcissusFarewell(IEventBus modEventBus) {
 
         // 注册网络通道
-        modEventBus.addListener(ModNetworkHandler::registerPackets);
+        ModNetworkHandler.registerPackets();
         // 注册服务器启动和关闭事件
         NeoForge.EVENT_BUS.addListener(this::onServerStarting);
 
         // 注册服务端配置
         ModLoadingContext.get().registerConfig(ModConfig.Type.SERVER, ServerConfig.SERVER_CONFIG);
-        // 注册数据附件
-        PlayerDataAttachment.ATTACHMENT_TYPES.register(modEventBus);
 
         if (FMLEnvironment.dist == Dist.CLIENT) {
             NeoForge.EVENT_BUS.addListener(ClientEventHandler::onClientTick);

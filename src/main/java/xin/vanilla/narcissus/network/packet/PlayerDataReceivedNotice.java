@@ -1,14 +1,11 @@
 package xin.vanilla.narcissus.network.packet;
 
 import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
-import net.minecraft.resources.ResourceLocation;
-import net.neoforged.neoforge.network.handling.IPayloadContext;
-import org.jetbrains.annotations.NotNull;
+import net.minecraft.server.level.ServerPlayer;
+import net.neoforged.neoforge.network.NetworkEvent;
 import xin.vanilla.narcissus.NarcissusFarewell;
 
-public class PlayerDataReceivedNotice implements CustomPacketPayload {
-    public final static ResourceLocation ID = new ResourceLocation(NarcissusFarewell.MODID, "player_data_received");
+public class PlayerDataReceivedNotice {
 
     public PlayerDataReceivedNotice() {
     }
@@ -16,23 +13,19 @@ public class PlayerDataReceivedNotice implements CustomPacketPayload {
     public PlayerDataReceivedNotice(FriendlyByteBuf buf) {
     }
 
-    @Override
-    public @NotNull ResourceLocation id() {
-        return ID;
+    public void toBytes(FriendlyByteBuf buf) {
     }
 
-    public void write(FriendlyByteBuf buf) {
-    }
-
-    public static void handle(PlayerDataReceivedNotice packet, IPayloadContext ctx) {
-        if (ctx.flow().isServerbound()) {
-            // 获取网络事件上下文并排队执行工作
-            ctx.workHandler().execute(() -> {
-                // 获取发送数据包的玩家实体
-                ctx.player().ifPresent(
-                        player -> NarcissusFarewell.getPlayerCapabilityStatus().put(player.getStringUUID(), true)
-                );
-            });
-        }
+    public static void handle(PlayerDataReceivedNotice packet, NetworkEvent.ServerCustomPayloadEvent.Context ctx) {
+        // 获取网络事件上下文并排队执行工作
+        ctx.enqueueWork(() -> {
+            // 获取发送数据包的玩家实体
+            ServerPlayer player = ctx.getSender();
+            if (player != null) {
+                NarcissusFarewell.getPlayerCapabilityStatus().put(player.getStringUUID(), true);
+            }
+        });
+        // 设置数据包已处理状态，防止重复处理
+        ctx.setPacketHandled(true);
     }
 }

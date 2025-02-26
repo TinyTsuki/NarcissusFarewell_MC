@@ -1,27 +1,31 @@
 package xin.vanilla.narcissus.network;
 
-import net.neoforged.neoforge.network.event.RegisterPayloadHandlerEvent;
-import net.neoforged.neoforge.network.registration.IPayloadRegistrar;
+import net.minecraft.resources.ResourceLocation;
+import net.neoforged.neoforge.network.NetworkRegistry;
+import net.neoforged.neoforge.network.simple.SimpleChannel;
 import xin.vanilla.narcissus.NarcissusFarewell;
 import xin.vanilla.narcissus.network.packet.*;
 
 public class ModNetworkHandler {
-    public static void registerPackets(final RegisterPayloadHandlerEvent event) {
-        final IPayloadRegistrar registrar = event.registrar(NarcissusFarewell.MODID).optional();
+    private static final String PROTOCOL_VERSION = "1";
+    private static int ID = 0;
+    public static final SimpleChannel INSTANCE = NetworkRegistry.ChannelBuilder.named(new ResourceLocation(NarcissusFarewell.MODID, "main_network"))
+            .networkProtocolVersion(() -> PROTOCOL_VERSION)
+            .clientAcceptedVersions((version) -> true)    // 客户端版本始终有效
+            .serverAcceptedVersions((version) -> true)    // 服务端版本始终有效
+            .simpleChannel();
 
-        registrar.play(PlayerDataSyncPacket.ID, PlayerDataSyncPacket::new,
-                handler -> handler.client(PlayerDataSyncPacket::handle));
-        registrar.play(PlayerDataReceivedNotice.ID, PlayerDataReceivedNotice::new,
-                handler -> handler.server(PlayerDataReceivedNotice::handle));
-        registrar.play(ClientModLoadedNotice.ID, ClientModLoadedNotice::new,
-                handler -> handler.server(ClientModLoadedNotice::handle));
-        registrar.play(TpHomeNotice.ID, TpHomeNotice::new,
-                handler -> handler.server(TpHomeNotice::handle));
-        registrar.play(TpBackNotice.ID, TpBackNotice::new,
-                handler -> handler.server(TpBackNotice::handle));
-        registrar.play(TpYesNotice.ID, TpYesNotice::new,
-                handler -> handler.server(TpYesNotice::handle));
-        registrar.play(TpNoNotice.ID, TpNoNotice::new,
-                handler -> handler.server(TpNoNotice::handle));
+    public static int nextID() {
+        return ID++;
+    }
+
+    public static void registerPackets() {
+        INSTANCE.messageBuilder(PlayerDataSyncPacket.class, nextID()).encoder(PlayerDataSyncPacket::toBytes).decoder(PlayerDataSyncPacket::new).consumerMainThread(PlayerDataSyncPacket::handle).add();
+        INSTANCE.messageBuilder(PlayerDataReceivedNotice.class, nextID()).encoder(PlayerDataReceivedNotice::toBytes).decoder(PlayerDataReceivedNotice::new).consumerMainThread(PlayerDataReceivedNotice::handle).add();
+        INSTANCE.messageBuilder(ClientModLoadedNotice.class, nextID()).encoder(ClientModLoadedNotice::toBytes).decoder(ClientModLoadedNotice::new).consumerMainThread(ClientModLoadedNotice::handle).add();
+        INSTANCE.messageBuilder(TpHomeNotice.class, nextID()).encoder(TpHomeNotice::toBytes).decoder(TpHomeNotice::new).consumerMainThread(TpHomeNotice::handle).add();
+        INSTANCE.messageBuilder(TpBackNotice.class, nextID()).encoder(TpBackNotice::toBytes).decoder(TpBackNotice::new).consumerMainThread(TpBackNotice::handle).add();
+        INSTANCE.messageBuilder(TpYesNotice.class, nextID()).encoder(TpYesNotice::toBytes).decoder(TpYesNotice::new).consumerMainThread(TpYesNotice::handle).add();
+        INSTANCE.messageBuilder(TpNoNotice.class, nextID()).encoder(TpNoNotice::toBytes).decoder(TpNoNotice::new).consumerMainThread(TpNoNotice::handle).add();
     }
 }

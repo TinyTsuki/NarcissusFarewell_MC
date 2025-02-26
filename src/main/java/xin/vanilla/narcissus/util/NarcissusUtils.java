@@ -47,8 +47,8 @@ import org.apache.maven.artifact.versioning.ArtifactVersion;
 import xin.vanilla.narcissus.NarcissusFarewell;
 import xin.vanilla.narcissus.config.*;
 import xin.vanilla.narcissus.data.TeleportRecord;
-import xin.vanilla.narcissus.data.player.PlayerDataAttachment;
-import xin.vanilla.narcissus.data.player.PlayerTeleportData;
+import xin.vanilla.narcissus.data.player.IPlayerTeleportData;
+import xin.vanilla.narcissus.data.player.PlayerTeleportDataCapability;
 import xin.vanilla.narcissus.data.world.WorldStageData;
 import xin.vanilla.narcissus.enums.*;
 
@@ -705,7 +705,7 @@ public class NarcissusUtils {
     }
 
     public static KeyValue<String, String> getPlayerHomeKey(ServerPlayer player, ResourceKey<Level> dimension, String name) {
-        PlayerTeleportData data = PlayerDataAttachment.getData(player);
+        IPlayerTeleportData data = PlayerTeleportDataCapability.getData(player);
         Map<String, String> defaultHome = data.getDefaultHome();
         if (defaultHome.isEmpty() && dimension == null && StringUtils.isNullOrEmpty(name) && data.getHomeCoordinate().size() != 1) {
             return null;
@@ -755,7 +755,7 @@ public class NarcissusUtils {
      * @param name      名称
      */
     public static Coordinate getPlayerHome(ServerPlayer player, ResourceKey<Level> dimension, String name) {
-        return PlayerDataAttachment.getData(player).getHomeCoordinate().getOrDefault(getPlayerHomeKey(player, dimension, name), null);
+        return PlayerTeleportDataCapability.getData(player).getHomeCoordinate().getOrDefault(getPlayerHomeKey(player, dimension, name), null);
     }
 
     /**
@@ -790,7 +790,7 @@ public class NarcissusUtils {
     public static TeleportRecord getBackTeleportRecord(ServerPlayer player, @Nullable ETeleportType type, @Nullable ResourceKey<Level> dimension) {
         TeleportRecord result = null;
         // 获取玩家的传送数据
-        PlayerTeleportData data = PlayerDataAttachment.getData(player);
+        IPlayerTeleportData data = PlayerTeleportDataCapability.getData(player);
         List<TeleportRecord> records = data.getTeleportRecords();
         Optional<TeleportRecord> optionalRecord = records.stream()
                 .filter(record -> type == null || record.getTeleportType() == type)
@@ -804,7 +804,7 @@ public class NarcissusUtils {
     }
 
     public static void removeBackTeleportRecord(ServerPlayer player, TeleportRecord record) {
-        PlayerDataAttachment.getData(player).getTeleportRecords().remove(record);
+        PlayerTeleportDataCapability.getData(player).getTeleportRecords().remove(record);
     }
 
     // endregion 坐标查找
@@ -931,7 +931,7 @@ public class NarcissusUtils {
         record.setTeleportType(type);
         record.setBefore(before);
         record.setAfter(after);
-        PlayerDataAttachment.getData(player).addTeleportRecords(record);
+        PlayerTeleportDataCapability.getData(player).addTeleportRecords(record);
     }
 
     // endregion 传送相关
@@ -1171,13 +1171,13 @@ public class NarcissusUtils {
     public static int getTeleportCoolDown(ServerPlayer player, ETeleportType type) {
         // 如果传送卡类型为抵消冷却时间，则不计算冷却时间
         if (ServerConfig.TELEPORT_CARD_TYPE.get() == ECardType.REFUND_COOLDOWN || ServerConfig.TELEPORT_CARD_TYPE.get() == ECardType.REFUND_ALL_COST_AND_COOLDOWN) {
-            if (PlayerDataAttachment.getData(player).getTeleportCard() > 0) {
+            if (PlayerTeleportDataCapability.getData(player).getTeleportCard() > 0) {
                 return 0;
             }
         }
         Instant current = Instant.now();
         int commandCoolDown = getCommandCoolDown(type);
-        Instant lastTpTime = PlayerDataAttachment.getData(player).getTeleportRecords(type).stream()
+        Instant lastTpTime = PlayerTeleportDataCapability.getData(player).getTeleportRecords(type).stream()
                 .map(TeleportRecord::getTeleportTime)
                 .max(Comparator.comparing(Date::toInstant))
                 .orElse(new Date(0)).toInstant();
@@ -1296,7 +1296,7 @@ public class NarcissusUtils {
                     NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EI18nType.MESSAGE, "cost_not_enough"), Component.translatable(NarcissusUtils.getPlayerLanguage(player), EI18nType.WORD, "exp_point"), (int) Math.ceil(need));
                 } else if (result && submit) {
                     player.giveExperiencePoints(-costNeed);
-                    PlayerDataAttachment.getData(player).subTeleportCard(cardNeedTotal);
+                    PlayerTeleportDataCapability.getData(player).subTeleportCard(cardNeedTotal);
                 }
                 break;
             case EXP_LEVEL:
@@ -1305,7 +1305,7 @@ public class NarcissusUtils {
                     NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EI18nType.MESSAGE, "cost_not_enough"), Component.translatable(NarcissusUtils.getPlayerLanguage(player), EI18nType.WORD, "exp_level"), (int) Math.ceil(need));
                 } else if (result && submit) {
                     player.giveExperienceLevels(-costNeed);
-                    PlayerDataAttachment.getData(player).subTeleportCard(cardNeedTotal);
+                    PlayerTeleportDataCapability.getData(player).subTeleportCard(cardNeedTotal);
                 }
                 break;
             case HEALTH:
@@ -1314,7 +1314,7 @@ public class NarcissusUtils {
                     NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EI18nType.MESSAGE, "cost_not_enough"), Component.translatable(NarcissusUtils.getPlayerLanguage(player), EI18nType.WORD, "health"), (int) Math.ceil(need));
                 } else if (result && submit) {
                     player.hurt(player.level().damageSources().magic(), costNeed);
-                    PlayerDataAttachment.getData(player).subTeleportCard(cardNeedTotal);
+                    PlayerTeleportDataCapability.getData(player).subTeleportCard(cardNeedTotal);
                 }
                 break;
             case HUNGER:
@@ -1323,7 +1323,7 @@ public class NarcissusUtils {
                     NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EI18nType.MESSAGE, "cost_not_enough"), Component.translatable(NarcissusUtils.getPlayerLanguage(player), EI18nType.WORD, "hunger"), (int) Math.ceil(need));
                 } else if (result && submit) {
                     player.getFoodData().setFoodLevel(player.getFoodData().getFoodLevel() - costNeed);
-                    PlayerDataAttachment.getData(player).subTeleportCard(cardNeedTotal);
+                    PlayerTeleportDataCapability.getData(player).subTeleportCard(cardNeedTotal);
                 }
                 break;
             case ITEM:
@@ -1337,7 +1337,7 @@ public class NarcissusUtils {
                         result = removeItemFromPlayerInventory(player, itemStack);
                         // 代价不足
                         if (result) {
-                            PlayerDataAttachment.getData(player).subTeleportCard(cardNeedTotal);
+                            PlayerTeleportDataCapability.getData(player).subTeleportCard(cardNeedTotal);
                         } else {
                             NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EI18nType.MESSAGE, "cost_not_enough"), itemStack.getDisplayName(), (int) Math.ceil(need));
                         }
@@ -1352,7 +1352,7 @@ public class NarcissusUtils {
                         String command = cost.getConf().replaceAll("\\[num]", String.valueOf(costNeed));
                         // 指令执行的返回结果怎么没了???
                         NarcissusFarewell.getServerInstance().getCommands().performPrefixedCommand(player.createCommandSourceStack(), command);
-                        PlayerDataAttachment.getData(player).subTeleportCard(cardNeedTotal);
+                        PlayerTeleportDataCapability.getData(player).subTeleportCard(cardNeedTotal);
                     }
                 } catch (Exception ignored) {
                 }
@@ -1370,7 +1370,7 @@ public class NarcissusUtils {
     public static int getTeleportCostNeedPost(ServerPlayer player, double need) {
         int ceil = (int) Math.ceil(need);
         if (!ServerConfig.TELEPORT_CARD.get()) return ceil;
-        PlayerTeleportData data = PlayerDataAttachment.getData(player);
+        IPlayerTeleportData data = PlayerTeleportDataCapability.getData(player);
         return switch (ServerConfig.TELEPORT_CARD_TYPE.get()) {
             case NONE -> data.getTeleportCard() > 0 ? ceil : -1;
             case LIKE_COST -> data.getTeleportCard() >= ceil ? ceil : -1;
@@ -1398,7 +1398,7 @@ public class NarcissusUtils {
     public static int getTeleportCardNeedPost(ServerPlayer player, double need) {
         int ceil = (int) Math.ceil(need);
         if (!ServerConfig.TELEPORT_CARD.get()) return 0;
-        PlayerTeleportData data = PlayerDataAttachment.getData(player);
+        IPlayerTeleportData data = PlayerTeleportDataCapability.getData(player);
         return switch (ServerConfig.TELEPORT_CARD_TYPE.get()) {
             case NONE -> data.getTeleportCard() > 0 ? 0 : 1;
             case LIKE_COST -> Math.max(0, ceil - data.getTeleportCard());

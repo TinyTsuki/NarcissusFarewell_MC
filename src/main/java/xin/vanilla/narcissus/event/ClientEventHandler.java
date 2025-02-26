@@ -13,6 +13,7 @@ import net.neoforged.neoforge.network.PacketDistributor;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import xin.vanilla.narcissus.NarcissusFarewell;
+import xin.vanilla.narcissus.network.ModNetworkHandler;
 import xin.vanilla.narcissus.network.packet.TpBackNotice;
 import xin.vanilla.narcissus.network.packet.TpHomeNotice;
 import xin.vanilla.narcissus.network.packet.TpNoNotice;
@@ -75,28 +76,28 @@ public class ClientEventHandler {
             // 快捷回家
             if (TP_HOME_KEY.consumeClick()) {
                 if (!keyDown) {
-                    PacketDistributor.SERVER.noArg().send(new TpHomeNotice());
+                    ModNetworkHandler.INSTANCE.send(PacketDistributor.SERVER.noArg(), new TpHomeNotice());
                     keyDown = true;
                 }
             }
             // 快捷返回
             else if (TP_BACK_KEY.consumeClick()) {
                 if (!keyDown) {
-                    PacketDistributor.SERVER.noArg().send(new TpBackNotice());
+                    ModNetworkHandler.INSTANCE.send(PacketDistributor.SERVER.noArg(), new TpBackNotice());
                     keyDown = true;
                 }
             }
             // 快捷同意最近一条传送请求
             else if (TP_REQ_YES.consumeClick()) {
                 if (!keyDown) {
-                    PacketDistributor.SERVER.noArg().send(new TpYesNotice());
+                    ModNetworkHandler.INSTANCE.send(PacketDistributor.SERVER.noArg(), new TpYesNotice());
                     keyDown = true;
                 }
             }
             // 快捷拒绝最近一条传送请求
             else if (TP_REQ_NO.consumeClick()) {
                 if (!keyDown) {
-                    PacketDistributor.SERVER.noArg().send(new TpNoNotice());
+                    ModNetworkHandler.INSTANCE.send(PacketDistributor.SERVER.noArg(), new TpNoNotice());
                     keyDown = true;
                 }
             } else {
