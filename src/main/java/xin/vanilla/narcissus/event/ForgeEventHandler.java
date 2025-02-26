@@ -4,13 +4,13 @@ import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.api.distmarker.OnlyIn;
 import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.fml.LogicalSide;
+import net.neoforged.fml.common.Mod;
 import net.neoforged.neoforge.client.event.ClientPlayerNetworkEvent;
+import net.neoforged.neoforge.event.TickEvent;
 import net.neoforged.neoforge.event.entity.EntityJoinLevelEvent;
 import net.neoforged.neoforge.event.entity.EntityTeleportEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
-import net.neoforged.neoforge.event.tick.PlayerTickEvent;
-import net.neoforged.neoforge.event.tick.ServerTickEvent;
 import net.neoforged.neoforge.network.PacketDistributor;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -34,15 +34,15 @@ import java.util.Date;
 /**
  * Forge 事件处理
  */
-@EventBusSubscriber(modid = NarcissusFarewell.MODID, bus = EventBusSubscriber.Bus.GAME)
-public class GameEventHandler {
+@Mod.EventBusSubscriber(modid = NarcissusFarewell.MODID, bus = Mod.EventBusSubscriber.Bus.FORGE)
+public class ForgeEventHandler {
     private static final Logger LOGGER = LogManager.getLogger();
 
     @SubscribeEvent
     @OnlyIn(Dist.CLIENT)
     public static void onPlayerLoggedIn(ClientPlayerNetworkEvent.LoggingIn event) {
         LOGGER.debug("Client: Player logged in.");
-        PacketDistributor.sendToServer(new ClientModLoadedNotice());
+        PacketDistributor.SERVER.noArg().send(new ClientModLoadedNotice());
     }
 
     @SubscribeEvent
@@ -55,17 +55,19 @@ public class GameEventHandler {
      * 同步客户端服务端数据
      */
     @SubscribeEvent
-    public static void playerTickEvent(PlayerTickEvent.Post event) {
-        if (event.getEntity() instanceof ServerPlayer player) {
-            // 仅给安装了mod的玩家发送数据包
-            if (NarcissusFarewell.getPlayerCapabilityStatus().containsKey(player.getUUID().toString())
-                    && !NarcissusFarewell.getPlayerCapabilityStatus().get(player.getStringUUID())) {
-                // 如果玩家还活着则同步玩家传送数据到客户端
-                if (player.isAlive()) {
-                    try {
-                        PlayerDataAttachment.syncPlayerData(player);
-                    } catch (Exception e) {
-                        LOGGER.error("Failed to sync player data to client", e);
+    public static void playerTickEvent(TickEvent.PlayerTickEvent event) {
+        if (event.side == LogicalSide.SERVER && event.phase == TickEvent.Phase.END) {
+            if (event.player instanceof ServerPlayer player) {
+                // 仅给安装了mod的玩家发送数据包
+                if (NarcissusFarewell.getPlayerCapabilityStatus().containsKey(player.getUUID().toString())
+                        && !NarcissusFarewell.getPlayerCapabilityStatus().get(player.getStringUUID())) {
+                    // 如果玩家还活着则同步玩家传送数据到客户端
+                    if (player.isAlive()) {
+                        try {
+                            PlayerDataAttachment.syncPlayerData(player);
+                        } catch (Exception e) {
+                            LOGGER.error("Failed to sync player data to client", e);
+                        }
                     }
                 }
             }
@@ -73,22 +75,24 @@ public class GameEventHandler {
     }
 
     @SubscribeEvent
-    public static void onServerTick(ServerTickEvent.Post event) {
-        if (event.hasTime()) {
-            if (NarcissusFarewell.getServerInstance().getTickCount() % 20 == 0) {
-                long currentTimeMillis = System.currentTimeMillis();
-                NarcissusFarewell.getTeleportRequest().entrySet().stream()
-                        .filter(entry -> entry.getValue().getExpireTime() < currentTimeMillis)
-                        .forEach(entry -> {
-                            TeleportRequest request = NarcissusFarewell.getTeleportRequest().remove(entry.getKey());
-                            if (request != null) {
-                                if (request.getTeleportType() == ETeleportType.TP_ASK) {
-                                    NarcissusUtils.sendTranslatableMessage(request.getRequester(), I18nUtils.getKey(EI18nType.MESSAGE, "tp_ask_expired"), request.getTarget().getDisplayName().getString());
-                                } else if (request.getTeleportType() == ETeleportType.TP_HERE) {
-                                    NarcissusUtils.sendTranslatableMessage(request.getRequester(), I18nUtils.getKey(EI18nType.MESSAGE, "tp_here_expired"), request.getTarget().getDisplayName().getString());
+    public static void onServerTick(TickEvent.ServerTickEvent event) {
+        if (event.phase == TickEvent.Phase.END) {
+            if (event.haveTime()) {
+                if (NarcissusFarewell.getServerInstance().getTickCount() % 20 == 0) {
+                    long currentTimeMillis = System.currentTimeMillis();
+                    NarcissusFarewell.getTeleportRequest().entrySet().stream()
+                            .filter(entry -> entry.getValue().getExpireTime() < currentTimeMillis)
+                            .forEach(entry -> {
+                                TeleportRequest request = NarcissusFarewell.getTeleportRequest().remove(entry.getKey());
+                                if (request != null) {
+                                    if (request.getTeleportType() == ETeleportType.TP_ASK) {
+                                        NarcissusUtils.sendTranslatableMessage(request.getRequester(), I18nUtils.getKey(EI18nType.MESSAGE, "tp_ask_expired"), request.getTarget().getDisplayName().getString());
+                                    } else if (request.getTeleportType() == ETeleportType.TP_HERE) {
+                                        NarcissusUtils.sendTranslatableMessage(request.getRequester(), I18nUtils.getKey(EI18nType.MESSAGE, "tp_here_expired"), request.getTarget().getDisplayName().getString());
+                                    }
                                 }
-                            }
-                        });
+                            });
+                }
             }
         }
     }

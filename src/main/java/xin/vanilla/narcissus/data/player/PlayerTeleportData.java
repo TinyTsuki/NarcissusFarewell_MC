@@ -2,12 +2,10 @@ package xin.vanilla.narcissus.data.player;
 
 import lombok.NonNull;
 import lombok.Setter;
-import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.network.FriendlyByteBuf;
 import net.neoforged.neoforge.common.util.INBTSerializable;
-import org.jetbrains.annotations.NotNull;
 import xin.vanilla.narcissus.config.Coordinate;
 import xin.vanilla.narcissus.config.KeyValue;
 import xin.vanilla.narcissus.config.ServerConfig;
@@ -166,7 +164,7 @@ public class PlayerTeleportData implements INBTSerializable<CompoundTag> {
     }
 
     @Override
-    public CompoundTag serializeNBT(HolderLookup.@NotNull Provider provider) {
+    public CompoundTag serializeNBT() {
         CompoundTag tag = new CompoundTag();
         tag.putString("lastCardTime", DateUtils.toDateTimeString(this.getLastCardTime()));
         tag.putString("lastTpTime", DateUtils.toDateTimeString(this.getLastTpTime()));
@@ -200,7 +198,7 @@ public class PlayerTeleportData implements INBTSerializable<CompoundTag> {
     }
 
     @Override
-    public void deserializeNBT(HolderLookup.@NotNull Provider provider, CompoundTag nbt) {
+    public void deserializeNBT(CompoundTag nbt) {
         this.setLastCardTime(DateUtils.format(nbt.getString("lastCardTime")));
         this.setLastTpTime(DateUtils.format(nbt.getString("lastTpTime")));
         this.setTeleportCard(nbt.getInt("teleportCard"));

@@ -1,21 +1,27 @@
 package xin.vanilla.narcissus.network;
 
-import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
-import net.neoforged.neoforge.network.registration.PayloadRegistrar;
+import net.neoforged.neoforge.network.event.RegisterPayloadHandlerEvent;
+import net.neoforged.neoforge.network.registration.IPayloadRegistrar;
+import xin.vanilla.narcissus.NarcissusFarewell;
 import xin.vanilla.narcissus.network.packet.*;
 
 public class ModNetworkHandler {
-    private static final String PROTOCOL_VERSION = "1";
+    public static void registerPackets(final RegisterPayloadHandlerEvent event) {
+        final IPayloadRegistrar registrar = event.registrar(NarcissusFarewell.MODID).optional();
 
-    public static void registerPackets(final RegisterPayloadHandlersEvent event) {
-        final PayloadRegistrar registrar = event.registrar(PROTOCOL_VERSION).optional();
-
-        registrar.playToClient(PlayerDataSyncPacket.TYPE, PlayerDataSyncPacket.STREAM_CODEC, PlayerDataSyncPacket::handle);
-        registrar.playToServer(PlayerDataReceivedNotice.TYPE, PlayerDataReceivedNotice.STREAM_CODEC, PlayerDataReceivedNotice::handle);
-        registrar.playToServer(ClientModLoadedNotice.TYPE, ClientModLoadedNotice.STREAM_CODEC, ClientModLoadedNotice::handle);
-        registrar.playToServer(TpHomeNotice.TYPE, TpHomeNotice.STREAM_CODEC, TpHomeNotice::handle);
-        registrar.playToServer(TpBackNotice.TYPE, TpBackNotice.STREAM_CODEC, TpBackNotice::handle);
-        registrar.playToServer(TpYesNotice.TYPE, TpYesNotice.STREAM_CODEC, TpYesNotice::handle);
-        registrar.playToServer(TpNoNotice.TYPE, TpNoNotice.STREAM_CODEC, TpNoNotice::handle);
+        registrar.play(PlayerDataSyncPacket.ID, PlayerDataSyncPacket::new,
+                handler -> handler.client(PlayerDataSyncPacket::handle));
+        registrar.play(PlayerDataReceivedNotice.ID, PlayerDataReceivedNotice::new,
+                handler -> handler.server(PlayerDataReceivedNotice::handle));
+        registrar.play(ClientModLoadedNotice.ID, ClientModLoadedNotice::new,
+                handler -> handler.server(ClientModLoadedNotice::handle));
+        registrar.play(TpHomeNotice.ID, TpHomeNotice::new,
+                handler -> handler.server(TpHomeNotice::handle));
+        registrar.play(TpBackNotice.ID, TpBackNotice::new,
+                handler -> handler.server(TpBackNotice::handle));
+        registrar.play(TpYesNotice.ID, TpYesNotice::new,
+                handler -> handler.server(TpYesNotice::handle));
+        registrar.play(TpNoNotice.ID, TpNoNotice::new,
+                handler -> handler.server(TpNoNotice::handle));
     }
 }

@@ -720,7 +720,7 @@ public class NarcissusUtils {
             } else if (defaultHome.containsValue(name)) {
                 List<Map.Entry<String, String>> entryList = defaultHome.entrySet().stream().filter(entry -> entry.getValue().equals(name)).toList();
                 if (entryList.size() == 1) {
-                    keyValue = new KeyValue<>(entryList.getFirst().getKey(), entryList.getFirst().getValue());
+                    keyValue = new KeyValue<>(entryList.get(0).getKey(), entryList.get(0).getValue());
                 }
             }
         } else if (dimension != null && StringUtils.isNullOrEmpty(name)) {
@@ -879,7 +879,7 @@ public class NarcissusUtils {
                                             .filter(block -> playerItemList.stream().map(ItemStack::getItem).anyMatch(item -> new ItemStack(block.getBlock()).getItem().equals(item)))
                                             .findFirst().orElse(null);
                                 } else {
-                                    blockState = SAFE_BLOCKS.getFirst();
+                                    blockState = SAFE_BLOCKS.get(0);
                                 }
                             } else {
                                 blockState = null;
@@ -1328,7 +1328,7 @@ public class NarcissusUtils {
                 break;
             case ITEM:
                 try {
-                    ItemStack itemStack = ItemStack.parseOptional(player.registryAccess(), TagParser.parseTag(cost.getConf()));
+                    ItemStack itemStack = ItemStack.of(TagParser.parseTag(cost.getConf()));
                     result = getItemCount(player.getInventory().items, itemStack) >= costNeed && cardNeed == 0;
                     if (!result && cardNeed == 0) {
                         NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EI18nType.MESSAGE, "cost_not_enough"), itemStack.getDisplayName(), (int) Math.ceil(need));
@@ -1584,7 +1584,7 @@ public class NarcissusUtils {
                     .findFirst()
                     .orElse(null);
             if (minecraftVersion != null) {
-                ArtifactVersion lowerBound = minecraftVersion.getVersionRange().getRestrictions().getFirst().getLowerBound();
+                ArtifactVersion lowerBound = minecraftVersion.getVersionRange().getRestrictions().get(0).getLowerBound();
                 int majorVersion = lowerBound.getMajorVersion();
                 int minorVersion = lowerBound.getMinorVersion();
                 int incrementalVersion = lowerBound.getIncrementalVersion();

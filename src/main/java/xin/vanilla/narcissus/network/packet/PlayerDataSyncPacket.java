@@ -1,9 +1,7 @@
 package xin.vanilla.narcissus.network.packet;
 
-import io.netty.buffer.ByteBuf;
 import lombok.Getter;
 import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.ResourceLocation;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
@@ -22,16 +20,7 @@ import java.util.stream.Collectors;
 
 @Getter
 public class PlayerDataSyncPacket extends SplitPacket implements CustomPacketPayload {
-    public final static Type<PlayerDataSyncPacket> TYPE = new Type<>(new ResourceLocation(NarcissusFarewell.MODID, "player_data_sync"));
-    public final static StreamCodec<ByteBuf, PlayerDataSyncPacket> STREAM_CODEC = new StreamCodec<>() {
-        public @NotNull PlayerDataSyncPacket decode(@NotNull ByteBuf byteBuf) {
-            return new PlayerDataSyncPacket((new FriendlyByteBuf(byteBuf)));
-        }
-
-        public void encode(@NotNull ByteBuf byteBuf, @NotNull PlayerDataSyncPacket packet) {
-            packet.toBytes(new FriendlyByteBuf(byteBuf));
-        }
-    };
+    public final static ResourceLocation ID = new ResourceLocation(NarcissusFarewell.MODID, "player_data_sync");
 
     private final UUID playerUUID;
     private final Date lastCardTime;
@@ -80,10 +69,10 @@ public class PlayerDataSyncPacket extends SplitPacket implements CustomPacketPay
 
     public PlayerDataSyncPacket(List<PlayerDataSyncPacket> packets) {
         super();
-        this.playerUUID = packets.getFirst().playerUUID;
-        this.lastCardTime = packets.getFirst().lastCardTime;
-        this.lastTpTime = packets.getFirst().lastTpTime;
-        this.teleportCard = packets.getFirst().teleportCard;
+        this.playerUUID = packets.get(0).playerUUID;
+        this.lastCardTime = packets.get(0).lastCardTime;
+        this.lastTpTime = packets.get(0).lastTpTime;
+        this.teleportCard = packets.get(0).teleportCard;
         this.teleportRecords = packets.stream()
                 .map(PlayerDataSyncPacket::getTeleportRecords)
                 .flatMap(Collection::stream)
@@ -93,7 +82,7 @@ public class PlayerDataSyncPacket extends SplitPacket implements CustomPacketPay
                 .map(PlayerDataSyncPacket::getHomeCoordinate)
                 .flatMap(map -> map.entrySet().stream())
                 .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (v1, v2) -> v1));
-        this.defaultHome = packets.getFirst().defaultHome;
+        this.defaultHome = packets.get(0).defaultHome;
     }
 
     private PlayerDataSyncPacket(UUID playerUUID, Date lastCardTime, Date lastTpTime, int teleportCard) {
@@ -108,12 +97,12 @@ public class PlayerDataSyncPacket extends SplitPacket implements CustomPacketPay
     }
 
     @Override
-    public @NotNull Type<? extends CustomPacketPayload> type() {
-        return TYPE;
+    public @NotNull ResourceLocation id() {
+        return ID;
     }
 
-    public void toBytes(FriendlyByteBuf buffer) {
-        super.toBytes(buffer);
+    public void write(FriendlyByteBuf buffer) {
+        super.write(buffer);
         buffer.writeUUID(playerUUID);
         buffer.writeUtf(DateUtils.toDateTimeString(this.lastCardTime));
         buffer.writeUtf(DateUtils.toDateTimeString(this.lastTpTime));
@@ -137,7 +126,7 @@ public class PlayerDataSyncPacket extends SplitPacket implements CustomPacketPay
 
     public static void handle(PlayerDataSyncPacket packet, IPayloadContext ctx) {
         if (ctx.flow().isClientbound()) {
-            ctx.enqueueWork(() -> {
+            ctx.workHandler().execute(() -> {
                 // 获取玩家并更新 Capability 数据
                 List<PlayerDataSyncPacket> packets = SplitPacket.handle(packet);
                 if (CollectionUtils.isNotNullOrEmpty(packets)) {

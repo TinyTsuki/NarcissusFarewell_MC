@@ -5,11 +5,10 @@ import net.minecraft.client.Minecraft;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.ModList;
-import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.fml.common.Mod;
 import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent;
-import net.neoforged.neoforge.client.event.ClientTickEvent;
 import net.neoforged.neoforge.client.event.RegisterKeyMappingsEvent;
-import net.neoforged.neoforge.common.NeoForge;
+import net.neoforged.neoforge.event.TickEvent;
 import net.neoforged.neoforge.network.PacketDistributor;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -23,7 +22,7 @@ import xin.vanilla.narcissus.util.LogoModifier;
 /**
  * 客户端事件处理器
  */
-@EventBusSubscriber(bus = EventBusSubscriber.Bus.MOD, modid = NarcissusFarewell.MODID, value = Dist.CLIENT)
+@Mod.EventBusSubscriber(bus = Mod.EventBusSubscriber.Bus.MOD, modid = NarcissusFarewell.MODID, value = Dist.CLIENT)
 public class ClientEventHandler {
     private static final Logger LOGGER = LogManager.getLogger();
 
@@ -71,33 +70,33 @@ public class ClientEventHandler {
      * @param event 客户端Tick事件
      */
     // @SubscribeEvent
-    public static void onClientTick(ClientTickEvent.Post event) {
-        if (Minecraft.getInstance().screen == null) {
+    public static void onClientTick(TickEvent.ClientTickEvent event) {
+        if (Minecraft.getInstance().screen == null && event.phase == TickEvent.Phase.END) {
             // 快捷回家
             if (TP_HOME_KEY.consumeClick()) {
                 if (!keyDown) {
-                    PacketDistributor.sendToServer(new TpHomeNotice());
+                    PacketDistributor.SERVER.noArg().send(new TpHomeNotice());
                     keyDown = true;
                 }
             }
             // 快捷返回
             else if (TP_BACK_KEY.consumeClick()) {
                 if (!keyDown) {
-                    PacketDistributor.sendToServer(new TpBackNotice());
+                    PacketDistributor.SERVER.noArg().send(new TpBackNotice());
                     keyDown = true;
                 }
             }
             // 快捷同意最近一条传送请求
             else if (TP_REQ_YES.consumeClick()) {
                 if (!keyDown) {
-                    PacketDistributor.sendToServer(new TpYesNotice());
+                    PacketDistributor.SERVER.noArg().send(new TpYesNotice());
                     keyDown = true;
                 }
             }
             // 快捷拒绝最近一条传送请求
             else if (TP_REQ_NO.consumeClick()) {
                 if (!keyDown) {
-                    PacketDistributor.sendToServer(new TpNoNotice());
+                    PacketDistributor.SERVER.noArg().send(new TpNoNotice());
                     keyDown = true;
                 }
             } else {

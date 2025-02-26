@@ -1,4 +1,4 @@
-# This is an example neoforge.mods.toml file. It contains the data relating to the loading mods.
+# This is an example mods.toml file. It contains the data relating to the loading mods.
 # There are several mandatory fields (#mandatory), and many more that are optional (#optional).
 # The overall format is standard TOML format, v0.5.0.
 # Note that there are a couple of TOML lists in this file.
@@ -63,15 +63,3 @@ versionRange = "${minecraft_version_range}"
 ordering = "NONE"
 side = "BOTH"
 
-[[dependencies."${mod_id}"]]
-modId = "${mod_id}" # 模组ID
-mandatory = true # 模组必须在服务器上安装
-versionRange = "[1.0.0,)"
-ordering = "NONE"
-side = "SERVER" # 强制模组在服务器端运行
-[[dependencies."${mod_id}"]]
-modId = "${mod_id}" # 模组ID
-mandatory = false # 客户端可以不安装
-versionRange = "[1.0.0,)"
-ordering = "NONE"
-side = "CLIENT" # 客户端安装是可选的

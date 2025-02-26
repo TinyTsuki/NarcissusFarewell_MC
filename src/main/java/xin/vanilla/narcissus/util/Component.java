@@ -531,7 +531,7 @@ public class Component implements Cloneable, Serializable {
         if (components.isEmpty()) {
             components.add(net.minecraft.network.chat.Component.literal(""));
         }
-        MutableComponent result = components.getFirst();
+        MutableComponent result = components.get(0);
         for (int j = 1; j < components.size(); j++) {
             result.append(components.get(j));
         }

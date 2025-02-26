@@ -8,7 +8,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.fml.ModContainer;
+import net.neoforged.fml.ModLoadingContext;
 import net.neoforged.fml.common.Mod;
 import net.neoforged.fml.config.ModConfig;
 import net.neoforged.fml.loading.FMLEnvironment;
@@ -73,7 +73,7 @@ public class NarcissusFarewell {
     @Getter
     private static final Map<String, TeleportRequest> teleportRequest = new ConcurrentHashMap<>();
 
-    public NarcissusFarewell(IEventBus modEventBus, ModContainer modContainer) {
+    public NarcissusFarewell(IEventBus modEventBus) {
 
         // 注册网络通道
         modEventBus.addListener(ModNetworkHandler::registerPackets);
@@ -81,7 +81,7 @@ public class NarcissusFarewell {
         NeoForge.EVENT_BUS.addListener(this::onServerStarting);
 
         // 注册服务端配置
-        modContainer.registerConfig(ModConfig.Type.SERVER, ServerConfig.SERVER_CONFIG);
+        ModLoadingContext.get().registerConfig(ModConfig.Type.SERVER, ServerConfig.SERVER_CONFIG);
         // 注册数据附件
         PlayerDataAttachment.ATTACHMENT_TYPES.register(modEventBus);
 

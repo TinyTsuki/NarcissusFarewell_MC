@@ -3,7 +3,6 @@ package xin.vanilla.narcissus.data.player;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
 import net.neoforged.neoforge.attachment.AttachmentType;
-import net.neoforged.neoforge.network.PacketDistributor;
 import net.neoforged.neoforge.registries.DeferredRegister;
 import net.neoforged.neoforge.registries.NeoForgeRegistries;
 import xin.vanilla.narcissus.NarcissusFarewell;
@@ -28,7 +27,7 @@ public class PlayerDataAttachment {
         // 创建自定义包并发送到客户端
         PlayerDataSyncPacket packet = new PlayerDataSyncPacket(player.getUUID(), player.getData(PLAYER_DATA));
         for (PlayerDataSyncPacket syncPacket : packet.split()) {
-            PacketDistributor.sendToPlayer(player, syncPacket);
+            player.connection.send(syncPacket);
         }
     }
 
