@@ -32,6 +32,7 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.levelgen.structure.Structure;
 import net.minecraft.world.phys.Vec3;
+import net.neoforged.neoforge.registries.NeoForgeRegistries;
 import xin.vanilla.narcissus.NarcissusFarewell;
 import xin.vanilla.narcissus.config.Coordinate;
 import xin.vanilla.narcissus.config.KeyValue;
@@ -184,16 +185,16 @@ public class FarewellCommand {
             String input = context.getInput().substring(stringRange.getStart(), stringRange.getEnd());
             boolean isInputEmpty = StringUtils.isNullOrEmpty(input);
             // 具体结构(Recourse)
-            NarcissusFarewell.getServerInstance().registryAccess().lookupOrThrow(Registries.STRUCTURE).keySet().stream()
+            NarcissusFarewell.getServerInstance().registryAccess().registryOrThrow(Registries.STRUCTURE).keySet().stream()
                     .filter(location -> isInputEmpty || location.toString().contains(input))
                     .forEach(location -> builder.suggest(location.toString()));
             // 结构类型(Tag)
-            NarcissusFarewell.getServerInstance().registryAccess().lookupOrThrow(Registries.STRUCTURE).getTags()
-                    .filter(tag -> isInputEmpty || tag.key().location().toString().contains(input))
-                    .forEach(tag -> builder.suggest(tag.key().location().toString()));
-            NarcissusFarewell.getServerInstance().registryAccess().lookupOrThrow(Registries.BIOME).getTags()
-                    .filter(biome -> isInputEmpty || biome.key().location().toString().contains(input))
-                    .forEach(biome -> builder.suggest(biome.key().location().toString()));
+            NarcissusFarewell.getServerInstance().registryAccess().registryOrThrow(Registries.STRUCTURE).getTagNames()
+                    .filter(tag -> isInputEmpty || tag.location().toString().contains(input))
+                    .forEach(tag -> builder.suggest(tag.location().toString()));
+            NarcissusFarewell.getServerInstance().registryAccess().registryOrThrow(Registries.BIOME).getTagNames()
+                    .filter(biome -> isInputEmpty || biome.location().toString().contains(input))
+                    .forEach(biome -> builder.suggest(biome.location().toString()));
             return builder.buildFuture();
         };
 
