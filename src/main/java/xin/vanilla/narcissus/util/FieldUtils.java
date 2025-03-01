@@ -66,7 +66,17 @@ public class FieldUtils {
         try {
             Field field = clazz.getDeclaredField(fieldName);
             field.setAccessible(true);
-            field.set(instance, value);
+            // 若field为final则解除final限制
+            if (Modifier.isFinal(field.getModifiers())) {
+                Field modifiersField = Field.class.getDeclaredField("modifiers");
+                modifiersField.setAccessible(true);
+                int fieldInt = modifiersField.getInt(field);
+                modifiersField.setInt(field, field.getModifiers() & ~java.lang.reflect.Modifier.FINAL);
+                field.set(instance, value);
+                modifiersField.setInt(field, fieldInt);
+            } else {
+                field.set(instance, value);
+            }
         } catch (NoSuchFieldException | IllegalAccessException e) {
             LOGGER.error("Failed to set private field {} from {}", fieldName, clazz.getName(), e);
         }
