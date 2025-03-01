@@ -349,9 +349,17 @@ public class NarcissusUtils {
             .distinct()
             .toList();
 
+    public static int getWorldMinY(ServerLevel world) {
+        return world.getMinBuildHeight();
+    }
+
+    public static int getWorldMaxY(ServerLevel world) {
+        return world.getMaxBuildHeight();
+    }
+
     public static Coordinate findTopCandidate(ServerLevel world, Coordinate start) {
-        if (start.getY() >= world.getMaxBuildHeight()) return null;
-        for (int y : IntStream.range((int) start.getY() + 1, world.getMaxBuildHeight()).boxed()
+        if (start.getY() >= NarcissusUtils.getWorldMaxY(world)) return null;
+        for (int y : IntStream.range((int) start.getY() + 1, NarcissusUtils.getWorldMaxY(world)).boxed()
                 .sorted(Comparator.comparingInt(Integer::intValue).reversed())
                 .toList()) {
             Coordinate candidate = new Coordinate().setX(start.getX()).setY(y).setZ(start.getZ())
@@ -367,7 +375,7 @@ public class NarcissusUtils {
 
     public static Coordinate findBottomCandidate(ServerLevel world, Coordinate start) {
         if (start.getY() <= 0) return null;
-        for (int y : IntStream.range(world.getMinBuildHeight(), (int) start.getY() - 1).boxed()
+        for (int y : IntStream.range(NarcissusUtils.getWorldMinY(world), (int) start.getY() - 1).boxed()
                 .sorted(Comparator.comparingInt(Integer::intValue))
                 .toList()) {
             Coordinate candidate = new Coordinate().setX(start.getX()).setY(y).setZ(start.getZ())
@@ -382,8 +390,8 @@ public class NarcissusUtils {
     }
 
     public static Coordinate findUpCandidate(ServerLevel world, Coordinate start) {
-        if (start.getY() >= world.getMaxBuildHeight()) return null;
-        for (int y : IntStream.range((int) start.getY() + 1, world.getMaxBuildHeight()).boxed()
+        if (start.getY() >= NarcissusUtils.getWorldMaxY(world)) return null;
+        for (int y : IntStream.range((int) start.getY() + 1, NarcissusUtils.getWorldMaxY(world)).boxed()
                 .sorted(Comparator.comparingInt(a -> a - (int) start.getY()))
                 .toList()) {
             Coordinate candidate = new Coordinate().setX(start.getX()).setY(y).setZ(start.getZ())
@@ -399,7 +407,7 @@ public class NarcissusUtils {
 
     public static Coordinate findDownCandidate(ServerLevel world, Coordinate start) {
         if (start.getY() <= 0) return null;
-        for (int y : IntStream.range(world.getMinBuildHeight(), (int) start.getY() - 1).boxed()
+        for (int y : IntStream.range(NarcissusUtils.getWorldMinY(world), (int) start.getY() - 1).boxed()
                 .sorted(Comparator.comparingInt(a -> (int) start.getY() - a))
                 .toList()) {
             Coordinate candidate = new Coordinate().setX(start.getX()).setY(y).setZ(start.getZ())
@@ -542,7 +550,9 @@ public class NarcissusUtils {
             if (coordinate.getSafeMode() == ESafeMode.NONE && y <= minY || (y <= minY || y > maxY)) continue;
             for (int x : xList) {
                 for (int z : zList) {
-                    Coordinate candidate = new Coordinate().setX(x + 0.5).setY(y + 0.15).setZ(z + 0.5)
+                    double offsetX = x > 0 ? x + 0.5 : x - 0.5;
+                    double offsetZ = z > 0 ? z + 0.5 : z - 0.5;
+                    Coordinate candidate = new Coordinate().setX(offsetX).setY(y + 0.15).setZ(offsetZ)
                             .setYaw(coordinate.getYaw()).setPitch(coordinate.getPitch())
                             .setDimension(coordinate.getDimension())
                             .setSafe(coordinate.isSafe()).setSafeMode(coordinate.getSafeMode());
