@@ -5,7 +5,10 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.LivingEntity;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import sun.misc.Unsafe;
 
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.VarHandle;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
@@ -13,6 +16,18 @@ import java.util.List;
 
 public class FieldUtils {
     private static final Logger LOGGER = LogManager.getLogger();
+
+    private static final Unsafe UNSAFE;
+
+    static {
+        try {
+            Field theUnsafe = Unsafe.class.getDeclaredField("theUnsafe");
+            theUnsafe.setAccessible(true);
+            UNSAFE = (Unsafe) theUnsafe.get(null);
+        } catch (Exception e) {
+            throw new RuntimeException("Unable to access Unsafe instance", e);
+        }
+    }
 
     /**
      * 获取 类中声明的私有 target 字段名称
@@ -51,10 +66,10 @@ public class FieldUtils {
     }
 
     /**
-     * 设置 类中声明的私有 target 字段值
+     * 设置 类中声明的私有 target 字段值 (支持private+final+static)
      *
      * @param clazz     类
-     * @param instance  实例
+     * @param instance  实例 (若为static字段应传null)
      * @param fieldName 字段名称
      * @param value     字段值
      */
@@ -62,20 +77,45 @@ public class FieldUtils {
         try {
             Field field = clazz.getDeclaredField(fieldName);
             field.setAccessible(true);
-            // 若field为final则解除final限制
-            if (Modifier.isFinal(field.getModifiers())) {
-                Field modifiersField = Field.class.getDeclaredField("modifiers");
-                modifiersField.setAccessible(true);
-                int fieldInt = modifiersField.getInt(field);
-                modifiersField.setInt(field, field.getModifiers() & ~java.lang.reflect.Modifier.FINAL);
-                field.set(instance, value);
-                modifiersField.setInt(field, fieldInt);
+
+            if (Modifier.isStatic(field.getModifiers())) {
+                if (isJava8()) {
+                    setStaticFieldByUnsafe(field, value);
+                } else {
+                    try {
+                        setStaticFieldByVarHandle(clazz, fieldName, value);
+                    } catch (Throwable t) {
+                        setStaticFieldByUnsafe(field, value);
+                    }
+                }
             } else {
-                field.set(instance, value);
+                setInstanceFieldByUnsafe(instance, field, value);
             }
-        } catch (NoSuchFieldException | IllegalAccessException e) {
+        } catch (Exception e) {
             LOGGER.error("Failed to set private field {} from {}", fieldName, clazz.getName(), e);
         }
+    }
+
+    private static boolean isJava8() {
+        String version = System.getProperty("java.version");
+        return version.startsWith("1.8");
+    }
+
+    private static void setInstanceFieldByUnsafe(Object instance, Field field, Object value) {
+        long offset = UNSAFE.objectFieldOffset(field);
+        UNSAFE.putObject(instance, offset, value);
+    }
+
+    private static void setStaticFieldByUnsafe(Field field, Object value) {
+        Object base = UNSAFE.staticFieldBase(field);
+        long offset = UNSAFE.staticFieldOffset(field);
+        UNSAFE.putObject(base, offset, value);
+    }
+
+    private static void setStaticFieldByVarHandle(Class<?> clazz, String fieldName, Object value) throws Throwable {
+        VarHandle handle = MethodHandles.privateLookupIn(clazz, MethodHandles.lookup())
+                .findStaticVarHandle(clazz, fieldName, value.getClass());
+        handle.set(value);
     }
 
     private static String LANGUAGE_FIELD_NAME;

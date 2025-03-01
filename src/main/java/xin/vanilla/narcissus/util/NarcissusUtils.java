@@ -382,7 +382,7 @@ public class NarcissusUtils {
     }
 
     public static Coordinate findBottomCandidate(ServerLevel world, Coordinate start) {
-        if (start.getY() <= 0) return null;
+        if (start.getY() <= NarcissusUtils.getWorldMinY(world)) return null;
         for (int y : IntStream.range(NarcissusUtils.getWorldMinY(world), (int) start.getY() - 1).boxed()
                 .sorted(Comparator.comparingInt(Integer::intValue))
                 .toList()) {
@@ -414,7 +414,7 @@ public class NarcissusUtils {
     }
 
     public static Coordinate findDownCandidate(ServerLevel world, Coordinate start) {
-        if (start.getY() <= 0) return null;
+        if (start.getY() <= NarcissusUtils.getWorldMinY(world)) return null;
         for (int y : IntStream.range(NarcissusUtils.getWorldMinY(world), (int) start.getY() - 1).boxed()
                 .sorted(Comparator.comparingInt(a -> (int) start.getY() - a))
                 .toList()) {
@@ -462,14 +462,15 @@ public class NarcissusUtils {
             }
         }
 
-        // 如果未找到碰撞点，则使用射线的终点
+        // 若未找到碰撞点，则使用射线的终点
         if (result == null) {
             result = start.clone().fromVec3(currentPosition);
         }
 
-        // 如果 safe 为 true，从碰撞点反向查找安全位置
+        // 若需寻找安全坐标，则从碰撞点反向查找安全位置
         if (safe) {
-            Vec3 collisionVector = result.toVec3(); // 碰撞点的三维向量
+            // 碰撞点的三维向量
+            Vec3 collisionVector = result.toVec3();
             for (int stepCount = (int) Math.ceil(collisionVector.distanceTo(startPosition) / stepScale); stepCount >= 0; stepCount--) {
                 currentPosition = startPosition.add(stepVector.scale(stepCount));
                 BlockPos currentBlockPos = new BlockPos(currentPosition.x, currentPosition.y, currentPosition.z);
@@ -477,14 +478,14 @@ public class NarcissusUtils {
                     Coordinate candidate = start.clone().fromBlockPos(currentBlockPos).addY(yOffset);
                     // 判断当前候选坐标是否安全
                     if (isSafeCoordinate(world, candidate)) {
-                        result = candidate.addX(0.5).addY(0.15).addZ(0.5); // 找到安全位置
-                        stepCount = 0; // 跳出循环
+                        result = candidate.addX(0.5).addY(0.15).addZ(0.5);
+                        stepCount = 0;
                         break;
                     }
                 }
             }
         }
-        // 如果起点与结果相同则返回null
+        // 若起点与结果相同则返回null
         if (start.equalsOfRange(result, 1)) {
             result = null;
         }
