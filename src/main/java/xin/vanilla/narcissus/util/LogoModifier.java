@@ -15,16 +15,16 @@ public class LogoModifier {
     public static void modifyLogo(ModInfo modInfo) {
         try {
             if (StringUtils.isNullOrEmpty(FIELD_NAME)) {
-                FieldUtils.getPrivateFieldNames(ModInfo.class, Optional.class)
-                        .forEach(name -> {
-                            try {
-                                Optional<String> logo = ((Optional<String>) FieldUtils.getPrivateFieldValue(ModInfo.class, modInfo, name));
-                                if (!logo.isPresent() || StringUtils.isNotNullOrEmpty(logo.get()) && logo.get().matches(".*logo.*")) {
-                                    FIELD_NAME = name;
-                                }
-                            } catch (Exception ignored) {
-                            }
-                        });
+                for (String name : FieldUtils.getPrivateFieldNames(ModInfo.class, Optional.class)) {
+                    try {
+                        Optional<String> logo = ((Optional<String>) FieldUtils.getPrivateFieldValue(ModInfo.class, modInfo, name));
+                        if (logo.isPresent() && StringUtils.isNotNullOrEmpty(logo.get()) && logo.get().matches(".*logo.*.png$")) {
+                            FIELD_NAME = name;
+                            break;
+                        }
+                    } catch (Exception ignored) {
+                    }
+                }
                 if (StringUtils.isNullOrEmpty(FIELD_NAME)) {
                     FIELD_NAME = "logoFile";
                 }
