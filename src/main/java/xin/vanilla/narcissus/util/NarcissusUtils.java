@@ -687,9 +687,17 @@ public class NarcissusUtils {
             .distinct()
             .collect(Collectors.toList());
 
+    public static int getWorldMinY(WorldServer world) {
+        return 0;
+    }
+
+    public static int getWorldMaxY(WorldServer world) {
+        return world.getHeight();
+    }
+
     public static Coordinate findTopCandidate(WorldServer world, Coordinate start) {
-        if (start.getY() >= world.getHeight()) return null;
-        for (int y : IntStream.range((int) start.getY() + 1, world.getHeight()).boxed()
+        if (start.getY() >= NarcissusUtils.getWorldMaxY(world)) return null;
+        for (int y : IntStream.range((int) start.getY() + 1, NarcissusUtils.getWorldMaxY(world)).boxed()
                 .sorted(Comparator.comparingInt(Integer::intValue).reversed())
                 .collect(Collectors.toList())) {
             Coordinate candidate = new Coordinate().setX(start.getX()).setY(y).setZ(start.getZ())
@@ -705,7 +713,7 @@ public class NarcissusUtils {
 
     public static Coordinate findBottomCandidate(WorldServer world, Coordinate start) {
         if (start.getY() <= 0) return null;
-        for (int y : IntStream.range(0, (int) start.getY() - 1).boxed()
+        for (int y : IntStream.range(NarcissusUtils.getWorldMinY(world), (int) start.getY() - 1).boxed()
                 .sorted(Comparator.comparingInt(Integer::intValue))
                 .collect(Collectors.toList())) {
             Coordinate candidate = new Coordinate().setX(start.getX()).setY(y).setZ(start.getZ())
@@ -720,8 +728,8 @@ public class NarcissusUtils {
     }
 
     public static Coordinate findUpCandidate(WorldServer world, Coordinate start) {
-        if (start.getY() >= world.getHeight()) return null;
-        for (int y : IntStream.range((int) start.getY() + 1, world.getHeight()).boxed()
+        if (start.getY() >= NarcissusUtils.getWorldMaxY(world)) return null;
+        for (int y : IntStream.range((int) start.getY() + 1, NarcissusUtils.getWorldMaxY(world)).boxed()
                 .sorted(Comparator.comparingInt(a -> a - (int) start.getY()))
                 .collect(Collectors.toList())) {
             Coordinate candidate = new Coordinate().setX(start.getX()).setY(y).setZ(start.getZ())
@@ -737,7 +745,7 @@ public class NarcissusUtils {
 
     public static Coordinate findDownCandidate(WorldServer world, Coordinate start) {
         if (start.getY() <= 0) return null;
-        for (int y : IntStream.range(0, (int) start.getY() - 1).boxed()
+        for (int y : IntStream.range(NarcissusUtils.getWorldMinY(world), (int) start.getY() - 1).boxed()
                 .sorted(Comparator.comparingInt(a -> (int) start.getY() - a))
                 .collect(Collectors.toList())) {
             Coordinate candidate = new Coordinate().setX(start.getX()).setY(y).setZ(start.getZ())
@@ -831,7 +839,6 @@ public class NarcissusUtils {
         int chunkMaxX = chunkMinX + 15 + offset;
         int chunkMaxZ = chunkMinZ + 15 + offset;
 
-        // FIXME 1.18及之后版本range应该为(-64, world.getHeight())
         List<Integer> yList;
         List<Integer> xList;
         List<Integer> zList;
@@ -880,7 +887,9 @@ public class NarcissusUtils {
             if (coordinate.getSafeMode() == ESafeMode.NONE && y <= 0 || (y <= 0 || y > world.getHeight())) continue;
             for (int x : xList) {
                 for (int z : zList) {
-                    Coordinate candidate = new Coordinate().setX(x + 0.5).setY(y + 0.15).setZ(z + 0.5)
+                    double offsetX = x > 0 ? x + 0.5 : x - 0.5;
+                    double offsetZ = z > 0 ? z + 0.5 : z - 0.5;
+                    Coordinate candidate = new Coordinate().setX(offsetX).setY(y + 0.15).setZ(offsetZ)
                             .setYaw(coordinate.getYaw()).setPitch(coordinate.getPitch())
                             .setDimension(coordinate.getDimension())
                             .setSafe(coordinate.isSafe()).setSafeMode(coordinate.getSafeMode());

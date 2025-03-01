@@ -10,11 +10,14 @@ public class LogoModifier {
 
     public static void modifyLogo(ModContainer modInfo) {
         try {
-            boolean b = Math.random() > 0.5;
-            modInfo.getMetadata().logoFile = b ? "logo_.png" : "logo.png";
-            LOGGER.debug(b ? "logo_" : "logo");
+            modInfo.getMetadata().logoFile = LogoModifier.getLogoName();
+            LOGGER.debug("Modify logo to {}", modInfo.getMetadata().logoFile);
         } catch (Exception e) {
             LOGGER.error(e);
         }
+    }
+
+    public static String getLogoName() {
+        return Math.random() > 0.5 ? "logo_.png" : "logo.png";
     }
 }
