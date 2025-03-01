@@ -10,6 +10,7 @@ import net.minecraft.core.Registry;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
@@ -116,9 +117,10 @@ public class Coordinate implements Serializable, Cloneable {
     }
 
     public static Coordinate random(ServerPlayer player, int range, ResourceKey<Level> dimension) {
+        ServerLevel world = NarcissusUtils.getWorld(dimension);
         range = Math.min(Math.max(range, 1), ServerConfig.TELEPORT_RANDOM_DISTANCE_LIMIT.get());
         double x = player.getX() + (Math.random() * 2 - 1) * range;
-        double y = getRandomWithWeight(NarcissusUtils.getWorld(dimension).getMinBuildHeight(), NarcissusUtils.getWorld(dimension).getMaxBuildHeight(), (int) player.getY(), 0.75);
+        double y = getRandomWithWeight(NarcissusUtils.getWorldMinY(world), NarcissusUtils.getWorldMaxY(world), (int) player.getY(), 0.75);
         double z = player.getZ() + (Math.random() * 2 - 1) * range;
         return new Coordinate(x, y, z, player.getYRot(), player.getXRot(), dimension);
     }
