@@ -13,6 +13,7 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.vector.Vector3d;
 import net.minecraft.util.registry.Registry;
 import net.minecraft.world.World;
+import net.minecraft.world.server.ServerWorld;
 import xin.vanilla.narcissus.enums.ESafeMode;
 import xin.vanilla.narcissus.util.NarcissusUtils;
 import xin.vanilla.narcissus.util.StringUtils;
@@ -115,9 +116,10 @@ public class Coordinate implements Serializable, Cloneable {
     }
 
     public static Coordinate random(ServerPlayerEntity player, int range, RegistryKey<World> dimension) {
+        ServerWorld world = NarcissusUtils.getWorld(dimension);
         range = Math.min(Math.max(range, 1), ServerConfig.TELEPORT_RANDOM_DISTANCE_LIMIT.get());
         double x = player.getX() + (Math.random() * 2 - 1) * range;
-        double y = getRandomWithWeight(0, NarcissusUtils.getWorld(dimension).getMaxBuildHeight(), (int) player.getY(), 0.75);
+        double y = getRandomWithWeight(NarcissusUtils.getWorldMinY(world), NarcissusUtils.getWorldMaxY(world), (int) player.getY(), 0.75);
         double z = player.getZ() + (Math.random() * 2 - 1) * range;
         return new Coordinate(x, y, z, player.yRot, player.xRot, dimension);
     }
