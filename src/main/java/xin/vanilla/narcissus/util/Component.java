@@ -9,9 +9,9 @@ import lombok.NonNull;
 import lombok.Setter;
 import lombok.experimental.Accessors;
 import net.minecraft.entity.player.EntityPlayerMP;
-import net.minecraft.util.text.*;
-import net.minecraft.util.text.event.ClickEvent;
-import net.minecraft.util.text.event.HoverEvent;
+import net.minecraft.event.ClickEvent;
+import net.minecraft.event.HoverEvent;
+import net.minecraft.util.*;
 import xin.vanilla.narcissus.NarcissusFarewell;
 import xin.vanilla.narcissus.enums.EI18nType;
 
@@ -50,13 +50,6 @@ public class Component implements Cloneable, Serializable {
      * 翻译组件参数
      */
     private List<Component> args = new ArrayList<>();
-
-    /**
-     * 原始组件
-     */
-    @Getter
-    @Setter
-    private Object original = null;
 
     // region 样式属性
 
@@ -434,11 +427,11 @@ public class Component implements Cloneable, Serializable {
         return this;
     }
 
-    public Style getStyle() {
-        Style style = new Style();
+    public ChatStyle getStyle() {
+        ChatStyle style = new ChatStyle();
 
         if (!isColorEmpty() && getColor() != 0xFFFFFFFF) {
-            TextFormatting code = TextFormatting.getValueByName(StringUtils.argbToMinecraftColor(getColor()).name().toLowerCase());
+            EnumChatFormatting code = EnumChatFormatting.getValueByName(StringUtils.argbToMinecraftColor(getColor()).name().toLowerCase());
             if (code != null) {
                 style = style.setColor(code);
             }
@@ -448,8 +441,8 @@ public class Component implements Cloneable, Serializable {
                 .setObfuscated(this.isObfuscated())
                 .setBold(this.isBold())
                 .setItalic(this.isItalic())
-                .setClickEvent(this.clickEvent)
-                .setHoverEvent(this.hoverEvent);
+                .setChatClickEvent(this.clickEvent)
+                .setChatHoverEvent(this.hoverEvent);
         return style;
     }
 
@@ -518,8 +511,6 @@ public class Component implements Cloneable, Serializable {
             }
             if (this.i18nType == EI18nType.PLAIN) {
                 result.append(this.text);
-            } else if (i18nType == EI18nType.ORIGINAL) {
-                result.append(((ITextComponent) this.original).getFormattedText());
             } else {
                 result.append(I18nUtils.getTranslation(I18nUtils.getKey(this.i18nType, this.text), languageCode));
             }
@@ -532,7 +523,7 @@ public class Component implements Cloneable, Serializable {
     /**
      * 获取文本组件
      */
-    public ITextComponent toTextComponent() {
+    public IChatComponent toTextComponent() {
         return this.toTextComponent(this.getLanguageCode());
     }
 
@@ -541,81 +532,77 @@ public class Component implements Cloneable, Serializable {
      *
      * @param languageCode 语言代码
      */
-    public ITextComponent toTextComponent(String languageCode) {
-        List<TextComponentBase> components = new ArrayList<>();
-        if (this.i18nType == EI18nType.ORIGINAL) {
-            components.add((TextComponentBase) this.original);
-        } else {
-            // 如果颜色值为null则说明为透明，则不显示内容，所以返回空文本组件
-            if (!this.isColorEmpty()) {
-                if (this.i18nType != EI18nType.PLAIN) {
-                    String text = I18nUtils.getTranslation(I18nUtils.getKey(this.i18nType, this.text), languageCode);
-                    String[] split = text.split(StringUtils.FORMAT_REGEX, -1);
-                    for (String s : split) {
-                        components.add((TextComponentString) new TextComponentString(s).setStyle(this.getStyle()));
+    public IChatComponent toTextComponent(String languageCode) {
+        List<IChatComponent> components = new ArrayList<>();
+        // 如果颜色值为null则说明为透明，则不显示内容，所以返回空文本组件
+        if (!this.isColorEmpty()) {
+            if (this.i18nType != EI18nType.PLAIN) {
+                String text = I18nUtils.getTranslation(I18nUtils.getKey(this.i18nType, this.text), languageCode);
+                String[] split = text.split(StringUtils.FORMAT_REGEX, -1);
+                for (String s : split) {
+                    components.add(new ChatComponentText(s).setChatStyle(this.getStyle()));
+                }
+                Pattern pattern = Pattern.compile(StringUtils.FORMAT_REGEX);
+                Matcher matcher = pattern.matcher(text);
+                int i = 0;
+                while (matcher.find()) {
+                    String placeholder = matcher.group();
+                    int index = placeholder.contains("$") ? StringUtils.toInt(placeholder.split("\\$")[0].substring(1)) - 1 : -1;
+                    if (index == -1) {
+                        index = i;
                     }
-                    Pattern pattern = Pattern.compile(StringUtils.FORMAT_REGEX);
-                    Matcher matcher = pattern.matcher(text);
-                    int i = 0;
-                    while (matcher.find()) {
-                        String placeholder = matcher.group();
-                        int index = placeholder.contains("$") ? StringUtils.toInt(placeholder.split("\\$")[0].substring(1)) - 1 : -1;
-                        if (index == -1) {
-                            index = i;
-                        }
-                        Component formattedArg = new Component(placeholder).withStyle(this);
-                        if (index < this.getArgs().size()) {
-                            if (this.getArgs().get(index) == null) {
-                                formattedArg = new Component();
-                            } else {
-                                Component argComponent = this.getArgs().get(index);
-                                if (argComponent.getI18nType() != EI18nType.PLAIN) {
-                                    try {
-                                        // 颜色代码传递
-                                        String colorCode = split[i].replaceAll("^.*?((?:§[\\da-fA-FKLMNORklmnor])*)$", "$1");
-                                        formattedArg = new Component(String.format(placeholder.replaceAll("^%\\d+\\$", "%"), colorCode + argComponent)).withStyle(argComponent);
-                                    } catch (Exception e) {
-                                        // 颜色传递
-                                        if (argComponent.isColorEmpty()) {
-                                            argComponent.setColor(this.color);
-                                        }
-                                        formattedArg = argComponent;
-                                    }
-                                } else {
+                    Component formattedArg = new Component(placeholder).withStyle(this);
+                    if (index < this.getArgs().size()) {
+                        if (this.getArgs().get(index) == null) {
+                            formattedArg = new Component();
+                        } else {
+                            Component argComponent = this.getArgs().get(index);
+                            if (argComponent.getI18nType() != EI18nType.PLAIN) {
+                                try {
+                                    // 颜色代码传递
+                                    String colorCode = split[i].replaceAll("^.*?((?:§[\\da-fA-FKLMNORklmnor])*)$", "$1");
+                                    formattedArg = new Component(String.format(placeholder.replaceAll("^%\\d+\\$", "%"), colorCode + argComponent)).withStyle(argComponent);
+                                } catch (Exception e) {
                                     // 颜色传递
                                     if (argComponent.isColorEmpty()) {
                                         argComponent.setColor(this.color);
                                     }
                                     formattedArg = argComponent;
                                 }
+                            } else {
+                                // 颜色传递
+                                if (argComponent.isColorEmpty()) {
+                                    argComponent.setColor(this.color);
+                                }
+                                formattedArg = argComponent;
                             }
                         }
-                        if (components.size() > i) {
-                            components.get(i).appendSibling(formattedArg.toTextComponent());
-                        }
-                        i++;
                     }
-                } else {
-                    components.add((TextComponentString) new TextComponentString(this.text).setStyle(this.getStyle()));
+                    if (components.size() > i) {
+                        components.get(i).appendSibling(formattedArg.toTextComponent());
+                    }
+                    i++;
                 }
+            } else {
+                components.add(new ChatComponentText(this.text).setChatStyle(this.getStyle()));
             }
         }
-        components.addAll(this.getChildren().stream().map(component -> (TextComponentBase) component.toTextComponent(languageCode)).collect(Collectors.toList()));
+        components.addAll(this.getChildren().stream().map(component -> component.toTextComponent(languageCode)).collect(Collectors.toList()));
         if (components.isEmpty()) {
-            components.add(new TextComponentString(""));
+            components.add(new ChatComponentText(""));
         }
-        ITextComponent result = components.get(0);
+        IChatComponent result = components.get(0);
         for (int j = 1; j < components.size(); j++) {
             result.appendSibling(components.get(j));
         }
-        return result.setStyle(this.getStyle());
+        return result.setChatStyle(this.getStyle());
     }
 
     /**
      * 获取翻译文本组件
      */
-    public ITextComponent toTranslatedTextComponent() {
-        ITextComponent result = new TextComponentTranslation("");
+    public IChatComponent toTranslatedTextComponent() {
+        IChatComponent result = new ChatComponentText("");
         if (!this.isColorEmpty() || !this.isBgColorEmpty()) {
             if (this.i18nType != EI18nType.PLAIN) {
                 Object[] objects = this.getArgs().stream().map(component -> {
@@ -626,12 +613,12 @@ public class Component implements Cloneable, Serializable {
                     }
                 }).toArray();
                 if (CollectionUtils.isNotNullOrEmpty(objects)) {
-                    result = new TextComponentTranslation(I18nUtils.getKey(this.i18nType, this.text), objects);
+                    result = new ChatComponentTranslation(I18nUtils.getKey(this.i18nType, this.text), objects);
                 } else {
-                    result = new TextComponentTranslation(I18nUtils.getKey(this.i18nType, this.text));
+                    result = new ChatComponentTranslation(I18nUtils.getKey(this.i18nType, this.text));
                 }
             } else {
-                result = new TextComponentString(this.text).setStyle(this.getStyle());
+                result = new ChatComponentText(this.text).setChatStyle(this.getStyle());
             }
         }
         for (Component child : this.getChildren()) {
@@ -640,12 +627,19 @@ public class Component implements Cloneable, Serializable {
         return result;
     }
 
+    public boolean hasEvent() {
+        return !(this.clickEvent == null
+                && this.hoverEvent == null
+                && this.getChildren().stream().noneMatch(Component::hasEvent)
+                && this.getArgs().stream().noneMatch(Component::hasEvent));
+    }
+
     /**
      * 获取聊天文本组件
      *
      * @return 格式化颜色后的文本组件
      */
-    public ITextComponent toChatComponent() {
+    public List<IChatComponent> toChatComponent() {
         return this.toChatComponent(this.getLanguageCode());
     }
 
@@ -654,23 +648,16 @@ public class Component implements Cloneable, Serializable {
      *
      * @return 格式化颜色后的文本组件
      */
-    public ITextComponent toChatComponent(String languageCode) {
-        return rewriteColor(this.toTextComponent(languageCode));
-    }
-
-    // 😵‍💫
-    public static ITextComponent rewriteColor(ITextComponent component) {
-        // if (component instanceof IFormattableTextComponent) {
-        //     Color color = component.getStyle().getColor();
-        //     if (color != null && color.serialize().startsWith("#")) {
-        //         Style style = component.getStyle().withColor(Color.parseColor(StringUtils.argbToMinecraftColor(StringUtils.argbToHex(color.serialize())).name().toLowerCase()));
-        //         ((IFormattableTextComponent) component).setStyle(style);
-        //     }
-        // }
-        // for (ITextComponent sibling : component.getSiblings()) {
-        //     rewriteColor(sibling);
-        // }
-        return component;
+    public List<IChatComponent> toChatComponent(String languageCode) {
+        List<IChatComponent> result = new ArrayList<>();
+        if (this.hasEvent()) {
+            result.add(toTextComponent(languageCode));
+        } else {
+            for (String s : this.getString(languageCode).split("\n")) {
+                result.add(new ChatComponentText(s));
+            }
+        }
+        return result;
     }
 
     /**
@@ -678,13 +665,6 @@ public class Component implements Cloneable, Serializable {
      */
     public static Component empty() {
         return new Component();
-    }
-
-    /**
-     * 获取原始组件
-     */
-    public static Component original(Object original) {
-        return empty().setOriginal(original).setI18nType(EI18nType.ORIGINAL);
     }
 
     /**
@@ -779,7 +759,7 @@ public class Component implements Cloneable, Serializable {
             result.setClickEvent(new ClickEvent(ClickEvent.Action.valueOf(jsonObject.get("clickEvent.action").getAsString()), jsonObject.get("clickEvent.value").getAsString()));
         }
         if (jsonObject.has("hoverEvent.action") && jsonObject.has("hoverEvent.value")) {
-            result.setHoverEvent(new HoverEvent(HoverEvent.Action.valueOf(jsonObject.get("hoverEvent.action").getAsString()), ITextComponent.Serializer.fromJsonLenient(jsonObject.get("hoverEvent.value").getAsString())));
+            result.setHoverEvent(new HoverEvent(HoverEvent.Action.valueOf(jsonObject.get("hoverEvent.action").getAsString()), IChatComponent.Serializer.func_150699_a(jsonObject.get("hoverEvent.value").getAsString())));
         }
         for (JsonElement childJson : jsonObject.getAsJsonArray("children")) {
             result.getChildren().add(deserialize((JsonObject) childJson));
@@ -809,7 +789,7 @@ public class Component implements Cloneable, Serializable {
         }
         if (reward.getHoverEvent() != null) {
             result.addProperty("hoverEvent.action", reward.getHoverEvent().getAction().name());
-            result.addProperty("hoverEvent.value", ITextComponent.Serializer.componentToJson(reward.getHoverEvent().getValue()));
+            result.addProperty("hoverEvent.value", IChatComponent.Serializer.func_150696_a(reward.getHoverEvent().getValue()));
         }
         JsonArray children = new JsonArray();
         for (Component child : reward.getChildren()) {

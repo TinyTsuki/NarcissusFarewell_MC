@@ -1,11 +1,12 @@
 package xin.vanilla.narcissus.network;
 
+import cpw.mods.fml.common.network.simpleimpl.IMessage;
+import cpw.mods.fml.common.network.simpleimpl.IMessageHandler;
+import cpw.mods.fml.common.network.simpleimpl.MessageContext;
 import io.netty.buffer.ByteBuf;
 import net.minecraft.entity.player.EntityPlayerMP;
-import net.minecraftforge.fml.common.network.simpleimpl.IMessage;
-import net.minecraftforge.fml.common.network.simpleimpl.IMessageHandler;
-import net.minecraftforge.fml.common.network.simpleimpl.MessageContext;
 import xin.vanilla.narcissus.NarcissusFarewell;
+import xin.vanilla.narcissus.util.ServerTaskExecutor;
 
 public class PlayerDataReceivedNotice implements IMessage {
 
@@ -24,8 +25,8 @@ public class PlayerDataReceivedNotice implements IMessage {
         @Override
         public IMessage onMessage(PlayerDataReceivedNotice packet, MessageContext ctx) {
             // 排队工作到主线程
-            ctx.getServerHandler().player.getServerWorld().addScheduledTask(() -> {
-                EntityPlayerMP player = ctx.getServerHandler().player;
+            ServerTaskExecutor.run(() -> {
+                EntityPlayerMP player = ctx.getServerHandler().playerEntity;
                 if (player != null) {
                     // 更新玩家数据
                     NarcissusFarewell.getPlayerCapabilityStatus().put(player.getUniqueID().toString(), true);

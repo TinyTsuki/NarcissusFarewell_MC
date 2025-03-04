@@ -10,5 +10,4 @@ public enum EI18nType {
     MESSAGE,
     NONE,
     PLAIN,
-    ORIGINAL,
 }

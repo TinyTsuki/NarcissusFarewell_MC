@@ -1,6 +1,6 @@
 package xin.vanilla.narcissus.util;
 
-import net.minecraftforge.fml.common.ModContainer;
+import cpw.mods.fml.common.ModContainer;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 

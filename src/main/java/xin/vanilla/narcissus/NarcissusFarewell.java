@@ -1,26 +1,28 @@
 package xin.vanilla.narcissus;
 
+import cpw.mods.fml.common.Loader;
+import cpw.mods.fml.common.Mod;
+import cpw.mods.fml.common.event.FMLInitializationEvent;
+import cpw.mods.fml.common.event.FMLPreInitializationEvent;
+import cpw.mods.fml.common.event.FMLServerStartingEvent;
 import lombok.Getter;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.server.MinecraftServer;
-import net.minecraftforge.fml.common.Loader;
-import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.fml.common.event.FMLInitializationEvent;
-import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
-import net.minecraftforge.fml.common.event.FMLServerStartingEvent;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import xin.vanilla.narcissus.capability.player.PlayerTeleportDataCapability;
 import xin.vanilla.narcissus.command.FarewellCommand;
 import xin.vanilla.narcissus.command.concise.*;
 import xin.vanilla.narcissus.config.ServerConfig;
 import xin.vanilla.narcissus.config.TeleportRequest;
 import xin.vanilla.narcissus.enums.ECommandType;
 import xin.vanilla.narcissus.event.ClientEventHandler;
+import xin.vanilla.narcissus.event.ForgeEventHandler;
 import xin.vanilla.narcissus.network.ModNetworkHandler;
 import xin.vanilla.narcissus.network.SplitPacket;
+import xin.vanilla.narcissus.util.DimensionUtils;
 import xin.vanilla.narcissus.util.LogoModifier;
 import xin.vanilla.narcissus.util.NarcissusUtils;
+import xin.vanilla.narcissus.util.ServerTaskExecutor;
 
 import java.util.List;
 import java.util.Map;
@@ -82,17 +84,16 @@ public class NarcissusFarewell {
 
         // 注册服务端配置
         ServerConfig.init(event);
-
-        // 注册 PlayerDataCapability
-        PlayerTeleportDataCapability.register();
     }
 
     @Mod.EventHandler
     public void init(FMLInitializationEvent event) {
+        new ForgeEventHandler();
         // 仅在客户端执行的代码
         if (event.getSide().isClient()) {
             // 注册键盘按键绑定
             ClientEventHandler.registerKeyBindings();
+            new ClientEventHandler();
 
             // 修改logo为随机logo
             Loader.instance().getModList().stream()
@@ -105,6 +106,8 @@ public class NarcissusFarewell {
     @Mod.EventHandler
     public void onServerStarting(FMLServerStartingEvent event) {
         serverInstance = event.getServer();
+        ServerTaskExecutor.init();
+        DimensionUtils.init();
         LOGGER.debug("Registering commands");
         event.registerServerCommand(new FarewellCommand());
         if (NarcissusUtils.isConciseEnabled(ECommandType.UUID))

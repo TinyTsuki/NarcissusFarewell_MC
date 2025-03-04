@@ -7,9 +7,7 @@ import lombok.experimental.Accessors;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.nbt.NBTTagCompound;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Vec3d;
-import net.minecraft.world.DimensionType;
+import net.minecraft.util.Vec3;
 import net.minecraft.world.WorldServer;
 import xin.vanilla.narcissus.enums.ESafeMode;
 import xin.vanilla.narcissus.util.DimensionUtils;
@@ -31,7 +29,7 @@ public class Coordinate implements Serializable, Cloneable {
     private double z = 0;
     private double yaw = 0;
     private double pitch = 0;
-    private DimensionType dimension = DimensionType.OVERWORLD;
+    private String dimension = DimensionUtils.getOverworldDimensionStringId();
     private boolean safe = false;
     private ESafeMode safeMode = ESafeMode.NONE;
 
@@ -41,7 +39,7 @@ public class Coordinate implements Serializable, Cloneable {
         this.z = player.posZ;
         this.yaw = player.cameraYaw;
         this.pitch = player.cameraPitch;
-        this.dimension = player.world.provider.getDimensionType();
+        this.dimension = DimensionUtils.getStringId(player.getEntityWorld().provider.dimensionId);
     }
 
     public Coordinate(double x, double y, double z) {
@@ -50,7 +48,7 @@ public class Coordinate implements Serializable, Cloneable {
         this.z = z;
     }
 
-    public Coordinate(double x, double y, double z, DimensionType dimension) {
+    public Coordinate(double x, double y, double z, String dimension) {
         this.x = x;
         this.y = y;
         this.z = z;
@@ -65,7 +63,7 @@ public class Coordinate implements Serializable, Cloneable {
         this.pitch = pitch;
     }
 
-    public Coordinate(double x, double y, double z, double yaw, double pitch, DimensionType dimension) {
+    public Coordinate(double x, double y, double z, double yaw, double pitch, String dimension) {
         this.x = x;
         this.y = y;
         this.z = z;
@@ -110,11 +108,11 @@ public class Coordinate implements Serializable, Cloneable {
     }
 
     public static Coordinate random(EntityPlayerMP player, int range) {
-        return random(player, range, player.world.provider.getDimensionType());
+        return random(player, range, DimensionUtils.getStringId(player.getEntityWorld().provider.dimensionId));
     }
 
-    public static Coordinate random(EntityPlayerMP player, int range, DimensionType dimension) {
-        WorldServer world = NarcissusUtils.getWorld(dimension);
+    public static Coordinate random(EntityPlayerMP player, int range, String dimension) {
+        WorldServer world = NarcissusUtils.getWorld(DimensionUtils.getDimensionType(dimension));
         range = Math.min(Math.max(range, 1), ServerConfig.TELEPORT_RANDOM_DISTANCE_LIMIT);
         double x = player.posX + (Math.random() * 2 - 1) * range;
         double y = getRandomWithWeight(NarcissusUtils.getWorldMinY(world), NarcissusUtils.getWorldMaxY(world), (int) player.posY, 0.75);
@@ -122,25 +120,14 @@ public class Coordinate implements Serializable, Cloneable {
         return new Coordinate(x, y, z, player.cameraYaw, player.cameraPitch, dimension);
     }
 
-    public BlockPos toBlockPos() {
-        return new BlockPos(x, y, z);
+    public Vec3 toVector3d() {
+        return Vec3.createVectorHelper(x, y, z);
     }
 
-    public Vec3d toVector3d() {
-        return new Vec3d(x, y, z);
-    }
-
-    public Coordinate fromBlockPos(BlockPos pos) {
-        this.x = pos.getX();
-        this.y = pos.getY();
-        this.z = pos.getZ();
-        return this;
-    }
-
-    public Coordinate fromVector3d(Vec3d pos) {
-        this.x = pos.x;
-        this.y = pos.y;
-        this.z = pos.z;
+    public Coordinate fromVector3(Vec3 pos) {
+        this.x = pos.xCoord;
+        this.y = pos.yCoord;
+        this.z = pos.zCoord;
         return this;
     }
 
@@ -169,7 +156,7 @@ public class Coordinate implements Serializable, Cloneable {
         tag.setDouble("z", z);
         tag.setDouble("yaw", yaw);
         tag.setDouble("pitch", pitch);
-        tag.setString("dimension", DimensionUtils.getStringIdFromInt(dimension.getId()));
+        tag.setString("dimension", dimension);
         return tag;
     }
 
@@ -190,7 +177,7 @@ public class Coordinate implements Serializable, Cloneable {
         coordinate.z = tag.getDouble("z");
         coordinate.yaw = tag.getDouble("yaw");
         coordinate.pitch = tag.getDouble("pitch");
-        coordinate.dimension = DimensionUtils.getDimensionType(tag.getString("dimension"));
+        coordinate.dimension = tag.getString("dimension");
         return coordinate;
     }
 
@@ -227,4 +214,13 @@ public class Coordinate implements Serializable, Cloneable {
     public String toXyzString() {
         return StringUtils.toFixedEx(x, 1) + ", " + StringUtils.toFixedEx(y, 1) + ", " + StringUtils.toFixedEx(z, 1);
     }
+
+    public double distanceSq(Coordinate coordinate) {
+        return Math.pow(coordinate.x - x, 2) + Math.pow(coordinate.y - y, 2) + Math.pow(coordinate.z - z, 2);
+    }
+
+    public double distanceSq(double x, double y, double z) {
+        return Math.pow(x - this.x, 2) + Math.pow(y - this.y, 2) + Math.pow(z - this.z, 2);
+    }
+
 }

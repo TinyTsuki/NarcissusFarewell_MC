@@ -1,15 +1,15 @@
-package xin.vanilla.narcissus.capability.player;
+package xin.vanilla.narcissus.data.player;
 
 import lombok.NonNull;
-import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.network.PacketBuffer;
-import net.minecraftforge.common.util.INBTSerializable;
-import xin.vanilla.narcissus.capability.TeleportRecord;
+import net.minecraftforge.common.IExtendedEntityProperties;
 import xin.vanilla.narcissus.config.Coordinate;
 import xin.vanilla.narcissus.config.KeyValue;
+import xin.vanilla.narcissus.data.TeleportRecord;
 import xin.vanilla.narcissus.enums.ETeleportType;
 
+import java.io.IOException;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -17,8 +17,7 @@ import java.util.Map;
 /**
  * 玩家传送数据
  */
-public interface IPlayerTeleportData extends INBTSerializable<NBTTagCompound> {
-    // TIPS 加完属性记得去 PlayerTeleportDataStorage 里注册
+public interface IPlayerTeleportData extends IExtendedEntityProperties {
 
     /**
      * 获取传送卡数量
@@ -112,11 +111,13 @@ public interface IPlayerTeleportData extends INBTSerializable<NBTTagCompound> {
 
     KeyValue<String, String> getDefaultHome(String key);
 
-    void writeToBuffer(PacketBuffer buffer);
+    void writeToBuffer(PacketBuffer buffer) throws IOException;
 
-    void readFromBuffer(PacketBuffer buffer);
+    void readFromBuffer(PacketBuffer buffer) throws IOException;
 
     void copyFrom(IPlayerTeleportData capability);
 
-    void save(EntityPlayerMP player);
+    void deserializeNBT(NBTTagCompound entityData);
+
+    void serializeNBT(NBTTagCompound entityData);
 }

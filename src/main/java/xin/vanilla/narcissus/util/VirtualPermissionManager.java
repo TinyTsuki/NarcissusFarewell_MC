@@ -1,9 +1,6 @@
 package xin.vanilla.narcissus.util;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.JsonArray;
-import com.google.gson.JsonObject;
+import com.google.gson.*;
 import net.minecraft.entity.player.EntityPlayer;
 import xin.vanilla.narcissus.config.ServerConfig;
 import xin.vanilla.narcissus.enums.ECommandType;
@@ -118,7 +115,7 @@ public class VirtualPermissionManager {
         JsonObject jsonObject = new JsonObject();
         OP_MAP.forEach((uuid, types) -> {
             JsonArray jsonArray = new JsonArray();
-            types.stream().map(ECommandType::name).forEach(jsonArray::add);
+            types.stream().map(ECommandType::name).forEach(type -> jsonArray.add(new JsonPrimitive(type)));
             jsonObject.add(uuid, jsonArray);
         });
         return jsonObject;

@@ -1,8 +1,6 @@
 package xin.vanilla.narcissus.util;
 
-import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.player.EntityPlayerMP;
-import net.minecraft.network.datasync.DataParameter;
 import net.minecraft.world.gen.structure.MapGenStructureIO;
 import net.minecraft.world.gen.structure.StructureStart;
 import org.apache.logging.log4j.LogManager;
@@ -135,34 +133,10 @@ public class FieldUtils {
                 }
             }
         } catch (Exception e) {
-            LANGUAGE_FIELD_NAME = "language";
+            LANGUAGE_FIELD_NAME = "translator";
             LOGGER.error("Failed to get player language field name", e);
         }
         return LANGUAGE_FIELD_NAME;
-    }
-
-    private static String HEALTH_FIELD_NAME;
-
-    /**
-     * 获取实体生命字段名称
-     */
-    public static String getEntityHealthFieldName() {
-        if (StringUtils.isNotNullOrEmpty(HEALTH_FIELD_NAME)) return HEALTH_FIELD_NAME;
-        try {
-            Class<?> clazz = EntityLivingBase.class;
-            Field[] fields = clazz.getDeclaredFields();
-            for (Field field : fields) {
-                if (field.getType().equals(DataParameter.class) && field.getGenericType().getTypeName().contains("Float")) {
-                    if (Modifier.isStatic(field.getModifiers())) {
-                        HEALTH_FIELD_NAME = field.getName();
-                    }
-                }
-            }
-        } catch (Exception e) {
-            HEALTH_FIELD_NAME = "HEALTH";
-            LOGGER.error("Failed to get entity health field name", e);
-        }
-        return HEALTH_FIELD_NAME;
     }
 
     private static final String[] structStartNames = new String[]{"Mineshaft", "Village", "Fortress", "Stronghold", "Temple", "Monument", "EndCity", "Mansion"};

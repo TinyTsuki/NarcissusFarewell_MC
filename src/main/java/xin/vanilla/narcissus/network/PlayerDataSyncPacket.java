@@ -1,20 +1,19 @@
 package xin.vanilla.narcissus.network;
 
+import cpw.mods.fml.common.network.ByteBufUtils;
+import cpw.mods.fml.common.network.simpleimpl.IMessage;
+import cpw.mods.fml.common.network.simpleimpl.IMessageHandler;
+import cpw.mods.fml.common.network.simpleimpl.MessageContext;
 import io.netty.buffer.ByteBuf;
 import lombok.Getter;
-import net.minecraft.client.Minecraft;
-import net.minecraftforge.fml.common.network.ByteBufUtils;
-import net.minecraftforge.fml.common.network.simpleimpl.IMessage;
-import net.minecraftforge.fml.common.network.simpleimpl.IMessageHandler;
-import net.minecraftforge.fml.common.network.simpleimpl.MessageContext;
-import xin.vanilla.narcissus.capability.TeleportRecord;
-import xin.vanilla.narcissus.capability.TeleportRecord;
-import xin.vanilla.narcissus.capability.player.IPlayerTeleportData;
-import xin.vanilla.narcissus.capability.player.PlayerTeleportData;
 import xin.vanilla.narcissus.config.Coordinate;
 import xin.vanilla.narcissus.config.KeyValue;
+import xin.vanilla.narcissus.data.TeleportRecord;
+import xin.vanilla.narcissus.data.player.IPlayerTeleportData;
+import xin.vanilla.narcissus.data.player.PlayerTeleportData;
 import xin.vanilla.narcissus.proxy.ClientProxy;
 import xin.vanilla.narcissus.util.DateUtils;
+import xin.vanilla.narcissus.util.ServerTaskExecutor;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -146,7 +145,7 @@ public class PlayerDataSyncPacket extends SplitPacket implements IMessage {
         @Override
         public IMessage onMessage(PlayerDataSyncPacket packet, MessageContext ctx) {
             if (ctx.side.isClient()) {
-                Minecraft.getMinecraft().addScheduledTask(() -> {
+                ServerTaskExecutor.run(() -> {
                     // 获取玩家并更新 Capability 数据
                     List<PlayerDataSyncPacket> packets = SplitPacket.handle(packet);
                     if (!packets.isEmpty()) {

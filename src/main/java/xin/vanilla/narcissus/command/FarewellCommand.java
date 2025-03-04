@@ -8,30 +8,27 @@ import net.minecraft.command.ICommandSender;
 import net.minecraft.command.PlayerNotFoundException;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
-import net.minecraft.network.play.server.SPacketChat;
+import net.minecraft.event.ClickEvent;
+import net.minecraft.event.HoverEvent;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.text.ChatType;
-import net.minecraft.util.text.event.ClickEvent;
-import net.minecraft.util.text.event.HoverEvent;
-import net.minecraft.world.DimensionType;
+import net.minecraft.util.ChunkCoordinates;
+import net.minecraft.world.WorldProviderSurface;
 import net.minecraft.world.WorldServer;
-import net.minecraft.world.biome.Biome;
-import net.minecraftforge.fml.common.registry.ForgeRegistries;
+import net.minecraft.world.biome.BiomeGenBase;
+import net.minecraftforge.common.DimensionManager;
 import xin.vanilla.narcissus.NarcissusFarewell;
-import xin.vanilla.narcissus.capability.TeleportRecord;
-import xin.vanilla.narcissus.capability.player.IPlayerTeleportData;
-import xin.vanilla.narcissus.capability.player.PlayerTeleportDataCapability;
-import xin.vanilla.narcissus.capability.world.WorldStageData;
 import xin.vanilla.narcissus.config.Coordinate;
 import xin.vanilla.narcissus.config.KeyValue;
 import xin.vanilla.narcissus.config.ServerConfig;
 import xin.vanilla.narcissus.config.TeleportRequest;
+import xin.vanilla.narcissus.data.TeleportRecord;
+import xin.vanilla.narcissus.data.player.IPlayerTeleportData;
+import xin.vanilla.narcissus.data.player.PlayerTeleportData;
+import xin.vanilla.narcissus.data.world.WorldStageData;
 import xin.vanilla.narcissus.enums.*;
 import xin.vanilla.narcissus.util.Component;
 import xin.vanilla.narcissus.util.*;
 
-import javax.annotation.Nullable;
 import javax.annotation.ParametersAreNonnullByDefault;
 import java.awt.*;
 import java.util.List;
@@ -63,33 +60,33 @@ public class FarewellCommand extends CommandBase {
 
     @Override
     @ParametersAreNonnullByDefault
-    public boolean checkPermission(MinecraftServer server, ICommandSender sender) {
+    public boolean canCommandSenderUseCommand(ICommandSender sender) {
         return NarcissusUtils.hasPermissions(sender, this.getRequiredPermissionLevel());
     }
 
     @Override
     @NonNull
-    public String getName() {
+    public String getCommandName() {
         return NarcissusUtils.getCommandPrefix();
     }
 
     @Override
     @NonNull
-    public String getUsage(@NonNull ICommandSender sender) {
+    public String getCommandUsage(@NonNull ICommandSender sender) {
         return "/" + ServerConfig.COMMAND_PREFIX + " help";
     }
 
     @Override
     @NonNull
     @ParametersAreNonnullByDefault
-    public List<String> getTabCompletions(MinecraftServer server, ICommandSender sender, String[] args, @Nullable BlockPos targetPos) {
-        return getSuggestions(server, sender, args, targetPos);
+    public List<String> addTabCompletionOptions(ICommandSender sender, String[] args) {
+        return getSuggestions(sender, args);
     }
 
     @Override
     @ParametersAreNonnullByDefault
-    public void execute(@NonNull MinecraftServer server, @NonNull ICommandSender sender, @ParametersAreNonnullByDefault String[] args) throws PlayerNotFoundException {
-        verifyExecuteResult(sender, executeCommand(server, sender, args));
+    public void processCommand(@NonNull ICommandSender sender, @ParametersAreNonnullByDefault String[] args) throws PlayerNotFoundException {
+        verifyExecuteResult(sender, executeCommand(sender, args));
     }
 
     // endregion 实现CommandBase
@@ -118,12 +115,12 @@ public class FarewellCommand extends CommandBase {
     /**
      * 获取指令补全提示(快乐堆粪)
      *
-     * @param server 服务器
      * @param sender 指令发送者
      * @param args   指令参数
      * @return 指令补全提示
      */
-    public static List<String> getSuggestions(MinecraftServer server, ICommandSender sender, String[] args, @Nullable BlockPos targetPos) {
+    public static List<String> getSuggestions(ICommandSender sender, String[] args) {
+        MinecraftServer server = NarcissusFarewell.getServerInstance();
         EntityPlayer player = (EntityPlayer) sender;
         List<String> suggestions = new ArrayList<>();
 
@@ -185,9 +182,9 @@ public class FarewellCommand extends CommandBase {
             else if (args[0].equals(ServerConfig.COMMAND_TP_COORDINATE) && NarcissusUtils.isTeleportEnabled(ECommandType.TP_COORDINATE) && NarcissusUtils.hasCommandPermission(player, ECommandType.TP_COORDINATE)) {
                 if (args.length == 2) {
                     suggestions.addAll(getPlayerNameSuggestions(server, args));
-                    suggestions.addAll(getCoordinateSuggestions(player.getPosition(), args, 1));
+                    suggestions.addAll(getCoordinateSuggestions(new Coordinate(player), args, 1));
                 } else if (args.length == 3) {
-                    List<String> coordinateSuggestions = getCoordinateSuggestions(player.getPosition(), args, 1);
+                    List<String> coordinateSuggestions = getCoordinateSuggestions(new Coordinate(player), args, 1);
                     suggestions.addAll(coordinateSuggestions);
                     if (coordinateSuggestions.isEmpty()) {
                         if (StringUtils.isNullOrEmptyEx(arg) || "safe".startsWith(arg)) {
@@ -198,7 +195,7 @@ public class FarewellCommand extends CommandBase {
                         }
                     }
                 } else if (args.length == 4) {
-                    suggestions.addAll(getCoordinateSuggestions(player.getPosition(), args, 1));
+                    suggestions.addAll(getCoordinateSuggestions(new Coordinate(player), args, 1));
                 } else if (args.length == 5) {
                     if (StringUtils.isNullOrEmptyEx(arg) || "safe".startsWith(arg)) {
                         suggestions.add("safe");
@@ -207,9 +204,7 @@ public class FarewellCommand extends CommandBase {
                         suggestions.add("unsafe");
                     }
                 } else if (args.length == 6) {
-                    Arrays.stream(DimensionType.values())
-                            .map(dimensionType -> DimensionUtils.getStringIdFromInt(dimensionType.getId()))
-                            .filter(Objects::nonNull)
+                    DimensionUtils.getStringIds().stream()
                             .filter(string -> StringUtils.isNullOrEmpty(arg) || string.contains(arg))
                             .filter(StringUtils::isNotNullOrEmpty)
                             .distinct()
@@ -222,9 +217,9 @@ public class FarewellCommand extends CommandBase {
                     NarcissusUtils.getStructureList().stream()
                             .filter(string -> StringUtils.isNullOrEmpty(arg) || string.contains(arg))
                             .forEach(suggestions::add);
-                    ForgeRegistries.BIOMES.getValuesCollection().stream()
-                            .filter(biome -> StringUtils.isNullOrEmpty(arg) || biome.getRegistryName().toString().contains(arg))
-                            .forEach(biome -> suggestions.add(biome.getRegistryName().toString()));
+                    BiomeUtils.getStringIds().stream()
+                            .filter(biome -> StringUtils.isNullOrEmpty(arg) || biome.contains(arg))
+                            .forEach(biome -> suggestions.add(biome));
                 } else if (args.length == 3) {
                     if (StringUtils.isNullOrEmptyEx(arg) || "safe".startsWith(arg)) {
                         suggestions.add("safe");
@@ -233,9 +228,7 @@ public class FarewellCommand extends CommandBase {
                         suggestions.add("unsafe");
                     }
                 } else if (args.length == 4) {
-                    Arrays.stream(DimensionType.values())
-                            .map(dimensionType -> DimensionUtils.getStringIdFromInt(dimensionType.getId()))
-                            .filter(Objects::nonNull)
+                    DimensionUtils.getStringIds().stream()
                             .filter(string -> StringUtils.isNullOrEmpty(arg) || string.contains(arg))
                             .forEach(suggestions::add);
                 }
@@ -307,9 +300,7 @@ public class FarewellCommand extends CommandBase {
                         suggestions.add("unsafe");
                     }
                 } else if (args.length == 4) {
-                    Arrays.stream(DimensionType.values())
-                            .map(dimensionType -> DimensionUtils.getStringIdFromInt(dimensionType.getId()))
-                            .filter(Objects::nonNull)
+                    DimensionUtils.getStringIds().stream()
                             .filter(string -> StringUtils.isNullOrEmpty(arg) || string.contains(arg))
                             .forEach(suggestions::add);
                 }
@@ -410,7 +401,7 @@ public class FarewellCommand extends CommandBase {
                     if (StringUtils.isNullOrEmptyEx(arg) || "unsafe".contains(arg)) {
                         suggestions.add("unsafe");
                     }
-                    PlayerTeleportDataCapability.getData(player).getHomeCoordinate().keySet().stream()
+                    PlayerTeleportData.get(player).getHomeCoordinate().keySet().stream()
                             .filter(keyValue -> StringUtils.isNullOrEmpty(arg) || keyValue.getValue().startsWith(arg))
                             .map(KeyValue::getValue)
                             .forEach(suggestions::add);
@@ -421,13 +412,11 @@ public class FarewellCommand extends CommandBase {
                     if (StringUtils.isNullOrEmptyEx(arg) || "unsafe".contains(arg)) {
                         suggestions.add("unsafe");
                     }
-                    Arrays.stream(DimensionType.values())
-                            .map(dimensionType -> DimensionUtils.getStringIdFromInt(dimensionType.getId()))
-                            .filter(Objects::nonNull)
+                    DimensionUtils.getStringIds().stream()
                             .filter(string -> StringUtils.isNullOrEmpty(arg) || string.contains(arg))
                             .forEach(suggestions::add);
                 } else if (args.length == 4) {
-                    PlayerTeleportDataCapability.getData(player).getHomeCoordinate().keySet().stream()
+                    PlayerTeleportData.get(player).getHomeCoordinate().keySet().stream()
                             .filter(keyValue -> keyValue.getValue().equals(args[1]))
                             .filter(keyValue -> StringUtils.isNullOrEmpty(arg) || keyValue.getKey().contains(arg))
                             .map(KeyValue::getKey)
@@ -441,7 +430,7 @@ public class FarewellCommand extends CommandBase {
                     int index = 0;
                     while (true) {
                         int finalIndex = index;
-                        if (PlayerTeleportDataCapability.getData(player).getHomeCoordinate().keySet().stream()
+                        if (PlayerTeleportData.get(player).getHomeCoordinate().keySet().stream()
                                 .noneMatch(keyValue -> keyValue.getValue().equals(name + (finalIndex == 0 ? "" : finalIndex)))) {
                             suggestions.add(name + index);
                             break;
@@ -460,12 +449,12 @@ public class FarewellCommand extends CommandBase {
             // 删除预设位置
             else if (args[0].equals(ServerConfig.COMMAND_DEL_HOME) && NarcissusUtils.isTeleportEnabled(ECommandType.TP_HOME) && NarcissusUtils.hasCommandPermission(player, ECommandType.DEL_HOME)) {
                 if (args.length == 2) {
-                    PlayerTeleportDataCapability.getData(player).getHomeCoordinate().keySet().stream()
+                    PlayerTeleportData.get(player).getHomeCoordinate().keySet().stream()
                             .filter(keyValue -> StringUtils.isNullOrEmpty(arg) || keyValue.getValue().startsWith(arg))
                             .map(KeyValue::getValue)
                             .forEach(suggestions::add);
                 } else if (args.length == 3) {
-                    PlayerTeleportDataCapability.getData(player).getHomeCoordinate().keySet().stream()
+                    PlayerTeleportData.get(player).getHomeCoordinate().keySet().stream()
                             .filter(keyValue -> keyValue.getValue().equals(args[1]))
                             .filter(keyValue -> StringUtils.isNullOrEmpty(arg) || keyValue.getKey().contains(arg))
                             .map(KeyValue::getKey)
@@ -509,15 +498,13 @@ public class FarewellCommand extends CommandBase {
                         index++;
                     }
                 } else if (args.length == 3) {
-                    suggestions.addAll(getCoordinateSuggestions(player.getPosition(), args, 2));
+                    suggestions.addAll(getCoordinateSuggestions(new Coordinate(player), args, 2));
                 } else if (args.length == 4) {
-                    suggestions.addAll(getCoordinateSuggestions(player.getPosition(), args, 2));
+                    suggestions.addAll(getCoordinateSuggestions(new Coordinate(player), args, 2));
                 } else if (args.length == 5) {
-                    suggestions.addAll(getCoordinateSuggestions(player.getPosition(), args, 2));
+                    suggestions.addAll(getCoordinateSuggestions(new Coordinate(player), args, 2));
                 } else if (args.length == 6) {
-                    Arrays.stream(DimensionType.values())
-                            .map(dimensionType -> DimensionUtils.getStringIdFromInt(dimensionType.getId()))
-                            .filter(Objects::nonNull)
+                    DimensionUtils.getStringIds().stream()
                             .filter(string -> StringUtils.isNullOrEmpty(arg) || string.contains(arg))
                             .forEach(suggestions::add);
                 }
@@ -551,9 +538,9 @@ public class FarewellCommand extends CommandBase {
                             .filter(string -> StringUtils.isNullOrEmpty(arg) || string.contains(arg))
                             .forEach(suggestions::add);
                 } else if (args.length == 4) {
-                    PlayerTeleportDataCapability.getData(player).getTeleportRecords().stream()
+                    PlayerTeleportData.get(player).getTeleportRecords().stream()
                             .filter(record -> record.getTeleportType() == ETeleportType.valueOf(args[2]))
-                            .map(record -> DimensionUtils.getStringIdFromInt(record.getBefore().getDimension().getId()))
+                            .map(record -> record.getBefore().getDimension())
                             .filter(string -> StringUtils.isNullOrEmpty(arg) || string.contains(arg))
                             .forEach(suggestions::add);
                 }
@@ -586,11 +573,11 @@ public class FarewellCommand extends CommandBase {
     /**
      * 解析并执行指令(快乐堆粪)
      *
-     * @param server 服务器
      * @param sender 指令发送者
      * @param args   指令参数
      */
-    public static int executeCommand(@NonNull MinecraftServer server, @NonNull ICommandSender sender, @ParametersAreNonnullByDefault String[] args) throws PlayerNotFoundException {
+    public static int executeCommand(@NonNull ICommandSender sender, @ParametersAreNonnullByDefault String[] args) throws PlayerNotFoundException {
+        MinecraftServer server = NarcissusFarewell.getServerInstance();
         EntityPlayerMP player;
         if (sender instanceof EntityPlayerMP) {
             player = (EntityPlayerMP) sender;
@@ -653,10 +640,11 @@ public class FarewellCommand extends CommandBase {
                     target = player;
                 } else if (args.length == 2) {
                     try {
-                        target = CommandBase.getPlayer(server, sender, args[1]);
+                        target = CommandBase.getPlayer(sender, args[1]);
                     } catch (CommandException ignored) {
                     }
                 }
+                if (target == null) return -1;
                 String language = NarcissusFarewell.DEFAULT_LANGUAGE;
                 if (player != null) {
                     language = NarcissusUtils.getPlayerLanguage(player);
@@ -665,8 +653,8 @@ public class FarewellCommand extends CommandBase {
                 uuid.setColor(EMCColor.GREEN.getColor())
                         .setClickEvent(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, target.getUniqueID().toString()))
                         .setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.translatable(language, EI18nType.MESSAGE, "chat_copy_click").toTextComponent()));
-                Component component = Component.translatable(NarcissusUtils.getPlayerLanguage(target), EI18nType.MESSAGE, "player_uuid", target.getDisplayNameString(), uuid);
-                sender.sendMessage(component.toChatComponent(language));
+                Component component = Component.translatable(NarcissusUtils.getPlayerLanguage(target), EI18nType.MESSAGE, "player_uuid", target.getDisplayName(), uuid);
+                NarcissusUtils.sendMessage(sender, component);
                 return 1;
             }
             // 当前纬度ID
@@ -675,7 +663,7 @@ public class FarewellCommand extends CommandBase {
                 if (checkTeleportPre(player, ECommandType.DIMENSION)) {
                     return 0;
                 }
-                String dimString = DimensionUtils.getStringIdFromInt(player.world.provider.getDimensionType().getId());
+                String dimString = DimensionUtils.getStringId(player.getEntityWorld().provider);
                 Component dim = Component.literal(dimString);
                 dim.setColor(EMCColor.GREEN.getColor())
                         .setClickEvent(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, dimString))
@@ -703,7 +691,7 @@ public class FarewellCommand extends CommandBase {
                             }
                         }
                         try {
-                            targetList.addAll(CommandBase.getPlayers(server, sender, args[1]));
+                            targetList.add(CommandBase.getPlayer(sender, args[1]));
                         } catch (CommandException ignored) {
                         }
                         // targetList.addAll(NarcissusUtils.getPlayer(player, args[1]));
@@ -718,9 +706,9 @@ public class FarewellCommand extends CommandBase {
                     for (EntityPlayerMP target : targetList) {
                         if (NarcissusUtils.killPlayer(target)) {
                             if (player != null) {
-                                NarcissusUtils.broadcastMessage(player, Component.translatable(NarcissusUtils.getPlayerLanguage(target), EI18nType.MESSAGE, "died_of_narcissus_" + (new Random().nextInt(4) + 1), target.getDisplayNameString()));
+                                NarcissusUtils.broadcastMessage(player, Component.translatable(NarcissusUtils.getPlayerLanguage(target), EI18nType.MESSAGE, "died_of_narcissus_" + (new Random().nextInt(4) + 1), target.getDisplayName()));
                             } else {
-                                NarcissusUtils.broadcastMessage(server, Component.translatable(NarcissusUtils.getPlayerLanguage(target), EI18nType.MESSAGE, "died_of_narcissus_" + (new Random().nextInt(4) + 1), target.getDisplayNameString()));
+                                NarcissusUtils.broadcastMessage(server, Component.translatable(NarcissusUtils.getPlayerLanguage(target), EI18nType.MESSAGE, "died_of_narcissus_" + (new Random().nextInt(4) + 1), target.getDisplayName()));
                             }
                         }
                     }
@@ -736,7 +724,7 @@ public class FarewellCommand extends CommandBase {
                     if (args.length == 2 || args.length == 3) {
                         List<EntityPlayerMP> targetList = new ArrayList<>();
                         try {
-                            targetList.addAll(CommandBase.getPlayers(server, sender, args[1]));
+                            targetList.add(CommandBase.getPlayer(sender, args[1]));
                         } catch (CommandException ignored) {
                         }
                         // List<EntityPlayerMP> targetList = NarcissusUtils.getPlayer(player, args[1]);
@@ -750,11 +738,16 @@ public class FarewellCommand extends CommandBase {
                         Double y = StringUtils.toCoordinate(args[2], player.posY);
                         Double z = StringUtils.toCoordinate(args[3], player.posZ);
                         if (x != null && y != null && z != null) {
-                            coordinate = new Coordinate(x, y, z, player.cameraYaw, player.cameraPitch, player.world.provider.getDimensionType());
+                            coordinate = new Coordinate(x, y, z, player.cameraYaw, player.cameraPitch, DimensionUtils.getStringId(player.getEntityWorld().provider.dimensionId));
                             if (args.length > 4) {
                                 coordinate.setSafe(args[4].equals("safe"));
                                 if (args.length == 6) {
-                                    coordinate.setDimension(DimensionUtils.getDimensionType(args[5]));
+                                    String dim = DimensionUtils.getStringId(args[5]);
+                                    if (StringUtils.isNullOrEmptyEx(dim)) {
+                                        NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EI18nType.MESSAGE, "dimension_not_found"), args[5]);
+                                        return 0;
+                                    }
+                                    coordinate.setDimension(dim);
                                 }
                             }
                         }
@@ -775,7 +768,7 @@ public class FarewellCommand extends CommandBase {
                 }
                 if (args.length >= 2) {
                     String structId = args[1];
-                    Biome biome = NarcissusUtils.getBiome(structId);
+                    BiomeGenBase biome = NarcissusUtils.getBiome(structId);
                     if (!NarcissusUtils.getStructureList().contains(structId) && biome == null) {
                         NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EI18nType.MESSAGE, "structure_biome_not_found"), structId);
                         return 0;
@@ -786,17 +779,17 @@ public class FarewellCommand extends CommandBase {
                         range = anInt > 0 ? anInt : range;
                     }
                     range = NarcissusUtils.checkRange(player, ETeleportType.TP_STRUCTURE, range);
-                    DimensionType targetLevel = null;
+                    String targetLevel = null;
                     if (args.length == 4) {
-                        targetLevel = DimensionUtils.getDimensionType(args[3]);
+                        targetLevel = DimensionUtils.getStringId(args[3]);
                     }
-                    if (targetLevel == null) {
-                        targetLevel = player.world.provider.getDimensionType();
+                    if (StringUtils.isNullOrEmptyEx(targetLevel)) {
+                        targetLevel = DimensionUtils.getStringId(player.getEntityWorld().provider.dimensionId);
                     }
-                    WorldServer world = Objects.requireNonNull(NarcissusFarewell.getServerInstance().getWorld(targetLevel.getId()));
+                    WorldServer world = Objects.requireNonNull(DimensionManager.getWorld(DimensionUtils.getDimensionType(targetLevel)));
                     Coordinate start = new Coordinate(player).setDimension(targetLevel);
                     int finalRange = range;
-                    player.connection.sendPacket(new SPacketChat(Component.translatable(NarcissusUtils.getPlayerLanguage(player), EI18nType.MESSAGE, "tp_structure_searching").toTextComponent(), ChatType.GAME_INFO));
+                    NarcissusUtils.sendMessage(player, Component.translatable(NarcissusUtils.getPlayerLanguage(player), EI18nType.MESSAGE, "tp_structure_searching"));
                     new Thread(() -> {
                         Coordinate coordinate;
                         if (biome != null) {
@@ -811,7 +804,7 @@ public class FarewellCommand extends CommandBase {
                         coordinate.setSafe(true);
                         // 验证传送代价
                         if (checkTeleportPost(player, coordinate, ETeleportType.TP_STRUCTURE, true)) return;
-                        server.addScheduledTask(() -> NarcissusUtils.teleportTo(player, coordinate, ETeleportType.TP_STRUCTURE));
+                        ServerTaskExecutor.run(() -> NarcissusUtils.teleportTo(player, coordinate, ETeleportType.TP_STRUCTURE));
                     }).start();
                     return 1;
                 }
@@ -831,7 +824,7 @@ public class FarewellCommand extends CommandBase {
                                 .filter(request -> {
                                     EntityPlayer entity = request.getTarget();
                                     return NarcissusUtils.isTeleportTypeAcrossDimensionEnabled(player, ETeleportType.TP_ASK)
-                                            || entity != null && entity.world.provider.getDimensionType() == player.world.provider.getDimensionType();
+                                            || entity != null && entity.getEntityWorld().provider == player.getEntityWorld().provider;
                                 })
                                 .max(Comparator.comparing(TeleportRequest::getRequestTime))
                                 .orElse(new TeleportRequest().setTarget(NarcissusFarewell.getLastTeleportRequest()
@@ -840,7 +833,7 @@ public class FarewellCommand extends CommandBase {
                     } else {
                         List<EntityPlayerMP> targetList = new ArrayList<>();
                         try {
-                            targetList.addAll(CommandBase.getPlayers(server, sender, args[1]));
+                            targetList.add(CommandBase.getPlayer(sender, args[1]));
                         } catch (CommandException ignored) {
                         }
                         // List<EntityPlayerMP> targetList = NarcissusUtils.getPlayer(player, args[1]);
@@ -874,12 +867,12 @@ public class FarewellCommand extends CommandBase {
                         Component noButton = Component.translatable(NarcissusUtils.getPlayerLanguage(target), EI18nType.MESSAGE, "no_button", NarcissusUtils.getPlayerLanguage(target))
                                 .setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, String.format("/%s %s %s", NarcissusUtils.getCommandPrefix(), ServerConfig.COMMAND_TP_ASK_NO, request.getRequestId())));
                         Component msg = Component.translatable(NarcissusUtils.getPlayerLanguage(target), EI18nType.MESSAGE, "tp_ask_request_received"
-                                , player.getDisplayNameString(), yesButton, noButton);
+                                , player.getDisplayName(), yesButton, noButton);
                         NarcissusUtils.sendMessage(target, msg);
                     }
                     // 通知请求者
                     {
-                        NarcissusUtils.sendMessage(player, Component.translatable(NarcissusUtils.getPlayerLanguage(player), EI18nType.MESSAGE, "tp_ask_request_sent", target.getDisplayNameString()));
+                        NarcissusUtils.sendMessage(player, Component.translatable(NarcissusUtils.getPlayerLanguage(player), EI18nType.MESSAGE, "tp_ask_request_sent", target.getDisplayName()));
                     }
                     return 1;
                 }
@@ -918,7 +911,7 @@ public class FarewellCommand extends CommandBase {
                         return 0;
                     }
                     TeleportRequest request = NarcissusFarewell.getTeleportRequest().remove(id);
-                    NarcissusUtils.sendTranslatableMessage(request.getRequester(), I18nUtils.getKey(EI18nType.MESSAGE, "tp_ask_rejected"), request.getTarget().getDisplayNameString());
+                    NarcissusUtils.sendTranslatableMessage(request.getRequester(), I18nUtils.getKey(EI18nType.MESSAGE, "tp_ask_rejected"), request.getTarget().getDisplayName());
                     return 1;
                 }
             }
@@ -937,7 +930,7 @@ public class FarewellCommand extends CommandBase {
                                 .filter(request -> {
                                     EntityPlayer entity = request.getTarget();
                                     return NarcissusUtils.isTeleportTypeAcrossDimensionEnabled(player, ETeleportType.TP_HERE)
-                                            || entity != null && entity.world.provider.getDimensionType() == player.world.provider.getDimensionType();
+                                            || entity != null && entity.getEntityWorld().provider == player.getEntityWorld().provider;
                                 })
                                 .max(Comparator.comparing(TeleportRequest::getRequestTime))
                                 .orElse(new TeleportRequest().setTarget(NarcissusFarewell.getLastTeleportRequest()
@@ -946,7 +939,7 @@ public class FarewellCommand extends CommandBase {
                     } else {
                         List<EntityPlayerMP> targetList = new ArrayList<>();
                         try {
-                            targetList.addAll(CommandBase.getPlayers(server, sender, args[1]));
+                            targetList.add(CommandBase.getPlayer(sender, args[1]));
                         } catch (CommandException ignored) {
                         }
                         // List<EntityPlayerMP> targetList = NarcissusUtils.getPlayer(player, args[1]);
@@ -980,12 +973,12 @@ public class FarewellCommand extends CommandBase {
                         Component noButton = Component.translatable(NarcissusUtils.getPlayerLanguage(target), EI18nType.MESSAGE, "no_button", NarcissusUtils.getPlayerLanguage(target))
                                 .setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, String.format("/%s %s %s", NarcissusUtils.getCommandPrefix(), ServerConfig.COMMAND_TP_HERE_NO, request.getRequestId())));
                         Component msg = Component.translatable(NarcissusUtils.getPlayerLanguage(target), EI18nType.MESSAGE, "tp_here_request_received"
-                                , player.getDisplayNameString(), Component.translatable(NarcissusUtils.getPlayerLanguage(target), EI18nType.WORD, request.isSafe() ? "tp_here_safe" : "tp_here_unsafe"), yesButton, noButton);
+                                , player.getDisplayName(), Component.translatable(NarcissusUtils.getPlayerLanguage(target), EI18nType.WORD, request.isSafe() ? "tp_here_safe" : "tp_here_unsafe"), yesButton, noButton);
                         NarcissusUtils.sendMessage(target, msg);
                     }
                     // 通知请求者
                     {
-                        NarcissusUtils.sendMessage(player, Component.translatable(NarcissusUtils.getPlayerLanguage(player), EI18nType.MESSAGE, "tp_here_request_sent", target.getDisplayNameString()));
+                        NarcissusUtils.sendMessage(player, Component.translatable(NarcissusUtils.getPlayerLanguage(player), EI18nType.MESSAGE, "tp_here_request_sent", target.getDisplayName()));
                     }
                     return 1;
                 }
@@ -1024,7 +1017,7 @@ public class FarewellCommand extends CommandBase {
                         return 0;
                     }
                     TeleportRequest request = NarcissusFarewell.getTeleportRequest().remove(id);
-                    NarcissusUtils.sendTranslatableMessage(request.getRequester(), I18nUtils.getKey(EI18nType.MESSAGE, "tp_here_rejected"), request.getTarget().getDisplayNameString());
+                    NarcissusUtils.sendTranslatableMessage(request.getRequester(), I18nUtils.getKey(EI18nType.MESSAGE, "tp_here_rejected"), request.getTarget().getDisplayName());
                     return 1;
                 }
             }
@@ -1045,12 +1038,12 @@ public class FarewellCommand extends CommandBase {
                     if (args.length >= 3) {
                         safe = args[2].equals("safe");
                     }
-                    DimensionType targetLevel = null;
+                    String targetLevel = null;
                     if (args.length == 4) {
-                        targetLevel = DimensionUtils.getDimensionType(args[3]);
+                        targetLevel = DimensionUtils.getStringId(args[3]);
                     }
-                    if (targetLevel == null) {
-                        targetLevel = player.world.provider.getDimensionType();
+                    if (StringUtils.isNullOrEmptyEx(targetLevel)) {
+                        targetLevel = DimensionUtils.getStringId(player.getEntityWorld().provider.dimensionId);
                     }
                     Coordinate coordinate = Coordinate.random(player, range, targetLevel).setSafe(safe);
                     // 验证传送代价
@@ -1071,7 +1064,7 @@ public class FarewellCommand extends CommandBase {
                         if (NarcissusUtils.hasCommandPermission(player, ECommandType.TP_SPAWN_OTHER)) {
                             List<EntityPlayerMP> targetList = new ArrayList<>();
                             try {
-                                targetList.addAll(CommandBase.getPlayers(server, sender, args[1]));
+                                targetList.add(CommandBase.getPlayer(sender, args[1]));
                             } catch (CommandException ignored) {
                             }
                             // List<EntityPlayerMP> targetList = NarcissusUtils.getPlayer(player, args[1]);
@@ -1084,21 +1077,22 @@ public class FarewellCommand extends CommandBase {
                         }
                     }
                     Coordinate coordinate = new Coordinate(target);
-                    BlockPos respawnPosition = target.getBedLocation(player.world.provider.getDimensionType().getId());
+                    ChunkCoordinates respawnPosition = target.getBedLocation(player.getEntityWorld().provider.dimensionId);
                     // idea很烦诶，明明就会是null非警告我不会为null
-                    if (respawnPosition == null && target.world.provider.getDimensionType().getId() != DimensionType.OVERWORLD.getId()) {
-                        respawnPosition = target.getBedLocation(DimensionType.OVERWORLD.getId());
-                        coordinate.setDimension(DimensionType.OVERWORLD);
+                    if (respawnPosition == null && !(target.getEntityWorld().provider instanceof WorldProviderSurface)) {
+                        int dimensionId = DimensionUtils.getOverworldDimensionId();
+                        respawnPosition = target.getBedLocation(dimensionId);
+                        coordinate.setDimension(DimensionUtils.getStringId(dimensionId));
                     }
                     if (respawnPosition == null) {
-                        respawnPosition = target.world.getSpawnPoint();
-                        coordinate.setDimension(target.world.provider.getDimensionType());
+                        respawnPosition = target.getEntityWorld().getSpawnPoint();
+                        coordinate.setDimension(DimensionUtils.getStringId(target.getEntityWorld().provider.dimensionId));
                     }
                     if (respawnPosition == null) {
-                        respawnPosition = NarcissusFarewell.getServerInstance().getWorld(DimensionType.OVERWORLD.getId()).getSpawnPoint();
-                        coordinate.setDimension(DimensionType.OVERWORLD);
+                        respawnPosition = DimensionManager.getWorld(DimensionUtils.getOverworldDimensionId()).getSpawnPoint();
+                        coordinate.setDimension(DimensionUtils.getOverworldDimensionStringId());
                     }
-                    coordinate.fromBlockPos(respawnPosition);
+                    coordinate.setX(respawnPosition.posX).setY(respawnPosition.posY).setZ(respawnPosition.posZ);
                     try {
                         coordinate.setSafe("safe".equalsIgnoreCase(args[args.length - 1]));
                     } catch (IllegalArgumentException ignored) {
@@ -1118,12 +1112,12 @@ public class FarewellCommand extends CommandBase {
                 }
                 if (args.length <= 2) {
                     Coordinate coordinate = new Coordinate(player);
-                    BlockPos respawnPosition = player.world.getSpawnPoint();
+                    ChunkCoordinates respawnPosition = player.getEntityWorld().getSpawnPoint();
                     if (respawnPosition == null) {
-                        respawnPosition = NarcissusFarewell.getServerInstance().getWorld(DimensionType.OVERWORLD.getId()).getSpawnPoint();
-                        coordinate.setDimension(DimensionType.OVERWORLD);
+                        respawnPosition = DimensionManager.getWorld(DimensionUtils.getOverworldDimensionId()).getSpawnPoint();
+                        coordinate.setDimension(DimensionUtils.getOverworldDimensionStringId());
                     }
-                    coordinate.fromBlockPos(respawnPosition);
+                    coordinate.setX(respawnPosition.posX).setY(respawnPosition.posY).setZ(respawnPosition.posZ);
                     try {
                         coordinate.setSafe("safe".equalsIgnoreCase(args[args.length - 1]));
                     } catch (IllegalArgumentException ignored) {
@@ -1142,7 +1136,7 @@ public class FarewellCommand extends CommandBase {
                     return 0;
                 }
                 if (args.length <= 2) {
-                    Coordinate coordinate = NarcissusUtils.findTopCandidate(player.getServerWorld(), new Coordinate(player));
+                    Coordinate coordinate = NarcissusUtils.findTopCandidate(player.getServerForPlayer(), new Coordinate(player));
                     if (coordinate == null) {
                         NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EI18nType.MESSAGE, "tp_top_not_found"));
                         return 0;
@@ -1165,7 +1159,7 @@ public class FarewellCommand extends CommandBase {
                     return 0;
                 }
                 if (args.length <= 2) {
-                    Coordinate coordinate = NarcissusUtils.findBottomCandidate(player.getServerWorld(), new Coordinate(player));
+                    Coordinate coordinate = NarcissusUtils.findBottomCandidate(player.getServerForPlayer(), new Coordinate(player));
                     if (coordinate == null) {
                         NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EI18nType.MESSAGE, "tp_bottom_not_found"));
                         return 0;
@@ -1188,7 +1182,7 @@ public class FarewellCommand extends CommandBase {
                     return 0;
                 }
                 if (args.length <= 2) {
-                    Coordinate coordinate = NarcissusUtils.findUpCandidate(player.getServerWorld(), new Coordinate(player));
+                    Coordinate coordinate = NarcissusUtils.findUpCandidate(player.getServerForPlayer(), new Coordinate(player));
                     if (coordinate == null) {
                         NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EI18nType.MESSAGE, "tp_up_not_found"));
                         return 0;
@@ -1211,7 +1205,7 @@ public class FarewellCommand extends CommandBase {
                     return 0;
                 }
                 if (args.length <= 2) {
-                    Coordinate coordinate = NarcissusUtils.findDownCandidate(player.getServerWorld(), new Coordinate(player));
+                    Coordinate coordinate = NarcissusUtils.findDownCandidate(player.getServerForPlayer(), new Coordinate(player));
                     if (coordinate == null) {
                         NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EI18nType.MESSAGE, "tp_down_not_found"));
                         return 0;
@@ -1247,7 +1241,7 @@ public class FarewellCommand extends CommandBase {
                     }
                     range = NarcissusUtils.checkRange(player, ETeleportType.TP_VIEW, range);
                     int finalRange = range;
-                    player.connection.sendPacket(new SPacketChat(Component.translatable(NarcissusUtils.getPlayerLanguage(player), EI18nType.MESSAGE, "tp_view_searching").toTextComponent(), ChatType.GAME_INFO));
+                    NarcissusUtils.sendMessage(player, Component.translatable(NarcissusUtils.getPlayerLanguage(player), EI18nType.MESSAGE, "tp_view_searching"));
                     new Thread(() -> {
                         Coordinate coordinate = NarcissusUtils.findViewEndCandidate(player, safe, finalRange);
                         if (coordinate == null) {
@@ -1257,7 +1251,7 @@ public class FarewellCommand extends CommandBase {
                         coordinate.setSafeMode(ESafeMode.Y_OFFSET_3);
                         // 验证传送代价
                         if (checkTeleportPost(player, coordinate, ETeleportType.TP_VIEW, true)) return;
-                        server.addScheduledTask(() -> NarcissusUtils.teleportTo(player, coordinate, ETeleportType.TP_VIEW));
+                        ServerTaskExecutor.run(() -> NarcissusUtils.teleportTo(player, coordinate, ETeleportType.TP_VIEW));
                     }).start();
                     return 1;
                 }
@@ -1269,9 +1263,9 @@ public class FarewellCommand extends CommandBase {
                     return 0;
                 }
                 if (args.length <= 4) {
-                    DimensionType targetLevel = null;
-                    DimensionType targetDimension = DimensionUtils.getDimensionType(args[args.length - 1]);
-                    if (targetDimension != null) {
+                    String targetLevel = null;
+                    String targetDimension = DimensionUtils.getStringId(args[args.length - 1]);
+                    if (StringUtils.isNotNullOrEmpty(targetDimension)) {
                         targetLevel = targetDimension;
                     }
                     String name = null;
@@ -1283,11 +1277,11 @@ public class FarewellCommand extends CommandBase {
                         if (targetLevel == null && name == null) {
                             NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EI18nType.MESSAGE, "home_not_found"));
                         } else if (targetLevel != null && name == null) {
-                            NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EI18nType.MESSAGE, "home_not_found_in_dimension"), DimensionUtils.getStringIdFromInt(targetLevel.getId()));
+                            NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EI18nType.MESSAGE, "home_not_found_in_dimension"), DimensionUtils.getStringId(targetLevel));
                         } else if (targetLevel == null) {
                             NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EI18nType.MESSAGE, "home_not_found_with_name"), name);
                         } else {
-                            NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EI18nType.MESSAGE, "home_not_found_with_name_in_dimension"), DimensionUtils.getStringIdFromInt(targetLevel.getId()), name);
+                            NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EI18nType.MESSAGE, "home_not_found_with_name_in_dimension"), DimensionUtils.getStringId(targetLevel), name);
                         }
                         return 0;
                     }
@@ -1309,7 +1303,7 @@ public class FarewellCommand extends CommandBase {
                 }
                 if (args.length <= 3) {
                     // 判断设置数量是否超过限制
-                    IPlayerTeleportData data = PlayerTeleportDataCapability.getData(player);
+                    IPlayerTeleportData data = PlayerTeleportData.get(player);
                     if (data.getHomeCoordinate().size() >= ServerConfig.TELEPORT_HOME_LIMIT) {
                         NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EI18nType.MESSAGE, "home_limit"), ServerConfig.TELEPORT_HOME_LIMIT);
                         return 0;
@@ -1323,7 +1317,7 @@ public class FarewellCommand extends CommandBase {
                         defaultHome = args[2].equals("default");
                     }
                     Coordinate coordinate = new Coordinate(player);
-                    String dimension = DimensionUtils.getStringIdFromInt(player.world.provider.getDimensionType().getId());
+                    String dimension = DimensionUtils.getStringId(player.getEntityWorld().provider);
                     KeyValue<String, String> key = new KeyValue<>(dimension, name);
                     if (data.getHomeCoordinate().containsKey(key)) {
                         NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EI18nType.MESSAGE, "home_already_exists"), key.getKey(), key.getValue());
@@ -1349,7 +1343,7 @@ public class FarewellCommand extends CommandBase {
                     return 0;
                 }
                 if (args.length == 3) {
-                    IPlayerTeleportData data = PlayerTeleportDataCapability.getData(player);
+                    IPlayerTeleportData data = PlayerTeleportData.get(player);
                     String name = args[1];
                     String dimension = null;
                     if (DimensionUtils.getDimensionType(args[2]) != null) {
@@ -1382,7 +1376,7 @@ public class FarewellCommand extends CommandBase {
                 }
                 if (args.length == 1) {
                     Component component;
-                    IPlayerTeleportData data = PlayerTeleportDataCapability.getData(player);
+                    IPlayerTeleportData data = PlayerTeleportData.get(player);
                     String language = NarcissusUtils.getPlayerLanguage(player);
                     if (data.getHomeCoordinate().isEmpty()) {
                         component = Component.translatable(language, EI18nType.MESSAGE, "home_is_empty");
@@ -1424,7 +1418,7 @@ public class FarewellCommand extends CommandBase {
                                         , defHome);
                                 name.setColor(EMCColor.GREEN.getColor());
                                 name.setClickEvent(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, name_hover.toString(true)));
-                                name.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, name_hover.toChatComponent()));
+                                name.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, name_hover.toTextComponent()));
                                 dimension.append(name);
                                 dimension.append(Component.literal(", ").setColor(EMCColor.GRAY.getColor()));
                             }
@@ -1447,11 +1441,11 @@ public class FarewellCommand extends CommandBase {
                     if (args.length >= 2) {
                         name = args[1];
                     }
-                    DimensionType targetLevel = null;
+                    String targetLevel = null;
                     if (args.length == 4) {
-                        targetLevel = DimensionUtils.getDimensionType(args[3]);
+                        targetLevel = DimensionUtils.getStringId(args[3]);
                     }
-                    String dimension = targetLevel != null ? args[3] : null;
+                    String dimension = StringUtils.isNotNullOrEmpty(targetLevel) ? args[3] : null;
                     if (StringUtils.isNullOrEmptyEx(name)) {
                         KeyValue<String, String> stageKey = NarcissusUtils.findNearestStageKey(player);
                         if (stageKey == null) {
@@ -1468,7 +1462,7 @@ public class FarewellCommand extends CommandBase {
                         if (coordinateSize == 1) {
                             coordinate = stageData.getCoordinate(name);
                         } else if (coordinateSize > 1) {
-                            coordinate = stageData.getCoordinate(DimensionUtils.getStringIdFromInt(player.world.provider.getDimensionType().getId()), name);
+                            coordinate = stageData.getCoordinate(DimensionUtils.getStringId(player.getEntityWorld().provider), name);
                         }
                         if (coordinate == null) {
                             NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EI18nType.MESSAGE, "stage_not_found"), name);
@@ -1500,14 +1494,14 @@ public class FarewellCommand extends CommandBase {
                 if (args.length > 1 && args.length <= 6) {
                     WorldStageData stageData = WorldStageData.get();
                     String name = args[1];
-                    DimensionType targetLevel = null;
+                    String targetLevel = null;
                     if (args.length == 6) {
-                        targetLevel = DimensionUtils.getDimensionType(args[5]);
+                        targetLevel = DimensionUtils.getStringId(args[5]);
                     }
-                    if (targetLevel == null) {
-                        targetLevel = player.world.provider.getDimensionType();
+                    if (StringUtils.isNullOrEmptyEx(targetLevel)) {
+                        targetLevel = DimensionUtils.getStringId(player.getEntityWorld().provider.dimensionId);
                     }
-                    String dimension = DimensionUtils.getStringIdFromInt(targetLevel.getId());
+                    String dimension = DimensionUtils.getStringId(targetLevel);
                     KeyValue<String, String> key = new KeyValue<>(dimension, name);
                     if (stageData.getStageCoordinate().containsKey(key)) {
                         NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EI18nType.MESSAGE, "stage_already_exists"), key.getKey(), key.getValue());
@@ -1595,7 +1589,7 @@ public class FarewellCommand extends CommandBase {
                                     , coordinates.getValue().toZString());
                             name.setColor(EMCColor.GREEN.getColor());
                             name.setClickEvent(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, name_hover.toString(true)));
-                            name.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, name_hover.toChatComponent()));
+                            name.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, name_hover.toTextComponent()));
                             dimension.append(name);
                             dimension.append(Component.literal(", ").setColor(EMCColor.GRAY.getColor()));
                         }
@@ -1617,9 +1611,9 @@ public class FarewellCommand extends CommandBase {
                     if (args.length >= 3) {
                         type = ETeleportType.valueOf(args[2]);
                     }
-                    DimensionType targetLevel = null;
+                    String targetLevel = null;
                     if (args.length == 4) {
-                        targetLevel = DimensionUtils.getDimensionType(args[3]);
+                        targetLevel = DimensionUtils.getStringId(args[3]);
                     }
                     TeleportRecord record = NarcissusUtils.getBackTeleportRecord(player, type, targetLevel);
                     if (record == null) {
@@ -1649,7 +1643,7 @@ public class FarewellCommand extends CommandBase {
                         EOperationType type = EOperationType.fromString(args[1]);
                         List<EntityPlayerMP> targetList = new ArrayList<>();
                         try {
-                            targetList.addAll(CommandBase.getPlayers(server, sender, args[2]));
+                            targetList.add(CommandBase.getPlayer(sender, args[2]));
                         } catch (CommandException ignored) {
                         }
                         if (CollectionUtils.isNullOrEmpty(targetList)) {
@@ -1687,16 +1681,16 @@ public class FarewellCommand extends CommandBase {
                                     break;
                             }
                             String permissions = VirtualPermissionManager.buildPermissionsString(VirtualPermissionManager.getVirtualPermission(target));
-                            NarcissusUtils.sendTranslatableMessage(target, I18nUtils.getKey(EI18nType.MESSAGE, "player_virtual_op"), target.getDisplayNameString(), permissions);
+                            NarcissusUtils.sendTranslatableMessage(target, I18nUtils.getKey(EI18nType.MESSAGE, "player_virtual_op"), target.getDisplayName(), permissions);
                             if (player != null) {
                                 if (!target.getUniqueID().toString().equalsIgnoreCase(player.getUniqueID().toString())) {
-                                    NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EI18nType.MESSAGE, "player_virtual_op"), target.getDisplayNameString(), permissions);
+                                    NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EI18nType.MESSAGE, "player_virtual_op"), target.getDisplayName(), permissions);
                                 }
                             } else {
-                                sender.sendMessage(Component.translatable(language, EI18nType.MESSAGE, "player_virtual_op", target.getDisplayNameString(), permissions).toChatComponent());
+                                NarcissusUtils.sendMessage(sender, Component.translatable(language, EI18nType.MESSAGE, "player_virtual_op", target.getDisplayName(), permissions));
                             }
                             // 更新权限信息
-                            server.getPlayerList().updatePermissionLevel(target);
+                            // server.getPlayerList().updatePermissionLevel(target);
                         }
                         return 1;
                     }
@@ -1713,11 +1707,11 @@ public class FarewellCommand extends CommandBase {
             result.add("@r");
             result.add("@s");
         }
-        result.addAll(getListOfStringsMatchingLastWord(args, server.getOnlinePlayerNames()));
+        result.addAll(getListOfStringsMatchingLastWord(args, server.getConfigurationManager().getAllUsernames()));
         return result;
     }
 
-    private static List<String> getCoordinateSuggestions(BlockPos playerPos, String[] args, int start) {
+    private static List<String> getCoordinateSuggestions(Coordinate playerPos, String[] args, int start) {
         List<String> result = new ArrayList<>();
         if (args.length - 1 == start) {
             result.add("~");
@@ -1748,7 +1742,7 @@ public class FarewellCommand extends CommandBase {
                 .filter(entry -> StringUtils.isNullOrEmpty(arg) || entry.getKey().contains(arg))
                 .forEach(entry -> {
                     result.add(entry.getKey());
-                    result.add(entry.getValue().getRequester().getDisplayNameString());
+                    result.add(entry.getValue().getRequester().getDisplayName());
                 });
         if (StringUtils.isNullOrEmpty(arg)) {
             for (int i = 0; i < NarcissusFarewell.getTeleportRequest().entrySet().stream()
@@ -1775,7 +1769,7 @@ public class FarewellCommand extends CommandBase {
         // 判断是否有冷却时间
         if (player != null) {
             ETeleportType type = teleportType.toTeleportType();
-            if (type != null) {
+            if (type != null && !(teleportType.name().toLowerCase().contains("yes") || teleportType.name().toLowerCase().contains("no"))) {
                 int teleportCoolDown = NarcissusUtils.getTeleportCoolDown(player, type);
                 if (teleportCoolDown > 0) {
                     NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EI18nType.MESSAGE, "command_cooldown"), teleportCoolDown);
@@ -1804,7 +1798,7 @@ public class FarewellCommand extends CommandBase {
     private static boolean checkTeleportPost(TeleportRequest request, boolean submit) {
         boolean result;
         // 判断跨维度传送
-        result = NarcissusUtils.isTeleportAcrossDimensionEnabled(request.getRequester(), request.getTarget().world.provider.getDimensionType(), request.getTeleportType());
+        result = NarcissusUtils.isTeleportAcrossDimensionEnabled(request.getRequester(), DimensionUtils.getStringId(request.getTarget().getEntityWorld().provider.dimensionId), request.getTeleportType());
         // 判断是否有传送代价
         result = result && NarcissusUtils.validTeleportCost(request, submit);
         return !result;
@@ -1845,7 +1839,7 @@ public class FarewellCommand extends CommandBase {
         try {
             List<EntityPlayerMP> playerMPList = new ArrayList<>();
             try {
-                playerMPList.addAll(CommandBase.getPlayers(player.getServer(), player, arg));
+                playerMPList.add(CommandBase.getPlayer(player, arg));
             } catch (CommandException ignored) {
             }
             // List<EntityPlayerMP> playerMPList = NarcissusUtils.getPlayer(player, arg);

@@ -19,7 +19,7 @@ public class TeleporterCustom extends Teleporter {
      * 放置实体
      */
     @Override
-    public void placeInPortal(Entity entity, float rotationYaw) {
+    public void placeInPortal(Entity entity, double x, double y, double z, float rotationYaw) {
         // 直接传送到指定坐标
         entity.setPosition(this.coordinate.getX(), this.coordinate.getY(), this.coordinate.getZ());
         entity.rotationYaw = (float) this.coordinate.getYaw() == 0 ? entity.rotationYaw : (float) this.coordinate.getYaw();
@@ -31,7 +31,7 @@ public class TeleporterCustom extends Teleporter {
      */
     @Override
     @ParametersAreNonnullByDefault
-    public boolean placeInExistingPortal(Entity entity, float rotationYaw) {
+    public boolean placeInExistingPortal(Entity entity, double x, double y, double z, float rotationYaw) {
         return false; // 不寻找现有传送门
     }
 

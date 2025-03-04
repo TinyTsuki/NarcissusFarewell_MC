@@ -1,8 +1,8 @@
 package xin.vanilla.narcissus.network;
 
+import cpw.mods.fml.common.network.ByteBufUtils;
 import io.netty.buffer.ByteBuf;
 import lombok.Data;
-import net.minecraftforge.fml.common.network.ByteBufUtils;
 import xin.vanilla.narcissus.NarcissusFarewell;
 
 import java.util.*;

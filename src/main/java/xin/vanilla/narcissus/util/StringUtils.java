@@ -2,17 +2,13 @@ package xin.vanilla.narcissus.util;
 
 
 import lombok.NonNull;
-import net.minecraft.util.text.TextFormatting;
 import xin.vanilla.narcissus.enums.EMCColor;
 
 import javax.annotation.Nullable;
-import java.lang.reflect.Field;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.security.SecureRandom;
-import java.util.Arrays;
 import java.util.Collection;
-import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -710,28 +706,6 @@ public class StringUtils {
             }
         }
         return result;
-    }
-
-    public static TextFormatting getTextFormattingByCode(char c) {
-        String fieldName;
-        List<String> privateFieldNames = FieldUtils.getPrivateFieldNames(TextFormatting.class, char.class);
-        if (!CollectionUtils.isNullOrEmpty(privateFieldNames)) {
-            fieldName = privateFieldNames.get(0);
-        } else {
-            fieldName = "formattingCode";
-        }
-        return Arrays.stream(TextFormatting.values())
-                .filter(formatting -> {
-                    try {
-                        Class<?> clazz = formatting.getClass();
-                        Field secretField = clazz.getDeclaredField(fieldName);
-                        secretField.setAccessible(true);
-                        return (char) secretField.get(formatting) == c;
-                    } catch (Exception e) {
-                        return false;
-                    }
-                })
-                .findFirst().orElse(null);
     }
 
     public static void main(String[] args) {

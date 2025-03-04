@@ -12,9 +12,6 @@
     ],
     "credits": "",
     "logoFile": "logo.png",
-    "dependencies": [
-      "required-after:forge@${forge_version_range}",
-      "required-after:minecraft@${minecraft_version_range}"
-    ]
+    "dependencies": []
   }
 ]

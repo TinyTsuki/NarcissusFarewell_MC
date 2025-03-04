@@ -1,14 +1,14 @@
 package xin.vanilla.narcissus.network;
 
+import cpw.mods.fml.common.network.simpleimpl.IMessage;
+import cpw.mods.fml.common.network.simpleimpl.IMessageHandler;
+import cpw.mods.fml.common.network.simpleimpl.MessageContext;
 import io.netty.buffer.ByteBuf;
 import net.minecraft.entity.player.EntityPlayerMP;
-import net.minecraftforge.fml.common.network.simpleimpl.IMessage;
-import net.minecraftforge.fml.common.network.simpleimpl.IMessageHandler;
-import net.minecraftforge.fml.common.network.simpleimpl.MessageContext;
+import xin.vanilla.narcissus.NarcissusFarewell;
 import xin.vanilla.narcissus.enums.ECommandType;
 import xin.vanilla.narcissus.util.NarcissusUtils;
-
-import java.util.Objects;
+import xin.vanilla.narcissus.util.ServerTaskExecutor;
 
 public class TpHomeNotice implements IMessage {
 
@@ -27,11 +27,11 @@ public class TpHomeNotice implements IMessage {
         @Override
         public IMessage onMessage(TpHomeNotice packet, MessageContext ctx) {
             // 获取网络事件上下文并排队执行工作
-            ctx.getServerHandler().player.getServerWorld().addScheduledTask(() -> {
+            ServerTaskExecutor.run(() -> {
                 // 获取发送数据包的玩家实体
-                EntityPlayerMP player = ctx.getServerHandler().player;
+                EntityPlayerMP player = ctx.getServerHandler().playerEntity;
                 if (player != null) {
-                    Objects.requireNonNull(player.getServer()).getCommandManager().executeCommand(player, NarcissusUtils.getCommand(ECommandType.TP_HOME));
+                    NarcissusFarewell.getServerInstance().getCommandManager().executeCommand(player, NarcissusUtils.getCommand(ECommandType.TP_HOME));
                 }
             });
             return null;

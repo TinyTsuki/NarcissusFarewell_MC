@@ -1,12 +1,10 @@
-package xin.vanilla.narcissus.capability.world;
+package xin.vanilla.narcissus.data.world;
 
 import lombok.Getter;
-import lombok.NonNull;
-import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
-import net.minecraft.world.WorldServer;
-import net.minecraftforge.common.util.WorldCapabilityData;
+import net.minecraft.world.WorldSavedData;
+import net.minecraft.world.storage.MapStorage;
 import xin.vanilla.narcissus.NarcissusFarewell;
 import xin.vanilla.narcissus.config.Coordinate;
 import xin.vanilla.narcissus.config.KeyValue;
@@ -19,14 +17,18 @@ import java.util.Map;
  * 世界驿站数据
  */
 @Getter
-public class WorldStageData extends WorldCapabilityData {
-    private static final String DATA_NAME = "world_stage_data";
+public class WorldStageData extends WorldSavedData {
+    public static final String DATA_NAME = "world_stage_data";
 
     // dimension:name coordinate
     private Map<KeyValue<String, String>, Coordinate> stageCoordinate = new LinkedHashMap<>();
 
     public WorldStageData() {
         super(DATA_NAME);
+    }
+
+    public WorldStageData(String name) {
+        super(name);
     }
 
     @Override
@@ -43,8 +45,7 @@ public class WorldStageData extends WorldCapabilityData {
     }
 
     @Override
-    @NonNull
-    public NBTTagCompound writeToNBT(NBTTagCompound nbt) {
+    public void writeToNBT(NBTTagCompound nbt) {
         NBTTagList stageCoordinateNBT = new NBTTagList();
         for (Map.Entry<KeyValue<String, String>, Coordinate> entry : this.getStageCoordinate().entrySet()) {
             NBTTagCompound stageCoordinateTag = new NBTTagCompound();
@@ -54,17 +55,16 @@ public class WorldStageData extends WorldCapabilityData {
             stageCoordinateNBT.appendTag(stageCoordinateTag);
         }
         nbt.setTag("stageCoordinate", stageCoordinateNBT);
-        return nbt;
     }
 
     public void setCoordinate(Map<KeyValue<String, String>, Coordinate> stageCoordinate) {
         this.stageCoordinate = stageCoordinate;
-        super.markDirty();
+        this.markDirty();
     }
 
     public void addCoordinate(KeyValue<String, String> key, Coordinate coordinate) {
         this.stageCoordinate.put(key, coordinate);
-        super.markDirty();
+        this.markDirty();
     }
 
     public int getCoordinateSize(String name) {
@@ -90,19 +90,12 @@ public class WorldStageData extends WorldCapabilityData {
     }
 
     public static WorldStageData get() {
-        return get(NarcissusFarewell.getServerInstance().worlds[0]);
-    }
-
-    public static WorldStageData get(EntityPlayerMP player) {
-        return get(player.getServerWorld());
-    }
-
-    public static WorldStageData get(WorldServer world) {
-        WorldStageData stageData = (WorldStageData) world.loadData(WorldStageData.class, DATA_NAME);
-        if (stageData == null) {
-            stageData = new WorldStageData();
-            world.setData(DATA_NAME, stageData);
+        MapStorage storage = NarcissusFarewell.getServerInstance().worldServers[0].mapStorage;
+        WorldStageData data = (WorldStageData) storage.loadData(WorldStageData.class, DATA_NAME);
+        if (data == null) {
+            data = new WorldStageData();
+            storage.setData(DATA_NAME, data);
         }
-        return stageData;
+        return data;
     }
 }

@@ -1,14 +1,14 @@
 package xin.vanilla.narcissus.network;
 
+import cpw.mods.fml.common.network.simpleimpl.IMessage;
+import cpw.mods.fml.common.network.simpleimpl.IMessageHandler;
+import cpw.mods.fml.common.network.simpleimpl.MessageContext;
 import io.netty.buffer.ByteBuf;
 import net.minecraft.entity.player.EntityPlayerMP;
-import net.minecraftforge.fml.common.network.simpleimpl.IMessage;
-import net.minecraftforge.fml.common.network.simpleimpl.IMessageHandler;
-import net.minecraftforge.fml.common.network.simpleimpl.MessageContext;
+import xin.vanilla.narcissus.NarcissusFarewell;
 import xin.vanilla.narcissus.enums.ECommandType;
 import xin.vanilla.narcissus.util.NarcissusUtils;
-
-import java.util.Objects;
+import xin.vanilla.narcissus.util.ServerTaskExecutor;
 
 public class TpBackNotice implements IMessage {
 
@@ -27,10 +27,10 @@ public class TpBackNotice implements IMessage {
         @Override
         public IMessage onMessage(TpBackNotice packet, MessageContext ctx) {
             // 获取网络事件上下文并排队执行工作
-            ctx.getServerHandler().player.getServerWorld().addScheduledTask(() -> {
-                EntityPlayerMP player = ctx.getServerHandler().player;
+            ServerTaskExecutor.run(() -> {
+                EntityPlayerMP player = ctx.getServerHandler().playerEntity;
                 if (player != null) {
-                    Objects.requireNonNull(player.getServer()).getCommandManager().executeCommand(player, NarcissusUtils.getCommand(ECommandType.TP_BACK));
+                    NarcissusFarewell.getServerInstance().getCommandManager().executeCommand(player, NarcissusUtils.getCommand(ECommandType.TP_BACK));
                 }
             });
             return null;

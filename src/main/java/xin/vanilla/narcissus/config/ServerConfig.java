@@ -1,9 +1,8 @@
 package xin.vanilla.narcissus.config;
 
-import net.minecraft.init.Blocks;
+import cpw.mods.fml.common.event.FMLPreInitializationEvent;
 import net.minecraftforge.common.config.Configuration;
 import net.minecraftforge.common.config.Property;
-import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
 import xin.vanilla.narcissus.BuildConfig;
 import xin.vanilla.narcissus.enums.ECardType;
 import xin.vanilla.narcissus.enums.ECoolDownType;
@@ -11,7 +10,6 @@ import xin.vanilla.narcissus.enums.ECostType;
 
 import java.io.File;
 import java.util.Arrays;
-import java.util.stream.Stream;
 
 /**
  * 服务器配置
@@ -94,21 +92,19 @@ public class ServerConfig {
     /**
      * 不安全的方块
      */
-    public static String[] UNSAFE_BLOCKS = Stream.of(
-                    Blocks.LAVA,
-                    Blocks.FIRE,
-                    Blocks.CACTUS
-            ).map(block -> block.getRegistryName().toString())
-            .toArray(String[]::new);
+    public static String[] UNSAFE_BLOCKS = {
+            "minecraft:lava",
+            "minecraft:fire",
+            "minecraft:cactus",
+    };
 
     /**
      * 窒息的方块
      */
-    public static String[] SUFFOCATING_BLOCKS = Stream.of(
-                    Blocks.LAVA,
-                    Blocks.WATER
-            ).map(block -> block.getRegistryName().toString())
-            .toArray(String[]::new);
+    public static String[] SUFFOCATING_BLOCKS = {
+            "minecraft:lava",
+            "minecraft:water",
+    };
 
     /**
      * 当安全传送未找到安全坐标时，是否在脚下放置方块
@@ -123,13 +119,10 @@ public class ServerConfig {
     /**
      * 当安全传送未找到安全坐标时，放置的方块类型
      */
-    public static String[] SAFE_BLOCKS = Stream.of(
-                    Blocks.GRASS,
-                    Blocks.GRASS_PATH,
-                    Blocks.DIRT,
-                    Blocks.COBBLESTONE
-            ).map(block -> block.getRegistryName().toString())
-            .toArray(String[]::new);
+    public static String[] SAFE_BLOCKS = {
+            "minecraft:dirt",
+            "minecraft:cobblestone",
+    };
 
     /**
      * 寻找安全坐标的区块范围
@@ -859,12 +852,12 @@ public class ServerConfig {
             TELEPORT_CARD = teleportCard.getBoolean();
 
             // 每日传送卡数量
-            Property teleportCardDaily = config.get(CATEGORY_BASE + ".TpCard","teleportCardDaily",  0,
+            Property teleportCardDaily = config.get(CATEGORY_BASE + ".TpCard", "teleportCardDaily", 0,
                     "The number of Teleport Card that can be obtained daily.\n" +
                             "每日可获得的传送卡数量。\n"
             );
             teleportCardDaily.setMinValue(0).setMaxValue(9999);
-            teleportCardDaily.setComment(teleportCardDaily.getComment() + " [range: " + teleportCardDaily.getMinValue() + " ~ " + teleportCardDaily.getMaxValue() + ", default: " + teleportCardDaily.getDefault() + "]");
+            teleportCardDaily.comment = (teleportCardDaily.comment + " [range: " + teleportCardDaily.getMinValue() + " ~ " + teleportCardDaily.getMaxValue() + ", default: " + teleportCardDaily.getDefault() + "]");
             if (write) teleportCardDaily.set(TELEPORT_CARD_DAILY);
             TELEPORT_CARD_DAILY = teleportCardDaily.getInt();
 
@@ -899,7 +892,7 @@ public class ServerConfig {
                             "传送记录数量限制，数量为0表示不限制。\n"
             );
             teleportRecordLimit.setMinValue(0).setMaxValue(9999);
-            teleportRecordLimit.setComment(teleportRecordLimit.getComment() + " [range: " + teleportRecordLimit.getMinValue() + " ~ " + teleportRecordLimit.getMaxValue() + ", default: " + teleportRecordLimit.getDefault() + "]");
+            teleportRecordLimit.comment = (teleportRecordLimit.comment + " [range: " + teleportRecordLimit.getMinValue() + " ~ " + teleportRecordLimit.getMaxValue() + ", default: " + teleportRecordLimit.getDefault() + "]");
             if (write) teleportRecordLimit.set(TELEPORT_RECORD_LIMIT);
             TELEPORT_RECORD_LIMIT = teleportRecordLimit.getInt();
 
@@ -918,7 +911,7 @@ public class ServerConfig {
                             "传送代价中传送距离计算限制，值为0表示不限制。(此配置项并非限制传送距离，而是限制计算传送代价时使用的距离乘数。)\n"
             );
             teleportDistanceLimit.setMinValue(0).setMaxValue(Integer.MAX_VALUE);
-            teleportDistanceLimit.setComment(teleportDistanceLimit.getComment() + " [range: " + teleportDistanceLimit.getMinValue() + " ~ " + teleportDistanceLimit.getMaxValue() + ", default: " + teleportDistanceLimit.getDefault() + "]");
+            teleportDistanceLimit.comment = (teleportDistanceLimit.comment + " [range: " + teleportDistanceLimit.getMinValue() + " ~ " + teleportDistanceLimit.getMaxValue() + ", default: " + teleportDistanceLimit.getDefault() + "]");
             if (write) teleportDistanceLimit.set(TELEPORT_COST_DISTANCE_LIMIT);
             TELEPORT_COST_DISTANCE_LIMIT = teleportDistanceLimit.getInt();
 
@@ -928,7 +921,7 @@ public class ServerConfig {
                             "跨维度传送时传送代价中传送距离取值，值为0表示不限制。\n"
             );
             teleportDistanceAcrossDimension.setMinValue(0).setMaxValue(Integer.MAX_VALUE);
-            teleportDistanceAcrossDimension.setComment(teleportDistanceAcrossDimension.getComment() + " [range: " + teleportDistanceAcrossDimension.getMinValue() + " ~ " + teleportDistanceAcrossDimension.getMaxValue() + ", default: " + teleportDistanceAcrossDimension.getDefault() + "]");
+            teleportDistanceAcrossDimension.comment = (teleportDistanceAcrossDimension.comment + " [range: " + teleportDistanceAcrossDimension.getMinValue() + " ~ " + teleportDistanceAcrossDimension.getMaxValue() + ", default: " + teleportDistanceAcrossDimension.getDefault() + "]");
             if (write) teleportDistanceAcrossDimension.set(TELEPORT_COST_DISTANCE_ACROSS_DIMENSION);
             TELEPORT_COST_DISTANCE_ACROSS_DIMENSION = teleportDistanceAcrossDimension.getInt();
 
@@ -938,7 +931,7 @@ public class ServerConfig {
                             "传送至视线尽头时最远传送距离限制，值为0表示不限制。\n"
             );
             teleportViewDistanceLimit.setMinValue(0).setMaxValue(Integer.MAX_VALUE);
-            teleportViewDistanceLimit.setComment(teleportViewDistanceLimit.getComment() + " [range: " + teleportViewDistanceLimit.getMinValue() + " ~ " + teleportViewDistanceLimit.getMaxValue() + ", default: " + teleportViewDistanceLimit.getDefault() + "]");
+            teleportViewDistanceLimit.comment = (teleportViewDistanceLimit.comment + " [range: " + teleportViewDistanceLimit.getMinValue() + " ~ " + teleportViewDistanceLimit.getMaxValue() + ", default: " + teleportViewDistanceLimit.getDefault() + "]");
             if (write) teleportViewDistanceLimit.set(TELEPORT_VIEW_DISTANCE_LIMIT);
             TELEPORT_VIEW_DISTANCE_LIMIT = teleportViewDistanceLimit.getInt();
 
@@ -948,7 +941,7 @@ public class ServerConfig {
                             "传送请求过期时间，单位为秒。\n"
             );
             teleportRequestExpireTime.setMinValue(0).setMaxValue(60 * 60);
-            teleportRequestExpireTime.setComment(teleportRequestExpireTime.getComment() + " [range: " + teleportRequestExpireTime.getMinValue() + " ~ " + teleportRequestExpireTime.getMaxValue() + ", default: " + teleportRequestExpireTime.getDefault() + "]");
+            teleportRequestExpireTime.comment = (teleportRequestExpireTime.comment + " [range: " + teleportRequestExpireTime.getMinValue() + " ~ " + teleportRequestExpireTime.getMaxValue() + ", default: " + teleportRequestExpireTime.getDefault() + "]");
             if (write) teleportRequestExpireTime.set(TELEPORT_REQUEST_EXPIRE_TIME);
             TELEPORT_REQUEST_EXPIRE_TIME = teleportRequestExpireTime.getInt();
 
@@ -974,7 +967,7 @@ public class ServerConfig {
                             "当冷却时间计算方式为COMMON或MIXED时，此值对所有指令生效。\n"
             );
             teleportRequestCooldown.setMinValue(0).setMaxValue(60 * 60 * 24);
-            teleportRequestCooldown.setComment(teleportRequestCooldown.getComment() + " [range: " + teleportRequestCooldown.getMinValue() + " ~ " + teleportRequestCooldown.getMaxValue() + ", default: " + teleportRequestCooldown.getDefault() + "]");
+            teleportRequestCooldown.comment = (teleportRequestCooldown.comment + " [range: " + teleportRequestCooldown.getMinValue() + " ~ " + teleportRequestCooldown.getMaxValue() + ", default: " + teleportRequestCooldown.getDefault() + "]");
             if (write) teleportRequestCooldown.set(TELEPORT_REQUEST_COOLDOWN);
             TELEPORT_REQUEST_COOLDOWN = teleportRequestCooldown.getInt();
 
@@ -984,7 +977,7 @@ public class ServerConfig {
                             "随机传送与传送至指定结构的最大距离限制。\n"
             );
             teleportRandomDistanceLimit.setMinValue(0).setMaxValue(Integer.MAX_VALUE);
-            teleportRandomDistanceLimit.setComment(teleportRandomDistanceLimit.getComment() + " [range: " + teleportRandomDistanceLimit.getMinValue() + " ~ " + teleportRandomDistanceLimit.getMaxValue() + ", default: " + teleportRandomDistanceLimit.getDefault() + "]");
+            teleportRandomDistanceLimit.comment = (teleportRandomDistanceLimit.comment + " [range: " + teleportRandomDistanceLimit.getMinValue() + " ~ " + teleportRandomDistanceLimit.getMaxValue() + ", default: " + teleportRandomDistanceLimit.getDefault() + "]");
             if (write) teleportRandomDistanceLimit.set(TELEPORT_RANDOM_DISTANCE_LIMIT);
             TELEPORT_RANDOM_DISTANCE_LIMIT = teleportRandomDistanceLimit.getInt();
 
@@ -994,7 +987,7 @@ public class ServerConfig {
                             "玩家可设置的家的数量。\n"
             );
             teleportHomeLimit.setMinValue(1).setMaxValue(9999);
-            teleportHomeLimit.setComment(teleportHomeLimit.getComment() + " [range: " + teleportHomeLimit.getMinValue() + " ~ " + teleportHomeLimit.getMaxValue() + ", default: " + teleportHomeLimit.getDefault() + "]");
+            teleportHomeLimit.comment = (teleportHomeLimit.comment + " [range: " + teleportHomeLimit.getMinValue() + " ~ " + teleportHomeLimit.getMaxValue() + ", default: " + teleportHomeLimit.getDefault() + "]");
             if (write) teleportHomeLimit.set(TELEPORT_HOME_LIMIT);
             TELEPORT_HOME_LIMIT = teleportHomeLimit.getInt();
 
@@ -1063,7 +1056,7 @@ public class ServerConfig {
                             "当进行安全传送时，寻找安全坐标的半径，单位为区块。\n"
             );
             safeChunkRange.setMinValue(1).setMaxValue(16);
-            safeChunkRange.setComment(safeChunkRange.getComment() + " [range: " + safeChunkRange.getMinValue() + " ~ " + safeChunkRange.getMaxValue() + ", default: " + safeChunkRange.getDefault() + "]");
+            safeChunkRange.comment = (safeChunkRange.comment + " [range: " + safeChunkRange.getMinValue() + " ~ " + safeChunkRange.getMaxValue() + ", default: " + safeChunkRange.getDefault() + "]");
             if (write) safeChunkRange.set(SAFE_CHUNK_RANGE);
             SAFE_CHUNK_RANGE = safeChunkRange.getInt();
 
@@ -1202,7 +1195,7 @@ public class ServerConfig {
                                 "毒杀指令所需的权限等级。\n"
                 );
                 permissionFeedOther.setMinValue(0).setMaxValue(4);
-                permissionFeedOther.setComment(permissionFeedOther.getComment() + " [range: " + permissionFeedOther.getMinValue() + " ~ " + permissionFeedOther.getMaxValue() + ", default: " + permissionFeedOther.getDefault() + "]");
+                permissionFeedOther.comment = (permissionFeedOther.comment + " [range: " + permissionFeedOther.getMinValue() + " ~ " + permissionFeedOther.getMaxValue() + ", default: " + permissionFeedOther.getDefault() + "]");
                 if (write) permissionFeedOther.set(PERMISSION_FEED_OTHER);
                 PERMISSION_FEED_OTHER = permissionFeedOther.getInt();
 
@@ -1211,7 +1204,7 @@ public class ServerConfig {
                                 "传送到指定坐标指令所需的权限等级。\n"
                 );
                 permissionTpCoordinate.setMinValue(0).setMaxValue(4);
-                permissionTpCoordinate.setComment(permissionTpCoordinate.getComment() + " [range: " + permissionTpCoordinate.getMinValue() + " ~ " + permissionTpCoordinate.getMaxValue() + ", default: " + permissionTpCoordinate.getDefault() + "]");
+                permissionTpCoordinate.comment = (permissionTpCoordinate.comment + " [range: " + permissionTpCoordinate.getMinValue() + " ~ " + permissionTpCoordinate.getMaxValue() + ", default: " + permissionTpCoordinate.getDefault() + "]");
                 if (write) permissionTpCoordinate.set(PERMISSION_TP_COORDINATE);
                 PERMISSION_TP_COORDINATE = permissionTpCoordinate.getInt();
 
@@ -1220,7 +1213,7 @@ public class ServerConfig {
                                 "传送到指定结构指令所需的权限等级。\n"
                 );
                 permissionTpStructure.setMinValue(0).setMaxValue(4);
-                permissionTpStructure.setComment(permissionTpStructure.getComment() + " [range: " + permissionTpStructure.getMinValue() + " ~ " + permissionTpStructure.getMaxValue() + ", default: " + permissionTpStructure.getDefault() + "]");
+                permissionTpStructure.comment = (permissionTpStructure.comment + " [range: " + permissionTpStructure.getMinValue() + " ~ " + permissionTpStructure.getMaxValue() + ", default: " + permissionTpStructure.getDefault() + "]");
                 PERMISSION_TP_STRUCTURE = permissionTpStructure.getInt();
 
                 Property permissionTpAsk = config.get(CATEGORY_PERMISSION + ".command", "permissionTpAsk", 0,
@@ -1228,7 +1221,7 @@ public class ServerConfig {
                                 "请求传送至玩家指令所需的权限等级。\n"
                 );
                 permissionTpAsk.setMinValue(0).setMaxValue(4);
-                permissionTpAsk.setComment(permissionTpAsk.getComment() + " [range: " + permissionTpAsk.getMinValue() + " ~ " + permissionTpAsk.getMaxValue() + ", default: " + permissionTpAsk.getDefault() + "]");
+                permissionTpAsk.comment = (permissionTpAsk.comment + " [range: " + permissionTpAsk.getMinValue() + " ~ " + permissionTpAsk.getMaxValue() + ", default: " + permissionTpAsk.getDefault() + "]");
                 if (write) permissionTpAsk.set(PERMISSION_TP_ASK);
                 PERMISSION_TP_ASK = permissionTpAsk.getInt();
 
@@ -1237,7 +1230,7 @@ public class ServerConfig {
                                 "请求将玩家传送至当前位置指令所需的权限等级。\n"
                 );
                 permissionTpHere.setMinValue(0).setMaxValue(4);
-                permissionTpHere.setComment(permissionTpHere.getComment() + " [range: " + permissionTpHere.getMinValue() + " ~ " + permissionTpHere.getMaxValue() + ", default: " + permissionTpHere.getDefault() + "]");
+                permissionTpHere.comment = (permissionTpHere.comment + " [range: " + permissionTpHere.getMinValue() + " ~ " + permissionTpHere.getMaxValue() + ", default: " + permissionTpHere.getDefault() + "]");
                 if (write) permissionTpAsk.set(PERMISSION_TP_HERE);
                 PERMISSION_TP_HERE = permissionTpHere.getInt();
 
@@ -1246,7 +1239,7 @@ public class ServerConfig {
                                 "随机传送指令所需的权限等级。\n"
                 );
                 permissionTpRandom.setMinValue(0).setMaxValue(4);
-                permissionTpRandom.setComment(permissionTpRandom.getComment() + " [range: " + permissionTpRandom.getMinValue() + " ~ " + permissionTpRandom.getMaxValue() + ", default: " + permissionTpRandom.getDefault() + "]");
+                permissionTpRandom.comment = (permissionTpRandom.comment + " [range: " + permissionTpRandom.getMinValue() + " ~ " + permissionTpRandom.getMaxValue() + ", default: " + permissionTpRandom.getDefault() + "]");
                 if (write) permissionTpRandom.set(PERMISSION_TP_RANDOM);
                 PERMISSION_TP_RANDOM = permissionTpRandom.getInt();
 
@@ -1255,7 +1248,7 @@ public class ServerConfig {
                                 "传送到玩家重生点指令所需的权限等级。\n"
                 );
                 permissionTpSpawn.setMinValue(0).setMaxValue(4);
-                permissionTpSpawn.setComment(permissionTpSpawn.getComment() + " [range: " + permissionTpSpawn.getMinValue() + " ~ " + permissionTpSpawn.getMaxValue() + ", default: " + permissionTpSpawn.getDefault() + "]");
+                permissionTpSpawn.comment = (permissionTpSpawn.comment + " [range: " + permissionTpSpawn.getMinValue() + " ~ " + permissionTpSpawn.getMaxValue() + ", default: " + permissionTpSpawn.getDefault() + "]");
                 if (write) permissionTpSpawn.set(PERMISSION_TP_SPAWN);
                 PERMISSION_TP_SPAWN = permissionTpSpawn.getInt();
 
@@ -1264,7 +1257,7 @@ public class ServerConfig {
                                 "传送到其他玩家重生点指令所需的权限等级。\n"
                 );
                 permissionTpSpawnOther.setMinValue(0).setMaxValue(4);
-                permissionTpSpawnOther.setComment(permissionTpSpawnOther.getComment() + " [range: " + permissionTpSpawnOther.getMinValue() + " ~ " + permissionTpSpawnOther.getMaxValue() + ", default: " + permissionTpSpawnOther.getDefault() + "]");
+                permissionTpSpawnOther.comment = (permissionTpSpawnOther.comment + " [range: " + permissionTpSpawnOther.getMinValue() + " ~ " + permissionTpSpawnOther.getMaxValue() + ", default: " + permissionTpSpawnOther.getDefault() + "]");
                 if (write) permissionTpSpawnOther.set(PERMISSION_TP_SPAWN_OTHER);
                 PERMISSION_TP_SPAWN_OTHER = permissionTpSpawnOther.getInt();
 
@@ -1273,7 +1266,7 @@ public class ServerConfig {
                                 "传送到世界重生点指令所需的权限等级。\n"
                 );
                 permissionTpWorldSpawn.setMinValue(0).setMaxValue(4);
-                permissionTpWorldSpawn.setComment(permissionTpWorldSpawn.getComment() + " [range: " + permissionTpWorldSpawn.getMinValue() + " ~ " + permissionTpWorldSpawn.getMaxValue() + ", default: " + permissionTpWorldSpawn.getDefault() + "]");
+                permissionTpWorldSpawn.comment = (permissionTpWorldSpawn.comment + " [range: " + permissionTpWorldSpawn.getMinValue() + " ~ " + permissionTpWorldSpawn.getMaxValue() + ", default: " + permissionTpWorldSpawn.getDefault() + "]");
                 if (write) permissionTpWorldSpawn.set(PERMISSION_TP_WORLD_SPAWN);
                 PERMISSION_TP_WORLD_SPAWN = permissionTpWorldSpawn.getInt();
 
@@ -1282,7 +1275,7 @@ public class ServerConfig {
                                 "传送到顶部指令所需的权限等级。\n"
                 );
                 permissionTpTop.setMinValue(0).setMaxValue(4);
-                permissionTpTop.setComment(permissionTpTop.getComment() + " [range: " + permissionTpTop.getMinValue() + " ~ " + permissionTpTop.getMaxValue() + ", default: " + permissionTpTop.getDefault() + "]");
+                permissionTpTop.comment = (permissionTpTop.comment + " [range: " + permissionTpTop.getMinValue() + " ~ " + permissionTpTop.getMaxValue() + ", default: " + permissionTpTop.getDefault() + "]");
                 if (write) permissionTpTop.set(PERMISSION_TP_TOP);
                 PERMISSION_TP_TOP = permissionTpTop.getInt();
 
@@ -1291,7 +1284,7 @@ public class ServerConfig {
                                 "传送到底部指令所需的权限等级。\n"
                 );
                 permissionTpBottom.setMinValue(0).setMaxValue(4);
-                permissionTpBottom.setComment(permissionTpBottom.getComment() + " [range: " + permissionTpBottom.getMinValue() + " ~ " + permissionTpBottom.getMaxValue() + ", default: " + permissionTpBottom.getDefault() + "]");
+                permissionTpBottom.comment = (permissionTpBottom.comment + " [range: " + permissionTpBottom.getMinValue() + " ~ " + permissionTpBottom.getMaxValue() + ", default: " + permissionTpBottom.getDefault() + "]");
                 if (write) permissionTpBottom.set(PERMISSION_TP_BOTTOM);
                 PERMISSION_TP_BOTTOM = permissionTpBottom.getInt();
 
@@ -1300,7 +1293,7 @@ public class ServerConfig {
                                 "传送到上方指令所需的权限等级。\n"
                 );
                 permissionTpUp.setMinValue(0).setMaxValue(4);
-                permissionTpUp.setComment(permissionTpUp.getComment() + " [range: " + permissionTpUp.getMinValue() + " ~ " + permissionTpUp.getMaxValue() + ", default: " + permissionTpUp.getDefault() + "]");
+                permissionTpUp.comment = (permissionTpUp.comment + " [range: " + permissionTpUp.getMinValue() + " ~ " + permissionTpUp.getMaxValue() + ", default: " + permissionTpUp.getDefault() + "]");
                 if (write) permissionTpUp.set(PERMISSION_TP_UP);
                 PERMISSION_TP_UP = permissionTpUp.getInt();
 
@@ -1309,7 +1302,7 @@ public class ServerConfig {
                                 "传送到下方指令所需的权限等级。\n"
                 );
                 permissionTpDown.setMinValue(0).setMaxValue(4);
-                permissionTpDown.setComment(permissionTpDown.getComment() + " [range: " + permissionTpDown.getMinValue() + " ~ " + permissionTpDown.getMaxValue() + ", default: " + permissionTpDown.getDefault() + "]");
+                permissionTpDown.comment = (permissionTpDown.comment + " [range: " + permissionTpDown.getMinValue() + " ~ " + permissionTpDown.getMaxValue() + ", default: " + permissionTpDown.getDefault() + "]");
                 if (write) permissionTpDown.set(PERMISSION_TP_DOWN);
                 PERMISSION_TP_DOWN = permissionTpDown.getInt();
 
@@ -1320,7 +1313,7 @@ public class ServerConfig {
                                 "该功能与玩家设置的视距无关。\n"
                 );
                 permissionTpView.setMinValue(0).setMaxValue(4);
-                permissionTpView.setComment(permissionTpView.getComment() + " [range: " + permissionTpView.getMinValue() + " ~ " + permissionTpView.getMaxValue() + ", default: " + permissionTpView.getDefault() + "]");
+                permissionTpView.comment = (permissionTpView.comment + " [range: " + permissionTpView.getMinValue() + " ~ " + permissionTpView.getMaxValue() + ", default: " + permissionTpView.getDefault() + "]");
                 if (write) permissionTpView.set(PERMISSION_TP_VIEW);
                 PERMISSION_TP_VIEW = permissionTpView.getInt();
 
@@ -1329,7 +1322,7 @@ public class ServerConfig {
                                 "传送到家指令所需的权限等级。\n"
                 );
                 permissionTpHome.setMinValue(0).setMaxValue(4);
-                permissionTpHome.setComment(permissionTpHome.getComment() + " [range: " + permissionTpHome.getMinValue() + " ~ " + permissionTpHome.getMaxValue() + ", default: " + permissionTpHome.getDefault() + "]");
+                permissionTpHome.comment = (permissionTpHome.comment + " [range: " + permissionTpHome.getMinValue() + " ~ " + permissionTpHome.getMaxValue() + ", default: " + permissionTpHome.getDefault() + "]");
                 if (write) permissionTpHome.set(PERMISSION_TP_HOME);
                 PERMISSION_TP_HOME = permissionTpHome.getInt();
 
@@ -1338,7 +1331,7 @@ public class ServerConfig {
                                 "传送到驿站指令所需的权限等级。\n"
                 );
                 permissionTpStage.setMinValue(0).setMaxValue(4);
-                permissionTpStage.setComment(permissionTpStage.getComment() + " [range: " + permissionTpStage.getMinValue() + " ~ " + permissionTpStage.getMaxValue() + ", default: " + permissionTpStage.getDefault() + "]");
+                permissionTpStage.comment = (permissionTpStage.comment + " [range: " + permissionTpStage.getMinValue() + " ~ " + permissionTpStage.getMaxValue() + ", default: " + permissionTpStage.getDefault() + "]");
                 if (write) permissionTpStage.set(PERMISSION_TP_STAGE);
                 PERMISSION_TP_STAGE = permissionTpStage.getInt();
 
@@ -1347,7 +1340,7 @@ public class ServerConfig {
                                 "设置驿站指令所需的权限等级。\n"
                 );
                 permissionSetStage.setMinValue(0).setMaxValue(4);
-                permissionSetStage.setComment(permissionSetStage.getComment() + " [range: " + permissionSetStage.getMinValue() + " ~ " + permissionSetStage.getMaxValue() + ", default: " + permissionSetStage.getDefault() + "]");
+                permissionSetStage.comment = (permissionSetStage.comment + " [range: " + permissionSetStage.getMinValue() + " ~ " + permissionSetStage.getMaxValue() + ", default: " + permissionSetStage.getDefault() + "]");
                 if (write) permissionSetStage.set(PERMISSION_SET_STAGE);
                 PERMISSION_SET_STAGE = permissionSetStage.getInt();
 
@@ -1356,7 +1349,7 @@ public class ServerConfig {
                                 "删除驿站指令所需的权限等级。\n"
                 );
                 permissionDelStage.setMinValue(0).setMaxValue(4);
-                permissionDelStage.setComment(permissionDelStage.getComment() + " [range: " + permissionDelStage.getMinValue() + " ~ " + permissionDelStage.getMaxValue() + ", default: " + permissionDelStage.getDefault() + "]");
+                permissionDelStage.comment = (permissionDelStage.comment + " [range: " + permissionDelStage.getMinValue() + " ~ " + permissionDelStage.getMaxValue() + ", default: " + permissionDelStage.getDefault() + "]");
                 if (write) permissionDelStage.set(PERMISSION_DEL_STAGE);
                 PERMISSION_DEL_STAGE = permissionDelStage.getInt();
 
@@ -1365,7 +1358,7 @@ public class ServerConfig {
                                 "查询驿站指令所需的权限等级。\n"
                 );
                 permissionGetStage.setMinValue(0).setMaxValue(4);
-                permissionGetStage.setComment(permissionGetStage.getComment() + " [range: " + permissionGetStage.getMinValue() + " ~ " + permissionGetStage.getMaxValue() + ", default: " + permissionGetStage.getDefault() + "]");
+                permissionGetStage.comment = (permissionGetStage.comment + " [range: " + permissionGetStage.getMinValue() + " ~ " + permissionGetStage.getMaxValue() + ", default: " + permissionGetStage.getDefault() + "]");
                 if (write) permissionGetStage.set(PERMISSION_GET_STAGE);
                 PERMISSION_GET_STAGE = permissionGetStage.getInt();
 
@@ -1374,7 +1367,7 @@ public class ServerConfig {
                                 "传送到上次传送点指令所需的权限等级。\n"
                 );
                 permissionTpBack.setMinValue(0).setMaxValue(4);
-                permissionTpBack.setComment(permissionTpBack.getComment() + " [range: " + permissionTpBack.getMinValue() + " ~ " + permissionTpBack.getMaxValue() + ", default: " + permissionTpBack.getDefault() + "]");
+                permissionTpBack.comment = (permissionTpBack.comment + " [range: " + permissionTpBack.getMinValue() + " ~ " + permissionTpBack.getMaxValue() + ", default: " + permissionTpBack.getDefault() + "]");
                 if (write) permissionTpBack.set(PERMISSION_TP_BACK);
                 PERMISSION_TP_BACK = permissionTpBack.getInt();
 
@@ -1383,7 +1376,7 @@ public class ServerConfig {
                                 "设置虚拟权限指令所需的权限等级，同时用于控制使用'修改服务器配置指令'的权限。\n"
                 );
                 permissionVirtualOp.setMinValue(0).setMaxValue(4);
-                permissionVirtualOp.setComment(permissionVirtualOp.getComment() + " [range: " + permissionVirtualOp.getMinValue() + " ~ " + permissionVirtualOp.getMaxValue() + ", default: " + permissionVirtualOp.getDefault() + "]");
+                permissionVirtualOp.comment = (permissionVirtualOp.comment + " [range: " + permissionVirtualOp.getMinValue() + " ~ " + permissionVirtualOp.getMaxValue() + ", default: " + permissionVirtualOp.getDefault() + "]");
                 if (write) permissionVirtualOp.set(PERMISSION_VIRTUAL_OP);
                 PERMISSION_VIRTUAL_OP = permissionVirtualOp.getInt();
             }
@@ -1394,7 +1387,7 @@ public class ServerConfig {
                                 "跨维度传送到指定坐标指令所需的权限等级，若为-1则禁用跨维度传送。\n"
                 );
                 permissionTpCoordinateAcrossDimension.setMinValue(-1).setMaxValue(4);
-                permissionTpCoordinateAcrossDimension.setComment(permissionTpCoordinateAcrossDimension.getComment() + " [range: " + permissionTpCoordinateAcrossDimension.getMinValue() + " ~ " + permissionTpCoordinateAcrossDimension.getMaxValue() + ", default: " + permissionTpCoordinateAcrossDimension.getDefault() + "]");
+                permissionTpCoordinateAcrossDimension.comment = (permissionTpCoordinateAcrossDimension.comment + " [range: " + permissionTpCoordinateAcrossDimension.getMinValue() + " ~ " + permissionTpCoordinateAcrossDimension.getMaxValue() + ", default: " + permissionTpCoordinateAcrossDimension.getDefault() + "]");
                 if (write) permissionTpCoordinateAcrossDimension.set(PERMISSION_TP_COORDINATE_ACROSS_DIMENSION);
                 PERMISSION_TP_COORDINATE_ACROSS_DIMENSION = permissionTpCoordinateAcrossDimension.getInt();
 
@@ -1403,7 +1396,7 @@ public class ServerConfig {
                                 "跨维度传送到指定结构指令所需的权限等级，若为-1则禁用跨维度传送。\n"
                 );
                 permissionTpStructureAcrossDimension.setMinValue(-1).setMaxValue(4);
-                permissionTpStructureAcrossDimension.setComment(permissionTpStructureAcrossDimension.getComment() + " [range: " + permissionTpStructureAcrossDimension.getMinValue() + " ~ " + permissionTpStructureAcrossDimension.getMaxValue() + ", default: " + permissionTpStructureAcrossDimension.getDefault() + "]");
+                permissionTpStructureAcrossDimension.comment = (permissionTpStructureAcrossDimension.comment + " [range: " + permissionTpStructureAcrossDimension.getMinValue() + " ~ " + permissionTpStructureAcrossDimension.getMaxValue() + ", default: " + permissionTpStructureAcrossDimension.getDefault() + "]");
                 if (write) permissionTpStructureAcrossDimension.set(PERMISSION_TP_STRUCTURE_ACROSS_DIMENSION);
                 PERMISSION_TP_STRUCTURE_ACROSS_DIMENSION = permissionTpStructureAcrossDimension.getInt();
 
@@ -1412,7 +1405,7 @@ public class ServerConfig {
                                 "跨维度请求传送至玩家指令所需的权限等级，若为-1则禁用跨维度传送。\n"
                 );
                 permissionTpAskAcrossDimension.setMinValue(-1).setMaxValue(4);
-                permissionTpAskAcrossDimension.setComment(permissionTpAskAcrossDimension.getComment() + " [range: " + permissionTpAskAcrossDimension.getMinValue() + " ~ " + permissionTpAskAcrossDimension.getMaxValue() + ", default: " + permissionTpAskAcrossDimension.getDefault() + "]");
+                permissionTpAskAcrossDimension.comment = (permissionTpAskAcrossDimension.comment + " [range: " + permissionTpAskAcrossDimension.getMinValue() + " ~ " + permissionTpAskAcrossDimension.getMaxValue() + ", default: " + permissionTpAskAcrossDimension.getDefault() + "]");
                 if (write) permissionTpAskAcrossDimension.set(PERMISSION_TP_ASK_ACROSS_DIMENSION);
                 PERMISSION_TP_ASK_ACROSS_DIMENSION = permissionTpAskAcrossDimension.getInt();
 
@@ -1421,7 +1414,7 @@ public class ServerConfig {
                                 "跨维度传送到当前位置指令所需的权限等级，若为-1则禁用跨维度传送。\n"
                 );
                 permissionTpHereAcrossDimension.setMinValue(-1).setMaxValue(4);
-                permissionTpHereAcrossDimension.setComment(permissionTpHereAcrossDimension.getComment() + " [range: " + permissionTpHereAcrossDimension.getMinValue() + " ~ " + permissionTpHereAcrossDimension.getMaxValue() + ", default: " + permissionTpHereAcrossDimension.getDefault() + "]");
+                permissionTpHereAcrossDimension.comment = (permissionTpHereAcrossDimension.comment + " [range: " + permissionTpHereAcrossDimension.getMinValue() + " ~ " + permissionTpHereAcrossDimension.getMaxValue() + ", default: " + permissionTpHereAcrossDimension.getDefault() + "]");
                 if (write) permissionTpHereAcrossDimension.set(PERMISSION_TP_HERE_ACROSS_DIMENSION);
                 PERMISSION_TP_HERE_ACROSS_DIMENSION = permissionTpHereAcrossDimension.getInt();
 
@@ -1430,7 +1423,7 @@ public class ServerConfig {
                                 "跨维度传送到随机位置指令所需的权限等级，若为-1则禁用跨维度传送。\n"
                 );
                 permissionTpRandomAcrossDimension.setMinValue(-1).setMaxValue(4);
-                permissionTpRandomAcrossDimension.setComment(permissionTpRandomAcrossDimension.getComment() + " [range: " + permissionTpRandomAcrossDimension.getMinValue() + " ~ " + permissionTpRandomAcrossDimension.getMaxValue() + ", default: " + permissionTpRandomAcrossDimension.getDefault() + "]");
+                permissionTpRandomAcrossDimension.comment = (permissionTpRandomAcrossDimension.comment + " [range: " + permissionTpRandomAcrossDimension.getMinValue() + " ~ " + permissionTpRandomAcrossDimension.getMaxValue() + ", default: " + permissionTpRandomAcrossDimension.getDefault() + "]");
                 if (write) permissionTpRandomAcrossDimension.set(PERMISSION_TP_RANDOM_ACROSS_DIMENSION);
                 PERMISSION_TP_RANDOM_ACROSS_DIMENSION = permissionTpRandomAcrossDimension.getInt();
 
@@ -1439,7 +1432,7 @@ public class ServerConfig {
                                 "跨维度传送到当前维度的出生点指令所需的权限等级，若为-1则禁用跨维度传送。\n"
                 );
                 permissionTpSpawnAcrossDimension.setMinValue(-1).setMaxValue(4);
-                permissionTpSpawnAcrossDimension.setComment(permissionTpSpawnAcrossDimension.getComment() + " [range: " + permissionTpSpawnAcrossDimension.getMinValue() + " ~ " + permissionTpSpawnAcrossDimension.getMaxValue() + ", default: " + permissionTpSpawnAcrossDimension.getDefault() + "]");
+                permissionTpSpawnAcrossDimension.comment = (permissionTpSpawnAcrossDimension.comment + " [range: " + permissionTpSpawnAcrossDimension.getMinValue() + " ~ " + permissionTpSpawnAcrossDimension.getMaxValue() + ", default: " + permissionTpSpawnAcrossDimension.getDefault() + "]");
                 if (write) permissionTpSpawnAcrossDimension.set(PERMISSION_TP_SPAWN_ACROSS_DIMENSION);
                 PERMISSION_TP_SPAWN_ACROSS_DIMENSION = permissionTpSpawnAcrossDimension.getInt();
 
@@ -1448,7 +1441,7 @@ public class ServerConfig {
                                 "跨维度传送到当前维度的世界出生点指令所需的权限等级，若为-1则禁用跨维度传送。\n"
                 );
                 permissionTpWorldSpawnAcrossDimension.setMinValue(-1).setMaxValue(4);
-                permissionTpWorldSpawnAcrossDimension.setComment(permissionTpWorldSpawnAcrossDimension.getComment() + " [range: " + permissionTpWorldSpawnAcrossDimension.getMinValue() + " ~ " + permissionTpWorldSpawnAcrossDimension.getMaxValue() + ", default: " + permissionTpWorldSpawnAcrossDimension.getDefault() + "]");
+                permissionTpWorldSpawnAcrossDimension.comment = (permissionTpWorldSpawnAcrossDimension.comment + " [range: " + permissionTpWorldSpawnAcrossDimension.getMinValue() + " ~ " + permissionTpWorldSpawnAcrossDimension.getMaxValue() + ", default: " + permissionTpWorldSpawnAcrossDimension.getDefault() + "]");
                 if (write) permissionTpWorldSpawnAcrossDimension.set(PERMISSION_TP_WORLD_SPAWN_ACROSS_DIMENSION);
                 PERMISSION_TP_WORLD_SPAWN_ACROSS_DIMENSION = permissionTpWorldSpawnAcrossDimension.getInt();
 
@@ -1457,7 +1450,7 @@ public class ServerConfig {
                                 "跨维度传送到家指令所需的权限等级，若为-1则禁用跨维度传送。\n"
                 );
                 permissionTpHomeAcrossDimension.setMinValue(-1).setMaxValue(4);
-                permissionTpHomeAcrossDimension.setComment(permissionTpHomeAcrossDimension.getComment() + " [range: " + permissionTpHomeAcrossDimension.getMinValue() + " ~ " + permissionTpHomeAcrossDimension.getMaxValue() + ", default: " + permissionTpHomeAcrossDimension.getDefault() + "]");
+                permissionTpHomeAcrossDimension.comment = (permissionTpHomeAcrossDimension.comment + " [range: " + permissionTpHomeAcrossDimension.getMinValue() + " ~ " + permissionTpHomeAcrossDimension.getMaxValue() + ", default: " + permissionTpHomeAcrossDimension.getDefault() + "]");
                 if (write) permissionTpHomeAcrossDimension.set(PERMISSION_TP_HOME_ACROSS_DIMENSION);
                 PERMISSION_TP_HOME_ACROSS_DIMENSION = permissionTpHomeAcrossDimension.getInt();
 
@@ -1466,7 +1459,7 @@ public class ServerConfig {
                                 "跨维度传送到驿站指令所需的权限等级，若为-1则禁用跨维度传送。\n"
                 );
                 permissionTpStageAcrossDimension.setMinValue(-1).setMaxValue(4);
-                permissionTpStageAcrossDimension.setComment(permissionTpStageAcrossDimension.getComment() + " [range: " + permissionTpStageAcrossDimension.getMinValue() + " ~ " + permissionTpStageAcrossDimension.getMaxValue() + ", default: " + permissionTpStageAcrossDimension.getDefault() + "]");
+                permissionTpStageAcrossDimension.comment = (permissionTpStageAcrossDimension.comment + " [range: " + permissionTpStageAcrossDimension.getMinValue() + " ~ " + permissionTpStageAcrossDimension.getMaxValue() + ", default: " + permissionTpStageAcrossDimension.getDefault() + "]");
                 if (write) permissionTpStageAcrossDimension.set(PERMISSION_TP_STAGE_ACROSS_DIMENSION);
                 PERMISSION_TP_STAGE_ACROSS_DIMENSION = permissionTpStageAcrossDimension.getInt();
 
@@ -1475,7 +1468,7 @@ public class ServerConfig {
                                 "跨维度传送到上次传送点指令所需的权限等级，若为-1则禁用跨维度传送。\n"
                 );
                 permissionTpBackAcrossDimension.setMinValue(-1).setMaxValue(4);
-                permissionTpBackAcrossDimension.setComment(permissionTpBackAcrossDimension.getComment() + " [range: " + permissionTpBackAcrossDimension.getMinValue() + " ~ " + permissionTpBackAcrossDimension.getMaxValue() + ", default: " + permissionTpBackAcrossDimension.getDefault() + "]");
+                permissionTpBackAcrossDimension.comment = (permissionTpBackAcrossDimension.comment + " [range: " + permissionTpBackAcrossDimension.getMinValue() + " ~ " + permissionTpBackAcrossDimension.getMaxValue() + ", default: " + permissionTpBackAcrossDimension.getDefault() + "]");
                 if (write) permissionTpBackAcrossDimension.set(PERMISSION_TP_BACK_ACROSS_DIMENSION);
                 PERMISSION_TP_BACK_ACROSS_DIMENSION = permissionTpBackAcrossDimension.getInt();
             }
@@ -1489,7 +1482,7 @@ public class ServerConfig {
                             "传送到指定坐标的冷却时间，单位为秒。\n"
             );
             cooldownTpCoordinate.setMinValue(0).setMaxValue(60 * 60 * 24);
-            cooldownTpCoordinate.setComment(cooldownTpCoordinate.getComment() + " [range: " + cooldownTpCoordinate.getMinValue() + " ~ " + cooldownTpCoordinate.getMaxValue() + ", default: " + cooldownTpCoordinate.getDefault() + "]");
+            cooldownTpCoordinate.comment = (cooldownTpCoordinate.comment + " [range: " + cooldownTpCoordinate.getMinValue() + " ~ " + cooldownTpCoordinate.getMaxValue() + ", default: " + cooldownTpCoordinate.getDefault() + "]");
             if (write) cooldownTpCoordinate.set(COOLDOWN_TP_COORDINATE);
             COOLDOWN_TP_COORDINATE = cooldownTpCoordinate.getInt();
 
@@ -1498,7 +1491,7 @@ public class ServerConfig {
                             "传送到指定结构的冷却时间，单位为秒。\n"
             );
             cooldownTpStructure.setMinValue(0).setMaxValue(60 * 60 * 24);
-            cooldownTpStructure.setComment(cooldownTpStructure.getComment() + " [range: " + cooldownTpStructure.getMinValue() + " ~ " + cooldownTpStructure.getMaxValue() + ", default: " + cooldownTpStructure.getDefault() + "]");
+            cooldownTpStructure.comment = (cooldownTpStructure.comment + " [range: " + cooldownTpStructure.getMinValue() + " ~ " + cooldownTpStructure.getMaxValue() + ", default: " + cooldownTpStructure.getDefault() + "]");
             if (write) cooldownTpStructure.set(COOLDOWN_TP_STRUCTURE);
             COOLDOWN_TP_STRUCTURE = cooldownTpStructure.getInt();
 
@@ -1507,7 +1500,7 @@ public class ServerConfig {
                             "请求传送至玩家的冷却时间，单位为秒。\n"
             );
             cooldownTpAsk.setMinValue(0).setMaxValue(60 * 60 * 24);
-            cooldownTpAsk.setComment(cooldownTpAsk.getComment() + " [range: " + cooldownTpAsk.getMinValue() + " ~ " + cooldownTpAsk.getMaxValue() + ", default: " + cooldownTpAsk.getDefault() + "]");
+            cooldownTpAsk.comment = (cooldownTpAsk.comment + " [range: " + cooldownTpAsk.getMinValue() + " ~ " + cooldownTpAsk.getMaxValue() + ", default: " + cooldownTpAsk.getDefault() + "]");
             if (write) cooldownTpAsk.set(COOLDOWN_TP_ASK);
             COOLDOWN_TP_ASK = cooldownTpAsk.getInt();
 
@@ -1516,7 +1509,7 @@ public class ServerConfig {
                             "请求将玩家传送至当前位置的冷却时间，单位为秒。\n"
             );
             cooldownTpHere.setMinValue(0).setMaxValue(60 * 60 * 24);
-            cooldownTpHere.setComment(cooldownTpHere.getComment() + " [range: " + cooldownTpHere.getMinValue() + " ~ " + cooldownTpHere.getMaxValue() + ", default: " + cooldownTpHere.getDefault() + "]");
+            cooldownTpHere.comment = (cooldownTpHere.comment + " [range: " + cooldownTpHere.getMinValue() + " ~ " + cooldownTpHere.getMaxValue() + ", default: " + cooldownTpHere.getDefault() + "]");
             if (write) cooldownTpHere.set(COOLDOWN_TP_HERE);
             COOLDOWN_TP_HERE = cooldownTpHere.getInt();
 
@@ -1525,7 +1518,7 @@ public class ServerConfig {
                             "随机传送的冷却时间，单位为秒。\n"
             );
             cooldownTpRandom.setMinValue(0).setMaxValue(60 * 60 * 24);
-            cooldownTpRandom.setComment(cooldownTpRandom.getComment() + " [range: " + cooldownTpRandom.getMinValue() + " ~ " + cooldownTpRandom.getMaxValue() + ", default: " + cooldownTpRandom.getDefault() + "]");
+            cooldownTpRandom.comment = (cooldownTpRandom.comment + " [range: " + cooldownTpRandom.getMinValue() + " ~ " + cooldownTpRandom.getMaxValue() + ", default: " + cooldownTpRandom.getDefault() + "]");
             if (write) cooldownTpRandom.set(COOLDOWN_TP_RANDOM);
             COOLDOWN_TP_RANDOM = cooldownTpRandom.getInt();
 
@@ -1534,7 +1527,7 @@ public class ServerConfig {
                             "传送到玩家重生点的冷却时间，单位为秒。\n"
             );
             cooldownTpSpawn.setMinValue(0).setMaxValue(60 * 60 * 24);
-            cooldownTpSpawn.setComment(cooldownTpSpawn.getComment() + " [range: " + cooldownTpSpawn.getMinValue() + " ~ " + cooldownTpSpawn.getMaxValue() + ", default: " + cooldownTpSpawn.getDefault() + "]");
+            cooldownTpSpawn.comment = (cooldownTpSpawn.comment + " [range: " + cooldownTpSpawn.getMinValue() + " ~ " + cooldownTpSpawn.getMaxValue() + ", default: " + cooldownTpSpawn.getDefault() + "]");
             if (write) cooldownTpSpawn.set(COOLDOWN_TP_SPAWN);
             COOLDOWN_TP_SPAWN = cooldownTpSpawn.getInt();
 
@@ -1543,7 +1536,7 @@ public class ServerConfig {
                             "传送到世界重生点的冷却时间，单位为秒。\n"
             );
             cooldownTpWorldSpawn.setMinValue(0).setMaxValue(60 * 60 * 24);
-            cooldownTpWorldSpawn.setComment(cooldownTpWorldSpawn.getComment() + " [range: " + cooldownTpWorldSpawn.getMinValue() + " ~ " + cooldownTpWorldSpawn.getMaxValue() + ", default: " + cooldownTpWorldSpawn.getDefault() + "]");
+            cooldownTpWorldSpawn.comment = (cooldownTpWorldSpawn.comment + " [range: " + cooldownTpWorldSpawn.getMinValue() + " ~ " + cooldownTpWorldSpawn.getMaxValue() + ", default: " + cooldownTpWorldSpawn.getDefault() + "]");
             if (write) cooldownTpWorldSpawn.set(COOLDOWN_TP_WORLD_SPAWN);
             COOLDOWN_TP_WORLD_SPAWN = cooldownTpWorldSpawn.getInt();
 
@@ -1552,7 +1545,7 @@ public class ServerConfig {
                             "传送到顶部的冷却时间，单位为秒。\n"
             );
             cooldownTpTop.setMinValue(0).setMaxValue(60 * 60 * 24);
-            cooldownTpTop.setComment(cooldownTpTop.getComment() + " [range: " + cooldownTpTop.getMinValue() + " ~ " + cooldownTpTop.getMaxValue() + ", default: " + cooldownTpTop.getDefault() + "]");
+            cooldownTpTop.comment = (cooldownTpTop.comment + " [range: " + cooldownTpTop.getMinValue() + " ~ " + cooldownTpTop.getMaxValue() + ", default: " + cooldownTpTop.getDefault() + "]");
             if (write) cooldownTpTop.set(COOLDOWN_TP_TOP);
             COOLDOWN_TP_TOP = cooldownTpTop.getInt();
 
@@ -1561,7 +1554,7 @@ public class ServerConfig {
                             "传送到底部的冷却时间，单位为秒。\n"
             );
             cooldownTpBottom.setMinValue(0).setMaxValue(60 * 60 * 24);
-            cooldownTpBottom.setComment(cooldownTpBottom.getComment() + " [range: " + cooldownTpBottom.getMinValue() + " ~ " + cooldownTpBottom.getMaxValue() + ", default: " + cooldownTpBottom.getDefault() + "]");
+            cooldownTpBottom.comment = (cooldownTpBottom.comment + " [range: " + cooldownTpBottom.getMinValue() + " ~ " + cooldownTpBottom.getMaxValue() + ", default: " + cooldownTpBottom.getDefault() + "]");
             if (write) cooldownTpBottom.set(COOLDOWN_TP_BOTTOM);
             COOLDOWN_TP_BOTTOM = cooldownTpBottom.getInt();
 
@@ -1570,7 +1563,7 @@ public class ServerConfig {
                             "传送到上方的冷却时间，单位为秒。\n"
             );
             cooldownTpUp.setMinValue(0).setMaxValue(60 * 60 * 24);
-            cooldownTpUp.setComment(cooldownTpUp.getComment() + " [range: " + cooldownTpUp.getMinValue() + " ~ " + cooldownTpUp.getMaxValue() + ", default: " + cooldownTpUp.getDefault() + "]");
+            cooldownTpUp.comment = (cooldownTpUp.comment + " [range: " + cooldownTpUp.getMinValue() + " ~ " + cooldownTpUp.getMaxValue() + ", default: " + cooldownTpUp.getDefault() + "]");
             if (write) cooldownTpUp.set(COOLDOWN_TP_UP);
             COOLDOWN_TP_UP = cooldownTpUp.getInt();
 
@@ -1579,7 +1572,7 @@ public class ServerConfig {
                             "传送到下方的冷却时间，单位为秒。\n"
             );
             cooldownTpDown.setMinValue(0).setMaxValue(60 * 60 * 24);
-            cooldownTpDown.setComment(cooldownTpDown.getComment() + " [range: " + cooldownTpDown.getMinValue() + " ~ " + cooldownTpDown.getMaxValue() + ", default: " + cooldownTpDown.getDefault() + "]");
+            cooldownTpDown.comment = (cooldownTpDown.comment + " [range: " + cooldownTpDown.getMinValue() + " ~ " + cooldownTpDown.getMaxValue() + ", default: " + cooldownTpDown.getDefault() + "]");
             if (write) cooldownTpDown.set(COOLDOWN_TP_DOWN);
             COOLDOWN_TP_DOWN = cooldownTpDown.getInt();
 
@@ -1590,7 +1583,7 @@ public class ServerConfig {
                             "该功能与玩家设置的视距无关。\n"
             );
             cooldownTpView.setMinValue(0).setMaxValue(60 * 60 * 24);
-            cooldownTpView.setComment(cooldownTpView.getComment() + " [range: " + cooldownTpView.getMinValue() + " ~ " + cooldownTpView.getMaxValue() + ", default: " + cooldownTpView.getDefault() + "]");
+            cooldownTpView.comment = (cooldownTpView.comment + " [range: " + cooldownTpView.getMinValue() + " ~ " + cooldownTpView.getMaxValue() + ", default: " + cooldownTpView.getDefault() + "]");
             if (write) cooldownTpView.set(COOLDOWN_TP_VIEW);
             COOLDOWN_TP_VIEW = cooldownTpView.getInt();
 
@@ -1599,7 +1592,7 @@ public class ServerConfig {
                             "传送到家的冷却时间，单位为秒。\n"
             );
             cooldownTpHome.setMinValue(0).setMaxValue(60 * 60 * 24);
-            cooldownTpHome.setComment(cooldownTpHome.getComment() + " [range: " + cooldownTpHome.getMinValue() + " ~ " + cooldownTpHome.getMaxValue() + ", default: " + cooldownTpHome.getDefault() + "]");
+            cooldownTpHome.comment = (cooldownTpHome.comment + " [range: " + cooldownTpHome.getMinValue() + " ~ " + cooldownTpHome.getMaxValue() + ", default: " + cooldownTpHome.getDefault() + "]");
             if (write) cooldownTpHome.set(COOLDOWN_TP_HOME);
             COOLDOWN_TP_HOME = cooldownTpHome.getInt();
 
@@ -1608,7 +1601,7 @@ public class ServerConfig {
                             "传送到驿站的冷却时间，单位为秒。\n"
             );
             cooldownTpStage.setMinValue(0).setMaxValue(60 * 60 * 24);
-            cooldownTpStage.setComment(cooldownTpStage.getComment() + " [range: " + cooldownTpStage.getMinValue() + " ~ " + cooldownTpStage.getMaxValue() + ", default: " + cooldownTpStage.getDefault() + "]");
+            cooldownTpStage.comment = (cooldownTpStage.comment + " [range: " + cooldownTpStage.getMinValue() + " ~ " + cooldownTpStage.getMaxValue() + ", default: " + cooldownTpStage.getDefault() + "]");
             if (write) cooldownTpStage.set(COOLDOWN_TP_STAGE);
             COOLDOWN_TP_STAGE = cooldownTpStage.getInt();
 
@@ -1617,7 +1610,7 @@ public class ServerConfig {
                             "传送到上次传送点的冷却时间，单位为秒。\n"
             );
             cooldownTpBack.setMinValue(0).setMaxValue(60 * 60 * 24);
-            cooldownTpBack.setComment(cooldownTpBack.getComment() + " [range: " + cooldownTpBack.getMinValue() + " ~ " + cooldownTpBack.getMaxValue() + ", default: " + cooldownTpBack.getDefault() + "]");
+            cooldownTpBack.comment = (cooldownTpBack.comment + " [range: " + cooldownTpBack.getMinValue() + " ~ " + cooldownTpBack.getMaxValue() + ", default: " + cooldownTpBack.getDefault() + "]");
             if (write) cooldownTpBack.set(COOLDOWN_TP_BACK);
             COOLDOWN_TP_BACK = cooldownTpBack.getInt();
         }
@@ -2088,7 +2081,7 @@ public class ServerConfig {
                                 "传送到指定坐标的代价数量。\n"
                 );
                 costTpCoordinateNum.setMinValue(0).setMaxValue(9999);
-                costTpCoordinateNum.setComment(costTpCoordinateNum.getComment() + " [range: " + costTpCoordinateNum.getMinValue() + " ~ " + costTpCoordinateNum.getMaxValue() + ", default: " + costTpCoordinateNum.getDefault() + "]");
+                costTpCoordinateNum.comment = (costTpCoordinateNum.comment + " [range: " + costTpCoordinateNum.getMinValue() + " ~ " + costTpCoordinateNum.getMaxValue() + ", default: " + costTpCoordinateNum.getDefault() + "]");
                 if (write) costTpCoordinateNum.set(COST_TP_COORDINATE_NUM);
                 COST_TP_COORDINATE_NUM = costTpCoordinateNum.getInt();
 
@@ -2110,7 +2103,7 @@ public class ServerConfig {
                                 "传送到指定坐标的代价倍率，代价会乘以传送前后坐标之间的距离。\n"
                 );
                 costTpCoordinateRate.setMinValue(0).setMaxValue(9999);
-                costTpCoordinateRate.setComment(costTpCoordinateRate.getComment() + " [range: " + costTpCoordinateRate.getMinValue() + " ~ " + costTpCoordinateRate.getMaxValue() + ", default: " + costTpCoordinateRate.getDefault() + "]");
+                costTpCoordinateRate.comment = (costTpCoordinateRate.comment + " [range: " + costTpCoordinateRate.getMinValue() + " ~ " + costTpCoordinateRate.getMaxValue() + ", default: " + costTpCoordinateRate.getDefault() + "]");
                 if (write) costTpCoordinateRate.set(COST_TP_COORDINATE_RATE);
                 COST_TP_COORDINATE_RATE = costTpCoordinateRate.getDouble();
             }
@@ -2128,7 +2121,7 @@ public class ServerConfig {
                                 "传送到指定结构的代价数量。\n"
                 );
                 costTpStructureNum.setMinValue(0).setMaxValue(9999);
-                costTpStructureNum.setComment(costTpStructureNum.getComment() + " [range: " + costTpStructureNum.getMinValue() + " ~ " + costTpStructureNum.getMaxValue() + ", default: " + costTpStructureNum.getDefault() + "]");
+                costTpStructureNum.comment = (costTpStructureNum.comment + " [range: " + costTpStructureNum.getMinValue() + " ~ " + costTpStructureNum.getMaxValue() + ", default: " + costTpStructureNum.getDefault() + "]");
                 if (write) costTpStructureNum.set(COST_TP_STRUCTURE_NUM);
                 COST_TP_STRUCTURE_NUM = costTpStructureNum.getInt();
 
@@ -2150,7 +2143,7 @@ public class ServerConfig {
                                 "传送到指定结构的代价倍率，代价会乘以两个玩家之间的距离。\n"
                 );
                 costTpStructureRate.setMinValue(0).setMaxValue(9999);
-                costTpStructureRate.setComment(costTpStructureRate.getComment() + " [range: " + costTpStructureRate.getMinValue() + " ~ " + costTpStructureRate.getMaxValue() + ", default: " + costTpStructureRate.getDefault() + "]");
+                costTpStructureRate.comment = (costTpStructureRate.comment + " [range: " + costTpStructureRate.getMinValue() + " ~ " + costTpStructureRate.getMaxValue() + ", default: " + costTpStructureRate.getDefault() + "]");
                 if (write) costTpStructureRate.set(COST_TP_STRUCTURE_RATE);
                 COST_TP_STRUCTURE_RATE = costTpStructureRate.getDouble();
             }
@@ -2168,7 +2161,7 @@ public class ServerConfig {
                                 "请求传送至玩家的代价数量。\n"
                 );
                 costTpAskNum.setMinValue(0).setMaxValue(9999);
-                costTpAskNum.setComment(costTpAskNum.getComment() + " [range: " + costTpAskNum.getMinValue() + " ~ " + costTpAskNum.getMaxValue() + ", default: " + costTpAskNum.getDefault() + "]");
+                costTpAskNum.comment = (costTpAskNum.comment + " [range: " + costTpAskNum.getMinValue() + " ~ " + costTpAskNum.getMaxValue() + ", default: " + costTpAskNum.getDefault() + "]");
                 if (write) costTpAskNum.set(COST_TP_ASK_NUM);
                 COST_TP_ASK_NUM = costTpAskNum.getInt();
 
@@ -2190,7 +2183,7 @@ public class ServerConfig {
                                 "请求传送至玩家的代价倍率，代价会乘以两个玩家之间的距离。\n"
                 );
                 costTpAskRate.setMinValue(0).setMaxValue(9999);
-                costTpAskRate.setComment(costTpAskRate.getComment() + " [range: " + costTpAskRate.getMinValue() + " ~ " + costTpAskRate.getMaxValue() + ", default: " + costTpAskRate.getDefault() + "]");
+                costTpAskRate.comment = (costTpAskRate.comment + " [range: " + costTpAskRate.getMinValue() + " ~ " + costTpAskRate.getMaxValue() + ", default: " + costTpAskRate.getDefault() + "]");
                 if (write) costTpAskRate.set(COST_TP_ASK_RATE);
                 COST_TP_ASK_RATE = costTpAskRate.getDouble();
             }
@@ -2208,7 +2201,7 @@ public class ServerConfig {
                                 "请求将玩家传送至当前位置的代价数量。\n"
                 );
                 costTpHereNum.setMinValue(0).setMaxValue(9999);
-                costTpHereNum.setComment(costTpHereNum.getComment() + " [range: " + costTpHereNum.getMinValue() + " ~ " + costTpHereNum.getMaxValue() + ", default: " + costTpHereNum.getDefault() + "]");
+                costTpHereNum.comment = (costTpHereNum.comment + " [range: " + costTpHereNum.getMinValue() + " ~ " + costTpHereNum.getMaxValue() + ", default: " + costTpHereNum.getDefault() + "]");
                 if (write) costTpHereNum.set(COST_TP_HERE_NUM);
                 COST_TP_HERE_NUM = costTpHereNum.getInt();
 
@@ -2230,7 +2223,7 @@ public class ServerConfig {
                                 "请求将玩家传送至当前位置的代价倍率，代价会乘以传送前后坐标之间的距离。\n"
                 );
                 costTpHereRate.setMinValue(0).setMaxValue(9999);
-                costTpHereRate.setComment(costTpHereRate.getComment() + " [range: " + costTpHereRate.getMinValue() + " ~ " + costTpHereRate.getMaxValue() + ", default: " + costTpHereRate.getDefault() + "]");
+                costTpHereRate.comment = (costTpHereRate.comment + " [range: " + costTpHereRate.getMinValue() + " ~ " + costTpHereRate.getMaxValue() + ", default: " + costTpHereRate.getDefault() + "]");
                 if (write) costTpHereRate.set(COST_TP_HERE_RATE);
                 COST_TP_HERE_RATE = costTpHereRate.getDouble();
             }
@@ -2248,7 +2241,7 @@ public class ServerConfig {
                                 "随机传送的代价数量。\n"
                 );
                 costTpRandomNum.setMinValue(0).setMaxValue(9999);
-                costTpRandomNum.setComment(costTpRandomNum.getComment() + " [range: " + costTpRandomNum.getMinValue() + " ~ " + costTpRandomNum.getMaxValue() + ", default: " + costTpRandomNum.getDefault() + "]");
+                costTpRandomNum.comment = (costTpRandomNum.comment + " [range: " + costTpRandomNum.getMinValue() + " ~ " + costTpRandomNum.getMaxValue() + ", default: " + costTpRandomNum.getDefault() + "]");
                 if (write) costTpRandomNum.set(COST_TP_RANDOM_NUM);
                 COST_TP_RANDOM_NUM = costTpRandomNum.getInt();
 
@@ -2270,7 +2263,7 @@ public class ServerConfig {
                                 "随机传送的代价倍率，代价会乘以传送前后坐标之间的距离。\n"
                 );
                 costTpRandomRate.setMinValue(0).setMaxValue(9999);
-                costTpRandomRate.setComment(costTpRandomRate.getComment() + " [range: " + costTpRandomRate.getMinValue() + " ~ " + costTpRandomRate.getMaxValue() + ", default: " + costTpRandomRate.getDefault() + "]");
+                costTpRandomRate.comment = (costTpRandomRate.comment + " [range: " + costTpRandomRate.getMinValue() + " ~ " + costTpRandomRate.getMaxValue() + ", default: " + costTpRandomRate.getDefault() + "]");
                 if (write) costTpRandomRate.set(COST_TP_RANDOM_RATE);
                 COST_TP_RANDOM_RATE = costTpRandomRate.getDouble();
             }
@@ -2288,7 +2281,7 @@ public class ServerConfig {
                                 "传送到玩家重生点的代价数量。\n"
                 );
                 costTpSpawnNum.setMinValue(0).setMaxValue(9999);
-                costTpSpawnNum.setComment(costTpSpawnNum.getComment() + " [range: " + costTpSpawnNum.getMinValue() + " ~ " + costTpSpawnNum.getMaxValue() + ", default: " + costTpSpawnNum.getDefault() + "]");
+                costTpSpawnNum.comment = (costTpSpawnNum.comment + " [range: " + costTpSpawnNum.getMinValue() + " ~ " + costTpSpawnNum.getMaxValue() + ", default: " + costTpSpawnNum.getDefault() + "]");
                 if (write) costTpSpawnNum.set(COST_TP_SPAWN_NUM);
                 COST_TP_SPAWN_NUM = costTpSpawnNum.getInt();
 
@@ -2310,7 +2303,7 @@ public class ServerConfig {
                                 "传送到玩家重生点的代价倍率，代价会乘以传送前后坐标之间的距离。\n"
                 );
                 costTpSpawnRate.setMinValue(0).setMaxValue(9999);
-                costTpSpawnRate.setComment(costTpSpawnRate.getComment() + " [range: " + costTpSpawnRate.getMinValue() + " ~ " + costTpSpawnRate.getMaxValue() + ", default: " + costTpSpawnRate.getDefault() + "]");
+                costTpSpawnRate.comment = (costTpSpawnRate.comment + " [range: " + costTpSpawnRate.getMinValue() + " ~ " + costTpSpawnRate.getMaxValue() + ", default: " + costTpSpawnRate.getDefault() + "]");
                 if (write) costTpSpawnRate.set(COST_TP_SPAWN_RATE);
                 COST_TP_SPAWN_RATE = costTpSpawnRate.getDouble();
             }
