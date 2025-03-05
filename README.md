@@ -168,6 +168,7 @@
 ## 注意事项
 
 - **版本迁移**：将加载了Minecraft 1.12.2版本的该mod的存档升级到高版本Minecraft时可能会因为数据不兼容导致的各种问题。
+- **开发环境构建**：gradle执行`gradle setupDecompWorkspace`即可完成构建
 
 ## 许可证
 

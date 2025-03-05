@@ -74,9 +74,8 @@ tasks.withType(JavaCompile).configureEach {
     options.encoding = "UTF-8"
 }
 
-// 自定义打包路径和格式
+// 自定义打包路径与输出格式
 tasks.named('jar', Jar).configure {
-    // 自定义打包路径与输出格式
     archiveBaseName.set(mod_id)
     archiveVersion.set("forge-${mod_version}")
     destinationDirectory.set(file("${projectDir}/builds/${mod_version.split('-')[1]}"))
