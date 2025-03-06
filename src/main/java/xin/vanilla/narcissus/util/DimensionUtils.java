@@ -31,14 +31,17 @@ public class DimensionUtils {
 
         // 遍历所有维度
         for (int dimId : DimensionManager.getStaticDimensionIDs()) {
-            WorldProvider type = DimensionManager.getProvider(dimId);
-            if (type != null) {
-                String modid = getModIdForDimension(type).toLowerCase().replace("fml", "minecraft");
-                String fullId = modid + ":" + type.getDimensionName().toLowerCase(Locale.ROOT).replace(" ", "_");
+            try {
+                WorldProvider type = DimensionManager.getProvider(dimId);
+                if (type != null) {
+                    String modid = getModIdForDimension(type).toLowerCase().replace("fml", "minecraft");
+                    String fullId = modid + ":" + type.getDimensionName().toLowerCase(Locale.ROOT).replace(" ", "_");
 
-                idToStringMap.put(dimId, fullId);
-                stringToIdMap.put(fullId, dimId);
-                typeToIdMap.put(type, dimId);
+                    idToStringMap.put(dimId, fullId);
+                    stringToIdMap.put(fullId, dimId);
+                    typeToIdMap.put(type, dimId);
+                }
+            } catch (Exception ignored) {
             }
         }
     }

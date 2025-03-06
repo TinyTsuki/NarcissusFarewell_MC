@@ -1375,13 +1375,12 @@ public class FarewellCommand extends CommandBase {
                     return 0;
                 }
                 if (args.length == 1) {
-                    Component component;
                     IPlayerTeleportData data = PlayerTeleportData.get(player);
                     String language = NarcissusUtils.getPlayerLanguage(player);
                     if (data.getHomeCoordinate().isEmpty()) {
-                        component = Component.translatable(language, EI18nType.MESSAGE, "home_is_empty");
+                        NarcissusUtils.sendMessage(player, Component.translatable(language, EI18nType.MESSAGE, "home_is_empty"));
                     } else {
-                        Component info = Component.empty();
+                        List<Component> infoList = new ArrayList<>();
                         // dimension:name coordinate 转为 dimension [name:coordinate]
                         Map<String, List<KeyValue<String, Coordinate>>> map = data.getHomeCoordinate().entrySet().stream()
                                 .collect(Collectors.groupingBy(
@@ -1422,11 +1421,13 @@ public class FarewellCommand extends CommandBase {
                                 dimension.append(name);
                                 dimension.append(Component.literal(", ").setColor(EMCColor.GRAY.getColor()));
                             }
-                            info.append(dimension).append("\n");
+                            infoList.add(dimension);
                         }
-                        component = Component.translatable(language, EI18nType.MESSAGE, "home_is", info);
+                        NarcissusUtils.sendMessage(player, Component.translatable(language, EI18nType.MESSAGE, "home_is"));
+                        for (Component info : infoList) {
+                            NarcissusUtils.sendMessage(player, info);
+                        }
                     }
-                    NarcissusUtils.sendMessage(player, component);
                     return 1;
                 }
             }
@@ -1555,13 +1556,12 @@ public class FarewellCommand extends CommandBase {
                 if (checkTeleportPre(player, ECommandType.GET_STAGE)) {
                     return 0;
                 }
-                Component component;
                 WorldStageData data = WorldStageData.get();
                 String language = NarcissusUtils.getPlayerLanguage(player);
                 if (data.getStageCoordinate().isEmpty()) {
-                    component = Component.translatable(language, EI18nType.MESSAGE, "stage_is_empty");
+                    NarcissusUtils.sendMessage(player, Component.translatable(language, EI18nType.MESSAGE, "stage_is_empty"));
                 } else {
-                    Component info = Component.empty();
+                    List<Component> infoList = new ArrayList<>();
                     // dimension:name coordinate 转为 dimension [name:coordinate]
                     Map<String, List<KeyValue<String, Coordinate>>> map = data.getStageCoordinate().entrySet().stream()
                             .collect(Collectors.groupingBy(
@@ -1593,11 +1593,13 @@ public class FarewellCommand extends CommandBase {
                             dimension.append(name);
                             dimension.append(Component.literal(", ").setColor(EMCColor.GRAY.getColor()));
                         }
-                        info.append(dimension).append("\n");
+                        infoList.add(dimension);
                     }
-                    component = Component.translatable(language, EI18nType.MESSAGE, "stage_is", info);
+                    NarcissusUtils.sendMessage(player, Component.translatable(language, EI18nType.MESSAGE, "stage_is"));
+                    for (Component info : infoList) {
+                        NarcissusUtils.sendMessage(player, info);
+                    }
                 }
-                NarcissusUtils.sendMessage(player, component);
                 return 1;
             }
             // 传送到上一次离开位置
@@ -1681,13 +1683,16 @@ public class FarewellCommand extends CommandBase {
                                     break;
                             }
                             String permissions = VirtualPermissionManager.buildPermissionsString(VirtualPermissionManager.getVirtualPermission(target));
-                            NarcissusUtils.sendTranslatableMessage(target, I18nUtils.getKey(EI18nType.MESSAGE, "player_virtual_op"), target.getDisplayName(), permissions);
+                            NarcissusUtils.sendTranslatableMessage(target, I18nUtils.getKey(EI18nType.MESSAGE, "player_virtual_op"), target.getDisplayName());
+                            NarcissusUtils.sendMessage(target, Component.literal(permissions));
                             if (player != null) {
                                 if (!target.getUniqueID().toString().equalsIgnoreCase(player.getUniqueID().toString())) {
-                                    NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EI18nType.MESSAGE, "player_virtual_op"), target.getDisplayName(), permissions);
+                                    NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EI18nType.MESSAGE, "player_virtual_op"), target.getDisplayName());
+                                    NarcissusUtils.sendMessage(player, Component.literal(permissions));
                                 }
                             } else {
-                                NarcissusUtils.sendMessage(sender, Component.translatable(language, EI18nType.MESSAGE, "player_virtual_op", target.getDisplayName(), permissions));
+                                NarcissusUtils.sendMessage(sender, Component.translatable(language, EI18nType.MESSAGE, "player_virtual_op", target.getDisplayName()));
+                                NarcissusUtils.sendMessage(sender, Component.literal(permissions));
                             }
                             // 更新权限信息
                             // server.getPlayerList().updatePermissionLevel(target);
