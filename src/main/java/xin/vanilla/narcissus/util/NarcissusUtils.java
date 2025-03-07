@@ -22,10 +22,7 @@ import net.minecraft.network.play.server.SChatPacket;
 import net.minecraft.network.play.server.SCombatPacket;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.stats.Stats;
-import net.minecraft.util.DamageSource;
-import net.minecraft.util.RegistryKey;
-import net.minecraft.util.ResourceLocation;
-import net.minecraft.util.Util;
+import net.minecraft.util.*;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.vector.Vector3d;
 import net.minecraft.util.registry.Registry;
@@ -44,10 +41,10 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.maven.artifact.versioning.ArtifactVersion;
 import xin.vanilla.narcissus.NarcissusFarewell;
-import xin.vanilla.narcissus.capability.TeleportRecord;
-import xin.vanilla.narcissus.capability.player.IPlayerTeleportData;
-import xin.vanilla.narcissus.capability.player.PlayerTeleportDataCapability;
-import xin.vanilla.narcissus.capability.world.WorldStageData;
+import xin.vanilla.narcissus.data.TeleportRecord;
+import xin.vanilla.narcissus.data.player.IPlayerTeleportData;
+import xin.vanilla.narcissus.data.player.PlayerTeleportDataCapability;
+import xin.vanilla.narcissus.data.world.WorldStageData;
 import xin.vanilla.narcissus.config.*;
 import xin.vanilla.narcissus.enums.*;
 
@@ -1145,10 +1142,13 @@ public class NarcissusUtils {
     }
 
     private static void doTeleport(@NonNull ServerPlayerEntity player, @NonNull Coordinate after, ETeleportType type, Coordinate before, ServerWorld level) {
+        ResourceLocation sound = new ResourceLocation(ServerConfig.TP_SOUND.get());
+        NarcissusUtils.playSound(player, sound, 1.0f, 1.0f);
         after.setY(Math.floor(after.getY()) + 0.1);
         player.teleportTo(level, after.getX(), after.getY(), after.getZ()
                 , after.getYaw() == 0 ? player.yRot : (float) after.getYaw()
                 , after.getPitch() == 0 ? player.xRot : (float) after.getPitch());
+        NarcissusUtils.playSound(player, sound, 1.0f, 1.0f);
         TeleportRecord record = new TeleportRecord();
         record.setTeleportTime(new Date());
         record.setTeleportType(type);
@@ -1880,6 +1880,21 @@ public class NarcissusUtils {
             }
         }
         return version;
+    }
+
+    /**
+     * 播放音效
+     *
+     * @param player 玩家
+     * @param sound  音效
+     * @param volume 音量
+     * @param pitch  音调
+     */
+    public static void playSound(ServerPlayerEntity player, ResourceLocation sound, float volume, float pitch) {
+        SoundEvent soundEvent = ForgeRegistries.SOUND_EVENTS.getValue(sound);
+        if (soundEvent != null) {
+            player.playNotifySound(soundEvent, SoundCategory.PLAYERS, volume, pitch);
+        }
     }
 
     // endregion 杂项
