@@ -22,6 +22,8 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.sounds.SoundEvent;
+import net.minecraft.sounds.SoundSource;
 import net.minecraft.stats.Stats;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.entity.Entity;
@@ -933,10 +935,13 @@ public class NarcissusUtils {
     }
 
     private static void doTeleport(@NonNull ServerPlayer player, @NonNull Coordinate after, ETeleportType type, Coordinate before, ServerLevel level) {
+        ResourceLocation sound = new ResourceLocation(ServerConfig.TP_SOUND.get());
+        NarcissusUtils.playSound(player, sound, 1.0f, 1.0f);
         after.setY(Math.floor(after.getY()) + 0.1);
         player.teleportTo(level, after.getX(), after.getY(), after.getZ()
                 , after.getYaw() == 0 ? player.getYRot() : (float) after.getYaw()
                 , after.getPitch() == 0 ? player.getXRot() : (float) after.getPitch());
+        NarcissusUtils.playSound(player, sound, 1.0f, 1.0f);
         TeleportRecord record = new TeleportRecord();
         record.setTeleportTime(new Date());
         record.setTeleportType(type);
@@ -1603,6 +1608,21 @@ public class NarcissusUtils {
             }
         }
         return version;
+    }
+
+    /**
+     * 播放音效
+     *
+     * @param player 玩家
+     * @param sound  音效
+     * @param volume 音量
+     * @param pitch  音调
+     */
+    public static void playSound(ServerPlayer player, ResourceLocation sound, float volume, float pitch) {
+        SoundEvent soundEvent = SoundEvent.createVariableRangeEvent(sound);
+        if (soundEvent != null) {
+            player.playNotifySound(soundEvent, SoundSource.PLAYERS, volume, pitch);
+        }
     }
 
     // endregion 杂项
