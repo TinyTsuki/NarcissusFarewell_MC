@@ -1,4 +1,4 @@
-package xin.vanilla.narcissus.capability.world;
+package xin.vanilla.narcissus.data.world;
 
 import lombok.Getter;
 import lombok.NonNull;

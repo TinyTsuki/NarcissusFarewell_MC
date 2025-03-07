@@ -6,7 +6,7 @@ import net.minecraftforge.fml.common.Mod;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import xin.vanilla.narcissus.NarcissusFarewell;
-import xin.vanilla.narcissus.capability.player.IPlayerTeleportData;
+import xin.vanilla.narcissus.data.player.IPlayerTeleportData;
 
 /**
  * Mod 事件处理器
