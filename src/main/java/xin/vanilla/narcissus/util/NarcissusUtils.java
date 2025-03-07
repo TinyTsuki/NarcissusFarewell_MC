@@ -12,6 +12,7 @@ import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.JsonToNBT;
 import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.network.play.server.S29PacketSoundEffect;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.stats.StatList;
 import net.minecraft.util.ChatComponentTranslation;
@@ -1232,6 +1233,8 @@ public class NarcissusUtils {
     }
 
     private static void doTeleport(@NonNull EntityPlayerMP player, @NonNull Coordinate after, ETeleportType type, Coordinate before, WorldServer level) {
+        String sound = ServerConfig.TP_SOUND;
+        NarcissusUtils.playSound(player, sound, 1.0f, 1.0f);
         after.setY(Math.floor(after.getY()) + 0.1);
         if (before.getDimension().equalsIgnoreCase(after.getDimension())) {
             player.setPositionAndUpdate(after.getX(), after.getY(), after.getZ());
@@ -1241,6 +1244,7 @@ public class NarcissusUtils {
             NarcissusFarewell.getServerInstance().getConfigurationManager()
                     .transferPlayerToDimension(player, DimensionUtils.getDimensionType(after.getDimension()), new TeleporterCustom(level, after));
         }
+        NarcissusUtils.playSound(player, sound, 1.0f, 1.0f);
         TeleportRecord record = new TeleportRecord();
         record.setTeleportTime(new Date());
         record.setTeleportType(type);
@@ -1996,6 +2000,20 @@ public class NarcissusUtils {
             return false;
         }
         return true;
+    }
+
+    /**
+     * 播放音效
+     *
+     * @param player 玩家
+     * @param sound  音效
+     * @param volume 音量
+     * @param pitch  音调
+     */
+    public static void playSound(EntityPlayerMP player, String sound, float volume, float pitch) {
+        player.playerNetServerHandler.sendPacket(
+                new S29PacketSoundEffect(sound, player.posX, player.posY, player.posZ, volume, pitch)
+        );
     }
 
     // endregion 杂项

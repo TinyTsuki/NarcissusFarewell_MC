@@ -139,6 +139,11 @@ public class ServerConfig {
      */
     public static String HELP_HEADER = "-----==== Narcissus Farewell Help (%d/%d) ====-----";
 
+    /**
+     * 传送音效
+     */
+    public static String TP_SOUND;
+
     // endregion 基础设置
 
     // region 功能开关
@@ -1017,6 +1022,14 @@ public class ServerConfig {
             );
             if (write) helpHeader.set(HELP_HEADER);
             HELP_HEADER = helpHeader.getString();
+
+            // 传送音效
+            Property tpSound = config.get(CATEGORY_BASE, "tpSound", "mob.endermen.portal",
+                    "The sound effect when teleporting.\n" +
+                            "传送时的音效。\n"
+            );
+            if (write) tpSound.set(TP_SOUND);
+            TP_SOUND = tpSound.getString();
 
             // 不安全的方块
             Property unsafeBlocks = config.get(CATEGORY_BASE + ".Safe", "unsafeBlocks", new String[]{"minecraft:lava", "minecraft:fire", "minecraft:cactus"},
