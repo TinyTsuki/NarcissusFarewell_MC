@@ -5,11 +5,11 @@ import net.minecraft.network.FriendlyByteBuf;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.event.network.CustomPayloadEvent;
 import net.minecraftforge.fml.DistExecutor;
-import xin.vanilla.narcissus.capability.TeleportRecord;
-import xin.vanilla.narcissus.capability.player.IPlayerTeleportData;
-import xin.vanilla.narcissus.capability.player.PlayerTeleportData;
 import xin.vanilla.narcissus.config.Coordinate;
 import xin.vanilla.narcissus.config.KeyValue;
+import xin.vanilla.narcissus.data.TeleportRecord;
+import xin.vanilla.narcissus.data.player.IPlayerTeleportData;
+import xin.vanilla.narcissus.data.player.PlayerTeleportData;
 import xin.vanilla.narcissus.util.CollectionUtils;
 import xin.vanilla.narcissus.util.DateUtils;
 
