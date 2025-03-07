@@ -1,4 +1,4 @@
-package xin.vanilla.narcissus.capability.player;
+package xin.vanilla.narcissus.data.player;
 
 import net.minecraft.nbt.NBTBase;
 import net.minecraft.nbt.NBTTagCompound;

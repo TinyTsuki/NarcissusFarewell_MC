@@ -1,6 +1,7 @@
 package xin.vanilla.narcissus.config;
 
 import net.minecraft.init.Blocks;
+import net.minecraft.init.SoundEvents;
 import net.minecraftforge.common.config.Configuration;
 import net.minecraftforge.common.config.Property;
 import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
@@ -145,6 +146,11 @@ public class ServerConfig {
      * 帮助指令信息头部内容
      */
     public static String HELP_HEADER = "-----==== Narcissus Farewell Help (%d/%d) ====-----";
+
+    /**
+     * 传送音效
+     */
+    public static String TP_SOUND;
 
     // endregion 基础设置
 
@@ -859,7 +865,7 @@ public class ServerConfig {
             TELEPORT_CARD = teleportCard.getBoolean();
 
             // 每日传送卡数量
-            Property teleportCardDaily = config.get(CATEGORY_BASE + ".TpCard","teleportCardDaily",  0,
+            Property teleportCardDaily = config.get(CATEGORY_BASE + ".TpCard", "teleportCardDaily", 0,
                     "The number of Teleport Card that can be obtained daily.\n" +
                             "每日可获得的传送卡数量。\n"
             );
@@ -1024,6 +1030,14 @@ public class ServerConfig {
             );
             if (write) helpHeader.set(HELP_HEADER);
             HELP_HEADER = helpHeader.getString();
+
+            // 传送音效
+            Property tpSound = config.get(CATEGORY_BASE, "tpSound", SoundEvents.ENTITY_ENDERMEN_TELEPORT.getRegistryName().toString(),
+                    "The sound effect when teleporting.\n" +
+                            "传送时的音效。\n"
+            );
+            if (write) tpSound.set(TP_SOUND);
+            TP_SOUND = tpSound.getString();
 
             // 不安全的方块
             Property unsafeBlocks = config.get(CATEGORY_BASE + ".Safe", "unsafeBlocks", new String[]{"minecraft:lava", "minecraft:fire", "minecraft:cactus"},

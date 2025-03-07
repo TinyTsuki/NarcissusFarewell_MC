@@ -16,11 +16,10 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.JsonToNBT;
 import net.minecraft.network.datasync.DataParameter;
 import net.minecraft.network.play.server.SPacketChat;
+import net.minecraft.network.play.server.SPacketSoundEffect;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.stats.StatList;
-import net.minecraft.util.DamageSource;
-import net.minecraft.util.NonNullList;
-import net.minecraft.util.ResourceLocation;
+import net.minecraft.util.*;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.text.ChatType;
@@ -37,11 +36,11 @@ import net.minecraftforge.fml.common.registry.ForgeRegistries;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import xin.vanilla.narcissus.NarcissusFarewell;
-import xin.vanilla.narcissus.capability.TeleportRecord;
-import xin.vanilla.narcissus.capability.player.IPlayerTeleportData;
-import xin.vanilla.narcissus.capability.player.PlayerTeleportDataCapability;
-import xin.vanilla.narcissus.capability.world.WorldStageData;
 import xin.vanilla.narcissus.config.*;
+import xin.vanilla.narcissus.data.TeleportRecord;
+import xin.vanilla.narcissus.data.player.IPlayerTeleportData;
+import xin.vanilla.narcissus.data.player.PlayerTeleportDataCapability;
+import xin.vanilla.narcissus.data.world.WorldStageData;
 import xin.vanilla.narcissus.enums.*;
 
 import javax.annotation.Nullable;
@@ -1231,6 +1230,8 @@ public class NarcissusUtils {
     }
 
     private static void doTeleport(@NonNull EntityPlayerMP player, @NonNull Coordinate after, ETeleportType type, Coordinate before, WorldServer level) {
+        ResourceLocation sound = new ResourceLocation(ServerConfig.TP_SOUND);
+        NarcissusUtils.playSound(player, sound, 1.0f, 1.0f);
         after.setY(Math.floor(after.getY()) + 0.1);
         if (before.getDimension() == after.getDimension()) {
             player.setPositionAndUpdate(after.getX(), after.getY(), after.getZ());
@@ -1239,6 +1240,7 @@ public class NarcissusUtils {
         } else {
             player.server.getPlayerList().transferPlayerToDimension(player, after.getDimension().getId(), new TeleporterCustom(level, after));
         }
+        NarcissusUtils.playSound(player, sound, 1.0f, 1.0f);
         TeleportRecord record = new TeleportRecord();
         record.setTeleportTime(new Date());
         record.setTeleportType(type);
@@ -2008,6 +2010,22 @@ public class NarcissusUtils {
             return false;
         }
         return true;
+    }
+
+    /**
+     * 播放音效
+     *
+     * @param player 玩家
+     * @param sound  音效
+     * @param volume 音量
+     * @param pitch  音调
+     */
+    public static void playSound(EntityPlayerMP player, ResourceLocation sound, float volume, float pitch) {
+        SoundEvent soundEvent = ForgeRegistries.SOUND_EVENTS.getValue(sound);
+        if (soundEvent != null) {
+            player.connection.sendPacket(new SPacketSoundEffect(soundEvent, SoundCategory.PLAYERS,
+                    player.posX, player.posY, player.posZ, volume, pitch));
+        }
     }
 
     // endregion 杂项
