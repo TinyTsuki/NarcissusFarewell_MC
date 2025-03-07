@@ -1,6 +1,7 @@
 package xin.vanilla.narcissus.config;
 
 import net.minecraft.commands.arguments.blocks.BlockStateParser;
+import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraftforge.common.ForgeConfigSpec;
 import xin.vanilla.narcissus.enums.ECardType;
@@ -126,6 +127,11 @@ public class ServerConfig {
      * 帮助指令信息头部内容
      */
     public static final ForgeConfigSpec.ConfigValue<String> HELP_HEADER;
+
+    /**
+     * 传送音效
+     */
+    public static final ForgeConfigSpec.ConfigValue<String> TP_SOUND;
 
     // endregion 基础设置
 
@@ -913,6 +919,12 @@ public class ServerConfig {
                     .comment("The header content of the help command.",
                             "帮助指令信息头部内容。")
                     .define("helpHeader", "-----==== Narcissus Farewell Help (%d/%d) ====-----");
+
+            // 传送音效
+            TP_SOUND = SERVER_BUILDER
+                    .comment("The sound effect when teleporting.",
+                            "传送时的音效。")
+                    .define("tpSound", SoundEvents.ENDERMAN_TELEPORT.location().toString());
 
             SERVER_BUILDER.comment("Safe Teleport", "安全传送").push("Safe");
             // 不安全的方块
