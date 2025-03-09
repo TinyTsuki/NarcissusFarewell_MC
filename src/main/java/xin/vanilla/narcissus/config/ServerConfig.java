@@ -133,6 +133,21 @@ public class ServerConfig {
      */
     public static final ForgeConfigSpec.ConfigValue<String> TP_SOUND;
 
+    /**
+     * 是否允许载具一起传送
+     */
+    public static final ForgeConfigSpec.BooleanValue TP_WITH_VEHICLE;
+
+    /**
+     * 是否允许跟随的实体一起传送
+     */
+    public static final ForgeConfigSpec.BooleanValue TP_WITH_FOLLOWER;
+
+    /**
+     * 跟随的实体识别范围半径
+     */
+    public static final ForgeConfigSpec.IntValue TP_WITH_FOLLOWER_RANGE;
+
     // endregion 基础设置
 
     // region 功能开关
@@ -925,6 +940,24 @@ public class ServerConfig {
                     .comment("The sound effect when teleporting.",
                             "传送时的音效。")
                     .define("tpSound", SoundEvents.ENDERMAN_TELEPORT.getLocation().toString());
+
+            // 是否允许载具一起传送
+            TP_WITH_VEHICLE = SERVER_BUILDER
+                    .comment("Whether to allow vehicles to be teleported together.",
+                            "是否允许载具一起传送。")
+                    .define("tpWithVehicle", true);
+
+            // 是否允许跟随的实体一起传送
+            TP_WITH_FOLLOWER = SERVER_BUILDER
+                    .comment("Whether to allow followers to be teleported together.",
+                            "是否允许跟随的实体一起传送。")
+                    .define("tpWithFollower", true);
+
+            // 跟随的实体识别范围
+            TP_WITH_FOLLOWER_RANGE = SERVER_BUILDER
+                    .comment("The range of followers to be recognized, in blocks.",
+                            "跟随的实体识别范围半径。")
+                    .defineInRange("tpWithFollowerRange", 10, 1, 16 * 16);
 
             SERVER_BUILDER.comment("Safe Teleport", "安全传送").push("Safe");
             // 不安全的方块
