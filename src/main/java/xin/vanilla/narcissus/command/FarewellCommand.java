@@ -1510,9 +1510,9 @@ public class FarewellCommand extends CommandBase {
                     }
                     Coordinate coordinate = new Coordinate(player).setDimension(targetLevel);
                     if (args.length >= 5) {
-                        Double x = StringUtils.toCoordinate(args[1], player.posX);
-                        Double y = StringUtils.toCoordinate(args[2], player.posY);
-                        Double z = StringUtils.toCoordinate(args[3], player.posZ);
+                        Double x = StringUtils.toCoordinate(args[2], player.posX);
+                        Double y = StringUtils.toCoordinate(args[3], player.posY);
+                        Double z = StringUtils.toCoordinate(args[4], player.posZ);
                         if (x == null || y == null || z == null) {
                             return -1;
                         }

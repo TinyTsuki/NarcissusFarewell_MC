@@ -89,6 +89,7 @@ public class NarcissusFarewell {
     @Mod.EventHandler
     public void init(FMLInitializationEvent event) {
         new ForgeEventHandler();
+        // ForgeChunkManager.setForcedChunkLoadingCallback(NarcissusFarewell.instance, new ChunkLoadingCallback());
         // 仅在客户端执行的代码
         if (event.getSide().isClient()) {
             // 注册键盘按键绑定

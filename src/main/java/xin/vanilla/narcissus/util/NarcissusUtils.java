@@ -4,6 +4,9 @@ import lombok.NonNull;
 import net.minecraft.block.Block;
 import net.minecraft.client.Minecraft;
 import net.minecraft.command.ICommandSender;
+import net.minecraft.entity.Entity;
+import net.minecraft.entity.EntityLiving;
+import net.minecraft.entity.passive.EntityTameable;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.init.Blocks;
@@ -12,6 +15,8 @@ import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.JsonToNBT;
 import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.network.Packet;
+import net.minecraft.network.play.server.S1BPacketEntityAttach;
 import net.minecraft.network.play.server.S29PacketSoundEffect;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.stats.StatList;
@@ -1221,28 +1226,48 @@ public class NarcissusUtils {
                         Coordinate finalAfter1 = finalAfter;
                         ServerTaskExecutor.run(() -> {
                             if (runnable != null) runnable.run();
-                            doTeleport(player, finalAfter1, type, before, level);
+                            teleportPlayer(player, finalAfter1, type, before, level);
                             // DimensionManager.unloadWorld(DimensionUtils.getDimensionType(finalAfter1.getDimension()));
                         });
                     }).start();
                 } else {
-                    doTeleport(player, after, type, before, level);
+                    teleportPlayer(player, after, type, before, level);
                 }
+            } else {
+                NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EI18nType.MESSAGE, "dimension_not_found"), after.getDimension());
             }
         }
     }
 
-    private static void doTeleport(@NonNull EntityPlayerMP player, @NonNull Coordinate after, ETeleportType type, Coordinate before, WorldServer level) {
+    public static Entity getLowestRidingEntity(Entity entity) {
+        Entity result;
+        for (result = entity.ridingEntity; result != null && result.ridingEntity != null; result = result.ridingEntity) {
+        }
+        return result;
+    }
+
+    public static void stopRiding(Entity entity) {
+        if (entity != null) {
+            entity.mountEntity(null);
+        }
+    }
+
+    private static void teleportPlayer(@NonNull EntityPlayerMP player, @NonNull Coordinate after, ETeleportType type, Coordinate before, WorldServer level) {
         String sound = ServerConfig.TP_SOUND;
         NarcissusUtils.playSound(player, sound, 1.0f, 1.0f);
         after.setY(Math.floor(after.getY()) + 0.1);
-        if (before.getDimension().equalsIgnoreCase(after.getDimension())) {
-            player.setPositionAndUpdate(after.getX(), after.getY(), after.getZ());
-            player.cameraYaw = after.getYaw() == 0 ? player.cameraYaw : (float) after.getYaw();
-            player.cameraPitch = after.getPitch() == 0 ? player.cameraPitch : (float) after.getPitch();
-        } else {
-            NarcissusFarewell.getServerInstance().getConfigurationManager()
-                    .transferPlayerToDimension(player, DimensionUtils.getDimensionType(after.getDimension()), new TeleporterCustom(level, after));
+
+        // 传送跟随者
+        teleportFollowers(player, after, level);
+        // 传送载体与乘客
+        Entity vehicle = teleportPassengers(player, null, getLowestRidingEntity(player), after, level);
+        // 传送玩家
+        doTeleport(player, after, level);
+        // 使玩家重新坐上载体
+        if (vehicle != null) {
+            player.mountEntity(vehicle);
+            // 同步客户端状态
+            broadcastPacket(new S1BPacketEntityAttach(0, player, vehicle));
         }
         NarcissusUtils.playSound(player, sound, 1.0f, 1.0f);
         TeleportRecord record = new TeleportRecord();
@@ -1251,6 +1276,129 @@ public class NarcissusUtils {
         record.setBefore(before);
         record.setAfter(after);
         PlayerTeleportData.get(player).addTeleportRecords(record);
+    }
+
+    /**
+     * 传送载具及其所有乘客
+     *
+     * @param parent     载具
+     * @param passenger  乘客
+     * @param coordinate 目标坐标
+     * @param level      目标世界
+     * @return 玩家的坐骑
+     */
+    private static @Nullable Entity teleportPassengers(EntityPlayerMP player, Entity parent, Entity passenger, @NonNull Coordinate coordinate, WorldServer level) {
+        if (!ServerConfig.TP_WITH_VEHICLE || passenger == null) return null;
+
+        Entity playerVehicle = null;
+        List<Entity> passengers = new ArrayList<>();
+        if (passenger.riddenByEntity != null) {
+            passengers.add(passenger.riddenByEntity);
+        }
+
+        // 递归传送所有乘客
+        for (Entity entity : passengers) {
+            if (passenger.riddenByEntity != null) {
+                Entity value = teleportPassengers(player, passenger, entity, coordinate, level);
+                if (value != null) {
+                    playerVehicle = value;
+                }
+            }
+        }
+
+        passengers.forEach(NarcissusUtils::stopRiding);
+
+        // 传送载具
+        if (parent == null) {
+            doTeleport(passenger, coordinate, level);
+        }
+        // 传送所有乘客
+        for (Entity entity : passengers) {
+            if (entity == player) {
+                playerVehicle = passenger;
+            } else if (entity.riddenByEntity == null) {
+                int oldId = entity.getEntityId();
+                doTeleport(entity, coordinate, level);
+                passenger.mountEntity(entity);
+                // 更新玩家乘坐的实体对象
+                if (playerVehicle != null && oldId == playerVehicle.getEntityId()) {
+                    playerVehicle = entity;
+                }
+            }
+        }
+        // 同步客户端状态
+        broadcastPacket(new S1BPacketEntityAttach(0, player, passenger));
+        return playerVehicle;
+    }
+
+    /**
+     * 传送跟随的实体
+     */
+    private static void teleportFollowers(@NonNull EntityPlayerMP player, @NonNull Coordinate coordinate, WorldServer level) {
+        if (!ServerConfig.TP_WITH_FOLLOWER) return;
+
+        int followerRange = ServerConfig.TP_WITH_FOLLOWER_RANGE;
+
+        // 传送主动跟随的实体
+        for (Object obj : player.getServerForPlayer().getEntitiesWithinAABB(EntityTameable.class, player.boundingBox.expand(followerRange, followerRange, followerRange))) {
+            EntityTameable entity = (EntityTameable) obj;
+            if (entity.getOwner() != null && entity.getOwner().getUniqueID().equals(player.getUniqueID()) && !entity.isSitting()) {
+                doTeleport(entity, coordinate, level);
+            }
+        }
+
+        // 传送拴绳实体
+        for (Object obj : player.worldObj.getEntitiesWithinAABB(EntityLiving.class, player.boundingBox.expand(followerRange, followerRange, followerRange))) {
+            EntityLiving entity = (EntityLiving) obj;
+            if (entity.getLeashed() && entity.getLeashedToEntity() == player) {
+                doTeleport(entity, coordinate, level);
+            }
+        }
+
+        // // 传送被吸引的非敌对实体
+        // for (Object obj : player.worldObj.getEntitiesWithinAABB(EntityLiving.class, player.boundingBox.expand(followerRange, followerRange, followerRange))) {
+        //     EntityLiving entity = (EntityLiving) obj;
+        //     // 排除敌对生物
+        //     if (entity instanceof IMob) continue;
+        //
+        //     // 检查是否被玩家吸引
+        //     boolean isTempted = false;
+        //     for (Object taskObj : entity.tasks.taskEntries) {
+        //         EntityAIBase task = ((EntityAITasks.EntityAITaskEntry) taskObj).action;
+        //         if (task instanceof EntityAITempt) {
+        //             isTempted = true;
+        //             break;
+        //         }
+        //     }
+        //
+        //     if (entity.canEntityBeSeen(player) && isTempted) {
+        //         doTeleport(entity, coordinate, level);
+        //     }
+        // }
+
+    }
+
+    private static void doTeleport(@NonNull Entity entity, @NonNull Coordinate coordinate, WorldServer level) {
+        if (entity instanceof EntityPlayerMP) {
+            EntityPlayerMP player = (EntityPlayerMP) entity;
+            if (DimensionUtils.getStringId(player.dimension).equalsIgnoreCase(coordinate.getDimension())) {
+                player.setPositionAndUpdate(coordinate.getX(), coordinate.getY(), coordinate.getZ());
+                player.cameraYaw = coordinate.getYaw() == 0 ? player.cameraYaw : (float) coordinate.getYaw();
+                player.cameraPitch = coordinate.getPitch() == 0 ? player.cameraPitch : (float) coordinate.getPitch();
+            } else {
+                NarcissusFarewell.getServerInstance().getConfigurationManager()
+                        .transferPlayerToDimension(player, DimensionUtils.getDimensionType(coordinate.getDimension()), new TeleporterCustom(level, coordinate));
+            }
+        } else {
+            if (DimensionUtils.getStringId(entity.dimension).equalsIgnoreCase(coordinate.getDimension())) {
+                entity.setPosition(coordinate.getX(), coordinate.getY(), coordinate.getZ());
+            } else {
+                NarcissusFarewell.getServerInstance().getConfigurationManager()
+                        .transferEntityToWorld(entity, DimensionUtils.getDimensionType(coordinate.getDimension())
+                                , DimensionUtils.getWorldByDimensionId(entity.dimension), level
+                                , new TeleporterCustom(level, coordinate));
+            }
+        }
     }
 
     // endregion 传送相关
@@ -1480,6 +1628,15 @@ public class NarcissusUtils {
                 source.addChatMessage(component);
             }
         }
+    }
+
+    /**
+     * 广播数据包至所有玩家
+     *
+     * @param packet 数据包
+     */
+    public static void broadcastPacket(Packet packet) {
+        NarcissusFarewell.getServerInstance().getConfigurationManager().sendPacketToAllPlayers(packet);
     }
 
     // endregion 消息相关

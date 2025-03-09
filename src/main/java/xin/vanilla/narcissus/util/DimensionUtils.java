@@ -112,14 +112,14 @@ public class DimensionUtils {
     /**
      * 通过ID获取维度的World
      */
-    public static World getWorldByDimensionId(int dimensionID) {
+    public static WorldServer getWorldByDimensionId(int dimensionID) {
         return DimensionManager.getWorld(dimensionID);
     }
 
     /**
      * 通过ResourceID获取维度的World
      */
-    public static World getWorldByStringId(String fullDimensionId) {
+    public static WorldServer getWorldByStringId(String fullDimensionId) {
         Integer dimId = getIntIdFromString(fullDimensionId);
         if (dimId == null) return null;
         return getWorldByDimensionId(dimId);
