@@ -10,6 +10,10 @@ import net.minecraft.command.CommandSource;
 import net.minecraft.command.arguments.BlockStateParser;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;
+import net.minecraft.entity.MobEntity;
+import net.minecraft.entity.ai.goal.TemptGoal;
+import net.minecraft.entity.monster.MonsterEntity;
+import net.minecraft.entity.passive.TameableEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.inventory.IInventory;
@@ -17,13 +21,16 @@ import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import net.minecraft.nbt.JsonToNBT;
+import net.minecraft.network.IPacket;
 import net.minecraft.network.datasync.DataParameter;
 import net.minecraft.network.play.server.SChatPacket;
 import net.minecraft.network.play.server.SCombatPacket;
+import net.minecraft.network.play.server.SSetPassengersPacket;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.stats.Stats;
 import net.minecraft.util.*;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.ChunkPos;
 import net.minecraft.util.math.vector.Vector3d;
 import net.minecraft.util.registry.Registry;
 import net.minecraft.util.text.ChatType;
@@ -33,6 +40,8 @@ import net.minecraft.world.World;
 import net.minecraft.world.biome.Biome;
 import net.minecraft.world.gen.feature.structure.Structure;
 import net.minecraft.world.server.ServerWorld;
+import net.minecraft.world.server.TicketType;
+import net.minecraftforge.common.util.ITeleporter;
 import net.minecraftforge.fml.ModContainer;
 import net.minecraftforge.fml.ModList;
 import net.minecraftforge.forgespi.language.IModInfo;
@@ -41,17 +50,18 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.maven.artifact.versioning.ArtifactVersion;
 import xin.vanilla.narcissus.NarcissusFarewell;
+import xin.vanilla.narcissus.config.*;
 import xin.vanilla.narcissus.data.TeleportRecord;
 import xin.vanilla.narcissus.data.player.IPlayerTeleportData;
 import xin.vanilla.narcissus.data.player.PlayerTeleportDataCapability;
 import xin.vanilla.narcissus.data.world.WorldStageData;
-import xin.vanilla.narcissus.config.*;
 import xin.vanilla.narcissus.enums.*;
 
 import javax.annotation.Nullable;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -1131,23 +1141,34 @@ public class NarcissusUtils {
                         Coordinate finalAfter1 = finalAfter;
                         player.server.submit(() -> {
                             if (runnable != null) runnable.run();
-                            doTeleport(player, finalAfter1, type, before, level);
+                            teleportPlayer(player, finalAfter1, type, before, level);
                         });
                     }).start();
                 } else {
-                    doTeleport(player, after, type, before, level);
+                    teleportPlayer(player, after, type, before, level);
                 }
             }
         }
     }
 
-    private static void doTeleport(@NonNull ServerPlayerEntity player, @NonNull Coordinate after, ETeleportType type, Coordinate before, ServerWorld level) {
+    private static void teleportPlayer(@NonNull ServerPlayerEntity player, @NonNull Coordinate after, ETeleportType type, Coordinate before, ServerWorld level) {
         ResourceLocation sound = new ResourceLocation(ServerConfig.TP_SOUND.get());
         NarcissusUtils.playSound(player, sound, 1.0f, 1.0f);
         after.setY(Math.floor(after.getY()) + 0.1);
-        player.teleportTo(level, after.getX(), after.getY(), after.getZ()
-                , after.getYaw() == 0 ? player.yRot : (float) after.getYaw()
-                , after.getPitch() == 0 ? player.xRot : (float) after.getPitch());
+
+        // 传送跟随者
+        teleportFollowers(player, after, level);
+        // 传送载体与乘客
+        Entity vehicle = teleportPassengers(player, null, player.getRootVehicle(), after, level);
+        // 传送玩家
+        doTeleport(player, after, level);
+        // 使玩家重新坐上载体
+        if (vehicle != null) {
+            player.startRiding(vehicle, true);
+            // 同步客户端状态
+            broadcastPacket(new SSetPassengersPacket(vehicle));
+        }
+
         NarcissusUtils.playSound(player, sound, 1.0f, 1.0f);
         TeleportRecord record = new TeleportRecord();
         record.setTeleportTime(new Date());
@@ -1155,6 +1176,123 @@ public class NarcissusUtils {
         record.setBefore(before);
         record.setAfter(after);
         PlayerTeleportDataCapability.getData(player).addTeleportRecords(record);
+    }
+
+    /**
+     * 传送载具及其所有乘客
+     *
+     * @param parent     载具
+     * @param passenger  乘客
+     * @param coordinate 目标坐标
+     * @param level      目标世界
+     * @return 玩家的坐骑
+     */
+    private static @Nullable Entity teleportPassengers(ServerPlayerEntity player, Entity parent, Entity passenger, @NonNull Coordinate coordinate, ServerWorld level) {
+        if (!ServerConfig.TP_WITH_VEHICLE.get() || passenger == null) return null;
+
+        Entity playerVehicle = null;
+        List<Entity> passengers = new ArrayList<>(passenger.getPassengers());
+
+        // 递归传送所有乘客
+        for (Entity entity : passengers) {
+            if (CollectionUtils.isNotNullOrEmpty(entity.getPassengers())) {
+                Entity value = teleportPassengers(player, passenger, entity, coordinate, level);
+                if (value != null) {
+                    playerVehicle = value;
+                }
+            }
+        }
+
+        passengers.forEach(Entity::stopRiding);
+
+        // 传送载具
+        if (parent == null) {
+            passenger = doTeleport(passenger, coordinate, level);
+        }
+        // 传送所有乘客
+        for (Entity entity : passengers) {
+            if (entity == player) {
+                playerVehicle = passenger;
+            } else if (entity.getVehicle() == null) {
+                int oldId = entity.getId();
+                entity = doTeleport(entity, coordinate, level);
+                entity.startRiding(passenger, true);
+                // 更新玩家乘坐的实体对象
+                if (playerVehicle != null && oldId == playerVehicle.getId()) {
+                    playerVehicle = entity;
+                }
+            }
+        }
+        // 同步客户端状态
+        broadcastPacket(new SSetPassengersPacket(passenger));
+        return playerVehicle;
+    }
+
+    /**
+     * 传送跟随的实体
+     */
+    private static void teleportFollowers(@NonNull ServerPlayerEntity player, @NonNull Coordinate coordinate, ServerWorld level) {
+        if (!ServerConfig.TP_WITH_FOLLOWER.get()) return;
+
+        int followerRange = ServerConfig.TP_WITH_FOLLOWER_RANGE.get();
+
+        // 传送主动跟随的实体
+        for (TameableEntity entity : player.level.getEntitiesOfClass(TameableEntity.class, player.getBoundingBox().inflate(followerRange))) {
+            if (entity.getOwnerUUID() != null && entity.getOwnerUUID().equals(player.getUUID()) && !entity.isOrderedToSit()) {
+                doTeleport(entity, coordinate, level);
+            }
+        }
+
+        // 传送拴绳实体
+        for (MobEntity entity : player.level.getEntitiesOfClass(MobEntity.class, player.getBoundingBox().inflate(followerRange))) {
+            if (entity.getLeashHolder() == player) {
+                doTeleport(entity, coordinate, level);
+            }
+        }
+
+        // 传送被吸引的非敌对实体
+        for (MobEntity entity : player.level.getEntitiesOfClass(MobEntity.class, player.getBoundingBox().inflate(followerRange))) {
+            // 排除敌对生物
+            if (entity instanceof MonsterEntity) continue;
+
+            if ((entity.getTarget() == player) || entity.goalSelector.getRunningGoals().anyMatch(goal -> goal.getGoal() instanceof TemptGoal)) {
+                doTeleport(entity, coordinate, level);
+            }
+        }
+    }
+
+    private static Entity doTeleport(@NonNull Entity entity, @NonNull Coordinate coordinate, ServerWorld level) {
+        if (entity instanceof ServerPlayerEntity) {
+            ServerPlayerEntity player = (ServerPlayerEntity) entity;
+            player.teleportTo(level, coordinate.getX(), coordinate.getY(), coordinate.getZ()
+                    , coordinate.getYaw() == 0 ? player.yRot : (float) coordinate.getYaw()
+                    , coordinate.getPitch() == 0 ? player.xRot : (float) coordinate.getPitch());
+        } else {
+            if (level == entity.level) {
+                entity.teleportToWithTicket(coordinate.getX(), coordinate.getY(), coordinate.getZ());
+            } else {
+                entity = entity.changeDimension(level, new ITeleporter() {
+                    @Override
+                    public Entity placeEntity(Entity entity, ServerWorld currentWorld, ServerWorld destWorld, float yaw, Function<Boolean, Entity> repositionEntity) {
+                        // 计算目标区块坐标
+                        int chunkX = coordinate.getXInt() >> 4;
+                        int chunkZ = coordinate.getZInt() >> 4;
+                        // 确保目标区块已加载
+                        destWorld.getChunkSource().addRegionTicket(
+                                TicketType.POST_TELEPORT,
+                                new ChunkPos(chunkX, chunkZ),
+                                4, // 加载等级
+                                entity.getId()
+                        );
+                        // 复制实体，并且不生成传送门
+                        Entity newEntity = repositionEntity.apply(false);
+                        newEntity.moveTo(coordinate.getX(), coordinate.getY(), coordinate.getZ(), yaw, newEntity.xRot);
+                        return newEntity;
+                    }
+                });
+            }
+        }
+        return entity;
     }
 
     // endregion 传送相关
@@ -1339,6 +1477,15 @@ public class NarcissusUtils {
         } else {
             source.sendFailure(Component.translatable(key, args).setLanguageCode(NarcissusFarewell.DEFAULT_LANGUAGE).toChatComponent());
         }
+    }
+
+    /**
+     * 广播数据包至所有玩家
+     *
+     * @param packet 数据包
+     */
+    public static void broadcastPacket(IPacket<?> packet) {
+        NarcissusFarewell.getServerInstance().getPlayerList().getPlayers().forEach(player -> player.connection.send(packet));
     }
 
     // endregion 消息相关
