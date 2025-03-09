@@ -74,6 +74,18 @@ public class Coordinate implements Serializable, Cloneable {
         this.dimension = dimension;
     }
 
+    public int getXInt() {
+        return (int) x;
+    }
+
+    public int getYInt() {
+        return (int) y;
+    }
+
+    public int getZInt() {
+        return (int) z;
+    }
+
     /**
      * 根据距离和权重生成随机数
      *

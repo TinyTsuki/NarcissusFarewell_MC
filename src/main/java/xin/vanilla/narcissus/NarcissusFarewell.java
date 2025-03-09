@@ -3,6 +3,7 @@ package xin.vanilla.narcissus;
 import lombok.Getter;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.server.MinecraftServer;
+import net.minecraftforge.common.ForgeChunkManager;
 import net.minecraftforge.fml.common.Loader;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.event.FMLInitializationEvent;
@@ -19,6 +20,7 @@ import xin.vanilla.narcissus.enums.ECommandType;
 import xin.vanilla.narcissus.event.ClientEventHandler;
 import xin.vanilla.narcissus.network.ModNetworkHandler;
 import xin.vanilla.narcissus.network.SplitPacket;
+import xin.vanilla.narcissus.util.ChunkLoadingCallback;
 import xin.vanilla.narcissus.util.LogoModifier;
 import xin.vanilla.narcissus.util.NarcissusUtils;
 
@@ -89,6 +91,8 @@ public class NarcissusFarewell {
 
     @Mod.EventHandler
     public void init(FMLInitializationEvent event) {
+        ForgeChunkManager.setForcedChunkLoadingCallback(NarcissusFarewell.instance, new ChunkLoadingCallback());
+
         // 仅在客户端执行的代码
         if (event.getSide().isClient()) {
             // 注册键盘按键绑定

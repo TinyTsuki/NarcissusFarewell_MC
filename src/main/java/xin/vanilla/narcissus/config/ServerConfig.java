@@ -150,7 +150,22 @@ public class ServerConfig {
     /**
      * 传送音效
      */
-    public static String TP_SOUND;
+    public static String TP_SOUND = "entity.endermen.teleport";
+
+    /**
+     * 是否允许载具一起传送
+     */
+    public static boolean TP_WITH_VEHICLE = true;
+
+    /**
+     * 是否允许跟随的实体一起传送
+     */
+    public static boolean TP_WITH_FOLLOWER = true;
+
+    /**
+     * 跟随的实体识别范围半径
+     */
+    public static int TP_WITH_FOLLOWER_RANGE = 10;
 
     // endregion 基础设置
 
@@ -1038,6 +1053,32 @@ public class ServerConfig {
             );
             if (write) tpSound.set(TP_SOUND);
             TP_SOUND = tpSound.getString();
+
+            // 是否允许载具一起传送
+            Property tpWithVehicle = config.get(CATEGORY_BASE, "tpWithVehicle", true,
+                    "Whether to allow vehicles to be teleported together.\n" +
+                            "是否允许载具一起传送。\n"
+            );
+            if (write) tpWithVehicle.set(TP_WITH_VEHICLE);
+            TP_WITH_VEHICLE = tpWithVehicle.getBoolean();
+
+            // 是否允许跟随的实体一起传送
+            Property tpWithFollower = config.get(CATEGORY_BASE, "tpWithFollower", true,
+                    "Whether to allow followers to be teleported together.\n" +
+                            "是否允许跟随的实体一起传送。\n"
+            );
+            if (write) tpWithFollower.set(TP_WITH_FOLLOWER);
+            TP_WITH_FOLLOWER = tpWithFollower.getBoolean();
+
+            // 跟随的实体识别范围
+            Property tpWithFollowerRange = config.get(CATEGORY_BASE, "tpWithFollowerRange", 10,
+                    "The range of followers to be recognized, in blocks.\n" +
+                            "跟随的实体识别范围半径。\n"
+            );
+            tpWithFollowerRange.setMinValue(1).setMaxValue(16 * 16);
+            tpWithFollowerRange.setComment(tpWithFollowerRange.getComment() + " [range: " + tpWithFollowerRange.getMinValue() + " ~ " + tpWithFollowerRange.getMaxValue() + ", default: " + tpWithFollowerRange.getDefault() + "]");
+            if (write) tpWithFollowerRange.set(TP_WITH_FOLLOWER_RANGE);
+            TP_WITH_FOLLOWER_RANGE = tpWithFollowerRange.getInt();
 
             // 不安全的方块
             Property unsafeBlocks = config.get(CATEGORY_BASE + ".Safe", "unsafeBlocks", new String[]{"minecraft:lava", "minecraft:fire", "minecraft:cactus"},

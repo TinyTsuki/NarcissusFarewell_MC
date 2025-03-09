@@ -2,8 +2,13 @@ package xin.vanilla.narcissus.config;
 
 
 import net.minecraft.entity.Entity;
+import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.util.math.ChunkPos;
 import net.minecraft.world.Teleporter;
+import net.minecraft.world.World;
 import net.minecraft.world.WorldServer;
+import net.minecraftforge.common.ForgeChunkManager;
+import xin.vanilla.narcissus.NarcissusFarewell;
 
 import javax.annotation.ParametersAreNonnullByDefault;
 
@@ -19,11 +24,27 @@ public class TeleporterCustom extends Teleporter {
      * 放置实体
      */
     @Override
-    public void placeInPortal(Entity entity, float rotationYaw) {
+    @ParametersAreNonnullByDefault
+    public void placeEntity(World world, Entity entity, float rotationYaw) {
+        // 计算目标区块坐标
+        int chunkX = coordinate.getXInt() >> 4;
+        int chunkZ = coordinate.getZInt() >> 4;
+
+        // 强制加载目标区块
+        ForgeChunkManager.Ticket ticket = ForgeChunkManager.requestTicket(NarcissusFarewell.instance, super.world, ForgeChunkManager.Type.NORMAL);
+        if (ticket != null) {
+            ForgeChunkManager.forceChunk(ticket, new ChunkPos(chunkX, chunkZ));
+        }
+
         // 直接传送到指定坐标
-        entity.setPosition(this.coordinate.getX(), this.coordinate.getY(), this.coordinate.getZ());
+        entity.setPositionAndUpdate(this.coordinate.getX(), this.coordinate.getY(), this.coordinate.getZ());
         entity.rotationYaw = (float) this.coordinate.getYaw() == 0 ? entity.rotationYaw : (float) this.coordinate.getYaw();
         entity.rotationPitch = (float) this.coordinate.getPitch() == 0 ? entity.rotationPitch : (float) this.coordinate.getPitch();
+
+        // 释放区块加载
+        if (ticket != null && entity instanceof EntityPlayer) {
+            ForgeChunkManager.releaseTicket(ticket);
+        }
     }
 
     /**
