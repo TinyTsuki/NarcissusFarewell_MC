@@ -1238,7 +1238,7 @@ public class NarcissusUtils {
             player.cameraYaw = after.getYaw() == 0 ? player.cameraYaw : (float) after.getYaw();
             player.cameraPitch = after.getPitch() == 0 ? player.cameraPitch : (float) after.getPitch();
         } else {
-            player.server.getPlayerList().transferPlayerToDimension(player, after.getDimension().getId(), new TeleporterCustom(level, after));
+            player.getServer().getPlayerList().transferPlayerToDimension(player, after.getDimension().getId(), new TeleporterCustom(level, after));
         }
         NarcissusUtils.playSound(player, sound, 1.0f, 1.0f);
         TeleportRecord record = new TeleportRecord();
@@ -1414,7 +1414,7 @@ public class NarcissusUtils {
      * @param message 消息
      */
     public static void broadcastMessage(EntityPlayerMP player, Component message) {
-        player.server.getPlayerList().sendMessage(new TextComponentTranslation("chat.type.announcement", player.getDisplayName(), message.toChatComponent(NarcissusUtils.getPlayerLanguage(player))), true);
+        player.getServer().getPlayerList().sendMessage(new TextComponentTranslation("chat.type.announcement", player.getDisplayName(), message.toChatComponent(NarcissusUtils.getPlayerLanguage(player))), true);
     }
 
     /**
