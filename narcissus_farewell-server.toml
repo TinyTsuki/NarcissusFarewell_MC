@@ -6,10 +6,16 @@
 	#玩家可设置的家的数量。
 	#Range: 1 ~ 9999
 	teleportHomeLimit = 5
+	#Whether to allow vehicles to be teleported together.
+	#是否允许载具一起传送。
+	tpWithVehicle = true
 	#The maximum distance limit for random teleportation or teleportation to a specified structure.
 	#随机传送与传送至指定结构的最大距离限制。
 	#Range: > 5
 	teleportRandomDistanceLimit = 10000
+	#The sound effect when teleporting.
+	#传送时的音效。
+	tpSound = "minecraft:entity.enderman.teleport"
 	#The limit of teleport records, 0 means no limit.
 	#传送记录数量限制，数量为0表示不限制。
 	#Range: 0 ~ 99999
@@ -28,6 +34,13 @@
 	#格式："玩家UUID":"逗号分隔的能够使用的指令列表"
 	#Example: opList = "{\"23a23a23-od0o-23aa-2333-0d0o0d0033aa\":[\"VIRTUAL_OP\",\"TP_BACK\",\"TP_HOME\",\"TP_STAGE\",\"TP_ASK\",\"TP_HERE\",\"TP_SPAWN\",\"TP_SPAWN_OTHER\",\"DIMENSION\",\"TP_COORDINATE\",\"TP_STRUCTURE\",\"TP_TOP\",\"TP_DOWN\",\"TP_RANDOM\",\"FEED\",\"FEED_OTHER\",\"SET_STAGE\",\"DEL_STAGE\"]}"
 	opList = ""
+	#The range of followers to be recognized, in blocks.
+	#跟随的实体识别范围半径。
+	#Range: 1 ~ 256
+	tpWithFollowerRange = 10
+	#Whether to allow followers to be teleported together.
+	#是否允许跟随的实体一起传送。
+	tpWithFollower = true
 	#The expire time for teleport request, in seconds.
 	#传送请求过期时间，单位为秒。
 	#Range: 0 ~ 3600
