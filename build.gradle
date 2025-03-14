@@ -212,7 +212,7 @@ processResources {
 // Example for how to get properties into the manifest for reading at runtime.
 tasks.getByName('jar') {
     // 自定义打包路径与输出格式
-    baseName = mod_id
+    baseName = "${mod_id}-forge"
     destinationDir = file("${projectDir}/builds/${mod_version.split('-')[1]}")
 
     manifest {

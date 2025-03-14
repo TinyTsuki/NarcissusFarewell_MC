@@ -1378,11 +1378,12 @@ public class NarcissusUtils {
             // 排除敌对生物（IMob 代表所有敌对生物）
             if (entity instanceof IMob) continue;
             // 检查实体是否被玩家吸引
-            if (entity.getAttackTarget() == player ||
-                    (entity.getEntitySenses().canSee(player) &&
-                            entity.tasks.taskEntries.stream()
-                                    .anyMatch(task -> task.using && task.action instanceof EntityAITempt))
-            ) {
+            if (entity.getEntitySenses().canSee(player) &&
+                    entity.tasks.taskEntries.stream()
+                            .anyMatch(task -> task.using
+                                    && (task.action instanceof EntityAITempt)
+                                    && FieldUtils.getPrivateFieldValue(EntityAITempt.class, task.action, FieldUtils.getTemptGoalPlayerFieldName()) == player
+                            )) {
                 doTeleport(entity, coordinate, level);
             }
         }
