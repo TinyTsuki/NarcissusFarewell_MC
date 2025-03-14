@@ -1,5 +1,7 @@
 package xin.vanilla.narcissus.util;
 
+import net.minecraft.entity.ai.EntityAITempt;
+import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.world.gen.structure.MapGenStructureIO;
 import net.minecraft.world.gen.structure.StructureStart;
@@ -40,7 +42,7 @@ public class FieldUtils {
         List<String> fieldNames = new ArrayList<>();
         Field[] fields = clazz.getDeclaredFields();
         for (Field field : fields) {
-            if (Modifier.isPrivate(field.getModifiers()) && field.getType() == target) {
+            if ((Modifier.isPrivate(field.getModifiers()) || Modifier.isProtected(field.getModifiers())) && field.getType() == target) {
                 fieldNames.add(field.getName());
             }
         }
@@ -136,6 +138,7 @@ public class FieldUtils {
             LANGUAGE_FIELD_NAME = "translator";
             LOGGER.error("Failed to get player language field name", e);
         }
+        LOGGER.debug("Player language field name: {}", LANGUAGE_FIELD_NAME);
         return LANGUAGE_FIELD_NAME;
     }
 
@@ -162,6 +165,26 @@ public class FieldUtils {
         } catch (Exception e) {
             LOGGER.error("Failed to get start name to class map field name", e);
         }
+        LOGGER.debug("Start name to class map field name: {}", START_NAME_TO_CLASS_MAP_FIELD_NAME);
         return START_NAME_TO_CLASS_MAP_FIELD_NAME = "startNameToClassMap";
+    }
+
+    private static String TEMPT_GOAL_PLAYER_FIELD_NAME;
+
+    /**
+     * 获取实体生命字段名称
+     */
+    public static String getTemptGoalPlayerFieldName() {
+        if (StringUtils.isNotNullOrEmpty(TEMPT_GOAL_PLAYER_FIELD_NAME)) return TEMPT_GOAL_PLAYER_FIELD_NAME;
+        try {
+            for (String field : FieldUtils.getPrivateFieldNames(EntityAITempt.class, EntityPlayer.class)) {
+                TEMPT_GOAL_PLAYER_FIELD_NAME = field;
+            }
+        } catch (Exception e) {
+            TEMPT_GOAL_PLAYER_FIELD_NAME = "temptingPlayer";
+            LOGGER.error("Failed to get tempt goal player field name", e);
+        }
+        LOGGER.debug("Tempt goal player field name: {}", TEMPT_GOAL_PLAYER_FIELD_NAME);
+        return TEMPT_GOAL_PLAYER_FIELD_NAME;
     }
 }

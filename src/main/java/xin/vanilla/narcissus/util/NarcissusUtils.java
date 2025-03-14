@@ -6,6 +6,9 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.command.ICommandSender;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityLiving;
+import net.minecraft.entity.ai.EntityAITasks;
+import net.minecraft.entity.ai.EntityAITempt;
+import net.minecraft.entity.monster.IMob;
 import net.minecraft.entity.passive.EntityTameable;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
@@ -1355,26 +1358,23 @@ public class NarcissusUtils {
             }
         }
 
-        // // 传送被吸引的非敌对实体
-        // for (Object obj : player.worldObj.getEntitiesWithinAABB(EntityLiving.class, player.boundingBox.expand(followerRange, followerRange, followerRange))) {
-        //     EntityLiving entity = (EntityLiving) obj;
-        //     // 排除敌对生物
-        //     if (entity instanceof IMob) continue;
-        //
-        //     // 检查是否被玩家吸引
-        //     boolean isTempted = false;
-        //     for (Object taskObj : entity.tasks.taskEntries) {
-        //         EntityAIBase task = ((EntityAITasks.EntityAITaskEntry) taskObj).action;
-        //         if (task instanceof EntityAITempt) {
-        //             isTempted = true;
-        //             break;
-        //         }
-        //     }
-        //
-        //     if (entity.canEntityBeSeen(player) && isTempted) {
-        //         doTeleport(entity, coordinate, level);
-        //     }
-        // }
+        // 传送被吸引的非敌对实体
+        for (Object obj : player.worldObj.getEntitiesWithinAABB(EntityLiving.class, player.boundingBox.expand(followerRange, followerRange, followerRange))) {
+            EntityLiving entity = (EntityLiving) obj;
+            // 排除敌对生物
+            if (entity instanceof IMob) continue;
+
+            // 检查是否被玩家吸引
+            List<EntityAITasks.EntityAITaskEntry> taskEntries = entity.tasks.taskEntries;
+            if (entity.canEntityBeSeen(player) &&
+                    taskEntries.stream()
+                            .anyMatch(taskObj -> (taskObj.action instanceof EntityAITempt)
+                                    && ((EntityAITempt) taskObj.action).isRunning()
+                                    && FieldUtils.getPrivateFieldValue(EntityAITempt.class, taskObj.action, FieldUtils.getTemptGoalPlayerFieldName()) == player
+                            )) {
+                doTeleport(entity, coordinate, level);
+            }
+        }
 
     }
 
