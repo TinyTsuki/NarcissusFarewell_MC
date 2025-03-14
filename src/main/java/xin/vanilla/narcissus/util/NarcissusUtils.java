@@ -1050,7 +1050,11 @@ public class NarcissusUtils {
             // 排除敌对生物
             if (entity instanceof Monster) continue;
 
-            if ((entity.getTarget() == player) || entity.goalSelector.getAvailableGoals().stream().anyMatch(goal -> goal.isRunning() && goal.getGoal() instanceof TemptGoal)) {
+            if (entity.goalSelector.getAvailableGoals().stream()
+                    .anyMatch(goal -> goal.isRunning()
+                            && (goal.getGoal() instanceof TemptGoal)
+                            && FieldUtils.getPrivateFieldValue(TemptGoal.class, goal.getGoal(), FieldUtils.getTemptGoalPlayerFieldName()) == player
+                    )) {
                 doTeleport(entity, coordinate, level);
             }
         }
