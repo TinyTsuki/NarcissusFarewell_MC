@@ -238,6 +238,26 @@ public class Coordinate implements Serializable, Cloneable {
         }
     }
 
+    public Coordinate above() {
+        return this.clone().addY(1);
+    }
+
+    public Coordinate below() {
+        return this.clone().addY(-1);
+    }
+
+    public double distanceFrom(Coordinate coordinate) {
+        return Math.sqrt(Math.pow(coordinate.x - x, 2) + Math.pow(coordinate.y - y, 2) + Math.pow(coordinate.z - z, 2));
+    }
+
+    public double distanceFrom(double x, double y, double z) {
+        return Math.sqrt(Math.pow(x - this.x, 2) + Math.pow(y - this.y, 2) + Math.pow(z - this.z, 2));
+    }
+
+    public double distanceFrom2D(Coordinate coordinate) {
+        return Math.sqrt(Math.pow(coordinate.x - x, 2) + Math.pow(coordinate.z - z, 2));
+    }
+
     public String toXString() {
         return StringUtils.toFixedEx(x, 1);
     }
