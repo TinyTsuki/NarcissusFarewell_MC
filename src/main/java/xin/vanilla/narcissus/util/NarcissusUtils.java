@@ -361,11 +361,11 @@ public class NarcissusUtils {
             .distinct()
             .toList();
 
-    public static int getWorldMinY(ServerLevel world) {
+    public static int getWorldMinY(Level world) {
         return world.getMinBuildHeight();
     }
 
-    public static int getWorldMaxY(ServerLevel world) {
+    public static int getWorldMaxY(Level world) {
         return world.getMaxBuildHeight();
     }
 
@@ -515,69 +515,42 @@ public class NarcissusUtils {
         int minY = world.getMinBuildHeight();
         int maxY = world.getMaxBuildHeight();
 
-        List<Integer> yList;
-        List<Integer> xList;
-        List<Integer> zList;
+        List<Coordinate> coordinates = new ArrayList<>();
+
         if (coordinate.getSafeMode() == ESafeMode.Y_DOWN) {
-            xList = new ArrayList<>() {{
-                add((int) coordinate.getX());
-            }};
-            zList = new ArrayList<>() {{
-                add((int) coordinate.getZ());
-            }};
-            yList = IntStream.range((int) coordinate.getY(), 0).boxed()
-                    .sorted(Comparator.comparingInt(a -> (int) coordinate.getY() - a))
-                    .collect(Collectors.toList());
+            IntStream.range((int) coordinate.getY(), NarcissusUtils.getWorldMinY(world))
+                    .forEach(y -> coordinates.add(coordinate.clone().setY(y)));
         } else if (coordinate.getSafeMode() == ESafeMode.Y_UP) {
-            xList = new ArrayList<>() {{
-                add((int) coordinate.getX());
-            }};
-            zList = new ArrayList<>() {{
-                add((int) coordinate.getZ());
-            }};
-            yList = IntStream.range((int) coordinate.getY(), maxY).boxed()
-                    .sorted(Comparator.comparingInt(a -> a - (int) coordinate.getY()))
-                    .collect(Collectors.toList());
+            IntStream.range((int) coordinate.getY(), NarcissusUtils.getWorldMaxY(world))
+                    .forEach(y -> coordinates.add(coordinate.clone().setY(y)));
         } else if (coordinate.getSafeMode() == ESafeMode.Y_OFFSET_3) {
-            xList = new ArrayList<>() {{
-                add((int) coordinate.getX());
-            }};
-            zList = new ArrayList<>() {{
-                add((int) coordinate.getZ());
-            }};
-            yList = IntStream.range((int) (coordinate.getY() - 3), (int) (coordinate.getY() + 3)).boxed()
-                    .sorted(Comparator.comparingInt(a -> Math.abs(a - (int) coordinate.getY())))
-                    .collect(Collectors.toList());
+            IntStream.range((int) (coordinate.getY() - 3), (int) (coordinate.getY() + 3))
+                    .forEach(y -> coordinates.add(coordinate.clone().setY(y)));
         } else {
-            xList = IntStream.range(chunkMinX, chunkMaxX).boxed()
-                    .sorted(Comparator.comparingInt(a -> Math.abs(a - (int) coordinate.getX())))
-                    .toList();
-            zList = IntStream.range(chunkMinZ, chunkMaxZ).boxed()
-                    .sorted(Comparator.comparingInt(a -> Math.abs(a - (int) coordinate.getZ())))
-                    .toList();
-            yList = IntStream.range(minY, maxY).boxed()
-                    .sorted(Comparator.comparingInt(a -> Math.abs(a - (int) coordinate.getY())))
-                    .collect(Collectors.toList());
+            IntStream.range(chunkMinX, chunkMaxX)
+                    .forEach(x -> IntStream.range(chunkMinZ, chunkMaxZ)
+                            .forEach(z -> IntStream.range(NarcissusUtils.getWorldMinY(world), world.getHeight())
+                                    .forEach(y -> coordinates.add(coordinate.clone().setX(x).setZ(z).setY(y)))
+                            )
+                    );
         }
-        for (int y : yList) {
-            if (coordinate.getSafeMode() == ESafeMode.NONE && y <= minY || (y <= minY || y > maxY)) continue;
-            for (int x : xList) {
-                for (int z : zList) {
-                    double offsetX = x > 0 ? x + 0.5 : x - 0.5;
-                    double offsetZ = z > 0 ? z + 0.5 : z - 0.5;
-                    Coordinate candidate = new Coordinate().setX(offsetX).setY(y + 0.15).setZ(offsetZ)
-                            .setYaw(coordinate.getYaw()).setPitch(coordinate.getPitch())
-                            .setDimension(coordinate.getDimension())
-                            .setSafe(coordinate.isSafe()).setSafeMode(coordinate.getSafeMode());
-                    if (belowAllowAir) {
-                        if (isAirCoordinate(world, candidate)) {
-                            return candidate;
-                        }
-                    } else {
-                        if (isSafeCoordinate(world, candidate)) {
-                            return candidate;
-                        }
-                    }
+        for (Coordinate c : coordinates.stream().sorted(Comparator.comparingDouble(c -> {
+            double v = coordinate.distanceFrom(c);
+            return v <= 16 ? v : 16 + coordinate.distanceFrom2D(c);
+        })).toList()) {
+            double offsetX = c.getX() > 0 ? c.getX() + 0.5 : c.getX() - 0.5;
+            double offsetZ = c.getZ() > 0 ? c.getZ() + 0.5 : c.getZ() - 0.5;
+            Coordinate candidate = new Coordinate().setX(offsetX).setY(c.getY() + 0.15).setZ(offsetZ)
+                    .setYaw(coordinate.getYaw()).setPitch(coordinate.getPitch())
+                    .setDimension(coordinate.getDimension())
+                    .setSafe(coordinate.isSafe()).setSafeMode(coordinate.getSafeMode());
+            if (belowAllowAir) {
+                if (isAirCoordinate(world, candidate)) {
+                    return candidate;
+                }
+            } else {
+                if (isSafeCoordinate(world, candidate)) {
+                    return candidate;
                 }
             }
         }
@@ -588,22 +561,44 @@ public class NarcissusUtils {
         BlockState block = world.getBlockState(coordinate.toBlockPos());
         BlockState blockAbove = world.getBlockState(coordinate.toBlockPos().above());
         BlockState blockBelow = world.getBlockState(coordinate.toBlockPos().below());
-        return (!block.getMaterial().blocksMotion() && !UNSAFE_BLOCKS.contains(block) && !UNSAFE_BLOCKS.contains(block.getBlock().defaultBlockState()))
-                && (!blockAbove.getMaterial().blocksMotion() && !UNSAFE_BLOCKS.contains(blockAbove) && !UNSAFE_BLOCKS.contains(blockAbove.getBlock().defaultBlockState()) && !SUFFOCATING_BLOCKS.contains(blockAbove) && !SUFFOCATING_BLOCKS.contains(blockAbove.getBlock().defaultBlockState()))
-                && (blockBelow.is(Blocks.AIR) || blockBelow.is(Blocks.CAVE_AIR));
+        return isSafeBlock(world, coordinate, true, block, blockAbove, blockBelow);
     }
 
     private static boolean isSafeCoordinate(Level world, Coordinate coordinate) {
         BlockState block = world.getBlockState(coordinate.toBlockPos());
         BlockState blockAbove = world.getBlockState(coordinate.toBlockPos().above());
         BlockState blockBelow = world.getBlockState(coordinate.toBlockPos().below());
-        return isSafeBlock(block, blockAbove, blockBelow);
+        return isSafeBlock(world, coordinate, false, block, blockAbove, blockBelow);
     }
 
-    private static boolean isSafeBlock(BlockState block, BlockState blockAbove, BlockState blockBelow) {
-        return (!block.getMaterial().blocksMotion() && !UNSAFE_BLOCKS.contains(block) && !UNSAFE_BLOCKS.contains(block.getBlock().defaultBlockState()))
-                && (!blockAbove.getMaterial().blocksMotion() && !UNSAFE_BLOCKS.contains(blockAbove) && !UNSAFE_BLOCKS.contains(blockAbove.getBlock().defaultBlockState()) && !SUFFOCATING_BLOCKS.contains(blockAbove) && !SUFFOCATING_BLOCKS.contains(blockAbove.getBlock().defaultBlockState()))
-                && (blockBelow.getMaterial().isSolid() && !UNSAFE_BLOCKS.contains(blockBelow) && !UNSAFE_BLOCKS.contains(blockBelow.getBlock().defaultBlockState()));
+    /**
+     * 判断指定坐标是否安全
+     *
+     * @param block      方块
+     * @param blockAbove 头部方块
+     * @param blockBelow 脚下方块
+     */
+    private static boolean isSafeBlock(Level world, Coordinate coordinate, boolean belowAllowAir, BlockState block, BlockState blockAbove, BlockState blockBelow) {
+        boolean isCurrentPassable = !block.getMaterial().blocksMotion()
+                && !UNSAFE_BLOCKS.contains(block);
+
+        boolean isHeadSafe = !blockAbove.isSuffocating(world, coordinate.above().toBlockPos())
+                && !blockAbove.getMaterial().blocksMotion()
+                && !UNSAFE_BLOCKS.contains(blockAbove)
+                && !SUFFOCATING_BLOCKS.contains(blockAbove);
+
+        boolean isBelowValid;
+        if (blockBelow.getMaterial().isLiquid()) {
+            isBelowValid = !UNSAFE_BLOCKS.contains(blockBelow);
+        } else {
+            isBelowValid = blockBelow.getMaterial().isSolid()
+                    && !UNSAFE_BLOCKS.contains(blockBelow);
+        }
+        if (belowAllowAir) {
+            isBelowValid = isBelowValid || blockBelow.is(Blocks.AIR) || blockBelow.is(Blocks.CAVE_AIR);
+        }
+
+        return isCurrentPassable && isHeadSafe && isBelowValid;
     }
 
     // endregion 安全坐标
@@ -635,22 +630,6 @@ public class NarcissusUtils {
      * @param minDistance 最小距离
      */
     public static Coordinate findNearestBiome(ServerLevel world, Coordinate start, Biome biome, int radius, int minDistance) {
-        // for (int x : IntStream.range((int) (start.getX() - radius), (int) (start.getX() + radius)).boxed()
-        //         .sorted(Comparator.comparingInt(a -> Math.abs(a - (int) start.getX())))
-        //         .collect(Collectors.toList())) {
-        //     for (int z : IntStream.range((int) (start.getZ() - radius), (int) (start.getZ() + radius)).boxed()
-        //             .sorted(Comparator.comparingInt(a -> Math.abs(a - (int) start.getZ())))
-        //             .collect(Collectors.toList())) {
-        //         Coordinate clone = start.clone();
-        //         BlockPos pos = clone.setX(x).setZ(z).toBlockPos();
-        //         Biome b = world.getBiome(pos);
-        //         if (b == biome) {
-        //             return clone;
-        //         }
-        //     }
-        // }
-        // // 未找到目标生物群系
-        // return null;
         BlockPos pos = world.findNearestBiome(biome, start.toBlockPos(), radius, minDistance);
         if (pos != null) {
             return start.clone().setX(pos.getX()).setZ(pos.getZ()).setSafe(true);
@@ -1637,10 +1616,7 @@ public class NarcissusUtils {
     }
 
     public static double calculateDistance(Coordinate coordinate1, Coordinate coordinate2) {
-        double deltaX = coordinate1.getX() - coordinate2.getX();
-        double deltaY = coordinate1.getY() - coordinate2.getY();
-        double deltaZ = coordinate1.getZ() - coordinate2.getZ();
-        return Math.sqrt(deltaX * deltaX + deltaY * deltaY + deltaZ * deltaZ);
+        return coordinate1.distanceFrom(coordinate2);
     }
 
     // endregion 传送代价
