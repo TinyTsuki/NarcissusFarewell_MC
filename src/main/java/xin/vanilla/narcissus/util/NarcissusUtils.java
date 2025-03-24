@@ -518,8 +518,6 @@ public class NarcissusUtils {
         int chunkMinZ = (chunkZ << 4) - offset;
         int chunkMaxX = chunkMinX + 15 + offset;
         int chunkMaxZ = chunkMinZ + 15 + offset;
-        int minY = world.getMinBuildHeight();
-        int maxY = world.getMaxBuildHeight();
 
         List<Coordinate> coordinates = new ArrayList<>();
 
@@ -535,7 +533,7 @@ public class NarcissusUtils {
         } else {
             IntStream.range(chunkMinX, chunkMaxX)
                     .forEach(x -> IntStream.range(chunkMinZ, chunkMaxZ)
-                            .forEach(z -> IntStream.range(NarcissusUtils.getWorldMinY(world), world.getHeight())
+                            .forEach(z -> IntStream.range(NarcissusUtils.getWorldMinY(world), NarcissusUtils.getWorldMaxY(world))
                                     .forEach(y -> coordinates.add(coordinate.clone().setX(x).setZ(z).setY(y)))
                             )
                     );
