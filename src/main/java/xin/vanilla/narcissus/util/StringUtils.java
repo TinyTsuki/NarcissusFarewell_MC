@@ -21,23 +21,10 @@ public class StringUtils {
      */
     public static boolean stringToBoolean(String s) {
         if (null == s) return false;
-        switch (s.toLowerCase().trim()) {
-            case "1":
-            case "真":
-            case "是":
-            case "true":
-            case "y":
-            case "t":
-                return true;
-            case "0":
-            case "假":
-            case "否":
-            case "false":
-            case "n":
-            case "f":
-            default:
-                return false;
-        }
+        return switch (s.toLowerCase().trim()) {
+            case "1", "真", "是", "true", "y", "t" -> true;
+            default -> false;
+        };
     }
 
     public static boolean isNullOrEmpty(String s) {
@@ -164,7 +151,7 @@ public class StringUtils {
                 int unitIndex = integerLen - i - 1;
                 int unit = unitIndex % 4;
                 if (digit == 0) {
-                    if (unit != 0 && sb.length() > 0 && sb.charAt(sb.length() - 1) != '零') {
+                    if (unit != 0 && !sb.isEmpty() && sb.charAt(sb.length() - 1) != '零') {
                         sb.append(NUM[0]);
                     }
                 } else {
@@ -335,11 +322,7 @@ public class StringUtils {
      * 获取指定数量的某个字符串
      */
     public static String getString(String s, int count) {
-        StringBuilder sb = new StringBuilder();
-        for (int i = 0; i < count; i++) {
-            sb.append(s);
-        }
-        return sb.toString();
+        return s.repeat(Math.max(0, count));
     }
 
     /**
@@ -439,6 +422,30 @@ public class StringUtils {
             }
         }
         return result;
+    }
+
+    /**
+     * 将字符串转换为驼峰命名
+     */
+    public static String toPascalCase(String input) {
+        if (isNullOrEmptyEx(input)) return "";
+
+        StringBuilder result = new StringBuilder();
+        boolean capitalizeNext = true;
+
+        for (char c : input.toCharArray()) {
+            if (Character.isLetterOrDigit(c)) {
+                if (capitalizeNext) {
+                    result.append(Character.toUpperCase(c));
+                    capitalizeNext = false;
+                } else {
+                    result.append(Character.toLowerCase(c));
+                }
+            } else {
+                capitalizeNext = true;
+            }
+        }
+        return result.toString();
     }
 
     public static void main(String[] args) {
