@@ -541,10 +541,10 @@ public class NarcissusUtils {
         }
         for (Coordinate c : coordinates.stream().sorted(Comparator.comparingDouble(c -> {
             double v = coordinate.distanceFrom(c);
-            return v <= 16 ? v : 16 + coordinate.distanceFrom2D(c);
+            return v <= 16 ? v : 16 + Math.abs(coordinate.getY() - c.getY()) + coordinate.distanceFrom2D(c);
         })).toList()) {
-            double offsetX = c.getX() > 0 ? c.getX() + 0.5 : c.getX() - 0.5;
-            double offsetZ = c.getZ() > 0 ? c.getZ() + 0.5 : c.getZ() - 0.5;
+            double offsetX = c.getX() >= 0 ? c.getX() + 0.5 : c.getX() - 0.5;
+            double offsetZ = c.getZ() >= 0 ? c.getZ() + 0.5 : c.getZ() - 0.5;
             Coordinate candidate = new Coordinate().setX(offsetX).setY(c.getY() + 0.15).setZ(offsetZ)
                     .setYaw(coordinate.getYaw()).setPitch(coordinate.getPitch())
                     .setDimension(coordinate.getDimension())
