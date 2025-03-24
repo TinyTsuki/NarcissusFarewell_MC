@@ -441,6 +441,30 @@ public class StringUtils {
         return result;
     }
 
+    /**
+     * 将字符串转换为驼峰命名
+     */
+    public static String toPascalCase(String input) {
+        if (isNullOrEmptyEx(input)) return "";
+
+        StringBuilder result = new StringBuilder();
+        boolean capitalizeNext = true;
+
+        for (char c : input.toCharArray()) {
+            if (Character.isLetterOrDigit(c)) {
+                if (capitalizeNext) {
+                    result.append(Character.toUpperCase(c));
+                    capitalizeNext = false;
+                } else {
+                    result.append(Character.toLowerCase(c));
+                }
+            } else {
+                capitalizeNext = true;
+            }
+        }
+        return result.toString();
+    }
+
     public static void main(String[] args) {
         // 测试案例：不同类型的参数与格式字符串
         System.out.println(format("%2$s-%1$s-%1$s", "a", "b"));  // 输出 b-a-a
