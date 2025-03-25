@@ -511,6 +511,15 @@ public class NarcissusUtils {
         return searchForSafeCoordinateInChunk(world, coordinate, chunkX, chunkZ, belowAllowAir);
     }
 
+    private static int deterministicHash(Coordinate c) {
+        int prime = 31;
+        int hash = 1;
+        hash = prime * hash + Integer.hashCode(c.getXInt());
+        hash = prime * hash + Integer.hashCode(c.getYInt());
+        hash = prime * hash + Integer.hashCode(c.getZInt());
+        return hash;
+    }
+
     private static Coordinate searchForSafeCoordinateInChunk(Level world, Coordinate coordinate, int chunkX, int chunkZ, boolean belowAllowAir) {
         // 搜索安全位置，限制在目标范围区块内
         int offset = (ServerConfig.SAFE_CHUNK_RANGE.get() - 1) * 16;
@@ -519,29 +528,67 @@ public class NarcissusUtils {
         int chunkMaxX = chunkMinX + 15 + offset;
         int chunkMaxZ = chunkMinZ + 15 + offset;
 
+        Coordinate result = coordinate.clone();
         List<Coordinate> coordinates = new ArrayList<>();
+        Comparator<Coordinate> comparator = (c1, c2) -> {
+            // 计算各项距离
+            double dist3D_1 = coordinate.distanceFrom(c1);
+            double dist3D_2 = coordinate.distanceFrom(c2);
+            double dist2D_1 = coordinate.distanceFrom2D(c1);
+            double dist2D_2 = coordinate.distanceFrom2D(c2);
+            double yDiff1 = Math.abs(coordinate.getY() - c1.getY());
+            double yDiff2 = Math.abs(coordinate.getY() - c2.getY());
 
+            // 分组
+            int group1 = (dist3D_1 <= 16) ? 1 : (dist2D_1 <= 8 ? 2 : 3);
+            int group2 = (dist3D_2 <= 16) ? 1 : (dist2D_2 <= 8 ? 2 : 3);
+
+            // 先按组排序
+            if (group1 != group2) {
+                return group1 - group2;
+            }
+
+            // 同组内的排序规则：
+            if (group1 == 1) {
+                // 按三维距离排序
+                return Double.compare(dist3D_1, dist3D_2);
+            } else if (group1 == 2) {
+                // 先按二维距离，再按 Y 轴偏差排序
+                int cmp = Double.compare(dist2D_1, dist2D_2);
+                if (cmp == 0) {
+                    cmp = Double.compare(yDiff1, yDiff2);
+                }
+                return cmp;
+            } else {
+                // 使用确定性的伪随机排序
+                int hash1 = deterministicHash(c1);
+                int hash2 = deterministicHash(c2);
+                return Integer.compare(hash1, hash2);
+            }
+        };
+
+        LOGGER.debug("TimeMillis before generate: {}", System.currentTimeMillis());
         if (coordinate.getSafeMode() == ESafeMode.Y_DOWN) {
             IntStream.range((int) coordinate.getY(), NarcissusUtils.getWorldMinY(world))
-                    .forEach(y -> coordinates.add(coordinate.clone().setY(y)));
+                    .forEach(y -> coordinates.add(new Coordinate(coordinate.getX(), y, coordinate.getZ())));
         } else if (coordinate.getSafeMode() == ESafeMode.Y_UP) {
             IntStream.range((int) coordinate.getY(), NarcissusUtils.getWorldMaxY(world))
-                    .forEach(y -> coordinates.add(coordinate.clone().setY(y)));
+                    .forEach(y -> coordinates.add(new Coordinate(coordinate.getX(), y, coordinate.getZ())));
         } else if (coordinate.getSafeMode() == ESafeMode.Y_OFFSET_3) {
             IntStream.range((int) (coordinate.getY() - 3), (int) (coordinate.getY() + 3))
-                    .forEach(y -> coordinates.add(coordinate.clone().setY(y)));
+                    .forEach(y -> coordinates.add(new Coordinate(coordinate.getX(), y, coordinate.getZ())));
         } else {
             IntStream.range(chunkMinX, chunkMaxX)
                     .forEach(x -> IntStream.range(chunkMinZ, chunkMaxZ)
                             .forEach(z -> IntStream.range(NarcissusUtils.getWorldMinY(world), NarcissusUtils.getWorldMaxY(world))
-                                    .forEach(y -> coordinates.add(coordinate.clone().setX(x).setZ(z).setY(y)))
+                                    .forEach(y -> coordinates.add(new Coordinate(x, y, z)))
                             )
                     );
         }
-        for (Coordinate c : coordinates.stream().sorted(Comparator.comparingDouble(c -> {
-            double v = coordinate.distanceFrom(c);
-            return v <= 16 ? v : 16 + Math.abs(coordinate.getY() - c.getY()) + coordinate.distanceFrom2D(c);
-        })).toList()) {
+        LOGGER.debug("TimeMillis before sorting: {}", System.currentTimeMillis());
+        List<Coordinate> list = coordinates.stream().sorted(comparator).toList();
+        LOGGER.debug("TimeMillis before searching: {}", System.currentTimeMillis());
+        for (Coordinate c : list) {
             double offsetX = c.getX() >= 0 ? c.getX() + 0.5 : c.getX() - 0.5;
             double offsetZ = c.getZ() >= 0 ? c.getZ() + 0.5 : c.getZ() - 0.5;
             Coordinate candidate = new Coordinate().setX(offsetX).setY(c.getY() + 0.15).setZ(offsetZ)
@@ -550,15 +597,19 @@ public class NarcissusUtils {
                     .setSafe(coordinate.isSafe()).setSafeMode(coordinate.getSafeMode());
             if (belowAllowAir) {
                 if (isAirCoordinate(world, candidate)) {
-                    return candidate;
+                    result = candidate;
+                    break;
                 }
             } else {
                 if (isSafeCoordinate(world, candidate)) {
-                    return candidate;
+                    result = candidate;
+                    break;
                 }
             }
         }
-        return coordinate;
+        LOGGER.debug("TimeMillis after searching: {}", System.currentTimeMillis());
+        LOGGER.debug("Target:{} | Safe:{}", coordinate.toXyzString(), result.toXyzString());
+        return result;
     }
 
     private static boolean isAirCoordinate(Level world, Coordinate coordinate) {
