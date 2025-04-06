@@ -9,6 +9,10 @@ public enum ECommandType {
     UUID_CONCISE(),
     DIMENSION(),
     DIMENSION_CONCISE(),
+    CARD(),
+    CARD_CONCISE(),
+    SET_CARD(true),
+    SET_CARD_CONCISE(),
     FEED(),
     FEED_OTHER(true),
     FEED_CONCISE(),
@@ -23,12 +27,16 @@ public enum ECommandType {
     TP_ASK_YES_CONCISE(),
     TP_ASK_NO(false, false),
     TP_ASK_NO_CONCISE(),
+    TP_ASK_CANCEL(false, false),
+    TP_ASK_CANCEL_CONCISE(),
     TP_HERE(),
     TP_HERE_CONCISE(),
     TP_HERE_YES(false, false),
     TP_HERE_YES_CONCISE(),
     TP_HERE_NO(false, false),
     TP_HERE_NO_CONCISE(),
+    TP_HERE_CANCEL(false, false),
+    TP_HERE_CANCEL_CONCISE(),
     TP_RANDOM(),
     TP_RANDOM_CONCISE(),
     TP_SPAWN(),
@@ -102,9 +110,21 @@ public enum ECommandType {
         return switch (this) {
             case TP_COORDINATE, TP_COORDINATE_CONCISE -> ETeleportType.TP_COORDINATE;
             case TP_STRUCTURE, TP_STRUCTURE_CONCISE -> ETeleportType.TP_STRUCTURE;
-            case TP_ASK, TP_ASK_YES, TP_ASK_NO, TP_ASK_CONCISE, TP_ASK_YES_CONCISE, TP_ASK_NO_CONCISE ->
+            // case TP_ASK_YES:
+            // case TP_ASK_NO:
+            // case TP_ASK_CANCEL:
+            case TP_ASK, TP_ASK_CONCISE ->
+                // case TP_ASK_YES_CONCISE:
+                // case TP_ASK_NO_CONCISE:
+                // case TP_ASK_CANCEL_CONCISE:
                     ETeleportType.TP_ASK;
-            case TP_HERE, TP_HERE_YES, TP_HERE_NO, TP_HERE_CONCISE, TP_HERE_YES_CONCISE, TP_HERE_NO_CONCISE ->
+            // case TP_HERE_YES:
+            // case TP_HERE_NO:
+            // case TP_HERE_CANCEL:
+            case TP_HERE, TP_HERE_CONCISE ->
+                // case TP_HERE_YES_CONCISE:
+                // case TP_HERE_NO_CONCISE:
+                // case TP_HERE_CANCEL_CONCISE:
                     ETeleportType.TP_HERE;
             case TP_RANDOM, TP_RANDOM_CONCISE -> ETeleportType.TP_RANDOM;
             case TP_SPAWN, TP_SPAWN_OTHER, TP_SPAWN_CONCISE, TP_SPAWN_OTHER_CONCISE -> ETeleportType.TP_SPAWN;
@@ -114,10 +134,22 @@ public enum ECommandType {
             case TP_UP, TP_UP_CONCISE -> ETeleportType.TP_UP;
             case TP_DOWN, TP_DOWN_CONCISE -> ETeleportType.TP_DOWN;
             case TP_VIEW, TP_VIEW_CONCISE -> ETeleportType.TP_VIEW;
-            case TP_HOME, SET_HOME, DEL_HOME, GET_HOME, TP_HOME_CONCISE, SET_HOME_CONCISE, DEL_HOME_CONCISE,
-                 GET_HOME_CONCISE -> ETeleportType.TP_HOME;
-            case TP_STAGE, SET_STAGE, DEL_STAGE, GET_STAGE, TP_STAGE_CONCISE, SET_STAGE_CONCISE, DEL_STAGE_CONCISE,
-                 GET_STAGE_CONCISE -> ETeleportType.TP_STAGE;
+            // case SET_HOME:
+            // case DEL_HOME:
+            // case GET_HOME:
+            case TP_HOME, TP_HOME_CONCISE ->
+                // case SET_HOME_CONCISE:
+                // case DEL_HOME_CONCISE:
+                // case GET_HOME_CONCISE:
+                    ETeleportType.TP_HOME;
+            // case SET_STAGE:
+            // case DEL_STAGE:
+            // case GET_STAGE:
+            case TP_STAGE, TP_STAGE_CONCISE ->
+                // case SET_STAGE_CONCISE:
+                // case DEL_STAGE_CONCISE:
+                // case GET_STAGE_CONCISE:
+                    ETeleportType.TP_STAGE;
             case TP_BACK, TP_BACK_CONCISE -> ETeleportType.TP_BACK;
             default -> null;
         };

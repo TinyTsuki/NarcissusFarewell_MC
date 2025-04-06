@@ -1,14 +1,19 @@
 package xin.vanilla.narcissus.config;
 
-import net.minecraft.commands.arguments.blocks.BlockStateParser;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.sounds.SoundEvents;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraftforge.common.ForgeConfigSpec;
 import xin.vanilla.narcissus.enums.ECardType;
 import xin.vanilla.narcissus.enums.ECoolDownType;
 import xin.vanilla.narcissus.enums.ECostType;
+import xin.vanilla.narcissus.enums.ETeleportType;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -38,6 +43,10 @@ public class ServerConfig {
      * 历史传送记录数量限制
      */
     public static final ForgeConfigSpec.IntValue TELEPORT_RECORD_LIMIT;
+    /**
+     * back指令默认忽略的传送类型
+     */
+    public static final ForgeConfigSpec.ConfigValue<List<String>> TELEPORT_BACK_SKIP_TYPE;
     /**
      * 跨维度传送
      */
@@ -278,6 +287,8 @@ public class ServerConfig {
 
     public static final ForgeConfigSpec.IntValue PERMISSION_VIRTUAL_OP;
 
+    public static final ForgeConfigSpec.IntValue PERMISSION_SET_CARD;
+
     /**
      * 跨维度传送到指定坐标权限
      */
@@ -422,6 +433,11 @@ public class ServerConfig {
     public static final ForgeConfigSpec.ConfigValue<String> COMMAND_DIMENSION;
 
     /**
+     * 获取传送卡数量
+     */
+    public static final ForgeConfigSpec.ConfigValue<String> COMMAND_CARD;
+
+    /**
      * 自杀或毒杀(水仙是有毒的可不能吃哦)
      */
     public static final ForgeConfigSpec.ConfigValue<String> COMMAND_FEED;
@@ -452,6 +468,11 @@ public class ServerConfig {
     public static final ForgeConfigSpec.ConfigValue<String> COMMAND_TP_ASK_NO;
 
     /**
+     * 取消传送至玩家的请求
+     */
+    public static final ForgeConfigSpec.ConfigValue<String> COMMAND_TP_ASK_CANCEL;
+
+    /**
      * 请求将玩家传送至当前位置
      */
     public static final ForgeConfigSpec.ConfigValue<String> COMMAND_TP_HERE;
@@ -465,6 +486,11 @@ public class ServerConfig {
      * 拒绝请求将玩家传送至当前位置
      */
     public static final ForgeConfigSpec.ConfigValue<String> COMMAND_TP_HERE_NO;
+
+    /**
+     * 取消将玩家传送至当前位置的请求
+     */
+    public static final ForgeConfigSpec.ConfigValue<String> COMMAND_TP_HERE_CANCEL;
 
     /**
      * 随机传送
@@ -571,6 +597,11 @@ public class ServerConfig {
     public static final ForgeConfigSpec.BooleanValue CONCISE_DIMENSION;
 
     /**
+     * 获取传送卡数量
+     */
+    public static final ForgeConfigSpec.BooleanValue CONCISE_CARD;
+
+    /**
      * 自杀或毒杀
      */
     public static final ForgeConfigSpec.BooleanValue CONCISE_FEED;
@@ -601,6 +632,11 @@ public class ServerConfig {
     public static final ForgeConfigSpec.BooleanValue CONCISE_TP_ASK_NO;
 
     /**
+     * 取消传送至玩家的请求
+     */
+    public static final ForgeConfigSpec.BooleanValue CONCISE_TP_ASK_CANCEL;
+
+    /**
      * 请求将玩家传送至当前位置
      */
     public static final ForgeConfigSpec.BooleanValue CONCISE_TP_HERE;
@@ -614,6 +650,11 @@ public class ServerConfig {
      * 拒绝请求将玩家传送至当前位置
      */
     public static final ForgeConfigSpec.BooleanValue CONCISE_TP_HERE_NO;
+
+    /**
+     * 取消将玩家传送至当前位置的请求
+     */
+    public static final ForgeConfigSpec.BooleanValue CONCISE_TP_HERE_CANCEL;
 
     /**
      * 随机传送
@@ -847,6 +888,16 @@ public class ServerConfig {
                             , "传送记录数量限制，数量为0表示不限制。")
                     .defineInRange("teleportRecordLimit", 100, 0, 99999);
 
+            // 传送指令默认忽略的类型
+            TELEPORT_BACK_SKIP_TYPE = SERVER_BUILDER
+                    .comment("The teleport back skip type."
+                            , "传送回时忽略的传送类型。"
+                            , "Allowed Values: " + ETeleportType.names())
+                    .defineInList("teleportBackSkipType", new ArrayList<String>() {{
+                                add(ETeleportType.TP_BACK.name());
+                            }},
+                            Collections.singleton(ETeleportType.names()));
+
             // 跨维度传送
             TELEPORT_ACROSS_DIMENSION = SERVER_BUILDER
                     .comment("Is the teleport across dimensions enabled?"
@@ -973,7 +1024,10 @@ public class ServerConfig {
                                             Blocks.CACTUS,
                                             Blocks.MAGMA_BLOCK,
                                             Blocks.SWEET_BERRY_BUSH
-                                    ).map(block -> BlockStateParser.serialize(block.defaultBlockState()))
+                                    ).map(block -> {
+                                        Optional<ResourceKey<Block>> key = block.defaultBlockState().getBlockHolder().unwrapKey();
+                                        return key.map(blockResourceKey -> blockResourceKey.location().toString()).orElse("");
+                                    })
                                     .collect(Collectors.toList())
                     );
 
@@ -984,7 +1038,10 @@ public class ServerConfig {
                     .define("suffocatingBlocks", Stream.of(
                                             Blocks.LAVA,
                                             Blocks.WATER
-                                    ).map(block -> BlockStateParser.serialize(block.defaultBlockState()))
+                                    ).map(block -> {
+                                        Optional<ResourceKey<Block>> key = block.defaultBlockState().getBlockHolder().unwrapKey();
+                                        return key.map(blockResourceKey -> blockResourceKey.location().toString()).orElse("");
+                                    })
                                     .collect(Collectors.toList())
                     );
 
@@ -1009,7 +1066,10 @@ public class ServerConfig {
                                             Blocks.DIRT_PATH,
                                             Blocks.DIRT,
                                             Blocks.COBBLESTONE
-                                    ).map(block -> BlockStateParser.serialize(block.defaultBlockState()))
+                                    ).map(block -> {
+                                        Optional<ResourceKey<Block>> key = block.defaultBlockState().getBlockHolder().unwrapKey();
+                                        return key.map(blockResourceKey -> blockResourceKey.location().toString()).orElse("");
+                                    })
                                     .collect(Collectors.toList())
                     );
 
@@ -1225,6 +1285,11 @@ public class ServerConfig {
                         .comment("The permission level required to use the 'Set virtual permission' command, and also used as the permission level for modifying server configuration."
                                 , "设置虚拟权限指令所需的权限等级，同时用于控制使用'修改服务器配置指令'的权限。")
                         .defineInRange("permissionVirtualOp", 4, 0, 4);
+
+                PERMISSION_SET_CARD = SERVER_BUILDER
+                        .comment("The permission level required to use the 'Set the number of Teleport Card of the player' command."
+                                , "设置玩家传送卡数量指令所需的权限等级。")
+                        .defineInRange("permissionSetCard", 2, 0, 4);
             }
             SERVER_BUILDER.pop();
 
@@ -1385,6 +1450,12 @@ public class ServerConfig {
                             , "获取当前世界的维度ID的指令。")
                     .define("commandDimension", "dim");
 
+            // 获取传送卡数量
+            COMMAND_CARD = SERVER_BUILDER
+                    .comment("This command is used to get the number of Teleport Card."
+                            , "获取传送卡数量的指令。")
+                    .define("commandCard", "card");
+
             // 自杀或毒杀
             COMMAND_FEED = SERVER_BUILDER
                     .comment("This command is used to suicide or poisoning, narcissus are poisonous and should not be eaten."
@@ -1423,6 +1494,11 @@ public class ServerConfig {
                             , "拒绝请求传送至玩家的指令。"
                             , "我也翻译不清楚了，你懂意思就行。>_<")
                     .define("commandTpAskNo", "tpan");
+
+            COMMAND_TP_ASK_CANCEL = SERVER_BUILDER
+                    .comment("This command is used to cancel the request to teleport to other players."
+                            , "取消请求传送至玩家的指令。")
+                    .define("commandTpAskCancel", "tpac");
             SERVER_BUILDER.pop();
 
             SERVER_BUILDER.comment("Request the transfer of other players to oneself", "请求将玩家传送至当前位置").push("TpHere");
@@ -1445,6 +1521,11 @@ public class ServerConfig {
                             , "拒绝请求将玩家传送至当前位置的指令。"
                             , "我也翻译不清楚了，你懂意思就行。>_<")
                     .define("commandTpHereNo", "tphn");
+
+            COMMAND_TP_HERE_CANCEL = SERVER_BUILDER
+                    .comment("This command is used to cancel the request to teleport to other players."
+                            , "取消请求将玩家传送至当前位置的指令。")
+                    .define("commandTpHereCancel", "tphc");
             SERVER_BUILDER.pop();
 
             // 随机传送
@@ -1578,6 +1659,11 @@ public class ServerConfig {
                             "是否启用无前缀版本的 '获取当前世界的维度ID' 指令。")
                     .define("conciseDimension", false);
 
+            CONCISE_CARD = SERVER_BUILDER
+                    .comment("Enable or disable the concise version of the 'Get the number of Teleport Card of the player' command.",
+                            "是否启用无前缀版本的 '获取玩家的传送卡数量' 指令。")
+                    .define("conciseCard", false);
+
             CONCISE_FEED = SERVER_BUILDER
                     .comment("Enable or disable the concise version of the 'Suicide or poisoning' command.",
                             "是否启用无前缀版本的 '自杀或毒杀' 指令。")
@@ -1607,7 +1693,12 @@ public class ServerConfig {
             CONCISE_TP_ASK_NO = SERVER_BUILDER
                     .comment("Enable or disable the concise version of the 'Refuse teleportation of other players to oneself' command.",
                             "是否启用无前缀版本的 '拒绝请求传送至玩家' 指令。")
-                    .define("conciseTpAskNo", false);
+                    .define("conciseTpAskNo", true);
+
+            CONCISE_TP_ASK_CANCEL = SERVER_BUILDER
+                    .comment("Enable or disable the concise version of the 'Cancel the request to teleport to other players' command.",
+                            "是否启用无前缀版本的 '取消请求传送至玩家' 指令。")
+                    .define("conciseTpAskCancel", true);
             SERVER_BUILDER.pop();
 
             SERVER_BUILDER.comment("Request the transfer of other players to oneself", "请求将玩家传送至当前位置").push("TpHere");
@@ -1624,7 +1715,12 @@ public class ServerConfig {
             CONCISE_TP_HERE_NO = SERVER_BUILDER
                     .comment("Enable or disable the concise version of the 'Refuse teleportation to other players' command.",
                             "是否启用无前缀版本的 '拒绝请求将玩家传送至当前位置' 指令。")
-                    .define("conciseTpHereNo", false);
+                    .define("conciseTpHereNo", true);
+
+            CONCISE_TP_HERE_CANCEL = SERVER_BUILDER
+                    .comment("Enable or disable the concise version of the 'Cancel the request to teleport to other players' command.",
+                            "是否启用无前缀版本的 '取消请求将玩家传送至当前位置' 指令。")
+                    .define("conciseTpHereCancel", true);
             SERVER_BUILDER.pop();
 
             CONCISE_TP_RANDOM = SERVER_BUILDER
@@ -1678,17 +1774,17 @@ public class ServerConfig {
             CONCISE_SET_HOME = SERVER_BUILDER
                     .comment("Enable or disable the concise version of the 'Set the home' command.",
                             "是否启用无前缀版本的 '设置家' 指令。")
-                    .define("conciseTpHomeSet", false);
+                    .define("conciseTpHomeSet", true);
 
             CONCISE_DEL_HOME = SERVER_BUILDER
                     .comment("Enable or disable the concise version of the 'Delete the home' command.",
                             "是否启用无前缀版本的 '删除家' 指令。")
-                    .define("conciseTpHomeDel", false);
+                    .define("conciseTpHomeDel", true);
 
             CONCISE_GET_HOME = SERVER_BUILDER
                     .comment("Enable or disable the concise version of the 'Get the home info' command.",
                             "是否启用无前缀版本的 '查询家' 指令。")
-                    .define("conciseTpHomeGet", false);
+                    .define("conciseTpHomeGet", true);
             SERVER_BUILDER.pop();
 
             SERVER_BUILDER.comment("Teleport to the stage", "传送到驿站").push("TpStage");
@@ -1700,17 +1796,17 @@ public class ServerConfig {
             CONCISE_SET_STAGE = SERVER_BUILDER
                     .comment("Enable or disable the concise version of the 'Set the stage' command.",
                             "是否启用无前缀版本的 '设置驿站' 指令。")
-                    .define("conciseTpStageSet", false);
+                    .define("conciseTpStageSet", true);
 
             CONCISE_DEL_STAGE = SERVER_BUILDER
                     .comment("Enable or disable the concise version of the 'Delete the stage' command.",
                             "是否启用无前缀版本的 '删除驿站' 指令。")
-                    .define("conciseTpStageDel", false);
+                    .define("conciseTpStageDel", true);
 
             CONCISE_GET_STAGE = SERVER_BUILDER
                     .comment("Enable or disable the concise version of the 'Get the stage info' command.",
                             "是否启用无前缀版本的 '查询驿站' 指令。")
-                    .define("conciseTpStageGet", false);
+                    .define("conciseTpStageGet", true);
             SERVER_BUILDER.pop();
 
             CONCISE_TP_BACK = SERVER_BUILDER
@@ -1736,7 +1832,7 @@ public class ServerConfig {
                 COST_TP_COORDINATE_TYPE = SERVER_BUILDER
                         .comment("The cost type for 'Teleport to the specified coordinates'"
                                 , "传送到指定坐标的代价类型。")
-                        .defineEnum("costTpCoordinateType", ECostType.EXP_POINT);
+                        .defineEnum("costTpCoordinateType", ECostType.NONE);
 
                 COST_TP_COORDINATE_NUM = SERVER_BUILDER
                         .comment("The number of cost for 'Teleport to the specified coordinates'"
@@ -1766,7 +1862,7 @@ public class ServerConfig {
                 COST_TP_STRUCTURE_TYPE = SERVER_BUILDER
                         .comment("The cost type for 'Teleport to the specified structure'"
                                 , "传送到指定结构的代价类型。")
-                        .defineEnum("costTpStructureType", ECostType.EXP_POINT);
+                        .defineEnum("costTpStructureType", ECostType.NONE);
 
                 COST_TP_STRUCTURE_NUM = SERVER_BUILDER
                         .comment("The number of cost for 'Teleport to the specified structure'"
@@ -1796,7 +1892,7 @@ public class ServerConfig {
                 COST_TP_ASK_TYPE = SERVER_BUILDER
                         .comment("The cost type for 'Request to teleport oneself to other players'"
                                 , "请求传送至玩家的代价类型。")
-                        .defineEnum("costTpAskType", ECostType.EXP_POINT);
+                        .defineEnum("costTpAskType", ECostType.NONE);
 
                 COST_TP_ASK_NUM = SERVER_BUILDER
                         .comment("The number of cost for 'Request to teleport oneself to other players'"
@@ -1826,7 +1922,7 @@ public class ServerConfig {
                 COST_TP_HERE_TYPE = SERVER_BUILDER
                         .comment("The cost type for 'Request the transfer of other players to oneself'"
                                 , "请求将玩家传送至当前位置的代价类型。")
-                        .defineEnum("costTpHereType", ECostType.EXP_POINT);
+                        .defineEnum("costTpHereType", ECostType.NONE);
 
                 COST_TP_HERE_NUM = SERVER_BUILDER
                         .comment("The number of cost for 'Request the transfer of other players to oneself'"
@@ -1856,7 +1952,7 @@ public class ServerConfig {
                 COST_TP_RANDOM_TYPE = SERVER_BUILDER
                         .comment("The cost type for 'Teleport to a random location'"
                                 , "随机传送的代价类型。")
-                        .defineEnum("costTpRandomType", ECostType.EXP_POINT);
+                        .defineEnum("costTpRandomType", ECostType.NONE);
 
                 COST_TP_RANDOM_NUM = SERVER_BUILDER
                         .comment("The number of cost for 'Teleport to a random location'"
@@ -1886,7 +1982,7 @@ public class ServerConfig {
                 COST_TP_SPAWN_TYPE = SERVER_BUILDER
                         .comment("The cost type for 'Teleport to the spawn of the player'"
                                 , "传送到玩家重生点的代价类型。")
-                        .defineEnum("costTpSpawnType", ECostType.EXP_POINT);
+                        .defineEnum("costTpSpawnType", ECostType.NONE);
 
                 COST_TP_SPAWN_NUM = SERVER_BUILDER
                         .comment("The number of cost for 'Teleport to the spawn of the player'"
@@ -1916,7 +2012,7 @@ public class ServerConfig {
                 COST_TP_WORLD_SPAWN_TYPE = SERVER_BUILDER
                         .comment("The cost type for 'Teleport to the spawn of the world'"
                                 , "传送到世界重生点的代价类型。")
-                        .defineEnum("costTpWorldSpawnType", ECostType.EXP_POINT);
+                        .defineEnum("costTpWorldSpawnType", ECostType.NONE);
 
                 COST_TP_WORLD_SPAWN_NUM = SERVER_BUILDER
                         .comment("The number of cost for 'Teleport to the spawn of the world'"
@@ -1946,7 +2042,7 @@ public class ServerConfig {
                 COST_TP_TOP_TYPE = SERVER_BUILDER
                         .comment("The cost type for 'Teleport to the top of current position'"
                                 , "传送到顶部的代价类型。")
-                        .defineEnum("costTpTopType", ECostType.EXP_POINT);
+                        .defineEnum("costTpTopType", ECostType.NONE);
 
                 COST_TP_TOP_NUM = SERVER_BUILDER
                         .comment("The number of cost for 'Teleport to the top of current position'"
@@ -1976,7 +2072,7 @@ public class ServerConfig {
                 COST_TP_BOTTOM_TYPE = SERVER_BUILDER
                         .comment("The cost type for 'Teleport to the bottom of current position'"
                                 , "传送到底部的代价类型。")
-                        .defineEnum("costTpBottomType", ECostType.EXP_POINT);
+                        .defineEnum("costTpBottomType", ECostType.NONE);
 
                 COST_TP_BOTTOM_NUM = SERVER_BUILDER
                         .comment("The number of cost for 'Teleport to the bottom of current position'"
@@ -2006,7 +2102,7 @@ public class ServerConfig {
                 COST_TP_UP_TYPE = SERVER_BUILDER
                         .comment("The cost type for 'Teleport to the upper of current position'"
                                 , "传送到上方的代价类型。")
-                        .defineEnum("costTpUpType", ECostType.EXP_POINT);
+                        .defineEnum("costTpUpType", ECostType.NONE);
 
                 COST_TP_UP_NUM = SERVER_BUILDER
                         .comment("The number of cost for 'Teleport to the upper of current position'"
@@ -2036,7 +2132,7 @@ public class ServerConfig {
                 COST_TP_DOWN_TYPE = SERVER_BUILDER
                         .comment("The cost type for 'Teleport to the lower of current position'"
                                 , "传送到下方的代价类型。")
-                        .defineEnum("costTpDownType", ECostType.EXP_POINT);
+                        .defineEnum("costTpDownType", ECostType.NONE);
 
                 COST_TP_DOWN_NUM = SERVER_BUILDER
                         .comment("The number of cost for 'Teleport to the lower of current position'"
@@ -2066,7 +2162,7 @@ public class ServerConfig {
                 COST_TP_VIEW_TYPE = SERVER_BUILDER
                         .comment("The cost type for 'Teleport to the end of the line of sight'"
                                 , "传送至视线尽头的代价类型。")
-                        .defineEnum("costTpViewType", ECostType.EXP_POINT);
+                        .defineEnum("costTpViewType", ECostType.NONE);
 
                 COST_TP_VIEW_NUM = SERVER_BUILDER
                         .comment("The number of cost for 'Teleport to the end of the line of sight'"
@@ -2096,7 +2192,7 @@ public class ServerConfig {
                 COST_TP_HOME_TYPE = SERVER_BUILDER
                         .comment("The cost type for 'Teleport to the home'"
                                 , "传送到家的代价类型。")
-                        .defineEnum("costTpHomeType", ECostType.EXP_POINT);
+                        .defineEnum("costTpHomeType", ECostType.NONE);
 
                 COST_TP_HOME_NUM = SERVER_BUILDER
                         .comment("The number of cost for 'Teleport to the home'"
@@ -2126,7 +2222,7 @@ public class ServerConfig {
                 COST_TP_STAGE_TYPE = SERVER_BUILDER
                         .comment("The cost type for 'Teleport to the stage'"
                                 , "传送到驿站的代价类型。")
-                        .defineEnum("costTpStageType", ECostType.EXP_POINT);
+                        .defineEnum("costTpStageType", ECostType.NONE);
 
                 COST_TP_STAGE_NUM = SERVER_BUILDER
                         .comment("The number of cost for 'Teleport to the stage'"
@@ -2156,7 +2252,7 @@ public class ServerConfig {
                 COST_TP_BACK_TYPE = SERVER_BUILDER
                         .comment("The cost type for 'Teleport to the previous location'"
                                 , "传送到上次传送点的代价类型。")
-                        .defineEnum("costTpBackType", ECostType.HUNGER);
+                        .defineEnum("costTpBackType", ECostType.NONE);
 
                 COST_TP_BACK_NUM = SERVER_BUILDER
                         .comment("The number of cost for 'Teleport to the previous location'"
