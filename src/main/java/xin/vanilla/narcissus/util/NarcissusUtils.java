@@ -3,6 +3,7 @@ package xin.vanilla.narcissus.util;
 import com.mojang.brigadier.StringReader;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import lombok.NonNull;
+import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
 import net.minecraft.client.Minecraft;
@@ -67,6 +68,7 @@ import java.time.Instant;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 public class NarcissusUtils {
 
@@ -89,6 +91,11 @@ public class NarcissusUtils {
      */
     public static boolean isCommandEnabled(ECommandType type) {
         switch (type) {
+            case CARD:
+            case SET_CARD:
+            case CARD_CONCISE:
+            case SET_CARD_CONCISE:
+                return ServerConfig.TELEPORT_CARD.get();
             case FEED:
             case FEED_OTHER:
             case FEED_CONCISE:
@@ -103,16 +110,20 @@ public class NarcissusUtils {
             case TP_ASK:
             case TP_ASK_YES:
             case TP_ASK_NO:
+            case TP_ASK_CANCEL:
             case TP_ASK_CONCISE:
             case TP_ASK_YES_CONCISE:
             case TP_ASK_NO_CONCISE:
+            case TP_ASK_CANCEL_CONCISE:
                 return ServerConfig.SWITCH_TP_ASK.get();
             case TP_HERE:
             case TP_HERE_YES:
             case TP_HERE_NO:
+            case TP_HERE_CANCEL:
             case TP_HERE_CONCISE:
             case TP_HERE_YES_CONCISE:
             case TP_HERE_NO_CONCISE:
+            case TP_HERE_CANCEL_CONCISE:
                 return ServerConfig.SWITCH_TP_HERE.get();
             case TP_RANDOM:
             case TP_RANDOM_CONCISE:
@@ -216,6 +227,12 @@ public class NarcissusUtils {
                 return prefix + " " + ServerConfig.COMMAND_UUID.get();
             case UUID_CONCISE:
                 return isConciseEnabled(type) ? ServerConfig.COMMAND_UUID.get() : "";
+            case CARD:
+            case SET_CARD:
+                return prefix + " " + ServerConfig.COMMAND_CARD.get();
+            case CARD_CONCISE:
+            case SET_CARD_CONCISE:
+                return isConciseEnabled(type) ? ServerConfig.COMMAND_CARD.get() : "";
             case FEED:
             case FEED_OTHER:
                 return prefix + " " + ServerConfig.COMMAND_FEED.get();
@@ -242,6 +259,10 @@ public class NarcissusUtils {
                 return prefix + " " + ServerConfig.COMMAND_TP_ASK_NO.get();
             case TP_ASK_NO_CONCISE:
                 return isConciseEnabled(type) ? ServerConfig.COMMAND_TP_ASK_NO.get() : "";
+            case TP_ASK_CANCEL:
+                return prefix + " " + ServerConfig.COMMAND_TP_ASK_CANCEL.get();
+            case TP_ASK_CANCEL_CONCISE:
+                return isConciseEnabled(type) ? ServerConfig.COMMAND_TP_ASK_CANCEL.get() : "";
             case TP_HERE:
                 return prefix + " " + ServerConfig.COMMAND_TP_HERE.get();
             case TP_HERE_CONCISE:
@@ -254,6 +275,10 @@ public class NarcissusUtils {
                 return prefix + " " + ServerConfig.COMMAND_TP_HERE_NO.get();
             case TP_HERE_NO_CONCISE:
                 return isConciseEnabled(type) ? ServerConfig.COMMAND_TP_HERE_NO.get() : "";
+            case TP_HERE_CANCEL:
+                return prefix + " " + ServerConfig.COMMAND_TP_HERE_CANCEL.get();
+            case TP_HERE_CANCEL_CONCISE:
+                return isConciseEnabled(type) ? ServerConfig.COMMAND_TP_HERE_CANCEL.get() : "";
             case TP_RANDOM:
                 return prefix + " " + ServerConfig.COMMAND_TP_RANDOM.get();
             case TP_RANDOM_CONCISE:
@@ -335,6 +360,9 @@ public class NarcissusUtils {
 
     public static int getCommandPermissionLevel(ECommandType type) {
         switch (type) {
+            case SET_CARD:
+            case SET_CARD_CONCISE:
+                return ServerConfig.PERMISSION_SET_CARD.get();
             case FEED_OTHER:
             case FEED_OTHER_CONCISE:
                 return ServerConfig.PERMISSION_FEED_OTHER.get();
@@ -345,16 +373,20 @@ public class NarcissusUtils {
             case TP_STRUCTURE_CONCISE:
                 return ServerConfig.PERMISSION_TP_STRUCTURE.get();
             case TP_ASK:
+            case TP_ASK_CANCEL:
                 // case TP_ASK_YES:
                 // case TP_ASK_NO:
             case TP_ASK_CONCISE:
+            case TP_ASK_CANCEL_CONCISE:
                 // case TP_ASK_YES_CONCISE:
                 // case TP_ASK_NO_CONCISE:
                 return ServerConfig.PERMISSION_TP_ASK.get();
             case TP_HERE:
+            case TP_HERE_CANCEL:
                 // case TP_HERE_YES:
                 // case TP_HERE_NO:
             case TP_HERE_CONCISE:
+            case TP_HERE_CANCEL_CONCISE:
                 // case TP_HERE_YES_CONCISE:
                 // case TP_HERE_NO_CONCISE:
                 return ServerConfig.PERMISSION_TP_HERE.get();
@@ -462,6 +494,11 @@ public class NarcissusUtils {
             case DIMENSION:
             case DIMENSION_CONCISE:
                 return ServerConfig.CONCISE_DIMENSION.get();
+            case CARD:
+            case CARD_CONCISE:
+            case SET_CARD:
+            case SET_CARD_CONCISE:
+                return ServerConfig.CONCISE_CARD.get();
             case FEED:
             case FEED_OTHER:
             case FEED_CONCISE:
@@ -482,6 +519,9 @@ public class NarcissusUtils {
             case TP_ASK_NO:
             case TP_ASK_NO_CONCISE:
                 return ServerConfig.CONCISE_TP_ASK_NO.get();
+            case TP_ASK_CANCEL:
+            case TP_ASK_CANCEL_CONCISE:
+                return ServerConfig.CONCISE_TP_ASK_CANCEL.get();
             case TP_HERE:
             case TP_HERE_CONCISE:
                 return ServerConfig.CONCISE_TP_HERE.get();
@@ -491,6 +531,9 @@ public class NarcissusUtils {
             case TP_HERE_NO:
             case TP_HERE_NO_CONCISE:
                 return ServerConfig.CONCISE_TP_HERE_NO.get();
+            case TP_HERE_CANCEL:
+            case TP_HERE_CANCEL_CONCISE:
+                return ServerConfig.CONCISE_TP_HERE_CANCEL.get();
             case TP_RANDOM:
             case TP_RANDOM_CONCISE:
                 return ServerConfig.CONCISE_TP_RANDOM.get();
@@ -574,42 +617,40 @@ public class NarcissusUtils {
     /**
      * 安全的方块
      */
-    private static final List<BlockState> SAFE_BLOCKS = ServerConfig.SAFE_BLOCKS.get().stream()
-            .map(block -> {
-                try {
-                    return new BlockStateParser(new StringReader(block), false).parse(true).getState();
-                } catch (CommandSyntaxException e) {
-                    LOGGER.error("Invalid unsafe block: {}", block, e);
-                    return null;
-                }
-            })
+    private static final List<BlockState> SAFE_BLOCKS_STATE = ServerConfig.SAFE_BLOCKS.get().stream()
+            .map(NarcissusUtils::deserializeBlockState)
+            .filter(Objects::nonNull)
+            .distinct()
+            .collect(Collectors.toList());
+
+    /**
+     * 安全的方块
+     */
+    private static final List<String> SAFE_BLOCKS = ServerConfig.SAFE_BLOCKS.get().stream()
             .filter(Objects::nonNull)
             .distinct()
             .collect(Collectors.toList());
     /**
      * 不安全的方块
      */
-    private static final List<BlockState> UNSAFE_BLOCKS = ServerConfig.UNSAFE_BLOCKS.get().stream()
-            .map(block -> {
-                try {
-                    return new BlockStateParser(new StringReader(block), false).parse(true).getState();
-                } catch (CommandSyntaxException e) {
-                    LOGGER.error("Invalid unsafe block: {}", block, e);
-                    return null;
-                }
-            })
+    private static final List<BlockState> UNSAFE_BLOCKS_STATE = ServerConfig.UNSAFE_BLOCKS.get().stream()
+            .map(NarcissusUtils::deserializeBlockState)
             .filter(Objects::nonNull)
             .distinct()
             .collect(Collectors.toList());
-    private static final List<BlockState> SUFFOCATING_BLOCKS = ServerConfig.SUFFOCATING_BLOCKS.get().stream()
-            .map(block -> {
-                try {
-                    return new BlockStateParser(new StringReader(block), false).parse(true).getState();
-                } catch (CommandSyntaxException e) {
-                    LOGGER.error("Invalid unsafe block: {}", block, e);
-                    return null;
-                }
-            })
+    /**
+     * 不安全的方块
+     */
+    private static final List<String> UNSAFE_BLOCKS = ServerConfig.UNSAFE_BLOCKS.get().stream()
+            .filter(Objects::nonNull)
+            .distinct()
+            .collect(Collectors.toList());
+    private static final List<BlockState> SUFFOCATING_BLOCKS_STATE = ServerConfig.SUFFOCATING_BLOCKS.get().stream()
+            .map(NarcissusUtils::deserializeBlockState)
+            .filter(Objects::nonNull)
+            .distinct()
+            .collect(Collectors.toList());
+    private static final List<String> SUFFOCATING_BLOCKS = ServerConfig.SUFFOCATING_BLOCKS.get().stream()
             .filter(Objects::nonNull)
             .distinct()
             .collect(Collectors.toList());
@@ -883,19 +924,24 @@ public class NarcissusUtils {
      */
     private static boolean isSafeBlock(World world, Coordinate coordinate, boolean belowAllowAir, BlockState block, BlockState blockAbove, BlockState blockBelow) {
         boolean isCurrentPassable = !block.getMaterial().blocksMotion()
-                && !UNSAFE_BLOCKS.contains(block);
+                && !UNSAFE_BLOCKS_STATE.contains(block)
+                && !UNSAFE_BLOCKS.contains(NarcissusUtils.getBlockRegistryName(block));
 
         boolean isHeadSafe = !blockAbove.isCollisionShapeFullBlock(world, coordinate.above().toBlockPos())
                 && !blockAbove.getMaterial().blocksMotion()
-                && !UNSAFE_BLOCKS.contains(blockAbove)
-                && !SUFFOCATING_BLOCKS.contains(blockAbove);
+                && !UNSAFE_BLOCKS_STATE.contains(blockAbove)
+                && !UNSAFE_BLOCKS.contains(NarcissusUtils.getBlockRegistryName(blockAbove))
+                && !SUFFOCATING_BLOCKS_STATE.contains(blockAbove)
+                && !SUFFOCATING_BLOCKS.contains(NarcissusUtils.getBlockRegistryName(blockAbove));
 
         boolean isBelowValid;
         if (blockBelow.getMaterial().isLiquid()) {
-            isBelowValid = !UNSAFE_BLOCKS.contains(blockBelow);
+            isBelowValid = !UNSAFE_BLOCKS_STATE.contains(blockBelow)
+                    && !UNSAFE_BLOCKS.contains(NarcissusUtils.getBlockRegistryName(blockBelow));
         } else {
             isBelowValid = blockBelow.getMaterial().isSolid()
-                    && !UNSAFE_BLOCKS.contains(blockBelow);
+                    && !UNSAFE_BLOCKS_STATE.contains(blockBelow)
+                    && !UNSAFE_BLOCKS.contains(NarcissusUtils.getBlockRegistryName(blockBelow));
         }
         if (belowAllowAir) {
             isBelowValid = isBelowValid || blockBelow.getBlock() == Blocks.AIR || blockBelow.getBlock() == Blocks.CAVE_AIR;
@@ -1043,7 +1089,7 @@ public class NarcissusUtils {
     }
 
     /**
-     * 获取并移除玩家离开的坐标
+     * 获取玩家离开的坐标
      *
      * @param player    玩家
      * @param type      传送类型
@@ -1055,9 +1101,14 @@ public class NarcissusUtils {
         // 获取玩家的传送数据
         IPlayerTeleportData data = PlayerTeleportDataCapability.getData(player);
         List<TeleportRecord> records = data.getTeleportRecords();
-        Optional<TeleportRecord> optionalRecord = records.stream()
-                .filter(record -> type == null || record.getTeleportType() == type)
-                .filter(record -> type == ETeleportType.TP_BACK || record.getTeleportType() != ETeleportType.TP_BACK)
+        Stream<TeleportRecord> stream = records.stream()
+                .filter(record -> type == null || record.getTeleportType() == type);
+        for (String s : ServerConfig.TELEPORT_BACK_SKIP_TYPE.get()) {
+            ETeleportType value = ETeleportType.nullableValueOf(s);
+            stream = stream
+                    .filter(record -> type == value || record.getTeleportType() != value);
+        }
+        Optional<TeleportRecord> optionalRecord = stream
                 .filter(record -> dimension == null || record.getBefore().getDimension().equals(dimension))
                 .max(Comparator.comparing(TeleportRecord::getTeleportTime));
         if (optionalRecord.isPresent()) {
@@ -1140,13 +1191,13 @@ public class NarcissusUtils {
                         if (ServerConfig.SETBLOCK_WHEN_SAFE_NOT_FOUND.get() && !isSafeCoordinate(level, finalAfter)) {
                             BlockState blockState;
                             List<ItemStack> playerItemList = getPlayerItemList(player);
-                            if (CollectionUtils.isNotNullOrEmpty(SAFE_BLOCKS)) {
+                            if (CollectionUtils.isNotNullOrEmpty(SAFE_BLOCKS_STATE)) {
                                 if (ServerConfig.GETBLOCK_FROM_INVENTORY.get()) {
-                                    blockState = SAFE_BLOCKS.stream()
+                                    blockState = SAFE_BLOCKS_STATE.stream()
                                             .filter(block -> playerItemList.stream().map(ItemStack::getItem).anyMatch(item -> new ItemStack(block.getBlock()).getItem().equals(item)))
                                             .findFirst().orElse(null);
                                 } else {
-                                    blockState = SAFE_BLOCKS.get(0);
+                                    blockState = SAFE_BLOCKS_STATE.get(0);
                                 }
                             } else {
                                 blockState = null;
@@ -2083,6 +2134,49 @@ public class NarcissusUtils {
         if (soundEvent != null) {
             player.playNotifySound(soundEvent, SoundCategory.PLAYERS, volume, pitch);
         }
+    }
+
+    /**
+     * 序列化方块默认状态
+     */
+    public static String serializeBlockState(Block block) {
+        return serializeBlockState(block.defaultBlockState());
+    }
+
+    /**
+     * 序列化方块状态
+     */
+    public static String serializeBlockState(BlockState blockState) {
+        return BlockStateParser.serialize(blockState);
+    }
+
+    /**
+     * 反序列化方块状态
+     */
+    public static BlockState deserializeBlockState(String block) {
+        try {
+            return new BlockStateParser(new StringReader(block), false).parse(true).getState();
+        } catch (Exception e) {
+            LOGGER.error("Invalid unsafe block: {}", block, e);
+            return null;
+        }
+    }
+
+    /**
+     * 获取方块注册ID
+     */
+    @NonNull
+    public static String getBlockRegistryName(BlockState blockState) {
+        return getBlockRegistryName(blockState.getBlock());
+    }
+
+    /**
+     * 获取方块注册ID
+     */
+    @NonNull
+    public static String getBlockRegistryName(Block block) {
+        ResourceLocation location = block.getRegistryName();
+        return location == null ? "" : location.toString();
     }
 
     // endregion 杂项
