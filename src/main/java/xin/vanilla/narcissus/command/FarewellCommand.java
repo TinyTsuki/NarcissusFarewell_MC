@@ -136,6 +136,9 @@ public class FarewellCommand extends CommandBase {
                     .map(value -> NarcissusUtils.getCommand(value, false))
                     .distinct()
                     .forEach(suggestions::add);
+            if (NarcissusUtils.hasCommandPermission(player, ECommandType.VIRTUAL_OP)) {
+                suggestions.add("config");
+            }
         } else if (args.length == 1) {
             Arrays.stream(ECommandType.values())
                     .filter(type -> !type.isIgnore())
@@ -146,6 +149,11 @@ public class FarewellCommand extends CommandBase {
                     .filter(command -> StringUtils.isNullOrEmpty(args[0]) || command.startsWith(args[0]))
                     .distinct()
                     .forEach(suggestions::add);
+            if (NarcissusUtils.hasCommandPermission(player, ECommandType.VIRTUAL_OP)) {
+                if (StringUtils.isNullOrEmpty(args[0]) || "config".startsWith(args[0])) {
+                    suggestions.add("config");
+                }
+            }
         }
         // 根据指令帮助中的参数列表进行补全提示
         else {
@@ -172,6 +180,23 @@ public class FarewellCommand extends CommandBase {
             else if (args[0].equals(ServerConfig.COMMAND_UUID) && NarcissusUtils.isTeleportEnabled(ECommandType.UUID) && NarcissusUtils.hasCommandPermission(player, ECommandType.UUID)) {
                 if (args.length == 2) {
                     suggestions.addAll(getPlayerNameSuggestions(server, args));
+                }
+            }
+            // 传送卡
+            else if (args[0].equals(ServerConfig.COMMAND_CARD) && NarcissusUtils.isTeleportEnabled(ECommandType.CARD) && NarcissusUtils.hasCommandPermission(player, ECommandType.SET_CARD)) {
+                if (args.length == 2) {
+                    suggestions.add("get");
+                    suggestions.add("add");
+                    suggestions.add("set");
+                } else if (args.length == 3) {
+                    suggestions.addAll(getPlayerNameSuggestions(server, args));
+                } else if (args.length == 4) {
+                    suggestions.add("-5");
+                    suggestions.add("-1");
+                    suggestions.add("1");
+                    suggestions.add("5");
+                    suggestions.add("10");
+                    suggestions.add("20");
                 }
             }
             // 毒杀玩家
@@ -256,13 +281,19 @@ public class FarewellCommand extends CommandBase {
             // 同意传送请求
             else if (args[0].equals(ServerConfig.COMMAND_TP_ASK_YES) && NarcissusUtils.isTeleportEnabled(ECommandType.TP_ASK) && NarcissusUtils.hasCommandPermission(player, ECommandType.TP_ASK_YES)) {
                 if (args.length == 2) {
-                    suggestions.addAll(getReqIndexSuggestions(player, ETeleportType.TP_ASK, arg));
+                    suggestions.addAll(getReqIndexSuggestions(player, ETeleportType.TP_ASK, arg, true));
                 }
             }
             // 拒绝传送请求
             else if (args[0].equals(ServerConfig.COMMAND_TP_ASK_NO) && NarcissusUtils.isTeleportEnabled(ECommandType.TP_ASK) && NarcissusUtils.hasCommandPermission(player, ECommandType.TP_ASK_NO)) {
                 if (args.length == 2) {
-                    suggestions.addAll(getReqIndexSuggestions(player, ETeleportType.TP_ASK, arg));
+                    suggestions.addAll(getReqIndexSuggestions(player, ETeleportType.TP_ASK, arg, true));
+                }
+            }
+            // 取消传送请求
+            else if (args[0].equals(ServerConfig.COMMAND_TP_ASK_CANCEL) && NarcissusUtils.isTeleportEnabled(ECommandType.TP_ASK) && NarcissusUtils.hasCommandPermission(player, ECommandType.TP_ASK_CANCEL)) {
+                if (args.length == 2) {
+                    suggestions.addAll(getReqIndexSuggestions(player, ETeleportType.TP_ASK, arg, false));
                 }
             }
             // 请求指定玩家传送
@@ -281,13 +312,19 @@ public class FarewellCommand extends CommandBase {
             // 同意传送请求
             else if (args[0].equals(ServerConfig.COMMAND_TP_HERE_YES) && NarcissusUtils.isTeleportEnabled(ECommandType.TP_HERE) && NarcissusUtils.hasCommandPermission(player, ECommandType.TP_HERE_YES)) {
                 if (args.length == 2) {
-                    suggestions.addAll(getReqIndexSuggestions(player, ETeleportType.TP_HERE, arg));
+                    suggestions.addAll(getReqIndexSuggestions(player, ETeleportType.TP_HERE, arg, true));
                 }
             }
             // 拒绝传送请求
             else if (args[0].equals(ServerConfig.COMMAND_TP_HERE_NO) && NarcissusUtils.isTeleportEnabled(ECommandType.TP_HERE) && NarcissusUtils.hasCommandPermission(player, ECommandType.TP_HERE_NO)) {
                 if (args.length == 2) {
-                    suggestions.addAll(getReqIndexSuggestions(player, ETeleportType.TP_HERE, arg));
+                    suggestions.addAll(getReqIndexSuggestions(player, ETeleportType.TP_HERE, arg, true));
+                }
+            }
+            // 拒绝传送请求
+            else if (args[0].equals(ServerConfig.COMMAND_TP_HERE_CANCEL) && NarcissusUtils.isTeleportEnabled(ECommandType.TP_HERE) && NarcissusUtils.hasCommandPermission(player, ECommandType.TP_HERE_CANCEL)) {
+                if (args.length == 2) {
+                    suggestions.addAll(getReqIndexSuggestions(player, ETeleportType.TP_HERE, arg, false));
                 }
             }
             // 传送到随机位置
@@ -421,10 +458,9 @@ public class FarewellCommand extends CommandBase {
                     if (StringUtils.isNullOrEmptyEx(arg) || "unsafe".contains(arg)) {
                         suggestions.add("unsafe");
                     }
-                    Arrays.stream(DimensionType.values())
-                            .map(dimensionType -> DimensionUtils.getStringIdFromInt(dimensionType.getId()))
-                            .filter(Objects::nonNull)
-                            .filter(string -> StringUtils.isNullOrEmpty(arg) || string.contains(arg))
+                    PlayerTeleportDataCapability.getData(player).getHomeCoordinate().keySet().stream()
+                            .filter(keyValue -> StringUtils.isNullOrEmpty(arg) || keyValue.getKey().contains(arg))
+                            .map(KeyValue::getKey)
                             .forEach(suggestions::add);
                 } else if (args.length == 4) {
                     PlayerTeleportDataCapability.getData(player).getHomeCoordinate().keySet().stream()
@@ -579,6 +615,31 @@ public class FarewellCommand extends CommandBase {
                     }
                 }
             }
+            // 服务器配置
+            else if (args[0].equals("config") && NarcissusUtils.hasCommandPermission(player, ECommandType.VIRTUAL_OP)) {
+                if (args.length == 2) {
+                    suggestions.add("get");
+                    suggestions.add("set");
+                } else {
+                    if (args[1].equals("get")) {
+                        if (args.length == 3) {
+                            suggestions.add("teleportCard");
+                        }
+                    } else if (args[1].equals("set")) {
+                        if (args.length == 3) {
+                            suggestions.add("teleportCard");
+                            suggestions.add("mode");
+                        } else if (args.length == 4) {
+                            if (args[2].equals("teleportCard")) {
+                                suggestions.add("true");
+                                suggestions.add("false");
+                            } else if (args[2].equals("mode")) {
+
+                            }
+                        }
+                    }
+                }
+            }
         }
         return suggestions;
     }
@@ -631,6 +692,38 @@ public class FarewellCommand extends CommandBase {
                         helpInfo.append("\n");
                     }
                 }
+                // 添加翻页按钮
+                if (pages > 1) {
+                    helpInfo.append("\n");
+                    Component prevButton = Component.literal("<<< ");
+                    if (page > 1) {
+                        prevButton.setColor(EMCColor.AQUA.getColor())
+                                .setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND,
+                                        String.format("/%s %s %d", NarcissusUtils.getCommandPrefix(), "help", page - 1)))
+                                .setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT,
+                                        Component.translatable(NarcissusUtils.getPlayerLanguage(player), EI18nType.MESSAGE, "previous_page").toTextComponent()));
+                    } else {
+                        prevButton.setColor(EMCColor.DARK_AQUA.getColor());
+                    }
+                    helpInfo.append(prevButton);
+
+                    helpInfo.append(Component.literal(String.format(" %s/%s "
+                                    , StringUtils.padOptimizedLeft(page, String.valueOf(pages).length(), " ")
+                                    , pages))
+                            .setColor(EMCColor.WHITE.getColor()));
+
+                    Component nextButton = Component.literal(" >>>");
+                    if (page < pages) {
+                        nextButton.setColor(EMCColor.AQUA.getColor())
+                                .setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND,
+                                        String.format("/%s %s %d", NarcissusUtils.getCommandPrefix(), "help", page + 1)))
+                                .setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT,
+                                        Component.translatable(NarcissusUtils.getPlayerLanguage(player), EI18nType.MESSAGE, "next_page").toTextComponent()));
+                    } else {
+                        nextButton.setColor(EMCColor.DARK_AQUA.getColor());
+                    }
+                    helpInfo.append(nextButton);
+                }
             } else {
                 ECommandType type = ECommandType.valueOf(command);
                 helpInfo = Component.literal("");
@@ -666,6 +759,54 @@ public class FarewellCommand extends CommandBase {
                         .setClickEvent(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, target.getUniqueID().toString()))
                         .setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.translatable(language, EI18nType.MESSAGE, "chat_copy_click").toTextComponent()));
                 Component component = Component.translatable(NarcissusUtils.getPlayerLanguage(target), EI18nType.MESSAGE, "player_uuid", target.getDisplayNameString(), uuid);
+                sender.sendMessage(component.toChatComponent(language));
+                return 1;
+            }
+            // 传送卡
+            else if (prefix.equals(ServerConfig.COMMAND_CARD)) {
+                // 传送功能前置校验
+                if (checkTeleportPre(player, ECommandType.CARD)) {
+                    return 0;
+                }
+                EntityPlayerMP target = null;
+                if (args.length == 1) {
+                    target = player;
+                } else if (args.length >= 3) {
+                    try {
+                        target = CommandBase.getPlayer(server, sender, args[2]);
+                    } catch (CommandException ignored) {
+                    }
+                }
+                String type = "get";
+                if (args.length > 2) {
+                    type = args[1];
+                }
+                int num = 0;
+                if (args.length == 4) {
+                    StringUtils.toInt(args[3]);
+                } else if ((args.length == 2 || args.length == 3) && !type.equals("get")) {
+                    return -1;
+                }
+                String language = NarcissusFarewell.DEFAULT_LANGUAGE;
+                if (player != null) {
+                    language = NarcissusUtils.getPlayerLanguage(player);
+                }
+                IPlayerTeleportData data = PlayerTeleportDataCapability.getData(target);
+                switch (type) {
+                    case "set":
+                        data.setTeleportCard(num);
+                        break;
+                    case "add":
+                        data.plusTeleportCard(num);
+                        break;
+                    case "get":
+                        break;
+                    default:
+                        throw new IllegalArgumentException("Type " + type + " is not supported");
+                }
+                Component component = Component.translatable(language, EI18nType.MESSAGE, "player_card"
+                        , target.getDisplayNameString()
+                        , data.getTeleportCard());
                 sender.sendMessage(component.toChatComponent(language));
                 return 1;
             }
@@ -879,7 +1020,12 @@ public class FarewellCommand extends CommandBase {
                     }
                     // 通知请求者
                     {
-                        NarcissusUtils.sendMessage(player, Component.translatable(NarcissusUtils.getPlayerLanguage(player), EI18nType.MESSAGE, "tp_ask_request_sent", target.getDisplayNameString()));
+                        // 创建 "Cancel" 按钮
+                        Component cancelButton = Component.translatable(NarcissusUtils.getPlayerLanguage(target), EI18nType.MESSAGE, "cancel_button", NarcissusUtils.getPlayerLanguage(target))
+                                .setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, String.format("/%s %s %s", NarcissusUtils.getCommandPrefix(), ServerConfig.COMMAND_TP_ASK_CANCEL, request.getRequestId())));
+                        Component msg = Component.translatable(NarcissusUtils.getPlayerLanguage(player), EI18nType.MESSAGE, "tp_ask_request_sent"
+                                , target.getDisplayNameString(), cancelButton);
+                        NarcissusUtils.sendMessage(player, msg);
                     }
                     return 1;
                 }
@@ -891,7 +1037,7 @@ public class FarewellCommand extends CommandBase {
                     return 0;
                 }
                 if (args.length == 1 || args.length == 2) {
-                    String id = getRequestId(player, args.length == 2 ? args[1] : "", ETeleportType.TP_ASK);
+                    String id = getRequestId(player, args.length == 2 ? args[1] : "", ETeleportType.TP_ASK, true);
                     if (StringUtils.isNullOrEmpty(id) || !NarcissusFarewell.getTeleportRequest().containsKey(id)) {
                         NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EI18nType.MESSAGE, "tp_ask_not_found"));
                         return 0;
@@ -912,13 +1058,33 @@ public class FarewellCommand extends CommandBase {
                     return 0;
                 }
                 if (args.length == 1 || args.length == 2) {
-                    String id = getRequestId(player, args.length == 2 ? args[1] : "", ETeleportType.TP_ASK);
+                    String id = getRequestId(player, args.length == 2 ? args[1] : "", ETeleportType.TP_ASK, true);
                     if (StringUtils.isNullOrEmpty(id) || !NarcissusFarewell.getTeleportRequest().containsKey(id)) {
                         NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EI18nType.MESSAGE, "tp_ask_not_found"));
                         return 0;
                     }
                     TeleportRequest request = NarcissusFarewell.getTeleportRequest().remove(id);
                     NarcissusUtils.sendTranslatableMessage(request.getRequester(), I18nUtils.getKey(EI18nType.MESSAGE, "tp_ask_rejected"), request.getTarget().getDisplayNameString());
+                    return 1;
+                }
+            }
+            // 取消传送请求
+            else if (prefix.equals(ServerConfig.COMMAND_TP_ASK_CANCEL)) {
+                // 传送功能前置校验
+                if (checkTeleportPre(player, ECommandType.TP_ASK_CANCEL)) {
+                    return 0;
+                }
+                if (args.length == 1 || args.length == 2) {
+                    String id = getRequestId(player, args.length == 2 ? args[1] : "", ETeleportType.TP_ASK, false);
+                    if (StringUtils.isNullOrEmpty(id) || !NarcissusFarewell.getTeleportRequest().containsKey(id)) {
+                        NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EI18nType.MESSAGE, "tp_ask_not_found"));
+                        return 0;
+                    }
+                    TeleportRequest request = NarcissusFarewell.getTeleportRequest().remove(id);
+                    NarcissusUtils.sendTranslatableMessage(request.getRequester(), I18nUtils.getKey(EI18nType.MESSAGE, "tp_ask_cancelled"), request.getRequester().getDisplayNameString());
+                    if (!request.getRequester().getUniqueID().equals(request.getTarget().getUniqueID())) {
+                        NarcissusUtils.sendTranslatableMessage(request.getTarget(), I18nUtils.getKey(EI18nType.MESSAGE, "tp_ask_cancelled"), request.getRequester().getDisplayNameString());
+                    }
                     return 1;
                 }
             }
@@ -985,7 +1151,12 @@ public class FarewellCommand extends CommandBase {
                     }
                     // 通知请求者
                     {
-                        NarcissusUtils.sendMessage(player, Component.translatable(NarcissusUtils.getPlayerLanguage(player), EI18nType.MESSAGE, "tp_here_request_sent", target.getDisplayNameString()));
+                        // 创建 "Cancel" 按钮
+                        Component cancelButton = Component.translatable(NarcissusUtils.getPlayerLanguage(target), EI18nType.MESSAGE, "cancel_button", NarcissusUtils.getPlayerLanguage(target))
+                                .setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, String.format("/%s %s %s", NarcissusUtils.getCommandPrefix(), ServerConfig.COMMAND_TP_HERE_CANCEL, request.getRequestId())));
+                        Component msg = Component.translatable(NarcissusUtils.getPlayerLanguage(player), EI18nType.MESSAGE, "tp_here_request_sent"
+                                , target.getDisplayNameString(), cancelButton);
+                        NarcissusUtils.sendMessage(player, msg);
                     }
                     return 1;
                 }
@@ -997,7 +1168,7 @@ public class FarewellCommand extends CommandBase {
                     return 0;
                 }
                 if (args.length == 1 || args.length == 2) {
-                    String id = getRequestId(player, args.length == 2 ? args[1] : "", ETeleportType.TP_HERE);
+                    String id = getRequestId(player, args.length == 2 ? args[1] : "", ETeleportType.TP_HERE, true);
                     if (StringUtils.isNullOrEmpty(id) || !NarcissusFarewell.getTeleportRequest().containsKey(id)) {
                         NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EI18nType.MESSAGE, "tp_here_not_found"));
                         return 0;
@@ -1018,13 +1189,33 @@ public class FarewellCommand extends CommandBase {
                     return 0;
                 }
                 if (args.length == 1 || args.length == 2) {
-                    String id = getRequestId(player, args.length == 2 ? args[1] : "", ETeleportType.TP_HERE);
+                    String id = getRequestId(player, args.length == 2 ? args[1] : "", ETeleportType.TP_HERE, true);
                     if (StringUtils.isNullOrEmpty(id) || !NarcissusFarewell.getTeleportRequest().containsKey(id)) {
                         NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EI18nType.MESSAGE, "tp_here_not_found"));
                         return 0;
                     }
                     TeleportRequest request = NarcissusFarewell.getTeleportRequest().remove(id);
                     NarcissusUtils.sendTranslatableMessage(request.getRequester(), I18nUtils.getKey(EI18nType.MESSAGE, "tp_here_rejected"), request.getTarget().getDisplayNameString());
+                    return 1;
+                }
+            }
+            // 取消传送请求
+            else if (prefix.equals(ServerConfig.COMMAND_TP_HERE_CANCEL)) {
+                // 传送功能前置校验
+                if (checkTeleportPre(player, ECommandType.TP_HERE_CANCEL)) {
+                    return 0;
+                }
+                if (args.length == 1 || args.length == 2) {
+                    String id = getRequestId(player, args.length == 2 ? args[1] : "", ETeleportType.TP_HERE, false);
+                    if (StringUtils.isNullOrEmpty(id) || !NarcissusFarewell.getTeleportRequest().containsKey(id)) {
+                        NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EI18nType.MESSAGE, "tp_here_not_found"));
+                        return 0;
+                    }
+                    TeleportRequest request = NarcissusFarewell.getTeleportRequest().remove(id);
+                    NarcissusUtils.sendTranslatableMessage(request.getRequester(), I18nUtils.getKey(EI18nType.MESSAGE, "tp_here_cancelled"), request.getRequester().getDisplayNameString());
+                    if (!request.getRequester().getUniqueID().equals(request.getTarget().getUniqueID())) {
+                        NarcissusUtils.sendTranslatableMessage(request.getTarget(), I18nUtils.getKey(EI18nType.MESSAGE, "tp_here_cancelled"), request.getRequester().getDisplayNameString());
+                    }
                     return 1;
                 }
             }
@@ -1702,6 +1893,45 @@ public class FarewellCommand extends CommandBase {
                     }
                 }
             }
+            // 服务器配置
+            else if (prefix.equals("config")) {
+                // 权限判断
+                if (!NarcissusUtils.hasCommandPermission(player, ECommandType.VIRTUAL_OP)) {
+                    NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EI18nType.MESSAGE, "command_no_permission"));
+                    return 0;
+                }
+                if (args.length == 3 && args[1].equals("get")) {
+                    if (args[2].equals("teleportCard")) {
+                        Component msg = Component.translatable(I18nUtils.getKey(EI18nType.MESSAGE, "server_config_status")
+                                , I18nUtils.enabled(NarcissusUtils.getPlayerLanguage(player), ServerConfig.TELEPORT_CARD)
+                                , Component.translatable(NarcissusUtils.getPlayerLanguage(player), EI18nType.WORD, "teleport_card"));
+                        NarcissusUtils.sendMessage(player, msg);
+                        return 1;
+                    }
+                } else if (args.length == 4 && args[1].equals("set")) {
+                    if (args[2].equals("teleportCard")) {
+                        ServerConfig.TELEPORT_CARD = StringUtils.stringToBoolean(args[3]);
+                        Component msg = Component.translatable(I18nUtils.getKey(EI18nType.MESSAGE, "server_config_status")
+                                , I18nUtils.enabled(NarcissusUtils.getPlayerLanguage(player), ServerConfig.TELEPORT_CARD)
+                                , Component.translatable(NarcissusUtils.getPlayerLanguage(player), EI18nType.WORD, "teleport_card"));
+                        NarcissusUtils.broadcastMessage(player, msg);
+                        return 1;
+                    } else if (args[2].equals("mode")) {
+                        int mode = StringUtils.toInt(args[3]);
+                        switch (mode) {
+                            case 1:
+                                // TODO 实现配置文件模式切换
+                                break;
+                            default: {
+                                throw new IllegalArgumentException("Mode " + mode + " does not exist");
+                            }
+                        }
+                        Component component = Component.translatable(EI18nType.MESSAGE, "server_config_mode", mode);
+                        NarcissusUtils.sendMessage(player, component);
+                        return 1;
+                    }
+                }
+            }
         }
         return -1;
     }
@@ -1740,10 +1970,10 @@ public class FarewellCommand extends CommandBase {
         return result;
     }
 
-    private static List<String> getReqIndexSuggestions(EntityPlayer player, ETeleportType teleportType, String arg) {
+    private static List<String> getReqIndexSuggestions(EntityPlayer player, ETeleportType teleportType, String arg, final boolean isTarget) {
         Set<String> result = new HashSet<>();
         NarcissusFarewell.getTeleportRequest().entrySet().stream()
-                .filter(entry -> entry.getValue().getRequester().getUniqueID().equals(player.getUniqueID()))
+                .filter(entry -> isTarget ? entry.getValue().getRequester().getUniqueID().equals(player.getUniqueID()) : entry.getValue().getTarget().getUniqueID().equals(player.getUniqueID()))
                 .filter(entry -> entry.getValue().getTeleportType() == teleportType)
                 .filter(entry -> StringUtils.isNullOrEmpty(arg) || entry.getKey().contains(arg))
                 .forEach(entry -> {
@@ -1752,7 +1982,7 @@ public class FarewellCommand extends CommandBase {
                 });
         if (StringUtils.isNullOrEmpty(arg)) {
             for (int i = 0; i < NarcissusFarewell.getTeleportRequest().entrySet().stream()
-                    .filter(entry -> entry.getValue().getRequester().getUniqueID().equals(player.getUniqueID()))
+                    .filter(entry -> isTarget ? entry.getValue().getRequester().getUniqueID().equals(player.getUniqueID()) : entry.getValue().getTarget().getUniqueID().equals(player.getUniqueID()))
                     .filter(entry -> entry.getValue().getTeleportType() == teleportType)
                     .count(); i++) {
                 result.add(String.valueOf(i + 1));
@@ -1840,7 +2070,13 @@ public class FarewellCommand extends CommandBase {
         return !result;
     }
 
-    private static String getRequestId(EntityPlayerMP player, String arg, ETeleportType teleportType) {
+    /**
+     * 获取传送请求ID
+     *
+     * @param teleportType 传送类型
+     * @param isTarget     是否根据接收方查找
+     */
+    private static String getRequestId(EntityPlayerMP player, String arg, ETeleportType teleportType, final boolean isTarget) {
         String result = null;
         try {
             List<EntityPlayerMP> playerMPList = new ArrayList<>();
@@ -1852,8 +2088,8 @@ public class FarewellCommand extends CommandBase {
             if (CollectionUtils.isNotNullOrEmpty(playerMPList)) {
                 EntityPlayerMP requester = playerMPList.get(0);
                 Map.Entry<String, TeleportRequest> entry1 = NarcissusFarewell.getTeleportRequest().entrySet().stream()
-                        .filter(entry -> entry.getValue().getTarget().getUniqueID().equals(player.getUniqueID()))
-                        .filter(entry -> entry.getValue().getRequester().getUniqueID().equals(requester.getUniqueID()))
+                        .filter(entry -> isTarget ? entry.getValue().getTarget().getUniqueID().equals(player.getUniqueID()) : entry.getValue().getRequester().getUniqueID().equals(player.getUniqueID()))
+                        .filter(entry -> isTarget ? entry.getValue().getRequester().getUniqueID().equals(requester.getUniqueID()) : entry.getValue().getTarget().getUniqueID().equals(requester.getUniqueID()))
                         .filter(entry -> entry.getValue().getTeleportType() == teleportType)
                         .max(Comparator.comparing(entry -> entry.getValue().getRequestTime()))
                         .orElse(null);
@@ -1865,7 +2101,7 @@ public class FarewellCommand extends CommandBase {
             } else if (String.valueOf(StringUtils.toInt(arg)).equals(arg)) {
                 int askIndex = StringUtils.toInt(arg);
                 List<Map.Entry<String, TeleportRequest>> entryList = NarcissusFarewell.getTeleportRequest().entrySet().stream()
-                        .filter(entry -> entry.getValue().getTarget().getUniqueID().equals(player.getUniqueID()))
+                        .filter(entry -> isTarget ? entry.getValue().getTarget().getUniqueID().equals(player.getUniqueID()) : entry.getValue().getRequester().getUniqueID().equals(player.getUniqueID()))
                         .filter(entry -> entry.getValue().getTeleportType() == teleportType)
                         // 使用负数实现倒序排列
                         .sorted(Comparator.comparing(entry -> -entry.getValue().getRequestTime().getTime()))
@@ -1876,7 +2112,7 @@ public class FarewellCommand extends CommandBase {
             } else {
                 // 使用负数实现倒序排列
                 Map.Entry<String, TeleportRequest> entry1 = NarcissusFarewell.getTeleportRequest().entrySet().stream()
-                        .filter(entry -> entry.getValue().getTarget().getUniqueID().equals(player.getUniqueID()))
+                        .filter(entry -> isTarget ? entry.getValue().getTarget().getUniqueID().equals(player.getUniqueID()) : entry.getValue().getRequester().getUniqueID().equals(player.getUniqueID()))
                         .filter(entry -> entry.getValue().getTeleportType() == teleportType)
                         .max(Comparator.comparing(entry -> entry.getValue().getRequestTime()))
                         .orElse(null);

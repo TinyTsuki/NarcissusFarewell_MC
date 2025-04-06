@@ -758,6 +758,30 @@ public class StringUtils {
         return result.toString();
     }
 
+    public static String padOptimizedLeft(Object value, int length, String padChar) {
+        return padOptimized(value, length, padChar, true);
+    }
+
+    public static String padOptimizedRight(Object value, int length, String padChar) {
+        return padOptimized(value, length, padChar, false);
+    }
+
+    /**
+     * 在字符串前或后补全字符
+     */
+    public static String padOptimized(Object value, int length, String padChar, boolean left) {
+        String str = String.valueOf(value);
+        int currentLength = str.length();
+
+        if (length <= currentLength) return str;
+
+        char paddingChar = padChar != null && !padChar.isEmpty() ? padChar.charAt(0) : ' ';
+        char[] chars = new char[length - currentLength];
+        Arrays.fill(chars, paddingChar);
+
+        return left ? new String(chars) + str : str + new String(chars);
+    }
+
     public static void main(String[] args) {
         // 测试案例：不同类型的参数与格式字符串
         System.out.println(format("%2$s-%1$s-%1$s", "a", "b"));  // 输出 b-a-a

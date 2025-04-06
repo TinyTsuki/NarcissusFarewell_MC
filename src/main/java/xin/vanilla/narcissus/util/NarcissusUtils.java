@@ -57,6 +57,7 @@ import java.time.Instant;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 public class NarcissusUtils {
 
@@ -81,6 +82,11 @@ public class NarcissusUtils {
      */
     public static boolean isCommandEnabled(ECommandType type) {
         switch (type) {
+            case CARD:
+            case SET_CARD:
+            case CARD_CONCISE:
+            case SET_CARD_CONCISE:
+                return ServerConfig.TELEPORT_CARD;
             case FEED:
             case FEED_OTHER:
             case FEED_CONCISE:
@@ -95,16 +101,20 @@ public class NarcissusUtils {
             case TP_ASK:
             case TP_ASK_YES:
             case TP_ASK_NO:
+            case TP_ASK_CANCEL:
             case TP_ASK_CONCISE:
             case TP_ASK_YES_CONCISE:
             case TP_ASK_NO_CONCISE:
+            case TP_ASK_CANCEL_CONCISE:
                 return ServerConfig.SWITCH_TP_ASK;
             case TP_HERE:
             case TP_HERE_YES:
             case TP_HERE_NO:
+            case TP_HERE_CANCEL:
             case TP_HERE_CONCISE:
             case TP_HERE_YES_CONCISE:
             case TP_HERE_NO_CONCISE:
+            case TP_HERE_CANCEL_CONCISE:
                 return ServerConfig.SWITCH_TP_HERE;
             case TP_RANDOM:
             case TP_RANDOM_CONCISE:
@@ -292,6 +302,12 @@ public class NarcissusUtils {
                 return prefix + ServerConfig.COMMAND_UUID;
             case UUID_CONCISE:
                 return isConciseEnabled(type) ? ServerConfig.COMMAND_UUID : "";
+            case CARD:
+            case SET_CARD:
+                return prefix + " " + ServerConfig.COMMAND_CARD;
+            case CARD_CONCISE:
+            case SET_CARD_CONCISE:
+                return isConciseEnabled(type) ? ServerConfig.COMMAND_CARD : "";
             case FEED:
             case FEED_OTHER:
                 return prefix + ServerConfig.COMMAND_FEED;
@@ -318,6 +334,10 @@ public class NarcissusUtils {
                 return prefix + ServerConfig.COMMAND_TP_ASK_NO;
             case TP_ASK_NO_CONCISE:
                 return isConciseEnabled(type) ? ServerConfig.COMMAND_TP_ASK_NO : "";
+            case TP_ASK_CANCEL:
+                return prefix + " " + ServerConfig.COMMAND_TP_ASK_CANCEL;
+            case TP_ASK_CANCEL_CONCISE:
+                return isConciseEnabled(type) ? ServerConfig.COMMAND_TP_ASK_CANCEL : "";
             case TP_HERE:
                 return prefix + ServerConfig.COMMAND_TP_HERE;
             case TP_HERE_CONCISE:
@@ -330,6 +350,10 @@ public class NarcissusUtils {
                 return prefix + ServerConfig.COMMAND_TP_HERE_NO;
             case TP_HERE_NO_CONCISE:
                 return isConciseEnabled(type) ? ServerConfig.COMMAND_TP_HERE_NO : "";
+            case TP_HERE_CANCEL:
+                return prefix + " " + ServerConfig.COMMAND_TP_HERE_CANCEL;
+            case TP_HERE_CANCEL_CONCISE:
+                return isConciseEnabled(type) ? ServerConfig.COMMAND_TP_HERE_CANCEL : "";
             case TP_RANDOM:
                 return prefix + ServerConfig.COMMAND_TP_RANDOM;
             case TP_RANDOM_CONCISE:
@@ -411,6 +435,9 @@ public class NarcissusUtils {
 
     public static int getCommandPermissionLevel(ECommandType type) {
         switch (type) {
+            case SET_CARD:
+            case SET_CARD_CONCISE:
+                return ServerConfig.PERMISSION_SET_CARD;
             case FEED_OTHER:
             case FEED_OTHER_CONCISE:
                 return ServerConfig.PERMISSION_FEED_OTHER;
@@ -421,16 +448,20 @@ public class NarcissusUtils {
             case TP_STRUCTURE_CONCISE:
                 return ServerConfig.PERMISSION_TP_STRUCTURE;
             case TP_ASK:
+            case TP_ASK_CANCEL:
                 // case TP_ASK_YES:
                 // case TP_ASK_NO:
             case TP_ASK_CONCISE:
+            case TP_ASK_CANCEL_CONCISE:
                 // case TP_ASK_YES_CONCISE:
                 // case TP_ASK_NO_CONCISE:
                 return ServerConfig.PERMISSION_TP_ASK;
             case TP_HERE:
+            case TP_HERE_CANCEL:
                 // case TP_HERE_YES:
                 // case TP_HERE_NO:
             case TP_HERE_CONCISE:
+            case TP_HERE_CANCEL_CONCISE:
                 // case TP_HERE_YES_CONCISE:
                 // case TP_HERE_NO_CONCISE:
                 return ServerConfig.PERMISSION_TP_HERE;
@@ -538,6 +569,11 @@ public class NarcissusUtils {
             case DIMENSION:
             case DIMENSION_CONCISE:
                 return ServerConfig.CONCISE_DIMENSION;
+            case CARD:
+            case CARD_CONCISE:
+            case SET_CARD:
+            case SET_CARD_CONCISE:
+                return ServerConfig.CONCISE_CARD;
             case FEED:
             case FEED_OTHER:
             case FEED_CONCISE:
@@ -558,6 +594,9 @@ public class NarcissusUtils {
             case TP_ASK_NO:
             case TP_ASK_NO_CONCISE:
                 return ServerConfig.CONCISE_TP_ASK_NO;
+            case TP_ASK_CANCEL:
+            case TP_ASK_CANCEL_CONCISE:
+                return ServerConfig.CONCISE_TP_ASK_CANCEL;
             case TP_HERE:
             case TP_HERE_CONCISE:
                 return ServerConfig.CONCISE_TP_HERE;
@@ -567,6 +606,9 @@ public class NarcissusUtils {
             case TP_HERE_NO:
             case TP_HERE_NO_CONCISE:
                 return ServerConfig.CONCISE_TP_HERE_NO;
+            case TP_HERE_CANCEL:
+            case TP_HERE_CANCEL_CONCISE:
+                return ServerConfig.CONCISE_TP_HERE_CANCEL;
             case TP_RANDOM:
             case TP_RANDOM_CONCISE:
                 return ServerConfig.CONCISE_TP_RANDOM;
@@ -1134,7 +1176,7 @@ public class NarcissusUtils {
     }
 
     /**
-     * 获取并移除玩家离开的坐标
+     * 获取玩家离开的坐标
      *
      * @param player    玩家
      * @param type      传送类型
@@ -1146,9 +1188,14 @@ public class NarcissusUtils {
         // 获取玩家的传送数据
         IPlayerTeleportData data = PlayerTeleportDataCapability.getData(player);
         List<TeleportRecord> records = data.getTeleportRecords();
-        Optional<TeleportRecord> optionalRecord = records.stream()
-                .filter(record -> type == null || record.getTeleportType() == type)
-                .filter(record -> type == ETeleportType.TP_BACK || record.getTeleportType() != ETeleportType.TP_BACK)
+        Stream<TeleportRecord> stream = records.stream()
+                .filter(record -> type == null || record.getTeleportType() == type);
+        for (String s : ServerConfig.TELEPORT_BACK_SKIP_TYPE.split(",")) {
+            ETeleportType value = ETeleportType.nullableValueOf(s);
+            stream = stream
+                    .filter(record -> type == value || record.getTeleportType() != value);
+        }
+        Optional<TeleportRecord> optionalRecord = stream
                 .filter(record -> dimension == null || record.getBefore().getDimension().equals(dimension))
                 .max(Comparator.comparing(TeleportRecord::getTeleportTime));
         if (optionalRecord.isPresent()) {
@@ -2200,6 +2247,15 @@ public class NarcissusUtils {
             player.connection.sendPacket(new SPacketSoundEffect(soundEvent, SoundCategory.PLAYERS,
                     player.posX, player.posY, player.posZ, volume, pitch));
         }
+    }
+
+    /**
+     * 获取方块注册ID
+     */
+    @NonNull
+    public static String getBlockRegistryName(Block block) {
+        ResourceLocation location = block.getRegistryName();
+        return location == null ? "" : location.toString();
     }
 
     // endregion 杂项

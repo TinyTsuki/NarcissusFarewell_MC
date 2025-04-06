@@ -113,6 +113,8 @@ public class NarcissusFarewell {
         event.registerServerCommand(new FarewellCommand());
         if (NarcissusUtils.isConciseEnabled(ECommandType.UUID))
             event.registerServerCommand(new UuidCommand());
+        if (NarcissusUtils.isConciseEnabled(ECommandType.CARD))
+            event.registerServerCommand(new CardCommand());
         if (NarcissusUtils.isConciseEnabled(ECommandType.DIMENSION))
             event.registerServerCommand(new DimensionCommand());
         if (NarcissusUtils.isConciseEnabled(ECommandType.FEED))
@@ -127,12 +129,16 @@ public class NarcissusFarewell {
             event.registerServerCommand(new AskYesCommand());
         if (NarcissusUtils.isConciseEnabled(ECommandType.TP_ASK_NO))
             event.registerServerCommand(new AskNoCommand());
+        if (NarcissusUtils.isConciseEnabled(ECommandType.TP_ASK_CANCEL))
+            event.registerServerCommand(new AskCancelCommand());
         if (NarcissusUtils.isConciseEnabled(ECommandType.TP_HERE))
             event.registerServerCommand(new HereCommand());
         if (NarcissusUtils.isConciseEnabled(ECommandType.TP_HERE_YES))
             event.registerServerCommand(new HereYesCommand());
         if (NarcissusUtils.isConciseEnabled(ECommandType.TP_HERE_NO))
             event.registerServerCommand(new HereNoCommand());
+        if (NarcissusUtils.isConciseEnabled(ECommandType.TP_HERE_CANCEL))
+            event.registerServerCommand(new HereCancelCommand());
         if (NarcissusUtils.isConciseEnabled(ECommandType.TP_RANDOM))
             event.registerServerCommand(new RandomCommand());
         if (NarcissusUtils.isConciseEnabled(ECommandType.TP_SPAWN))
