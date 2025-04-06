@@ -8,6 +8,7 @@ import javax.annotation.Nullable;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.security.SecureRandom;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -730,6 +731,30 @@ public class StringUtils {
             }
         }
         return result.toString();
+    }
+
+    public static String padOptimizedLeft(Object value, int length, String padChar) {
+        return padOptimized(value, length, padChar, true);
+    }
+
+    public static String padOptimizedRight(Object value, int length, String padChar) {
+        return padOptimized(value, length, padChar, false);
+    }
+
+    /**
+     * 在字符串前或后补全字符
+     */
+    public static String padOptimized(Object value, int length, String padChar, boolean left) {
+        String str = String.valueOf(value);
+        int currentLength = str.length();
+
+        if (length <= currentLength) return str;
+
+        char paddingChar = padChar != null && !padChar.isEmpty() ? padChar.charAt(0) : ' ';
+        char[] chars = new char[length - currentLength];
+        Arrays.fill(chars, paddingChar);
+
+        return left ? new String(chars) + str : str + new String(chars);
     }
 
     public static void main(String[] args) {

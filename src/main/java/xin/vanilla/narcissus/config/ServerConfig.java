@@ -7,6 +7,7 @@ import xin.vanilla.narcissus.BuildConfig;
 import xin.vanilla.narcissus.enums.ECardType;
 import xin.vanilla.narcissus.enums.ECoolDownType;
 import xin.vanilla.narcissus.enums.ECostType;
+import xin.vanilla.narcissus.enums.ETeleportType;
 
 import java.io.File;
 import java.util.Arrays;
@@ -39,6 +40,10 @@ public class ServerConfig {
      * 历史传送记录数量限制
      */
     public static int TELEPORT_RECORD_LIMIT = 100;
+    /**
+     * back指令默认忽略的传送类型
+     */
+    public static String TELEPORT_BACK_SKIP_TYPE = String.join(",", new String[]{ETeleportType.TP_BACK.name()});
     /**
      * 跨维度传送
      */
@@ -293,6 +298,8 @@ public class ServerConfig {
 
     public static int PERMISSION_VIRTUAL_OP = 4;
 
+    public static int PERMISSION_SET_CARD = 2;
+
     /**
      * 跨维度传送到指定坐标权限
      */
@@ -441,6 +448,11 @@ public class ServerConfig {
     public static String COMMAND_DIMENSION = "dim";
 
     /**
+     * 获取传送卡数量
+     */
+    public static String COMMAND_CARD = "card";
+
+    /**
      * 自杀或毒杀(水仙是有毒的可不能吃哦)
      */
     public static String COMMAND_FEED = "feed";
@@ -471,6 +483,11 @@ public class ServerConfig {
     public static String COMMAND_TP_ASK_NO = "tpan";
 
     /**
+     * 取消传送至玩家的请求
+     */
+    public static String COMMAND_TP_ASK_CANCEL = "tpac";
+
+    /**
      * 请求将玩家传送至当前位置
      */
     public static String COMMAND_TP_HERE = "tph";
@@ -484,6 +501,11 @@ public class ServerConfig {
      * 拒绝请求将玩家传送至当前位置
      */
     public static String COMMAND_TP_HERE_NO = "tphn";
+
+    /**
+     * 取消将玩家传送至当前位置的请求
+     */
+    public static String COMMAND_TP_HERE_CANCEL = "tphc";
 
     /**
      * 随机传送
@@ -592,6 +614,11 @@ public class ServerConfig {
     public static boolean CONCISE_DIMENSION = false;
 
     /**
+     * 获取传送卡数量
+     */
+    public static boolean CONCISE_CARD = false;
+
+    /**
      * 自杀或毒杀
      */
     public static boolean CONCISE_FEED = false;
@@ -619,7 +646,12 @@ public class ServerConfig {
     /**
      * 拒绝请求传送至玩家
      */
-    public static boolean CONCISE_TP_ASK_NO = false;
+    public static boolean CONCISE_TP_ASK_NO = true;
+
+    /**
+     * 取消传送至玩家的请求
+     */
+    public static boolean CONCISE_TP_ASK_CANCEL = true;
 
     /**
      * 请求将玩家传送至当前位置
@@ -634,7 +666,12 @@ public class ServerConfig {
     /**
      * 拒绝请求将玩家传送至当前位置
      */
-    public static boolean CONCISE_TP_HERE_NO = false;
+    public static boolean CONCISE_TP_HERE_NO = true;
+
+    /**
+     * 取消将玩家传送至当前位置的请求
+     */
+    public static boolean CONCISE_TP_HERE_CANCEL = true;
 
     /**
      * 随机传送
@@ -684,17 +721,17 @@ public class ServerConfig {
     /**
      * 设置家
      */
-    public static boolean CONCISE_SET_HOME = false;
+    public static boolean CONCISE_SET_HOME = true;
 
     /**
      * 删除家
      */
-    public static boolean CONCISE_DEL_HOME = false;
+    public static boolean CONCISE_DEL_HOME = true;
 
     /**
      * 查询家
      */
-    public static boolean CONCISE_GET_HOME = false;
+    public static boolean CONCISE_GET_HOME = true;
 
     /**
      * 传送到驿站
@@ -704,12 +741,12 @@ public class ServerConfig {
     /**
      * 设置驿站
      */
-    public static boolean CONCISE_SET_STAGE = false;
+    public static boolean CONCISE_SET_STAGE = true;
 
     /**
      * 删除驿站
      */
-    public static boolean CONCISE_DEL_STAGE = false;
+    public static boolean CONCISE_DEL_STAGE = true;
 
     /**
      * 查询驿站
@@ -735,7 +772,7 @@ public class ServerConfig {
     /**
      * 代价类型
      */
-    public static ECostType COST_TP_COORDINATE_TYPE = ECostType.EXP_POINT;
+    public static ECostType COST_TP_COORDINATE_TYPE = ECostType.NONE;
     /**
      * 代价数量
      */
@@ -749,72 +786,72 @@ public class ServerConfig {
      */
     public static double COST_TP_COORDINATE_RATE = 0.001f;
 
-    public static ECostType COST_TP_STRUCTURE_TYPE = ECostType.EXP_POINT;
+    public static ECostType COST_TP_STRUCTURE_TYPE = ECostType.NONE;
     public static int COST_TP_STRUCTURE_NUM = 1;
     public static String COST_TP_STRUCTURE_CONF = "";
     public static double COST_TP_STRUCTURE_RATE = 0.001f;
 
-    public static ECostType COST_TP_ASK_TYPE = ECostType.EXP_POINT;
+    public static ECostType COST_TP_ASK_TYPE = ECostType.NONE;
     public static int COST_TP_ASK_NUM = 1;
     public static String COST_TP_ASK_CONF = "";
     public static double COST_TP_ASK_RATE = 0.001f;
 
-    public static ECostType COST_TP_HERE_TYPE = ECostType.EXP_POINT;
+    public static ECostType COST_TP_HERE_TYPE = ECostType.NONE;
     public static int COST_TP_HERE_NUM = 1;
     public static String COST_TP_HERE_CONF = "";
     public static double COST_TP_HERE_RATE = 0.001f;
 
-    public static ECostType COST_TP_RANDOM_TYPE = ECostType.EXP_POINT;
+    public static ECostType COST_TP_RANDOM_TYPE = ECostType.NONE;
     public static int COST_TP_RANDOM_NUM = 1;
     public static String COST_TP_RANDOM_CONF = "";
     public static double COST_TP_RANDOM_RATE = 0.001f;
 
-    public static ECostType COST_TP_SPAWN_TYPE = ECostType.EXP_POINT;
+    public static ECostType COST_TP_SPAWN_TYPE = ECostType.NONE;
     public static int COST_TP_SPAWN_NUM = 1;
     public static String COST_TP_SPAWN_CONF = "";
     public static double COST_TP_SPAWN_RATE = 0.001f;
 
-    public static ECostType COST_TP_WORLD_SPAWN_TYPE = ECostType.EXP_POINT;
+    public static ECostType COST_TP_WORLD_SPAWN_TYPE = ECostType.NONE;
     public static int COST_TP_WORLD_SPAWN_NUM = 1;
     public static String COST_TP_WORLD_SPAWN_CONF = "";
     public static double COST_TP_WORLD_SPAWN_RATE = 0.001f;
 
-    public static ECostType COST_TP_TOP_TYPE = ECostType.EXP_POINT;
+    public static ECostType COST_TP_TOP_TYPE = ECostType.NONE;
     public static int COST_TP_TOP_NUM = 1;
     public static String COST_TP_TOP_CONF = "";
     public static double COST_TP_TOP_RATE = 0.001f;
 
-    public static ECostType COST_TP_BOTTOM_TYPE = ECostType.EXP_POINT;
+    public static ECostType COST_TP_BOTTOM_TYPE = ECostType.NONE;
     public static int COST_TP_BOTTOM_NUM = 1;
     public static String COST_TP_BOTTOM_CONF = "";
     public static double COST_TP_BOTTOM_RATE = 0.001f;
 
-    public static ECostType COST_TP_UP_TYPE = ECostType.EXP_POINT;
+    public static ECostType COST_TP_UP_TYPE = ECostType.NONE;
     public static int COST_TP_UP_NUM = 1;
     public static String COST_TP_UP_CONF = "";
     public static double COST_TP_UP_RATE = 0.001f;
 
-    public static ECostType COST_TP_DOWN_TYPE = ECostType.EXP_POINT;
+    public static ECostType COST_TP_DOWN_TYPE = ECostType.NONE;
     public static int COST_TP_DOWN_NUM = 1;
     public static String COST_TP_DOWN_CONF = "";
     public static double COST_TP_DOWN_RATE = 0.001f;
 
-    public static ECostType COST_TP_VIEW_TYPE = ECostType.EXP_POINT;
+    public static ECostType COST_TP_VIEW_TYPE = ECostType.NONE;
     public static int COST_TP_VIEW_NUM = 1;
     public static String COST_TP_VIEW_CONF = "";
     public static double COST_TP_VIEW_RATE = 0.001f;
 
-    public static ECostType COST_TP_HOME_TYPE = ECostType.EXP_POINT;
+    public static ECostType COST_TP_HOME_TYPE = ECostType.NONE;
     public static int COST_TP_HOME_NUM = 1;
     public static String COST_TP_HOME_CONF = "";
     public static double COST_TP_HOME_RATE = 0.001f;
 
-    public static ECostType COST_TP_STAGE_TYPE = ECostType.EXP_POINT;
+    public static ECostType COST_TP_STAGE_TYPE = ECostType.NONE;
     public static int COST_TP_STAGE_NUM = 1;
     public static String COST_TP_STAGE_CONF = "";
     public static double COST_TP_STAGE_RATE = 0.001f;
 
-    public static ECostType COST_TP_BACK_TYPE = ECostType.HUNGER;
+    public static ECostType COST_TP_BACK_TYPE = ECostType.NONE;
     public static int COST_TP_BACK_NUM = 1;
     public static String COST_TP_BACK_CONF = "";
     public static double COST_TP_BACK_RATE = 0.001f;
@@ -915,6 +952,15 @@ public class ServerConfig {
             teleportRecordLimit.comment = (teleportRecordLimit.comment + " [range: " + teleportRecordLimit.getMinValue() + " ~ " + teleportRecordLimit.getMaxValue() + ", default: " + teleportRecordLimit.getDefault() + "]");
             if (write) teleportRecordLimit.set(TELEPORT_RECORD_LIMIT);
             TELEPORT_RECORD_LIMIT = teleportRecordLimit.getInt();
+
+            // 传送指令默认忽略的类型
+            Property backSkipTypeList = config.get(CATEGORY_BASE, "teleportBackSkipType", ETeleportType.TP_BACK.name(),
+                    "The teleport back skip type.\n" +
+                            "传送回时忽略的传送类型。\n" +
+                            "Allowed Values: " + ETeleportType.names()
+            );
+            if (write) backSkipTypeList.set(TELEPORT_BACK_SKIP_TYPE);
+            TELEPORT_BACK_SKIP_TYPE = backSkipTypeList.getString();
 
             // 跨维度传送
             Property teleportAcrossDimension = config.get(CATEGORY_BASE, "teleportAcrossDimension", true,
@@ -1433,6 +1479,15 @@ public class ServerConfig {
                 permissionVirtualOp.comment = (permissionVirtualOp.comment + " [range: " + permissionVirtualOp.getMinValue() + " ~ " + permissionVirtualOp.getMaxValue() + ", default: " + permissionVirtualOp.getDefault() + "]");
                 if (write) permissionVirtualOp.set(PERMISSION_VIRTUAL_OP);
                 PERMISSION_VIRTUAL_OP = permissionVirtualOp.getInt();
+
+                Property permissionSetCard = config.get(CATEGORY_PERMISSION + ".command", "permissionSetCard", 2,
+                        "The permission level required to use the 'Set the number of Teleport Card of the player' command.\n" +
+                                "设置玩家传送卡数量指令所需的权限等级。\n"
+                );
+                permissionSetCard.setMinValue(0).setMaxValue(4);
+                permissionVirtualOp.comment = permissionSetCard.comment + " [range: " + permissionSetCard.getMinValue() + " ~ " + permissionVirtualOp.getMaxValue() + ", default: " + permissionVirtualOp.getDefault() + "]";
+                if (write) permissionSetCard.set(PERMISSION_SET_CARD);
+                PERMISSION_SET_CARD = permissionSetCard.getInt();
             }
 
             {
@@ -1687,6 +1742,14 @@ public class ServerConfig {
             if (write) commandDimension.set(COMMAND_DIMENSION);
             COMMAND_DIMENSION = commandDimension.getString();
 
+            // 获取传送卡数量
+            Property commandCard = config.get(CATEGORY_COMMAND, "commandCard", "card",
+                    "This command is used to get the number of Teleport Card.\n" +
+                            "获取传送卡数量的指令。\n"
+            );
+            if (write) commandCard.set(COMMAND_CARD);
+            COMMAND_CARD = commandCard.getString();
+
             // 自杀或毒杀
             Property commandFeed = config.get(CATEGORY_COMMAND, "commandFeed", "feed",
                     "This command is used to suicide or poisoning, narcissus are poisonous and should not be eaten.\n" +
@@ -1737,6 +1800,13 @@ public class ServerConfig {
             if (write) commandTpAskNo.set(COMMAND_TP_ASK_NO);
             COMMAND_TP_ASK_NO = commandTpAskNo.getString();
 
+            Property commandTpAskCancel = config.get(CATEGORY_COMMAND + ".TpAsk", "commandTpAskCancel", "tpac",
+                    "This command is used to cancel the request to teleport to other players.\n" +
+                            "取消请求传送至玩家的指令。\n"
+            );
+            if (write) commandTpAskCancel.set(COMMAND_TP_ASK_CANCEL);
+            COMMAND_TP_ASK_CANCEL = commandTpAskCancel.getString();
+
             // 请求将玩家传送至当前位置
             Property commandTpHere = config.get(CATEGORY_COMMAND + ".TpHere", "commandTpHere", "tph",
                     "This command is used to request the transfer of other players to oneself.\n" +
@@ -1762,6 +1832,13 @@ public class ServerConfig {
             );
             if (write) commandTpHereNo.set(COMMAND_TP_HERE_NO);
             COMMAND_TP_HERE_NO = commandTpHereNo.getString();
+
+            Property commandTpHereCancel = config.get(CATEGORY_COMMAND + ".TpHere", "commandTpHereCancel", "tphc",
+                    "This command is used to cancel the request to teleport to other players.\n" +
+                            "取消请求将玩家传送至当前位置的指令。\n"
+            );
+            if (write) commandTpHereCancel.set(COMMAND_TP_HERE_CANCEL);
+            COMMAND_TP_HERE_CANCEL = commandTpHereCancel.getString();
 
             // 随机传送
             Property commandTpRandom = config.get(CATEGORY_COMMAND, "commandTpRandom", "tpr",
@@ -1927,6 +2004,13 @@ public class ServerConfig {
             if (write) conciseDimension.set(CONCISE_DIMENSION);
             CONCISE_DIMENSION = conciseDimension.getBoolean();
 
+            Property conciseCard = config.get(CATEGORY_CONCISE, "conciseCard", false,
+                    "Enable or disable the concise version of the 'Get the number of Teleport Card of the player' command.\n" +
+                            "是否启用无前缀版本的 '获取玩家的传送卡数量' 指令。\n"
+            );
+            if (write) conciseCard.set(CONCISE_CARD);
+            CONCISE_CARD = conciseCard.getBoolean();
+
             Property conciseFeed = config.get(CATEGORY_CONCISE, "conciseFeed", false,
                     "Enable or disable the concise version of the 'Suicide or poisoning' command.\n" +
                             "是否启用无前缀版本的 '自杀或毒杀' 指令。\n"
@@ -1962,12 +2046,19 @@ public class ServerConfig {
             if (write) conciseTpAskYes.set(CONCISE_TP_ASK_YES);
             CONCISE_TP_ASK_YES = conciseTpAskYes.getBoolean();
 
-            Property conciseTpAskNo = config.get(CATEGORY_CONCISE + ".TpAsk", "conciseTpAskNo", false,
+            Property conciseTpAskNo = config.get(CATEGORY_CONCISE + ".TpAsk", "conciseTpAskNo", true,
                     "Enable or disable the concise version of the 'Refuse teleportation of other players to oneself' command.\n" +
                             "是否启用无前缀版本的 '拒绝请求传送至玩家' 指令。\n"
             );
             if (write) conciseTpAskNo.set(CONCISE_TP_ASK_NO);
             CONCISE_TP_ASK_NO = conciseTpAskNo.getBoolean();
+
+            Property conciseTpAskCancel = config.get(CATEGORY_CONCISE + ".TpAsk", "conciseTpAskCancel", true,
+                    "Enable or disable the concise version of the 'Cancel the request to teleport to other players' command.\n" +
+                            "是否启用无前缀版本的 '取消请求传送至玩家' 指令。\n"
+            );
+            if (write) conciseTpAskCancel.set(CONCISE_TP_ASK_CANCEL);
+            CONCISE_TP_ASK_CANCEL = conciseTpAskCancel.getBoolean();
 
             Property conciseTpHere = config.get(CATEGORY_CONCISE + ".TpHere", "conciseTpHere", true,
                     "Enable or disable the concise version of the 'Request the transfer of other players to oneself' command.\n" +
@@ -1983,12 +2074,19 @@ public class ServerConfig {
             if (write) conciseTpHereYes.set(CONCISE_TP_HERE_YES);
             CONCISE_TP_HERE_YES = conciseTpHereYes.getBoolean();
 
-            Property conciseTpHereNo = config.get(CATEGORY_CONCISE + ".TpHere", "conciseTpHereNo", false,
+            Property conciseTpHereNo = config.get(CATEGORY_CONCISE + ".TpHere", "conciseTpHereNo", true,
                     "Enable or disable the concise version of the 'Refuse teleportation to other players' command.\n" +
                             "是否启用无前缀版本的 '拒绝请求将玩家传送至当前位置' 指令。\n"
             );
             if (write) conciseTpHereNo.set(CONCISE_TP_HERE_NO);
             CONCISE_TP_HERE_NO = conciseTpHereNo.getBoolean();
+
+            Property conciseTpHereCancel = config.get(CATEGORY_CONCISE + ".TpHere", "conciseTpHereCancel", true,
+                    "Enable or disable the concise version of the 'Cancel the request to teleport to other players' command.\n" +
+                            "是否启用无前缀版本的 '取消请求将玩家传送至当前位置' 指令。\n"
+            );
+            if (write) conciseTpHereCancel.set(CONCISE_TP_HERE_CANCEL);
+            CONCISE_TP_HERE_CANCEL = conciseTpHereCancel.getBoolean();
 
             Property conciseTpRandom = config.get(CATEGORY_CONCISE, "conciseTpRandom", false,
                     "Enable or disable the concise version of the 'Teleport to a random location' command.\n" +
@@ -2055,21 +2153,21 @@ public class ServerConfig {
             if (write) conciseTpHome.set(CONCISE_TP_HOME);
             CONCISE_TP_HOME = conciseTpHome.getBoolean();
 
-            Property conciseSetHome = config.get(CATEGORY_CONCISE + ".TpHome", "conciseTpHomeSet", false,
+            Property conciseSetHome = config.get(CATEGORY_CONCISE + ".TpHome", "conciseTpHomeSet", true,
                     "Enable or disable the concise version of the 'Set the home' command.\n" +
                             "是否启用无前缀版本的 '设置家' 指令。\n"
             );
             if (write) conciseSetHome.set(CONCISE_SET_HOME);
             CONCISE_SET_HOME = conciseSetHome.getBoolean();
 
-            Property conciseDelHome = config.get(CATEGORY_CONCISE + ".TpHome", "conciseTpHomeDel", false,
+            Property conciseDelHome = config.get(CATEGORY_CONCISE + ".TpHome", "conciseTpHomeDel", true,
                     "Enable or disable the concise version of the 'Delete the home' command.\n" +
                             "是否启用无前缀版本的 '删除家' 指令。\n"
             );
             if (write) conciseDelHome.set(CONCISE_DEL_HOME);
             CONCISE_DEL_HOME = conciseDelHome.getBoolean();
 
-            Property conciseGetHome = config.get(CATEGORY_CONCISE + ".TpHome", "conciseTpHomeGet", false,
+            Property conciseGetHome = config.get(CATEGORY_CONCISE + ".TpHome", "conciseTpHomeGet", true,
                     "Enable or disable the concise version of the 'Get the home info' command.\n" +
                             "是否启用无前缀版本的 '查询家' 指令。\n"
             );
@@ -2083,14 +2181,14 @@ public class ServerConfig {
             if (write) conciseTpStage.set(CONCISE_TP_STAGE);
             CONCISE_TP_STAGE = conciseTpStage.getBoolean();
 
-            Property conciseSetStage = config.get(CATEGORY_CONCISE + ".TpStage", "conciseTpStageSet", false,
+            Property conciseSetStage = config.get(CATEGORY_CONCISE + ".TpStage", "conciseTpStageSet", true,
                     "Enable or disable the concise version of the 'Set the stage' command.\n" +
                             "是否启用无前缀版本的 '设置驿站' 指令。\n"
             );
             if (write) conciseSetStage.set(CONCISE_SET_STAGE);
             CONCISE_SET_STAGE = conciseSetStage.getBoolean();
 
-            Property conciseDelStage = config.get(CATEGORY_CONCISE + ".TpStage", "conciseTpStageDel", false,
+            Property conciseDelStage = config.get(CATEGORY_CONCISE + ".TpStage", "conciseTpStageDel", true,
                     "Enable or disable the concise version of the 'Delete the stage' command.\n" +
                             "是否启用无前缀版本的 '删除驿站' 指令。\n"
             );
@@ -2123,7 +2221,7 @@ public class ServerConfig {
         // 定义传送代价
         {
             {
-                Property costTpCoordinateType = config.get(CATEGORY_COST + ".TpCoordinate", "costTpCoordinateType", ECostType.EXP_POINT.name(),
+                Property costTpCoordinateType = config.get(CATEGORY_COST + ".TpCoordinate", "costTpCoordinateType", ECostType.NONE.name(),
                         "The cost type for 'Teleport to the specified coordinates'.\n" +
                                 "传送到指定坐标的代价类型。\n"
                         , Arrays.stream(ECostType.values()).map(ECostType::name).toArray(String[]::new));
@@ -2163,7 +2261,7 @@ public class ServerConfig {
             }
 
             {
-                Property costTpStructureType = config.get(CATEGORY_COST + ".TpStructure", "costTpStructureType", ECostType.EXP_POINT.name(),
+                Property costTpStructureType = config.get(CATEGORY_COST + ".TpStructure", "costTpStructureType", ECostType.NONE.name(),
                         "The cost type for 'Teleport to the specified structure'.\n" +
                                 "传送到指定结构的代价类型。\n"
                         , Arrays.stream(ECostType.values()).map(ECostType::name).toArray(String[]::new));
@@ -2203,7 +2301,7 @@ public class ServerConfig {
             }
 
             {
-                Property costTpAskType = config.get(CATEGORY_COST + ".TpAsk", "costTpAskType", ECostType.EXP_POINT.name(),
+                Property costTpAskType = config.get(CATEGORY_COST + ".TpAsk", "costTpAskType", ECostType.NONE.name(),
                         "The cost type for 'Request to teleport oneself to other players'.\n" +
                                 "请求传送至玩家的代价类型。\n"
                         , Arrays.stream(ECostType.values()).map(ECostType::name).toArray(String[]::new));
@@ -2243,7 +2341,7 @@ public class ServerConfig {
             }
 
             {
-                Property costTpHereType = config.get(CATEGORY_COST + ".TpHere", "costTpHereType", ECostType.EXP_POINT.name(),
+                Property costTpHereType = config.get(CATEGORY_COST + ".TpHere", "costTpHereType", ECostType.NONE.name(),
                         "The cost type for 'Request the transfer of other players to oneself'.\n" +
                                 "请求将玩家传送至当前位置的代价类型。\n"
                         , Arrays.stream(ECostType.values()).map(ECostType::name).toArray(String[]::new));
@@ -2283,7 +2381,7 @@ public class ServerConfig {
             }
 
             {
-                Property costTpRandomType = config.get(CATEGORY_COST + ".TpRandom", "costTpRandomType", ECostType.EXP_POINT.name(),
+                Property costTpRandomType = config.get(CATEGORY_COST + ".TpRandom", "costTpRandomType", ECostType.NONE.name(),
                         "The cost type for 'Teleport to a random location'.\n" +
                                 "随机传送的代价类型。\n"
                         , Arrays.stream(ECostType.values()).map(ECostType::name).toArray(String[]::new));
@@ -2323,7 +2421,7 @@ public class ServerConfig {
             }
 
             {
-                Property costTpSpawnType = config.get(CATEGORY_COST + ".TpSpawn", "costTpSpawnType", ECostType.EXP_POINT.name(),
+                Property costTpSpawnType = config.get(CATEGORY_COST + ".TpSpawn", "costTpSpawnType", ECostType.NONE.name(),
                         "The cost type for 'Teleport to the spawn of the player'.\n" +
                                 "传送到玩家重生点的代价类型。\n"
                         , Arrays.stream(ECostType.values()).map(ECostType::name).toArray(String[]::new));
@@ -2363,7 +2461,7 @@ public class ServerConfig {
             }
 
             {
-                Property costTpWorldSpawnType = config.get(CATEGORY_COST + ".TpWorldSpawn", "costTpWorldSpawnType", ECostType.EXP_POINT.name(),
+                Property costTpWorldSpawnType = config.get(CATEGORY_COST + ".TpWorldSpawn", "costTpWorldSpawnType", ECostType.NONE.name(),
                         "The cost type for 'Teleport to the spawn of the world'.\n" +
                                 "传送到世界重生点的代价类型。\n"
                         , Arrays.stream(ECostType.values()).map(ECostType::name).toArray(String[]::new));
@@ -2401,7 +2499,7 @@ public class ServerConfig {
             }
 
             {
-                Property costTpTopType = config.get(CATEGORY_COST + ".TpTop", "costTpTopType", ECostType.EXP_POINT.name(),
+                Property costTpTopType = config.get(CATEGORY_COST + ".TpTop", "costTpTopType", ECostType.NONE.name(),
                         "The cost type for 'Teleport to the top of current position'.\n" +
                                 "传送到顶部的代价类型。\n"
                         , Arrays.stream(ECostType.values()).map(ECostType::name).toArray(String[]::new));
@@ -2439,7 +2537,7 @@ public class ServerConfig {
             }
 
             {
-                Property costTpBottomType = config.get(CATEGORY_COST + ".TpBottom", "costTpBottomType", ECostType.EXP_POINT.name(),
+                Property costTpBottomType = config.get(CATEGORY_COST + ".TpBottom", "costTpBottomType", ECostType.NONE.name(),
                         "The cost type for 'Teleport to the bottom of current position'.\n" +
                                 "传送到底部的代价类型。\n"
                         , Arrays.stream(ECostType.values()).map(ECostType::name).toArray(String[]::new));
@@ -2477,7 +2575,7 @@ public class ServerConfig {
             }
 
             {
-                Property costTpUpType = config.get(CATEGORY_COST + ".TpUp", "costTpUpType", ECostType.EXP_POINT.name(),
+                Property costTpUpType = config.get(CATEGORY_COST + ".TpUp", "costTpUpType", ECostType.NONE.name(),
                         "The cost type for 'Teleport to the upper of current position'.\n" +
                                 "传送到上方的代价类型。\n"
                         , Arrays.stream(ECostType.values()).map(ECostType::name).toArray(String[]::new));
@@ -2515,7 +2613,7 @@ public class ServerConfig {
             }
 
             {
-                Property costTpDownType = config.get(CATEGORY_COST + ".TpDown", "costTpDownType", ECostType.EXP_POINT.name(),
+                Property costTpDownType = config.get(CATEGORY_COST + ".TpDown", "costTpDownType", ECostType.NONE.name(),
                         "The cost type for 'Teleport to the lower of current position'.\n" +
                                 "传送到下方的代价类型。\n"
                         , Arrays.stream(ECostType.values()).map(ECostType::name).toArray(String[]::new));
@@ -2553,7 +2651,7 @@ public class ServerConfig {
             }
 
             {
-                Property costTpViewType = config.get(CATEGORY_COST + ".TpView", "costTpViewType", ECostType.EXP_POINT.name(),
+                Property costTpViewType = config.get(CATEGORY_COST + ".TpView", "costTpViewType", ECostType.NONE.name(),
                         "The cost type for 'Teleport to the end of the line of sight'.\n" +
                                 "传送至视线尽头的代价类型。\n"
                         , Arrays.stream(ECostType.values()).map(ECostType::name).toArray(String[]::new));
@@ -2591,7 +2689,7 @@ public class ServerConfig {
             }
 
             {
-                Property costTpHomeType = config.get(CATEGORY_COST + ".TpHome", "costTpHomeType", ECostType.EXP_POINT.name(),
+                Property costTpHomeType = config.get(CATEGORY_COST + ".TpHome", "costTpHomeType", ECostType.NONE.name(),
                         "The cost type for 'Teleport to the home'.\n" +
                                 "传送到家的代价类型。\n",
                         Arrays.stream(ECostType.values()).map(ECostType::name).toArray(String[]::new));
@@ -2626,7 +2724,7 @@ public class ServerConfig {
             }
 
             {
-                Property costTpStageType = config.get(CATEGORY_COST + ".TpStage", "costTpStageType", ECostType.EXP_POINT.name(),
+                Property costTpStageType = config.get(CATEGORY_COST + ".TpStage", "costTpStageType", ECostType.NONE.name(),
                         "The cost type for 'Teleport to the stage'.\n" +
                                 "传送到驿站的代价类型。\n",
                         Arrays.stream(ECostType.values()).map(ECostType::name).toArray(String[]::new));
@@ -2661,7 +2759,7 @@ public class ServerConfig {
             }
 
             {
-                Property costTpBackType = config.get(CATEGORY_COST + ".TpBack", "costTpBackType", ECostType.HUNGER.name(),
+                Property costTpBackType = config.get(CATEGORY_COST + ".TpBack", "costTpBackType", ECostType.NONE.name(),
                         "The cost type for 'Teleport to the previous location'.\n" +
                                 "传送到上次传送点的代价类型。\n",
                         Arrays.stream(ECostType.values()).map(ECostType::name).toArray(String[]::new));
