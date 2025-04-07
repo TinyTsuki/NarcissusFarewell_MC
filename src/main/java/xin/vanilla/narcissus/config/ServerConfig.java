@@ -6,6 +6,7 @@ import net.minecraftforge.common.config.Configuration;
 import net.minecraftforge.common.config.Property;
 import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
 import xin.vanilla.narcissus.BuildConfig;
+import xin.vanilla.narcissus.NarcissusFarewell;
 import xin.vanilla.narcissus.enums.ECardType;
 import xin.vanilla.narcissus.enums.ECoolDownType;
 import xin.vanilla.narcissus.enums.ECostType;
@@ -172,11 +173,26 @@ public class ServerConfig {
      */
     public static int TP_WITH_FOLLOWER_RANGE = 10;
 
+    /**
+     * 帮助信息每页显示的数量
+     */
+    public static int HELP_INFO_NUM_PER_PAGE;
+
+    /**
+     * 服务器默认语言
+     */
+    public static String DEFAULT_LANGUAGE;
+
     // endregion 基础设置
 
     // region 功能开关
 
     private final static String CATEGORY_SWITCH = "switch";
+
+    /**
+     * 分享坐标 开关
+     */
+    public static boolean SWITCH_SHARE = true;
 
     /**
      * 自杀或毒杀 开关
@@ -451,6 +467,11 @@ public class ServerConfig {
     public static String COMMAND_UUID = "uuid";
 
     /**
+     * 设置语言
+     */
+    public static String COMMAND_LANGUAGE = "language";
+
+    /**
      * 获取当前世界的维度ID
      */
     public static String COMMAND_DIMENSION = "dim";
@@ -459,6 +480,11 @@ public class ServerConfig {
      * 获取传送卡数量
      */
     public static String COMMAND_CARD = "card";
+
+    /**
+     * 分享坐标
+     */
+    public static String COMMAND_SHARE = "share";
 
     /**
      * 自杀或毒杀(水仙是有毒的可不能吃哦)
@@ -612,6 +638,11 @@ public class ServerConfig {
     private final static String CATEGORY_CONCISE = "concise";
 
     /**
+     * 设置语言
+     */
+    public static boolean CONCISE_LANGUAGE = false;
+
+    /**
      * 获取玩家的UUID
      */
     public static boolean CONCISE_UUID = false;
@@ -625,6 +656,11 @@ public class ServerConfig {
      * 获取传送卡数量
      */
     public static boolean CONCISE_CARD = false;
+
+    /**
+     * 分享坐标
+     */
+    public static boolean CONCISE_SHARE = false;
 
     /**
      * 自杀或毒杀
@@ -1126,6 +1162,24 @@ public class ServerConfig {
             if (write) tpWithFollowerRange.set(TP_WITH_FOLLOWER_RANGE);
             TP_WITH_FOLLOWER_RANGE = tpWithFollowerRange.getInt();
 
+            // 帮助信息每页显示的数量
+            Property helpInfoNumPerPage = config.get(CATEGORY_BASE, "helpInfoNumPerPage", 5,
+                    "The number of help information displayed per page.\n" +
+                            "每页显示的帮助信息数量。\n"
+            );
+            helpInfoNumPerPage.setMinValue(1).setMaxValue(9999);
+            helpInfoNumPerPage.setComment(helpInfoNumPerPage.getComment() + " [range: " + helpInfoNumPerPage.getMinValue() + " ~ " + helpInfoNumPerPage.getMaxValue() + ", default: " + helpInfoNumPerPage.getDefault() + "]");
+            if (write) helpInfoNumPerPage.set(HELP_INFO_NUM_PER_PAGE);
+            HELP_INFO_NUM_PER_PAGE = helpInfoNumPerPage.getInt();
+
+            // 服务器默认语言
+            Property defaultLanguage = config.get(CATEGORY_BASE, "defaultLanguage", "en_us",
+                    "The default language of the server.\n" +
+                            "服务器默认语言。\n"
+            );
+            if (write) defaultLanguage.set(DEFAULT_LANGUAGE);
+            DEFAULT_LANGUAGE = defaultLanguage.getString();
+
             // 不安全的方块
             Property unsafeBlocks = config.get(CATEGORY_BASE + ".Safe", "unsafeBlocks", new String[]{"minecraft:lava", "minecraft:fire", "minecraft:cactus"},
                     "The list of unsafe blocks, players will not be teleported to these blocks.\n" +
@@ -1179,6 +1233,13 @@ public class ServerConfig {
 
         // 定义功能开关
         {
+            Property switchShare = config.get(CATEGORY_SWITCH, "switchShare", true,
+                    "Enable or disable the option to 'Share coordinate'.\n" +
+                            "是否启用坐标分享。\n"
+            );
+            if (write) switchShare.set(SWITCH_SHARE);
+            SWITCH_SHARE = switchShare.getBoolean();
+
             Property switchFeed = config.get(CATEGORY_SWITCH, "switchFeed", true,
                     "Enable or disable the option to 'Suicide or poisoning'.\n" +
                             "是否启用自杀或毒杀。\n"
@@ -1734,6 +1795,14 @@ public class ServerConfig {
 
         // 定义自定义指令配置
         {
+            // 设置语言
+            Property commandLanguage = config.get(CATEGORY_COMMAND, "commandLanguage", "language",
+                    "This command is used to set the language.\n" +
+                            "设置语言的指令。\n"
+            );
+            if (write) commandLanguage.set(COMMAND_LANGUAGE);
+            COMMAND_LANGUAGE = commandLanguage.getString();
+
             // 获取玩家的UUID
             Property commandUuid = config.get(CATEGORY_COMMAND, "commandUuid", "uuid",
                     "This command is used to get the UUID of the player.\n" +
@@ -1757,6 +1826,14 @@ public class ServerConfig {
             );
             if (write) commandCard.set(COMMAND_CARD);
             COMMAND_CARD = commandCard.getString();
+
+            // 分享坐标
+            Property commandShare = config.get(CATEGORY_COMMAND, "commandShare", "share",
+                    "This command is used to share the stage, the personal home, and the current coordinate of player.\n" +
+                            "分享驿站、玩家的私人传送点、玩家当前坐标的指令。\n"
+            );
+            if (write) commandShare.set(COMMAND_SHARE);
+            COMMAND_SHARE = commandShare.getString();
 
             // 自杀或毒杀
             Property commandFeed = config.get(CATEGORY_COMMAND, "commandFeed", "feed",
@@ -1998,6 +2075,13 @@ public class ServerConfig {
 
         // 定义简化指令
         {
+            Property conciseLanguage = config.get(CATEGORY_CONCISE, "conciseLanguage", false,
+                    "Enable or disable the concise version of the 'Set the language' command.\n" +
+                            "是否启用无前缀版本的 '设置语言' 指令。\n"
+            );
+            if (write) conciseLanguage.set(CONCISE_LANGUAGE);
+            CONCISE_LANGUAGE = conciseLanguage.getBoolean();
+
             Property conciseUuid = config.get(CATEGORY_CONCISE, "conciseUuid", false,
                     "Enable or disable the concise version of the 'Get the UUID of the player' command.\n" +
                             "是否启用无前缀版本的 '获取玩家的UUID' 指令。\n"
@@ -2018,6 +2102,13 @@ public class ServerConfig {
             );
             if (write) conciseCard.set(CONCISE_CARD);
             CONCISE_CARD = conciseCard.getBoolean();
+
+            Property conciseShare = config.get(CATEGORY_CONCISE, "conciseShare", false,
+                    "Enable or disable the concise version of the 'Share the stage, the personal home, and the current coordinate of player' command.\n" +
+                            "是否启用无前缀版本的 '分享驿站、玩家的私人传送点、玩家当前坐标' 指令。\n"
+            );
+            if (write) conciseShare.set(CONCISE_SHARE);
+            CONCISE_SHARE = conciseShare.getBoolean();
 
             Property conciseFeed = config.get(CATEGORY_CONCISE, "conciseFeed", false,
                     "Enable or disable the concise version of the 'Suicide or poisoning' command.\n" +
@@ -2823,4 +2914,336 @@ public class ServerConfig {
             config.save();
         }
     }
+
+    /**
+     * 重置服务器配置文件
+     */
+    public static void resetConfig() {
+        TELEPORT_CARD = (false);
+        TELEPORT_CARD_DAILY = (0);
+        TELEPORT_CARD_TYPE = (ECardType.REFUND_ALL_COST);
+        TELEPORT_RECORD_LIMIT = (100);
+        TELEPORT_BACK_SKIP_TYPE = String.join(",", new String[]{ETeleportType.TP_BACK.name()});
+        TELEPORT_ACROSS_DIMENSION = (true);
+        TELEPORT_COST_DISTANCE_LIMIT = (10000);
+        TELEPORT_COST_DISTANCE_ACROSS_DIMENSION = (10000);
+        TELEPORT_VIEW_DISTANCE_LIMIT = (16 * 64);
+        TELEPORT_REQUEST_EXPIRE_TIME = (60);
+        TELEPORT_REQUEST_COOLDOWN_TYPE = (ECoolDownType.INDIVIDUAL);
+        TELEPORT_REQUEST_COOLDOWN = (10);
+        TELEPORT_RANDOM_DISTANCE_LIMIT = (10000);
+        TELEPORT_HOME_LIMIT = (5);
+        COMMAND_PREFIX = (NarcissusFarewell.DEFAULT_COMMAND_PREFIX);
+        UNSAFE_BLOCKS = Stream.of(
+                        Blocks.LAVA,
+                        Blocks.FIRE,
+                        Blocks.CACTUS
+                ).map(block -> block.getRegistryName().toString())
+                .toArray(String[]::new);
+        SUFFOCATING_BLOCKS = Stream.of(
+                        Blocks.LAVA,
+                        Blocks.WATER
+                ).map(block -> block.getRegistryName().toString())
+                .toArray(String[]::new);
+        SETBLOCK_WHEN_SAFE_NOT_FOUND = (false);
+        GETBLOCK_FROM_INVENTORY = (true);
+        SAFE_BLOCKS = Stream.of(
+                        Blocks.GRASS,
+                        Blocks.GRASS_PATH,
+                        Blocks.DIRT,
+                        Blocks.COBBLESTONE
+                ).map(block -> block.getRegistryName().toString())
+                .toArray(String[]::new);
+        SAFE_CHUNK_RANGE = (1);
+        OP_LIST = ("");
+        HELP_HEADER = ("-----==== Narcissus Farewell Help (%d/%d) ====-----");
+        TP_SOUND = "entity.endermen.teleport";
+        TP_WITH_VEHICLE = (true);
+        TP_WITH_FOLLOWER = (true);
+        TP_WITH_FOLLOWER_RANGE = (10);
+        HELP_INFO_NUM_PER_PAGE = (5);
+        DEFAULT_LANGUAGE = ("en_us");
+        SWITCH_SHARE = (true);
+        SWITCH_FEED = (true);
+        SWITCH_TP_COORDINATE = (true);
+        SWITCH_TP_STRUCTURE = (true);
+        SWITCH_TP_ASK = (true);
+        SWITCH_TP_HERE = (true);
+        SWITCH_TP_RANDOM = (true);
+        SWITCH_TP_SPAWN = (true);
+        SWITCH_TP_WORLD_SPAWN = (true);
+        SWITCH_TP_TOP = (true);
+        SWITCH_TP_BOTTOM = (true);
+        SWITCH_TP_UP = (true);
+        SWITCH_TP_DOWN = (true);
+        SWITCH_TP_VIEW = (true);
+        SWITCH_TP_HOME = (true);
+        SWITCH_TP_STAGE = (true);
+        SWITCH_TP_BACK = (true);
+        PERMISSION_FEED_OTHER = (2);
+        PERMISSION_TP_COORDINATE = (2);
+        PERMISSION_TP_STRUCTURE = (2);
+        PERMISSION_TP_ASK = (0);
+        PERMISSION_TP_HERE = (0);
+        PERMISSION_TP_RANDOM = (1);
+        PERMISSION_TP_SPAWN = (0);
+        PERMISSION_TP_SPAWN_OTHER = (2);
+        PERMISSION_TP_WORLD_SPAWN = (0);
+        PERMISSION_TP_TOP = (1);
+        PERMISSION_TP_BOTTOM = (1);
+        PERMISSION_TP_UP = (1);
+        PERMISSION_TP_DOWN = (1);
+        PERMISSION_TP_VIEW = (1);
+        PERMISSION_TP_HOME = (0);
+        PERMISSION_TP_STAGE = (0);
+        PERMISSION_SET_STAGE = (2);
+        PERMISSION_DEL_STAGE = (2);
+        PERMISSION_GET_STAGE = (0);
+        PERMISSION_TP_BACK = (0);
+        PERMISSION_VIRTUAL_OP = (4);
+        PERMISSION_SET_CARD = (2);
+        PERMISSION_TP_COORDINATE_ACROSS_DIMENSION = (2);
+        PERMISSION_TP_STRUCTURE_ACROSS_DIMENSION = (2);
+        PERMISSION_TP_ASK_ACROSS_DIMENSION = (0);
+        PERMISSION_TP_HERE_ACROSS_DIMENSION = (0);
+        PERMISSION_TP_RANDOM_ACROSS_DIMENSION = (0);
+        PERMISSION_TP_SPAWN_ACROSS_DIMENSION = (0);
+        PERMISSION_TP_WORLD_SPAWN_ACROSS_DIMENSION = (0);
+        PERMISSION_TP_HOME_ACROSS_DIMENSION = (0);
+        PERMISSION_TP_STAGE_ACROSS_DIMENSION = (0);
+        PERMISSION_TP_BACK_ACROSS_DIMENSION = (0);
+        COOLDOWN_TP_COORDINATE = (10);
+        COOLDOWN_TP_STRUCTURE = (10);
+        COOLDOWN_TP_ASK = (10);
+        COOLDOWN_TP_HERE = (10);
+        COOLDOWN_TP_RANDOM = (10);
+        COOLDOWN_TP_SPAWN = (10);
+        COOLDOWN_TP_WORLD_SPAWN = (10);
+        COOLDOWN_TP_TOP = (10);
+        COOLDOWN_TP_BOTTOM = (10);
+        COOLDOWN_TP_UP = (10);
+        COOLDOWN_TP_DOWN = (10);
+        COOLDOWN_TP_VIEW = (10);
+        COOLDOWN_TP_HOME = (10);
+        COOLDOWN_TP_STAGE = (10);
+        COOLDOWN_TP_BACK = (10);
+        COMMAND_LANGUAGE = ("language");
+        COMMAND_UUID = ("uuid");
+        COMMAND_DIMENSION = ("dim");
+        COMMAND_CARD = ("card");
+        COMMAND_SHARE = ("share");
+        COMMAND_FEED = ("feed");
+        COMMAND_TP_COORDINATE = ("tpx");
+        COMMAND_TP_STRUCTURE = ("tpst");
+        COMMAND_TP_ASK = ("tpa");
+        COMMAND_TP_ASK_YES = ("tpay");
+        COMMAND_TP_ASK_NO = ("tpan");
+        COMMAND_TP_ASK_CANCEL = ("tpac");
+        COMMAND_TP_HERE = ("tph");
+        COMMAND_TP_HERE_YES = ("tphy");
+        COMMAND_TP_HERE_NO = ("tphn");
+        COMMAND_TP_HERE_CANCEL = ("tphc");
+        COMMAND_TP_RANDOM = ("tpr");
+        COMMAND_TP_SPAWN = ("tpsp");
+        COMMAND_TP_WORLD_SPAWN = ("tpws");
+        COMMAND_TP_TOP = ("tpt");
+        COMMAND_TP_BOTTOM = ("tpb");
+        COMMAND_TP_UP = ("tpu");
+        COMMAND_TP_DOWN = ("tpd");
+        COMMAND_TP_VIEW = ("tpv");
+        COMMAND_TP_HOME = ("home");
+        COMMAND_SET_HOME = ("sethome");
+        COMMAND_DEL_HOME = ("delhome");
+        COMMAND_GET_HOME = ("gethome");
+        COMMAND_TP_STAGE = ("stage");
+        COMMAND_SET_STAGE = ("setstage");
+        COMMAND_DEL_STAGE = ("delstage");
+        COMMAND_GET_STAGE = ("getstage");
+        COMMAND_TP_BACK = ("back");
+        COMMAND_VIRTUAL_OP = ("opv");
+        CONCISE_LANGUAGE = (false);
+        CONCISE_UUID = (false);
+        CONCISE_DIMENSION = (false);
+        CONCISE_CARD = (false);
+        CONCISE_SHARE = (false);
+        CONCISE_FEED = (false);
+        CONCISE_TP_COORDINATE = (true);
+        CONCISE_TP_STRUCTURE = (true);
+        CONCISE_TP_ASK = (true);
+        CONCISE_TP_ASK_YES = (true);
+        CONCISE_TP_ASK_NO = (true);
+        CONCISE_TP_ASK_CANCEL = (true);
+        CONCISE_TP_HERE = (true);
+        CONCISE_TP_HERE_YES = (true);
+        CONCISE_TP_HERE_NO = (true);
+        CONCISE_TP_HERE_CANCEL = (true);
+        CONCISE_TP_RANDOM = (false);
+        CONCISE_TP_SPAWN = (true);
+        CONCISE_TP_WORLD_SPAWN = (false);
+        CONCISE_TP_TOP = (false);
+        CONCISE_TP_BOTTOM = (false);
+        CONCISE_TP_UP = (false);
+        CONCISE_TP_DOWN = (false);
+        CONCISE_TP_VIEW = (false);
+        CONCISE_TP_HOME = (true);
+        CONCISE_SET_HOME = (true);
+        CONCISE_DEL_HOME = (true);
+        CONCISE_GET_HOME = (true);
+        CONCISE_TP_STAGE = (true);
+        CONCISE_SET_STAGE = (true);
+        CONCISE_DEL_STAGE = (true);
+        CONCISE_GET_STAGE = (true);
+        CONCISE_TP_BACK = (true);
+        CONCISE_VIRTUAL_OP = (false);
+        COST_TP_COORDINATE_TYPE = (ECostType.NONE);
+        COST_TP_COORDINATE_NUM = (1);
+        COST_TP_COORDINATE_CONF = ("");
+        COST_TP_COORDINATE_RATE = (0.001);
+        COST_TP_STRUCTURE_TYPE = (ECostType.NONE);
+        COST_TP_STRUCTURE_NUM = (1);
+        COST_TP_STRUCTURE_CONF = ("");
+        COST_TP_STRUCTURE_RATE = (0.001);
+        COST_TP_ASK_TYPE = (ECostType.NONE);
+        COST_TP_ASK_NUM = (1);
+        COST_TP_ASK_CONF = ("");
+        COST_TP_ASK_RATE = (0.001);
+        COST_TP_HERE_TYPE = (ECostType.NONE);
+        COST_TP_HERE_NUM = (1);
+        COST_TP_HERE_CONF = ("");
+        COST_TP_HERE_RATE = (0.001);
+        COST_TP_RANDOM_TYPE = (ECostType.NONE);
+        COST_TP_RANDOM_NUM = (1);
+        COST_TP_RANDOM_CONF = ("");
+        COST_TP_RANDOM_RATE = (0.001);
+        COST_TP_SPAWN_TYPE = (ECostType.NONE);
+        COST_TP_SPAWN_NUM = (1);
+        COST_TP_SPAWN_CONF = ("");
+        COST_TP_SPAWN_RATE = (0.001);
+        COST_TP_WORLD_SPAWN_TYPE = (ECostType.NONE);
+        COST_TP_WORLD_SPAWN_NUM = (1);
+        COST_TP_WORLD_SPAWN_CONF = ("");
+        COST_TP_WORLD_SPAWN_RATE = (0.001);
+        COST_TP_TOP_TYPE = (ECostType.NONE);
+        COST_TP_TOP_NUM = (1);
+        COST_TP_TOP_CONF = ("");
+        COST_TP_TOP_RATE = (0.001);
+        COST_TP_BOTTOM_TYPE = (ECostType.NONE);
+        COST_TP_BOTTOM_NUM = (1);
+        COST_TP_BOTTOM_CONF = ("");
+        COST_TP_BOTTOM_RATE = (0.001);
+        COST_TP_UP_TYPE = (ECostType.NONE);
+        COST_TP_UP_NUM = (1);
+        COST_TP_UP_CONF = ("");
+        COST_TP_UP_RATE = (0.001);
+        COST_TP_DOWN_TYPE = (ECostType.NONE);
+        COST_TP_DOWN_NUM = (1);
+        COST_TP_DOWN_CONF = ("");
+        COST_TP_DOWN_RATE = (0.001);
+        COST_TP_VIEW_TYPE = (ECostType.NONE);
+        COST_TP_VIEW_NUM = (1);
+        COST_TP_VIEW_CONF = ("");
+        COST_TP_VIEW_RATE = (0.001);
+        COST_TP_HOME_TYPE = (ECostType.NONE);
+        COST_TP_HOME_NUM = (1);
+        COST_TP_HOME_CONF = ("");
+        COST_TP_HOME_RATE = (0.001);
+        COST_TP_STAGE_TYPE = (ECostType.NONE);
+        COST_TP_STAGE_NUM = (1);
+        COST_TP_STAGE_CONF = ("");
+        COST_TP_STAGE_RATE = (0.001);
+        COST_TP_BACK_TYPE = (ECostType.NONE);
+        COST_TP_BACK_NUM = (1);
+        COST_TP_BACK_CONF = ("");
+        COST_TP_BACK_RATE = (0.001);
+
+        saveAll();
+    }
+
+    /**
+     * 经典模式</br></br>
+     * 驿站指令改为warp</br>
+     * back返回时不再忽略使用back指令产生的传送记录</br>
+     * 操作家与驿站的前缀后移为后缀，使之更易于输入
+     */
+    public static void resetConfigWithMode1() {
+        resetConfig();
+
+        COMMAND_TP_HOME = ("home");
+        COMMAND_SET_HOME = ("home_set");
+        COMMAND_DEL_HOME = ("home_del");
+        COMMAND_GET_HOME = ("home_get");
+
+        COMMAND_TP_STAGE = ("warp");
+        COMMAND_SET_STAGE = ("warp_set");
+        COMMAND_DEL_STAGE = ("warp_del");
+        COMMAND_GET_STAGE = ("warp_get");
+
+        COMMAND_TP_TOP = ("top");
+        COMMAND_TP_UP = ("up");
+        COMMAND_TP_DOWN = ("down");
+        COMMAND_TP_BOTTOM = ("bottom");
+
+        TELEPORT_RECORD_LIMIT = (2);
+        TELEPORT_BACK_SKIP_TYPE = "";
+
+        saveAll();
+    }
+
+    /**
+     * 简洁模式</br></br>
+     * 在经典模式的基础上禁用不常用的功能
+     */
+    public static void resetConfigWithMode2() {
+        resetConfigWithMode1();
+
+        SWITCH_FEED = (false);
+        SWITCH_TP_STRUCTURE = (false);
+        SWITCH_TP_RANDOM = (false);
+        SWITCH_TP_SPAWN = (false);
+        SWITCH_TP_WORLD_SPAWN = (false);
+        SWITCH_TP_BOTTOM = (false);
+        SWITCH_TP_DOWN = (false);
+        SWITCH_TP_UP = (false);
+        SWITCH_TP_VIEW = (false);
+
+        saveAll();
+    }
+
+    /**
+     * 进阶模式</br></br>
+     * 使用推荐的配置，并启用传送代价
+     */
+    public static void resetConfigWithMode3() {
+        resetConfig();
+
+        CONCISE_TP_ASK_CANCEL = (false);
+        CONCISE_TP_HERE_CANCEL = (false);
+        CONCISE_TP_RANDOM = (false);
+        CONCISE_TP_SPAWN = (false);
+        CONCISE_TP_WORLD_SPAWN = (false);
+        CONCISE_TP_TOP = (false);
+        CONCISE_TP_UP = (false);
+        CONCISE_TP_BOTTOM = (false);
+        CONCISE_TP_DOWN = (false);
+        CONCISE_TP_VIEW = (false);
+
+        COST_TP_COORDINATE_TYPE = (ECostType.EXP_POINT);
+        COST_TP_STRUCTURE_TYPE = (ECostType.EXP_POINT);
+        COST_TP_ASK_TYPE = (ECostType.EXP_POINT);
+        COST_TP_HERE_TYPE = (ECostType.EXP_POINT);
+        COST_TP_RANDOM_TYPE = (ECostType.EXP_POINT);
+        COST_TP_SPAWN_TYPE = (ECostType.EXP_POINT);
+        COST_TP_WORLD_SPAWN_TYPE = (ECostType.EXP_POINT);
+        COST_TP_TOP_TYPE = (ECostType.EXP_POINT);
+        COST_TP_BOTTOM_TYPE = (ECostType.EXP_POINT);
+        COST_TP_UP_TYPE = (ECostType.EXP_POINT);
+        COST_TP_DOWN_TYPE = (ECostType.EXP_POINT);
+        COST_TP_VIEW_TYPE = (ECostType.EXP_POINT);
+        COST_TP_HOME_TYPE = (ECostType.EXP_POINT);
+        COST_TP_STAGE_TYPE = (ECostType.EXP_POINT);
+        COST_TP_BACK_TYPE = (ECostType.HUNGER);
+
+        saveAll();
+    }
+
 }

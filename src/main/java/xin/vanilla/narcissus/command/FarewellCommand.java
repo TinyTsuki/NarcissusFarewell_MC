@@ -94,8 +94,6 @@ public class FarewellCommand extends CommandBase {
 
     // endregion 实现CommandBase
 
-    public static int HELP_INFO_NUM_PER_PAGE = 5;
-
     public static final List<KeyValue<String, ECommandType>> HELP_MESSAGE = Arrays.stream(ECommandType.values())
             .map(type -> {
                 String command = NarcissusUtils.getCommand(type);
@@ -163,7 +161,7 @@ public class FarewellCommand extends CommandBase {
                 if (args.length == 2) {
                     String input = args[1];
                     boolean isInputEmpty = StringUtils.isNullOrEmpty(input);
-                    int totalPages = (int) Math.ceil((double) HELP_MESSAGE.size() / HELP_INFO_NUM_PER_PAGE);
+                    int totalPages = (int) Math.ceil((double) HELP_MESSAGE.size() / ServerConfig.HELP_INFO_NUM_PER_PAGE);
                     for (int i = 0; i < totalPages && isInputEmpty; i++) {
                         suggestions.add(String.valueOf(i + 1));
                     }
@@ -171,9 +169,17 @@ public class FarewellCommand extends CommandBase {
                             .filter(type -> type != ECommandType.HELP)
                             .filter(type -> !type.isIgnore())
                             .filter(type -> !type.name().toLowerCase().contains("concise"))
-                            .filter(type -> isInputEmpty || type.name().contains(input))
+                            .filter(type -> isInputEmpty || type.name().toLowerCase().contains(input.toLowerCase()))
                             .sorted(Comparator.comparing(ECommandType::getSort))
                             .forEach(type -> suggestions.add(type.name()));
+                }
+            }
+            // 设置语言
+            else if (args[0].equals(ServerConfig.COMMAND_LANGUAGE)) {
+                if (args.length == 2) {
+                    suggestions.add("client");
+                    suggestions.add("server");
+                    suggestions.addAll(I18nUtils.getI18nFiles());
                 }
             }
             // 获取UUID
@@ -197,6 +203,34 @@ public class FarewellCommand extends CommandBase {
                     suggestions.add("5");
                     suggestions.add("10");
                     suggestions.add("20");
+                }
+            }
+            // 分享坐标
+            else if (args[0].equals(ServerConfig.COMMAND_SHARE) && NarcissusUtils.isTeleportEnabled(ECommandType.SHARE) && NarcissusUtils.hasCommandPermission(player, ECommandType.SHARE)) {
+                if (args.length == 2) {
+                    String name = args[1];
+                    // 获取玩家私人传送点
+                    IPlayerTeleportData data = PlayerTeleportDataCapability.getData(player);
+                    for (KeyValue<String, String> home : data.getHomeCoordinate().keySet()) {
+                        // -> 用于标识home，方便shareCommand中识别
+                        String homeString = home.getValue() + "->" + home.getKey();
+                        if (StringUtils.isNullOrEmptyEx(name) || homeString.toLowerCase().contains(name)) {
+                            // suggestions.add(StringUtils.formatString(homeString));
+                            suggestions.add(homeString);
+                        }
+                    }
+                    // 获取公共传送点
+                    for (KeyValue<String, String> stage : WorldStageData.get().getStageCoordinate().keySet()) {
+                        // >> 用于标识stage，方便shareCommand中识别
+                        String stageString = stage.getValue() + ">>" + stage.getKey();
+                        if (StringUtils.isNullOrEmptyEx(name) || stageString.toLowerCase().contains(name)) {
+                            // suggestions.add(StringUtils.formatString(stageString));
+                            suggestions.add(stageString);
+                        }
+                    }
+                } else if (args.length == 3) {
+                    suggestions.addAll(getPlayerNameSuggestions(server, args));
+                    suggestions.add("@a");
                 }
             }
             // 毒杀玩家
@@ -634,7 +668,10 @@ public class FarewellCommand extends CommandBase {
                                 suggestions.add("true");
                                 suggestions.add("false");
                             } else if (args[2].equals("mode")) {
-
+                                suggestions.add("0");
+                                suggestions.add("1");
+                                suggestions.add("2");
+                                suggestions.add("3");
                             }
                         }
                     }
@@ -674,10 +711,10 @@ public class FarewellCommand extends CommandBase {
             }
             Component helpInfo;
             if (page > 0) {
-                int pages = (int) Math.ceil((double) HELP_MESSAGE.size() / HELP_INFO_NUM_PER_PAGE);
+                int pages = (int) Math.ceil((double) HELP_MESSAGE.size() / ServerConfig.HELP_INFO_NUM_PER_PAGE);
                 helpInfo = Component.literal(StringUtils.format(ServerConfig.HELP_HEADER + "\n", page, pages));
-                for (int i = 0; (page - 1) * HELP_INFO_NUM_PER_PAGE + i < HELP_MESSAGE.size() && i < HELP_INFO_NUM_PER_PAGE; i++) {
-                    KeyValue<String, ECommandType> keyValue = HELP_MESSAGE.get((page - 1) * HELP_INFO_NUM_PER_PAGE + i);
+                for (int i = 0; (page - 1) * ServerConfig.HELP_INFO_NUM_PER_PAGE + i < HELP_MESSAGE.size() && i < ServerConfig.HELP_INFO_NUM_PER_PAGE; i++) {
+                    KeyValue<String, ECommandType> keyValue = HELP_MESSAGE.get((page - 1) * ServerConfig.HELP_INFO_NUM_PER_PAGE + i);
                     Component commandTips;
                     if (keyValue.getValue().name().toLowerCase().contains("concise")) {
                         commandTips = Component.translatable(NarcissusUtils.getPlayerLanguage(player), EI18nType.COMMAND, "concise", NarcissusUtils.getCommand(keyValue.getValue().replaceConcise()));
@@ -734,9 +771,32 @@ public class FarewellCommand extends CommandBase {
             NarcissusUtils.sendMessage(player, helpInfo);
             return 1;
         } else {
+            notifyHelp(player);
+
             String prefix = args[0];
+            // 设置语言
+            if (prefix.equals(ServerConfig.COMMAND_LANGUAGE)) {
+                // 传送功能前置校验
+                if (checkTeleportPre(player, ECommandType.LANGUAGE)) {
+                    return 0;
+                }
+                if (args.length == 2) {
+                    IPlayerTeleportData signInData = PlayerTeleportDataCapability.getData(player);
+                    String language = args[1];
+                    if (I18nUtils.getI18nFiles().contains(language)) {
+                        signInData.setLanguage(language);
+                        NarcissusUtils.sendMessage(player, Component.translatable(player, EI18nType.MESSAGE, "player_default_language", language));
+                    } else if ("server".equalsIgnoreCase(language) || "client".equalsIgnoreCase(language)) {
+                        signInData.setLanguage(language);
+                        NarcissusUtils.sendMessage(player, Component.translatable(player, EI18nType.MESSAGE, "player_default_language", language));
+                    } else {
+                        NarcissusUtils.sendMessage(player, Component.translatable(player, EI18nType.MESSAGE, "language_not_exist").setColor(0xFFFF0000));
+                    }
+                    return 1;
+                }
+            }
             // 玩家UUID
-            if (prefix.equals(ServerConfig.COMMAND_UUID)) {
+            else if (prefix.equals(ServerConfig.COMMAND_UUID)) {
                 // 传送功能前置校验
                 if (checkTeleportPre(player, ECommandType.UUID)) {
                     return 0;
@@ -750,7 +810,7 @@ public class FarewellCommand extends CommandBase {
                     } catch (CommandException ignored) {
                     }
                 }
-                String language = NarcissusFarewell.DEFAULT_LANGUAGE;
+                String language = ServerConfig.DEFAULT_LANGUAGE;
                 if (player != null) {
                     language = NarcissusUtils.getPlayerLanguage(player);
                 }
@@ -787,7 +847,7 @@ public class FarewellCommand extends CommandBase {
                 } else if ((args.length == 2 || args.length == 3) && !type.equals("get")) {
                     return -1;
                 }
-                String language = NarcissusFarewell.DEFAULT_LANGUAGE;
+                String language = ServerConfig.DEFAULT_LANGUAGE;
                 if (player != null) {
                     language = NarcissusUtils.getPlayerLanguage(player);
                 }
@@ -808,6 +868,128 @@ public class FarewellCommand extends CommandBase {
                         , target.getDisplayNameString()
                         , data.getTeleportCard());
                 sender.sendMessage(component.toChatComponent(language));
+                return 1;
+            }
+            // 分享坐标
+            else if (prefix.equals(ServerConfig.COMMAND_SHARE)) {
+                // 传送功能前置校验
+                if (checkTeleportPre(player, ECommandType.SHARE)) {
+                    return 0;
+                }
+
+                String name = args.length > 1 ? args[1] : "Shared";
+
+                List<EntityPlayerMP> targetList;
+                if (args.length == 4) {
+                    try {
+                        targetList = new ArrayList<>(CommandBase.getPlayers(server, sender, args[3]));
+                    } catch (IllegalArgumentException | CommandException ignored) {
+                        return -1;
+                    }
+                } else {
+                    targetList = new ArrayList<>(server.getPlayerList().getPlayers());
+                }
+
+                Component nameComponent;
+                Component tpButton = Component.translatable(EI18nType.MESSAGE, "tp_button");
+                // Component addButton = Component.translatable(EI18nType.MESSAGE, "add_button");
+                Component copyButton = Component.translatable(EI18nType.MESSAGE, "copy_button");
+
+                // 若为home
+                if (name.contains("->")) {
+                    IPlayerTeleportData data = PlayerTeleportDataCapability.getData(player);
+                    KeyValue<String, Coordinate> keyValue = data.getHomeCoordinate().entrySet().stream()
+                            .map(entry -> new KeyValue<>(entry.getKey().getValue() + "->" + entry.getKey().getKey(), entry.getValue()))
+                            .filter(kv -> name.equals(kv.getKey()))
+                            .findFirst()
+                            .orElse(new KeyValue<>(name, null));
+                    String[] split = keyValue.getKey().split("->");
+                    Coordinate coordinate = keyValue.getValue();
+                    if (coordinate == null) {
+                        NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EI18nType.MESSAGE, "home_not_found_with_name_in_dimension")
+                                , split[1], split[0]);
+                        return 0;
+                    }
+                    nameComponent = Component.literal(split[0]);
+
+                    String tpCommand = String.format("/%s %s %s %s unsafe %s"
+                            , NarcissusUtils.getCommand(ECommandType.TP_COORDINATE)
+                            , coordinate.toXString()
+                            , coordinate.toYString()
+                            , coordinate.toZString()
+                            , coordinate.getDimensionResourceId()
+                    );
+                    tpButton.setColor(EMCColor.GREEN.getColor())
+                            .setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, tpCommand))
+                            .setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.literal(tpCommand).toTextComponent()));
+                    copyButton.setColor(EMCColor.GREEN.getColor())
+                            .setClickEvent(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, tpCommand))
+                            .setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.literal(tpCommand).toTextComponent()));
+
+                }
+                // 若为stage
+                else if (name.contains(">>")) {
+                    KeyValue<String, Coordinate> keyValue = WorldStageData.get().getStageCoordinate().entrySet().stream()
+                            .map(entry -> new KeyValue<>(entry.getKey().getValue() + ">>" + entry.getKey().getKey(), entry.getValue()))
+                            .filter(kv -> name.equals(kv.getKey()))
+                            .findFirst()
+                            .orElse(new KeyValue<>(name, null));
+                    String[] split = keyValue.getKey().split(">>");
+                    Coordinate coordinate = keyValue.getValue();
+                    if (coordinate == null) {
+                        NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EI18nType.MESSAGE, "stage_not_found_with_name_in_dimension")
+                                , split[1], split[0]);
+                        return 0;
+                    }
+                    nameComponent = Component.literal(split[0]);
+
+                    String tpCommand = String.format("/%s %s %s %s unsafe %s"
+                            , NarcissusUtils.getCommand(ECommandType.TP_COORDINATE)
+                            , coordinate.toXString()
+                            , coordinate.toYString()
+                            , coordinate.toZString()
+                            , coordinate.getDimensionResourceId()
+                    );
+                    tpButton.setColor(EMCColor.GREEN.getColor())
+                            .setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, tpCommand))
+                            .setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.literal(tpCommand).toTextComponent()));
+                    copyButton.setColor(EMCColor.GREEN.getColor())
+                            .setClickEvent(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, tpCommand))
+                            .setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.literal(tpCommand).toTextComponent()));
+                }
+                // 玩家当前坐标
+                else {
+                    nameComponent = Component.literal(name);
+                    Coordinate coordinate = new Coordinate(player);
+
+                    String tpCommand = String.format("/%s %s %s %s unsafe %s"
+                            , NarcissusUtils.getCommand(ECommandType.TP_COORDINATE)
+                            , coordinate.toXString()
+                            , coordinate.toYString()
+                            , coordinate.toZString()
+                            , coordinate.getDimensionResourceId()
+                    );
+                    tpButton.setColor(EMCColor.GREEN.getColor())
+                            .setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, tpCommand))
+                            .setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.literal(tpCommand).toTextComponent()));
+                    copyButton.setColor(EMCColor.GREEN.getColor())
+                            .setClickEvent(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, tpCommand))
+                            .setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.literal(tpCommand).toTextComponent()));
+                }
+
+                String lang = NarcissusUtils.getPlayerLanguage(player);
+                Component component = Component.translatable(lang, EI18nType.MESSAGE, "shared_coordinates"
+                        , player.getDisplayNameString()
+                        , nameComponent
+                        , tpButton
+                        // , addButton
+                        , copyButton);
+                for (EntityPlayerMP target : targetList) {
+                    if (!target.getUniqueID().equals(player.getUniqueID())) {
+                        NarcissusUtils.sendMessage(target, component);
+                    }
+                }
+                NarcissusUtils.sendMessage(player, component);
                 return 1;
             }
             // 当前纬度ID
@@ -853,7 +1035,7 @@ public class FarewellCommand extends CommandBase {
                         if (player != null)
                             NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EI18nType.MESSAGE, "player_not_found"));
                         else
-                            NarcissusUtils.sendMessage(sender, Component.translatable(I18nUtils.getKey(EI18nType.MESSAGE, "player_not_found")).getString(NarcissusFarewell.DEFAULT_LANGUAGE));
+                            NarcissusUtils.sendMessage(sender, Component.translatable(I18nUtils.getKey(EI18nType.MESSAGE, "player_not_found")).getString(ServerConfig.DEFAULT_LANGUAGE));
                         return 0;
                     }
                     for (EntityPlayerMP target : targetList) {
@@ -1857,7 +2039,7 @@ public class FarewellCommand extends CommandBase {
                         } catch (Exception ignored) {
                             rules = new ECommandType[]{};
                         }
-                        String language = NarcissusFarewell.DEFAULT_LANGUAGE;
+                        String language = ServerConfig.DEFAULT_LANGUAGE;
                         if (player != null) {
                             language = NarcissusUtils.getPlayerLanguage(player);
                         }
@@ -1919,8 +2101,17 @@ public class FarewellCommand extends CommandBase {
                     } else if (args[2].equals("mode")) {
                         int mode = StringUtils.toInt(args[3]);
                         switch (mode) {
+                            case 0:
+                                ServerConfig.resetConfig();
+                                break;
                             case 1:
-                                // TODO 实现配置文件模式切换
+                                ServerConfig.resetConfigWithMode1();
+                                break;
+                            case 2:
+                                ServerConfig.resetConfigWithMode2();
+                                break;
+                            case 3:
+                                ServerConfig.resetConfigWithMode3();
                                 break;
                             default: {
                                 throw new IllegalArgumentException("Mode " + mode + " does not exist");
@@ -1928,6 +2119,11 @@ public class FarewellCommand extends CommandBase {
                         }
                         Component component = Component.translatable(EI18nType.MESSAGE, "server_config_mode", mode);
                         NarcissusUtils.sendMessage(player, component);
+                        // 更新权限信息
+                        server.getPlayerList().getPlayers()
+                                .forEach(target -> server.getPlayerList()
+                                        .updatePermissionLevel(target)
+                                );
                         return 1;
                     }
                 }
@@ -2123,5 +2319,24 @@ public class FarewellCommand extends CommandBase {
         } catch (Exception ignored) {
         }
         return result;
+    }
+
+    /**
+     * 若为第一次使用指令则进行提示
+     */
+    public static void notifyHelp(EntityPlayerMP player) {
+        if (player != null) {
+            IPlayerTeleportData data = PlayerTeleportDataCapability.getData(player);
+            if (!data.isNotified()) {
+                Component button = Component.literal("/" + NarcissusUtils.getCommandPrefix())
+                        .setColor(EMCColor.AQUA.getColor())
+                        .setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/" + NarcissusUtils.getCommandPrefix()))
+                        .setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.literal("/" + NarcissusUtils.getCommandPrefix())
+                                .toTextComponent())
+                        );
+                NarcissusUtils.sendMessage(player, Component.translatable(EI18nType.MESSAGE, "notify_help", button));
+                data.setNotified(true);
+            }
+        }
     }
 }

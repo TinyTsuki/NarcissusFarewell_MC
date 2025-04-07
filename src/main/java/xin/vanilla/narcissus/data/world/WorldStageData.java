@@ -6,6 +6,7 @@ import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
 import net.minecraft.world.WorldServer;
+import net.minecraftforge.common.util.Constants;
 import net.minecraftforge.common.util.WorldCapabilityData;
 import xin.vanilla.narcissus.NarcissusFarewell;
 import xin.vanilla.narcissus.config.Coordinate;
@@ -26,13 +27,17 @@ public class WorldStageData extends WorldCapabilityData {
     private Map<KeyValue<String, String>, Coordinate> stageCoordinate = new LinkedHashMap<>();
 
     public WorldStageData() {
-        super(DATA_NAME);
+        this(DATA_NAME);
+    }
+
+    public WorldStageData(String name) {
+        super(name);
     }
 
     @Override
     public void readFromNBT(NBTTagCompound nbt) {
         this.stageCoordinate = new LinkedHashMap<>();
-        NBTTagList stageCoordinateNBT = nbt.getTagList("stageCoordinate", 10);
+        NBTTagList stageCoordinateNBT = nbt.getTagList("stageCoordinate", Constants.NBT.TAG_COMPOUND);
         Map<KeyValue<String, String>, Coordinate> stageCoordinate = new HashMap<>();
         for (int i = 0; i < stageCoordinateNBT.tagCount(); i++) {
             NBTTagCompound stageCoordinateTag = stageCoordinateNBT.getCompoundTagAt(i);
@@ -98,7 +103,7 @@ public class WorldStageData extends WorldCapabilityData {
     }
 
     public static WorldStageData get(WorldServer world) {
-        WorldStageData stageData = (WorldStageData) world.loadData(WorldStageData.class, DATA_NAME);
+        WorldStageData stageData = (WorldStageData) world.getMapStorage().getOrLoadData(WorldStageData.class, DATA_NAME);
         if (stageData == null) {
             stageData = new WorldStageData();
             world.setData(DATA_NAME, stageData);

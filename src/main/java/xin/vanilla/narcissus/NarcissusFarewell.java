@@ -45,11 +45,6 @@ public class NarcissusFarewell {
     private static MinecraftServer serverInstance;
 
     /**
-     * 默认语言
-     */
-    public static final String DEFAULT_LANGUAGE = "en_us";
-
-    /**
      * 分片网络包缓存
      */
     @Getter
@@ -111,10 +106,14 @@ public class NarcissusFarewell {
         serverInstance = event.getServer();
         LOGGER.debug("Registering commands");
         event.registerServerCommand(new FarewellCommand());
+        if (NarcissusUtils.isConciseEnabled(ECommandType.LANGUAGE))
+            event.registerServerCommand(new LanguageCommand());
         if (NarcissusUtils.isConciseEnabled(ECommandType.UUID))
             event.registerServerCommand(new UuidCommand());
         if (NarcissusUtils.isConciseEnabled(ECommandType.CARD))
             event.registerServerCommand(new CardCommand());
+        if (NarcissusUtils.isConciseEnabled(ECommandType.SHARE))
+            event.registerServerCommand(new ShareCommand());
         if (NarcissusUtils.isConciseEnabled(ECommandType.DIMENSION))
             event.registerServerCommand(new DimensionCommand());
         if (NarcissusUtils.isConciseEnabled(ECommandType.FEED))

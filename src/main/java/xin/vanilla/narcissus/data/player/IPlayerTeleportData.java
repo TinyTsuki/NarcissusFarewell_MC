@@ -1,6 +1,7 @@
 package xin.vanilla.narcissus.data.player;
 
 import lombok.NonNull;
+import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.network.PacketBuffer;
@@ -10,6 +11,7 @@ import xin.vanilla.narcissus.config.KeyValue;
 import xin.vanilla.narcissus.data.TeleportRecord;
 import xin.vanilla.narcissus.enums.ETeleportType;
 
+import javax.annotation.Nullable;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -108,9 +110,29 @@ public interface IPlayerTeleportData extends INBTSerializable<NBTTagCompound> {
 
     void setDefaultHome(Map<String, String> defaultHome);
 
+    /**
+     * 获取语言
+     */
+    String getLanguage();
+
+    /**
+     * 设置语言
+     */
+    void setLanguage(String language);
+
+    /**
+     * 获取有效的语言
+     */
+    @NonNull
+    String getValidLanguage(@Nullable EntityPlayer player);
+
     void addDefaultHome(String key, String value);
 
     KeyValue<String, String> getDefaultHome(String key);
+
+    boolean isNotified();
+
+    void setNotified(boolean notified);
 
     void writeToBuffer(PacketBuffer buffer);
 
