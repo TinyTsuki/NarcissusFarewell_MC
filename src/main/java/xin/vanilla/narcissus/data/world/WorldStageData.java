@@ -5,6 +5,7 @@ import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
 import net.minecraft.world.WorldSavedData;
 import net.minecraft.world.storage.MapStorage;
+import net.minecraftforge.common.util.Constants;
 import xin.vanilla.narcissus.NarcissusFarewell;
 import xin.vanilla.narcissus.config.Coordinate;
 import xin.vanilla.narcissus.config.KeyValue;
@@ -34,7 +35,7 @@ public class WorldStageData extends WorldSavedData {
     @Override
     public void readFromNBT(NBTTagCompound nbt) {
         this.stageCoordinate = new LinkedHashMap<>();
-        NBTTagList stageCoordinateNBT = nbt.getTagList("stageCoordinate", 10);
+        NBTTagList stageCoordinateNBT = nbt.getTagList("stageCoordinate", Constants.NBT.TAG_COMPOUND);
         Map<KeyValue<String, String>, Coordinate> stageCoordinate = new HashMap<>();
         for (int i = 0; i < stageCoordinateNBT.tagCount(); i++) {
             NBTTagCompound stageCoordinateTag = stageCoordinateNBT.getCompoundTagAt(i);

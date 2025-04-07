@@ -83,6 +83,9 @@ public class NarcissusUtils {
             case CARD_CONCISE:
             case SET_CARD_CONCISE:
                 return ServerConfig.TELEPORT_CARD;
+            case SHARE:
+            case SHARE_CONCISE:
+                return ServerConfig.SWITCH_SHARE;
             case FEED:
             case FEED_OTHER:
             case FEED_CONCISE:
@@ -292,6 +295,10 @@ public class NarcissusUtils {
         switch (type) {
             case HELP:
                 return prefix + "help";
+            case LANGUAGE:
+                return prefix + ServerConfig.COMMAND_LANGUAGE;
+            case LANGUAGE_CONCISE:
+                return isConciseEnabled(type) ? ServerConfig.COMMAND_LANGUAGE : "";
             case DIMENSION:
                 return prefix + ServerConfig.COMMAND_DIMENSION;
             case UUID:
@@ -300,10 +307,14 @@ public class NarcissusUtils {
                 return isConciseEnabled(type) ? ServerConfig.COMMAND_UUID : "";
             case CARD:
             case SET_CARD:
-                return prefix + " " + ServerConfig.COMMAND_CARD;
+                return prefix + ServerConfig.COMMAND_CARD;
             case CARD_CONCISE:
             case SET_CARD_CONCISE:
                 return isConciseEnabled(type) ? ServerConfig.COMMAND_CARD : "";
+            case SHARE:
+                return prefix + ServerConfig.COMMAND_SHARE;
+            case SHARE_CONCISE:
+                return isConciseEnabled(type) ? ServerConfig.COMMAND_SHARE : "";
             case FEED:
             case FEED_OTHER:
                 return prefix + ServerConfig.COMMAND_FEED;
@@ -331,7 +342,7 @@ public class NarcissusUtils {
             case TP_ASK_NO_CONCISE:
                 return isConciseEnabled(type) ? ServerConfig.COMMAND_TP_ASK_NO : "";
             case TP_ASK_CANCEL:
-                return prefix + " " + ServerConfig.COMMAND_TP_ASK_CANCEL;
+                return prefix + ServerConfig.COMMAND_TP_ASK_CANCEL;
             case TP_ASK_CANCEL_CONCISE:
                 return isConciseEnabled(type) ? ServerConfig.COMMAND_TP_ASK_CANCEL : "";
             case TP_HERE:
@@ -347,7 +358,7 @@ public class NarcissusUtils {
             case TP_HERE_NO_CONCISE:
                 return isConciseEnabled(type) ? ServerConfig.COMMAND_TP_HERE_NO : "";
             case TP_HERE_CANCEL:
-                return prefix + " " + ServerConfig.COMMAND_TP_HERE_CANCEL;
+                return prefix + ServerConfig.COMMAND_TP_HERE_CANCEL;
             case TP_HERE_CANCEL_CONCISE:
                 return isConciseEnabled(type) ? ServerConfig.COMMAND_TP_HERE_CANCEL : "";
             case TP_RANDOM:
@@ -559,6 +570,9 @@ public class NarcissusUtils {
 
     public static boolean isConciseEnabled(ECommandType type) {
         switch (type) {
+            case LANGUAGE:
+            case LANGUAGE_CONCISE:
+                return ServerConfig.CONCISE_LANGUAGE;
             case UUID:
             case UUID_CONCISE:
                 return ServerConfig.CONCISE_UUID;
@@ -570,6 +584,9 @@ public class NarcissusUtils {
             case SET_CARD:
             case SET_CARD_CONCISE:
                 return ServerConfig.CONCISE_CARD;
+            case SHARE:
+            case SHARE_CONCISE:
+                return ServerConfig.CONCISE_SHARE;
             case FEED:
             case FEED_OTHER:
             case FEED_CONCISE:
@@ -1716,7 +1733,7 @@ public class NarcissusUtils {
         if (source instanceof EntityPlayerMP) {
             sendTranslatableMessage((EntityPlayerMP) source, key, args);
         } else {
-            for (IChatComponent component : Component.translatable(key, args).setLanguageCode(NarcissusFarewell.DEFAULT_LANGUAGE).toChatComponent()) {
+            for (IChatComponent component : Component.translatable(key, args).setLanguageCode(ServerConfig.DEFAULT_LANGUAGE).toChatComponent()) {
                 source.addChatMessage(component);
             }
         }
@@ -2199,6 +2216,26 @@ public class NarcissusUtils {
 
     // region 杂项
     public static String getPlayerLanguage(EntityPlayerMP player) {
+        return PlayerTeleportData.get(player).getValidLanguage(player);
+    }
+
+    public static String getValidLanguage(@Nullable EntityPlayer player, @Nullable String language) {
+        String result;
+        if (StringUtils.isNullOrEmptyEx(language) || "client".equalsIgnoreCase(language)) {
+            if (player instanceof EntityPlayerMP) {
+                result = NarcissusUtils.getServerPlayerLanguage((EntityPlayerMP) player);
+            } else {
+                result = NarcissusUtils.getClientLanguage();
+            }
+        } else if ("server".equalsIgnoreCase(language)) {
+            result = ServerConfig.DEFAULT_LANGUAGE;
+        } else {
+            result = language;
+        }
+        return result;
+    }
+
+    public static String getServerPlayerLanguage(EntityPlayerMP player) {
         Object value = FieldUtils.getPrivateFieldValue(EntityPlayerMP.class, player, FieldUtils.getPlayerLanguageFieldName(player));
         if (value == null) {
             return "en_us";

@@ -12,7 +12,7 @@ import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.event.ClickEvent;
 import net.minecraft.event.HoverEvent;
 import net.minecraft.util.*;
-import xin.vanilla.narcissus.NarcissusFarewell;
+import xin.vanilla.narcissus.config.ServerConfig;
 import xin.vanilla.narcissus.enums.EI18nType;
 
 import java.io.Serializable;
@@ -160,7 +160,7 @@ public class Component implements Cloneable, Serializable {
      * 获取语言代码
      */
     public @NonNull String getLanguageCode() {
-        return this.languageCode == null ? NarcissusFarewell.DEFAULT_LANGUAGE : this.languageCode;
+        return this.languageCode == null ? ServerConfig.DEFAULT_LANGUAGE : this.languageCode;
     }
 
     /**
