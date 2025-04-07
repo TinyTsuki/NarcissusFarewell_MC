@@ -5,17 +5,21 @@ import lombok.Getter;
 @Getter
 public enum ECommandType {
     HELP(false, false),
+    LANGUAGE(false, false),
+    LANGUAGE_CONCISE(),
     UUID(),
     UUID_CONCISE(),
     DIMENSION(),
     DIMENSION_CONCISE(),
-    CARD(),
+    CARD(false, false),
     CARD_CONCISE(),
     SET_CARD(true),
     SET_CARD_CONCISE(),
-    FEED(),
-    FEED_OTHER(true),
+    SHARE(),
+    SHARE_CONCISE(),
+    FEED(false, false),
     FEED_CONCISE(),
+    FEED_OTHER(true),
     FEED_OTHER_CONCISE(true),
     TP_COORDINATE(),
     TP_COORDINATE_CONCISE(),
@@ -76,8 +80,17 @@ public enum ECommandType {
     VIRTUAL_OP(),
     VIRTUAL_OP_CONCISE();
 
+    /**
+     * 在帮助信息内忽略
+     */
     private final boolean ignore;
+    /**
+     * 是否简短指令
+     */
     private final boolean concise = this.name().endsWith("_CONCISE");
+    /**
+     * 是否被虚拟权限管理
+     */
     private final boolean op;
 
     ECommandType() {
@@ -115,22 +128,22 @@ public enum ECommandType {
             case TP_STRUCTURE_CONCISE:
                 return ETeleportType.TP_STRUCTURE;
             case TP_ASK:
-            // case TP_ASK_YES:
-            // case TP_ASK_NO:
-            // case TP_ASK_CANCEL:
+                // case TP_ASK_YES:
+                // case TP_ASK_NO:
+                // case TP_ASK_CANCEL:
             case TP_ASK_CONCISE:
-            // case TP_ASK_YES_CONCISE:
-            // case TP_ASK_NO_CONCISE:
-            // case TP_ASK_CANCEL_CONCISE:
+                // case TP_ASK_YES_CONCISE:
+                // case TP_ASK_NO_CONCISE:
+                // case TP_ASK_CANCEL_CONCISE:
                 return ETeleportType.TP_ASK;
             case TP_HERE:
-            // case TP_HERE_YES:
-            // case TP_HERE_NO:
-            // case TP_HERE_CANCEL:
+                // case TP_HERE_YES:
+                // case TP_HERE_NO:
+                // case TP_HERE_CANCEL:
             case TP_HERE_CONCISE:
-            // case TP_HERE_YES_CONCISE:
-            // case TP_HERE_NO_CONCISE:
-            // case TP_HERE_CANCEL_CONCISE:
+                // case TP_HERE_YES_CONCISE:
+                // case TP_HERE_NO_CONCISE:
+                // case TP_HERE_CANCEL_CONCISE:
                 return ETeleportType.TP_HERE;
             case TP_RANDOM:
             case TP_RANDOM_CONCISE:
@@ -159,22 +172,22 @@ public enum ECommandType {
             case TP_VIEW_CONCISE:
                 return ETeleportType.TP_VIEW;
             case TP_HOME:
-            // case SET_HOME:
-            // case DEL_HOME:
-            // case GET_HOME:
+                // case SET_HOME:
+                // case DEL_HOME:
+                // case GET_HOME:
             case TP_HOME_CONCISE:
-            // case SET_HOME_CONCISE:
-            // case DEL_HOME_CONCISE:
-            // case GET_HOME_CONCISE:
+                // case SET_HOME_CONCISE:
+                // case DEL_HOME_CONCISE:
+                // case GET_HOME_CONCISE:
                 return ETeleportType.TP_HOME;
             case TP_STAGE:
-            // case SET_STAGE:
-            // case DEL_STAGE:
-            // case GET_STAGE:
+                // case SET_STAGE:
+                // case DEL_STAGE:
+                // case GET_STAGE:
             case TP_STAGE_CONCISE:
-            // case SET_STAGE_CONCISE:
-            // case DEL_STAGE_CONCISE:
-            // case GET_STAGE_CONCISE:
+                // case SET_STAGE_CONCISE:
+                // case DEL_STAGE_CONCISE:
+                // case GET_STAGE_CONCISE:
                 return ETeleportType.TP_STAGE;
             case TP_BACK:
             case TP_BACK_CONCISE:

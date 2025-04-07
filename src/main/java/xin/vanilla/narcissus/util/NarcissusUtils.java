@@ -93,6 +93,9 @@ public class NarcissusUtils {
             case CARD_CONCISE:
             case SET_CARD_CONCISE:
                 return ServerConfig.TELEPORT_CARD.get();
+            case SHARE:
+            case SHARE_CONCISE:
+                return ServerConfig.SWITCH_SHARE.get();
             case FEED:
             case FEED_OTHER:
             case FEED_CONCISE:
@@ -216,6 +219,10 @@ public class NarcissusUtils {
         switch (type) {
             case HELP:
                 return prefix + " help";
+            case LANGUAGE:
+                return prefix + " " + ServerConfig.COMMAND_LANGUAGE.get();
+            case LANGUAGE_CONCISE:
+                return isConciseEnabled(type) ? ServerConfig.COMMAND_LANGUAGE.get() : "";
             case DIMENSION:
                 return prefix + " " + ServerConfig.COMMAND_DIMENSION.get();
             case DIMENSION_CONCISE:
@@ -230,6 +237,10 @@ public class NarcissusUtils {
             case CARD_CONCISE:
             case SET_CARD_CONCISE:
                 return isConciseEnabled(type) ? ServerConfig.COMMAND_CARD.get() : "";
+            case SHARE:
+                return prefix + " " + ServerConfig.COMMAND_SHARE.get();
+            case SHARE_CONCISE:
+                return isConciseEnabled(type) ? ServerConfig.COMMAND_SHARE.get() : "";
             case FEED:
             case FEED_OTHER:
                 return prefix + " " + ServerConfig.COMMAND_FEED.get();
@@ -485,6 +496,9 @@ public class NarcissusUtils {
 
     public static boolean isConciseEnabled(ECommandType type) {
         switch (type) {
+            case LANGUAGE:
+            case LANGUAGE_CONCISE:
+                return ServerConfig.CONCISE_LANGUAGE.get();
             case UUID:
             case UUID_CONCISE:
                 return ServerConfig.CONCISE_UUID.get();
@@ -496,6 +510,9 @@ public class NarcissusUtils {
             case SET_CARD:
             case SET_CARD_CONCISE:
                 return ServerConfig.CONCISE_CARD.get();
+            case SHARE:
+            case SHARE_CONCISE:
+                return ServerConfig.CONCISE_SHARE.get();
             case FEED:
             case FEED_OTHER:
             case FEED_CONCISE:
@@ -1558,9 +1575,9 @@ public class NarcissusUtils {
             } catch (CommandSyntaxException ignored) {
             }
         } else if (success) {
-            source.sendSuccess(Component.translatable(key, args).setLanguageCode(NarcissusFarewell.DEFAULT_LANGUAGE).toChatComponent(), false);
+            source.sendSuccess(Component.translatable(key, args).setLanguageCode(ServerConfig.DEFAULT_LANGUAGE.get()).toChatComponent(), false);
         } else {
-            source.sendFailure(Component.translatable(key, args).setLanguageCode(NarcissusFarewell.DEFAULT_LANGUAGE).toChatComponent());
+            source.sendFailure(Component.translatable(key, args).setLanguageCode(ServerConfig.DEFAULT_LANGUAGE.get()).toChatComponent());
         }
     }
 
@@ -2042,6 +2059,26 @@ public class NarcissusUtils {
     // region 杂项
 
     public static String getPlayerLanguage(ServerPlayerEntity player) {
+        return PlayerTeleportDataCapability.getData(player).getValidLanguage(player);
+    }
+
+    public static String getValidLanguage(@Nullable PlayerEntity player, @Nullable String language) {
+        String result;
+        if (StringUtils.isNullOrEmptyEx(language) || "client".equalsIgnoreCase(language)) {
+            if (player instanceof ServerPlayerEntity) {
+                result = NarcissusUtils.getServerPlayerLanguage((ServerPlayerEntity) player);
+            } else {
+                result = NarcissusUtils.getClientLanguage();
+            }
+        } else if ("server".equalsIgnoreCase(language)) {
+            result = ServerConfig.DEFAULT_LANGUAGE.get();
+        } else {
+            result = language;
+        }
+        return result;
+    }
+
+    public static String getServerPlayerLanguage(ServerPlayerEntity player) {
         return player.getLanguage();
     }
 
