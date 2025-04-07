@@ -95,224 +95,526 @@ public class NarcissusUtils {
      * @param type 指令类型
      */
     public static boolean isCommandEnabled(ECommandType type) {
-        return switch (type) {
-            case CARD, SET_CARD, CARD_CONCISE, SET_CARD_CONCISE -> ServerConfig.TELEPORT_CARD.get();
-            case FEED, FEED_OTHER, FEED_CONCISE, FEED_OTHER_CONCISE -> ServerConfig.SWITCH_FEED.get();
-            case TP_COORDINATE, TP_COORDINATE_CONCISE -> ServerConfig.SWITCH_TP_COORDINATE.get();
-            case TP_STRUCTURE, TP_STRUCTURE_CONCISE -> ServerConfig.SWITCH_TP_STRUCTURE.get();
-            case TP_ASK, TP_ASK_YES, TP_ASK_NO, TP_ASK_CANCEL, TP_ASK_CONCISE, TP_ASK_YES_CONCISE, TP_ASK_NO_CONCISE,
-                 TP_ASK_CANCEL_CONCISE -> ServerConfig.SWITCH_TP_ASK.get();
-            case TP_HERE, TP_HERE_YES, TP_HERE_NO, TP_HERE_CANCEL, TP_HERE_CONCISE, TP_HERE_YES_CONCISE,
-                 TP_HERE_NO_CONCISE, TP_HERE_CANCEL_CONCISE -> ServerConfig.SWITCH_TP_HERE.get();
-            case TP_RANDOM, TP_RANDOM_CONCISE -> ServerConfig.SWITCH_TP_RANDOM.get();
-            case TP_SPAWN, TP_SPAWN_OTHER, TP_SPAWN_CONCISE, TP_SPAWN_OTHER_CONCISE ->
-                    ServerConfig.SWITCH_TP_SPAWN.get();
-            case TP_WORLD_SPAWN, TP_WORLD_SPAWN_CONCISE -> ServerConfig.SWITCH_TP_WORLD_SPAWN.get();
-            case TP_TOP, TP_TOP_CONCISE -> ServerConfig.SWITCH_TP_TOP.get();
-            case TP_BOTTOM, TP_BOTTOM_CONCISE -> ServerConfig.SWITCH_TP_BOTTOM.get();
-            case TP_UP, TP_UP_CONCISE -> ServerConfig.SWITCH_TP_UP.get();
-            case TP_DOWN, TP_DOWN_CONCISE -> ServerConfig.SWITCH_TP_DOWN.get();
-            case TP_VIEW, TP_VIEW_CONCISE -> ServerConfig.SWITCH_TP_VIEW.get();
-            case TP_HOME, SET_HOME, DEL_HOME, GET_HOME, TP_HOME_CONCISE, SET_HOME_CONCISE, DEL_HOME_CONCISE,
-                 GET_HOME_CONCISE -> ServerConfig.SWITCH_TP_HOME.get();
-            case TP_STAGE, SET_STAGE, DEL_STAGE, GET_STAGE, TP_STAGE_CONCISE, SET_STAGE_CONCISE, DEL_STAGE_CONCISE,
-                 GET_STAGE_CONCISE -> ServerConfig.SWITCH_TP_STAGE.get();
-            case TP_BACK, TP_BACK_CONCISE -> ServerConfig.SWITCH_TP_BACK.get();
-            default -> true;
-        };
+        switch (type) {
+            case CARD:
+            case SET_CARD:
+            case CARD_CONCISE:
+            case SET_CARD_CONCISE:
+                return ServerConfig.TELEPORT_CARD.get();
+            case SHARE:
+            case SHARE_CONCISE:
+                return ServerConfig.SWITCH_SHARE.get();
+            case FEED:
+            case FEED_OTHER:
+            case FEED_CONCISE:
+            case FEED_OTHER_CONCISE:
+                return ServerConfig.SWITCH_FEED.get();
+            case TP_COORDINATE:
+            case TP_COORDINATE_CONCISE:
+                return ServerConfig.SWITCH_TP_COORDINATE.get();
+            case TP_STRUCTURE:
+            case TP_STRUCTURE_CONCISE:
+                return ServerConfig.SWITCH_TP_STRUCTURE.get();
+            case TP_ASK:
+            case TP_ASK_YES:
+            case TP_ASK_NO:
+            case TP_ASK_CANCEL:
+            case TP_ASK_CONCISE:
+            case TP_ASK_YES_CONCISE:
+            case TP_ASK_NO_CONCISE:
+            case TP_ASK_CANCEL_CONCISE:
+                return ServerConfig.SWITCH_TP_ASK.get();
+            case TP_HERE:
+            case TP_HERE_YES:
+            case TP_HERE_NO:
+            case TP_HERE_CANCEL:
+            case TP_HERE_CONCISE:
+            case TP_HERE_YES_CONCISE:
+            case TP_HERE_NO_CONCISE:
+            case TP_HERE_CANCEL_CONCISE:
+                return ServerConfig.SWITCH_TP_HERE.get();
+            case TP_RANDOM:
+            case TP_RANDOM_CONCISE:
+                return ServerConfig.SWITCH_TP_RANDOM.get();
+            case TP_SPAWN:
+            case TP_SPAWN_OTHER:
+            case TP_SPAWN_CONCISE:
+            case TP_SPAWN_OTHER_CONCISE:
+                return ServerConfig.SWITCH_TP_SPAWN.get();
+            case TP_WORLD_SPAWN:
+            case TP_WORLD_SPAWN_CONCISE:
+                return ServerConfig.SWITCH_TP_WORLD_SPAWN.get();
+            case TP_TOP:
+            case TP_TOP_CONCISE:
+                return ServerConfig.SWITCH_TP_TOP.get();
+            case TP_BOTTOM:
+            case TP_BOTTOM_CONCISE:
+                return ServerConfig.SWITCH_TP_BOTTOM.get();
+            case TP_UP:
+            case TP_UP_CONCISE:
+                return ServerConfig.SWITCH_TP_UP.get();
+            case TP_DOWN:
+            case TP_DOWN_CONCISE:
+                return ServerConfig.SWITCH_TP_DOWN.get();
+            case TP_VIEW:
+            case TP_VIEW_CONCISE:
+                return ServerConfig.SWITCH_TP_VIEW.get();
+            case TP_HOME:
+            case SET_HOME:
+            case DEL_HOME:
+            case GET_HOME:
+            case TP_HOME_CONCISE:
+            case SET_HOME_CONCISE:
+            case DEL_HOME_CONCISE:
+            case GET_HOME_CONCISE:
+                return ServerConfig.SWITCH_TP_HOME.get();
+            case TP_STAGE:
+            case SET_STAGE:
+            case DEL_STAGE:
+            case GET_STAGE:
+            case TP_STAGE_CONCISE:
+            case SET_STAGE_CONCISE:
+            case DEL_STAGE_CONCISE:
+            case GET_STAGE_CONCISE:
+                return ServerConfig.SWITCH_TP_STAGE.get();
+            case TP_BACK:
+            case TP_BACK_CONCISE:
+                return ServerConfig.SWITCH_TP_BACK.get();
+            default:
+                return true;
+        }
     }
 
     public static String getCommand(ETeleportType type) {
-        return switch (type) {
-            case TP_COORDINATE -> ServerConfig.COMMAND_TP_COORDINATE.get();
-            case TP_STRUCTURE -> ServerConfig.COMMAND_TP_STRUCTURE.get();
-            case TP_ASK -> ServerConfig.COMMAND_TP_ASK.get();
-            case TP_HERE -> ServerConfig.COMMAND_TP_HERE.get();
-            case TP_RANDOM -> ServerConfig.COMMAND_TP_RANDOM.get();
-            case TP_SPAWN -> ServerConfig.COMMAND_TP_SPAWN.get();
-            case TP_WORLD_SPAWN -> ServerConfig.COMMAND_TP_WORLD_SPAWN.get();
-            case TP_TOP -> ServerConfig.COMMAND_TP_TOP.get();
-            case TP_BOTTOM -> ServerConfig.COMMAND_TP_BOTTOM.get();
-            case TP_UP -> ServerConfig.COMMAND_TP_UP.get();
-            case TP_DOWN -> ServerConfig.COMMAND_TP_DOWN.get();
-            case TP_VIEW -> ServerConfig.COMMAND_TP_VIEW.get();
-            case TP_HOME -> ServerConfig.COMMAND_TP_HOME.get();
-            case TP_STAGE -> ServerConfig.COMMAND_TP_STAGE.get();
-            case TP_BACK -> ServerConfig.COMMAND_TP_BACK.get();
-            default -> "";
-        };
+        switch (type) {
+            case TP_COORDINATE:
+                return ServerConfig.COMMAND_TP_COORDINATE.get();
+            case TP_STRUCTURE:
+                return ServerConfig.COMMAND_TP_STRUCTURE.get();
+            case TP_ASK:
+                return ServerConfig.COMMAND_TP_ASK.get();
+            case TP_HERE:
+                return ServerConfig.COMMAND_TP_HERE.get();
+            case TP_RANDOM:
+                return ServerConfig.COMMAND_TP_RANDOM.get();
+            case TP_SPAWN:
+                return ServerConfig.COMMAND_TP_SPAWN.get();
+            case TP_WORLD_SPAWN:
+                return ServerConfig.COMMAND_TP_WORLD_SPAWN.get();
+            case TP_TOP:
+                return ServerConfig.COMMAND_TP_TOP.get();
+            case TP_BOTTOM:
+                return ServerConfig.COMMAND_TP_BOTTOM.get();
+            case TP_UP:
+                return ServerConfig.COMMAND_TP_UP.get();
+            case TP_DOWN:
+                return ServerConfig.COMMAND_TP_DOWN.get();
+            case TP_VIEW:
+                return ServerConfig.COMMAND_TP_VIEW.get();
+            case TP_HOME:
+                return ServerConfig.COMMAND_TP_HOME.get();
+            case TP_STAGE:
+                return ServerConfig.COMMAND_TP_STAGE.get();
+            case TP_BACK:
+                return ServerConfig.COMMAND_TP_BACK.get();
+            default:
+                return "";
+        }
     }
 
     public static String getCommand(ECommandType type) {
         String prefix = NarcissusUtils.getCommandPrefix();
-        return switch (type) {
-            case HELP -> prefix + " help";
-            case DIMENSION -> prefix + " " + ServerConfig.COMMAND_DIMENSION.get();
-            case DIMENSION_CONCISE -> isConciseEnabled(type) ? ServerConfig.COMMAND_DIMENSION.get() : "";
-            case UUID -> prefix + " " + ServerConfig.COMMAND_UUID.get();
-            case UUID_CONCISE -> isConciseEnabled(type) ? ServerConfig.COMMAND_UUID.get() : "";
-            case CARD, SET_CARD -> prefix + " " + ServerConfig.COMMAND_CARD.get();
-            case CARD_CONCISE, SET_CARD_CONCISE -> isConciseEnabled(type) ? ServerConfig.COMMAND_CARD.get() : "";
-            case FEED, FEED_OTHER -> prefix + " " + ServerConfig.COMMAND_FEED.get();
-            case FEED_CONCISE, FEED_OTHER_CONCISE -> isConciseEnabled(type) ? ServerConfig.COMMAND_FEED.get() : "";
-            case TP_COORDINATE -> prefix + " " + ServerConfig.COMMAND_TP_COORDINATE.get();
-            case TP_COORDINATE_CONCISE -> isConciseEnabled(type) ? ServerConfig.COMMAND_TP_COORDINATE.get() : "";
-            case TP_STRUCTURE -> prefix + " " + ServerConfig.COMMAND_TP_STRUCTURE.get();
-            case TP_STRUCTURE_CONCISE -> isConciseEnabled(type) ? ServerConfig.COMMAND_TP_STRUCTURE.get() : "";
-            case TP_ASK -> prefix + " " + ServerConfig.COMMAND_TP_ASK.get();
-            case TP_ASK_CONCISE -> isConciseEnabled(type) ? ServerConfig.COMMAND_TP_ASK.get() : "";
-            case TP_ASK_YES -> prefix + " " + ServerConfig.COMMAND_TP_ASK_YES.get();
-            case TP_ASK_YES_CONCISE -> isConciseEnabled(type) ? ServerConfig.COMMAND_TP_ASK_YES.get() : "";
-            case TP_ASK_NO -> prefix + " " + ServerConfig.COMMAND_TP_ASK_NO.get();
-            case TP_ASK_NO_CONCISE -> isConciseEnabled(type) ? ServerConfig.COMMAND_TP_ASK_NO.get() : "";
-            case TP_ASK_CANCEL -> prefix + " " + ServerConfig.COMMAND_TP_ASK_CANCEL.get();
-            case TP_ASK_CANCEL_CONCISE -> isConciseEnabled(type) ? ServerConfig.COMMAND_TP_ASK_CANCEL.get() : "";
-            case TP_HERE -> prefix + " " + ServerConfig.COMMAND_TP_HERE.get();
-            case TP_HERE_CONCISE -> isConciseEnabled(type) ? ServerConfig.COMMAND_TP_HERE.get() : "";
-            case TP_HERE_YES -> prefix + " " + ServerConfig.COMMAND_TP_HERE_YES.get();
-            case TP_HERE_YES_CONCISE -> isConciseEnabled(type) ? ServerConfig.COMMAND_TP_HERE_YES.get() : "";
-            case TP_HERE_NO -> prefix + " " + ServerConfig.COMMAND_TP_HERE_NO.get();
-            case TP_HERE_NO_CONCISE -> isConciseEnabled(type) ? ServerConfig.COMMAND_TP_HERE_NO.get() : "";
-            case TP_HERE_CANCEL -> prefix + " " + ServerConfig.COMMAND_TP_HERE_CANCEL.get();
-            case TP_HERE_CANCEL_CONCISE -> isConciseEnabled(type) ? ServerConfig.COMMAND_TP_HERE_CANCEL.get() : "";
-            case TP_RANDOM -> prefix + " " + ServerConfig.COMMAND_TP_RANDOM.get();
-            case TP_RANDOM_CONCISE -> isConciseEnabled(type) ? ServerConfig.COMMAND_TP_RANDOM.get() : "";
-            case TP_SPAWN, TP_SPAWN_OTHER -> prefix + " " + ServerConfig.COMMAND_TP_SPAWN.get();
-            case TP_SPAWN_CONCISE, TP_SPAWN_OTHER_CONCISE ->
-                    isConciseEnabled(type) ? ServerConfig.COMMAND_TP_SPAWN.get() : "";
-            case TP_WORLD_SPAWN -> prefix + " " + ServerConfig.COMMAND_TP_WORLD_SPAWN.get();
-            case TP_WORLD_SPAWN_CONCISE -> isConciseEnabled(type) ? ServerConfig.COMMAND_TP_WORLD_SPAWN.get() : "";
-            case TP_TOP -> prefix + " " + ServerConfig.COMMAND_TP_TOP.get();
-            case TP_TOP_CONCISE -> isConciseEnabled(type) ? ServerConfig.COMMAND_TP_TOP.get() : "";
-            case TP_BOTTOM -> prefix + " " + ServerConfig.COMMAND_TP_BOTTOM.get();
-            case TP_BOTTOM_CONCISE -> isConciseEnabled(type) ? ServerConfig.COMMAND_TP_BOTTOM.get() : "";
-            case TP_UP -> prefix + " " + ServerConfig.COMMAND_TP_UP.get();
-            case TP_UP_CONCISE -> isConciseEnabled(type) ? ServerConfig.COMMAND_TP_UP.get() : "";
-            case TP_DOWN -> prefix + " " + ServerConfig.COMMAND_TP_DOWN.get();
-            case TP_DOWN_CONCISE -> isConciseEnabled(type) ? ServerConfig.COMMAND_TP_DOWN.get() : "";
-            case TP_VIEW -> prefix + " " + ServerConfig.COMMAND_TP_VIEW.get();
-            case TP_VIEW_CONCISE -> isConciseEnabled(type) ? ServerConfig.COMMAND_TP_VIEW.get() : "";
-            case TP_HOME -> prefix + " " + ServerConfig.COMMAND_TP_HOME.get();
-            case TP_HOME_CONCISE -> isConciseEnabled(type) ? ServerConfig.COMMAND_TP_HOME.get() : "";
-            case SET_HOME -> prefix + " " + ServerConfig.COMMAND_SET_HOME.get();
-            case SET_HOME_CONCISE -> isConciseEnabled(type) ? ServerConfig.COMMAND_SET_HOME.get() : "";
-            case DEL_HOME -> prefix + " " + ServerConfig.COMMAND_DEL_HOME.get();
-            case DEL_HOME_CONCISE -> isConciseEnabled(type) ? ServerConfig.COMMAND_DEL_HOME.get() : "";
-            case GET_HOME -> prefix + " " + ServerConfig.COMMAND_GET_HOME.get();
-            case GET_HOME_CONCISE -> isConciseEnabled(type) ? ServerConfig.COMMAND_GET_HOME.get() : "";
-            case TP_STAGE -> prefix + " " + ServerConfig.COMMAND_TP_STAGE.get();
-            case TP_STAGE_CONCISE -> isConciseEnabled(type) ? ServerConfig.COMMAND_TP_STAGE.get() : "";
-            case SET_STAGE -> prefix + " " + ServerConfig.COMMAND_SET_STAGE.get();
-            case SET_STAGE_CONCISE -> isConciseEnabled(type) ? ServerConfig.COMMAND_SET_STAGE.get() : "";
-            case DEL_STAGE -> prefix + " " + ServerConfig.COMMAND_DEL_STAGE.get();
-            case DEL_STAGE_CONCISE -> isConciseEnabled(type) ? ServerConfig.COMMAND_DEL_STAGE.get() : "";
-            case GET_STAGE -> prefix + " " + ServerConfig.COMMAND_GET_STAGE.get();
-            case GET_STAGE_CONCISE -> isConciseEnabled(type) ? ServerConfig.COMMAND_GET_STAGE.get() : "";
-            case TP_BACK -> prefix + " " + ServerConfig.COMMAND_TP_BACK.get();
-            case TP_BACK_CONCISE -> isConciseEnabled(type) ? ServerConfig.COMMAND_TP_BACK.get() : "";
-            case VIRTUAL_OP -> prefix + " " + ServerConfig.COMMAND_VIRTUAL_OP.get();
-            case VIRTUAL_OP_CONCISE -> isConciseEnabled(type) ? ServerConfig.COMMAND_VIRTUAL_OP.get() : "";
-            default -> "";
-        };
+        switch (type) {
+            case HELP:
+                return prefix + " help";
+            case LANGUAGE:
+                return prefix + " " + ServerConfig.COMMAND_LANGUAGE.get();
+            case LANGUAGE_CONCISE:
+                return isConciseEnabled(type) ? ServerConfig.COMMAND_LANGUAGE.get() : "";
+            case DIMENSION:
+                return prefix + " " + ServerConfig.COMMAND_DIMENSION.get();
+            case DIMENSION_CONCISE:
+                return isConciseEnabled(type) ? ServerConfig.COMMAND_DIMENSION.get() : "";
+            case UUID:
+                return prefix + " " + ServerConfig.COMMAND_UUID.get();
+            case UUID_CONCISE:
+                return isConciseEnabled(type) ? ServerConfig.COMMAND_UUID.get() : "";
+            case CARD:
+            case SET_CARD:
+                return prefix + " " + ServerConfig.COMMAND_CARD.get();
+            case CARD_CONCISE:
+            case SET_CARD_CONCISE:
+                return isConciseEnabled(type) ? ServerConfig.COMMAND_CARD.get() : "";
+            case SHARE:
+                return prefix + " " + ServerConfig.COMMAND_SHARE.get();
+            case SHARE_CONCISE:
+                return isConciseEnabled(type) ? ServerConfig.COMMAND_SHARE.get() : "";
+            case FEED:
+            case FEED_OTHER:
+                return prefix + " " + ServerConfig.COMMAND_FEED.get();
+            case FEED_CONCISE:
+            case FEED_OTHER_CONCISE:
+                return isConciseEnabled(type) ? ServerConfig.COMMAND_FEED.get() : "";
+            case TP_COORDINATE:
+                return prefix + " " + ServerConfig.COMMAND_TP_COORDINATE.get();
+            case TP_COORDINATE_CONCISE:
+                return isConciseEnabled(type) ? ServerConfig.COMMAND_TP_COORDINATE.get() : "";
+            case TP_STRUCTURE:
+                return prefix + " " + ServerConfig.COMMAND_TP_STRUCTURE.get();
+            case TP_STRUCTURE_CONCISE:
+                return isConciseEnabled(type) ? ServerConfig.COMMAND_TP_STRUCTURE.get() : "";
+            case TP_ASK:
+                return prefix + " " + ServerConfig.COMMAND_TP_ASK.get();
+            case TP_ASK_CONCISE:
+                return isConciseEnabled(type) ? ServerConfig.COMMAND_TP_ASK.get() : "";
+            case TP_ASK_YES:
+                return prefix + " " + ServerConfig.COMMAND_TP_ASK_YES.get();
+            case TP_ASK_YES_CONCISE:
+                return isConciseEnabled(type) ? ServerConfig.COMMAND_TP_ASK_YES.get() : "";
+            case TP_ASK_NO:
+                return prefix + " " + ServerConfig.COMMAND_TP_ASK_NO.get();
+            case TP_ASK_NO_CONCISE:
+                return isConciseEnabled(type) ? ServerConfig.COMMAND_TP_ASK_NO.get() : "";
+            case TP_ASK_CANCEL:
+                return prefix + " " + ServerConfig.COMMAND_TP_ASK_CANCEL.get();
+            case TP_ASK_CANCEL_CONCISE:
+                return isConciseEnabled(type) ? ServerConfig.COMMAND_TP_ASK_CANCEL.get() : "";
+            case TP_HERE:
+                return prefix + " " + ServerConfig.COMMAND_TP_HERE.get();
+            case TP_HERE_CONCISE:
+                return isConciseEnabled(type) ? ServerConfig.COMMAND_TP_HERE.get() : "";
+            case TP_HERE_YES:
+                return prefix + " " + ServerConfig.COMMAND_TP_HERE_YES.get();
+            case TP_HERE_YES_CONCISE:
+                return isConciseEnabled(type) ? ServerConfig.COMMAND_TP_HERE_YES.get() : "";
+            case TP_HERE_NO:
+                return prefix + " " + ServerConfig.COMMAND_TP_HERE_NO.get();
+            case TP_HERE_NO_CONCISE:
+                return isConciseEnabled(type) ? ServerConfig.COMMAND_TP_HERE_NO.get() : "";
+            case TP_HERE_CANCEL:
+                return prefix + " " + ServerConfig.COMMAND_TP_HERE_CANCEL.get();
+            case TP_HERE_CANCEL_CONCISE:
+                return isConciseEnabled(type) ? ServerConfig.COMMAND_TP_HERE_CANCEL.get() : "";
+            case TP_RANDOM:
+                return prefix + " " + ServerConfig.COMMAND_TP_RANDOM.get();
+            case TP_RANDOM_CONCISE:
+                return isConciseEnabled(type) ? ServerConfig.COMMAND_TP_RANDOM.get() : "";
+            case TP_SPAWN:
+            case TP_SPAWN_OTHER:
+                return prefix + " " + ServerConfig.COMMAND_TP_SPAWN.get();
+            case TP_SPAWN_CONCISE:
+            case TP_SPAWN_OTHER_CONCISE:
+                return isConciseEnabled(type) ? ServerConfig.COMMAND_TP_SPAWN.get() : "";
+            case TP_WORLD_SPAWN:
+                return prefix + " " + ServerConfig.COMMAND_TP_WORLD_SPAWN.get();
+            case TP_WORLD_SPAWN_CONCISE:
+                return isConciseEnabled(type) ? ServerConfig.COMMAND_TP_WORLD_SPAWN.get() : "";
+            case TP_TOP:
+                return prefix + " " + ServerConfig.COMMAND_TP_TOP.get();
+            case TP_TOP_CONCISE:
+                return isConciseEnabled(type) ? ServerConfig.COMMAND_TP_TOP.get() : "";
+            case TP_BOTTOM:
+                return prefix + " " + ServerConfig.COMMAND_TP_BOTTOM.get();
+            case TP_BOTTOM_CONCISE:
+                return isConciseEnabled(type) ? ServerConfig.COMMAND_TP_BOTTOM.get() : "";
+            case TP_UP:
+                return prefix + " " + ServerConfig.COMMAND_TP_UP.get();
+            case TP_UP_CONCISE:
+                return isConciseEnabled(type) ? ServerConfig.COMMAND_TP_UP.get() : "";
+            case TP_DOWN:
+                return prefix + " " + ServerConfig.COMMAND_TP_DOWN.get();
+            case TP_DOWN_CONCISE:
+                return isConciseEnabled(type) ? ServerConfig.COMMAND_TP_DOWN.get() : "";
+            case TP_VIEW:
+                return prefix + " " + ServerConfig.COMMAND_TP_VIEW.get();
+            case TP_VIEW_CONCISE:
+                return isConciseEnabled(type) ? ServerConfig.COMMAND_TP_VIEW.get() : "";
+            case TP_HOME:
+                return prefix + " " + ServerConfig.COMMAND_TP_HOME.get();
+            case TP_HOME_CONCISE:
+                return isConciseEnabled(type) ? ServerConfig.COMMAND_TP_HOME.get() : "";
+            case SET_HOME:
+                return prefix + " " + ServerConfig.COMMAND_SET_HOME.get();
+            case SET_HOME_CONCISE:
+                return isConciseEnabled(type) ? ServerConfig.COMMAND_SET_HOME.get() : "";
+            case DEL_HOME:
+                return prefix + " " + ServerConfig.COMMAND_DEL_HOME.get();
+            case DEL_HOME_CONCISE:
+                return isConciseEnabled(type) ? ServerConfig.COMMAND_DEL_HOME.get() : "";
+            case GET_HOME:
+                return prefix + " " + ServerConfig.COMMAND_GET_HOME.get();
+            case GET_HOME_CONCISE:
+                return isConciseEnabled(type) ? ServerConfig.COMMAND_GET_HOME.get() : "";
+            case TP_STAGE:
+                return prefix + " " + ServerConfig.COMMAND_TP_STAGE.get();
+            case TP_STAGE_CONCISE:
+                return isConciseEnabled(type) ? ServerConfig.COMMAND_TP_STAGE.get() : "";
+            case SET_STAGE:
+                return prefix + " " + ServerConfig.COMMAND_SET_STAGE.get();
+            case SET_STAGE_CONCISE:
+                return isConciseEnabled(type) ? ServerConfig.COMMAND_SET_STAGE.get() : "";
+            case DEL_STAGE:
+                return prefix + " " + ServerConfig.COMMAND_DEL_STAGE.get();
+            case DEL_STAGE_CONCISE:
+                return isConciseEnabled(type) ? ServerConfig.COMMAND_DEL_STAGE.get() : "";
+            case GET_STAGE:
+                return prefix + " " + ServerConfig.COMMAND_GET_STAGE.get();
+            case GET_STAGE_CONCISE:
+                return isConciseEnabled(type) ? ServerConfig.COMMAND_GET_STAGE.get() : "";
+            case TP_BACK:
+                return prefix + " " + ServerConfig.COMMAND_TP_BACK.get();
+            case TP_BACK_CONCISE:
+                return isConciseEnabled(type) ? ServerConfig.COMMAND_TP_BACK.get() : "";
+            case VIRTUAL_OP:
+                return prefix + " " + ServerConfig.COMMAND_VIRTUAL_OP.get();
+            case VIRTUAL_OP_CONCISE:
+                return isConciseEnabled(type) ? ServerConfig.COMMAND_VIRTUAL_OP.get() : "";
+            default:
+                return "";
+        }
     }
 
     public static int getCommandPermissionLevel(ECommandType type) {
-        return switch (type) {
-            case SET_CARD, SET_CARD_CONCISE -> ServerConfig.PERMISSION_SET_CARD.get();
-            case FEED_OTHER, FEED_OTHER_CONCISE -> ServerConfig.PERMISSION_FEED_OTHER.get();
-            case TP_COORDINATE, TP_COORDINATE_CONCISE -> ServerConfig.PERMISSION_TP_COORDINATE.get();
-            case TP_STRUCTURE, TP_STRUCTURE_CONCISE -> ServerConfig.PERMISSION_TP_STRUCTURE.get();
-            // case TP_ASK_YES:
-            // case TP_ASK_NO:
-            case TP_ASK, TP_ASK_CANCEL, TP_ASK_CONCISE, TP_ASK_CANCEL_CONCISE ->
+        switch (type) {
+            case SET_CARD:
+            case SET_CARD_CONCISE:
+                return ServerConfig.PERMISSION_SET_CARD.get();
+            case FEED_OTHER:
+            case FEED_OTHER_CONCISE:
+                return ServerConfig.PERMISSION_FEED_OTHER.get();
+            case TP_COORDINATE:
+            case TP_COORDINATE_CONCISE:
+                return ServerConfig.PERMISSION_TP_COORDINATE.get();
+            case TP_STRUCTURE:
+            case TP_STRUCTURE_CONCISE:
+                return ServerConfig.PERMISSION_TP_STRUCTURE.get();
+            case TP_ASK:
+            case TP_ASK_CANCEL:
+                // case TP_ASK_YES:
+                // case TP_ASK_NO:
+            case TP_ASK_CONCISE:
+            case TP_ASK_CANCEL_CONCISE:
                 // case TP_ASK_YES_CONCISE:
                 // case TP_ASK_NO_CONCISE:
-                    ServerConfig.PERMISSION_TP_ASK.get();
-            // case TP_HERE_YES:
-            // case TP_HERE_NO:
-            case TP_HERE, TP_HERE_CANCEL, TP_HERE_CONCISE, TP_HERE_CANCEL_CONCISE ->
+                return ServerConfig.PERMISSION_TP_ASK.get();
+            case TP_HERE:
+            case TP_HERE_CANCEL:
+                // case TP_HERE_YES:
+                // case TP_HERE_NO:
+            case TP_HERE_CONCISE:
+            case TP_HERE_CANCEL_CONCISE:
                 // case TP_HERE_YES_CONCISE:
                 // case TP_HERE_NO_CONCISE:
-                    ServerConfig.PERMISSION_TP_HERE.get();
-            case TP_RANDOM, TP_RANDOM_CONCISE -> ServerConfig.PERMISSION_TP_RANDOM.get();
-            case TP_SPAWN, TP_SPAWN_CONCISE -> ServerConfig.PERMISSION_TP_SPAWN.get();
-            case TP_SPAWN_OTHER, TP_SPAWN_OTHER_CONCISE -> ServerConfig.PERMISSION_TP_SPAWN_OTHER.get();
-            case TP_WORLD_SPAWN, TP_WORLD_SPAWN_CONCISE -> ServerConfig.PERMISSION_TP_WORLD_SPAWN.get();
-            case TP_TOP, TP_TOP_CONCISE -> ServerConfig.PERMISSION_TP_TOP.get();
-            case TP_BOTTOM, TP_BOTTOM_CONCISE -> ServerConfig.PERMISSION_TP_BOTTOM.get();
-            case TP_UP, TP_UP_CONCISE -> ServerConfig.PERMISSION_TP_UP.get();
-            case TP_DOWN, TP_DOWN_CONCISE -> ServerConfig.PERMISSION_TP_DOWN.get();
-            case TP_VIEW, TP_VIEW_CONCISE -> ServerConfig.PERMISSION_TP_VIEW.get();
-            case TP_HOME, SET_HOME, DEL_HOME, GET_HOME, TP_HOME_CONCISE, SET_HOME_CONCISE, DEL_HOME_CONCISE,
-                 GET_HOME_CONCISE -> ServerConfig.PERMISSION_TP_HOME.get();
-            case TP_STAGE, TP_STAGE_CONCISE -> ServerConfig.PERMISSION_TP_STAGE.get();
-            case SET_STAGE, SET_STAGE_CONCISE -> ServerConfig.PERMISSION_SET_STAGE.get();
-            case DEL_STAGE, DEL_STAGE_CONCISE -> ServerConfig.PERMISSION_DEL_STAGE.get();
-            case GET_STAGE, GET_STAGE_CONCISE -> ServerConfig.PERMISSION_GET_STAGE.get();
-            case TP_BACK, TP_BACK_CONCISE -> ServerConfig.PERMISSION_TP_BACK.get();
-            case VIRTUAL_OP, VIRTUAL_OP_CONCISE -> ServerConfig.PERMISSION_VIRTUAL_OP.get();
-            default -> 0;
-        };
+                return ServerConfig.PERMISSION_TP_HERE.get();
+            case TP_RANDOM:
+            case TP_RANDOM_CONCISE:
+                return ServerConfig.PERMISSION_TP_RANDOM.get();
+            case TP_SPAWN:
+            case TP_SPAWN_CONCISE:
+                return ServerConfig.PERMISSION_TP_SPAWN.get();
+            case TP_SPAWN_OTHER:
+            case TP_SPAWN_OTHER_CONCISE:
+                return ServerConfig.PERMISSION_TP_SPAWN_OTHER.get();
+            case TP_WORLD_SPAWN:
+            case TP_WORLD_SPAWN_CONCISE:
+                return ServerConfig.PERMISSION_TP_WORLD_SPAWN.get();
+            case TP_TOP:
+            case TP_TOP_CONCISE:
+                return ServerConfig.PERMISSION_TP_TOP.get();
+            case TP_BOTTOM:
+            case TP_BOTTOM_CONCISE:
+                return ServerConfig.PERMISSION_TP_BOTTOM.get();
+            case TP_UP:
+            case TP_UP_CONCISE:
+                return ServerConfig.PERMISSION_TP_UP.get();
+            case TP_DOWN:
+            case TP_DOWN_CONCISE:
+                return ServerConfig.PERMISSION_TP_DOWN.get();
+            case TP_VIEW:
+            case TP_VIEW_CONCISE:
+                return ServerConfig.PERMISSION_TP_VIEW.get();
+            case TP_HOME:
+            case SET_HOME:
+            case DEL_HOME:
+            case GET_HOME:
+            case TP_HOME_CONCISE:
+            case SET_HOME_CONCISE:
+            case DEL_HOME_CONCISE:
+            case GET_HOME_CONCISE:
+                return ServerConfig.PERMISSION_TP_HOME.get();
+            case TP_STAGE:
+            case TP_STAGE_CONCISE:
+                return ServerConfig.PERMISSION_TP_STAGE.get();
+            case SET_STAGE:
+            case SET_STAGE_CONCISE:
+                return ServerConfig.PERMISSION_SET_STAGE.get();
+            case DEL_STAGE:
+            case DEL_STAGE_CONCISE:
+                return ServerConfig.PERMISSION_DEL_STAGE.get();
+            case GET_STAGE:
+            case GET_STAGE_CONCISE:
+                return ServerConfig.PERMISSION_GET_STAGE.get();
+            case TP_BACK:
+            case TP_BACK_CONCISE:
+                return ServerConfig.PERMISSION_TP_BACK.get();
+            case VIRTUAL_OP:
+            case VIRTUAL_OP_CONCISE:
+                return ServerConfig.PERMISSION_VIRTUAL_OP.get();
+            default:
+                return 0;
+        }
     }
 
     public static int getCommandPermissionLevel(ETeleportType type) {
-        return switch (type) {
-            case TP_COORDINATE -> ServerConfig.PERMISSION_TP_COORDINATE.get();
-            case TP_STRUCTURE -> ServerConfig.PERMISSION_TP_STRUCTURE.get();
-            case TP_ASK -> ServerConfig.PERMISSION_TP_ASK.get();
-            case TP_HERE -> ServerConfig.PERMISSION_TP_HERE.get();
-            case TP_RANDOM -> ServerConfig.PERMISSION_TP_RANDOM.get();
-            case TP_SPAWN -> ServerConfig.PERMISSION_TP_SPAWN.get();
-            case TP_WORLD_SPAWN -> ServerConfig.PERMISSION_TP_WORLD_SPAWN.get();
-            case TP_TOP -> ServerConfig.PERMISSION_TP_TOP.get();
-            case TP_BOTTOM -> ServerConfig.PERMISSION_TP_BOTTOM.get();
-            case TP_UP -> ServerConfig.PERMISSION_TP_UP.get();
-            case TP_DOWN -> ServerConfig.PERMISSION_TP_DOWN.get();
-            case TP_VIEW -> ServerConfig.PERMISSION_TP_VIEW.get();
-            case TP_HOME -> ServerConfig.PERMISSION_TP_HOME.get();
-            case TP_STAGE -> ServerConfig.PERMISSION_TP_STAGE.get();
-            case TP_BACK -> ServerConfig.PERMISSION_TP_BACK.get();
-            default -> 0;
-        };
+        switch (type) {
+            case TP_COORDINATE:
+                return ServerConfig.PERMISSION_TP_COORDINATE.get();
+            case TP_STRUCTURE:
+                return ServerConfig.PERMISSION_TP_STRUCTURE.get();
+            case TP_ASK:
+                return ServerConfig.PERMISSION_TP_ASK.get();
+            case TP_HERE:
+                return ServerConfig.PERMISSION_TP_HERE.get();
+            case TP_RANDOM:
+                return ServerConfig.PERMISSION_TP_RANDOM.get();
+            case TP_SPAWN:
+                return ServerConfig.PERMISSION_TP_SPAWN.get();
+            case TP_WORLD_SPAWN:
+                return ServerConfig.PERMISSION_TP_WORLD_SPAWN.get();
+            case TP_TOP:
+                return ServerConfig.PERMISSION_TP_TOP.get();
+            case TP_BOTTOM:
+                return ServerConfig.PERMISSION_TP_BOTTOM.get();
+            case TP_UP:
+                return ServerConfig.PERMISSION_TP_UP.get();
+            case TP_DOWN:
+                return ServerConfig.PERMISSION_TP_DOWN.get();
+            case TP_VIEW:
+                return ServerConfig.PERMISSION_TP_VIEW.get();
+            case TP_HOME:
+                return ServerConfig.PERMISSION_TP_HOME.get();
+            case TP_STAGE:
+                return ServerConfig.PERMISSION_TP_STAGE.get();
+            case TP_BACK:
+                return ServerConfig.PERMISSION_TP_BACK.get();
+            default:
+                return 0;
+        }
     }
 
     public static boolean isConciseEnabled(ECommandType type) {
-        return switch (type) {
-            case UUID, UUID_CONCISE -> ServerConfig.CONCISE_UUID.get();
-            case DIMENSION, DIMENSION_CONCISE -> ServerConfig.CONCISE_DIMENSION.get();
-            case CARD, CARD_CONCISE, SET_CARD, SET_CARD_CONCISE -> ServerConfig.CONCISE_CARD.get();
-            case FEED, FEED_OTHER, FEED_CONCISE, FEED_OTHER_CONCISE -> ServerConfig.CONCISE_FEED.get();
-            case TP_COORDINATE, TP_COORDINATE_CONCISE -> ServerConfig.CONCISE_TP_COORDINATE.get();
-            case TP_STRUCTURE, TP_STRUCTURE_CONCISE -> ServerConfig.CONCISE_TP_STRUCTURE.get();
-            case TP_ASK, TP_ASK_CONCISE -> ServerConfig.CONCISE_TP_ASK.get();
-            case TP_ASK_YES, TP_ASK_YES_CONCISE -> ServerConfig.CONCISE_TP_ASK_YES.get();
-            case TP_ASK_NO, TP_ASK_NO_CONCISE -> ServerConfig.CONCISE_TP_ASK_NO.get();
-            case TP_ASK_CANCEL, TP_ASK_CANCEL_CONCISE -> ServerConfig.CONCISE_TP_ASK_CANCEL.get();
-            case TP_HERE, TP_HERE_CONCISE -> ServerConfig.CONCISE_TP_HERE.get();
-            case TP_HERE_YES, TP_HERE_YES_CONCISE -> ServerConfig.CONCISE_TP_HERE_YES.get();
-            case TP_HERE_NO, TP_HERE_NO_CONCISE -> ServerConfig.CONCISE_TP_HERE_NO.get();
-            case TP_HERE_CANCEL, TP_HERE_CANCEL_CONCISE -> ServerConfig.CONCISE_TP_HERE_CANCEL.get();
-            case TP_RANDOM, TP_RANDOM_CONCISE -> ServerConfig.CONCISE_TP_RANDOM.get();
-            case TP_SPAWN, TP_SPAWN_OTHER, TP_SPAWN_CONCISE, TP_SPAWN_OTHER_CONCISE ->
-                    ServerConfig.CONCISE_TP_SPAWN.get();
-            case TP_WORLD_SPAWN, TP_WORLD_SPAWN_CONCISE -> ServerConfig.CONCISE_TP_WORLD_SPAWN.get();
-            case TP_TOP, TP_TOP_CONCISE -> ServerConfig.CONCISE_TP_TOP.get();
-            case TP_BOTTOM, TP_BOTTOM_CONCISE -> ServerConfig.CONCISE_TP_BOTTOM.get();
-            case TP_UP, TP_UP_CONCISE -> ServerConfig.CONCISE_TP_UP.get();
-            case TP_DOWN, TP_DOWN_CONCISE -> ServerConfig.CONCISE_TP_DOWN.get();
-            case TP_VIEW, TP_VIEW_CONCISE -> ServerConfig.CONCISE_TP_VIEW.get();
-            case TP_HOME, TP_HOME_CONCISE -> ServerConfig.CONCISE_TP_HOME.get();
-            case SET_HOME, SET_HOME_CONCISE -> ServerConfig.CONCISE_SET_HOME.get();
-            case DEL_HOME, DEL_HOME_CONCISE -> ServerConfig.CONCISE_DEL_HOME.get();
-            case GET_HOME, GET_HOME_CONCISE -> ServerConfig.CONCISE_GET_HOME.get();
-            case TP_STAGE, TP_STAGE_CONCISE -> ServerConfig.CONCISE_TP_STAGE.get();
-            case SET_STAGE, SET_STAGE_CONCISE -> ServerConfig.CONCISE_SET_STAGE.get();
-            case DEL_STAGE, DEL_STAGE_CONCISE -> ServerConfig.CONCISE_DEL_STAGE.get();
-            case GET_STAGE, GET_STAGE_CONCISE -> ServerConfig.CONCISE_GET_STAGE.get();
-            case TP_BACK, TP_BACK_CONCISE -> ServerConfig.CONCISE_TP_BACK.get();
-            case VIRTUAL_OP, VIRTUAL_OP_CONCISE -> ServerConfig.CONCISE_VIRTUAL_OP.get();
-            default -> false;
-        };
+        switch (type) {
+            case LANGUAGE:
+            case LANGUAGE_CONCISE:
+                return ServerConfig.CONCISE_LANGUAGE.get();
+            case UUID:
+            case UUID_CONCISE:
+                return ServerConfig.CONCISE_UUID.get();
+            case DIMENSION:
+            case DIMENSION_CONCISE:
+                return ServerConfig.CONCISE_DIMENSION.get();
+            case CARD:
+            case CARD_CONCISE:
+            case SET_CARD:
+            case SET_CARD_CONCISE:
+                return ServerConfig.CONCISE_CARD.get();
+            case SHARE:
+            case SHARE_CONCISE:
+                return ServerConfig.CONCISE_SHARE.get();
+            case FEED:
+            case FEED_OTHER:
+            case FEED_CONCISE:
+            case FEED_OTHER_CONCISE:
+                return ServerConfig.CONCISE_FEED.get();
+            case TP_COORDINATE:
+            case TP_COORDINATE_CONCISE:
+                return ServerConfig.CONCISE_TP_COORDINATE.get();
+            case TP_STRUCTURE:
+            case TP_STRUCTURE_CONCISE:
+                return ServerConfig.CONCISE_TP_STRUCTURE.get();
+            case TP_ASK:
+            case TP_ASK_CONCISE:
+                return ServerConfig.CONCISE_TP_ASK.get();
+            case TP_ASK_YES:
+            case TP_ASK_YES_CONCISE:
+                return ServerConfig.CONCISE_TP_ASK_YES.get();
+            case TP_ASK_NO:
+            case TP_ASK_NO_CONCISE:
+                return ServerConfig.CONCISE_TP_ASK_NO.get();
+            case TP_ASK_CANCEL:
+            case TP_ASK_CANCEL_CONCISE:
+                return ServerConfig.CONCISE_TP_ASK_CANCEL.get();
+            case TP_HERE:
+            case TP_HERE_CONCISE:
+                return ServerConfig.CONCISE_TP_HERE.get();
+            case TP_HERE_YES:
+            case TP_HERE_YES_CONCISE:
+                return ServerConfig.CONCISE_TP_HERE_YES.get();
+            case TP_HERE_NO:
+            case TP_HERE_NO_CONCISE:
+                return ServerConfig.CONCISE_TP_HERE_NO.get();
+            case TP_HERE_CANCEL:
+            case TP_HERE_CANCEL_CONCISE:
+                return ServerConfig.CONCISE_TP_HERE_CANCEL.get();
+            case TP_RANDOM:
+            case TP_RANDOM_CONCISE:
+                return ServerConfig.CONCISE_TP_RANDOM.get();
+            case TP_SPAWN:
+            case TP_SPAWN_OTHER:
+            case TP_SPAWN_CONCISE:
+            case TP_SPAWN_OTHER_CONCISE:
+                return ServerConfig.CONCISE_TP_SPAWN.get();
+            case TP_WORLD_SPAWN:
+            case TP_WORLD_SPAWN_CONCISE:
+                return ServerConfig.CONCISE_TP_WORLD_SPAWN.get();
+            case TP_TOP:
+            case TP_TOP_CONCISE:
+                return ServerConfig.CONCISE_TP_TOP.get();
+            case TP_BOTTOM:
+            case TP_BOTTOM_CONCISE:
+                return ServerConfig.CONCISE_TP_BOTTOM.get();
+            case TP_UP:
+            case TP_UP_CONCISE:
+                return ServerConfig.CONCISE_TP_UP.get();
+            case TP_DOWN:
+            case TP_DOWN_CONCISE:
+                return ServerConfig.CONCISE_TP_DOWN.get();
+            case TP_VIEW:
+            case TP_VIEW_CONCISE:
+                return ServerConfig.CONCISE_TP_VIEW.get();
+            case TP_HOME:
+            case TP_HOME_CONCISE:
+                return ServerConfig.CONCISE_TP_HOME.get();
+            case SET_HOME:
+            case SET_HOME_CONCISE:
+                return ServerConfig.CONCISE_SET_HOME.get();
+            case DEL_HOME:
+            case DEL_HOME_CONCISE:
+                return ServerConfig.CONCISE_DEL_HOME.get();
+            case GET_HOME:
+            case GET_HOME_CONCISE:
+                return ServerConfig.CONCISE_GET_HOME.get();
+            case TP_STAGE:
+            case TP_STAGE_CONCISE:
+                return ServerConfig.CONCISE_TP_STAGE.get();
+            case SET_STAGE:
+            case SET_STAGE_CONCISE:
+                return ServerConfig.CONCISE_SET_STAGE.get();
+            case DEL_STAGE:
+            case DEL_STAGE_CONCISE:
+                return ServerConfig.CONCISE_DEL_STAGE.get();
+            case GET_STAGE:
+            case GET_STAGE_CONCISE:
+                return ServerConfig.CONCISE_GET_STAGE.get();
+            case TP_BACK:
+            case TP_BACK_CONCISE:
+                return ServerConfig.CONCISE_TP_BACK.get();
+            case VIRTUAL_OP:
+            case VIRTUAL_OP_CONCISE:
+                return ServerConfig.CONCISE_VIRTUAL_OP.get();
+            default:
+                return false;
+        }
     }
 
     public static boolean hasCommandPermission(CommandSourceStack source, ECommandType type) {
@@ -1280,9 +1582,9 @@ public class NarcissusUtils {
             } catch (CommandSyntaxException ignored) {
             }
         } else if (success) {
-            source.sendSuccess(Component.translatable(key, args).setLanguageCode(NarcissusFarewell.DEFAULT_LANGUAGE).toChatComponent(), false);
+            source.sendSuccess(Component.translatable(key, args).setLanguageCode(ServerConfig.DEFAULT_LANGUAGE.get()).toChatComponent(), false);
         } else {
-            source.sendFailure(Component.translatable(key, args).setLanguageCode(NarcissusFarewell.DEFAULT_LANGUAGE).toChatComponent());
+            source.sendFailure(Component.translatable(key, args).setLanguageCode(ServerConfig.DEFAULT_LANGUAGE.get()).toChatComponent());
         }
     }
 
@@ -1701,6 +2003,26 @@ public class NarcissusUtils {
     // region 杂项
 
     public static String getPlayerLanguage(ServerPlayer player) {
+        return PlayerTeleportDataCapability.getData(player).getValidLanguage(player);
+    }
+
+    public static String getValidLanguage(@Nullable Player player, @Nullable String language) {
+        String result;
+        if (StringUtils.isNullOrEmptyEx(language) || "client".equalsIgnoreCase(language)) {
+            if (player instanceof ServerPlayer) {
+                result = NarcissusUtils.getServerPlayerLanguage((ServerPlayer) player);
+            } else {
+                result = NarcissusUtils.getClientLanguage();
+            }
+        } else if ("server".equalsIgnoreCase(language)) {
+            result = ServerConfig.DEFAULT_LANGUAGE.get();
+        } else {
+            result = language;
+        }
+        return result;
+    }
+
+    public static String getServerPlayerLanguage(ServerPlayer player) {
         return player.getLanguage();
     }
 
