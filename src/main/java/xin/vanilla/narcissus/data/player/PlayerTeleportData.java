@@ -5,6 +5,7 @@ import lombok.Setter;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.world.entity.player.Player;
 import xin.vanilla.narcissus.config.Coordinate;
 import xin.vanilla.narcissus.config.KeyValue;
 import xin.vanilla.narcissus.config.ServerConfig;
@@ -12,7 +13,9 @@ import xin.vanilla.narcissus.data.TeleportRecord;
 import xin.vanilla.narcissus.enums.ETeleportType;
 import xin.vanilla.narcissus.util.CollectionUtils;
 import xin.vanilla.narcissus.util.DateUtils;
+import xin.vanilla.narcissus.util.NarcissusUtils;
 
+import javax.annotation.Nullable;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
@@ -39,6 +42,11 @@ public class PlayerTeleportData implements IPlayerTeleportData {
      */
     @Setter
     private Map<String, String> defaultHome;
+    /**
+     * 是否已发送使用说明
+     */
+    private boolean notified;
+    private String language = "client";
 
     public int getTeleportCard() {
         return this.teleportCard.get();
@@ -103,6 +111,22 @@ public class PlayerTeleportData implements IPlayerTeleportData {
         return defaultHome = defaultHome == null ? new HashMap<>() : defaultHome;
     }
 
+    @Override
+    public String getLanguage() {
+        return this.language;
+    }
+
+    @Override
+    public void setLanguage(String language) {
+        this.language = language;
+    }
+
+    @NonNull
+    @Override
+    public String getValidLanguage(@Nullable Player player) {
+        return NarcissusUtils.getValidLanguage(player, this.getLanguage());
+    }
+
     public void addDefaultHome(String key, String value) {
         this.getDefaultHome().put(key, value);
     }
@@ -112,6 +136,16 @@ public class PlayerTeleportData implements IPlayerTeleportData {
             return new KeyValue<>(dimension, this.getDefaultHome().get(dimension));
         }
         return null;
+    }
+
+    @Override
+    public boolean isNotified() {
+        return this.notified;
+    }
+
+    @Override
+    public void setNotified(boolean notified) {
+        this.notified = notified;
     }
 
     public void writeToBuffer(FriendlyByteBuf buffer) {
@@ -133,6 +167,8 @@ public class PlayerTeleportData implements IPlayerTeleportData {
             buffer.writeUtf(entry.getKey());
             buffer.writeUtf(entry.getValue());
         }
+        buffer.writeBoolean(this.notified);
+        buffer.writeUtf(this.getLanguage());
     }
 
     public void readFromBuffer(FriendlyByteBuf buffer) {
@@ -151,6 +187,8 @@ public class PlayerTeleportData implements IPlayerTeleportData {
         for (int i = 0; i < buffer.readInt(); i++) {
             this.defaultHome.put(buffer.readUtf(), buffer.readUtf());
         }
+        this.notified = buffer.readBoolean();
+        this.language = buffer.readUtf();
     }
 
     public void copyFrom(IPlayerTeleportData capability) {
@@ -160,6 +198,8 @@ public class PlayerTeleportData implements IPlayerTeleportData {
         this.teleportRecords = capability.getTeleportRecords();
         this.homeCoordinate = capability.getHomeCoordinate();
         this.defaultHome = capability.getDefaultHome();
+        this.notified = capability.isNotified();
+        this.language = capability.getLanguage();
     }
 
     @Override
@@ -193,6 +233,8 @@ public class PlayerTeleportData implements IPlayerTeleportData {
             defaultHomeNBT.add(defaultHomeTag);
         }
         tag.put("defaultHome", defaultHomeNBT);
+        tag.putBoolean("notified", this.notified);
+        tag.putString("language", this.getLanguage());
         return tag;
     }
 
@@ -225,5 +267,7 @@ public class PlayerTeleportData implements IPlayerTeleportData {
             defaultHome.put(defaultHomeTag.getString("key"), defaultHomeTag.getString("value"));
         }
         this.setDefaultHome(defaultHome);
+        this.notified = nbt.getBoolean("notified");
+        this.setLanguage(nbt.getString("language"));
     }
 }
