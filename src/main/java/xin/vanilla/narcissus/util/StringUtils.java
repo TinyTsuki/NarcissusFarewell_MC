@@ -473,6 +473,23 @@ public class StringUtils {
         return left ? new String(chars) + str : str + new String(chars);
     }
 
+    /**
+     * 判断给定字符串是否仅包含\w字符
+     */
+    public static boolean isWordString(String str) {
+        if (StringUtils.isNullOrEmptyEx(str)) return false;
+        return str.matches("^\\w+$");
+    }
+
+    /**
+     * 若input不为 仅包含\w字符 的字符串
+     * 则将input格式化为 'input'，并将input中的'转义为\'
+     */
+    public static String formatString(String input) {
+        if (isWordString(input)) return input;
+        return "'" + input.replaceAll("'", "\\\\'") + "'";
+    }
+
     public static void main(String[] args) {
         // 测试案例：不同类型的参数与格式字符串
         System.out.println(format("%2$s-%1$s-%1$s", "a", "b"));  // 输出 b-a-a

@@ -6,6 +6,7 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.network.FriendlyByteBuf;
 import net.neoforged.neoforge.common.util.INBTSerializable;
+import net.minecraft.world.entity.player.Player;
 import xin.vanilla.narcissus.config.Coordinate;
 import xin.vanilla.narcissus.config.KeyValue;
 import xin.vanilla.narcissus.config.ServerConfig;
@@ -13,7 +14,9 @@ import xin.vanilla.narcissus.data.TeleportRecord;
 import xin.vanilla.narcissus.enums.ETeleportType;
 import xin.vanilla.narcissus.util.CollectionUtils;
 import xin.vanilla.narcissus.util.DateUtils;
+import xin.vanilla.narcissus.util.NarcissusUtils;
 
+import javax.annotation.Nullable;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
@@ -40,6 +43,11 @@ public class PlayerTeleportData implements INBTSerializable<CompoundTag> {
      */
     @Setter
     private Map<String, String> defaultHome;
+    /**
+     * 是否已发送使用说明
+     */
+    private boolean notified;
+    private String language = "client";
 
     public int getTeleportCard() {
         return this.teleportCard.get();
@@ -104,6 +112,19 @@ public class PlayerTeleportData implements INBTSerializable<CompoundTag> {
         return defaultHome = defaultHome == null ? new HashMap<>() : defaultHome;
     }
 
+    public String getLanguage() {
+        return this.language;
+    }
+
+    public void setLanguage(String language) {
+        this.language = language;
+    }
+
+    @NonNull
+    public String getValidLanguage(@Nullable Player player) {
+        return NarcissusUtils.getValidLanguage(player, this.getLanguage());
+    }
+
     public void addDefaultHome(String key, String value) {
         this.getDefaultHome().put(key, value);
     }
@@ -113,6 +134,14 @@ public class PlayerTeleportData implements INBTSerializable<CompoundTag> {
             return new KeyValue<>(dimension, this.getDefaultHome().get(dimension));
         }
         return null;
+    }
+
+    public boolean isNotified() {
+        return this.notified;
+    }
+
+    public void setNotified(boolean notified) {
+        this.notified = notified;
     }
 
     public void writeToBuffer(FriendlyByteBuf buffer) {
@@ -134,6 +163,8 @@ public class PlayerTeleportData implements INBTSerializable<CompoundTag> {
             buffer.writeUtf(entry.getKey());
             buffer.writeUtf(entry.getValue());
         }
+        buffer.writeBoolean(this.notified);
+        buffer.writeUtf(this.getLanguage());
     }
 
     public void readFromBuffer(FriendlyByteBuf buffer) {
@@ -152,6 +183,8 @@ public class PlayerTeleportData implements INBTSerializable<CompoundTag> {
         for (int i = 0; i < buffer.readInt(); i++) {
             this.defaultHome.put(buffer.readUtf(), buffer.readUtf());
         }
+        this.notified = buffer.readBoolean();
+        this.language = buffer.readUtf();
     }
 
     public void copyFrom(PlayerTeleportData capability) {
@@ -161,6 +194,8 @@ public class PlayerTeleportData implements INBTSerializable<CompoundTag> {
         this.teleportRecords = capability.getTeleportRecords();
         this.homeCoordinate = capability.getHomeCoordinate();
         this.defaultHome = capability.getDefaultHome();
+        this.notified = capability.isNotified();
+        this.language = capability.getLanguage();
     }
 
     @Override
@@ -194,6 +229,8 @@ public class PlayerTeleportData implements INBTSerializable<CompoundTag> {
             defaultHomeNBT.add(defaultHomeTag);
         }
         tag.put("defaultHome", defaultHomeNBT);
+        tag.putBoolean("notified", this.notified);
+        tag.putString("language", this.getLanguage());
         return tag;
     }
 
@@ -226,5 +263,7 @@ public class PlayerTeleportData implements INBTSerializable<CompoundTag> {
             defaultHome.put(defaultHomeTag.getString("key"), defaultHomeTag.getString("value"));
         }
         this.setDefaultHome(defaultHome);
+        this.notified = nbt.getBoolean("notified");
+        this.setLanguage(nbt.getString("language"));
     }
 }
