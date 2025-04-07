@@ -6,9 +6,9 @@ import net.minecraft.nbt.ListNBT;
 import net.minecraft.util.Direction;
 import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.common.capabilities.Capability.IStorage;
-import xin.vanilla.narcissus.data.TeleportRecord;
 import xin.vanilla.narcissus.config.Coordinate;
 import xin.vanilla.narcissus.config.KeyValue;
+import xin.vanilla.narcissus.data.TeleportRecord;
 import xin.vanilla.narcissus.util.DateUtils;
 
 import java.util.ArrayList;
@@ -63,6 +63,8 @@ public class PlayerTeleportDataStorage implements IStorage<IPlayerTeleportData> 
             defaultHomeNBT.add(defaultHomeTag);
         }
         tag.put("defaultHome", defaultHomeNBT);
+        tag.putBoolean("notified", instance.isNotified());
+        tag.putString("language", instance.getLanguage());
         return tag;
     }
 
@@ -106,6 +108,8 @@ public class PlayerTeleportDataStorage implements IStorage<IPlayerTeleportData> 
                 defaultHome.put(defaultHomeTag.getString("key"), defaultHomeTag.getString("value"));
             }
             instance.setDefaultHome(defaultHome);
+            instance.setNotified(nbtTag.getBoolean("notified"));
+            instance.setLanguage(nbtTag.getString("language"));
         }
     }
 }
