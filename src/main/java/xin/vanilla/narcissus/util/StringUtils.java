@@ -466,12 +466,12 @@ public class StringUtils {
         return result.toString();
     }
 
-    public static String padOptimizedLeft(Object value, int length, String padChar){
-        return padOptimized(value,length,padChar,true);
+    public static String padOptimizedLeft(Object value, int length, String padChar) {
+        return padOptimized(value, length, padChar, true);
     }
 
-    public static String padOptimizedRight(Object value, int length, String padChar){
-        return padOptimized(value,length,padChar,false);
+    public static String padOptimizedRight(Object value, int length, String padChar) {
+        return padOptimized(value, length, padChar, false);
     }
 
     /**
@@ -487,7 +487,24 @@ public class StringUtils {
         char[] chars = new char[length - currentLength];
         Arrays.fill(chars, paddingChar);
 
-        return left ? new String(chars) + str :str + new String(chars);
+        return left ? new String(chars) + str : str + new String(chars);
+    }
+
+    /**
+     * 判断给定字符串是否仅包含\w字符
+     */
+    public static boolean isWordString(String str) {
+        if (StringUtils.isNullOrEmptyEx(str)) return false;
+        return str.matches("^\\w+$");
+    }
+
+    /**
+     * 若input不为 仅包含\w字符 的字符串
+     * 则将input格式化为 'input'，并将input中的'转义为\'
+     */
+    public static String formatString(String input) {
+        if (isWordString(input)) return input;
+        return "'" + input.replaceAll("'", "\\\\'") + "'";
     }
 
     public static void main(String[] args) {
