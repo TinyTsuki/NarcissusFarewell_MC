@@ -167,7 +167,7 @@ public class ForgeEventHandler {
     }
 
     /**
-     * 同纬度传送事件
+     * 同维度传送事件
      */
     @SubscribeEvent
     public static void onEntityTeleport(EntityTeleportEvent event) {
