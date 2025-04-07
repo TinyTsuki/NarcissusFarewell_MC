@@ -261,4 +261,8 @@ public class Coordinate implements Serializable, Cloneable {
     public String toXyzString() {
         return StringUtils.toFixedEx(x, 1) + ", " + StringUtils.toFixedEx(y, 1) + ", " + StringUtils.toFixedEx(z, 1);
     }
+
+    public String getDimensionResourceId() {
+        return dimension.location().toString();
+    }
 }
