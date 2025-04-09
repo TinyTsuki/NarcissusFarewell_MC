@@ -1065,8 +1065,13 @@ public class FarewellCommand {
             if (checkTeleportPre(context.getSource(), ECommandType.DEL_HOME)) return 0;
             PlayerTeleportData data = PlayerDataAttachment.getData(player);
             String name = StringArgumentType.getString(context, "name");
-            ResourceKey<Level> targetLevel = ResourceKey.create(Registries.DIMENSION, new ResourceLocation(StringArgumentType.getString(context, "dimension")));
-            String dimension = targetLevel.location().toString();
+            String dimension;
+            try {
+                ResourceKey<Level> targetLevel = ResourceKey.create(Registries.DIMENSION, new ResourceLocation(StringArgumentType.getString(context, "dimension")));
+                dimension = targetLevel.location().toString();
+            } catch (IllegalArgumentException ignored) {
+                dimension = NarcissusUtils.getHomeDimensionByName(player, name);
+            }
             Coordinate remove = data.getHomeCoordinate().remove(new KeyValue<>(dimension, name));
             if (remove == null) {
                 NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EI18nType.MESSAGE, "home_not_found_with_name_in_dimension"), dimension, name);
@@ -1235,9 +1240,14 @@ public class FarewellCommand {
             // 传送功能前置校验
             if (checkTeleportPre(context.getSource(), ECommandType.DEL_STAGE)) return 0;
             String name = StringArgumentType.getString(context, "name");
-            ResourceKey<Level> targetLevel = ResourceKey.create(Registries.DIMENSION, new ResourceLocation(StringArgumentType.getString(context, "dimension")));
+            String dimension;
+            try {
+                ResourceKey<Level> targetLevel = ResourceKey.create(Registries.DIMENSION, new ResourceLocation(StringArgumentType.getString(context, "dimension")));
+                dimension = targetLevel.location().toString();
+            } catch (IllegalArgumentException ignored) {
+                dimension = NarcissusUtils.getStageDimensionByName(name);
+            }
             WorldStageData stageData = WorldStageData.get();
-            String dimension = targetLevel.location().toString();
             Coordinate remove = stageData.getStageCoordinate().remove(new KeyValue<>(dimension, name));
             stageData.setDirty();
             if (remove == null) {
@@ -1740,6 +1750,7 @@ public class FarewellCommand {
                 .requires(source -> NarcissusUtils.hasCommandPermission(source, ECommandType.TP_HOME))
                 .then(Commands.argument("name", StringArgumentType.string())
                         .suggests(homeSuggestions)
+                        .executes(delHomeCommand)
                         .then(Commands.argument("dimension", StringArgumentType.greedyString())
                                 .suggests((context, builder) -> {
                                     ServerPlayer player = context.getSource().getPlayerOrException();
@@ -1798,6 +1809,7 @@ public class FarewellCommand {
                 .requires(source -> NarcissusUtils.hasCommandPermission(source, ECommandType.DEL_STAGE))
                 .then(Commands.argument("name", StringArgumentType.string())
                         .suggests(stageSuggestions)
+                        .executes(delStageCommand)
                         .then(Commands.argument("dimension", StringArgumentType.greedyString())
                                 .suggests((context, builder) -> {
                                     WorldStageData data = WorldStageData.get();
@@ -2153,8 +2165,7 @@ public class FarewellCommand {
                                     .then(Commands.literal("teleportCard")
                                             .executes(context -> {
                                                 ServerPlayer player = context.getSource().getPlayerOrException();
-                                                Component msg = Component.translatable(NarcissusUtils.getPlayerLanguage(player)
-                                                        , I18nUtils.getKey(EI18nType.MESSAGE, "server_config_status")
+                                                Component msg = Component.translatable(I18nUtils.getKey(EI18nType.MESSAGE, "server_config_status")
                                                         , I18nUtils.enabled(NarcissusUtils.getPlayerLanguage(player), ServerConfig.TELEPORT_CARD.get())
                                                         , Component.translatable(NarcissusUtils.getPlayerLanguage(player), EI18nType.WORD, "teleport_card"));
                                                 NarcissusUtils.sendMessage(player, msg);
@@ -2171,8 +2182,7 @@ public class FarewellCommand {
                                                         boolean bool = BoolArgumentType.getBool(context, "bool");
                                                         ServerConfig.TELEPORT_CARD.set(bool);
                                                         ServerPlayer player = context.getSource().getPlayerOrException();
-                                                        Component msg = Component.translatable(NarcissusUtils.getPlayerLanguage(player)
-                                                                , I18nUtils.getKey(EI18nType.MESSAGE, "server_config_status")
+                                                        Component msg = Component.translatable(I18nUtils.getKey(EI18nType.MESSAGE, "server_config_status")
                                                                 , I18nUtils.enabled(NarcissusUtils.getPlayerLanguage(player), ServerConfig.TELEPORT_CARD.get())
                                                                 , Component.translatable(NarcissusUtils.getPlayerLanguage(player), EI18nType.WORD, "teleport_card"));
                                                         NarcissusUtils.broadcastMessage(player, msg);
