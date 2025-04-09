@@ -1077,6 +1077,17 @@ public class NarcissusUtils {
         return null;
     }
 
+    public static String getHomeDimensionByName(ServerPlayer player, String name) {
+        IPlayerTeleportData data = PlayerTeleportDataCapability.getData(player);
+        List<KeyValue<String, String>> list = data.getHomeCoordinate().keySet().stream()
+                .filter(key -> key.getValue().equals(name))
+                .toList();
+        if (list.size() == 1) {
+            return list.get(0).getKey();
+        }
+        return null;
+    }
+
     public static KeyValue<String, String> getPlayerHomeKey(ServerPlayer player, ResourceKey<Level> dimension, String name) {
         IPlayerTeleportData data = PlayerTeleportDataCapability.getData(player);
         Map<String, String> defaultHome = data.getDefaultHome();
@@ -1129,6 +1140,17 @@ public class NarcissusUtils {
      */
     public static Coordinate getPlayerHome(ServerPlayer player, ResourceKey<Level> dimension, String name) {
         return PlayerTeleportDataCapability.getData(player).getHomeCoordinate().getOrDefault(getPlayerHomeKey(player, dimension, name), null);
+    }
+
+    public static String getStageDimensionByName(String name) {
+        WorldStageData stageData = WorldStageData.get();
+        List<KeyValue<String, String>> list = stageData.getStageCoordinate().keySet().stream()
+                .filter(key -> key.getValue().equals(name))
+                .toList();
+        if (list.size() == 1) {
+            return list.get(0).getKey();
+        }
+        return null;
     }
 
     /**
@@ -2043,7 +2065,11 @@ public class NarcissusUtils {
     // region 杂项
 
     public static String getPlayerLanguage(ServerPlayer player) {
-        return PlayerTeleportDataCapability.getData(player).getValidLanguage(player);
+        try {
+            return PlayerTeleportDataCapability.getData(player).getValidLanguage(player);
+        } catch (IllegalArgumentException i) {
+            return ServerConfig.DEFAULT_LANGUAGE.get();
+        }
     }
 
     public static String getValidLanguage(@Nullable Player player, @Nullable String language) {
@@ -2073,7 +2099,7 @@ public class NarcissusUtils {
      * @param targetPlayer   目标玩家
      */
     public static void clonePlayerLanguage(ServerPlayer originalPlayer, ServerPlayer targetPlayer) {
-        FieldUtils.setPrivateFieldValue(ServerPlayer.class, targetPlayer, FieldUtils.getPlayerLanguageFieldName(originalPlayer), getPlayerLanguage(originalPlayer));
+        FieldUtils.setPrivateFieldValue(ServerPlayer.class, targetPlayer, FieldUtils.getPlayerLanguageFieldName(originalPlayer), getServerPlayerLanguage(originalPlayer));
     }
 
     public static String getClientLanguage() {

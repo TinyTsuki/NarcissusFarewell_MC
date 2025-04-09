@@ -127,8 +127,8 @@ public class ForgeEventHandler {
     public static void onPlayerCloned(PlayerEvent.Clone event) {
         ServerPlayer original = (ServerPlayer) event.getOriginal();
         ServerPlayer newPlayer = (ServerPlayer) event.getEntity();
-        NarcissusUtils.clonePlayerLanguage(original, newPlayer);
         original.revive();
+        NarcissusUtils.clonePlayerLanguage(original, newPlayer);
         IPlayerTeleportData oldDataCap = PlayerTeleportDataCapability.getData(original);
         IPlayerTeleportData newDataCap = PlayerTeleportDataCapability.getData(newPlayer);
         newDataCap.copyFrom(oldDataCap);
