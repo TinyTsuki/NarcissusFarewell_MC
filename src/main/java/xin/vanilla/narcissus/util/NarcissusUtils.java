@@ -1118,6 +1118,17 @@ public class NarcissusUtils {
         return structureList;
     }
 
+    public static String getHomeDimensionByName(EntityPlayerMP player, String name) {
+        IPlayerTeleportData data = PlayerTeleportData.get(player);
+        List<KeyValue<String, String>> list = data.getHomeCoordinate().keySet().stream()
+                .filter(key -> key.getValue().equals(name))
+                .collect(Collectors.toList());
+        if (list.size() == 1) {
+            return list.get(0).getKey();
+        }
+        return null;
+    }
+
     public static KeyValue<String, String> getPlayerHomeKey(EntityPlayerMP player, String dimension, String name) {
         IPlayerTeleportData data = PlayerTeleportData.get(player);
         Map<String, String> defaultHome = data.getDefaultHome();
@@ -1175,6 +1186,17 @@ public class NarcissusUtils {
     public static boolean isPlayerHome(EntityPlayerMP player, String name) {
         return PlayerTeleportData.get(player).getHomeCoordinate().keySet().stream()
                 .anyMatch(key -> key.getValue().equals(name));
+    }
+
+    public static String getStageDimensionByName(String name) {
+        WorldStageData stageData = WorldStageData.get();
+        List<KeyValue<String, String>> list = stageData.getStageCoordinate().keySet().stream()
+                .filter(key -> key.getValue().equals(name))
+                .collect(Collectors.toList());
+        if (list.size() == 1) {
+            return list.get(0).getKey();
+        }
+        return null;
     }
 
     /**

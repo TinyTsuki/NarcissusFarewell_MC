@@ -1719,12 +1719,14 @@ public class FarewellCommand extends CommandBase {
                 if (checkTeleportPre(player, ECommandType.DEL_HOME)) {
                     return 0;
                 }
-                if (args.length == 3) {
+                if (args.length >= 2) {
                     IPlayerTeleportData data = PlayerTeleportData.get(player);
                     String name = args[1];
-                    String dimension = null;
-                    if (DimensionUtils.getDimensionType(args[2]) != null) {
+                    String dimension;
+                    if (args.length == 3 && DimensionUtils.getDimensionType(args[2]) != null) {
                         dimension = args[2];
+                    } else {
+                        dimension = NarcissusUtils.getHomeDimensionByName(player, name);
                     }
                     if (StringUtils.isNullOrEmptyEx(dimension)) {
                         NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EI18nType.MESSAGE, "dimension_not_found"), args[2]);
@@ -1906,11 +1908,13 @@ public class FarewellCommand extends CommandBase {
                 if (checkTeleportPre(player, ECommandType.DEL_STAGE)) {
                     return 0;
                 }
-                if (args.length == 3) {
+                if (args.length >= 2) {
                     String name = args[1];
-                    String dimension = null;
-                    if (DimensionUtils.getDimensionType(args[2]) != null) {
+                    String dimension;
+                    if (args.length == 3 && DimensionUtils.getDimensionType(args[2]) != null) {
                         dimension = args[2];
+                    } else {
+                        dimension = NarcissusUtils.getStageDimensionByName(name);
                     }
                     if (StringUtils.isNullOrEmptyEx(dimension)) {
                         NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EI18nType.MESSAGE, "dimension_not_found"), args[2]);
