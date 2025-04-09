@@ -1735,7 +1735,7 @@ public class ServerConfig {
             CONCISE_SHARE = SERVER_BUILDER
                     .comment("Enable or disable the concise version of the 'Share the stage, the personal home, and the current coordinate of player' command.",
                             "是否启用无前缀版本的 '分享驿站、玩家的私人传送点、玩家当前坐标' 指令。")
-                    .define("share", false);
+                    .define("conciseShare", false);
 
             CONCISE_FEED = SERVER_BUILDER
                     .comment("Enable or disable the concise version of the 'Suicide or poisoning' command.",
