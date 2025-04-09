@@ -54,6 +54,7 @@ import xin.vanilla.narcissus.NarcissusFarewell;
 import xin.vanilla.narcissus.config.*;
 import xin.vanilla.narcissus.data.TeleportRecord;
 import xin.vanilla.narcissus.data.player.IPlayerTeleportData;
+import xin.vanilla.narcissus.data.player.PlayerTeleportData;
 import xin.vanilla.narcissus.data.player.PlayerTeleportDataCapability;
 import xin.vanilla.narcissus.data.world.WorldStageData;
 import xin.vanilla.narcissus.enums.*;
@@ -1023,6 +1024,17 @@ public class NarcissusUtils {
         return null;
     }
 
+    public static String getHomeDimensionByName(ServerPlayerEntity player, String name) {
+        IPlayerTeleportData data = PlayerTeleportDataCapability.getData(player);
+        List<KeyValue<String, String>> list = data.getHomeCoordinate().keySet().stream()
+                .filter(key -> key.getValue().equals(name))
+                .collect(Collectors.toList());
+        if (list.size() == 1) {
+            return list.get(0).getKey();
+        }
+        return null;
+    }
+
     public static KeyValue<String, String> getPlayerHomeKey(ServerPlayerEntity player, RegistryKey<World> dimension, String name) {
         IPlayerTeleportData data = PlayerTeleportDataCapability.getData(player);
         Map<String, String> defaultHome = data.getDefaultHome();
@@ -1075,6 +1087,17 @@ public class NarcissusUtils {
      */
     public static Coordinate getPlayerHome(ServerPlayerEntity player, RegistryKey<World> dimension, String name) {
         return PlayerTeleportDataCapability.getData(player).getHomeCoordinate().getOrDefault(getPlayerHomeKey(player, dimension, name), null);
+    }
+
+    public static String getStageDimensionByName(String name) {
+        WorldStageData stageData = WorldStageData.get();
+        List<KeyValue<String, String>> list = stageData.getStageCoordinate().keySet().stream()
+                .filter(key -> key.getValue().equals(name))
+                .collect(Collectors.toList());
+        if (list.size() == 1) {
+            return list.get(0).getKey();
+        }
+        return null;
     }
 
     /**
