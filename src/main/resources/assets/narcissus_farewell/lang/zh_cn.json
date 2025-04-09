@@ -43,7 +43,7 @@
   "command.narcissus_farewell.dimension_detail": "获取当前所处世界的维度ID",
   "command.narcissus_farewell.uuid_detail": "获取指定玩家的UUID",
   "command.narcissus_farewell.card_detail": "获取/修改指定玩家的传送卡数量，获取自己的传送卡数量无需参数。\n参数列表：\n 1. get <玩家>\n 2. add <玩家> <数量>\n 3. set <玩家> <数量>",
-  "command.narcissus_farewell.share_detail": "分享驿站、玩家的私人传送点、玩家当前坐标，标识“->”代表私人传送点，“>>”代表驿站，标识为空或不填写时将分享玩家当前坐标。\n参数列表：\n 1. [<分享名称>]\n 2. [<分享名称>] [<驿站标识>] [<分享对象>]\n 3. [<分享名称>] [<私人传送点标识>] [<分享对象>]",
+  "command.narcissus_farewell.share_detail": "分享驿站、玩家的私人传送点、玩家当前坐标，标识“->”代表私人传送点，“>>”代表驿站，自定义标识或不填写时将分享玩家当前坐标。\n参数列表：\n 1. [<分享名称>]\n 2. [<驿站标识>] [<分享对象>]\n 3. [<私人传送点标识>] [<分享对象>]",
   "command.narcissus_farewell.feed_detail": "自己品尝或请他人品尝水仙浓茶，效果类似/kill。\n参数列表：\n [<玩家>]",
   "command.narcissus_farewell.tp_coordinate_detail": "传送至指定坐标或玩家。\n参数列表：\n 1. <玩家> [<是否安全传送>]\n 2. <坐标> [<是否安全传送>] [<维度>]",
   "command.narcissus_farewell.tp_structure_detail": "传送至指定结构或生物群系(默认安全的)。\n参数列表：\n 1. <结构> [<搜索距离>] [<维度>]\n 2. <生物群系> [<搜索距离>] [<维度>]",
