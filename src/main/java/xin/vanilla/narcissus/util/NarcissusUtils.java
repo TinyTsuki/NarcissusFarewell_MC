@@ -2215,7 +2215,11 @@ public class NarcissusUtils {
 
     // region 杂项
     public static String getPlayerLanguage(EntityPlayerMP player) {
-        return PlayerTeleportDataCapability.getData(player).getValidLanguage(player);
+        try {
+            return PlayerTeleportDataCapability.getData(player).getValidLanguage(player);
+        } catch (IllegalArgumentException i) {
+            return ServerConfig.DEFAULT_LANGUAGE;
+        }
     }
 
     public static String getValidLanguage(@Nullable EntityPlayer player, @Nullable String language) {
