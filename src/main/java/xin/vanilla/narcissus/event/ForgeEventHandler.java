@@ -19,13 +19,13 @@ import net.minecraftforge.fml.common.Mod;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import xin.vanilla.narcissus.NarcissusFarewell;
+import xin.vanilla.narcissus.config.Coordinate;
+import xin.vanilla.narcissus.config.ServerConfig;
+import xin.vanilla.narcissus.config.TeleportRequest;
 import xin.vanilla.narcissus.data.TeleportRecord;
 import xin.vanilla.narcissus.data.player.IPlayerTeleportData;
 import xin.vanilla.narcissus.data.player.PlayerTeleportDataCapability;
 import xin.vanilla.narcissus.data.player.PlayerTeleportDataProvider;
-import xin.vanilla.narcissus.config.Coordinate;
-import xin.vanilla.narcissus.config.ServerConfig;
-import xin.vanilla.narcissus.config.TeleportRequest;
 import xin.vanilla.narcissus.enums.EI18nType;
 import xin.vanilla.narcissus.enums.ETeleportType;
 import xin.vanilla.narcissus.network.ClientModLoadedNotice;
@@ -125,8 +125,8 @@ public class ForgeEventHandler {
     public static void onPlayerCloned(PlayerEvent.Clone event) {
         ServerPlayer original = (ServerPlayer) event.getOriginal();
         ServerPlayer newPlayer = (ServerPlayer) event.getEntity();
-        NarcissusUtils.clonePlayerLanguage(original, newPlayer);
         original.revive();
+        NarcissusUtils.clonePlayerLanguage(original, newPlayer);
         LazyOptional<IPlayerTeleportData> oldDataCap = original.getCapability(PlayerTeleportDataCapability.PLAYER_DATA);
         LazyOptional<IPlayerTeleportData> newDataCap = newPlayer.getCapability(PlayerTeleportDataCapability.PLAYER_DATA);
         oldDataCap.ifPresent(oldData -> newDataCap.ifPresent(newData -> newData.copyFrom(oldData)));
