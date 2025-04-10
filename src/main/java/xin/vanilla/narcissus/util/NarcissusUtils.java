@@ -899,20 +899,18 @@ public class NarcissusUtils {
         List<Coordinate> list = coordinates.stream().sorted(comparator).toList();
         LOGGER.debug("TimeMillis before searching: {}", System.currentTimeMillis());
         for (Coordinate c : list) {
-            double offsetX = c.getX() >= 0 ? c.getX() + 0.5 : c.getX() - 0.5;
-            double offsetZ = c.getZ() >= 0 ? c.getZ() + 0.5 : c.getZ() - 0.5;
-            Coordinate candidate = new Coordinate().setX(offsetX).setY(c.getY() + 0.15).setZ(offsetZ)
+            Coordinate candidate = new Coordinate().setX(c.getX()).setY(c.getY()).setZ(c.getZ())
                     .setYaw(coordinate.getYaw()).setPitch(coordinate.getPitch())
                     .setDimension(coordinate.getDimension())
                     .setSafe(coordinate.isSafe()).setSafeMode(coordinate.getSafeMode());
             if (belowAllowAir) {
                 if (isAirCoordinate(world, candidate)) {
-                    result = candidate;
+                    result = candidate.addX(0.5).addY(0.15).addZ(0.5);
                     break;
                 }
             } else {
                 if (isSafeCoordinate(world, candidate)) {
-                    result = candidate;
+                    result = candidate.addX(0.5).addY(0.15).addZ(0.5);
                     break;
                 }
             }
