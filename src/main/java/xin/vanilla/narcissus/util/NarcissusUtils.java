@@ -2253,7 +2253,7 @@ public class NarcissusUtils {
      * @param targetPlayer   目标玩家
      */
     public static void clonePlayerLanguage(EntityPlayerMP originalPlayer, EntityPlayerMP targetPlayer) {
-        FieldUtils.setPrivateFieldValue(EntityPlayerMP.class, targetPlayer, FieldUtils.getPlayerLanguageFieldName(originalPlayer), getPlayerLanguage(originalPlayer));
+        FieldUtils.setPrivateFieldValue(EntityPlayerMP.class, targetPlayer, FieldUtils.getPlayerLanguageFieldName(originalPlayer), getServerPlayerLanguage(originalPlayer));
     }
 
     public static final DamageSource DAMAGE_SOURCE = new DamageSource("narcissus");
