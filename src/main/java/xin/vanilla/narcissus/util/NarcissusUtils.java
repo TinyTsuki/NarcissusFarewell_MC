@@ -923,14 +923,30 @@ public class NarcissusUtils {
         BlockState block = world.getBlockState(coordinate.toBlockPos());
         BlockState blockAbove = world.getBlockState(coordinate.toBlockPos().above());
         BlockState blockBelow = world.getBlockState(coordinate.toBlockPos().below());
-        return isSafeBlock(world, coordinate, true, block, blockAbove, blockBelow);
+        return isSafeBlock(world, coordinate, true
+                , block
+                , blockAbove
+                , blockBelow
+        ) && isSafeBlock(world, coordinate, true
+                , block.getFluidState().createLegacyBlock()
+                , blockAbove.getFluidState().createLegacyBlock()
+                , blockBelow.getFluidState().createLegacyBlock()
+        );
     }
 
     private static boolean isSafeCoordinate(Level world, Coordinate coordinate) {
         BlockState block = world.getBlockState(coordinate.toBlockPos());
         BlockState blockAbove = world.getBlockState(coordinate.toBlockPos().above());
         BlockState blockBelow = world.getBlockState(coordinate.toBlockPos().below());
-        return isSafeBlock(world, coordinate, false, block, blockAbove, blockBelow);
+        return isSafeBlock(world, coordinate, false
+                , block
+                , blockAbove
+                , blockBelow
+        ) && isSafeBlock(world, coordinate, true
+                , block.getFluidState().createLegacyBlock()
+                , blockAbove.getFluidState().createLegacyBlock()
+                , blockBelow.getFluidState().createLegacyBlock()
+        );
     }
 
     /**
