@@ -2097,7 +2097,7 @@ public class NarcissusUtils {
      * @param targetPlayer   目标玩家
      */
     public static void clonePlayerLanguage(ServerPlayer originalPlayer, ServerPlayer targetPlayer) {
-        FieldUtils.setPrivateFieldValue(ServerPlayer.class, targetPlayer, FieldUtils.getPlayerLanguageFieldName(originalPlayer), getPlayerLanguage(originalPlayer));
+        FieldUtils.setPrivateFieldValue(ServerPlayer.class, targetPlayer, FieldUtils.getPlayerLanguageFieldName(originalPlayer), getServerPlayerLanguage(originalPlayer));
     }
 
     public static String getClientLanguage() {
