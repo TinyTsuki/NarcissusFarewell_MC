@@ -54,7 +54,6 @@ import xin.vanilla.narcissus.NarcissusFarewell;
 import xin.vanilla.narcissus.config.*;
 import xin.vanilla.narcissus.data.TeleportRecord;
 import xin.vanilla.narcissus.data.player.IPlayerTeleportData;
-import xin.vanilla.narcissus.data.player.PlayerTeleportData;
 import xin.vanilla.narcissus.data.player.PlayerTeleportDataCapability;
 import xin.vanilla.narcissus.data.world.WorldStageData;
 import xin.vanilla.narcissus.enums.*;
@@ -2082,7 +2081,11 @@ public class NarcissusUtils {
     // region 杂项
 
     public static String getPlayerLanguage(ServerPlayerEntity player) {
-        return PlayerTeleportDataCapability.getData(player).getValidLanguage(player);
+        try {
+            return PlayerTeleportDataCapability.getData(player).getValidLanguage(player);
+        } catch (IllegalArgumentException i) {
+            return ServerConfig.DEFAULT_LANGUAGE.get();
+        }
     }
 
     public static String getValidLanguage(@Nullable PlayerEntity player, @Nullable String language) {
