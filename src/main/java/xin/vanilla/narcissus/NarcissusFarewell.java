@@ -98,7 +98,6 @@ public class NarcissusFarewell {
                 .ifPresent(LogoModifier::modifyLogo);
     }
 
-    // 服务器启动时加载数据
     private void onServerStarting(FMLServerStartingEvent event) {
         serverInstance = event.getServer();
         LOGGER.debug("Registering commands");
