@@ -166,5 +166,6 @@
   "message.narcissus_farewell.notify_help": "Welcome to NarcissusFarewell! Use the command '%s' to view the help message.",
   "message.narcissus_farewell.shared_coordinates": "Player '%s' has shared a teleport point named '%s'. %s %s",
   "message.narcissus_farewell.server_default_language": "The default language of the server is set to %s.",
-  "message.narcissus_farewell.player_default_language": "The default language of the player is set to %s."
+  "message.narcissus_farewell.player_default_language": "The default language of the player is set to %s.",
+  "message.narcissus_farewell.locked_by_mob": "§eTeleportation was interrupted by nearby hostile mobs' line of sight!"
 }
