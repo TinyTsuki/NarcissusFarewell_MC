@@ -38,11 +38,15 @@ public class FieldUtils {
      */
     public static List<String> getPrivateFieldNames(Class<?> clazz, Class<?> target) {
         List<String> fieldNames = new ArrayList<>();
-        Field[] fields = clazz.getDeclaredFields();
-        for (Field field : fields) {
-            if ((Modifier.isPrivate(field.getModifiers()) || Modifier.isProtected(field.getModifiers())) && field.getType() == target) {
-                fieldNames.add(field.getName());
+        try {
+            Field[] fields = clazz.getDeclaredFields();
+            for (Field field : fields) {
+                if ((Modifier.isPrivate(field.getModifiers()) || Modifier.isProtected(field.getModifiers())) && field.getType() == target) {
+                    fieldNames.add(field.getName());
+                }
             }
+        } catch (Exception e) {
+            LOGGER.error("Failed to get private field names from {}", clazz.getName(), e);
         }
         return fieldNames;
     }
