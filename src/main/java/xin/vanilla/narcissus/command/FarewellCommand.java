@@ -10,6 +10,7 @@ import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.suggestion.SuggestionProvider;
+import com.mojang.brigadier.tree.CommandNode;
 import net.minecraft.command.CommandSource;
 import net.minecraft.command.Commands;
 import net.minecraft.command.arguments.DimensionArgument;
@@ -33,6 +34,8 @@ import net.minecraft.world.gen.feature.structure.Structure;
 import net.minecraft.world.server.ServerWorld;
 import net.minecraftforge.registries.ForgeRegistries;
 import net.minecraftforge.registries.GameData;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import xin.vanilla.narcissus.NarcissusFarewell;
 import xin.vanilla.narcissus.config.Coordinate;
 import xin.vanilla.narcissus.config.KeyValue;
@@ -49,6 +52,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 public class FarewellCommand {
+    private static final Logger LOGGER = LogManager.getLogger();
 
     public static final List<KeyValue<String, ECommandType>> HELP_MESSAGE = Arrays.stream(ECommandType.values())
             .map(type -> {
@@ -1894,6 +1898,21 @@ public class FarewellCommand {
 
         // 注册简短的指令
         {
+            // 移除原版tp指令
+            if (ServerConfig.REMOVE_ORIGINAL_TP.get()) {
+                for (String fieldName : FieldUtils.getPrivateFieldNames(CommandNode.class, Map.class)) {
+                    try {
+                        Map<String, ?> map = (Map<String, ?>) FieldUtils.getPrivateFieldValue(CommandNode.class, dispatcher.getRoot(), fieldName);
+                        if (map != null) {
+                            map.remove("tp");
+                            map.remove("teleport");
+                        }
+                    } catch (Exception e) {
+                        LOGGER.error("Failed to remove original command: ", e);
+                    }
+                }
+            }
+
             // 设置语言 /language
             if (ServerConfig.CONCISE_LANGUAGE.get()) {
                 dispatcher.register(language);
@@ -2335,9 +2354,9 @@ public class FarewellCommand {
             NarcissusUtils.sendTranslatableMessage(source, false, I18nUtils.getKey(EI18nType.MESSAGE, "command_disabled"));
             return true;
         }
-        // 判断是否有冷却时间
         if (source.getEntity() != null && source.getEntity() instanceof ServerPlayerEntity) {
             ServerPlayerEntity player = (ServerPlayerEntity) source.getEntity();
+            // 判断是否有冷却时间
             ETeleportType type = teleportType.toTeleportType();
             if (type != null) {
                 int teleportCoolDown = NarcissusUtils.getTeleportCoolDown(player, type);
@@ -2345,6 +2364,11 @@ public class FarewellCommand {
                     NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EI18nType.MESSAGE, "command_cooldown"), teleportCoolDown);
                     return true;
                 }
+            }
+            // 判断是否被敌对生物锁定
+            if (ServerConfig.TP_WITH_ENEMY.get() && NarcissusUtils.isTargetedByHostile(player)) {
+                NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EI18nType.MESSAGE, "locked_by_mob"));
+                return true;
             }
         }
         return false;
@@ -2371,6 +2395,11 @@ public class FarewellCommand {
         result = NarcissusUtils.isTeleportAcrossDimensionEnabled(request.getRequester(), request.getTarget().getLevel().dimension.getType(), request.getTeleportType());
         // 判断是否有传送代价
         result = result && NarcissusUtils.validTeleportCost(request, submit);
+        // 判断是否被敌对生物锁定
+        if (ServerConfig.TP_WITH_ENEMY.get() && NarcissusUtils.isTargetedByHostile(request.getRequester())) {
+            NarcissusUtils.sendTranslatableMessage(request.getRequester(), I18nUtils.getKey(EI18nType.MESSAGE, "locked_by_mob"));
+            result = false;
+        }
         return !result;
     }
 
@@ -2401,6 +2430,11 @@ public class FarewellCommand {
         result = NarcissusUtils.isTeleportAcrossDimensionEnabled(player, target.getDimension(), type);
         // 判断是否有传送代价
         result = result && NarcissusUtils.validTeleportCost(player, target, type, submit);
+        // 判断是否被敌对生物锁定
+        if (ServerConfig.TP_WITH_ENEMY.get() && NarcissusUtils.isTargetedByHostile(player)) {
+            NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EI18nType.MESSAGE, "locked_by_mob"));
+            result = false;
+        }
         return !result;
     }
 

@@ -2256,5 +2256,17 @@ public class NarcissusUtils {
         return location == null ? "" : location.toString();
     }
 
+    /**
+     * 判断玩家是否被任何敌对生物锁定为攻击目标
+     */
+    public static boolean isTargetedByHostile(ServerPlayerEntity player) {
+        return player.level.getEntitiesOfClass(MobEntity.class, player.getBoundingBox()
+                        .inflate(ServerConfig.TP_WITH_FOLLOWER_RANGE.get()))
+                .stream()
+                .anyMatch(entity -> player.equals(entity.getTarget())
+                        // || (entity.getBrain().hasMemoryValue(MemoryModuleType.ATTACK_TARGET)) && player.equals(entity.getBrain().getMemory(MemoryModuleType.ATTACK_TARGET).orElse(null))
+                );
+    }
+
     // endregion 杂项
 }
