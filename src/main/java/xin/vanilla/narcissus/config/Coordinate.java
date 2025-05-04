@@ -199,12 +199,12 @@ public class Coordinate implements Serializable, Cloneable {
      */
     public static Coordinate readFromNBT(CompoundTag tag) {
         Coordinate coordinate = new Coordinate();
-        coordinate.x = tag.getDouble("x");
-        coordinate.y = tag.getDouble("y");
-        coordinate.z = tag.getDouble("z");
-        coordinate.yaw = tag.getDouble("yaw");
-        coordinate.pitch = tag.getDouble("pitch");
-        coordinate.dimension = ResourceKey.create(Registries.DIMENSION, ResourceLocation.parse(tag.getString("dimension")));
+        coordinate.x = tag.getDouble("x").orElse(0D);
+        coordinate.y = tag.getDouble("y").orElse(0D);
+        coordinate.z = tag.getDouble("z").orElse(0D);
+        coordinate.yaw = tag.getDouble("yaw").orElse(0D);
+        coordinate.pitch = tag.getDouble("pitch").orElse(0D);
+        coordinate.dimension = ResourceKey.create(Registries.DIMENSION, ResourceLocation.parse(tag.getString("dimension").orElse(Level.OVERWORLD.location().toString())));
         return coordinate;
     }
 
