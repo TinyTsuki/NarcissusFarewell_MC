@@ -166,5 +166,6 @@
   "message.narcissus_farewell.notify_help": "欢迎使用水仙辞，使用指令『%s』以获取帮助信息！",
   "message.narcissus_farewell.shared_coordinates": "玩家『%s』分享了名为『%s』的传送点，%s %s",
   "message.narcissus_farewell.server_default_language": "服务器默认语言被设置为：%s。",
-  "message.narcissus_farewell.player_default_language": "玩家默认语言被设置为：%s。"
+  "message.narcissus_farewell.player_default_language": "玩家默认语言被设置为：%s。",
+  "message.narcissus_farewell.locked_by_mob": "§e传送被附近敌对生物的视线打断！"
 }
