@@ -34,6 +34,7 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.TamableAnimal;
 import net.minecraft.world.entity.ai.goal.TemptGoal;
+import net.minecraft.world.entity.ai.memory.MemoryModuleType;
 import net.minecraft.world.entity.monster.Monster;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
@@ -2228,6 +2229,18 @@ public class NarcissusUtils {
     public static String getBlockRegistryName(Block block) {
         Optional<ResourceKey<Block>> key = block.defaultBlockState().getBlockHolder().unwrapKey();
         return key.map(blockResourceKey -> blockResourceKey.location().toString()).orElse("");
+    }
+
+    /**
+     * 判断玩家是否被任何敌对生物锁定为攻击目标
+     */
+    public static boolean isTargetedByHostile(ServerPlayer player) {
+        return player.level().getEntitiesOfClass(Mob.class, player.getBoundingBox()
+                        .inflate(ServerConfig.TP_WITH_FOLLOWER_RANGE.get()))
+                .stream()
+                .anyMatch(entity -> player.equals(entity.getTarget())
+                        || (entity.getBrain().hasMemoryValue(MemoryModuleType.ATTACK_TARGET)) && player.equals(entity.getBrain().getMemory(MemoryModuleType.ATTACK_TARGET).orElse(null))
+                );
     }
 
     // endregion 杂项
