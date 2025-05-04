@@ -1,11 +1,15 @@
 package xin.vanilla.narcissus;
 
+import com.mojang.brigadier.CommandDispatcher;
 import lombok.Getter;
+import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.RegisterCommandsEvent;
+import net.minecraftforge.event.server.ServerStartedEvent;
 import net.minecraftforge.event.server.ServerStartingEvent;
+import net.minecraftforge.event.server.ServerStoppingEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.ModList;
 import net.minecraftforge.fml.ModLoadingContext;
@@ -43,6 +47,11 @@ public class NarcissusFarewell {
     private static MinecraftServer serverInstance;
 
     /**
+     * 服务器是否已启动
+     */
+    private boolean serverStarted = false;
+
+    /**
      * 分片网络包缓存
      */
     @Getter
@@ -66,12 +75,19 @@ public class NarcissusFarewell {
     @Getter
     private static final Map<String, TeleportRequest> teleportRequest = new ConcurrentHashMap<>();
 
+    /**
+     * 命令调度器
+     */
+    private CommandDispatcher<CommandSourceStack> dispatcher;
+
     public NarcissusFarewell() {
 
         // 注册网络通道
         ModNetworkHandler.registerPackets();
         // 注册服务器启动和关闭事件
         MinecraftForge.EVENT_BUS.addListener(this::onServerStarting);
+        MinecraftForge.EVENT_BUS.addListener(this::onServerStarted);
+        MinecraftForge.EVENT_BUS.addListener(this::onServerStopping);
 
         // 注册当前实例到MinecraftForge的事件总线，以便监听和处理游戏内的各种事件
         MinecraftForge.EVENT_BUS.register(this);
@@ -99,23 +115,31 @@ public class NarcissusFarewell {
                 .ifPresent(LogoModifier::modifyLogo);
     }
 
-    // 服务器启动时加载数据
     private void onServerStarting(ServerStartingEvent event) {
         serverInstance = event.getServer();
     }
 
-    /**
-     * 注册命令事件的处理方法
-     * 当注册命令事件被触发时，此方法将被调用
-     * 该方法主要用于注册传送命令到事件调度器
-     *
-     * @param event 注册命令事件对象，通过该对象可以获取到事件调度器
-     */
+    private void onServerStarted(ServerStartedEvent event) {
+        this.serverStarted = true;
+        this.registerCommands();
+    }
+
+    private void onServerStopping(ServerStoppingEvent event) {
+        this.serverStarted = false;
+    }
+
     @SubscribeEvent
     public void onRegisterCommands(RegisterCommandsEvent event) {
-        LOGGER.debug("Registering commands");
-        // 注册传送命令到事件调度器
-        FarewellCommand.register(event.getDispatcher());
+        this.dispatcher = event.getDispatcher();
+        this.registerCommands();
+    }
+
+    private void registerCommands() {
+        if (serverStarted && dispatcher != null) {
+            LOGGER.debug("Registering commands");
+            // 注册传送命令到事件调度器
+            FarewellCommand.register(this.dispatcher);
+        }
     }
 
 }
