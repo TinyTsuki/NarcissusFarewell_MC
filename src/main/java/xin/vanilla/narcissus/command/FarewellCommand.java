@@ -2364,7 +2364,7 @@ public class FarewellCommand {
                 }
             }
             // 判断是否被敌对生物锁定
-            if (NarcissusUtils.isTargetedByHostile(player)) {
+            if (ServerConfig.TP_WITH_ENEMY.get() && NarcissusUtils.isTargetedByHostile(player)) {
                 NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EI18nType.MESSAGE, "locked_by_mob"));
                 return true;
             }
@@ -2394,7 +2394,7 @@ public class FarewellCommand {
         // 判断是否有传送代价
         result = result && NarcissusUtils.validTeleportCost(request, submit);
         // 判断是否被敌对生物锁定
-        if (NarcissusUtils.isTargetedByHostile(request.getRequester())) {
+        if (ServerConfig.TP_WITH_ENEMY.get() && NarcissusUtils.isTargetedByHostile(request.getRequester())) {
             NarcissusUtils.sendTranslatableMessage(request.getRequester(), I18nUtils.getKey(EI18nType.MESSAGE, "locked_by_mob"));
             result = false;
         }
@@ -2429,7 +2429,7 @@ public class FarewellCommand {
         // 判断是否有传送代价
         result = result && NarcissusUtils.validTeleportCost(player, target, type, submit);
         // 判断是否被敌对生物锁定
-        if (NarcissusUtils.isTargetedByHostile(player)) {
+        if (ServerConfig.TP_WITH_ENEMY.get() && NarcissusUtils.isTargetedByHostile(player)) {
             NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EI18nType.MESSAGE, "locked_by_mob"));
             result = false;
         }
