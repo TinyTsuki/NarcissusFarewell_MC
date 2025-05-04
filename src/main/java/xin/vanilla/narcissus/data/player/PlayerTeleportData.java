@@ -276,35 +276,35 @@ public class PlayerTeleportData implements IPlayerTeleportData {
 
     @Override
     public void deserializeNBT(HolderLookup.Provider registryAccess, CompoundTag nbt) {
-        this.setLastCardTime(DateUtils.format(nbt.getString("lastCardTime")));
-        this.setLastTpTime(DateUtils.format(nbt.getString("lastTpTime")));
-        this.setTeleportCard(nbt.getInt("teleportCard"));
+        this.setLastCardTime(DateUtils.format(nbt.getString("lastCardTime").orElse(DateUtils.toDateTimeString(new Date(0)))));
+        this.setLastTpTime(DateUtils.format(nbt.getString("lastTpTime").orElse(DateUtils.toDateTimeString(new Date(0)))));
+        this.setTeleportCard(nbt.getInt("teleportCard").orElse(0));
         // 反序列化传送记录
-        ListTag recordsNBT = nbt.getList("teleportRecords", 10); // 10 是 CompoundTag 的类型ID
+        ListTag recordsNBT = nbt.getList("teleportRecords").orElse(new ListTag());
         List<TeleportRecord> records = new ArrayList<>();
         for (int i = 0; i < recordsNBT.size(); i++) {
-            records.add(TeleportRecord.readFromNBT(recordsNBT.getCompound(i)));
+            records.add(TeleportRecord.readFromNBT(recordsNBT.getCompound(i).orElse(new Coordinate().writeToNBT())));
         }
         this.setTeleportRecords(records);
         // 反序列化家坐标
-        ListTag homeCoordinateNBT = nbt.getList("homeCoordinate", 10);
+        ListTag homeCoordinateNBT = nbt.getList("homeCoordinate").orElse(new ListTag());
         Map<KeyValue<String, String>, Coordinate> homeCoordinate = new HashMap<>();
         for (int i = 0; i < homeCoordinateNBT.size(); i++) {
-            CompoundTag homeCoordinateTag = homeCoordinateNBT.getCompound(i);
-            homeCoordinate.put(new KeyValue<>(homeCoordinateTag.getString("key"), homeCoordinateTag.getString("value")),
-                    Coordinate.readFromNBT(homeCoordinateTag.getCompound("coordinate")));
+            CompoundTag homeCoordinateTag = homeCoordinateNBT.getCompound(i).orElse(new CompoundTag());
+            homeCoordinate.put(new KeyValue<>(homeCoordinateTag.getString("key").orElse(""), homeCoordinateTag.getString("value").orElse("")),
+                    Coordinate.readFromNBT(homeCoordinateTag.getCompound("coordinate").orElse(new Coordinate().writeToNBT())));
         }
         this.setHomeCoordinate(homeCoordinate);
         // 反序列化默认家
-        ListTag defaultHomeNBT = nbt.getList("defaultHome", 10);
+        ListTag defaultHomeNBT = nbt.getList("defaultHome").orElse(new ListTag());
         Map<String, String> defaultHome = new HashMap<>();
         for (int i = 0; i < defaultHomeNBT.size(); i++) {
-            CompoundTag defaultHomeTag = defaultHomeNBT.getCompound(i);
-            defaultHome.put(defaultHomeTag.getString("key"), defaultHomeTag.getString("value"));
+            CompoundTag defaultHomeTag = defaultHomeNBT.getCompound(i).orElse(new CompoundTag());
+            defaultHome.put(defaultHomeTag.getString("key").orElse(""), defaultHomeTag.getString("value").orElse(""));
         }
         this.setDefaultHome(defaultHome);
-        this.notified = nbt.getBoolean("notified");
-        this.setLanguage(nbt.getString("language"));
+        this.notified = nbt.getBoolean("notified").orElse(false);
+        this.setLanguage(nbt.getString("language").orElse("client"));
     }
 
     @Override

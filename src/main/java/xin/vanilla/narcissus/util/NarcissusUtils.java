@@ -28,10 +28,7 @@ import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.stats.Stats;
 import net.minecraft.tags.TagKey;
-import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.Mob;
-import net.minecraft.world.entity.TamableAnimal;
+import net.minecraft.world.entity.*;
 import net.minecraft.world.entity.ai.goal.TemptGoal;
 import net.minecraft.world.entity.ai.memory.MemoryModuleType;
 import net.minecraft.world.entity.monster.Monster;
@@ -1422,7 +1419,7 @@ public class NarcissusUtils {
 
         // 传送主动跟随的实体
         for (TamableAnimal entity : player.level().getEntitiesOfClass(TamableAnimal.class, player.getBoundingBox().inflate(followerRange))) {
-            if (entity.getOwnerUUID() != null && entity.getOwnerUUID().equals(player.getUUID()) && !entity.isOrderedToSit()) {
+            if (entity.getOwner() != null && entity.getOwner().getUUID().equals(player.getUUID()) && !entity.isOrderedToSit()) {
                 doTeleport(entity, coordinate, level);
             }
         }
@@ -1571,9 +1568,11 @@ public class NarcissusUtils {
     public static List<ItemStack> getPlayerItemList(ServerPlayer player) {
         List<ItemStack> result = new ArrayList<>();
         if (player != null) {
-            result.addAll(player.getInventory().items);
-            result.addAll(player.getInventory().armor);
-            result.addAll(player.getInventory().offhand);
+            result.addAll(player.getInventory().getNonEquipmentItems());
+            for (EquipmentSlot slot : Inventory.EQUIPMENT_SLOT_MAPPING.values()) {
+                result.add(player.getInventory().getEquipment().get((slot)));
+            }
+            result.add(player.getOffhandItem());
             result = result.stream().filter(itemStack -> !itemStack.isEmpty() && itemStack.getItem() != Items.AIR).collect(Collectors.toList());
         }
         return result;
@@ -1874,8 +1873,8 @@ public class NarcissusUtils {
                 break;
             case ITEM:
                 try {
-                    ItemStack itemStack = ItemStack.parseOptional(player.registryAccess(), TagParser.parseTag(cost.getConf()));
-                    result = getItemCount(player.getInventory().items, itemStack) >= costNeed && cardNeed == 0;
+                    ItemStack itemStack = ItemStack.parse(player.registryAccess(), TagParser.parseCompoundFully(cost.getConf())).get();
+                    result = getItemCount(getPlayerItemList(player), itemStack) >= costNeed && cardNeed == 0;
                     if (!result && cardNeed == 0) {
                         NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EI18nType.MESSAGE, "cost_not_enough"), itemStack.getDisplayName(), (int) Math.ceil(need));
                     } else if (result && submit) {

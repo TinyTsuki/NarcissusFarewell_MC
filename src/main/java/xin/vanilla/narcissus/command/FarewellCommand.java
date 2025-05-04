@@ -127,10 +127,8 @@ public class FarewellCommand {
                     Component prevButton = Component.literal("<<< ");
                     if (page > 1) {
                         prevButton.setColor(EMCColor.AQUA.getColor())
-                                .setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND,
-                                        String.format("/%s %s %d", NarcissusUtils.getCommandPrefix(), "help", page - 1)))
-                                .setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT,
-                                        Component.translatable(NarcissusUtils.getPlayerLanguage(player), EI18nType.MESSAGE, "previous_page").toTextComponent()));
+                                .setClickEvent(new ClickEvent.RunCommand(String.format("/%s %s %d", NarcissusUtils.getCommandPrefix(), "help", page - 1)))
+                                .setHoverEvent(new HoverEvent.ShowText(Component.translatable(NarcissusUtils.getPlayerLanguage(player), EI18nType.MESSAGE, "previous_page").toTextComponent()));
                     } else {
                         prevButton.setColor(EMCColor.DARK_AQUA.getColor());
                     }
@@ -144,10 +142,8 @@ public class FarewellCommand {
                     Component nextButton = Component.literal(" >>>");
                     if (page < pages) {
                         nextButton.setColor(EMCColor.AQUA.getColor())
-                                .setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND,
-                                        String.format("/%s %s %d", NarcissusUtils.getCommandPrefix(), "help", page + 1)))
-                                .setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT,
-                                        Component.translatable(NarcissusUtils.getPlayerLanguage(player), EI18nType.MESSAGE, "next_page").toTextComponent()));
+                                .setClickEvent(new ClickEvent.RunCommand(String.format("/%s %s %d", NarcissusUtils.getCommandPrefix(), "help", page + 1)))
+                                .setHoverEvent(new HoverEvent.ShowText(Component.translatable(NarcissusUtils.getPlayerLanguage(player), EI18nType.MESSAGE, "next_page").toTextComponent()));
                     } else {
                         nextButton.setColor(EMCColor.DARK_AQUA.getColor());
                     }
@@ -263,8 +259,8 @@ public class FarewellCommand {
             String dimString = player.level().dimension().location().toString();
             Component dim = Component.literal(dimString);
             dim.setColor(EMCColor.GREEN.getColor())
-                    .setClickEvent(new ClickEvent(ClickEvent.Action.COPY_TO_CLIPBOARD, dimString))
-                    .setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.translatable(NarcissusUtils.getPlayerLanguage(player), EI18nType.MESSAGE, "chat_copy_click").toTextComponent()));
+                    .setClickEvent(new ClickEvent.CopyToClipboard(dimString))
+                    .setHoverEvent(new HoverEvent.ShowText(Component.translatable(NarcissusUtils.getPlayerLanguage(player), EI18nType.MESSAGE, "chat_copy_click").toTextComponent()));
             Component msg = Component.translatable(NarcissusUtils.getPlayerLanguage(player), EI18nType.MESSAGE, "dimension_info", dim);
             NarcissusUtils.sendMessage(player, msg);
             return 1;
@@ -293,8 +289,8 @@ public class FarewellCommand {
             }
             Component uuid = Component.literal(target.getStringUUID());
             uuid.setColor(EMCColor.GREEN.getColor())
-                    .setClickEvent(new ClickEvent(ClickEvent.Action.COPY_TO_CLIPBOARD, target.getStringUUID()))
-                    .setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.translatable(language, EI18nType.MESSAGE, "chat_copy_click").toTextComponent()));
+                    .setClickEvent(new ClickEvent.CopyToClipboard(target.getStringUUID()))
+                    .setHoverEvent(new HoverEvent.ShowText(Component.translatable(language, EI18nType.MESSAGE, "chat_copy_click").toTextComponent()));
             Component component = Component.translatable(language, EI18nType.MESSAGE, "player_uuid", target.getDisplayName().getString(), uuid);
             source.sendSuccess(() -> component.toChatComponent(language), false);
             return 1;
@@ -394,11 +390,11 @@ public class FarewellCommand {
                         , coordinate.getDimensionResourceId()
                 );
                 tpButton.setColor(EMCColor.GREEN.getColor())
-                        .setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, tpCommand))
-                        .setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.literal(tpCommand).toTextComponent()));
+                        .setClickEvent(new ClickEvent.RunCommand(tpCommand))
+                        .setHoverEvent(new HoverEvent.ShowText(Component.literal(tpCommand).toTextComponent()));
                 copyButton.setColor(EMCColor.GREEN.getColor())
-                        .setClickEvent(new ClickEvent(ClickEvent.Action.COPY_TO_CLIPBOARD, tpCommand))
-                        .setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.literal(tpCommand).toTextComponent()));
+                        .setClickEvent(new ClickEvent.CopyToClipboard(tpCommand))
+                        .setHoverEvent(new HoverEvent.ShowText(Component.literal(tpCommand).toTextComponent()));
 
             }
             // 若为stage
@@ -425,11 +421,11 @@ public class FarewellCommand {
                         , coordinate.getDimensionResourceId()
                 );
                 tpButton.setColor(EMCColor.GREEN.getColor())
-                        .setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, tpCommand))
-                        .setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.literal(tpCommand).toTextComponent()));
+                        .setClickEvent(new ClickEvent.RunCommand(tpCommand))
+                        .setHoverEvent(new HoverEvent.ShowText(Component.literal(tpCommand).toTextComponent()));
                 copyButton.setColor(EMCColor.GREEN.getColor())
-                        .setClickEvent(new ClickEvent(ClickEvent.Action.COPY_TO_CLIPBOARD, tpCommand))
-                        .setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.literal(tpCommand).toTextComponent()));
+                        .setClickEvent(new ClickEvent.CopyToClipboard(tpCommand))
+                        .setHoverEvent(new HoverEvent.ShowText(Component.literal(tpCommand).toTextComponent()));
             }
             // 玩家当前坐标
             else {
@@ -444,11 +440,11 @@ public class FarewellCommand {
                         , coordinate.getDimensionResourceId()
                 );
                 tpButton.setColor(EMCColor.GREEN.getColor())
-                        .setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, tpCommand))
-                        .setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.literal(tpCommand).toTextComponent()));
+                        .setClickEvent(new ClickEvent.RunCommand(tpCommand))
+                        .setHoverEvent(new HoverEvent.ShowText(Component.literal(tpCommand).toTextComponent()));
                 copyButton.setColor(EMCColor.GREEN.getColor())
-                        .setClickEvent(new ClickEvent(ClickEvent.Action.COPY_TO_CLIPBOARD, tpCommand))
-                        .setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.literal(tpCommand).toTextComponent()));
+                        .setClickEvent(new ClickEvent.CopyToClipboard(tpCommand))
+                        .setHoverEvent(new HoverEvent.ShowText(Component.literal(tpCommand).toTextComponent()));
             }
 
             String lang;
@@ -630,10 +626,10 @@ public class FarewellCommand {
             {
                 // 创建 "Yes" 按钮
                 Component yesButton = Component.translatable(NarcissusUtils.getPlayerLanguage(target), EI18nType.MESSAGE, "yes_button", NarcissusUtils.getPlayerLanguage(target))
-                        .setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, String.format("/%s %s %s", NarcissusUtils.getCommandPrefix(), ServerConfig.COMMAND_TP_ASK_YES.get(), request.getRequestId())));
+                        .setClickEvent(new ClickEvent.RunCommand(String.format("/%s %s %s", NarcissusUtils.getCommandPrefix(), ServerConfig.COMMAND_TP_ASK_YES.get(), request.getRequestId())));
                 // 创建 "No" 按钮
                 Component noButton = Component.translatable(NarcissusUtils.getPlayerLanguage(target), EI18nType.MESSAGE, "no_button", NarcissusUtils.getPlayerLanguage(target))
-                        .setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, String.format("/%s %s %s", NarcissusUtils.getCommandPrefix(), ServerConfig.COMMAND_TP_ASK_NO.get(), request.getRequestId())));
+                        .setClickEvent(new ClickEvent.RunCommand(String.format("/%s %s %s", NarcissusUtils.getCommandPrefix(), ServerConfig.COMMAND_TP_ASK_NO.get(), request.getRequestId())));
                 Component msg = Component.translatable(NarcissusUtils.getPlayerLanguage(target), EI18nType.MESSAGE, "tp_ask_request_received"
                         , player.getDisplayName().getString(), yesButton, noButton);
                 NarcissusUtils.sendMessage(target, msg);
@@ -642,7 +638,7 @@ public class FarewellCommand {
             {
                 // 创建 "Cancel" 按钮
                 Component cancelButton = Component.translatable(NarcissusUtils.getPlayerLanguage(target), EI18nType.MESSAGE, "cancel_button", NarcissusUtils.getPlayerLanguage(target))
-                        .setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, String.format("/%s %s %s", NarcissusUtils.getCommandPrefix(), ServerConfig.COMMAND_TP_ASK_CANCEL.get(), request.getRequestId())));
+                        .setClickEvent(new ClickEvent.RunCommand(String.format("/%s %s %s", NarcissusUtils.getCommandPrefix(), ServerConfig.COMMAND_TP_ASK_CANCEL.get(), request.getRequestId())));
                 Component msg = Component.translatable(NarcissusUtils.getPlayerLanguage(player), EI18nType.MESSAGE, "tp_ask_request_sent"
                         , target.getDisplayName().getString(), cancelButton);
                 NarcissusUtils.sendMessage(player, msg);
@@ -743,10 +739,10 @@ public class FarewellCommand {
             {
                 // 创建 "Yes" 按钮
                 Component yesButton = Component.translatable(NarcissusUtils.getPlayerLanguage(target), EI18nType.MESSAGE, "yes_button", NarcissusUtils.getPlayerLanguage(target))
-                        .setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, String.format("/%s %s %s", NarcissusUtils.getCommandPrefix(), ServerConfig.COMMAND_TP_HERE_YES.get(), request.getRequestId())));
+                        .setClickEvent(new ClickEvent.RunCommand(String.format("/%s %s %s", NarcissusUtils.getCommandPrefix(), ServerConfig.COMMAND_TP_HERE_YES.get(), request.getRequestId())));
                 // 创建 "No" 按钮
                 Component noButton = Component.translatable(NarcissusUtils.getPlayerLanguage(target), EI18nType.MESSAGE, "no_button", NarcissusUtils.getPlayerLanguage(target))
-                        .setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, String.format("/%s %s %s", NarcissusUtils.getCommandPrefix(), ServerConfig.COMMAND_TP_HERE_NO.get(), request.getRequestId())));
+                        .setClickEvent(new ClickEvent.RunCommand(String.format("/%s %s %s", NarcissusUtils.getCommandPrefix(), ServerConfig.COMMAND_TP_HERE_NO.get(), request.getRequestId())));
                 Component msg = Component.translatable(NarcissusUtils.getPlayerLanguage(target), EI18nType.MESSAGE, "tp_here_request_received"
                         , player.getDisplayName().getString(), Component.translatable(NarcissusUtils.getPlayerLanguage(target), EI18nType.WORD, request.isSafe() ? "tp_here_safe" : "tp_here_unsafe"), yesButton, noButton);
                 NarcissusUtils.sendMessage(target, msg);
@@ -755,7 +751,7 @@ public class FarewellCommand {
             {
                 // 创建 "Cancel" 按钮
                 Component cancelButton = Component.translatable(NarcissusUtils.getPlayerLanguage(target), EI18nType.MESSAGE, "cancel_button", NarcissusUtils.getPlayerLanguage(target))
-                        .setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, String.format("/%s %s %s", NarcissusUtils.getCommandPrefix(), ServerConfig.COMMAND_TP_HERE_CANCEL.get(), request.getRequestId())));
+                        .setClickEvent(new ClickEvent.RunCommand(String.format("/%s %s %s", NarcissusUtils.getCommandPrefix(), ServerConfig.COMMAND_TP_HERE_CANCEL.get(), request.getRequestId())));
                 Component msg = Component.translatable(NarcissusUtils.getPlayerLanguage(player), EI18nType.MESSAGE, "tp_here_request_sent"
                         , target.getDisplayName().getString(), cancelButton);
                 NarcissusUtils.sendMessage(player, msg);
@@ -852,8 +848,8 @@ public class FarewellCommand {
                 target = player;
             }
             Coordinate coordinate = new Coordinate(target);
-            BlockPos respawnPosition = target.getRespawnPosition();
-            coordinate.setDimension(target.getRespawnDimension());
+            BlockPos respawnPosition = target.getRespawnConfig().pos();
+            coordinate.setDimension(target.getRespawnConfig().dimension());
             if (respawnPosition == null) {
                 respawnPosition = target.level().getSharedSpawnPos();
                 coordinate.setDimension(target.level().dimension());
@@ -1115,8 +1111,8 @@ public class FarewellCommand {
                         ));
                 for (Map.Entry<String, List<KeyValue<String, Coordinate>>> entry : map.entrySet()) {
                     Component dimension = Component.literal(entry.getKey()).setColor(EMCColor.DARK_GREEN.getColor());
-                    dimension.setClickEvent(new ClickEvent(ClickEvent.Action.COPY_TO_CLIPBOARD, entry.getKey()));
-                    dimension.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.literal(entry.getKey()).toTextComponent()));
+                    dimension.setClickEvent(new ClickEvent.CopyToClipboard(entry.getKey()));
+                    dimension.setHoverEvent(new HoverEvent.ShowText(Component.literal(entry.getKey()).toTextComponent()));
                     dimension.append(Component.literal(": ").setColor(EMCColor.GRAY.getColor()));
                     for (KeyValue<String, Coordinate> coordinates : entry.getValue()) {
                         Component defHome;
@@ -1139,8 +1135,8 @@ public class FarewellCommand {
                                 , coordinates.getValue().toZString()
                                 , defHome);
                         name.setColor(EMCColor.GREEN.getColor());
-                        name.setClickEvent(new ClickEvent(ClickEvent.Action.COPY_TO_CLIPBOARD, name_hover.toString(true)));
-                        name.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, name_hover.toChatComponent()));
+                        name.setClickEvent(new ClickEvent.CopyToClipboard(name_hover.toString(true)));
+                        name.setHoverEvent(new HoverEvent.ShowText(name_hover.toChatComponent()));
                         dimension.append(name);
                         dimension.append(Component.literal(", ").setColor(EMCColor.GRAY.getColor()));
                     }
@@ -1286,8 +1282,8 @@ public class FarewellCommand {
                         ));
                 for (Map.Entry<String, List<KeyValue<String, Coordinate>>> entry : map.entrySet()) {
                     Component dimension = Component.literal(entry.getKey()).setColor(EMCColor.DARK_GREEN.getColor());
-                    dimension.setClickEvent(new ClickEvent(ClickEvent.Action.COPY_TO_CLIPBOARD, entry.getKey()));
-                    dimension.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.literal(entry.getKey()).toTextComponent()));
+                    dimension.setClickEvent(new ClickEvent.CopyToClipboard(entry.getKey()));
+                    dimension.setHoverEvent(new HoverEvent.ShowText(Component.literal(entry.getKey()).toTextComponent()));
                     dimension.append(Component.literal(": ").setColor(EMCColor.GRAY.getColor()));
                     for (KeyValue<String, Coordinate> coordinates : entry.getValue()) {
                         Component name = Component.translatable(language, EI18nType.MESSAGE, "stage_info"
@@ -1301,8 +1297,8 @@ public class FarewellCommand {
                                 , coordinates.getValue().toYString()
                                 , coordinates.getValue().toZString());
                         name.setColor(EMCColor.GREEN.getColor());
-                        name.setClickEvent(new ClickEvent(ClickEvent.Action.COPY_TO_CLIPBOARD, name_hover.toString(true)));
-                        name.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, name_hover.toChatComponent()));
+                        name.setClickEvent(new ClickEvent.CopyToClipboard(name_hover.toString(true)));
+                        name.setHoverEvent(new HoverEvent.ShowText(name_hover.toChatComponent()));
                         dimension.append(name);
                         dimension.append(Component.literal(", ").setColor(EMCColor.GRAY.getColor()));
                     }
@@ -2480,8 +2476,8 @@ public class FarewellCommand {
             if (!data.isNotified()) {
                 Component button = Component.literal("/" + NarcissusUtils.getCommandPrefix())
                         .setColor(EMCColor.AQUA.getColor())
-                        .setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/" + NarcissusUtils.getCommandPrefix()))
-                        .setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.literal("/" + NarcissusUtils.getCommandPrefix())
+                        .setClickEvent(new ClickEvent.RunCommand("/" + NarcissusUtils.getCommandPrefix()))
+                        .setHoverEvent(new HoverEvent.ShowText(Component.literal("/" + NarcissusUtils.getCommandPrefix())
                                 .toTextComponent())
                         );
                 NarcissusUtils.sendMessage(player, Component.translatable(EI18nType.MESSAGE, "notify_help", button));
