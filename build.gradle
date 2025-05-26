@@ -1,3 +1,5 @@
+def javaVer = 1.8
+
 buildscript {
     repositories {
         // These repositories are only for Gradle plugins, put any other repositories in the repository block further below
@@ -15,7 +17,7 @@ group = mod_group_id
 version = mod_version
 
 archivesBaseName = mod_id
-sourceCompatibility = targetCompatibility = compileJava.sourceCompatibility = compileJava.targetCompatibility = '1.8'
+sourceCompatibility = targetCompatibility = compileJava.sourceCompatibility = compileJava.targetCompatibility = "${javaVer}"
 
 minecraft {
     // The mappings can be changed at any time and must be in the following format.
