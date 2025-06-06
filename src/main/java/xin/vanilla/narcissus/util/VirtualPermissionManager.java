@@ -1,91 +1,88 @@
 package xin.vanilla.narcissus.util;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import net.minecraft.world.entity.player.Player;
-import xin.vanilla.narcissus.config.ServerConfig;
-import xin.vanilla.narcissus.enums.ECommandType;
-import xin.vanilla.narcissus.enums.EOperationType;
+import xin.vanilla.narcissus.config.CustomConfig;
+import xin.vanilla.narcissus.enums.EnumCommandType;
+import xin.vanilla.narcissus.enums.EnumOperationType;
 
 import java.util.*;
 import java.util.stream.Collectors;
 
+@SuppressWarnings("unused")
 public class VirtualPermissionManager {
 
-    public static final Gson GSON = new GsonBuilder().enableComplexMapKeySerialization().create();
-
-    private static final Map<String, Set<ECommandType>> OP_MAP = deserialize();
+    private static final Map<String, Set<EnumCommandType>> OP_MAP = deserialize();
 
     /**
      * 添加权限（合并原有权限）
      */
-    public static void addVirtualPermission(Player player, ECommandType... types) {
-        modifyPermissions(player.getStringUUID(), EOperationType.ADD, types);
+    public static void addVirtualPermission(Player player, EnumCommandType... types) {
+        modifyPermissions(player.getStringUUID(), EnumOperationType.ADD, types);
     }
 
     /**
      * 设置权限（覆盖原有权限）
      */
-    public static void setVirtualPermission(Player player, ECommandType... types) {
-        modifyPermissions(player.getStringUUID(), EOperationType.SET, types);
+    public static void setVirtualPermission(Player player, EnumCommandType... types) {
+        modifyPermissions(player.getStringUUID(), EnumOperationType.SET, types);
     }
 
     /**
      * 删除权限
      */
-    public static void delVirtualPermission(Player player, ECommandType... types) {
-        modifyPermissions(player.getStringUUID(), EOperationType.REMOVE, types);
+    public static void delVirtualPermission(Player player, EnumCommandType... types) {
+        modifyPermissions(player.getStringUUID(), EnumOperationType.REMOVE, types);
     }
 
     /**
      * 清空所有权限
      */
     public static void clearVirtualPermission(Player player) {
-        modifyPermissions(player.getStringUUID(), EOperationType.CLEAR);
+        modifyPermissions(player.getStringUUID(), EnumOperationType.CLEAR);
     }
 
     /**
      * 获取当前权限列表
      */
-    public static Set<ECommandType> getVirtualPermission(Player player) {
+    public static Set<EnumCommandType> getVirtualPermission(Player player) {
         return getExistingPermissions(player.getStringUUID());
     }
 
-    public static String buildPermissionsString(ECommandType... types) {
+    public static String buildPermissionsString(EnumCommandType... types) {
         return Arrays.stream(types)
-                .filter(ECommandType::isOp)
-                .sorted(Comparator.comparingInt(ECommandType::getSort))
-                .map(ECommandType::name)
+                .filter(EnumCommandType::isOp)
+                .sorted(Comparator.comparingInt(EnumCommandType::getSort))
+                .map(EnumCommandType::name)
                 .collect(Collectors.joining(","));
     }
 
-    public static String buildPermissionsString(Set<ECommandType> types) {
+    public static String buildPermissionsString(Set<EnumCommandType> types) {
         return types.stream()
-                .filter(ECommandType::isOp)
-                .sorted(Comparator.comparingInt(ECommandType::getSort))
-                .map(ECommandType::name)
+                .filter(EnumCommandType::isOp)
+                .sorted(Comparator.comparingInt(EnumCommandType::getSort))
+                .map(EnumCommandType::name)
                 .collect(Collectors.joining(","));
     }
 
-    private static void modifyPermissions(String stringUUID, EOperationType operation, ECommandType... types) {
-        Set<ECommandType> newTypes = processOperation(getExistingPermissions(stringUUID), new HashSet<>(Arrays.asList(types)), operation);
+    private static void modifyPermissions(String stringUUID, EnumOperationType operation, EnumCommandType... types) {
+        Set<EnumCommandType> newTypes = processOperation(getExistingPermissions(stringUUID), new HashSet<>(Arrays.asList(types)), operation);
         updateRuleList(stringUUID, newTypes);
     }
 
     /**
      * 查找现有规则
      */
-    private static Set<ECommandType> getExistingPermissions(String uuid) {
+    private static Set<EnumCommandType> getExistingPermissions(String uuid) {
         return OP_MAP.getOrDefault(uuid, new HashSet<>());
     }
 
     /**
      * 处理权限操作
      */
-    private static Set<ECommandType> processOperation(Set<ECommandType> existing, Set<ECommandType> input, EOperationType operation) {
-        Set<ECommandType> result = new LinkedHashSet<>(existing);
+    private static Set<EnumCommandType> processOperation(Set<EnumCommandType> existing, Set<EnumCommandType> input, EnumOperationType operation) {
+        Set<EnumCommandType> result = new LinkedHashSet<>(existing);
         switch (operation) {
             case ADD:
                 result.addAll(input);
@@ -102,42 +99,42 @@ public class VirtualPermissionManager {
                 result.clear();
                 break;
         }
-        return result.stream().filter(ECommandType::isOp).collect(Collectors.toSet());
+        return result.stream().filter(EnumCommandType::isOp).collect(Collectors.toSet());
     }
 
     /**
      * 更新规则列表
      */
-    private static void updateRuleList(String stringUUID, Set<ECommandType> types) {
+    private static void updateRuleList(String stringUUID, Set<EnumCommandType> types) {
+        OP_MAP.putAll(deserialize());
         OP_MAP.put(stringUUID, types);
-        ServerConfig.OP_LIST.set(serialize().toString());
-        ServerConfig.OP_LIST.save();
+        CustomConfig.setVirtualPermission(serialize());
     }
 
     private static JsonObject serialize() {
         JsonObject jsonObject = new JsonObject();
         OP_MAP.forEach((uuid, types) -> {
             JsonArray jsonArray = new JsonArray();
-            types.stream().map(ECommandType::name).forEach(jsonArray::add);
+            types.stream().map(EnumCommandType::name).forEach(jsonArray::add);
             jsonObject.add(uuid, jsonArray);
         });
         return jsonObject;
     }
 
-    private static Map<String, Set<ECommandType>> deserialize(JsonObject jsonObject) {
-        Map<String, Set<ECommandType>> map = new HashMap<>();
+    private static Map<String, Set<EnumCommandType>> deserialize(JsonObject jsonObject) {
+        Map<String, Set<EnumCommandType>> map = new HashMap<>();
         jsonObject.entrySet().forEach(entry -> {
-            Set<ECommandType> types = new HashSet<>();
-            entry.getValue().getAsJsonArray().forEach(jsonElement -> types.add(ECommandType.valueOf(jsonElement.getAsString())));
+            Set<EnumCommandType> types = new HashSet<>();
+            entry.getValue().getAsJsonArray().forEach(jsonElement -> types.add(EnumCommandType.valueOf(jsonElement.getAsString())));
             map.put(entry.getKey(), types);
         });
         return map;
     }
 
-    private static Map<String, Set<ECommandType>> deserialize() {
-        Map<String, Set<ECommandType>> result;
+    private static Map<String, Set<EnumCommandType>> deserialize() {
+        Map<String, Set<EnumCommandType>> result;
         try {
-            result = deserialize(GSON.fromJson(ServerConfig.OP_LIST.get(), JsonObject.class));
+            result = deserialize(CustomConfig.getVirtualPermission());
         } catch (Exception e) {
             result = new HashMap<>();
         }
