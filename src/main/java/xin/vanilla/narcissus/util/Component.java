@@ -568,7 +568,11 @@ public class Component implements Cloneable, Serializable {
                                     try {
                                         // 颜色代码传递
                                         String colorCode = split[i].replaceAll("^.*?((?:§[\\da-fA-FKLMNORklmnor])*)$", "$1");
-                                        formattedArg = new Component(String.format(placeholder.replaceAll("^%\\d+\\$", "%"), colorCode + argComponent)).withStyle(argComponent);
+                                        // 语言代码传递
+                                        String string = argComponent.isLanguageCodeEmpty()
+                                                ? argComponent.getString(languageCode)
+                                                : argComponent.toString();
+                                        formattedArg = new Component(String.format(placeholder.replaceAll("^%\\d+\\$", "%"), colorCode + string)).withStyle(argComponent);
                                     } catch (Exception e) {
                                         // 颜色传递
                                         if (argComponent.isColorEmpty()) {
