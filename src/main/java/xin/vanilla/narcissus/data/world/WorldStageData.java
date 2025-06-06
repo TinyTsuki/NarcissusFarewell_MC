@@ -9,8 +9,8 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.datafix.DataFixTypes;
 import net.minecraft.world.level.saveddata.SavedData;
 import xin.vanilla.narcissus.NarcissusFarewell;
-import xin.vanilla.narcissus.config.Coordinate;
-import xin.vanilla.narcissus.config.KeyValue;
+import xin.vanilla.narcissus.data.Coordinate;
+import xin.vanilla.narcissus.data.KeyValue;
 
 import javax.annotation.ParametersAreNonnullByDefault;
 import java.util.HashMap;

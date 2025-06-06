@@ -7,6 +7,7 @@ import net.neoforged.neoforge.registries.DeferredRegister;
 import net.neoforged.neoforge.registries.NeoForgeRegistries;
 import xin.vanilla.narcissus.NarcissusFarewell;
 import xin.vanilla.narcissus.network.packet.PlayerDataSyncPacket;
+import xin.vanilla.narcissus.util.NarcissusUtils;
 
 import java.util.function.Supplier;
 
@@ -27,7 +28,7 @@ public class PlayerDataAttachment {
         // 创建自定义包并发送到客户端
         PlayerDataSyncPacket packet = new PlayerDataSyncPacket(player.getUUID(), player.getData(PLAYER_DATA));
         for (PlayerDataSyncPacket syncPacket : packet.split()) {
-            player.connection.send(syncPacket);
+            NarcissusUtils.sendPacketToPlayer(syncPacket, player);
         }
     }
 
