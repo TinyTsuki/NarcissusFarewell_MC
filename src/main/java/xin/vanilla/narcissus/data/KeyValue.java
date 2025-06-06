@@ -1,4 +1,4 @@
-package xin.vanilla.narcissus.config;
+package xin.vanilla.narcissus.data;
 
 import lombok.Data;
 import lombok.experimental.Accessors;
