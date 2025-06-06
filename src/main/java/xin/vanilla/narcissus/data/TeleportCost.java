@@ -1,13 +1,13 @@
-package xin.vanilla.narcissus.config;
+package xin.vanilla.narcissus.data;
 
 import lombok.Data;
 import lombok.experimental.Accessors;
-import xin.vanilla.narcissus.enums.ECostType;
+import xin.vanilla.narcissus.enums.EnumCostType;
 
 @Data
 @Accessors(chain = true)
 public class TeleportCost {
-    private ECostType type;
+    private EnumCostType type;
     private int num;
     private double rate;
     private String conf;

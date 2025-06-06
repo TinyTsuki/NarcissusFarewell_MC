@@ -1,29 +1,23 @@
 package xin.vanilla.narcissus.event;
 
 import net.minecraft.server.level.ServerPlayer;
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.api.distmarker.OnlyIn;
 import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.fml.common.EventBusSubscriber;
-import net.neoforged.neoforge.client.event.ClientPlayerNetworkEvent;
 import net.neoforged.neoforge.event.entity.EntityJoinLevelEvent;
 import net.neoforged.neoforge.event.entity.EntityTeleportEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import net.neoforged.neoforge.event.tick.PlayerTickEvent;
 import net.neoforged.neoforge.event.tick.ServerTickEvent;
-import net.neoforged.neoforge.network.PacketDistributor;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import xin.vanilla.narcissus.NarcissusFarewell;
-import xin.vanilla.narcissus.config.Coordinate;
-import xin.vanilla.narcissus.config.ServerConfig;
-import xin.vanilla.narcissus.config.TeleportRequest;
+import xin.vanilla.narcissus.config.CommonConfig;
+import xin.vanilla.narcissus.data.Coordinate;
 import xin.vanilla.narcissus.data.TeleportRecord;
+import xin.vanilla.narcissus.data.TeleportRequest;
 import xin.vanilla.narcissus.data.player.PlayerDataAttachment;
 import xin.vanilla.narcissus.data.player.PlayerTeleportData;
-import xin.vanilla.narcissus.enums.EI18nType;
 import xin.vanilla.narcissus.enums.ETeleportType;
-import xin.vanilla.narcissus.network.packet.ClientModLoadedNotice;
+import xin.vanilla.narcissus.enums.EnumI18nType;
 import xin.vanilla.narcissus.util.DateUtils;
 import xin.vanilla.narcissus.util.I18nUtils;
 import xin.vanilla.narcissus.util.NarcissusUtils;
@@ -31,31 +25,10 @@ import xin.vanilla.narcissus.util.NarcissusUtils;
 import java.util.Comparator;
 import java.util.Date;
 
-/**
- * Forge 事件处理
- */
-@EventBusSubscriber(modid = NarcissusFarewell.MODID, bus = EventBusSubscriber.Bus.GAME)
-public class GameEventHandler {
+public class EventHandlerProxy {
     private static final Logger LOGGER = LogManager.getLogger();
 
-    @SubscribeEvent
-    @OnlyIn(Dist.CLIENT)
-    public static void onPlayerLoggedIn(ClientPlayerNetworkEvent.LoggingIn event) {
-        LOGGER.debug("Client: Player logged in.");
-        PacketDistributor.sendToServer(new ClientModLoadedNotice());
-    }
-
-    @SubscribeEvent
-    @OnlyIn(Dist.CLIENT)
-    public static void onPlayerLoggedOut(ClientPlayerNetworkEvent.LoggingOut event) {
-        LOGGER.debug("Client: Player logged out.");
-    }
-
-    /**
-     * 同步客户端服务端数据
-     */
-    @SubscribeEvent
-    public static void playerTickEvent(PlayerTickEvent.Post event) {
+    public static void onPlayerTick(PlayerTickEvent.Post event) {
         if (event.getEntity() instanceof ServerPlayer player) {
             // 仅给安装了mod的玩家发送数据包
             if (NarcissusFarewell.getPlayerCapabilityStatus().containsKey(player.getUUID().toString())
@@ -72,7 +45,6 @@ public class GameEventHandler {
         }
     }
 
-    @SubscribeEvent
     public static void onServerTick(ServerTickEvent.Post event) {
         if (event.hasTime()) {
             if (NarcissusFarewell.getServerInstance().getTickCount() % 20 == 0) {
@@ -83,9 +55,9 @@ public class GameEventHandler {
                             TeleportRequest request = NarcissusFarewell.getTeleportRequest().remove(entry.getKey());
                             if (request != null) {
                                 if (request.getTeleportType() == ETeleportType.TP_ASK) {
-                                    NarcissusUtils.sendTranslatableMessage(request.getRequester(), I18nUtils.getKey(EI18nType.MESSAGE, "tp_ask_expired"), request.getTarget().getDisplayName().getString());
+                                    NarcissusUtils.sendTranslatableMessage(request.getRequester(), I18nUtils.getKey(EnumI18nType.MESSAGE, "tp_ask_expired"), request.getTarget().getDisplayName().getString());
                                 } else if (request.getTeleportType() == ETeleportType.TP_HERE) {
-                                    NarcissusUtils.sendTranslatableMessage(request.getRequester(), I18nUtils.getKey(EI18nType.MESSAGE, "tp_here_expired"), request.getTarget().getDisplayName().getString());
+                                    NarcissusUtils.sendTranslatableMessage(request.getRequester(), I18nUtils.getKey(EnumI18nType.MESSAGE, "tp_here_expired"), request.getTarget().getDisplayName().getString());
                                 }
                             }
                         });
@@ -98,31 +70,29 @@ public class GameEventHandler {
      */
     @SubscribeEvent
     public static void onPlayerCloned(PlayerEvent.Clone event) {
-        ServerPlayer original = (ServerPlayer) event.getOriginal();
-        ServerPlayer newPlayer = (ServerPlayer) event.getEntity();
-        original.revive();
-        NarcissusUtils.clonePlayerLanguage(original, newPlayer);
-        PlayerTeleportData oldDataCap = PlayerDataAttachment.getData(original);
-        PlayerTeleportData newDataCap = PlayerDataAttachment.getData(newPlayer);
-        newDataCap.copyFrom(oldDataCap);
-        if (NarcissusFarewell.getPlayerCapabilityStatus().containsKey(newPlayer.getUUID().toString())) {
-            NarcissusFarewell.getPlayerCapabilityStatus().put(newPlayer.getStringUUID(), false);
-        }
-        // 如果是死亡，则记录死亡记录
-        if (event.isWasDeath()) {
-            TeleportRecord record = new TeleportRecord();
-            record.setTeleportTime(new Date());
-            record.setTeleportType(ETeleportType.DEATH);
-            record.setBefore(new Coordinate().setX(original.getX()).setY(original.getY()).setZ(original.getZ()).setDimension(original.level().dimension()));
-            record.setAfter(new Coordinate().setX(newPlayer.getX()).setY(newPlayer.getY()).setZ(newPlayer.getZ()).setDimension(newPlayer.level().dimension()));
-            PlayerDataAttachment.getData(newPlayer).addTeleportRecords(record);
+        if (event.getEntity() instanceof ServerPlayer) {
+            ServerPlayer original = (ServerPlayer) event.getOriginal();
+            ServerPlayer newPlayer = (ServerPlayer) event.getEntity();
+            original.revive();
+            NarcissusUtils.clonePlayerLanguage(original, newPlayer);
+            PlayerTeleportData oldDataCap = PlayerDataAttachment.getData(original);
+            PlayerTeleportData newDataCap = PlayerDataAttachment.getData(newPlayer);
+            newDataCap.copyFrom(oldDataCap);
+            if (NarcissusFarewell.getPlayerCapabilityStatus().containsKey(newPlayer.getUUID().toString())) {
+                NarcissusFarewell.getPlayerCapabilityStatus().put(newPlayer.getStringUUID(), false);
+            }
+            // 如果是死亡，则记录死亡记录
+            if (event.isWasDeath()) {
+                TeleportRecord record = new TeleportRecord();
+                record.setTeleportTime(new Date());
+                record.setTeleportType(ETeleportType.DEATH);
+                record.setBefore(new Coordinate().setX(original.getX()).setY(original.getY()).setZ(original.getZ()).setDimension(original.level().dimension()));
+                record.setAfter(new Coordinate().setX(newPlayer.getX()).setY(newPlayer.getY()).setZ(newPlayer.getZ()).setDimension(newPlayer.level().dimension()));
+                PlayerDataAttachment.getData(newPlayer).addTeleportRecords(record);
+            }
         }
     }
 
-    /**
-     * 玩家进入维度
-     */
-    @SubscribeEvent
     public static void onEntityJoinWorld(EntityJoinLevelEvent event) {
         if (event.getEntity() instanceof ServerPlayer player) {
             // 初始化能力同步状态
@@ -130,21 +100,17 @@ public class GameEventHandler {
                 NarcissusFarewell.getPlayerCapabilityStatus().put(player.getStringUUID(), false);
             }
             // 给予传送卡
-            if (ServerConfig.TELEPORT_CARD.get()) {
+            if (CommonConfig.TELEPORT_CARD.get()) {
                 PlayerTeleportData data = PlayerDataAttachment.getData(player);
                 Date current = new Date();
                 if (DateUtils.toDateInt(data.getLastCardTime()) < DateUtils.toDateInt(current)) {
                     data.setLastCardTime(current);
-                    data.plusTeleportCard(ServerConfig.TELEPORT_CARD_DAILY.get());
+                    data.plusTeleportCard(CommonConfig.TELEPORT_CARD_DAILY.get());
                 }
             }
         }
     }
 
-    /**
-     * 同维度传送事件
-     */
-    @SubscribeEvent
     public static void onEntityTeleport(EntityTeleportEvent event) {
         if (event.getEntity() instanceof ServerPlayer player) {
             TeleportRecord record = new TeleportRecord();
@@ -162,10 +128,6 @@ public class GameEventHandler {
         }
     }
 
-    /**
-     * 玩家登出事件
-     */
-    @SubscribeEvent
     public static void onPlayerLoggedOut(PlayerEvent.PlayerLoggedOutEvent event) {
         // 玩家退出服务器时移除键(移除mod安装状态)
         if (event.getEntity() instanceof ServerPlayer) {
