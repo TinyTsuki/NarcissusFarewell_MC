@@ -565,14 +565,14 @@ public class Component implements Cloneable, Serializable {
                             } else {
                                 Component argComponent = this.getArgs().get(index);
                                 if (argComponent.getI18nType() != EnumI18nType.PLAIN) {
+                                    // 语言代码传递
+                                    if (argComponent.isLanguageCodeEmpty()) {
+                                        argComponent.setLanguageCode(languageCode);
+                                    }
                                     try {
                                         // 颜色代码传递
                                         String colorCode = split[i].replaceAll("^.*?((?:§[\\da-fA-FKLMNORklmnor])*)$", "$1");
-                                        // 语言代码传递
-                                        String string = argComponent.isLanguageCodeEmpty()
-                                                ? argComponent.getString(languageCode)
-                                                : argComponent.toString();
-                                        formattedArg = new Component(String.format(placeholder.replaceAll("^%\\d+\\$", "%"), colorCode + string)).withStyle(argComponent);
+                                        formattedArg = new Component(String.format(placeholder.replaceAll("^%\\d+\\$", "%"), colorCode + argComponent)).withStyle(argComponent);
                                     } catch (Exception e) {
                                         // 颜色传递
                                         if (argComponent.isColorEmpty()) {
