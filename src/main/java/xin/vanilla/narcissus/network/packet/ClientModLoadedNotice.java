@@ -4,7 +4,6 @@ import io.netty.buffer.ByteBuf;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
 import org.jetbrains.annotations.NotNull;
@@ -12,7 +11,7 @@ import xin.vanilla.narcissus.NarcissusFarewell;
 import xin.vanilla.narcissus.data.player.PlayerDataAttachment;
 
 public class ClientModLoadedNotice implements CustomPacketPayload {
-    public final static CustomPacketPayload.Type<ClientModLoadedNotice> TYPE = new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath(NarcissusFarewell.MODID, "client_mod_loaded"));
+    public final static CustomPacketPayload.Type<ClientModLoadedNotice> TYPE = new CustomPacketPayload.Type<>(NarcissusFarewell.createResource("client_mod_loaded"));
     public final static StreamCodec<ByteBuf, ClientModLoadedNotice> STREAM_CODEC = new StreamCodec<>() {
         public @NotNull ClientModLoadedNotice decode(@NotNull ByteBuf byteBuf) {
             return new ClientModLoadedNotice((new FriendlyByteBuf(byteBuf)));

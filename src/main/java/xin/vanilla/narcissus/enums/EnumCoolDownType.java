@@ -1,6 +1,6 @@
 package xin.vanilla.narcissus.enums;
 
-public enum ECoolDownType {
+public enum EnumCoolDownType {
     COMMON,
     INDIVIDUAL,
     MIXED,
