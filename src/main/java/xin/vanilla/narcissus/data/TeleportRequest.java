@@ -1,9 +1,10 @@
-package xin.vanilla.narcissus.config;
+package xin.vanilla.narcissus.data;
 
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
 import net.minecraft.entity.player.ServerPlayerEntity;
+import xin.vanilla.narcissus.config.ServerConfig;
 import xin.vanilla.narcissus.enums.ETeleportType;
 import xin.vanilla.narcissus.util.DateUtils;
 
@@ -29,6 +30,9 @@ public class TeleportRequest {
     private boolean safe;
     @Getter
     private long expireTime;
+    @Getter
+    @Setter
+    private boolean ignore;
 
     public TeleportRequest setRequestTime(Date requestTime) {
         this.requestTime = requestTime;

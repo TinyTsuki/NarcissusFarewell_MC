@@ -1,6 +1,6 @@
 package xin.vanilla.narcissus.enums;
 
-public enum EI18nType {
+public enum EnumI18nType {
     KEY,
     WORD,
     TIPS,
