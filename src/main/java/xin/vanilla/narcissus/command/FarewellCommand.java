@@ -2107,7 +2107,7 @@ public class FarewellCommand {
         // 注册简短的指令
         {
             // 移除原版tp指令
-            if (ServerConfig.REMOVE_ORIGINAL_TP.get()) {
+            if (CommonConfig.REMOVE_ORIGINAL_TP.get()) {
                 for (String fieldName : FieldUtils.getPrivateFieldNames(CommandNode.class, Map.class)) {
                     try {
                         Map<String, ?> map = (Map<String, ?>) FieldUtils.getPrivateFieldValue(CommandNode.class, dispatcher.getRoot(), fieldName);

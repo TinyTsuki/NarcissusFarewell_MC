@@ -146,11 +146,6 @@ public class ServerConfig {
      */
     public static final ForgeConfigSpec.BooleanValue TP_WITH_ENEMY;
 
-    /**
-     * 是否禁用原版TP指令
-     */
-    public static final ForgeConfigSpec.BooleanValue REMOVE_ORIGINAL_TP;
-
     // endregion 基础设置
 
 
@@ -562,12 +557,6 @@ public class ServerConfig {
                     .comment("Whether to restrict teleportation when the player is targeted (agroed) by hostile mobs.",
                             "是否在被敌对生物锁定（仇恨）时限制玩家进行传送操作。")
                     .define("tpWithEnemy", false);
-
-            // 是否禁用原版TP指令
-            REMOVE_ORIGINAL_TP = SERVER_BUILDER
-                    .comment("Whether to disable the original TP command.",
-                            "是否禁用原版TP指令。")
-                    .define("removeOriginalTp", false);
 
             SERVER_BUILDER.comment("Safe Teleport", "安全传送").push("Safe");
             // 不安全的方块
