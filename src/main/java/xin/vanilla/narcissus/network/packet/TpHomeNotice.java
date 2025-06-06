@@ -1,30 +1,31 @@
-package xin.vanilla.narcissus.network;
+package xin.vanilla.narcissus.network.packet;
 
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraftforge.fmllegacy.network.NetworkEvent;
-import xin.vanilla.narcissus.NarcissusFarewell;
+import xin.vanilla.narcissus.enums.EnumCommandType;
+import xin.vanilla.narcissus.util.NarcissusUtils;
 
 import java.util.function.Supplier;
 
-public class PlayerDataReceivedNotice {
+public class TpHomeNotice {
 
-    public PlayerDataReceivedNotice() {
+    public TpHomeNotice() {
     }
 
-    public PlayerDataReceivedNotice(FriendlyByteBuf buf) {
+    public TpHomeNotice(FriendlyByteBuf buf) {
     }
 
     public void toBytes(FriendlyByteBuf buf) {
     }
 
-    public static void handle(PlayerDataReceivedNotice packet, Supplier<NetworkEvent.Context> ctx) {
+    public static void handle(TpHomeNotice packet, Supplier<NetworkEvent.Context> ctx) {
         // 获取网络事件上下文并排队执行工作
         ctx.get().enqueueWork(() -> {
             // 获取发送数据包的玩家实体
             ServerPlayer player = ctx.get().getSender();
             if (player != null) {
-                NarcissusFarewell.getPlayerCapabilityStatus().put(player.getStringUUID(), true);
+                NarcissusUtils.executeCommand(player, NarcissusUtils.getCommand(EnumCommandType.TP_HOME));
             }
         });
         // 设置数据包已处理状态，防止重复处理
