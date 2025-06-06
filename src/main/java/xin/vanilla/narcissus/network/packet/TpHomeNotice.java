@@ -3,10 +3,8 @@ package xin.vanilla.narcissus.network.packet;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.neoforge.network.NetworkEvent;
-import xin.vanilla.narcissus.enums.ECommandType;
+import xin.vanilla.narcissus.enums.EnumCommandType;
 import xin.vanilla.narcissus.util.NarcissusUtils;
-
-import java.util.Objects;
 
 public class TpHomeNotice {
 
@@ -25,7 +23,7 @@ public class TpHomeNotice {
             // 获取发送数据包的玩家实体
             ServerPlayer player = ctx.getSender();
             if (player != null) {
-                Objects.requireNonNull(player.getServer()).getCommands().performPrefixedCommand(player.createCommandSourceStack(), NarcissusUtils.getCommand(ECommandType.TP_HOME));
+                NarcissusUtils.executeCommand(player, NarcissusUtils.getCommand(EnumCommandType.TP_HOME));
             }
         });
         // 设置数据包已处理状态，防止重复处理

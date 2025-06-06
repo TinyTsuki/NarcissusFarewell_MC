@@ -5,8 +5,9 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.entity.player.Player;
 import net.neoforged.neoforge.common.util.INBTSerializable;
-import xin.vanilla.narcissus.config.Coordinate;
-import xin.vanilla.narcissus.config.KeyValue;
+import xin.vanilla.narcissus.data.Coordinate;
+import xin.vanilla.narcissus.data.KeyValue;
+import xin.vanilla.narcissus.data.PlayerAccess;
 import xin.vanilla.narcissus.data.TeleportRecord;
 import xin.vanilla.narcissus.enums.ETeleportType;
 
@@ -19,7 +20,6 @@ import java.util.Map;
  * 玩家传送数据
  */
 public interface IPlayerTeleportData extends INBTSerializable<CompoundTag> {
-    // TIPS 加完属性记得去 PlayerTeleportDataStorage 里注册
 
     /**
      * 获取传送卡数量
@@ -132,6 +132,10 @@ public interface IPlayerTeleportData extends INBTSerializable<CompoundTag> {
     boolean isNotified();
 
     void setNotified(boolean notified);
+
+    PlayerAccess getAccess();
+
+    void setAccess(PlayerAccess access);
 
     void writeToBuffer(FriendlyByteBuf buffer);
 

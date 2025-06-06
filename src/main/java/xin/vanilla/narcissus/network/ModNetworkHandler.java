@@ -1,6 +1,5 @@
 package xin.vanilla.narcissus.network;
 
-import net.minecraft.resources.ResourceLocation;
 import net.neoforged.neoforge.network.NetworkRegistry;
 import net.neoforged.neoforge.network.simple.SimpleChannel;
 import xin.vanilla.narcissus.NarcissusFarewell;
@@ -9,7 +8,7 @@ import xin.vanilla.narcissus.network.packet.*;
 public class ModNetworkHandler {
     private static final String PROTOCOL_VERSION = "1";
     private static int ID = 0;
-    public static final SimpleChannel INSTANCE = NetworkRegistry.ChannelBuilder.named(new ResourceLocation(NarcissusFarewell.MODID, "main_network"))
+    public static final SimpleChannel INSTANCE = NetworkRegistry.ChannelBuilder.named(NarcissusFarewell.createResource("main_network"))
             .networkProtocolVersion(() -> PROTOCOL_VERSION)
             .clientAcceptedVersions((version) -> true)    // 客户端版本始终有效
             .serverAcceptedVersions((version) -> true)    // 服务端版本始终有效
