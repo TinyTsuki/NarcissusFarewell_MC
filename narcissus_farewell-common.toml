@@ -30,6 +30,9 @@
 	#若传送卡与代价都不足，则无法传送。若希望传送卡能够抵消代价但在不足时禁止传送，请在配置中将代价设置为零。
 	#Allowed Values: NONE, LIKE_COST, REFUND_COST, REFUND_ALL_COST, REFUND_COOLDOWN, REFUND_COST_AND_COOLDOWN, REFUND_ALL_COST_AND_COOLDOWN
 	teleportCardType = "REFUND_ALL_COST"
+	#Whether to disable the original TP command.
+	#是否禁用原版TP指令。
+	removeOriginalTp = false
 
 #Function Switch
 #功能开关
