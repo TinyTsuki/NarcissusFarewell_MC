@@ -13,7 +13,7 @@ import net.minecraft.util.text.*;
 import net.minecraft.util.text.event.ClickEvent;
 import net.minecraft.util.text.event.HoverEvent;
 import xin.vanilla.narcissus.config.ServerConfig;
-import xin.vanilla.narcissus.enums.EI18nType;
+import xin.vanilla.narcissus.enums.EnumI18nType;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -39,7 +39,7 @@ public class Component implements Cloneable, Serializable {
      */
     @Getter
     @Setter
-    private EI18nType i18nType = EI18nType.PLAIN;
+    private EnumI18nType i18nType = EnumI18nType.PLAIN;
 
     /**
      * 子组件
@@ -126,7 +126,7 @@ public class Component implements Cloneable, Serializable {
         this.text = text;
     }
 
-    public Component(String text, EI18nType i18nType) {
+    public Component(String text, EnumI18nType i18nType) {
         this.text = text;
         this.i18nType = i18nType;
     }
@@ -335,10 +335,10 @@ public class Component implements Cloneable, Serializable {
     }
 
     public Component append(Object... objs) {
-        return this.append(this.getChildren().size(), objs);
+        return this.appendIndex(this.getChildren().size(), objs);
     }
 
-    public Component append(int index, Object... objs) {
+    public Component appendIndex(int index, Object... objs) {
         for (int i = 0; i < objs.length; i++) {
             Object obj = objs[i];
             if (obj instanceof Component) {
@@ -516,9 +516,9 @@ public class Component implements Cloneable, Serializable {
                     result.append("§k");
                 }
             }
-            if (this.i18nType == EI18nType.PLAIN) {
+            if (this.i18nType == EnumI18nType.PLAIN) {
                 result.append(this.text);
-            } else if (i18nType == EI18nType.ORIGINAL) {
+            } else if (i18nType == EnumI18nType.ORIGINAL) {
                 result.append(((ITextComponent) this.original).getString());
             } else {
                 result.append(I18nUtils.getTranslation(I18nUtils.getKey(this.i18nType, this.text), languageCode));
@@ -543,12 +543,12 @@ public class Component implements Cloneable, Serializable {
      */
     public ITextComponent toTextComponent(String languageCode) {
         List<TextComponent> components = new ArrayList<>();
-        if (this.i18nType == EI18nType.ORIGINAL) {
+        if (this.i18nType == EnumI18nType.ORIGINAL) {
             components.add((TextComponent) this.original);
         } else {
             // 如果颜色值为null则说明为透明，则不显示内容，所以返回空文本组件
             if (!this.isColorEmpty()) {
-                if (this.i18nType != EI18nType.PLAIN) {
+                if (this.i18nType != EnumI18nType.PLAIN) {
                     String text = I18nUtils.getTranslation(I18nUtils.getKey(this.i18nType, this.text), languageCode);
                     String[] split = text.split(StringUtils.FORMAT_REGEX, -1);
                     for (String s : split) {
@@ -569,7 +569,11 @@ public class Component implements Cloneable, Serializable {
                                 formattedArg = new Component();
                             } else {
                                 Component argComponent = this.getArgs().get(index);
-                                if (argComponent.getI18nType() != EI18nType.PLAIN) {
+                                if (argComponent.getI18nType() != EnumI18nType.PLAIN) {
+                                    // 语言代码传递
+                                    if (argComponent.isLanguageCodeEmpty()) {
+                                        argComponent.setLanguageCode(languageCode);
+                                    }
                                     try {
                                         // 颜色代码传递
                                         String colorCode = split[i].replaceAll("^.*?((?:§[\\da-fA-FKLMNORklmnor])*)$", "$1");
@@ -617,9 +621,9 @@ public class Component implements Cloneable, Serializable {
     public ITextComponent toTranslatedTextComponent() {
         TextComponent result = new TranslationTextComponent("");
         if (!this.isColorEmpty() || !this.isBgColorEmpty()) {
-            if (this.i18nType != EI18nType.PLAIN) {
+            if (this.i18nType != EnumI18nType.PLAIN) {
                 Object[] objects = this.getArgs().stream().map(component -> {
-                    if (component.i18nType == EI18nType.PLAIN) {
+                    if (component.i18nType == EnumI18nType.PLAIN) {
                         return component.toTextComponent();
                     } else {
                         return component.toTranslatedTextComponent();
@@ -684,7 +688,7 @@ public class Component implements Cloneable, Serializable {
      * 获取原始组件
      */
     public static Component original(Object original) {
-        return empty().setOriginal(original).setI18nType(EI18nType.ORIGINAL);
+        return empty().setOriginal(original).setI18nType(EnumI18nType.ORIGINAL);
     }
 
     /**
@@ -703,7 +707,7 @@ public class Component implements Cloneable, Serializable {
      * @param args 参数
      */
     public static Component translatable(String key, Object... args) {
-        return new Component(key, EI18nType.NONE).appendArg(args);
+        return new Component(key, EnumI18nType.NONE).appendArg(args);
     }
 
     /**
@@ -713,7 +717,7 @@ public class Component implements Cloneable, Serializable {
      * @param key  翻译键
      * @param args 参数
      */
-    public static Component translatable(EI18nType type, String key, Object... args) {
+    public static Component translatable(EnumI18nType type, String key, Object... args) {
         return new Component(key, type).appendArg(args);
     }
 
@@ -724,7 +728,7 @@ public class Component implements Cloneable, Serializable {
      * @param args 参数
      */
     public static Component translatableClient(String key, Object... args) {
-        return new Component(key, EI18nType.NONE).setLanguageCode(NarcissusUtils.getClientLanguage()).appendArg(args);
+        return new Component(key, EnumI18nType.NONE).setLanguageCode(NarcissusUtils.getClientLanguage()).appendArg(args);
     }
 
     /**
@@ -734,7 +738,7 @@ public class Component implements Cloneable, Serializable {
      * @param key  翻译键
      * @param args 参数
      */
-    public static Component translatableClient(EI18nType type, String key, Object... args) {
+    public static Component translatableClient(EnumI18nType type, String key, Object... args) {
         return new Component(key, type).setLanguageCode(NarcissusUtils.getClientLanguage()).appendArg(args);
     }
 
@@ -746,7 +750,7 @@ public class Component implements Cloneable, Serializable {
      * @param key          翻译键
      * @param args         参数
      */
-    public static Component translatable(String languageCode, EI18nType type, String key, Object... args) {
+    public static Component translatable(String languageCode, EnumI18nType type, String key, Object... args) {
         return new Component(key, type).setLanguageCode(languageCode).appendArg(args);
     }
 
@@ -758,14 +762,14 @@ public class Component implements Cloneable, Serializable {
      * @param key    翻译键
      * @param args   参数
      */
-    public static Component translatable(ServerPlayerEntity player, EI18nType type, String key, Object... args) {
+    public static Component translatable(ServerPlayerEntity player, EnumI18nType type, String key, Object... args) {
         return new Component(key, type).setLanguageCode(NarcissusUtils.getPlayerLanguage(player)).appendArg(args);
     }
 
     public static Component deserialize(JsonObject jsonObject) {
         Component result = new Component();
         result.setText(jsonObject.get("text").getAsString());
-        result.setI18nType(EI18nType.valueOf(jsonObject.get("i18nType").getAsString()));
+        result.setI18nType(EnumI18nType.valueOf(jsonObject.get("i18nType").getAsString()));
         result.setLanguageCode(jsonObject.get("languageCode").getAsString());
         result.setColor(jsonObject.get("color").getAsInt());
         result.setBgColor(jsonObject.get("bgColor").getAsInt());
