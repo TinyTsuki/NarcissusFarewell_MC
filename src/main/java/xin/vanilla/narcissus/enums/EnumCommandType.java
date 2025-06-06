@@ -3,7 +3,7 @@ package xin.vanilla.narcissus.enums;
 import lombok.Getter;
 
 @Getter
-public enum ECommandType {
+public enum EnumCommandType {
     HELP(false, false),
     LANGUAGE(false, false),
     LANGUAGE_CONCISE(),
@@ -93,17 +93,17 @@ public enum ECommandType {
      */
     private final boolean op;
 
-    ECommandType() {
+    EnumCommandType() {
         this.ignore = false;
         this.op = !this.concise;
     }
 
-    ECommandType(boolean ig) {
+    EnumCommandType(boolean ig) {
         this.ignore = ig;
         this.op = !this.concise;
     }
 
-    ECommandType(boolean ig, boolean op) {
+    EnumCommandType(boolean ig, boolean op) {
         this.ignore = ig;
         this.op = !this.concise && op;
     }
@@ -112,9 +112,9 @@ public enum ECommandType {
         return this.ordinal();
     }
 
-    public ECommandType replaceConcise() {
+    public EnumCommandType replaceConcise() {
         if (this.name().endsWith("_CONCISE")) {
-            return ECommandType.valueOf(this.name().replace("_CONCISE", ""));
+            return EnumCommandType.valueOf(this.name().replace("_CONCISE", ""));
         }
         return this;
     }

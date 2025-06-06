@@ -4,7 +4,6 @@ import lombok.Data;
 import lombok.NonNull;
 import lombok.experimental.Accessors;
 import net.minecraft.nbt.CompoundNBT;
-import xin.vanilla.narcissus.config.Coordinate;
 import xin.vanilla.narcissus.enums.ETeleportType;
 import xin.vanilla.narcissus.util.DateUtils;
 

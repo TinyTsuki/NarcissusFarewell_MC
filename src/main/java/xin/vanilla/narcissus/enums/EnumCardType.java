@@ -6,7 +6,7 @@ import lombok.Getter;
  * 传送卡应用方式
  */
 @Getter
-public enum ECardType {
+public enum EnumCardType {
     NONE("无效果"),
     LIKE_COST("与代价数量一致"),
     REFUND_COST("一比一抵消代价"),
@@ -17,7 +17,7 @@ public enum ECardType {
 
     private final String desc;
 
-    ECardType(String desc) {
+    EnumCardType(String desc) {
         this.desc = desc;
     }
 }

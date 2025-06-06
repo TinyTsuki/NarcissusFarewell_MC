@@ -23,38 +23,38 @@ public enum ETeleportType {
     DEATH,
     OTHER;
 
-    public ECommandType toCommandType() {
+    public EnumCommandType toCommandType() {
         switch (this) {
             case TP_COORDINATE:
-                return ECommandType.TP_COORDINATE;
+                return EnumCommandType.TP_COORDINATE;
             case TP_STRUCTURE:
-                return ECommandType.TP_STRUCTURE;
+                return EnumCommandType.TP_STRUCTURE;
             case TP_ASK:
-                return ECommandType.TP_ASK;
+                return EnumCommandType.TP_ASK;
             case TP_HERE:
-                return ECommandType.TP_HERE;
+                return EnumCommandType.TP_HERE;
             case TP_RANDOM:
-                return ECommandType.TP_RANDOM;
+                return EnumCommandType.TP_RANDOM;
             case TP_SPAWN:
-                return ECommandType.TP_SPAWN;
+                return EnumCommandType.TP_SPAWN;
             case TP_WORLD_SPAWN:
-                return ECommandType.TP_WORLD_SPAWN;
+                return EnumCommandType.TP_WORLD_SPAWN;
             case TP_TOP:
-                return ECommandType.TP_TOP;
+                return EnumCommandType.TP_TOP;
             case TP_BOTTOM:
-                return ECommandType.TP_BOTTOM;
+                return EnumCommandType.TP_BOTTOM;
             case TP_UP:
-                return ECommandType.TP_UP;
+                return EnumCommandType.TP_UP;
             case TP_DOWN:
-                return ECommandType.TP_DOWN;
+                return EnumCommandType.TP_DOWN;
             case TP_VIEW:
-                return ECommandType.TP_VIEW;
+                return EnumCommandType.TP_VIEW;
             case TP_HOME:
-                return ECommandType.TP_HOME;
+                return EnumCommandType.TP_HOME;
             case TP_STAGE:
-                return ECommandType.TP_STAGE;
+                return EnumCommandType.TP_STAGE;
             case TP_BACK:
-                return ECommandType.TP_BACK;
+                return EnumCommandType.TP_BACK;
             default:
                 return null;
         }

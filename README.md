@@ -61,8 +61,9 @@
 
 ## 配置说明
 
-本地配置文件路径 `world/serverconfig/narcissus_farewell-server.toml`
-，其他的信息不再赘述，请参考 [默认配置文件](narcissus_farewell-server.toml) 中的注释。
+本地配置文件路径 [`world/serverconfig/narcissus_farewell-server.toml`](narcissus_farewell-server.toml)、
+[`config/narcissus_farewell-common.toml`](narcissus_farewell-common.toml)
+，其他的信息不再赘述，请参考默认配置文件中的注释。
 
 ## 指令说明
 

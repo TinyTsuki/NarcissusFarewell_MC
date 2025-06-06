@@ -87,6 +87,7 @@
   "word.narcissus_farewell.default": "§7(默认)",
   "message.narcissus_farewell.previous_page": "上一页",
   "message.narcissus_farewell.next_page": "下一页",
+  "message.narcissus_farewell.click_to_suggest": "点击以填充",
   "message.narcissus_farewell.command_disabled": "§e该指令已被服务器禁用！",
   "message.narcissus_farewell.command_cooldown": "§e传送冷却中，请在%s§e秒后再试！",
   "message.narcissus_farewell.across_dimension_not_enable": "§e服务器未启用跨维度传送！",
@@ -167,5 +168,16 @@
   "message.narcissus_farewell.shared_coordinates": "玩家『%s』分享了名为『%s』的传送点，%s %s",
   "message.narcissus_farewell.server_default_language": "服务器默认语言被设置为：%s。",
   "message.narcissus_farewell.player_default_language": "玩家默认语言被设置为：%s。",
-  "message.narcissus_farewell.locked_by_mob": "§e传送被附近敌对生物的视线打断！"
+  "message.narcissus_farewell.locked_by_mob": "§e传送被附近敌对生物的视线打断！",
+  "message.narcissus_farewell.blacklist": "§f[§0黑名单§f]",
+  "message.narcissus_farewell.whitelist": "§0[§f白名单§0]",
+  "message.narcissus_farewell.blacklist_help": "若黑名单列表不为空，则仅接收不在黑名单中的玩家的传送请求。",
+  "message.narcissus_farewell.whitelist_help": "若白名单列表不为空，则仅接收在白名单中的玩家的传送请求，并根据设置自动同意请求。",
+  "message.narcissus_farewell.list_is_empty": "%s列表空空如也。",
+  "message.narcissus_farewell.list_detail": "%s列表如下：\n%s",
+  "message.narcissus_farewell.list_add_success": "已将以下玩家加入%s：\n%s",
+  "message.narcissus_farewell.list_add_fail": "%s§e添加失败，请检查是否有玩家存在于%s§e中。",
+  "message.narcissus_farewell.remove_success": "删除成功。",
+  "message.narcissus_farewell.auto_accept_tpa": "自动同意TPA请求。",
+  "message.narcissus_farewell.auto_accept_tph": "自动同意TPH请求。"
 }

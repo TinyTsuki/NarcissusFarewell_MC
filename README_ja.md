@@ -53,8 +53,9 @@ Minecraft Forge テレポートコマンド Mod。
 
 ## 設定説明
 
-ローカル設定ファイルのパスは `world/serverconfig/narcissus_farewell-server.toml`
-です。他の情報は省略します。詳細は [デフォルト設定ファイル](narcissus_farewell-server.toml) のコメントを参照してください。
+ローカル設定ファイルのパスは [`world/serverconfig/narcissus_farewell-server.toml`](narcissus_farewell-server.toml)、
+[`config/narcissus_farewell-common.toml`](narcissus_farewell-common.toml)
+です。他の情報は省略します。詳細は デフォルト設定ファイル のコメントを参照してください。
 
 ## コマンド説明
 

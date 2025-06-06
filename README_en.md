@@ -60,8 +60,10 @@ This mod is required on the server side, and optional on the client side.
 
 ## Configuration Instructions
 
-The local configuration file is located at `world/serverconfig/narcissus_farewell-server.toml`. For further details,
-please refer to the comments in the [default config file](narcissus_farewell-server.toml).
+The local configuration file is located at [
+`world/serverconfig/narcissus_farewell-server.toml`](narcissus_farewell-server.toml),
+[`config/narcissus_farewell-common.toml`](narcissus_farewell-common.toml). For further details,
+please refer to the comments in the default config file.
 
 ## Command Instructions
 
