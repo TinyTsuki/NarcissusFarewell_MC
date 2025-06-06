@@ -1,15 +1,17 @@
-package xin.vanilla.narcissus.network;
+package xin.vanilla.narcissus.network.packet;
 
 import lombok.Getter;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.fml.DistExecutor;
 import net.minecraftforge.network.NetworkEvent;
-import xin.vanilla.narcissus.config.Coordinate;
-import xin.vanilla.narcissus.config.KeyValue;
+import xin.vanilla.narcissus.data.Coordinate;
+import xin.vanilla.narcissus.data.KeyValue;
 import xin.vanilla.narcissus.data.TeleportRecord;
 import xin.vanilla.narcissus.data.player.IPlayerTeleportData;
 import xin.vanilla.narcissus.data.player.PlayerTeleportData;
+import xin.vanilla.narcissus.network.ClientProxy;
+import xin.vanilla.narcissus.network.SplitPacket;
 import xin.vanilla.narcissus.util.CollectionUtils;
 import xin.vanilla.narcissus.util.DateUtils;
 
