@@ -1,15 +1,15 @@
 package xin.vanilla.narcissus;
 
 import org.junit.Test;
-import xin.vanilla.narcissus.config.Coordinate;
-import xin.vanilla.narcissus.enums.EMCColor;
+import xin.vanilla.narcissus.data.Coordinate;
+import xin.vanilla.narcissus.enums.EnumMCColor;
 import xin.vanilla.narcissus.util.StringUtils;
 
 public class MyTest {
 
     @Test
     public void testColor() {
-        for (EMCColor value : EMCColor.values()) {
+        for (EnumMCColor value : EnumMCColor.values()) {
             System.out.print(value.getCode());
             System.out.println(StringUtils.argbToMinecraftColorString(value.getColor()));
         }
