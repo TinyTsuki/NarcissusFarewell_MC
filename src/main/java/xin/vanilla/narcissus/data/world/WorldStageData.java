@@ -14,8 +14,8 @@ import net.minecraft.util.datafix.DataFixTypes;
 import net.minecraft.world.level.saveddata.SavedData;
 import net.minecraft.world.level.saveddata.SavedDataType;
 import xin.vanilla.narcissus.NarcissusFarewell;
-import xin.vanilla.narcissus.config.Coordinate;
-import xin.vanilla.narcissus.config.KeyValue;
+import xin.vanilla.narcissus.data.Coordinate;
+import xin.vanilla.narcissus.data.KeyValue;
 
 import java.util.HashMap;
 import java.util.LinkedHashMap;

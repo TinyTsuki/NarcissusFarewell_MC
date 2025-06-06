@@ -23,23 +23,23 @@ public enum ETeleportType {
     DEATH,
     OTHER;
 
-    public ECommandType toCommandType() {
+    public EnumCommandType toCommandType() {
         return switch (this) {
-            case TP_COORDINATE -> ECommandType.TP_COORDINATE;
-            case TP_STRUCTURE -> ECommandType.TP_STRUCTURE;
-            case TP_ASK -> ECommandType.TP_ASK;
-            case TP_HERE -> ECommandType.TP_HERE;
-            case TP_RANDOM -> ECommandType.TP_RANDOM;
-            case TP_SPAWN -> ECommandType.TP_SPAWN;
-            case TP_WORLD_SPAWN -> ECommandType.TP_WORLD_SPAWN;
-            case TP_TOP -> ECommandType.TP_TOP;
-            case TP_BOTTOM -> ECommandType.TP_BOTTOM;
-            case TP_UP -> ECommandType.TP_UP;
-            case TP_DOWN -> ECommandType.TP_DOWN;
-            case TP_VIEW -> ECommandType.TP_VIEW;
-            case TP_HOME -> ECommandType.TP_HOME;
-            case TP_STAGE -> ECommandType.TP_STAGE;
-            case TP_BACK -> ECommandType.TP_BACK;
+            case TP_COORDINATE -> EnumCommandType.TP_COORDINATE;
+            case TP_STRUCTURE -> EnumCommandType.TP_STRUCTURE;
+            case TP_ASK -> EnumCommandType.TP_ASK;
+            case TP_HERE -> EnumCommandType.TP_HERE;
+            case TP_RANDOM -> EnumCommandType.TP_RANDOM;
+            case TP_SPAWN -> EnumCommandType.TP_SPAWN;
+            case TP_WORLD_SPAWN -> EnumCommandType.TP_WORLD_SPAWN;
+            case TP_TOP -> EnumCommandType.TP_TOP;
+            case TP_BOTTOM -> EnumCommandType.TP_BOTTOM;
+            case TP_UP -> EnumCommandType.TP_UP;
+            case TP_DOWN -> EnumCommandType.TP_DOWN;
+            case TP_VIEW -> EnumCommandType.TP_VIEW;
+            case TP_HOME -> EnumCommandType.TP_HOME;
+            case TP_STAGE -> EnumCommandType.TP_STAGE;
+            case TP_BACK -> EnumCommandType.TP_BACK;
             default -> null;
         };
     }
