@@ -1,4 +1,4 @@
-package xin.vanilla.narcissus.config;
+package xin.vanilla.narcissus.data;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -8,13 +8,14 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceKey;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
-import xin.vanilla.narcissus.enums.ESafeMode;
+import xin.vanilla.narcissus.NarcissusFarewell;
+import xin.vanilla.narcissus.config.ServerConfig;
+import xin.vanilla.narcissus.enums.EnumSafeMode;
 import xin.vanilla.narcissus.util.NarcissusUtils;
 import xin.vanilla.narcissus.util.StringUtils;
 
@@ -35,7 +36,7 @@ public class Coordinate implements Serializable, Cloneable {
     private double pitch = 0;
     private ResourceKey<Level> dimension = Level.OVERWORLD;
     private boolean safe = false;
-    private ESafeMode safeMode = ESafeMode.NONE;
+    private EnumSafeMode safeMode = EnumSafeMode.NONE;
 
     public Coordinate(Player player) {
         this.x = player.getX();
@@ -204,7 +205,7 @@ public class Coordinate implements Serializable, Cloneable {
         coordinate.z = tag.getDouble("z");
         coordinate.yaw = tag.getDouble("yaw");
         coordinate.pitch = tag.getDouble("pitch");
-        coordinate.dimension = ResourceKey.create(Registries.DIMENSION, new ResourceLocation(tag.getString("dimension")));
+        coordinate.dimension = ResourceKey.create(Registries.DIMENSION, NarcissusFarewell.parseResource(tag.getString("dimension")));
         return coordinate;
     }
 
