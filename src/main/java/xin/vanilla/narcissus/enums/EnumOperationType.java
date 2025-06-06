@@ -1,6 +1,6 @@
 package xin.vanilla.narcissus.enums;
 
-public enum EOperationType {
+public enum EnumOperationType {
     ADD,
     SET,
     REMOVE,
@@ -9,9 +9,9 @@ public enum EOperationType {
     GET,
     CLEAR;
 
-    public static EOperationType fromString(String type) {
+    public static EnumOperationType fromString(String type) {
         try {
-            return EOperationType.valueOf(type.toUpperCase());
+            return EnumOperationType.valueOf(type.toUpperCase());
         } catch (IllegalArgumentException e) {
             throw new IllegalArgumentException("Invalid operation type: " + type);
         }
