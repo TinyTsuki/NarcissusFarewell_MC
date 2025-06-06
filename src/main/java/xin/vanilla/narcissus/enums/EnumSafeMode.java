@@ -1,6 +1,6 @@
 package xin.vanilla.narcissus.enums;
 
-public enum ESafeMode {
+public enum EnumSafeMode {
     NONE,
     Y_UP,
     Y_DOWN,
