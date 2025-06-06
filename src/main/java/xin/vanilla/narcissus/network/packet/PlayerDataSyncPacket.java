@@ -5,12 +5,11 @@ import lombok.Getter;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
-import net.minecraft.resources.ResourceLocation;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
 import org.jetbrains.annotations.NotNull;
 import xin.vanilla.narcissus.NarcissusFarewell;
-import xin.vanilla.narcissus.config.Coordinate;
-import xin.vanilla.narcissus.config.KeyValue;
+import xin.vanilla.narcissus.data.Coordinate;
+import xin.vanilla.narcissus.data.KeyValue;
 import xin.vanilla.narcissus.data.TeleportRecord;
 import xin.vanilla.narcissus.data.player.PlayerTeleportData;
 import xin.vanilla.narcissus.network.ClientProxy;
@@ -22,7 +21,7 @@ import java.util.stream.Collectors;
 
 @Getter
 public class PlayerDataSyncPacket extends SplitPacket implements CustomPacketPayload {
-    public final static Type<PlayerDataSyncPacket> TYPE = new Type<>(new ResourceLocation(NarcissusFarewell.MODID, "player_data_sync"));
+    public final static Type<PlayerDataSyncPacket> TYPE = new Type<>(NarcissusFarewell.createResource("player_data_sync"));
     public final static StreamCodec<ByteBuf, PlayerDataSyncPacket> STREAM_CODEC = new StreamCodec<>() {
         public @NotNull PlayerDataSyncPacket decode(@NotNull ByteBuf byteBuf) {
             return new PlayerDataSyncPacket((new FriendlyByteBuf(byteBuf)));
