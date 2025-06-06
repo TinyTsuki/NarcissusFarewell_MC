@@ -2,7 +2,7 @@ package xin.vanilla.narcissus.util;
 
 
 import lombok.NonNull;
-import xin.vanilla.narcissus.enums.EMCColor;
+import xin.vanilla.narcissus.enums.EnumMCColor;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -418,7 +418,7 @@ public class StringUtils {
         return "§" + argbToMinecraftColor(color).getCode();
     }
 
-    public static EMCColor argbToMinecraftColor(int color) {
+    public static EnumMCColor argbToMinecraftColor(int color) {
         // 获取 RGB 分量
         int red = (color >> 16) & 0xFF;
         int green = (color >> 8) & 0xFF;
@@ -426,8 +426,8 @@ public class StringUtils {
         // 颜色匹配
         double closestDistance = Double.MAX_VALUE;
         // 默认为白色
-        EMCColor result = EMCColor.WHITE;
-        for (EMCColor mcColor : EMCColor.values()) {
+        EnumMCColor result = EnumMCColor.WHITE;
+        for (EnumMCColor mcColor : EnumMCColor.values()) {
             int colorRGB = mcColor.getColor();
             int r = (colorRGB >> 16) & 0xFF;
             int g = (colorRGB >> 8) & 0xFF;

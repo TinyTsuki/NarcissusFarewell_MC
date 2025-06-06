@@ -1,4 +1,4 @@
-package xin.vanilla.narcissus.network;
+package xin.vanilla.narcissus.network.packet;
 
 import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.network.PacketBuffer;
