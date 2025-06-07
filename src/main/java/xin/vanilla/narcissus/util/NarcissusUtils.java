@@ -54,6 +54,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import xin.vanilla.narcissus.NarcissusFarewell;
 import xin.vanilla.narcissus.config.CommonConfig;
+import xin.vanilla.narcissus.config.CustomConfig;
 import xin.vanilla.narcissus.config.ServerConfig;
 import xin.vanilla.narcissus.data.*;
 import xin.vanilla.narcissus.data.player.IPlayerTeleportData;
@@ -181,7 +182,7 @@ public class NarcissusUtils {
         }
     }
 
-    public static String getCommand(ETeleportType type) {
+    public static String getCommand(EnumTeleportType type) {
         switch (type) {
             case TP_COORDINATE:
                 return CommonConfig.COMMAND_TP_COORDINATE.get();
@@ -461,7 +462,7 @@ public class NarcissusUtils {
         }
     }
 
-    public static int getCommandPermissionLevel(ETeleportType type) {
+    public static int getCommandPermissionLevel(EnumTeleportType type) {
         switch (type) {
             case TP_COORDINATE:
                 return ServerConfig.PERMISSION_TP_COORDINATE.get();
@@ -1196,7 +1197,7 @@ public class NarcissusUtils {
      * @param dimension 维度
      * @return 查询到的离开坐标（如果未找到则返回 null）
      */
-    public static TeleportRecord getBackTeleportRecord(ServerPlayerEntity player, @Nullable ETeleportType type, @Nullable DimensionType dimension) {
+    public static TeleportRecord getBackTeleportRecord(ServerPlayerEntity player, @Nullable EnumTeleportType type, @Nullable DimensionType dimension) {
         TeleportRecord result = null;
         // 获取玩家的传送数据
         IPlayerTeleportData data = PlayerTeleportDataCapability.getData(player);
@@ -1204,7 +1205,7 @@ public class NarcissusUtils {
         Stream<TeleportRecord> stream = records.stream()
                 .filter(record -> type == null || record.getTeleportType() == type);
         for (String s : ServerConfig.TELEPORT_BACK_SKIP_TYPE.get()) {
-            ETeleportType value = ETeleportType.nullableValueOf(s);
+            EnumTeleportType value = EnumTeleportType.nullableValueOf(s);
             stream = stream
                     .filter(record -> type == value || record.getTeleportType() != value);
         }
@@ -1228,7 +1229,7 @@ public class NarcissusUtils {
     /**
      * 检查传送范围
      */
-    public static int checkRange(ServerPlayerEntity player, ETeleportType type, int range) {
+    public static int checkRange(ServerPlayerEntity player, EnumTeleportType type, int range) {
         int maxRange;
         switch (type) {
             case TP_VIEW:
@@ -1259,8 +1260,8 @@ public class NarcissusUtils {
      * @param from 传送者
      * @param to   目标玩家
      */
-    public static void teleportTo(@NonNull ServerPlayerEntity from, @NonNull ServerPlayerEntity to, ETeleportType type, boolean safe) {
-        if (ETeleportType.TP_HERE == type) {
+    public static void teleportTo(@NonNull ServerPlayerEntity from, @NonNull ServerPlayerEntity to, EnumTeleportType type, boolean safe) {
+        if (EnumTeleportType.TP_HERE == type) {
             teleportTo(to, new Coordinate(from).setSafe(safe), type);
         } else {
             teleportTo(from, new Coordinate(to).setSafe(safe), type);
@@ -1273,7 +1274,7 @@ public class NarcissusUtils {
      * @param player 玩家
      * @param after  坐标
      */
-    public static void teleportTo(@NonNull ServerPlayerEntity player, @NonNull Coordinate after, ETeleportType type) {
+    public static void teleportTo(@NonNull ServerPlayerEntity player, @NonNull Coordinate after, EnumTeleportType type) {
         initSafeBlocks();
         Coordinate before = new Coordinate(player);
         World world = player.level;
@@ -1341,7 +1342,7 @@ public class NarcissusUtils {
         }
     }
 
-    private static void teleportPlayer(@NonNull ServerPlayerEntity player, @NonNull Coordinate after, ETeleportType type, Coordinate before, ServerWorld level) {
+    private static void teleportPlayer(@NonNull ServerPlayerEntity player, @NonNull Coordinate after, EnumTeleportType type, Coordinate before, ServerWorld level) {
         ResourceLocation sound = NarcissusFarewell.parseResource(ServerConfig.TP_SOUND.get());
         NarcissusUtils.playSound(player, sound, 1.0f, 1.0f);
         after.setY(Math.floor(after.getY()) + 0.1);
@@ -1706,7 +1707,7 @@ public class NarcissusUtils {
 
     // region 跨维度传送
 
-    public static boolean isTeleportAcrossDimensionEnabled(ServerPlayerEntity player, DimensionType to, ETeleportType type) {
+    public static boolean isTeleportAcrossDimensionEnabled(ServerPlayerEntity player, DimensionType to, EnumTeleportType type) {
         boolean result = true;
         if (player.level.dimension.getType() != to) {
             if (ServerConfig.TELEPORT_ACROSS_DIMENSION.get()) {
@@ -1725,7 +1726,7 @@ public class NarcissusUtils {
     /**
      * 判断传送类型跨维度传送是否开启
      */
-    public static boolean isTeleportTypeAcrossDimensionEnabled(ServerPlayerEntity player, ETeleportType type) {
+    public static boolean isTeleportTypeAcrossDimensionEnabled(ServerPlayerEntity player, EnumTeleportType type) {
         int permission;
         switch (type) {
             case TP_COORDINATE:
@@ -1775,9 +1776,11 @@ public class NarcissusUtils {
      * @param player 玩家
      * @param type   传送类型
      */
-    public static int getTeleportCoolDown(ServerPlayerEntity player, ETeleportType type) {
+    public static int getTeleportCoolDown(ServerPlayerEntity player, EnumTeleportType type) {
         // 如果传送卡类型为抵消冷却时间，则不计算冷却时间
-        if (CommonConfig.TELEPORT_CARD_TYPE.get() == EnumCardType.REFUND_COOLDOWN || CommonConfig.TELEPORT_CARD_TYPE.get() == EnumCardType.REFUND_ALL_COST_AND_COOLDOWN) {
+        if (EnumCardType.REFUND_COOLDOWN.name().equalsIgnoreCase(CommonConfig.TELEPORT_CARD_TYPE.get())
+                || EnumCardType.REFUND_ALL_COST_AND_COOLDOWN.name().equalsIgnoreCase(CommonConfig.TELEPORT_CARD_TYPE.get())
+        ) {
             if (PlayerTeleportDataCapability.getData(player).getTeleportCard() > 0) {
                 return 0;
             }
@@ -1788,7 +1791,7 @@ public class NarcissusUtils {
                 .map(TeleportRecord::getTeleportTime)
                 .max(Comparator.comparing(Date::toInstant))
                 .orElse(new Date(0)).toInstant();
-        switch (ServerConfig.TELEPORT_REQUEST_COOLDOWN_TYPE.get()) {
+        switch (EnumCoolDownType.valueOf(ServerConfig.TELEPORT_REQUEST_COOLDOWN_TYPE.get())) {
             case COMMON:
                 return calculateCooldown(player.getUUID(), current, lastTpTime, ServerConfig.TELEPORT_REQUEST_COOLDOWN.get(), null);
             case INDIVIDUAL:
@@ -1808,7 +1811,7 @@ public class NarcissusUtils {
      *
      * @param type 传送类型
      */
-    public static int getCommandCoolDown(ETeleportType type) {
+    public static int getCommandCoolDown(EnumTeleportType type) {
         switch (type) {
             case TP_COORDINATE:
                 return ServerConfig.COOLDOWN_TP_COORDINATE.get();
@@ -1845,7 +1848,7 @@ public class NarcissusUtils {
         }
     }
 
-    private static int calculateCooldown(UUID uuid, Instant current, Instant lastTpTime, int cooldown, ETeleportType type) {
+    private static int calculateCooldown(UUID uuid, Instant current, Instant lastTpTime, int cooldown, EnumTeleportType type) {
         Optional<TeleportRequest> latestRequest = NarcissusFarewell.getTeleportRequest().values().stream()
                 .filter(request -> request.getRequester().getUUID().equals(uuid))
                 .filter(request -> type == null || request.getTeleportType() == type)
@@ -1868,7 +1871,7 @@ public class NarcissusUtils {
      * @param submit 是否收取代价
      * @return 是否验证通过
      */
-    public static boolean validTeleportCost(ServerPlayerEntity player, Coordinate target, ETeleportType type, boolean submit) {
+    public static boolean validTeleportCost(ServerPlayerEntity player, Coordinate target, EnumTeleportType type, boolean submit) {
         return validateCost(player, target.getDimension(), calculateDistance(new Coordinate(player), target), type, submit);
     }
 
@@ -1895,7 +1898,7 @@ public class NarcissusUtils {
      * @param submit       是否收取代价
      * @return 是否验证通过
      */
-    private static boolean validateCost(ServerPlayerEntity player, DimensionType targetDim, double distance, ETeleportType teleportType, boolean submit) {
+    private static boolean validateCost(ServerPlayerEntity player, DimensionType targetDim, double distance, EnumTeleportType teleportType, boolean submit) {
         TeleportCost cost = NarcissusUtils.getCommandCost(teleportType);
         if (cost.getType() == EnumCostType.NONE) return true;
 
@@ -1995,7 +1998,7 @@ public class NarcissusUtils {
         int ceil = (int) Math.ceil(need);
         if (!CommonConfig.TELEPORT_CARD.get()) return ceil;
         IPlayerTeleportData data = PlayerTeleportDataCapability.getData(player);
-        switch (CommonConfig.TELEPORT_CARD_TYPE.get()) {
+        switch ((EnumCardType.valueOf(CommonConfig.TELEPORT_CARD_TYPE.get()))) {
             case NONE:
                 return data.getTeleportCard() > 0 ? ceil : -1;
             case LIKE_COST:
@@ -2018,7 +2021,7 @@ public class NarcissusUtils {
     public static int getTeleportCardNeedPre(double need) {
         int ceil = (int) Math.ceil(need);
         if (!CommonConfig.TELEPORT_CARD.get()) return 0;
-        switch (CommonConfig.TELEPORT_CARD_TYPE.get()) {
+        switch (EnumCardType.valueOf(CommonConfig.TELEPORT_CARD_TYPE.get())) {
             case LIKE_COST:
                 return ceil;
             case NONE:
@@ -2039,7 +2042,7 @@ public class NarcissusUtils {
         int ceil = (int) Math.ceil(need);
         if (!CommonConfig.TELEPORT_CARD.get()) return 0;
         IPlayerTeleportData data = PlayerTeleportDataCapability.getData(player);
-        switch (CommonConfig.TELEPORT_CARD_TYPE.get()) {
+        switch (EnumCardType.valueOf(CommonConfig.TELEPORT_CARD_TYPE.get())) {
             case NONE:
                 return data.getTeleportCard() > 0 ? 0 : 1;
             case LIKE_COST:
@@ -2054,7 +2057,7 @@ public class NarcissusUtils {
         }
     }
 
-    public static TeleportCost getCommandCost(ETeleportType type) {
+    public static TeleportCost getCommandCost(EnumTeleportType type) {
         TeleportCost cost = new TeleportCost();
         switch (type) {
             case TP_COORDINATE:
@@ -2170,7 +2173,7 @@ public class NarcissusUtils {
     // region 杂项
     public static String getPlayerLanguage(PlayerEntity player) {
         try {
-            return PlayerTeleportDataCapability.getData(player).getValidLanguage(player);
+            return NarcissusUtils.getValidLanguage(player, CustomConfig.getPlayerLanguage(getPlayerUUIDString(player)));
         } catch (IllegalArgumentException i) {
             return ServerConfig.DEFAULT_LANGUAGE.get();
         }
