@@ -34,6 +34,8 @@ public class PlayerTeleportDataStorage implements IStorage<IPlayerTeleportData> 
             return new CompoundNBT();
         }
         CompoundNBT tag = new CompoundNBT();
+        tag.putBoolean("notified", instance.isNotified());
+
         tag.putString("lastCardTime", DateUtils.toDateTimeString(instance.getLastCardTime()));
         tag.putString("lastTpTime", DateUtils.toDateTimeString(instance.getLastTpTime()));
         tag.putInt("teleportCard", instance.getTeleportCard());
@@ -66,9 +68,6 @@ public class PlayerTeleportDataStorage implements IStorage<IPlayerTeleportData> 
         }
         tag.put("defaultHome", defaultHomeNBT);
 
-        tag.putBoolean("notified", instance.isNotified());
-        tag.putString("language", instance.getLanguage());
-
         // 序列化黑白名单
         tag.put("access", instance.getAccess().writeToNBT());
         return tag;
@@ -86,6 +85,8 @@ public class PlayerTeleportDataStorage implements IStorage<IPlayerTeleportData> 
     public void readNBT(Capability<IPlayerTeleportData> capability, IPlayerTeleportData instance, Direction side, INBT nbt) {
         if (nbt instanceof CompoundNBT) {
             CompoundNBT nbtTag = (CompoundNBT) nbt;
+            instance.setNotified(nbtTag.getBoolean("notified"));
+
             instance.setLastCardTime(DateUtils.format(nbtTag.getString("lastCardTime")));
             instance.setLastTpTime(DateUtils.format(nbtTag.getString("lastTpTime")));
             instance.setTeleportCard(nbtTag.getInt("teleportCard"));
@@ -116,9 +117,6 @@ public class PlayerTeleportDataStorage implements IStorage<IPlayerTeleportData> 
                 defaultHome.put(defaultHomeTag.getString("key"), defaultHomeTag.getString("value"));
             }
             instance.setDefaultHome(defaultHome);
-
-            instance.setNotified(nbtTag.getBoolean("notified"));
-            instance.setLanguage(nbtTag.getString("language"));
 
             // 反序列化黑白名单
             instance.setAccess(PlayerAccess.readFromNBT(nbtTag.getCompound("access")));
