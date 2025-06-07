@@ -4,7 +4,7 @@ import lombok.Data;
 import lombok.NonNull;
 import lombok.experimental.Accessors;
 import net.minecraft.nbt.CompoundTag;
-import xin.vanilla.narcissus.enums.ETeleportType;
+import xin.vanilla.narcissus.enums.EnumTeleportType;
 import xin.vanilla.narcissus.util.DateUtils;
 
 import java.io.Serializable;
@@ -22,7 +22,7 @@ public class TeleportRecord implements Serializable, Cloneable {
      * 传送类型
      */
     @NonNull
-    private ETeleportType teleportType;
+    private EnumTeleportType teleportType;
     /**
      * 传送前的坐标
      */
@@ -34,7 +34,7 @@ public class TeleportRecord implements Serializable, Cloneable {
 
     public TeleportRecord() {
         this.teleportTime = new Date();
-        this.teleportType = ETeleportType.TP_ASK;
+        this.teleportType = EnumTeleportType.TP_ASK;
         this.before = new Coordinate();
         this.after = new Coordinate();
     }
@@ -57,7 +57,7 @@ public class TeleportRecord implements Serializable, Cloneable {
     public static TeleportRecord readFromNBT(CompoundTag tag) {
         TeleportRecord record = new TeleportRecord();
         record.teleportTime = DateUtils.format(tag.getString("teleportTime").orElse(DateUtils.toDateTimeString(new Date(0))));
-        record.teleportType = ETeleportType.valueOf(tag.getString("teleportType").orElse(ETeleportType.OTHER.name()));
+        record.teleportType = EnumTeleportType.valueOf(tag.getString("teleportType").orElse(EnumTeleportType.OTHER.name()));
         record.before = Coordinate.readFromNBT(tag.getCompound("before").orElse(new Coordinate().writeToNBT()));
         record.after = Coordinate.readFromNBT(tag.getCompound("after").orElse(new Coordinate().writeToNBT()));
         return record;

@@ -38,9 +38,7 @@ public class ClientModLoadedNotice implements CustomPacketPayload {
 
     public static void handle(ClientModLoadedNotice packet, IPayloadContext ctx) {
         if (ctx.flow().isServerbound()) {
-            // 获取网络事件上下文并排队执行工作
             ctx.enqueueWork(() -> {
-                // 获取发送数据包的玩家实体
                 if (ctx.player() instanceof ServerPlayer player) {
                     NarcissusFarewell.getPlayerCapabilityStatus().put(player.getStringUUID(), false);
                     // 同步玩家传送数据到客户端
