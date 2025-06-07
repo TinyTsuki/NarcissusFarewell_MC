@@ -40,6 +40,7 @@ public class NarcissusFarewell {
     public final static String DEFAULT_COMMAND_PREFIX = "narcissus";
 
     public static final String MODID = "narcissus_farewell";
+    public static final String ARTIFACT_ID = "xin.vanilla";
 
     private static final Logger LOGGER = LogManager.getLogger();
 
@@ -156,5 +157,12 @@ public class NarcissusFarewell {
     }
 
     // endregion 资源ID
+
+
+    // region 外部方法
+    public void reloadCustomConfig() {
+        CustomConfig.loadCustomConfig(false);
+    }
+    // endregion 外部方法
 
 }
