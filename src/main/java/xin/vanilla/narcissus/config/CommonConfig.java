@@ -24,7 +24,7 @@ public class CommonConfig {
     /**
      * 传送卡应用方式
      */
-    public static final ForgeConfigSpec.EnumValue<EnumCardType> TELEPORT_CARD_TYPE;
+    public static final ForgeConfigSpec.ConfigValue<String> TELEPORT_CARD_TYPE;
 
     /**
      * 是否禁用原版TP指令
@@ -519,7 +519,7 @@ public class CommonConfig {
                             "REFUND_COST_AND_COOLDOWN: 传送会消耗传送卡，按一比一比例抵消代价并抵消冷却时间。若传送卡不足，则收取对应代价。",
                             "REFUND_ALL_COST_AND_COOLDOWN: 传送会消耗传送卡，完全抵消所有代价和冷却时间。若传送卡不足，则收取对应代价。",
                             "若传送卡与代价都不足，则无法传送。若希望传送卡能够抵消代价但在不足时禁止传送，请在配置中将代价设置为零。")
-                    .defineEnum("teleportCardType", EnumCardType.REFUND_ALL_COST);
+                    .define("teleportCardType", EnumCardType.REFUND_ALL_COST.name());
 
             // 是否禁用原版TP指令
             REMOVE_ORIGINAL_TP = SERVER_BUILDER
@@ -1053,7 +1053,7 @@ public class CommonConfig {
     public static void resetConfig() {
         TELEPORT_CARD.set(false);
         TELEPORT_CARD_DAILY.set(0);
-        TELEPORT_CARD_TYPE.set(EnumCardType.REFUND_ALL_COST);
+        TELEPORT_CARD_TYPE.set(EnumCardType.REFUND_ALL_COST.name());
         REMOVE_ORIGINAL_TP.set(false);
 
         SWITCH_SHARE.set(true);
