@@ -5,6 +5,7 @@ import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.client.event.RegisterKeyMappingsEvent;
+import net.neoforged.neoforge.client.event.RegisterShadersEvent;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import xin.vanilla.narcissus.NarcissusFarewell;
@@ -31,7 +32,6 @@ public class ClientModEventHandler {
     /**
      * 注册键绑定
      */
-    @SubscribeEvent
     public static void registerKeyBindings(RegisterKeyMappingsEvent event) {
         // 注册键绑定
         LOGGER.debug("Registering key bindings");
@@ -39,5 +39,9 @@ public class ClientModEventHandler {
         event.register(TP_BACK_KEY);
         event.register(TP_REQ_YES);
         event.register(TP_REQ_NO);
+    }
+
+    @SubscribeEvent
+    public static void registerShaders(RegisterShadersEvent event) {
     }
 }
