@@ -10,7 +10,6 @@ import xin.vanilla.narcissus.enums.EnumCostType;
 import xin.vanilla.narcissus.enums.EnumTeleportType;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -440,10 +439,9 @@ public class ServerConfig {
                     .comment("The teleport back skip type."
                             , "传送回时忽略的传送类型。"
                             , "Allowed Values: " + EnumTeleportType.names())
-                    .defineInList("teleportBackSkipType", new ArrayList<>() {{
-                                add(EnumTeleportType.TP_BACK.name());
-                            }},
-                            Collections.singleton(EnumTeleportType.names()));
+                    .defineList("teleportBackSkipType", new ArrayList<>() {{
+                        add(EnumTeleportType.TP_BACK.name());
+                    }}, s -> s instanceof String);
 
             // 跨维度传送
             TELEPORT_ACROSS_DIMENSION = SERVER_BUILDER
