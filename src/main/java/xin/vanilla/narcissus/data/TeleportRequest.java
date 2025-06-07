@@ -5,7 +5,7 @@ import lombok.Setter;
 import lombok.experimental.Accessors;
 import net.minecraft.server.level.ServerPlayer;
 import xin.vanilla.narcissus.config.ServerConfig;
-import xin.vanilla.narcissus.enums.ETeleportType;
+import xin.vanilla.narcissus.enums.EnumTeleportType;
 import xin.vanilla.narcissus.util.DateUtils;
 
 import java.util.Date;
@@ -24,7 +24,7 @@ public class TeleportRequest {
     private Date requestTime;
     @Getter
     @Setter
-    private ETeleportType teleportType;
+    private EnumTeleportType teleportType;
     @Getter
     @Setter
     private boolean safe;
