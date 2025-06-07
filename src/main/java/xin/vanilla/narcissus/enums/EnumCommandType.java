@@ -119,14 +119,14 @@ public enum EnumCommandType {
         return this;
     }
 
-    public ETeleportType toTeleportType() {
+    public EnumTeleportType toTeleportType() {
         switch (this) {
             case TP_COORDINATE:
             case TP_COORDINATE_CONCISE:
-                return ETeleportType.TP_COORDINATE;
+                return EnumTeleportType.TP_COORDINATE;
             case TP_STRUCTURE:
             case TP_STRUCTURE_CONCISE:
-                return ETeleportType.TP_STRUCTURE;
+                return EnumTeleportType.TP_STRUCTURE;
             case TP_ASK:
                 // case TP_ASK_YES:
                 // case TP_ASK_NO:
@@ -135,7 +135,7 @@ public enum EnumCommandType {
                 // case TP_ASK_YES_CONCISE:
                 // case TP_ASK_NO_CONCISE:
                 // case TP_ASK_CANCEL_CONCISE:
-                return ETeleportType.TP_ASK;
+                return EnumTeleportType.TP_ASK;
             case TP_HERE:
                 // case TP_HERE_YES:
                 // case TP_HERE_NO:
@@ -144,33 +144,33 @@ public enum EnumCommandType {
                 // case TP_HERE_YES_CONCISE:
                 // case TP_HERE_NO_CONCISE:
                 // case TP_HERE_CANCEL_CONCISE:
-                return ETeleportType.TP_HERE;
+                return EnumTeleportType.TP_HERE;
             case TP_RANDOM:
             case TP_RANDOM_CONCISE:
-                return ETeleportType.TP_RANDOM;
+                return EnumTeleportType.TP_RANDOM;
             case TP_SPAWN:
             case TP_SPAWN_OTHER:
             case TP_SPAWN_CONCISE:
             case TP_SPAWN_OTHER_CONCISE:
-                return ETeleportType.TP_SPAWN;
+                return EnumTeleportType.TP_SPAWN;
             case TP_WORLD_SPAWN:
             case TP_WORLD_SPAWN_CONCISE:
-                return ETeleportType.TP_WORLD_SPAWN;
+                return EnumTeleportType.TP_WORLD_SPAWN;
             case TP_TOP:
             case TP_TOP_CONCISE:
-                return ETeleportType.TP_TOP;
+                return EnumTeleportType.TP_TOP;
             case TP_BOTTOM:
             case TP_BOTTOM_CONCISE:
-                return ETeleportType.TP_BOTTOM;
+                return EnumTeleportType.TP_BOTTOM;
             case TP_UP:
             case TP_UP_CONCISE:
-                return ETeleportType.TP_UP;
+                return EnumTeleportType.TP_UP;
             case TP_DOWN:
             case TP_DOWN_CONCISE:
-                return ETeleportType.TP_DOWN;
+                return EnumTeleportType.TP_DOWN;
             case TP_VIEW:
             case TP_VIEW_CONCISE:
-                return ETeleportType.TP_VIEW;
+                return EnumTeleportType.TP_VIEW;
             case TP_HOME:
                 // case SET_HOME:
                 // case DEL_HOME:
@@ -179,7 +179,7 @@ public enum EnumCommandType {
                 // case SET_HOME_CONCISE:
                 // case DEL_HOME_CONCISE:
                 // case GET_HOME_CONCISE:
-                return ETeleportType.TP_HOME;
+                return EnumTeleportType.TP_HOME;
             case TP_STAGE:
                 // case SET_STAGE:
                 // case DEL_STAGE:
@@ -188,10 +188,10 @@ public enum EnumCommandType {
                 // case SET_STAGE_CONCISE:
                 // case DEL_STAGE_CONCISE:
                 // case GET_STAGE_CONCISE:
-                return ETeleportType.TP_STAGE;
+                return EnumTeleportType.TP_STAGE;
             case TP_BACK:
             case TP_BACK_CONCISE:
-                return ETeleportType.TP_BACK;
+                return EnumTeleportType.TP_BACK;
             default:
                 return null;
         }
