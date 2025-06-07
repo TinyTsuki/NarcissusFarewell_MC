@@ -42,7 +42,7 @@ public class PlayerTeleportDataCapability {
     }
 
     /**
-     * 同步玩家传送数据到客户端
+     * 同步玩家数据到客户端
      */
     public static void syncPlayerData(ServerPlayer player) {
         // 创建自定义包并发送到客户端

@@ -18,15 +18,12 @@ public class TpBackNotice {
     }
 
     public static void handle(TpBackNotice packet, NetworkEvent.ServerCustomPayloadEvent.Context ctx) {
-        // 获取网络事件上下文并排队执行工作
         ctx.enqueueWork(() -> {
-            // 获取发送数据包的玩家实体
             ServerPlayer player = ctx.getSender();
             if (player != null) {
                 NarcissusUtils.executeCommand(player, NarcissusUtils.getCommand(EnumCommandType.TP_BACK));
             }
         });
-        // 设置数据包已处理状态，防止重复处理
         ctx.setPacketHandled(true);
     }
 }

@@ -3,15 +3,13 @@ package xin.vanilla.narcissus.data.player;
 import lombok.NonNull;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.world.entity.player.Player;
 import net.neoforged.neoforge.common.util.INBTSerializable;
 import xin.vanilla.narcissus.data.Coordinate;
 import xin.vanilla.narcissus.data.KeyValue;
 import xin.vanilla.narcissus.data.PlayerAccess;
 import xin.vanilla.narcissus.data.TeleportRecord;
-import xin.vanilla.narcissus.enums.ETeleportType;
+import xin.vanilla.narcissus.enums.EnumTeleportType;
 
-import javax.annotation.Nullable;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -20,6 +18,10 @@ import java.util.Map;
  * 玩家传送数据
  */
 public interface IPlayerTeleportData extends INBTSerializable<CompoundTag> {
+
+    boolean isNotified();
+
+    void setNotified(boolean notified);
 
     /**
      * 获取传送卡数量
@@ -81,7 +83,7 @@ public interface IPlayerTeleportData extends INBTSerializable<CompoundTag> {
      * 获取传送记录
      */
     @NonNull
-    List<TeleportRecord> getTeleportRecords(ETeleportType type);
+    List<TeleportRecord> getTeleportRecords(EnumTeleportType type);
 
     /**
      * 设置传送记录
@@ -109,29 +111,9 @@ public interface IPlayerTeleportData extends INBTSerializable<CompoundTag> {
 
     void setDefaultHome(Map<String, String> defaultHome);
 
-    /**
-     * 获取语言
-     */
-    String getLanguage();
-
-    /**
-     * 设置语言
-     */
-    void setLanguage(String language);
-
-    /**
-     * 获取有效的语言
-     */
-    @NonNull
-    String getValidLanguage(@Nullable Player player);
-
     void addDefaultHome(String key, String value);
 
     KeyValue<String, String> getDefaultHome(String key);
-
-    boolean isNotified();
-
-    void setNotified(boolean notified);
 
     PlayerAccess getAccess();
 
