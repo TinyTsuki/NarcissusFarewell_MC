@@ -5,12 +5,11 @@ import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.neoforged.neoforge.common.ModConfigSpec;
-import xin.vanilla.narcissus.enums.ETeleportType;
 import xin.vanilla.narcissus.enums.EnumCoolDownType;
 import xin.vanilla.narcissus.enums.EnumCostType;
+import xin.vanilla.narcissus.enums.EnumTeleportType;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -61,7 +60,7 @@ public class ServerConfig {
     /**
      * 传送请求冷却时间计算方式
      */
-    public static final ModConfigSpec.EnumValue<EnumCoolDownType> TELEPORT_REQUEST_COOLDOWN_TYPE;
+    public static final ModConfigSpec.ConfigValue<String> TELEPORT_REQUEST_COOLDOWN_TYPE;
 
     /**
      * 传送请求冷却时间
@@ -335,7 +334,7 @@ public class ServerConfig {
     /**
      * 代价类型
      */
-    public static final ModConfigSpec.EnumValue<EnumCostType> COST_TP_COORDINATE_TYPE;
+    public static final ModConfigSpec.ConfigValue<String> COST_TP_COORDINATE_TYPE;
     /**
      * 代价数量
      */
@@ -349,72 +348,72 @@ public class ServerConfig {
      */
     public static final ModConfigSpec.DoubleValue COST_TP_COORDINATE_RATE;
 
-    public static final ModConfigSpec.EnumValue<EnumCostType> COST_TP_STRUCTURE_TYPE;
+    public static final ModConfigSpec.ConfigValue<String> COST_TP_STRUCTURE_TYPE;
     public static final ModConfigSpec.IntValue COST_TP_STRUCTURE_NUM;
     public static final ModConfigSpec.ConfigValue<String> COST_TP_STRUCTURE_CONF;
     public static final ModConfigSpec.DoubleValue COST_TP_STRUCTURE_RATE;
 
-    public static final ModConfigSpec.EnumValue<EnumCostType> COST_TP_ASK_TYPE;
+    public static final ModConfigSpec.ConfigValue<String> COST_TP_ASK_TYPE;
     public static final ModConfigSpec.IntValue COST_TP_ASK_NUM;
     public static final ModConfigSpec.ConfigValue<String> COST_TP_ASK_CONF;
     public static final ModConfigSpec.DoubleValue COST_TP_ASK_RATE;
 
-    public static final ModConfigSpec.EnumValue<EnumCostType> COST_TP_HERE_TYPE;
+    public static final ModConfigSpec.ConfigValue<String> COST_TP_HERE_TYPE;
     public static final ModConfigSpec.IntValue COST_TP_HERE_NUM;
     public static final ModConfigSpec.ConfigValue<String> COST_TP_HERE_CONF;
     public static final ModConfigSpec.DoubleValue COST_TP_HERE_RATE;
 
-    public static final ModConfigSpec.EnumValue<EnumCostType> COST_TP_RANDOM_TYPE;
+    public static final ModConfigSpec.ConfigValue<String> COST_TP_RANDOM_TYPE;
     public static final ModConfigSpec.IntValue COST_TP_RANDOM_NUM;
     public static final ModConfigSpec.ConfigValue<String> COST_TP_RANDOM_CONF;
     public static final ModConfigSpec.DoubleValue COST_TP_RANDOM_RATE;
 
-    public static final ModConfigSpec.EnumValue<EnumCostType> COST_TP_SPAWN_TYPE;
+    public static final ModConfigSpec.ConfigValue<String> COST_TP_SPAWN_TYPE;
     public static final ModConfigSpec.IntValue COST_TP_SPAWN_NUM;
     public static final ModConfigSpec.ConfigValue<String> COST_TP_SPAWN_CONF;
     public static final ModConfigSpec.DoubleValue COST_TP_SPAWN_RATE;
 
-    public static final ModConfigSpec.EnumValue<EnumCostType> COST_TP_WORLD_SPAWN_TYPE;
+    public static final ModConfigSpec.ConfigValue<String> COST_TP_WORLD_SPAWN_TYPE;
     public static final ModConfigSpec.IntValue COST_TP_WORLD_SPAWN_NUM;
     public static final ModConfigSpec.ConfigValue<String> COST_TP_WORLD_SPAWN_CONF;
     public static final ModConfigSpec.DoubleValue COST_TP_WORLD_SPAWN_RATE;
 
-    public static final ModConfigSpec.EnumValue<EnumCostType> COST_TP_TOP_TYPE;
+    public static final ModConfigSpec.ConfigValue<String> COST_TP_TOP_TYPE;
     public static final ModConfigSpec.IntValue COST_TP_TOP_NUM;
     public static final ModConfigSpec.ConfigValue<String> COST_TP_TOP_CONF;
     public static final ModConfigSpec.DoubleValue COST_TP_TOP_RATE;
 
-    public static final ModConfigSpec.EnumValue<EnumCostType> COST_TP_BOTTOM_TYPE;
+    public static final ModConfigSpec.ConfigValue<String> COST_TP_BOTTOM_TYPE;
     public static final ModConfigSpec.IntValue COST_TP_BOTTOM_NUM;
     public static final ModConfigSpec.ConfigValue<String> COST_TP_BOTTOM_CONF;
     public static final ModConfigSpec.DoubleValue COST_TP_BOTTOM_RATE;
 
-    public static final ModConfigSpec.EnumValue<EnumCostType> COST_TP_UP_TYPE;
+    public static final ModConfigSpec.ConfigValue<String> COST_TP_UP_TYPE;
     public static final ModConfigSpec.IntValue COST_TP_UP_NUM;
     public static final ModConfigSpec.ConfigValue<String> COST_TP_UP_CONF;
     public static final ModConfigSpec.DoubleValue COST_TP_UP_RATE;
 
-    public static final ModConfigSpec.EnumValue<EnumCostType> COST_TP_DOWN_TYPE;
+    public static final ModConfigSpec.ConfigValue<String> COST_TP_DOWN_TYPE;
     public static final ModConfigSpec.IntValue COST_TP_DOWN_NUM;
     public static final ModConfigSpec.ConfigValue<String> COST_TP_DOWN_CONF;
     public static final ModConfigSpec.DoubleValue COST_TP_DOWN_RATE;
 
-    public static final ModConfigSpec.EnumValue<EnumCostType> COST_TP_VIEW_TYPE;
+    public static final ModConfigSpec.ConfigValue<String> COST_TP_VIEW_TYPE;
     public static final ModConfigSpec.IntValue COST_TP_VIEW_NUM;
     public static final ModConfigSpec.ConfigValue<String> COST_TP_VIEW_CONF;
     public static final ModConfigSpec.DoubleValue COST_TP_VIEW_RATE;
 
-    public static final ModConfigSpec.EnumValue<EnumCostType> COST_TP_HOME_TYPE;
+    public static final ModConfigSpec.ConfigValue<String> COST_TP_HOME_TYPE;
     public static final ModConfigSpec.IntValue COST_TP_HOME_NUM;
     public static final ModConfigSpec.ConfigValue<String> COST_TP_HOME_CONF;
     public static final ModConfigSpec.DoubleValue COST_TP_HOME_RATE;
 
-    public static final ModConfigSpec.EnumValue<EnumCostType> COST_TP_STAGE_TYPE;
+    public static final ModConfigSpec.ConfigValue<String> COST_TP_STAGE_TYPE;
     public static final ModConfigSpec.IntValue COST_TP_STAGE_NUM;
     public static final ModConfigSpec.ConfigValue<String> COST_TP_STAGE_CONF;
     public static final ModConfigSpec.DoubleValue COST_TP_STAGE_RATE;
 
-    public static final ModConfigSpec.EnumValue<EnumCostType> COST_TP_BACK_TYPE;
+    public static final ModConfigSpec.ConfigValue<String> COST_TP_BACK_TYPE;
     public static final ModConfigSpec.IntValue COST_TP_BACK_NUM;
     public static final ModConfigSpec.ConfigValue<String> COST_TP_BACK_CONF;
     public static final ModConfigSpec.DoubleValue COST_TP_BACK_RATE;
@@ -438,11 +437,10 @@ public class ServerConfig {
             TELEPORT_BACK_SKIP_TYPE = SERVER_BUILDER
                     .comment("The teleport back skip type."
                             , "传送回时忽略的传送类型。"
-                            , "Allowed Values: " + ETeleportType.names())
-                    .defineInList("teleportBackSkipType", new ArrayList<>() {{
-                                add(ETeleportType.TP_BACK.name());
-                            }},
-                            Collections.singleton(ETeleportType.names()));
+                            , "Allowed Values: " + EnumTeleportType.names())
+                    .defineList("teleportBackSkipType", new ArrayList<>() {{
+                        add(EnumTeleportType.TP_BACK.name());
+                    }}, s -> s instanceof String);
 
             // 跨维度传送
             TELEPORT_ACROSS_DIMENSION = SERVER_BUILDER
@@ -487,7 +485,7 @@ public class ServerConfig {
                             "INDIVIDUAL：每个指令有单独的冷却时间，由指令自身管理。",
                             "MIXED：结合两种方式，同时使用全局冷却时间和单独冷却时间。"
                     )
-                    .defineEnum("teleportRequestCooldownType", EnumCoolDownType.INDIVIDUAL);
+                    .define("teleportRequestCooldownType", EnumCoolDownType.INDIVIDUAL.name());
 
             // 传送请求冷却时间
             TELEPORT_REQUEST_COOLDOWN = SERVER_BUILDER
@@ -908,8 +906,9 @@ public class ServerConfig {
             {
                 COST_TP_COORDINATE_TYPE = SERVER_BUILDER
                         .comment("The cost type for 'Teleport to the specified coordinates'"
-                                , "传送到指定坐标的代价类型。")
-                        .defineEnum("costTpCoordinateType", EnumCostType.NONE);
+                                , "传送到指定坐标的代价类型。"
+                                , "Allowed Values: NONE, EXP_POINT, EXP_LEVEL, HEALTH, HUNGER, ITEM, COMMAND")
+                        .define("costTpCoordinateType", EnumCostType.NONE.name());
 
                 COST_TP_COORDINATE_NUM = SERVER_BUILDER
                         .comment("The number of cost for 'Teleport to the specified coordinates'"
@@ -938,8 +937,9 @@ public class ServerConfig {
             {
                 COST_TP_STRUCTURE_TYPE = SERVER_BUILDER
                         .comment("The cost type for 'Teleport to the specified structure'"
-                                , "传送到指定结构的代价类型。")
-                        .defineEnum("costTpStructureType", EnumCostType.NONE);
+                                , "传送到指定结构的代价类型。"
+                                , "Allowed Values: NONE, EXP_POINT, EXP_LEVEL, HEALTH, HUNGER, ITEM, COMMAND")
+                        .define("costTpStructureType", EnumCostType.NONE.name());
 
                 COST_TP_STRUCTURE_NUM = SERVER_BUILDER
                         .comment("The number of cost for 'Teleport to the specified structure'"
@@ -968,8 +968,9 @@ public class ServerConfig {
             {
                 COST_TP_ASK_TYPE = SERVER_BUILDER
                         .comment("The cost type for 'Request to teleport oneself to other players'"
-                                , "请求传送至玩家的代价类型。")
-                        .defineEnum("costTpAskType", EnumCostType.NONE);
+                                , "请求传送至玩家的代价类型。"
+                                , "Allowed Values: NONE, EXP_POINT, EXP_LEVEL, HEALTH, HUNGER, ITEM, COMMAND")
+                        .define("costTpAskType", EnumCostType.NONE.name());
 
                 COST_TP_ASK_NUM = SERVER_BUILDER
                         .comment("The number of cost for 'Request to teleport oneself to other players'"
@@ -998,8 +999,9 @@ public class ServerConfig {
             {
                 COST_TP_HERE_TYPE = SERVER_BUILDER
                         .comment("The cost type for 'Request the transfer of other players to oneself'"
-                                , "请求将玩家传送至当前位置的代价类型。")
-                        .defineEnum("costTpHereType", EnumCostType.NONE);
+                                , "请求将玩家传送至当前位置的代价类型。"
+                                , "Allowed Values: NONE, EXP_POINT, EXP_LEVEL, HEALTH, HUNGER, ITEM, COMMAND")
+                        .define("costTpHereType", EnumCostType.NONE.name());
 
                 COST_TP_HERE_NUM = SERVER_BUILDER
                         .comment("The number of cost for 'Request the transfer of other players to oneself'"
@@ -1028,8 +1030,9 @@ public class ServerConfig {
             {
                 COST_TP_RANDOM_TYPE = SERVER_BUILDER
                         .comment("The cost type for 'Teleport to a random location'"
-                                , "随机传送的代价类型。")
-                        .defineEnum("costTpRandomType", EnumCostType.NONE);
+                                , "随机传送的代价类型。"
+                                , "Allowed Values: NONE, EXP_POINT, EXP_LEVEL, HEALTH, HUNGER, ITEM, COMMAND")
+                        .define("costTpRandomType", EnumCostType.NONE.name());
 
                 COST_TP_RANDOM_NUM = SERVER_BUILDER
                         .comment("The number of cost for 'Teleport to a random location'"
@@ -1058,8 +1061,9 @@ public class ServerConfig {
             {
                 COST_TP_SPAWN_TYPE = SERVER_BUILDER
                         .comment("The cost type for 'Teleport to the spawn of the player'"
-                                , "传送到玩家重生点的代价类型。")
-                        .defineEnum("costTpSpawnType", EnumCostType.NONE);
+                                , "传送到玩家重生点的代价类型。"
+                                , "Allowed Values: NONE, EXP_POINT, EXP_LEVEL, HEALTH, HUNGER, ITEM, COMMAND")
+                        .define("costTpSpawnType", EnumCostType.NONE.name());
 
                 COST_TP_SPAWN_NUM = SERVER_BUILDER
                         .comment("The number of cost for 'Teleport to the spawn of the player'"
@@ -1088,8 +1092,9 @@ public class ServerConfig {
             {
                 COST_TP_WORLD_SPAWN_TYPE = SERVER_BUILDER
                         .comment("The cost type for 'Teleport to the spawn of the world'"
-                                , "传送到世界重生点的代价类型。")
-                        .defineEnum("costTpWorldSpawnType", EnumCostType.NONE);
+                                , "传送到世界重生点的代价类型。"
+                                , "Allowed Values: NONE, EXP_POINT, EXP_LEVEL, HEALTH, HUNGER, ITEM, COMMAND")
+                        .define("costTpWorldSpawnType", EnumCostType.NONE.name());
 
                 COST_TP_WORLD_SPAWN_NUM = SERVER_BUILDER
                         .comment("The number of cost for 'Teleport to the spawn of the world'"
@@ -1118,8 +1123,9 @@ public class ServerConfig {
             {
                 COST_TP_TOP_TYPE = SERVER_BUILDER
                         .comment("The cost type for 'Teleport to the top of current position'"
-                                , "传送到顶部的代价类型。")
-                        .defineEnum("costTpTopType", EnumCostType.NONE);
+                                , "传送到顶部的代价类型。"
+                                , "Allowed Values: NONE, EXP_POINT, EXP_LEVEL, HEALTH, HUNGER, ITEM, COMMAND")
+                        .define("costTpTopType", EnumCostType.NONE.name());
 
                 COST_TP_TOP_NUM = SERVER_BUILDER
                         .comment("The number of cost for 'Teleport to the top of current position'"
@@ -1149,7 +1155,7 @@ public class ServerConfig {
                 COST_TP_BOTTOM_TYPE = SERVER_BUILDER
                         .comment("The cost type for 'Teleport to the bottom of current position'"
                                 , "传送到底部的代价类型。")
-                        .defineEnum("costTpBottomType", EnumCostType.NONE);
+                        .define("costTpBottomType", EnumCostType.NONE.name());
 
                 COST_TP_BOTTOM_NUM = SERVER_BUILDER
                         .comment("The number of cost for 'Teleport to the bottom of current position'"
@@ -1178,8 +1184,9 @@ public class ServerConfig {
             {
                 COST_TP_UP_TYPE = SERVER_BUILDER
                         .comment("The cost type for 'Teleport to the upper of current position'"
-                                , "传送到上方的代价类型。")
-                        .defineEnum("costTpUpType", EnumCostType.NONE);
+                                , "传送到上方的代价类型。"
+                                , "Allowed Values: NONE, EXP_POINT, EXP_LEVEL, HEALTH, HUNGER, ITEM, COMMAND")
+                        .define("costTpUpType", EnumCostType.NONE.name());
 
                 COST_TP_UP_NUM = SERVER_BUILDER
                         .comment("The number of cost for 'Teleport to the upper of current position'"
@@ -1208,8 +1215,9 @@ public class ServerConfig {
             {
                 COST_TP_DOWN_TYPE = SERVER_BUILDER
                         .comment("The cost type for 'Teleport to the lower of current position'"
-                                , "传送到下方的代价类型。")
-                        .defineEnum("costTpDownType", EnumCostType.NONE);
+                                , "传送到下方的代价类型。"
+                                , "Allowed Values: NONE, EXP_POINT, EXP_LEVEL, HEALTH, HUNGER, ITEM, COMMAND")
+                        .define("costTpDownType", EnumCostType.NONE.name());
 
                 COST_TP_DOWN_NUM = SERVER_BUILDER
                         .comment("The number of cost for 'Teleport to the lower of current position'"
@@ -1238,8 +1246,9 @@ public class ServerConfig {
             {
                 COST_TP_VIEW_TYPE = SERVER_BUILDER
                         .comment("The cost type for 'Teleport to the end of the line of sight'"
-                                , "传送至视线尽头的代价类型。")
-                        .defineEnum("costTpViewType", EnumCostType.NONE);
+                                , "传送至视线尽头的代价类型。"
+                                , "Allowed Values: NONE, EXP_POINT, EXP_LEVEL, HEALTH, HUNGER, ITEM, COMMAND")
+                        .define("costTpViewType", EnumCostType.NONE.name());
 
                 COST_TP_VIEW_NUM = SERVER_BUILDER
                         .comment("The number of cost for 'Teleport to the end of the line of sight'"
@@ -1268,8 +1277,9 @@ public class ServerConfig {
             {
                 COST_TP_HOME_TYPE = SERVER_BUILDER
                         .comment("The cost type for 'Teleport to the home'"
-                                , "传送到家的代价类型。")
-                        .defineEnum("costTpHomeType", EnumCostType.NONE);
+                                , "传送到家的代价类型。"
+                                , "Allowed Values: NONE, EXP_POINT, EXP_LEVEL, HEALTH, HUNGER, ITEM, COMMAND")
+                        .define("costTpHomeType", EnumCostType.NONE.name());
 
                 COST_TP_HOME_NUM = SERVER_BUILDER
                         .comment("The number of cost for 'Teleport to the home'"
@@ -1298,8 +1308,9 @@ public class ServerConfig {
             {
                 COST_TP_STAGE_TYPE = SERVER_BUILDER
                         .comment("The cost type for 'Teleport to the stage'"
-                                , "传送到驿站的代价类型。")
-                        .defineEnum("costTpStageType", EnumCostType.NONE);
+                                , "传送到驿站的代价类型。"
+                                , "Allowed Values: NONE, EXP_POINT, EXP_LEVEL, HEALTH, HUNGER, ITEM, COMMAND")
+                        .define("costTpStageType", EnumCostType.NONE.name());
 
                 COST_TP_STAGE_NUM = SERVER_BUILDER
                         .comment("The number of cost for 'Teleport to the stage'"
@@ -1328,8 +1339,9 @@ public class ServerConfig {
             {
                 COST_TP_BACK_TYPE = SERVER_BUILDER
                         .comment("The cost type for 'Teleport to the previous location'"
-                                , "传送到上次传送点的代价类型。")
-                        .defineEnum("costTpBackType", EnumCostType.NONE);
+                                , "传送到上次传送点的代价类型。"
+                                , "Allowed Values: NONE, EXP_POINT, EXP_LEVEL, HEALTH, HUNGER, ITEM, COMMAND")
+                        .define("costTpBackType", EnumCostType.NONE.name());
 
                 COST_TP_BACK_NUM = SERVER_BUILDER
                         .comment("The number of cost for 'Teleport to the previous location'"
@@ -1366,14 +1378,14 @@ public class ServerConfig {
     public static void resetConfig() {
         TELEPORT_RECORD_LIMIT.set(100);
         TELEPORT_BACK_SKIP_TYPE.set(new ArrayList<>() {{
-            add(ETeleportType.TP_BACK.name());
+            add(EnumTeleportType.TP_BACK.name());
         }});
         TELEPORT_ACROSS_DIMENSION.set(true);
         TELEPORT_COST_DISTANCE_LIMIT.set(10000);
         TELEPORT_COST_DISTANCE_ACROSS_DIMENSION.set(10000);
         TELEPORT_VIEW_DISTANCE_LIMIT.set(16 * 64);
         TELEPORT_REQUEST_EXPIRE_TIME.set(60);
-        TELEPORT_REQUEST_COOLDOWN_TYPE.set(EnumCoolDownType.INDIVIDUAL);
+        TELEPORT_REQUEST_COOLDOWN_TYPE.set(EnumCoolDownType.INDIVIDUAL.name());
         TELEPORT_REQUEST_COOLDOWN.set(10);
         TELEPORT_RANDOM_DISTANCE_LIMIT.set(10000);
         TELEPORT_HOME_LIMIT.set(5);
@@ -1469,63 +1481,63 @@ public class ServerConfig {
         COOLDOWN_TP_STAGE.set(10);
         COOLDOWN_TP_BACK.set(10);
 
-        COST_TP_COORDINATE_TYPE.set(EnumCostType.NONE);
+        COST_TP_COORDINATE_TYPE.set(EnumCostType.NONE.name());
         COST_TP_COORDINATE_NUM.set(1);
         COST_TP_COORDINATE_CONF.set("");
         COST_TP_COORDINATE_RATE.set(0.001);
-        COST_TP_STRUCTURE_TYPE.set(EnumCostType.NONE);
+        COST_TP_STRUCTURE_TYPE.set(EnumCostType.NONE.name());
         COST_TP_STRUCTURE_NUM.set(1);
         COST_TP_STRUCTURE_CONF.set("");
         COST_TP_STRUCTURE_RATE.set(0.001);
-        COST_TP_ASK_TYPE.set(EnumCostType.NONE);
+        COST_TP_ASK_TYPE.set(EnumCostType.NONE.name());
         COST_TP_ASK_NUM.set(1);
         COST_TP_ASK_CONF.set("");
         COST_TP_ASK_RATE.set(0.001);
-        COST_TP_HERE_TYPE.set(EnumCostType.NONE);
+        COST_TP_HERE_TYPE.set(EnumCostType.NONE.name());
         COST_TP_HERE_NUM.set(1);
         COST_TP_HERE_CONF.set("");
         COST_TP_HERE_RATE.set(0.001);
-        COST_TP_RANDOM_TYPE.set(EnumCostType.NONE);
+        COST_TP_RANDOM_TYPE.set(EnumCostType.NONE.name());
         COST_TP_RANDOM_NUM.set(1);
         COST_TP_RANDOM_CONF.set("");
         COST_TP_RANDOM_RATE.set(0.001);
-        COST_TP_SPAWN_TYPE.set(EnumCostType.NONE);
+        COST_TP_SPAWN_TYPE.set(EnumCostType.NONE.name());
         COST_TP_SPAWN_NUM.set(1);
         COST_TP_SPAWN_CONF.set("");
         COST_TP_SPAWN_RATE.set(0.001);
-        COST_TP_WORLD_SPAWN_TYPE.set(EnumCostType.NONE);
+        COST_TP_WORLD_SPAWN_TYPE.set(EnumCostType.NONE.name());
         COST_TP_WORLD_SPAWN_NUM.set(1);
         COST_TP_WORLD_SPAWN_CONF.set("");
         COST_TP_WORLD_SPAWN_RATE.set(0.001);
-        COST_TP_TOP_TYPE.set(EnumCostType.NONE);
+        COST_TP_TOP_TYPE.set(EnumCostType.NONE.name());
         COST_TP_TOP_NUM.set(1);
         COST_TP_TOP_CONF.set("");
         COST_TP_TOP_RATE.set(0.001);
-        COST_TP_BOTTOM_TYPE.set(EnumCostType.NONE);
+        COST_TP_BOTTOM_TYPE.set(EnumCostType.NONE.name());
         COST_TP_BOTTOM_NUM.set(1);
         COST_TP_BOTTOM_CONF.set("");
         COST_TP_BOTTOM_RATE.set(0.001);
-        COST_TP_UP_TYPE.set(EnumCostType.NONE);
+        COST_TP_UP_TYPE.set(EnumCostType.NONE.name());
         COST_TP_UP_NUM.set(1);
         COST_TP_UP_CONF.set("");
         COST_TP_UP_RATE.set(0.001);
-        COST_TP_DOWN_TYPE.set(EnumCostType.NONE);
+        COST_TP_DOWN_TYPE.set(EnumCostType.NONE.name());
         COST_TP_DOWN_NUM.set(1);
         COST_TP_DOWN_CONF.set("");
         COST_TP_DOWN_RATE.set(0.001);
-        COST_TP_VIEW_TYPE.set(EnumCostType.NONE);
+        COST_TP_VIEW_TYPE.set(EnumCostType.NONE.name());
         COST_TP_VIEW_NUM.set(1);
         COST_TP_VIEW_CONF.set("");
         COST_TP_VIEW_RATE.set(0.001);
-        COST_TP_HOME_TYPE.set(EnumCostType.NONE);
+        COST_TP_HOME_TYPE.set(EnumCostType.NONE.name());
         COST_TP_HOME_NUM.set(1);
         COST_TP_HOME_CONF.set("");
         COST_TP_HOME_RATE.set(0.001);
-        COST_TP_STAGE_TYPE.set(EnumCostType.NONE);
+        COST_TP_STAGE_TYPE.set(EnumCostType.NONE.name());
         COST_TP_STAGE_NUM.set(1);
         COST_TP_STAGE_CONF.set("");
         COST_TP_STAGE_RATE.set(0.001);
-        COST_TP_BACK_TYPE.set(EnumCostType.NONE);
+        COST_TP_BACK_TYPE.set(EnumCostType.NONE.name());
         COST_TP_BACK_NUM.set(1);
         COST_TP_BACK_CONF.set("");
         COST_TP_BACK_RATE.set(0.001);
@@ -1564,22 +1576,22 @@ public class ServerConfig {
     public static void resetConfigWithMode3() {
         resetConfig();
 
-        COST_TP_COORDINATE_TYPE.set(EnumCostType.EXP_POINT);
-        COST_TP_COORDINATE_TYPE.set(EnumCostType.EXP_POINT);
-        COST_TP_STRUCTURE_TYPE.set(EnumCostType.EXP_POINT);
-        COST_TP_ASK_TYPE.set(EnumCostType.EXP_POINT);
-        COST_TP_HERE_TYPE.set(EnumCostType.EXP_POINT);
-        COST_TP_RANDOM_TYPE.set(EnumCostType.EXP_POINT);
-        COST_TP_SPAWN_TYPE.set(EnumCostType.EXP_POINT);
-        COST_TP_WORLD_SPAWN_TYPE.set(EnumCostType.EXP_POINT);
-        COST_TP_TOP_TYPE.set(EnumCostType.EXP_POINT);
-        COST_TP_BOTTOM_TYPE.set(EnumCostType.EXP_POINT);
-        COST_TP_UP_TYPE.set(EnumCostType.EXP_POINT);
-        COST_TP_DOWN_TYPE.set(EnumCostType.EXP_POINT);
-        COST_TP_VIEW_TYPE.set(EnumCostType.EXP_POINT);
-        COST_TP_HOME_TYPE.set(EnumCostType.EXP_POINT);
-        COST_TP_STAGE_TYPE.set(EnumCostType.EXP_POINT);
-        COST_TP_BACK_TYPE.set(EnumCostType.HUNGER);
+        COST_TP_COORDINATE_TYPE.set(EnumCostType.EXP_POINT.name());
+        COST_TP_COORDINATE_TYPE.set(EnumCostType.EXP_POINT.name());
+        COST_TP_STRUCTURE_TYPE.set(EnumCostType.EXP_POINT.name());
+        COST_TP_ASK_TYPE.set(EnumCostType.EXP_POINT.name());
+        COST_TP_HERE_TYPE.set(EnumCostType.EXP_POINT.name());
+        COST_TP_RANDOM_TYPE.set(EnumCostType.EXP_POINT.name());
+        COST_TP_SPAWN_TYPE.set(EnumCostType.EXP_POINT.name());
+        COST_TP_WORLD_SPAWN_TYPE.set(EnumCostType.EXP_POINT.name());
+        COST_TP_TOP_TYPE.set(EnumCostType.EXP_POINT.name());
+        COST_TP_BOTTOM_TYPE.set(EnumCostType.EXP_POINT.name());
+        COST_TP_UP_TYPE.set(EnumCostType.EXP_POINT.name());
+        COST_TP_DOWN_TYPE.set(EnumCostType.EXP_POINT.name());
+        COST_TP_VIEW_TYPE.set(EnumCostType.EXP_POINT.name());
+        COST_TP_HOME_TYPE.set(EnumCostType.EXP_POINT.name());
+        COST_TP_STAGE_TYPE.set(EnumCostType.EXP_POINT.name());
+        COST_TP_BACK_TYPE.set(EnumCostType.HUNGER.name());
 
         SERVER_CONFIG.save();
     }
