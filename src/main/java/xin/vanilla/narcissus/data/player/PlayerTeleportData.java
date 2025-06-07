@@ -6,19 +6,16 @@ import lombok.Setter;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.world.entity.player.Player;
 import net.neoforged.neoforge.common.util.INBTSerializable;
 import xin.vanilla.narcissus.config.ServerConfig;
 import xin.vanilla.narcissus.data.Coordinate;
 import xin.vanilla.narcissus.data.KeyValue;
 import xin.vanilla.narcissus.data.PlayerAccess;
 import xin.vanilla.narcissus.data.TeleportRecord;
-import xin.vanilla.narcissus.enums.ETeleportType;
+import xin.vanilla.narcissus.enums.EnumTeleportType;
 import xin.vanilla.narcissus.util.CollectionUtils;
 import xin.vanilla.narcissus.util.DateUtils;
-import xin.vanilla.narcissus.util.NarcissusUtils;
 
-import javax.annotation.Nullable;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
@@ -33,9 +30,6 @@ public class PlayerTeleportData implements INBTSerializable<CompoundTag> {
     @Getter
     @Setter
     private boolean notified;
-    @Setter
-    @Getter
-    private String language = "client";
     @Setter
     private Date lastCardTime;
     @Setter
@@ -95,7 +89,7 @@ public class PlayerTeleportData implements INBTSerializable<CompoundTag> {
         return this.teleportRecords = CollectionUtils.isNullOrEmpty(this.teleportRecords) ? new ArrayList<>() : this.teleportRecords;
     }
 
-    public @NonNull List<TeleportRecord> getTeleportRecords(ETeleportType type) {
+    public @NonNull List<TeleportRecord> getTeleportRecords(EnumTeleportType type) {
         return CollectionUtils.isNullOrEmpty(this.teleportRecords) ? this.teleportRecords = new ArrayList<>() :
                 this.teleportRecords.stream().filter(record -> record.getTeleportType() == type).collect(Collectors.toList());
     }
@@ -122,11 +116,6 @@ public class PlayerTeleportData implements INBTSerializable<CompoundTag> {
         return this.defaultHome = this.defaultHome == null ? new HashMap<>() : this.defaultHome;
     }
 
-    @NonNull
-    public String getValidLanguage(@Nullable Player player) {
-        return NarcissusUtils.getValidLanguage(player, this.getLanguage());
-    }
-
     public void addDefaultHome(String key, String value) {
         this.getDefaultHome().put(key, value);
     }
@@ -143,6 +132,7 @@ public class PlayerTeleportData implements INBTSerializable<CompoundTag> {
     }
 
     public void writeToBuffer(FriendlyByteBuf buffer) {
+        buffer.writeBoolean(this.notified);
         buffer.writeUtf(DateUtils.toDateTimeString(this.getLastCardTime()));
         buffer.writeUtf(DateUtils.toDateTimeString(this.getLastTpTime()));
         buffer.writeInt(this.getTeleportCard());
@@ -165,13 +155,11 @@ public class PlayerTeleportData implements INBTSerializable<CompoundTag> {
             buffer.writeUtf(entry.getValue());
         }
 
-        buffer.writeBoolean(this.notified);
-        buffer.writeUtf(this.getLanguage());
-
         buffer.writeNbt(this.getAccess().writeToNBT());
     }
 
     public void readFromBuffer(FriendlyByteBuf buffer) {
+        this.notified = buffer.readBoolean();
         this.lastCardTime = DateUtils.format(buffer.readUtf());
         this.lastTpTime = DateUtils.format(buffer.readUtf());
         this.teleportCard.set(buffer.readInt());
@@ -191,27 +179,24 @@ public class PlayerTeleportData implements INBTSerializable<CompoundTag> {
             this.defaultHome.put(buffer.readUtf(), buffer.readUtf());
         }
 
-        this.notified = buffer.readBoolean();
-        this.language = buffer.readUtf();
-
         this.access = PlayerAccess.readFromNBT(Objects.requireNonNull(buffer.readNbt()));
     }
 
     public void copyFrom(PlayerTeleportData capability) {
+        this.notified = capability.isNotified();
         this.lastCardTime = capability.getLastCardTime();
         this.lastTpTime = capability.getLastTpTime();
         this.teleportCard.set(capability.getTeleportCard());
         this.teleportRecords = capability.getTeleportRecords();
         this.homeCoordinate = capability.getHomeCoordinate();
         this.defaultHome = capability.getDefaultHome();
-        this.notified = capability.isNotified();
-        this.language = capability.getLanguage();
         this.access = capability.getAccess();
     }
 
     @Override
     public CompoundTag serializeNBT() {
         CompoundTag tag = new CompoundTag();
+        tag.putBoolean("notified", this.notified);
         tag.putString("lastCardTime", DateUtils.toDateTimeString(this.getLastCardTime()));
         tag.putString("lastTpTime", DateUtils.toDateTimeString(this.getLastTpTime()));
         tag.putInt("teleportCard", this.getTeleportCard());
@@ -244,9 +229,6 @@ public class PlayerTeleportData implements INBTSerializable<CompoundTag> {
         }
         tag.put("defaultHome", defaultHomeNBT);
 
-        tag.putBoolean("notified", this.notified);
-        tag.putString("language", this.getLanguage());
-
         // 序列化黑白名单
         tag.put("access", this.getAccess().writeToNBT());
 
@@ -255,6 +237,7 @@ public class PlayerTeleportData implements INBTSerializable<CompoundTag> {
 
     @Override
     public void deserializeNBT(CompoundTag nbt) {
+        this.notified = nbt.getBoolean("notified");
         this.setLastCardTime(DateUtils.format(nbt.getString("lastCardTime")));
         this.setLastTpTime(DateUtils.format(nbt.getString("lastTpTime")));
         this.setTeleportCard(nbt.getInt("teleportCard"));
@@ -285,9 +268,6 @@ public class PlayerTeleportData implements INBTSerializable<CompoundTag> {
             defaultHome.put(defaultHomeTag.getString("key"), defaultHomeTag.getString("value"));
         }
         this.setDefaultHome(defaultHome);
-
-        this.notified = nbt.getBoolean("notified");
-        this.setLanguage(nbt.getString("language"));
 
         // 反序列化黑白名单
         this.setAccess(PlayerAccess.readFromNBT(nbt.getCompound("access")));

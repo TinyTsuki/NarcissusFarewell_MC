@@ -29,9 +29,7 @@ public class TpHomeNotice implements CustomPacketPayload {
 
     public static void handle(TpHomeNotice packet, IPayloadContext ctx) {
         if (ctx.flow().isServerbound()) {
-            // 获取网络事件上下文并排队执行工作
             ctx.workHandler().execute(() -> {
-                // 获取发送数据包的玩家实体
                 ctx.player().ifPresent(player -> {
                             if (player instanceof ServerPlayer) {
                                 NarcissusUtils.executeCommand((ServerPlayer) player, NarcissusUtils.getCommand(EnumCommandType.TP_HOME));
