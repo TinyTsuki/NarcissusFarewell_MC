@@ -13,14 +13,15 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import xin.vanilla.narcissus.NarcissusFarewell;
 import xin.vanilla.narcissus.config.CommonConfig;
+import xin.vanilla.narcissus.config.CustomConfig;
 import xin.vanilla.narcissus.data.Coordinate;
 import xin.vanilla.narcissus.data.TeleportRecord;
 import xin.vanilla.narcissus.data.TeleportRequest;
 import xin.vanilla.narcissus.data.player.IPlayerTeleportData;
 import xin.vanilla.narcissus.data.player.PlayerTeleportDataCapability;
 import xin.vanilla.narcissus.data.player.PlayerTeleportDataProvider;
-import xin.vanilla.narcissus.enums.ETeleportType;
 import xin.vanilla.narcissus.enums.EnumI18nType;
+import xin.vanilla.narcissus.enums.EnumTeleportType;
 import xin.vanilla.narcissus.util.DateUtils;
 import xin.vanilla.narcissus.util.I18nUtils;
 import xin.vanilla.narcissus.util.NarcissusUtils;
@@ -29,6 +30,9 @@ import java.util.Date;
 
 public class EventHandlerProxy {
     private static final Logger LOGGER = LogManager.getLogger();
+
+    private static long lastSaveConfTime = System.currentTimeMillis();
+    private static long lastReadConfTime = System.currentTimeMillis();
 
     public static void onPlayerTick(TickEvent.PlayerTickEvent event) {
         PlayerEntity player = event.player;
@@ -57,13 +61,24 @@ public class EventHandlerProxy {
                         .forEach(entry -> {
                             TeleportRequest request = NarcissusFarewell.getTeleportRequest().remove(entry.getKey());
                             if (request != null) {
-                                if (request.getTeleportType() == ETeleportType.TP_ASK) {
+                                if (request.getTeleportType() == EnumTeleportType.TP_ASK) {
                                     NarcissusUtils.sendTranslatableMessage(request.getRequester(), I18nUtils.getKey(EnumI18nType.MESSAGE, "tp_ask_expired"), request.getTarget().getDisplayName().getString());
-                                } else if (request.getTeleportType() == ETeleportType.TP_HERE) {
+                                } else if (request.getTeleportType() == EnumTeleportType.TP_HERE) {
                                     NarcissusUtils.sendTranslatableMessage(request.getRequester(), I18nUtils.getKey(EnumI18nType.MESSAGE, "tp_here_expired"), request.getTarget().getDisplayName().getString());
                                 }
                             }
                         });
+            }
+
+            // 保存通用配置
+            if (System.currentTimeMillis() - lastSaveConfTime >= 10 * 1000) {
+                lastSaveConfTime = System.currentTimeMillis();
+                CustomConfig.saveCustomConfig();
+            }
+            // 读取通用配置
+            else if (System.currentTimeMillis() - lastReadConfTime >= 2 * 60 * 1000) {
+                lastReadConfTime = System.currentTimeMillis();
+                CustomConfig.loadCustomConfig(true);
             }
         }
     }
@@ -90,7 +105,7 @@ public class EventHandlerProxy {
             if (event.isWasDeath()) {
                 TeleportRecord record = new TeleportRecord();
                 record.setTeleportTime(new Date());
-                record.setTeleportType(ETeleportType.DEATH);
+                record.setTeleportType(EnumTeleportType.DEATH);
                 record.setBefore(new Coordinate().setX(original.getX()).setY(original.getY()).setZ(original.getZ()).setDimension(original.level.dimension.getType()));
                 record.setAfter(new Coordinate().setX(newPlayer.getX()).setY(newPlayer.getY()).setZ(newPlayer.getZ()).setDimension(newPlayer.level.dimension.getType()));
                 PlayerTeleportDataCapability.getData(newPlayer).addTeleportRecords(record);
