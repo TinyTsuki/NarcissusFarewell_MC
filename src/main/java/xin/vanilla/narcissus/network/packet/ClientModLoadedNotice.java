@@ -18,9 +18,7 @@ public class ClientModLoadedNotice {
     }
 
     public static void handle(ClientModLoadedNotice packet, CustomPayloadEvent.Context ctx) {
-        // 获取网络事件上下文并排队执行工作
         ctx.enqueueWork(() -> {
-            // 获取发送数据包的玩家实体
             ServerPlayer player = ctx.getSender();
             if (player != null) {
                 NarcissusFarewell.getPlayerCapabilityStatus().put(player.getStringUUID(), false);
@@ -28,7 +26,6 @@ public class ClientModLoadedNotice {
                 PlayerTeleportDataCapability.syncPlayerData(player);
             }
         });
-        // 设置数据包已处理状态，防止重复处理
         ctx.setPacketHandled(true);
     }
 }
