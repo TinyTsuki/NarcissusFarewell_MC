@@ -39,9 +39,7 @@ public class TpBackNotice implements CustomPacketPayload {
 
     public static void handle(TpBackNotice packet, IPayloadContext ctx) {
         if (ctx.flow().isServerbound()) {
-            // 获取网络事件上下文并排队执行工作
             ctx.enqueueWork(() -> {
-                // 获取发送数据包的玩家实体
                 if (ctx.player() instanceof ServerPlayer player) {
                     NarcissusUtils.executeCommand(player, NarcissusUtils.getCommand(EnumCommandType.TP_BACK));
                 }
