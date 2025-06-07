@@ -5,9 +5,9 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraftforge.network.NetworkEvent;
 import xin.vanilla.narcissus.NarcissusFarewell;
 import xin.vanilla.narcissus.data.TeleportRequest;
-import xin.vanilla.narcissus.enums.ETeleportType;
 import xin.vanilla.narcissus.enums.EnumCommandType;
 import xin.vanilla.narcissus.enums.EnumI18nType;
+import xin.vanilla.narcissus.enums.EnumTeleportType;
 import xin.vanilla.narcissus.util.I18nUtils;
 import xin.vanilla.narcissus.util.NarcissusUtils;
 
@@ -31,14 +31,14 @@ public class TpNoNotice {
             // 获取发送数据包的玩家实体
             ServerPlayer player = ctx.get().getSender();
             if (player != null) {
-                ETeleportType teleportType = NarcissusFarewell.getTeleportRequest().values().stream()
+                EnumTeleportType teleportType = NarcissusFarewell.getTeleportRequest().values().stream()
                         .filter(request -> !request.isIgnore())
                         .filter(request -> request.getTarget().getUUID().equals(player.getUUID()))
                         .max(Comparator.comparing(TeleportRequest::getRequestTime))
                         .orElse(new TeleportRequest())
                         .getTeleportType();
-                if (ETeleportType.TP_ASK == teleportType || ETeleportType.TP_HERE == teleportType) {
-                    EnumCommandType type = ETeleportType.TP_HERE == teleportType ? EnumCommandType.TP_HERE_NO : EnumCommandType.TP_ASK_NO;
+                if (EnumTeleportType.TP_ASK == teleportType || EnumTeleportType.TP_HERE == teleportType) {
+                    EnumCommandType type = EnumTeleportType.TP_HERE == teleportType ? EnumCommandType.TP_HERE_NO : EnumCommandType.TP_ASK_NO;
                     NarcissusUtils.executeCommand(player, NarcissusUtils.getCommand(type));
                 } else {
                     NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EnumI18nType.MESSAGE, "tp_ask_not_found"));
