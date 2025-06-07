@@ -4,7 +4,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public enum ETeleportType {
+public enum EnumTeleportType {
     TP_COORDINATE,
     TP_STRUCTURE,
     TP_ASK,
@@ -60,14 +60,14 @@ public enum ETeleportType {
         }
     }
 
-    public static ETeleportType nullableValueOf(String name) {
-        for (ETeleportType value : ETeleportType.values()) {
+    public static EnumTeleportType nullableValueOf(String name) {
+        for (EnumTeleportType value : EnumTeleportType.values()) {
             if (value.name().equalsIgnoreCase(name)) return value;
         }
         return null;
     }
 
     public static List<String> names() {
-        return Arrays.stream(ETeleportType.values()).map(Enum::name).collect(Collectors.toList());
+        return Arrays.stream(EnumTeleportType.values()).map(Enum::name).collect(Collectors.toList());
     }
 }
