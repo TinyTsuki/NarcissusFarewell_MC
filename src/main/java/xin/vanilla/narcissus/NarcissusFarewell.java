@@ -42,6 +42,7 @@ public class NarcissusFarewell {
     public final static String DEFAULT_COMMAND_PREFIX = "narcissus";
 
     public static final String MODID = "narcissus_farewell";
+    public static final String ARTIFACT_ID = "xin.vanilla";
 
     private static final Logger LOGGER = LogManager.getLogger();
 
