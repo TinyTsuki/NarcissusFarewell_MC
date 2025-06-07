@@ -11,4 +11,9 @@ public class TeleportCost {
     private int num;
     private double rate;
     private String conf;
+
+    public TeleportCost setType(String type) {
+        this.type = EnumCostType.valueOf(type);
+        return this;
+    }
 }
