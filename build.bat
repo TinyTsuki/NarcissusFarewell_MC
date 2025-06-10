@@ -4,15 +4,24 @@ setlocal enabledelayedexpansion
 
 :: 配置常量
 set EXCLUDED_BRANCHES=main forge_1.7.10 forge_1.12.2
+set INCLUDED_BRANCHES=:: neoforge_1.21.5 neoforge_1.21.4 neoforge_1.21.3 neoforge_1.21.1 neoforge_1.21.0
 set JDK_PROPERTIES_FILE=jdks.properties
-set GRADLE_USER_HOME=D:\Data\Gradle
+set GRADLE_USER_HOME=F:\Data\Gradle
 
-:: 获取所有远程分支并排除指定的分支
-for /f "tokens=*" %%b in ('git branch -r ^| findstr /v "%EXCLUDED_BRANCHES%"') do (
-    set "branch=%%b"
-    set "branch=!branch:origin/=!"
-    call :build_branch !branch!
+:: 如果白名单不为空，优先使用白名单
+if not "%INCLUDED_BRANCHES%" == "" (
+    for %%b in (%INCLUDED_BRANCHES%) do (
+        call :build_branch %%b
+    )
+) else (
+    :: 获取所有远程分支并排除指定的分支
+    for /f "tokens=*" %%b in ('git branch -r ^| findstr /v "%EXCLUDED_BRANCHES%"') do (
+        set "branch=%%b"
+        set "branch=!branch:origin/=!"
+        call :build_branch !branch!
+    )
 )
+
 git checkout main > nul 2>&1
 
 
