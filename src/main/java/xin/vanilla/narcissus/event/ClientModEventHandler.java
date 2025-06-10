@@ -1,19 +1,14 @@
 package xin.vanilla.narcissus.event;
 
 import net.minecraft.client.KeyMapping;
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.fml.common.EventBusSubscriber;
-import net.neoforged.neoforge.client.event.RegisterEntitySpectatorShadersEvent;
 import net.neoforged.neoforge.client.event.RegisterKeyMappingsEvent;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import xin.vanilla.narcissus.NarcissusFarewell;
 
 /**
  * 客户端 Mod事件处理器
  */
-@EventBusSubscriber(modid = NarcissusFarewell.MODID, value = Dist.CLIENT, bus = EventBusSubscriber.Bus.MOD)
+// @EventBusSubscriber(modid = NarcissusFarewell.MODID, value = Dist.CLIENT, bus = EventBusSubscriber.Bus.MOD)
 public class ClientModEventHandler {
     private static final Logger LOGGER = LogManager.getLogger();
 
@@ -41,7 +36,4 @@ public class ClientModEventHandler {
         event.register(TP_REQ_NO);
     }
 
-    @SubscribeEvent
-    public static void registerShaders(RegisterEntitySpectatorShadersEvent event) {
-    }
 }
