@@ -159,18 +159,18 @@ public class Coordinate implements Serializable, Cloneable {
         return this;
     }
 
-    public Coordinate addX(double x) {
-        this.x += x;
+    public Coordinate addX(double offset) {
+        this.x += offset;
         return this;
     }
 
-    public Coordinate addY(double y) {
-        this.y += y;
+    public Coordinate addY(double offset) {
+        this.y += offset;
         return this;
     }
 
-    public Coordinate addZ(double z) {
-        this.z += z;
+    public Coordinate addZ(double offset) {
+        this.z += offset;
         return this;
     }
 
@@ -257,6 +257,10 @@ public class Coordinate implements Serializable, Cloneable {
 
     public String toZString() {
         return StringUtils.toFixedEx(z, 1);
+    }
+
+    public String toXyzIntString() {
+        return getXInt() + ", " + getYInt() + ", " + getZInt();
     }
 
     public String toXyzString() {
