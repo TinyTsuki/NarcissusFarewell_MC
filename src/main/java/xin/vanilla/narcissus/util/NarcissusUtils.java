@@ -367,12 +367,11 @@ public class NarcissusUtils {
     public static Coordinate findTopCandidate(ServerLevel world, Coordinate start) {
         if (start.getY() >= NarcissusUtils.getWorldMaxY(world)) return null;
         SafeBlockChecker checker = new SafeBlockChecker(world);
-        BlockPos blockPos = start.toBlockPos();
-        for (int offset : IntStream.range(1, NarcissusUtils.getWorldMaxY(world) - (int) start.getY()).boxed()
+        for (int y : IntStream.range(start.getYInt(), NarcissusUtils.getWorldMaxY(world) + 1).boxed()
                 .sorted(Comparator.comparingInt(Integer::intValue).reversed())
                 .toList()) {
-            if (checker.isSafeBlock(blockPos.above(offset), false)) {
-                return start.clone().addY(offset);
+            if (checker.isSafeBlock(start.setY(y).toBlockPos(), false)) {
+                return start.setY(y);
             }
         }
         return null;
@@ -381,12 +380,11 @@ public class NarcissusUtils {
     public static Coordinate findBottomCandidate(ServerLevel world, Coordinate start) {
         if (start.getY() <= NarcissusUtils.getWorldMinY(world)) return null;
         SafeBlockChecker checker = new SafeBlockChecker(world);
-        BlockPos blockPos = start.toBlockPos();
-        for (int offset : IntStream.range(1, (int) start.getY() - NarcissusUtils.getWorldMinY(world)).boxed()
+        for (int y : IntStream.range(NarcissusUtils.getWorldMinY(world), start.getYInt()).boxed()
                 .sorted(Comparator.comparingInt(Integer::intValue))
                 .toList()) {
-            if (checker.isSafeBlock(blockPos.below(offset), false)) {
-                return start.clone().addY(-offset);
+            if (checker.isSafeBlock(start.setY(y).toBlockPos(), false)) {
+                return start.setY(y);
             }
         }
         return null;
@@ -395,12 +393,11 @@ public class NarcissusUtils {
     public static Coordinate findUpCandidate(ServerLevel world, Coordinate start) {
         if (start.getY() >= NarcissusUtils.getWorldMaxY(world)) return null;
         SafeBlockChecker checker = new SafeBlockChecker(world);
-        BlockPos blockPos = start.toBlockPos();
-        for (int offset : IntStream.range(1, NarcissusUtils.getWorldMaxY(world) - (int) start.getY()).boxed()
-                .sorted(Comparator.comparingInt(a -> a - (int) start.getY()))
+        for (int y : IntStream.range(start.getYInt() + 1, NarcissusUtils.getWorldMaxY(world) + 1).boxed()
+                .sorted(Comparator.comparingInt(Integer::intValue))
                 .toList()) {
-            if (checker.isSafeBlock(blockPos.above(offset), false)) {
-                return start.clone().addY(offset);
+            if (checker.isSafeBlock(start.setY(y).toBlockPos(), false)) {
+                return start.setY(y);
             }
         }
         return null;
@@ -409,12 +406,11 @@ public class NarcissusUtils {
     public static Coordinate findDownCandidate(ServerLevel world, Coordinate start) {
         if (start.getY() <= NarcissusUtils.getWorldMinY(world)) return null;
         SafeBlockChecker checker = new SafeBlockChecker(world);
-        BlockPos blockPos = start.toBlockPos();
-        for (int offset : IntStream.range(NarcissusUtils.getWorldMinY(world), (int) start.getY() - 1).boxed()
-                .sorted(Comparator.comparingInt(a -> (int) start.getY() - a))
+        for (int y : IntStream.range(NarcissusUtils.getWorldMinY(world), start.getYInt()).boxed()
+                .sorted(Comparator.comparingInt(Integer::intValue).reversed())
                 .toList()) {
-            if (checker.isSafeBlock(blockPos.below(offset), false)) {
-                return start.clone().addY(-offset);
+            if (checker.isSafeBlock(start.setY(y).toBlockPos(), false)) {
+                return start.setY(y);
             }
         }
         return null;
@@ -548,19 +544,27 @@ public class NarcissusUtils {
         };
 
         LOGGER.debug("TimeMillis before generate: {}", System.currentTimeMillis());
-        if (coordinate.getSafeMode() == EnumSafeMode.Y_DOWN) {
-            IntStream.range(NarcissusUtils.getWorldMinY(world), (int) coordinate.getY())
+        if (coordinate.getSafeMode() == EnumSafeMode.Y_C_TO_T) {
+            IntStream.range(coordinate.getYInt(), NarcissusUtils.getWorldMaxY(world) + 1)
                     .forEach(y -> coordinates.add(new Coordinate(coordinate.getX(), y, coordinate.getZ())));
-        } else if (coordinate.getSafeMode() == EnumSafeMode.Y_UP) {
-            IntStream.range((int) coordinate.getY(), NarcissusUtils.getWorldMaxY(world))
+        } else if (coordinate.getSafeMode() == EnumSafeMode.Y_B_TO_C) {
+            IntStream.range(NarcissusUtils.getWorldMinY(world), coordinate.getYInt() + 1)
                     .forEach(y -> coordinates.add(new Coordinate(coordinate.getX(), y, coordinate.getZ())));
-        } else if (coordinate.getSafeMode() == EnumSafeMode.Y_OFFSET_3) {
-            IntStream.range((int) (coordinate.getY() - 3), (int) (coordinate.getY() + 3))
+        } else if (coordinate.getSafeMode() == EnumSafeMode.Y_C_TO_B) {
+            IntStream.range(NarcissusUtils.getWorldMinY(world), coordinate.getYInt() + 1).boxed()
+                    .sorted(Comparator.comparingInt(Integer::intValue).reversed())
+                    .forEach(y -> coordinates.add(new Coordinate(coordinate.getX(), y, coordinate.getZ())));
+        } else if (coordinate.getSafeMode() == EnumSafeMode.Y_T_TO_C) {
+            IntStream.range(coordinate.getYInt(), NarcissusUtils.getWorldMaxY(world) + 1).boxed()
+                    .sorted(Comparator.comparingInt(Integer::intValue).reversed())
+                    .forEach(y -> coordinates.add(new Coordinate(coordinate.getX(), y, coordinate.getZ())));
+        } else if (coordinate.getSafeMode() == EnumSafeMode.Y_C_OFFSET_3) {
+            IntStream.range(coordinate.getYInt() - 3, coordinate.getYInt() + 3)
                     .forEach(y -> coordinates.add(new Coordinate(coordinate.getX(), y, coordinate.getZ())));
         } else {
             IntStream.range(chunkMinX, chunkMaxX)
                     .forEach(x -> IntStream.range(chunkMinZ, chunkMaxZ)
-                            .forEach(z -> IntStream.range(NarcissusUtils.getWorldMinY(world), NarcissusUtils.getWorldMaxY(world))
+                            .forEach(z -> IntStream.range(NarcissusUtils.getWorldMinY(world), NarcissusUtils.getWorldMaxY(world) + 1)
                                     .forEach(y -> coordinates.add(new Coordinate(x, y, z)))
                             )
                     );
