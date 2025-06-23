@@ -5,7 +5,6 @@ import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import lombok.NonNull;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
-import net.minecraft.block.Blocks;
 import net.minecraft.client.Minecraft;
 import net.minecraft.command.CommandSource;
 import net.minecraft.command.arguments.BlockStateParser;
@@ -647,76 +646,6 @@ public class NarcissusUtils {
 
     // region 安全坐标
 
-    /**
-     * 安全的方块
-     */
-    private static List<BlockState> SAFE_BLOCKS_STATE;
-    /**
-     * 安全的方块
-     */
-    private static List<String> SAFE_BLOCKS;
-    /**
-     * 不安全的方块
-     */
-    private static List<BlockState> UNSAFE_BLOCKS_STATE;
-    /**
-     * 不安全的方块
-     */
-    private static List<String> UNSAFE_BLOCKS;
-    /**
-     * 窒息的方块
-     */
-    private static List<BlockState> SUFFOCATING_BLOCKS_STATE;
-    /**
-     * 窒息的方块
-     */
-    private static List<String> SUFFOCATING_BLOCKS;
-
-    private static void initSafeBlocks() {
-        if (SAFE_BLOCKS_STATE == null) {
-            SAFE_BLOCKS_STATE = ServerConfig.SAFE_BLOCKS.get().stream()
-                    .map(NarcissusUtils::deserializeBlockState)
-                    .filter(Objects::nonNull)
-                    .distinct()
-                    .collect(Collectors.toList());
-        }
-        if (SAFE_BLOCKS == null) {
-            SAFE_BLOCKS = ServerConfig.SAFE_BLOCKS.get().stream()
-                    .filter(Objects::nonNull)
-                    .map(s -> (String) s)
-                    .distinct()
-                    .collect(Collectors.toList());
-        }
-        if (UNSAFE_BLOCKS_STATE == null) {
-            UNSAFE_BLOCKS_STATE = ServerConfig.UNSAFE_BLOCKS.get().stream()
-                    .map(NarcissusUtils::deserializeBlockState)
-                    .filter(Objects::nonNull)
-                    .distinct()
-                    .collect(Collectors.toList());
-        }
-        if (UNSAFE_BLOCKS == null) {
-            UNSAFE_BLOCKS = ServerConfig.UNSAFE_BLOCKS.get().stream()
-                    .filter(Objects::nonNull)
-                    .map(s -> (String) s)
-                    .distinct()
-                    .collect(Collectors.toList());
-        }
-        if (SUFFOCATING_BLOCKS_STATE == null) {
-            SUFFOCATING_BLOCKS_STATE = ServerConfig.SUFFOCATING_BLOCKS.get().stream()
-                    .map(NarcissusUtils::deserializeBlockState)
-                    .filter(Objects::nonNull)
-                    .distinct()
-                    .collect(Collectors.toList());
-        }
-        if (SUFFOCATING_BLOCKS == null) {
-            SUFFOCATING_BLOCKS = ServerConfig.SUFFOCATING_BLOCKS.get().stream()
-                    .filter(Objects::nonNull)
-                    .map(s -> (String) s)
-                    .distinct()
-                    .collect(Collectors.toList());
-        }
-    }
-
     public static int getWorldMinY(World world) {
         return 0;
     }
@@ -727,15 +656,13 @@ public class NarcissusUtils {
 
     public static Coordinate findTopCandidate(ServerWorld world, Coordinate start) {
         if (start.getY() >= NarcissusUtils.getWorldMaxY(world)) return null;
-        for (int y : IntStream.range((int) start.getY() + 1, NarcissusUtils.getWorldMaxY(world)).boxed()
+        SafeBlockChecker checker = new SafeBlockChecker(world);
+        BlockPos blockPos = start.toBlockPos();
+        for (int offset : IntStream.range(1, NarcissusUtils.getWorldMaxY(world) - (int) start.getY()).boxed()
                 .sorted(Comparator.comparingInt(Integer::intValue).reversed())
                 .collect(Collectors.toList())) {
-            Coordinate candidate = new Coordinate().setX(start.getX()).setY(y).setZ(start.getZ())
-                    .setYaw(start.getYaw()).setPitch(start.getPitch())
-                    .setDimension(start.getDimension())
-                    .setSafe(start.isSafe()).setSafeMode(start.getSafeMode());
-            if (isSafeCoordinate(world, candidate)) {
-                return candidate;
+            if (checker.isSafeBlock(blockPos.above(offset), false)) {
+                return start.clone().addY(offset);
             }
         }
         return null;
@@ -743,15 +670,13 @@ public class NarcissusUtils {
 
     public static Coordinate findBottomCandidate(ServerWorld world, Coordinate start) {
         if (start.getY() <= NarcissusUtils.getWorldMinY(world)) return null;
-        for (int y : IntStream.range(NarcissusUtils.getWorldMinY(world), (int) start.getY() - 1).boxed()
+        SafeBlockChecker checker = new SafeBlockChecker(world);
+        BlockPos blockPos = start.toBlockPos();
+        for (int offset : IntStream.range(1, (int) start.getY() - NarcissusUtils.getWorldMinY(world)).boxed()
                 .sorted(Comparator.comparingInt(Integer::intValue))
                 .collect(Collectors.toList())) {
-            Coordinate candidate = new Coordinate().setX(start.getX()).setY(y).setZ(start.getZ())
-                    .setYaw(start.getYaw()).setPitch(start.getPitch())
-                    .setDimension(start.getDimension())
-                    .setSafe(start.isSafe()).setSafeMode(start.getSafeMode());
-            if (isSafeCoordinate(world, candidate)) {
-                return candidate;
+            if (checker.isSafeBlock(blockPos.below(offset), false)) {
+                return start.clone().addY(-offset);
             }
         }
         return null;
@@ -759,15 +684,13 @@ public class NarcissusUtils {
 
     public static Coordinate findUpCandidate(ServerWorld world, Coordinate start) {
         if (start.getY() >= NarcissusUtils.getWorldMaxY(world)) return null;
-        for (int y : IntStream.range((int) start.getY() + 1, NarcissusUtils.getWorldMaxY(world)).boxed()
+        SafeBlockChecker checker = new SafeBlockChecker(world);
+        BlockPos blockPos = start.toBlockPos();
+        for (int offset : IntStream.range(1, NarcissusUtils.getWorldMaxY(world) - (int) start.getY()).boxed()
                 .sorted(Comparator.comparingInt(a -> a - (int) start.getY()))
                 .collect(Collectors.toList())) {
-            Coordinate candidate = new Coordinate().setX(start.getX()).setY(y).setZ(start.getZ())
-                    .setYaw(start.getYaw()).setPitch(start.getPitch())
-                    .setDimension(start.getDimension())
-                    .setSafe(start.isSafe()).setSafeMode(start.getSafeMode());
-            if (isSafeCoordinate(world, candidate)) {
-                return candidate;
+            if (checker.isSafeBlock(blockPos.above(offset), false)) {
+                return start.clone().addY(offset);
             }
         }
         return null;
@@ -775,15 +698,13 @@ public class NarcissusUtils {
 
     public static Coordinate findDownCandidate(ServerWorld world, Coordinate start) {
         if (start.getY() <= NarcissusUtils.getWorldMinY(world)) return null;
-        for (int y : IntStream.range(NarcissusUtils.getWorldMinY(world), (int) start.getY() - 1).boxed()
+        SafeBlockChecker checker = new SafeBlockChecker(world);
+        BlockPos blockPos = start.toBlockPos();
+        for (int offset : IntStream.range(NarcissusUtils.getWorldMinY(world), (int) start.getY() - 1).boxed()
                 .sorted(Comparator.comparingInt(a -> (int) start.getY() - a))
                 .collect(Collectors.toList())) {
-            Coordinate candidate = new Coordinate().setX(start.getX()).setY(y).setZ(start.getZ())
-                    .setYaw(start.getYaw()).setPitch(start.getPitch())
-                    .setDimension(start.getDimension())
-                    .setSafe(start.isSafe()).setSafeMode(start.getSafeMode());
-            if (isSafeCoordinate(world, candidate)) {
-                return candidate;
+            if (checker.isSafeBlock(blockPos.below(offset), false)) {
+                return start.clone().addY(-offset);
             }
         }
         return null;
@@ -829,16 +750,16 @@ public class NarcissusUtils {
 
         // 若需寻找安全坐标，则从碰撞点反向查找安全位置
         if (safe) {
+            SafeBlockChecker checker = new SafeBlockChecker(world);
             // 碰撞点的三维向量
             Vector3d collisionVector = result.toVector3d();
             for (int stepCount = (int) Math.ceil(collisionVector.distanceTo(startPosition) / stepScale); stepCount >= 0; stepCount--) {
                 currentPosition = startPosition.add(stepVector.scale(stepCount));
                 BlockPos currentBlockPos = new BlockPos(currentPosition.x, currentPosition.y, currentPosition.z);
                 for (int yOffset = -3; yOffset < 3; yOffset++) {
-                    Coordinate candidate = start.clone().fromBlockPos(currentBlockPos).addY(yOffset);
                     // 判断当前候选坐标是否安全
-                    if (isSafeCoordinate(world, candidate)) {
-                        result = candidate.addX(0.5).addY(0.15).addZ(0.5);
+                    if (checker.isSafeBlock(currentBlockPos.above(yOffset), false)) {
+                        result = start.clone().fromBlockPos(currentBlockPos).addY(yOffset).addX(0.5).addY(0.15).addZ(0.5);
                         stepCount = 0;
                         break;
                     }
@@ -878,7 +799,6 @@ public class NarcissusUtils {
         int chunkMaxX = chunkMinX + 15 + offset;
         int chunkMaxZ = chunkMinZ + 15 + offset;
 
-        Coordinate result = coordinate.clone();
         List<Coordinate> coordinates = new ArrayList<>();
         Comparator<Coordinate> comparator = (c1, c2) -> {
             // 计算各项距离
@@ -919,7 +839,7 @@ public class NarcissusUtils {
 
         LOGGER.debug("TimeMillis before generate: {}", System.currentTimeMillis());
         if (coordinate.getSafeMode() == EnumSafeMode.Y_DOWN) {
-            IntStream.range((int) coordinate.getY(), NarcissusUtils.getWorldMinY(world))
+            IntStream.range(NarcissusUtils.getWorldMinY(world), (int) coordinate.getY())
                     .forEach(y -> coordinates.add(new Coordinate(coordinate.getX(), y, coordinate.getZ())));
         } else if (coordinate.getSafeMode() == EnumSafeMode.Y_UP) {
             IntStream.range((int) coordinate.getY(), NarcissusUtils.getWorldMaxY(world))
@@ -936,94 +856,23 @@ public class NarcissusUtils {
                     );
         }
         LOGGER.debug("TimeMillis before sorting: {}", System.currentTimeMillis());
-        List<Coordinate> list = coordinates.stream().sorted(comparator).collect(Collectors.toList());
+        List<BlockPos> list = coordinates.stream().sorted(comparator).map(Coordinate::toBlockPos).collect(Collectors.toList());
         LOGGER.debug("TimeMillis before searching: {}", System.currentTimeMillis());
-        for (Coordinate c : list) {
-            Coordinate candidate = new Coordinate().setX(c.getX()).setY(c.getY()).setZ(c.getZ())
-                    .setYaw(coordinate.getYaw()).setPitch(coordinate.getPitch())
-                    .setDimension(coordinate.getDimension())
-                    .setSafe(coordinate.isSafe()).setSafeMode(coordinate.getSafeMode());
-            if (belowAllowAir) {
-                if (isAirCoordinate(world, candidate)) {
-                    result = candidate.addX(0.5).addY(0.15).addZ(0.5);
-                    break;
-                }
-            } else {
-                if (isSafeCoordinate(world, candidate)) {
-                    result = candidate.addX(0.5).addY(0.15).addZ(0.5);
-                    break;
-                }
+        Coordinate result = findSafeCoordinate(world, belowAllowAir, list);
+        LOGGER.debug("TimeMillis after searching: {}", System.currentTimeMillis());
+        LOGGER.debug("Target:{} | Safe:{}", coordinate.toXyzIntString(), result == null ? "null" : result.toXyzIntString());
+        return result == null ? coordinate : result.addX(0.5).addY(0.15).addZ(0.5);
+    }
+
+    private static Coordinate findSafeCoordinate(World world, boolean belowAllowAir, List<BlockPos> list) {
+        if (list.isEmpty()) return new Coordinate();
+        SafeBlockChecker checker = new SafeBlockChecker(world);
+        for (BlockPos pos : list) {
+            if (checker.isSafeBlock(pos, belowAllowAir)) {
+                return new Coordinate().fromBlockPos(pos).setDimension(world.dimension());
             }
         }
-        LOGGER.debug("TimeMillis after searching: {}", System.currentTimeMillis());
-        LOGGER.debug("Target:{} | Safe:{}", coordinate.toXyzString(), result.toXyzString());
-        return result;
-    }
-
-    private static boolean isAirCoordinate(World world, Coordinate coordinate) {
-        BlockState block = world.getBlockState(coordinate.toBlockPos());
-        BlockState blockAbove = world.getBlockState(coordinate.toBlockPos().above());
-        BlockState blockBelow = world.getBlockState(coordinate.toBlockPos().below());
-        return isSafeBlock(world, coordinate, true
-                , block
-                , blockAbove
-                , blockBelow
-        ) && isSafeBlock(world, coordinate, true
-                , block.getFluidState().createLegacyBlock()
-                , blockAbove.getFluidState().createLegacyBlock()
-                , blockBelow.getFluidState().createLegacyBlock()
-        );
-    }
-
-    private static boolean isSafeCoordinate(World world, Coordinate coordinate) {
-        BlockState block = world.getBlockState(coordinate.toBlockPos());
-        BlockState blockAbove = world.getBlockState(coordinate.toBlockPos().above());
-        BlockState blockBelow = world.getBlockState(coordinate.toBlockPos().below());
-        return isSafeBlock(world, coordinate, false
-                , block
-                , blockAbove
-                , blockBelow
-        ) && isSafeBlock(world, coordinate, true
-                , block.getFluidState().createLegacyBlock()
-                , blockAbove.getFluidState().createLegacyBlock()
-                , blockBelow.getFluidState().createLegacyBlock()
-        );
-    }
-
-    /**
-     * 判断指定坐标是否安全
-     *
-     * @param block      方块
-     * @param blockAbove 头部方块
-     * @param blockBelow 脚下方块
-     */
-    private static boolean isSafeBlock(World world, Coordinate coordinate, boolean belowAllowAir, BlockState block, BlockState blockAbove, BlockState blockBelow) {
-        initSafeBlocks();
-        boolean isCurrentPassable = !block.getMaterial().blocksMotion()
-                && !UNSAFE_BLOCKS_STATE.contains(block)
-                && !UNSAFE_BLOCKS.contains(NarcissusUtils.getBlockRegistryName(block));
-
-        boolean isHeadSafe = !blockAbove.isSuffocating(world, coordinate.above().toBlockPos())
-                && !blockAbove.getMaterial().blocksMotion()
-                && !UNSAFE_BLOCKS_STATE.contains(blockAbove)
-                && !UNSAFE_BLOCKS.contains(NarcissusUtils.getBlockRegistryName(blockAbove))
-                && !SUFFOCATING_BLOCKS_STATE.contains(blockAbove)
-                && !SUFFOCATING_BLOCKS.contains(NarcissusUtils.getBlockRegistryName(blockAbove));
-
-        boolean isBelowValid;
-        if (blockBelow.getMaterial().isLiquid()) {
-            isBelowValid = !UNSAFE_BLOCKS_STATE.contains(blockBelow)
-                    && !UNSAFE_BLOCKS.contains(NarcissusUtils.getBlockRegistryName(blockBelow));
-        } else {
-            isBelowValid = blockBelow.getMaterial().isSolid()
-                    && !UNSAFE_BLOCKS_STATE.contains(blockBelow)
-                    && !UNSAFE_BLOCKS.contains(NarcissusUtils.getBlockRegistryName(blockBelow));
-        }
-        if (belowAllowAir) {
-            isBelowValid = isBelowValid || blockBelow.is(Blocks.AIR) || blockBelow.is(Blocks.CAVE_AIR);
-        }
-
-        return isCurrentPassable && isHeadSafe && isBelowValid;
+        return null;
     }
 
     // endregion 安全坐标
@@ -1269,7 +1118,6 @@ public class NarcissusUtils {
      * @param after  坐标
      */
     public static void teleportTo(@NonNull ServerPlayerEntity player, @NonNull Coordinate after, EnumTeleportType type) {
-        initSafeBlocks();
         Coordinate before = new Coordinate(player);
         World world = player.level;
         MinecraftServer server = player.getServer();
@@ -1284,16 +1132,17 @@ public class NarcissusUtils {
                         finalAfter = findSafeCoordinate(finalAfter, false);
                         Runnable runnable;
                         // 判断是否需要在脚下放置方块
-                        if (ServerConfig.SETBLOCK_WHEN_SAFE_NOT_FOUND.get() && !isSafeCoordinate(level, finalAfter)) {
+                        SafeBlockChecker checker = new SafeBlockChecker(level);
+                        if (ServerConfig.SETBLOCK_WHEN_SAFE_NOT_FOUND.get() && !checker.isSafeBlock(finalAfter.toBlockPos(), false)) {
                             BlockState blockState;
                             List<ItemStack> playerItemList = getPlayerItemList(player);
-                            if (CollectionUtils.isNotNullOrEmpty(SAFE_BLOCKS_STATE)) {
+                            if (CollectionUtils.isNotNullOrEmpty(NarcissusFarewell.getSafeBlock().getSafeBlocksState())) {
                                 if (ServerConfig.GETBLOCK_FROM_INVENTORY.get()) {
-                                    blockState = SAFE_BLOCKS_STATE.stream()
+                                    blockState = NarcissusFarewell.getSafeBlock().getSafeBlocksState().stream()
                                             .filter(block -> playerItemList.stream().map(ItemStack::getItem).anyMatch(item -> new ItemStack(block.getBlock()).getItem().equals(item)))
                                             .findFirst().orElse(null);
                                 } else {
-                                    blockState = SAFE_BLOCKS_STATE.get(0);
+                                    blockState = NarcissusFarewell.getSafeBlock().getSafeBlocksState().get(0);
                                 }
                             } else {
                                 blockState = null;
@@ -2304,6 +2153,10 @@ public class NarcissusUtils {
     public static String getBlockRegistryName(Block block) {
         ResourceLocation location = block.getRegistryName();
         return location == null ? "" : location.toString();
+    }
+
+    public static Block getBlock(String location) {
+        return ForgeRegistries.BLOCKS.getValue(NarcissusFarewell.parseResource(location));
     }
 
     /**

@@ -62,7 +62,7 @@ public class CustomConfig {
             if (!notDirty || !isDirty()) {
                 try {
                     customConfig = JsonUtils.PRETTY_GSON.fromJson(new String(Files.readAllBytes(Paths.get(file.getPath()))), JsonObject.class);
-                    LOGGER.info("Loaded custom common config.");
+                    LOGGER.debug("Loaded custom common config.");
                 } catch (Exception e) {
                     LOGGER.error("Error loading custom common config: ", e);
                 }
@@ -112,7 +112,7 @@ public class CustomConfig {
                     accessFile.setLength(0);
                     accessFile.write(JsonUtils.PRETTY_GSON.toJson(customConfig).getBytes(StandardCharsets.UTF_8));
                     setDirty(false);
-                    LOGGER.info("Saved custom common config.");
+                    LOGGER.debug("Saved custom common config.");
                     FileLock finalLock = lock;
                     new Thread(() -> {
                         try {
