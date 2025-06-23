@@ -48,10 +48,9 @@ public class SafeBlock {
                     .collect(Collectors.toList());
         }
         if (this.safeBlocks == null) {
-            this.safeBlocks = ServerConfig.SAFE_BLOCKS.get().stream()
+            this.safeBlocks = safeBlocksState.stream()
                     .filter(Objects::nonNull)
-                    .map(NarcissusUtils::getBlock)
-                    .filter(Objects::nonNull)
+                    .map(BlockState::getBlock)
                     .distinct()
                     .collect(Collectors.toList());
         }
@@ -63,10 +62,9 @@ public class SafeBlock {
                     .collect(Collectors.toList());
         }
         if (this.unsafeBlocks == null) {
-            this.unsafeBlocks = ServerConfig.UNSAFE_BLOCKS.get().stream()
+            this.unsafeBlocks = unsafeBlocksState.stream()
                     .filter(Objects::nonNull)
-                    .map(NarcissusUtils::getBlock)
-                    .filter(Objects::nonNull)
+                    .map(BlockState::getBlock)
                     .distinct()
                     .collect(Collectors.toList());
         }
@@ -78,10 +76,9 @@ public class SafeBlock {
                     .collect(Collectors.toList());
         }
         if (this.suffocatingBlocks == null) {
-            this.suffocatingBlocks = ServerConfig.SUFFOCATING_BLOCKS.get().stream()
+            this.suffocatingBlocks = suffocatingBlocksState.stream()
                     .filter(Objects::nonNull)
-                    .map(NarcissusUtils::getBlock)
-                    .filter(Objects::nonNull)
+                    .map(BlockState::getBlock)
                     .distinct()
                     .collect(Collectors.toList());
         }

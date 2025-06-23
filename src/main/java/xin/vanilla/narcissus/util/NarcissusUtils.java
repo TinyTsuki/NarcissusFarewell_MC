@@ -1797,7 +1797,7 @@ public class NarcissusUtils {
         return location == null ? "" : location.toString();
     }
 
-    public static Block getBlock(String location) {
+    public static Block getBlockFromRegistryName(String location) {
         return ForgeRegistries.BLOCKS.getValue(NarcissusFarewell.parseResource(location));
     }
 
