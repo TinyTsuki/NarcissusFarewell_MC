@@ -885,12 +885,12 @@ public class FarewellCommand {
             ServerPlayer player = context.getSource().getPlayerOrException();
             // 传送功能前置校验
             if (checkTeleportPre(context.getSource(), EnumCommandType.TP_TOP)) return 0;
-            Coordinate coordinate = NarcissusUtils.findTopCandidate(player.serverLevel(), new Coordinate(player));
+            Coordinate coordinate = NarcissusUtils.findTopCandidate(player.serverLevel(), new Coordinate(player), player);
             if (coordinate == null) {
                 NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EnumI18nType.MESSAGE, "tp_top_not_found"));
                 return 0;
             }
-            coordinate.setSafe("safe".equalsIgnoreCase(getStringDefault(context, "safe", "safe"))).setSafeMode(EnumSafeMode.Y_DOWN);
+            coordinate.setSafe("safe".equalsIgnoreCase(getStringDefault(context, "safe", "safe"))).setSafeMode(EnumSafeMode.Y_T_TO_C);
             // 验证传送代价
             if (checkTeleportPost(player, coordinate, EnumTeleportType.TP_TOP, true)) return 0;
             NarcissusUtils.teleportTo(player, coordinate, EnumTeleportType.TP_TOP);
@@ -901,12 +901,12 @@ public class FarewellCommand {
             ServerPlayer player = context.getSource().getPlayerOrException();
             // 传送功能前置校验
             if (checkTeleportPre(context.getSource(), EnumCommandType.TP_BOTTOM)) return 0;
-            Coordinate coordinate = NarcissusUtils.findBottomCandidate(player.serverLevel(), new Coordinate(player));
+            Coordinate coordinate = NarcissusUtils.findBottomCandidate(player.serverLevel(), new Coordinate(player), player);
             if (coordinate == null) {
                 NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EnumI18nType.MESSAGE, "tp_bottom_not_found"));
                 return 0;
             }
-            coordinate.setSafe("safe".equalsIgnoreCase(getStringDefault(context, "safe", "safe"))).setSafeMode(EnumSafeMode.Y_UP);
+            coordinate.setSafe("safe".equalsIgnoreCase(getStringDefault(context, "safe", "safe"))).setSafeMode(EnumSafeMode.Y_B_TO_C);
             // 验证传送代价
             if (checkTeleportPost(player, coordinate, EnumTeleportType.TP_BOTTOM, true)) return 0;
             NarcissusUtils.teleportTo(player, coordinate, EnumTeleportType.TP_BOTTOM);
@@ -917,12 +917,12 @@ public class FarewellCommand {
             ServerPlayer player = context.getSource().getPlayerOrException();
             // 传送功能前置校验
             if (checkTeleportPre(context.getSource(), EnumCommandType.TP_UP)) return 0;
-            Coordinate coordinate = NarcissusUtils.findUpCandidate(player.serverLevel(), new Coordinate(player));
+            Coordinate coordinate = NarcissusUtils.findUpCandidate(player.serverLevel(), new Coordinate(player), player);
             if (coordinate == null) {
                 NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EnumI18nType.MESSAGE, "tp_up_not_found"));
                 return 0;
             }
-            coordinate.setSafe("safe".equalsIgnoreCase(getStringDefault(context, "safe", "safe"))).setSafeMode(EnumSafeMode.Y_UP);
+            coordinate.setSafe("safe".equalsIgnoreCase(getStringDefault(context, "safe", "safe"))).setSafeMode(EnumSafeMode.Y_C_TO_T);
             // 验证传送代价
             if (checkTeleportPost(player, coordinate, EnumTeleportType.TP_UP, true)) return 0;
             NarcissusUtils.teleportTo(player, coordinate, EnumTeleportType.TP_UP);
@@ -933,12 +933,12 @@ public class FarewellCommand {
             ServerPlayer player = context.getSource().getPlayerOrException();
             // 传送功能前置校验
             if (checkTeleportPre(context.getSource(), EnumCommandType.TP_DOWN)) return 0;
-            Coordinate coordinate = NarcissusUtils.findDownCandidate(player.serverLevel(), new Coordinate(player));
+            Coordinate coordinate = NarcissusUtils.findDownCandidate(player.serverLevel(), new Coordinate(player), player);
             if (coordinate == null) {
                 NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EnumI18nType.MESSAGE, "tp_down_not_found"));
                 return 0;
             }
-            coordinate.setSafe("safe".equalsIgnoreCase(getStringDefault(context, "safe", "safe"))).setSafeMode(EnumSafeMode.Y_DOWN);
+            coordinate.setSafe("safe".equalsIgnoreCase(getStringDefault(context, "safe", "safe"))).setSafeMode(EnumSafeMode.Y_C_TO_B);
             // 验证传送代价
             if (checkTeleportPost(player, coordinate, EnumTeleportType.TP_DOWN, true)) return 0;
             NarcissusUtils.teleportTo(player, coordinate, EnumTeleportType.TP_DOWN);
@@ -967,7 +967,7 @@ public class FarewellCommand {
                     NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EnumI18nType.MESSAGE, finalSafe ? "tp_view_safe_not_found" : "tp_view_not_found"));
                     return;
                 }
-                coordinate.setSafeMode(EnumSafeMode.Y_OFFSET_3);
+                coordinate.setSafeMode(EnumSafeMode.Y_C_OFFSET_3);
                 // 验证传送代价
                 if (checkTeleportPost(player, coordinate, EnumTeleportType.TP_VIEW, true)) return;
                 player.server.submit(() -> NarcissusUtils.teleportTo(player, coordinate, EnumTeleportType.TP_VIEW));
