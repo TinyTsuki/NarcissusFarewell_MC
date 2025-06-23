@@ -25,6 +25,7 @@ import xin.vanilla.narcissus.command.FarewellCommand;
 import xin.vanilla.narcissus.config.CommonConfig;
 import xin.vanilla.narcissus.config.CustomConfig;
 import xin.vanilla.narcissus.config.ServerConfig;
+import xin.vanilla.narcissus.data.SafeBlock;
 import xin.vanilla.narcissus.data.TeleportRequest;
 import xin.vanilla.narcissus.event.ClientModEventHandler;
 import xin.vanilla.narcissus.network.ModNetworkHandler;
@@ -74,6 +75,9 @@ public class NarcissusFarewell {
      */
     @Getter
     private static final Map<String, TeleportRequest> teleportRequest = new ConcurrentHashMap<>();
+
+    @Getter
+    private static final SafeBlock safeBlock = new SafeBlock();
 
     public NarcissusFarewell() {
 
