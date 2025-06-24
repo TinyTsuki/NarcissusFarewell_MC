@@ -657,12 +657,11 @@ public class NarcissusUtils {
     public static Coordinate findTopCandidate(ServerWorld world, Coordinate start) {
         if (start.getY() >= NarcissusUtils.getWorldMaxY(world)) return null;
         SafeBlockChecker checker = new SafeBlockChecker(world);
-        BlockPos blockPos = start.toBlockPos();
-        for (int offset : IntStream.range(1, NarcissusUtils.getWorldMaxY(world) - start.getYInt() + 1).boxed()
+        for (int y : IntStream.range(start.getYInt(), NarcissusUtils.getWorldMaxY(world) + 1).boxed()
                 .sorted(Comparator.comparingInt(Integer::intValue).reversed())
                 .collect(Collectors.toList())) {
-            if (checker.isSafeBlock(blockPos.above(offset), false)) {
-                return start.clone().addY(offset);
+            if (checker.isSafeBlock(start.setY(y).toBlockPos(), false)) {
+                return start.setY(y);
             }
         }
         return null;
@@ -671,12 +670,11 @@ public class NarcissusUtils {
     public static Coordinate findBottomCandidate(ServerWorld world, Coordinate start) {
         if (start.getY() <= NarcissusUtils.getWorldMinY(world)) return null;
         SafeBlockChecker checker = new SafeBlockChecker(world);
-        BlockPos blockPos = start.toBlockPos();
-        for (int offset : IntStream.range(NarcissusUtils.getWorldMinY(world) + 1, start.getYInt()).boxed()
-                .sorted(Comparator.comparingInt(Integer::intValue).reversed())
+        for (int y : IntStream.range(NarcissusUtils.getWorldMinY(world), start.getYInt()).boxed()
+                .sorted(Comparator.comparingInt(Integer::intValue))
                 .collect(Collectors.toList())) {
-            if (checker.isSafeBlock(blockPos.below(offset), false)) {
-                return start.clone().addY(-offset);
+            if (checker.isSafeBlock(start.setY(y).toBlockPos(), false)) {
+                return start.setY(y);
             }
         }
         return null;
@@ -685,12 +683,11 @@ public class NarcissusUtils {
     public static Coordinate findUpCandidate(ServerWorld world, Coordinate start) {
         if (start.getY() >= NarcissusUtils.getWorldMaxY(world)) return null;
         SafeBlockChecker checker = new SafeBlockChecker(world);
-        BlockPos blockPos = start.toBlockPos();
-        for (int offset : IntStream.range(1, NarcissusUtils.getWorldMaxY(world) - start.getYInt() + 1).boxed()
+        for (int y : IntStream.range(start.getYInt() + 1, NarcissusUtils.getWorldMaxY(world) + 1).boxed()
                 .sorted(Comparator.comparingInt(Integer::intValue))
                 .collect(Collectors.toList())) {
-            if (checker.isSafeBlock(blockPos.above(offset), false)) {
-                return start.clone().addY(offset);
+            if (checker.isSafeBlock(start.setY(y).toBlockPos(), false)) {
+                return start.setY(y);
             }
         }
         return null;
@@ -699,12 +696,11 @@ public class NarcissusUtils {
     public static Coordinate findDownCandidate(ServerWorld world, Coordinate start) {
         if (start.getY() <= NarcissusUtils.getWorldMinY(world)) return null;
         SafeBlockChecker checker = new SafeBlockChecker(world);
-        BlockPos blockPos = start.toBlockPos();
-        for (int offset : IntStream.range(1, start.getYInt() - NarcissusUtils.getWorldMinY(world) + 1).boxed()
-                .sorted(Comparator.comparingInt(Integer::intValue))
+        for (int y : IntStream.range(NarcissusUtils.getWorldMinY(world), start.getYInt()).boxed()
+                .sorted(Comparator.comparingInt(Integer::intValue).reversed())
                 .collect(Collectors.toList())) {
-            if (checker.isSafeBlock(blockPos.below(offset), false)) {
-                return start.clone().addY(-offset);
+            if (checker.isSafeBlock(start.setY(y).toBlockPos(), false)) {
+                return start.setY(y);
             }
         }
         return null;
