@@ -373,7 +373,7 @@ public class NarcissusUtils {
     public static Coordinate findTopCandidate(ServerLevel world, Coordinate start) {
         if (start.getY() >= NarcissusUtils.getWorldMaxY(world)) return null;
         SafeBlockChecker checker = new SafeBlockChecker(world);
-        for (int y : IntStream.range(start.getYInt(), NarcissusUtils.getWorldMaxY(world) + 1).boxed()
+        for (int y : IntStream.range(start.getYInt() + 1, NarcissusUtils.getWorldMaxY(world) + 1).boxed()
                 .sorted(Comparator.comparingInt(Integer::intValue).reversed())
                 .toList()) {
             if (checker.isSafeBlock(start.setY(y).toBlockPos(), false)) {
