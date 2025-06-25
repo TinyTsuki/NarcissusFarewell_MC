@@ -3,6 +3,7 @@ package xin.vanilla.narcissus.util;
 import lombok.NonNull;
 import net.minecraft.block.Block;
 import net.minecraft.client.Minecraft;
+import net.minecraft.command.CommandBase;
 import net.minecraft.command.ICommandSender;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityLiving;
@@ -2017,7 +2018,22 @@ public class NarcissusUtils {
                 break;
             case ITEM:
                 try {
-                    ItemStack itemStack = ItemStack.loadItemStackFromNBT((NBTTagCompound) JsonToNBT.func_150315_a(cost.getConf()));
+                    String itemId;
+                    String nbt;
+                    if (cost.getConf().contains("{") && cost.getConf().contains("}")) {
+                        itemId = cost.getConf().substring(0, cost.getConf().indexOf("{"));
+                        nbt = cost.getConf().substring(cost.getConf().indexOf("{"));
+                    } else {
+                        itemId = cost.getConf();
+                        nbt = null;
+                    }
+                    ItemStack itemStack = new ItemStack(CommandBase.getItemByText(player, itemId));
+                    if (StringUtils.isNotNullOrEmpty(nbt)) {
+                        try {
+                            itemStack.setTagCompound((NBTTagCompound) JsonToNBT.func_150315_a(nbt));
+                        } catch (Exception ignored) {
+                        }
+                    }
                     result = getItemCount(getPlayerInventory(player), itemStack) >= costNeed && cardNeed == 0;
                     if (!result && cardNeed == 0) {
                         NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EI18nType.MESSAGE, "cost_not_enough"), itemStack.getDisplayName(), (int) Math.ceil(need));
