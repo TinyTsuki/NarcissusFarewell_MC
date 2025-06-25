@@ -8,12 +8,13 @@ import lombok.NonNull;
 import net.minecraft.client.Minecraft;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.arguments.blocks.BlockStateParser;
+import net.minecraft.commands.arguments.item.ItemInput;
+import net.minecraft.commands.arguments.item.ItemParser;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
 import net.minecraft.core.HolderSet;
 import net.minecraft.core.Registry;
 import net.minecraft.core.registries.Registries;
-import net.minecraft.nbt.TagParser;
 import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientboundPlayerCombatKillPacket;
@@ -927,7 +928,7 @@ public class NarcissusUtils {
                             runnable = null;
                         }
                         Coordinate finalAfter1 = finalAfter;
-                        player.server.submit(() -> {
+                        player.getServer().submit(() -> {
                             if (runnable != null) runnable.run();
                             teleportPlayer(player, finalAfter1, type, before, level);
                         });
@@ -1196,7 +1197,7 @@ public class NarcissusUtils {
      * @param message 消息
      */
     public static void broadcastMessage(ServerPlayer player, Component message) {
-        player.server.getPlayerList().broadcastSystemMessage(net.minecraft.network.chat.Component.translatable("chat.type.announcement", player.getDisplayName(), message.toChatComponent()), false);
+        player.getServer().getPlayerList().broadcastSystemMessage(net.minecraft.network.chat.Component.translatable("chat.type.announcement", player.getDisplayName(), message.toChatComponent()), false);
     }
 
     /**
@@ -1503,7 +1504,8 @@ public class NarcissusUtils {
                 break;
             case ITEM:
                 try {
-                    ItemStack itemStack = ItemStack.parse(player.registryAccess(), TagParser.parseCompoundFully(cost.getConf())).get();
+                    ItemParser.ItemResult itemResult = new ItemParser(player.registryAccess()).parse(new StringReader(cost.getConf()));
+                    ItemStack itemStack = new ItemInput(itemResult.item(), itemResult.components()).createItemStack(1, false);
                     result = getItemCount(getPlayerItemList(player), itemStack) >= costNeed && cardNeed == 0;
                     if (!result && cardNeed == 0) {
                         NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EnumI18nType.MESSAGE, "cost_not_enough"), itemStack.getDisplayName(), (int) Math.ceil(need));
@@ -1763,7 +1765,7 @@ public class NarcissusUtils {
             player.getEntityData().set((EntityDataAccessor<? super Float>) FieldUtils.getPrivateFieldValue(LivingEntity.class, null, FieldUtils.getEntityHealthFieldName()), 0f);
             player.connection.send(new ClientboundPlayerCombatKillPacket(player.getId(), CommonComponents.EMPTY));
             if (!player.isSpectator()) {
-                if (!player.serverLevel().getGameRules().getBoolean(GameRules.RULE_KEEPINVENTORY)) {
+                if (!player.level().getGameRules().getBoolean(GameRules.RULE_KEEPINVENTORY)) {
                     player.getInventory().dropAll();
                 }
             }

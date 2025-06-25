@@ -1,17 +1,14 @@
 package xin.vanilla.narcissus.event;
 
 import net.minecraft.client.KeyMapping;
-import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.event.RegisterKeyMappingsEvent;
-import net.minecraftforge.fml.common.Mod;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import xin.vanilla.narcissus.NarcissusFarewell;
 
 /**
  * 客户端 Mod事件处理器
  */
-@Mod.EventBusSubscriber(modid = NarcissusFarewell.MODID, value = Dist.CLIENT, bus = Mod.EventBusSubscriber.Bus.MOD)
+// @Mod.EventBusSubscriber(modid = NarcissusFarewell.MODID, value = Dist.CLIENT, bus = Mod.EventBusSubscriber.Bus.MOD)
 public class ClientModEventHandler {
     private static final Logger LOGGER = LogManager.getLogger();
 

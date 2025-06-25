@@ -2,9 +2,7 @@ package xin.vanilla.narcissus.network.packet;
 
 import lombok.Getter;
 import net.minecraft.network.FriendlyByteBuf;
-import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.event.network.CustomPayloadEvent;
-import net.minecraftforge.fml.DistExecutor;
 import xin.vanilla.narcissus.data.Coordinate;
 import xin.vanilla.narcissus.data.KeyValue;
 import xin.vanilla.narcissus.data.TeleportRecord;
@@ -123,7 +121,7 @@ public class PlayerDataSyncPacket extends SplitPacket {
                 // 获取玩家并更新 Capability 数据
                 List<PlayerDataSyncPacket> packets = SplitPacket.handle(packet);
                 if (CollectionUtils.isNotNullOrEmpty(packets)) {
-                    DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> ClientProxy.handleSynPlayerData(new PlayerDataSyncPacket(packets)));
+                    ClientProxy.handleSynPlayerData(new PlayerDataSyncPacket(packets));
                 }
             }
         });

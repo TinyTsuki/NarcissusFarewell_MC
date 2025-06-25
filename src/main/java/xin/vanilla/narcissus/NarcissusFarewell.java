@@ -5,12 +5,13 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.client.event.RegisterKeyMappingsEvent;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.RegisterCommandsEvent;
 import net.minecraftforge.event.server.ServerStartedEvent;
 import net.minecraftforge.event.server.ServerStartingEvent;
 import net.minecraftforge.event.server.ServerStoppingEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.eventbus.api.listener.SubscribeEvent;
 import net.minecraftforge.fml.ModList;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.config.ModConfig;
@@ -83,11 +84,6 @@ public class NarcissusFarewell {
         // 注册网络通道
         ModNetworkHandler.registerPackets();
 
-        // 注册服务器启动和关闭事件
-        MinecraftForge.EVENT_BUS.addListener(this::onServerStarting);
-        MinecraftForge.EVENT_BUS.addListener(this::onServerStarted);
-        MinecraftForge.EVENT_BUS.addListener(this::onServerStopping);
-
         // 注册当前实例到事件总线
         MinecraftForge.EVENT_BUS.register(this);
 
@@ -96,12 +92,12 @@ public class NarcissusFarewell {
         context.registerConfig(ModConfig.Type.SERVER, ServerConfig.SERVER_CONFIG);
 
         // 注册客户端设置事件
-        context.getModEventBus().addListener(this::onClientSetup);
+        FMLClientSetupEvent.getBus(context.getModBusGroup()).addListener(this::onClientSetup);
         // 注册公共设置事件
-        context.getModEventBus().addListener(this::onCommonSetup);
+        FMLCommonSetupEvent.getBus(context.getModBusGroup()).addListener(this::onCommonSetup);
 
         if (FMLEnvironment.dist == Dist.CLIENT) {
-            context.getModEventBus().addListener(ClientModEventHandler::registerKeyBindings);
+            RegisterKeyMappingsEvent.getBus(context.getModBusGroup()).addListener(ClientModEventHandler::registerKeyBindings);
         }
     }
 
@@ -125,14 +121,17 @@ public class NarcissusFarewell {
         CustomConfig.loadCustomConfig(false);
     }
 
-    private void onServerStarting(ServerStartingEvent event) {
+    @SubscribeEvent
+    public void onServerStarting(ServerStartingEvent event) {
         serverInstance = event.getServer();
     }
 
-    private void onServerStarted(ServerStartedEvent event) {
+    @SubscribeEvent
+    public void onServerStarted(ServerStartedEvent event) {
     }
 
-    private void onServerStopping(ServerStoppingEvent event) {
+    @SubscribeEvent
+    public void onServerStopping(ServerStoppingEvent event) {
     }
 
     @SubscribeEvent
