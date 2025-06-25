@@ -4,6 +4,7 @@ import lombok.NonNull;
 import net.minecraft.block.Block;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.Minecraft;
+import net.minecraft.command.CommandBase;
 import net.minecraft.command.ICommandSender;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityLiving;
@@ -19,6 +20,7 @@ import net.minecraft.inventory.IInventory;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.JsonToNBT;
+import net.minecraft.nbt.NBTException;
 import net.minecraft.network.Packet;
 import net.minecraft.network.datasync.DataParameter;
 import net.minecraft.network.play.server.SPacketChat;
@@ -1994,7 +1996,22 @@ public class NarcissusUtils {
                 break;
             case ITEM:
                 try {
-                    ItemStack itemStack = new ItemStack(JsonToNBT.getTagFromJson(cost.getConf()));
+                    String itemId;
+                    String nbt;
+                    if (cost.getConf().contains("{") && cost.getConf().contains("}")) {
+                        itemId = cost.getConf().substring(0, cost.getConf().indexOf("{"));
+                        nbt = cost.getConf().substring(cost.getConf().indexOf("{"));
+                    } else {
+                        itemId = cost.getConf();
+                        nbt = null;
+                    }
+                    ItemStack itemStack = new ItemStack(CommandBase.getItemByText(player, itemId));
+                    if (StringUtils.isNotNullOrEmpty(nbt)) {
+                        try {
+                            itemStack.setTagCompound(JsonToNBT.getTagFromJson(nbt));
+                        } catch (NBTException ignored) {
+                        }
+                    }
                     result = getItemCount(getPlayerInventory(player), itemStack) >= costNeed && cardNeed == 0;
                     if (!result && cardNeed == 0) {
                         NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EI18nType.MESSAGE, "cost_not_enough"), itemStack.getDisplayName(), (int) Math.ceil(need));
