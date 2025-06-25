@@ -8,12 +8,14 @@ import lombok.NonNull;
 import net.minecraft.client.Minecraft;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.arguments.blocks.BlockStateParser;
+import net.minecraft.commands.arguments.item.ItemInput;
+import net.minecraft.commands.arguments.item.ItemParser;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
 import net.minecraft.core.HolderSet;
 import net.minecraft.core.Registry;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
-import net.minecraft.nbt.TagParser;
 import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientboundPlayerCombatKillPacket;
@@ -1517,7 +1519,8 @@ public class NarcissusUtils {
                 break;
             case ITEM:
                 try {
-                    ItemStack itemStack = ItemStack.of(TagParser.parseTag(cost.getConf()));
+                    ItemParser.ItemResult itemResult = ItemParser.parseForItem(BuiltInRegistries.ITEM.asLookup(), new StringReader(cost.getConf()));
+                    ItemStack itemStack = new ItemInput(itemResult.item(), itemResult.nbt()).createItemStack(1, false);
                     result = getItemCount(player.getInventory().items, itemStack) >= costNeed && cardNeed == 0;
                     if (!result && cardNeed == 0) {
                         NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EnumI18nType.MESSAGE, "cost_not_enough"), itemStack.getDisplayName(), (int) Math.ceil(need));
