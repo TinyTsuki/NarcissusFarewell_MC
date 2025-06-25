@@ -15,7 +15,7 @@ import xin.vanilla.narcissus.NarcissusFarewell;
 /**
  * 服务端 Game事件处理器
  */
-@EventBusSubscriber(modid = NarcissusFarewell.MODID, value = Dist.DEDICATED_SERVER, bus = EventBusSubscriber.Bus.GAME)
+@EventBusSubscriber(modid = NarcissusFarewell.MODID, value = Dist.DEDICATED_SERVER)
 public class ServerGameEventHandler {
     private static final Logger LOGGER = LogManager.getLogger();
 

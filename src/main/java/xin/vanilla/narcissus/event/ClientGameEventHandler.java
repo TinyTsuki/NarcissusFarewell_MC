@@ -20,7 +20,7 @@ import xin.vanilla.narcissus.util.NarcissusUtils;
 /**
  * 客户端 Game事件处理器
  */
-@EventBusSubscriber(modid = NarcissusFarewell.MODID, value = Dist.CLIENT, bus = EventBusSubscriber.Bus.GAME)
+@EventBusSubscriber(modid = NarcissusFarewell.MODID, value = Dist.CLIENT)
 public class ClientGameEventHandler {
     private static final Logger LOGGER = LogManager.getLogger();
 

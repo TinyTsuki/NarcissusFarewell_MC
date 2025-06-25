@@ -129,7 +129,7 @@ public class WorldStageData extends SavedData {
     }
 
     public static WorldStageData get(ServerPlayer player) {
-        return get(player.serverLevel());
+        return get(player.level());
     }
 
     public static WorldStageData get(ServerLevel world) {

@@ -3,11 +3,11 @@ package xin.vanilla.narcissus.data.player;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.Setter;
-import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.ListTag;
 import net.minecraft.network.FriendlyByteBuf;
-import net.neoforged.neoforge.common.util.INBTSerializable;
+import net.minecraft.world.level.storage.ValueInput;
+import net.minecraft.world.level.storage.ValueOutput;
+import net.neoforged.neoforge.common.util.ValueIOSerializable;
 import org.jetbrains.annotations.NotNull;
 import xin.vanilla.narcissus.config.ServerConfig;
 import xin.vanilla.narcissus.data.Coordinate;
@@ -25,7 +25,7 @@ import java.util.stream.Collectors;
 /**
  * 玩家传送数据
  */
-public class PlayerTeleportData implements INBTSerializable<CompoundTag> {
+public class PlayerTeleportData implements ValueIOSerializable {
     /**
      * 是否已发送使用说明
      */
@@ -196,22 +196,20 @@ public class PlayerTeleportData implements INBTSerializable<CompoundTag> {
     }
 
     @Override
-    public CompoundTag serializeNBT(HolderLookup.@NotNull Provider provider) {
-        CompoundTag tag = new CompoundTag();
-        tag.putBoolean("notified", this.notified);
-        tag.putString("lastCardTime", DateUtils.toDateTimeString(this.getLastCardTime()));
-        tag.putString("lastTpTime", DateUtils.toDateTimeString(this.getLastTpTime()));
-        tag.putInt("teleportCard", this.getTeleportCard());
+    public void serialize(@NotNull ValueOutput output) {
+        output.putBoolean("notified", this.notified);
+        output.putString("lastCardTime", DateUtils.toDateTimeString(this.getLastCardTime()));
+        output.putString("lastTpTime", DateUtils.toDateTimeString(this.getLastTpTime()));
+        output.putInt("teleportCard", this.getTeleportCard());
 
         // 序列化传送记录
-        ListTag recordsNBT = new ListTag();
+        ValueOutput.TypedOutputList<CompoundTag> recordsNBT = output.list("teleportRecords", CompoundTag.CODEC);
         for (TeleportRecord record : this.getTeleportRecords()) {
             recordsNBT.add(record.writeToNBT());
         }
-        tag.put("teleportRecords", recordsNBT);
 
         // 序列化家坐标
-        ListTag homeCoordinateNBT = new ListTag();
+        ValueOutput.TypedOutputList<CompoundTag> homeCoordinateNBT = output.list("homeCoordinate", CompoundTag.CODEC);
         for (Map.Entry<KeyValue<String, String>, Coordinate> entry : this.getHomeCoordinate().entrySet()) {
             CompoundTag homeCoordinateTag = new CompoundTag();
             homeCoordinateTag.putString("key", entry.getKey().getKey());
@@ -219,58 +217,56 @@ public class PlayerTeleportData implements INBTSerializable<CompoundTag> {
             homeCoordinateTag.put("coordinate", entry.getValue().writeToNBT());
             homeCoordinateNBT.add(homeCoordinateTag);
         }
-        tag.put("homeCoordinate", homeCoordinateNBT);
 
         // 序列化默认家
-        ListTag defaultHomeNBT = new ListTag();
+        ValueOutput.TypedOutputList<CompoundTag> defaultHomeNBT = output.list("defaultHome", CompoundTag.CODEC);
         for (Map.Entry<String, String> entry : this.getDefaultHome().entrySet()) {
             CompoundTag defaultHomeTag = new CompoundTag();
             defaultHomeTag.putString("key", entry.getKey());
             defaultHomeTag.putString("value", entry.getValue());
             defaultHomeNBT.add(defaultHomeTag);
         }
-        tag.put("defaultHome", defaultHomeNBT);
 
         // 序列化黑白名单
-        tag.put("access", this.getAccess().writeToNBT());
-
-        return tag;
+        output.store("access", CompoundTag.CODEC, this.getAccess().writeToNBT());
     }
 
     @Override
-    public void deserializeNBT(HolderLookup.@NotNull Provider provider, CompoundTag nbt) {
-        this.notified = nbt.getBoolean("notified").orElse(false);
-        this.setLastCardTime(DateUtils.format(nbt.getString("lastCardTime").orElse(DateUtils.toDateTimeString(new Date(0)))));
-        this.setLastTpTime(DateUtils.format(nbt.getString("lastTpTime").orElse(DateUtils.toDateTimeString(new Date(0)))));
-        this.setTeleportCard(nbt.getInt("teleportCard").orElse(0));
+    public void deserialize(@NotNull ValueInput input) {
+        this.notified = input.getBooleanOr("notified", false);
+        this.setLastCardTime(DateUtils.format(input.getString("lastCardTime").orElse(DateUtils.toDateTimeString(new Date(0)))));
+        this.setLastTpTime(DateUtils.format(input.getString("lastTpTime").orElse(DateUtils.toDateTimeString(new Date(0)))));
+        this.setTeleportCard(input.getInt("teleportCard").orElse(0));
+
         // 反序列化传送记录
-        ListTag recordsNBT = nbt.getList("teleportRecords").orElse(new ListTag());
-        List<TeleportRecord> records = new ArrayList<>();
-        for (int i = 0; i < recordsNBT.size(); i++) {
-            records.add(TeleportRecord.readFromNBT(recordsNBT.getCompound(i).orElse(new Coordinate().writeToNBT())));
-        }
-        this.setTeleportRecords(records);
+        input.list("teleportRecords", CompoundTag.CODEC).ifPresent(recordsNBT -> {
+            List<TeleportRecord> records = new ArrayList<>();
+            for (CompoundTag tag : recordsNBT) {
+                records.add(TeleportRecord.readFromNBT(tag));
+            }
+            this.setTeleportRecords(records);
+        });
 
         // 反序列化家坐标
-        ListTag homeCoordinateNBT = nbt.getList("homeCoordinate").orElse(new ListTag());
-        Map<KeyValue<String, String>, Coordinate> homeCoordinate = new HashMap<>();
-        for (int i = 0; i < homeCoordinateNBT.size(); i++) {
-            CompoundTag homeCoordinateTag = homeCoordinateNBT.getCompound(i).orElse(new CompoundTag());
-            homeCoordinate.put(new KeyValue<>(homeCoordinateTag.getString("key").orElse(""), homeCoordinateTag.getString("value").orElse("")),
-                    Coordinate.readFromNBT(homeCoordinateTag.getCompound("coordinate").orElse(new Coordinate().writeToNBT())));
-        }
-        this.setHomeCoordinate(homeCoordinate);
+        input.list("homeCoordinate", CompoundTag.CODEC).ifPresent(homeCoordinateNBT -> {
+            Map<KeyValue<String, String>, Coordinate> homeCoordinate = new HashMap<>();
+            for (CompoundTag tag : homeCoordinateNBT) {
+                homeCoordinate.put(new KeyValue<>(tag.getString("key").orElse(""), tag.getString("value").orElse("")),
+                        Coordinate.readFromNBT(tag.getCompound("coordinate").orElse(new Coordinate().writeToNBT())));
+            }
+            this.setHomeCoordinate(homeCoordinate);
+        });
 
         // 反序列化默认家
-        ListTag defaultHomeNBT = nbt.getList("defaultHome").orElse(new ListTag());
-        Map<String, String> defaultHome = new HashMap<>();
-        for (int i = 0; i < defaultHomeNBT.size(); i++) {
-            CompoundTag defaultHomeTag = defaultHomeNBT.getCompound(i).orElse(new CompoundTag());
-            defaultHome.put(defaultHomeTag.getString("key").orElse(""), defaultHomeTag.getString("value").orElse(""));
-        }
-        this.setDefaultHome(defaultHome);
+        input.list("defaultHome", CompoundTag.CODEC).ifPresent(defaultHomeNBT -> {
+            Map<String, String> defaultHome = new HashMap<>();
+            for (CompoundTag tag : defaultHomeNBT) {
+                defaultHome.put(tag.getString("key").orElse(""), tag.getString("value").orElse(""));
+                this.setDefaultHome(defaultHome);
+            }
+        });
 
         // 反序列化黑白名单
-        this.setAccess(PlayerAccess.readFromNBT(nbt.getCompound("access").orElse(new CompoundTag())));
+        this.setAccess(PlayerAccess.readFromNBT(input.read("access", CompoundTag.CODEC).orElse(new CompoundTag())));
     }
 }

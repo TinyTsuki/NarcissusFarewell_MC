@@ -928,7 +928,7 @@ public class NarcissusUtils {
                             runnable = null;
                         }
                         Coordinate finalAfter1 = finalAfter;
-                        player.server.submit(() -> {
+                        player.getServer().submit(() -> {
                             if (runnable != null) runnable.run();
                             teleportPlayer(player, finalAfter1, type, before, level);
                         });
@@ -1197,7 +1197,7 @@ public class NarcissusUtils {
      * @param message 消息
      */
     public static void broadcastMessage(ServerPlayer player, Component message) {
-        player.server.getPlayerList().broadcastSystemMessage(net.minecraft.network.chat.Component.translatable("chat.type.announcement", player.getDisplayName(), message.toChatComponent()), false);
+        player.getServer().getPlayerList().broadcastSystemMessage(net.minecraft.network.chat.Component.translatable("chat.type.announcement", player.getDisplayName(), message.toChatComponent()), false);
     }
 
     /**
@@ -1765,7 +1765,7 @@ public class NarcissusUtils {
             player.getEntityData().set((EntityDataAccessor<? super Float>) FieldUtils.getPrivateFieldValue(LivingEntity.class, null, FieldUtils.getEntityHealthFieldName()), 0f);
             player.connection.send(new ClientboundPlayerCombatKillPacket(player.getId(), CommonComponents.EMPTY));
             if (!player.isSpectator()) {
-                if (!player.serverLevel().getGameRules().getBoolean(GameRules.RULE_KEEPINVENTORY)) {
+                if (!player.level().getGameRules().getBoolean(GameRules.RULE_KEEPINVENTORY)) {
                     player.getInventory().dropAll();
                 }
             }
