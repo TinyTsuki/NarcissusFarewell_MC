@@ -46,7 +46,7 @@
   "command.narcissus_farewell.share_detail": "分享驿站、玩家的私人传送点、玩家当前坐标，标识“->”代表私人传送点，“>>”代表驿站，自定义标识或不填写时将分享玩家当前坐标。\n参数列表：\n 1. [<分享名称>]\n 2. [<驿站标识>] [<分享对象>]\n 3. [<私人传送点标识>] [<分享对象>]",
   "command.narcissus_farewell.feed_detail": "自己品尝或请他人品尝水仙浓茶，效果类似/kill。\n参数列表：\n [<玩家>]",
   "command.narcissus_farewell.tp_coordinate_detail": "传送至指定坐标或玩家。\n参数列表：\n 1. <玩家> [<是否安全传送>]\n 2. <坐标> [<是否安全传送>] [<维度>]",
-  "command.narcissus_farewell.tp_structure_detail": "传送至指定结构或生物群系(默认安全的)。\n参数列表：\n 1. <结构> [<搜索距离>] [<维度>]\n 2. <生物群系> [<搜索距离>] [<维度>]",
+  "command.narcissus_farewell.tp_structure_detail": "传送至指定结构或生物群系(默认安全的)。\n参数列表：\n 1. <结构> [<搜索距离>] [<维度>] [<是否安全传送>]\n 2. <生物群系> [<搜索距离>] [<维度>] [<是否安全传送>]",
   "command.narcissus_farewell.tp_ask_detail": "请求 将自己传送至某个玩家，若不指定目标玩家将使用上次请求时指定的玩家。\n参数列表：\n [<玩家>] [<是否安全传送>]",
   "command.narcissus_farewell.tp_ask_yes_detail": "接受 将某个玩家传送至自己 的请求，若不指定参数将接受最近一次请求。\n参数列表：\n 1. [<玩家>]\n 2. [<最近的第几次请求>]\n 3. [<请求ID>]",
   "command.narcissus_farewell.tp_ask_no_detail": "拒绝 将某个玩家传送至自己 的请求，若不指定参数将拒绝最近一次请求。\n参数列表：\n 1. [<玩家>]\n 2. [<最近的第几次请求>]\n 3. [<请求ID>]",
