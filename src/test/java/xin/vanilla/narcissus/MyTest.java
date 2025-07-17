@@ -25,4 +25,9 @@ public class MyTest {
             System.out.println();
         }
     }
+
+    @Test
+    public void test001() {
+
+    }
 }
