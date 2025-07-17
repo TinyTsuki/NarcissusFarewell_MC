@@ -538,6 +538,7 @@ public class FarewellCommand {
                 targetLevel = player.getLevel().dimension.getType();
             }
             DimensionType finalTargetLevel = targetLevel;
+            boolean safe = "safe".equalsIgnoreCase(getStringDefault(context, "safe", "safe"));
             int finalRange = range;
             NarcissusUtils.sendActionBarMessage(player, Component.translatable(NarcissusUtils.getPlayerLanguage(player), EnumI18nType.MESSAGE, "tp_structure_searching"));
             new Thread(() -> {
@@ -551,7 +552,7 @@ public class FarewellCommand {
                     NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EnumI18nType.MESSAGE, "structure_biome_not_found_in_range"), structId);
                     return;
                 }
-                coordinate.setSafe("safe".equalsIgnoreCase(getStringEmpty(context, "safe")));
+                coordinate.setSafe(safe);
                 // 验证传送代价
                 if (checkTeleportPost(player, coordinate, EnumTeleportType.TP_STRUCTURE, true)) return;
                 player.server.submit(() -> NarcissusUtils.teleportTo(player, coordinate, EnumTeleportType.TP_STRUCTURE));
@@ -1571,6 +1572,10 @@ public class FarewellCommand {
                                         .executes(tpStructureCommand)
                                         .then(Commands.argument("dimension", DimensionArgument.dimension())
                                                 .executes(tpStructureCommand)
+                                                .then(Commands.argument("safe", StringArgumentType.word())
+                                                        .suggests(safeSuggestions)
+                                                        .executes(tpStructureCommand)
+                                                )
                                         )
                                 )
                         );// endregion tpst
