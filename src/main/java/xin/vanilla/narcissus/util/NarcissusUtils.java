@@ -1753,7 +1753,8 @@ public class NarcissusUtils {
 
         double adjustedDistance;
         if (player.getLevel().dimension() == targetDim) {
-            adjustedDistance = Math.min(ServerConfig.TELEPORT_COST_DISTANCE_LIMIT.get(), distance);
+            int limit = ServerConfig.TELEPORT_COST_DISTANCE_LIMIT.get();
+            adjustedDistance = limit == 0 ? distance : Math.min(limit, distance);
         } else {
             adjustedDistance = ServerConfig.TELEPORT_COST_DISTANCE_ACROSS_DIMENSION.get();
         }
@@ -1860,7 +1861,9 @@ public class NarcissusUtils {
                             );
                         }
                     }
-                } catch (Exception ignored) {
+                } catch (Exception e) {
+                    result = false;
+                    LOGGER.error("Failed to teleport with item cost:", e);
                 }
                 break;
             case COMMAND:
@@ -1873,7 +1876,9 @@ public class NarcissusUtils {
                             data.subTeleportCard(Math.min(data.getTeleportCard(), cardNeed));
                         }
                     }
-                } catch (Exception ignored) {
+                } catch (Exception e) {
+                    result = false;
+                    LOGGER.error("Failed to teleport with command cost:", e);
                 }
                 break;
         }
