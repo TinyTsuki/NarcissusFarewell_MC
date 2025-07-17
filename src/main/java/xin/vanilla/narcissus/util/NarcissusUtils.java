@@ -1211,7 +1211,7 @@ public class NarcissusUtils {
      * @param message 消息
      */
     public static void broadcastMessage(ServerPlayer player, Component message) {
-        player.server.getPlayerList().broadcastSystemMessage(net.minecraft.network.chat.Component.translatable("chat.type.announcement", player.getDisplayName(), message.toChatComponent()), false);
+        player.server.getPlayerList().broadcastSystemMessage(net.minecraft.network.chat.Component.translatable("chat.type.announcement", getPlayerName(player), message.toChatComponent()), false);
     }
 
     /**
@@ -1463,139 +1463,189 @@ public class NarcissusUtils {
      * @return 是否验证通过
      */
     private static boolean validateCost(ServerPlayer player, ResourceKey<Level> targetDim, double distance, EnumTeleportType teleportType, boolean submit) {
-        TeleportCost cost = NarcissusUtils.getCommandCost(teleportType);
-        if (cost.getType() == EnumCostType.NONE) return true;
+        TeleportCost teleportCost = NarcissusUtils.getCommandCost(teleportType);
+        if (teleportCost.getType() == EnumCostType.NONE) return true;
+        PlayerTeleportData data = PlayerDataAttachment.getData(player);
 
         double adjustedDistance;
         if (player.level().dimension() == targetDim) {
-            adjustedDistance = Math.min(ServerConfig.TELEPORT_COST_DISTANCE_LIMIT.get(), distance);
+            int limit = ServerConfig.TELEPORT_COST_DISTANCE_LIMIT.get();
+            adjustedDistance = limit == 0 ? distance : Math.min(limit, distance);
         } else {
             adjustedDistance = ServerConfig.TELEPORT_COST_DISTANCE_ACROSS_DIMENSION.get();
         }
 
-        double need = cost.getNum() * adjustedDistance * cost.getRate();
-        int cardNeedTotal = getTeleportCardNeedPre(need);
-        int cardNeed = getTeleportCardNeedPost(player, need);
-        int costNeed = getTeleportCostNeedPost(player, need);
+        double need = teleportCost.getNum() * adjustedDistance * teleportCost.getRate();
+        int cardNeed = getTeleportCardNeed(need);
+        int costNeed = getTeleportCostNeed(data, cardNeed, (int) Math.ceil(need));
         boolean result = false;
 
-        switch (cost.getType()) {
+        if (costNeed < 0) {
+            NarcissusUtils.sendTranslatableMessage(player
+                    , I18nUtils.getKey(EnumI18nType.MESSAGE, "cost_not_enough")
+                    , Component.translatable(NarcissusUtils.getPlayerLanguage(player)
+                            , EnumI18nType.WORD, "teleport_card")
+                    , cardNeed
+            );
+        }
+
+        switch (teleportCost.getType()) {
             case EXP_POINT:
-                result = player.totalExperience >= costNeed && cardNeed == 0;
-                if (!result && cardNeed == 0) {
-                    NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EnumI18nType.MESSAGE, "cost_not_enough"), Component.translatable(NarcissusUtils.getPlayerLanguage(player), EnumI18nType.WORD, "exp_point"), (int) Math.ceil(need));
-                } else if (result && submit) {
+                result = player.totalExperience >= costNeed;
+                if (!result) {
+                    NarcissusUtils.sendTranslatableMessage(player
+                            , I18nUtils.getKey(EnumI18nType.MESSAGE, "cost_not_enough")
+                            , Component.translatable(NarcissusUtils.getPlayerLanguage(player)
+                                    , EnumI18nType.WORD, "exp_point")
+                            , costNeed
+                    );
+                } else if (submit) {
                     player.giveExperiencePoints(-costNeed);
-                    PlayerDataAttachment.getData(player).subTeleportCard(cardNeedTotal);
+                    data.subTeleportCard(Math.min(data.getTeleportCard(), cardNeed));
                 }
                 break;
             case EXP_LEVEL:
-                result = player.experienceLevel >= costNeed && cardNeed == 0;
-                if (!result && cardNeed == 0) {
-                    NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EnumI18nType.MESSAGE, "cost_not_enough"), Component.translatable(NarcissusUtils.getPlayerLanguage(player), EnumI18nType.WORD, "exp_level"), (int) Math.ceil(need));
-                } else if (result && submit) {
+                result = player.experienceLevel >= costNeed;
+                if (!result) {
+                    NarcissusUtils.sendTranslatableMessage(player
+                            , I18nUtils.getKey(EnumI18nType.MESSAGE, "cost_not_enough")
+                            , Component.translatable(NarcissusUtils.getPlayerLanguage(player)
+                                    , EnumI18nType.WORD, "exp_level")
+                            , costNeed
+                    );
+                } else if (submit) {
                     player.giveExperienceLevels(-costNeed);
-                    PlayerDataAttachment.getData(player).subTeleportCard(cardNeedTotal);
+                    data.subTeleportCard(Math.min(data.getTeleportCard(), cardNeed));
                 }
                 break;
             case HEALTH:
-                result = player.getHealth() > costNeed && cardNeed == 0;
-                if (!result && cardNeed == 0) {
-                    NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EnumI18nType.MESSAGE, "cost_not_enough"), Component.translatable(NarcissusUtils.getPlayerLanguage(player), EnumI18nType.WORD, "health"), (int) Math.ceil(need));
-                } else if (result && submit) {
-                    player.hurt(player.level().damageSources().magic(), costNeed);
-                    PlayerDataAttachment.getData(player).subTeleportCard(cardNeedTotal);
+                result = player.getHealth() > costNeed;
+                if (!result) {
+                    NarcissusUtils.sendTranslatableMessage(player
+                            , I18nUtils.getKey(EnumI18nType.MESSAGE, "cost_not_enough")
+                            , Component.translatable(NarcissusUtils.getPlayerLanguage(player)
+                                    , EnumI18nType.WORD, "health")
+                            , costNeed
+                    );
+                } else if (submit) {
+                    try {
+                        EntityDataAccessor<? super Float> DATA_HEALTH_ID = (EntityDataAccessor<? super Float>) FieldUtils.getPrivateFieldValue(LivingEntity.class, null, FieldUtils.getEntityHealthFieldName());
+                        player.getEntityData().set(DATA_HEALTH_ID, player.getHealth() - costNeed);
+                    } catch (Exception e) {
+                        player.hurt(player.level().damageSources().magic(), costNeed);
+                    }
+                    data.subTeleportCard(Math.min(data.getTeleportCard(), cardNeed));
                 }
                 break;
             case HUNGER:
-                result = player.getFoodData().getFoodLevel() >= costNeed && cardNeed == 0;
-                if (!result && cardNeed == 0) {
-                    NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EnumI18nType.MESSAGE, "cost_not_enough"), Component.translatable(NarcissusUtils.getPlayerLanguage(player), EnumI18nType.WORD, "hunger"), (int) Math.ceil(need));
-                } else if (result && submit) {
+                result = player.getFoodData().getFoodLevel() >= costNeed;
+                if (!result) {
+                    NarcissusUtils.sendTranslatableMessage(player
+                            , I18nUtils.getKey(EnumI18nType.MESSAGE, "cost_not_enough")
+                            , Component.translatable(NarcissusUtils.getPlayerLanguage(player)
+                                    , EnumI18nType.WORD, "hunger")
+                            , costNeed
+                    );
+                } else if (submit) {
                     player.getFoodData().setFoodLevel(player.getFoodData().getFoodLevel() - costNeed);
-                    PlayerDataAttachment.getData(player).subTeleportCard(cardNeedTotal);
+                    data.subTeleportCard(Math.min(data.getTeleportCard(), cardNeed));
                 }
                 break;
             case ITEM:
                 try {
-                    ItemParser.ItemResult itemResult = ItemParser.parseForItem(BuiltInRegistries.ITEM.asLookup(), new StringReader(cost.getConf()));
+                    ItemParser.ItemResult itemResult = ItemParser.parseForItem(BuiltInRegistries.ITEM.asLookup(), new StringReader(teleportCost.getConf()));
                     ItemStack itemStack = new ItemInput(itemResult.item(), itemResult.nbt()).createItemStack(1, false);
-                    result = getItemCount(player.getInventory().items, itemStack) >= costNeed && cardNeed == 0;
-                    if (!result && cardNeed == 0) {
-                        NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EnumI18nType.MESSAGE, "cost_not_enough"), itemStack.getDisplayName(), (int) Math.ceil(need));
-                    } else if (result && submit) {
+                    result = getItemCount(player.getInventory().items, itemStack) >= costNeed;
+                    if (!result) {
+                        NarcissusUtils.sendTranslatableMessage(player
+                                , I18nUtils.getKey(EnumI18nType.MESSAGE, "cost_not_enough")
+                                , NarcissusUtils.getItemName(itemStack)
+                                , costNeed
+                        );
+                    } else if (submit) {
                         itemStack.setCount(costNeed);
                         result = removeItemFromPlayerInventory(player, itemStack);
                         // 代价不足
                         if (result) {
-                            PlayerDataAttachment.getData(player).subTeleportCard(cardNeedTotal);
+                            data.subTeleportCard(Math.min(data.getTeleportCard(), cardNeed));
                         } else {
-                            NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EnumI18nType.MESSAGE, "cost_not_enough"), itemStack.getDisplayName(), (int) Math.ceil(need));
+                            NarcissusUtils.sendTranslatableMessage(player
+                                    , I18nUtils.getKey(EnumI18nType.MESSAGE, "cost_not_enough")
+                                    , NarcissusUtils.getItemName(itemStack)
+                                    , costNeed
+                            );
                         }
                     }
-                } catch (Exception ignored) {
+                } catch (Exception e) {
+                    result = false;
+                    LOGGER.error("Failed to teleport with item cost:", e);
                 }
                 break;
             case COMMAND:
                 try {
-                    result = cardNeed == 0;
+                    result = costNeed == 0;
                     if (result && submit) {
-                        String command = cost.getConf().replaceAll("\\[num]", String.valueOf(costNeed));
+                        String command = teleportCost.getConf().replaceAll("\\[num]", String.valueOf(costNeed));
                         result = NarcissusUtils.executeCommand(player, command);
                         if (result) {
-                            PlayerDataAttachment.getData(player).subTeleportCard(cardNeedTotal);
+                            data.subTeleportCard(Math.min(data.getTeleportCard(), cardNeed));
                         }
                     }
-                } catch (Exception ignored) {
+                } catch (Exception e) {
+                    result = false;
+                    LOGGER.error("Failed to teleport with command cost:", e);
                 }
                 break;
-        }
-        if (!result && cardNeed > 0) {
-            NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EnumI18nType.MESSAGE, "cost_not_enough"), Component.translatable(NarcissusUtils.getPlayerLanguage(player), EnumI18nType.WORD, "teleport_card"), (int) Math.ceil(need));
         }
         return result;
     }
 
     /**
-     * 使用传送卡后还须支付多少代价
-     */
-    public static int getTeleportCostNeedPost(ServerPlayer player, double need) {
-        int ceil = (int) Math.ceil(need);
-        if (!CommonConfig.TELEPORT_CARD.get()) return ceil;
-        PlayerTeleportData data = PlayerDataAttachment.getData(player);
-        return switch ((EnumCardType.valueOf(CommonConfig.TELEPORT_CARD_TYPE.get()))) {
-            case NONE -> data.getTeleportCard() > 0 ? ceil : -1;
-            case LIKE_COST -> data.getTeleportCard() >= ceil ? ceil : -1;
-            case REFUND_COST, REFUND_COST_AND_COOLDOWN -> Math.max(0, ceil - data.getTeleportCard());
-            case REFUND_ALL_COST, REFUND_ALL_COST_AND_COOLDOWN -> data.getTeleportCard() > 0 ? 0 : ceil;
-            default -> ceil;
-        };
-    }
-
-    /**
      * 须支付多少传送卡
      */
-    public static int getTeleportCardNeedPre(double need) {
+    public static int getTeleportCardNeed(double need) {
         int ceil = (int) Math.ceil(need);
         if (!CommonConfig.TELEPORT_CARD.get()) return 0;
-        return switch (EnumCardType.valueOf(CommonConfig.TELEPORT_CARD_TYPE.get())) {
-            case LIKE_COST -> ceil;
-            default -> 1;
-        };
+        switch (EnumCardType.valueOf(CommonConfig.TELEPORT_CARD_TYPE.get())) {
+            case LIKE_COST:
+            case REFUND_COST:
+            case REFUND_COST_AND_COOLDOWN:
+                return ceil;
+            case NONE:
+            case REFUND_ALL_COST:
+            case REFUND_COOLDOWN:
+            case REFUND_ALL_COST_AND_COOLDOWN:
+            default:
+                return 1;
+        }
     }
 
     /**
-     * 使用传送卡后还须支付多少传送卡
+     * 使用传送卡后还须支付多少代价
+     *
+     * @return -1：传送卡不足    0：传送卡足以抵消代价    >0：还须支付多少代价
      */
-    public static int getTeleportCardNeedPost(ServerPlayer player, double need) {
-        int ceil = (int) Math.ceil(need);
+    public static int getTeleportCostNeed(PlayerTeleportData data, int card, int need) {
         if (!CommonConfig.TELEPORT_CARD.get()) return 0;
-        PlayerTeleportData data = PlayerDataAttachment.getData(player);
-        return switch (EnumCardType.valueOf(CommonConfig.TELEPORT_CARD_TYPE.get())) {
-            case NONE -> data.getTeleportCard() > 0 ? 0 : 1;
-            case LIKE_COST -> Math.max(0, ceil - data.getTeleportCard());
-            default -> 0;
-        };
+        switch (EnumCardType.valueOf(CommonConfig.TELEPORT_CARD_TYPE.get())) {
+            case NONE:
+                // card = 1
+                return data.getTeleportCard() >= card ? need : -1;
+            case LIKE_COST:
+                // card = need
+                return data.getTeleportCard() >= card ? card : -1;
+            case REFUND_COOLDOWN:
+                return need;
+            case REFUND_ALL_COST:
+            case REFUND_ALL_COST_AND_COOLDOWN:
+                // card = 1
+                return data.getTeleportCard() >= card ? 0 : need;
+            case REFUND_COST:
+            case REFUND_COST_AND_COOLDOWN:
+                // card = need
+            default:
+                return Math.max(0, card - data.getTeleportCard());
+        }
     }
 
     public static TeleportCost getCommandCost(EnumTeleportType type) {
@@ -1867,6 +1917,14 @@ public class NarcissusUtils {
                 .anyMatch(entity -> player.equals(entity.getTarget())
                         || (entity.getBrain().hasMemoryValue(MemoryModuleType.ATTACK_TARGET)) && player.equals(entity.getBrain().getMemory(MemoryModuleType.ATTACK_TARGET).orElse(null))
                 );
+    }
+
+    public static String getItemName(ItemStack itemStack) {
+        return itemStack.getDisplayName().getString();
+    }
+
+    public static String getItemName(Item item) {
+        return getItemName(new ItemStack(item));
     }
 
     // endregion 杂项
