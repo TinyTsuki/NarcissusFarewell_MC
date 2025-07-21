@@ -158,6 +158,13 @@ public class Component implements Cloneable, Serializable {
         return this;
     }
 
+    public Component setLanguageCodeIfEmpty(String languageCode) {
+        if (this.isLanguageCodeEmpty()) {
+            this.setLanguageCode(languageCode);
+        }
+        return this;
+    }
+
     // region NonNull Getter
 
     /**
@@ -592,7 +599,8 @@ public class Component implements Cloneable, Serializable {
                         i++;
                     }
                 } else {
-                    components.add(net.minecraft.network.chat.Component.literal(this.text).withStyle(this.getStyle()));
+                    this.args.forEach(arg -> arg.setLanguageCodeIfEmpty(languageCode));
+                    components.add(net.minecraft.network.chat.Component.literal(StringUtils.format(this.text, this.args.toArray())).withStyle(this.getStyle()));
                 }
             }
         }
