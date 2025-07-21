@@ -483,7 +483,8 @@ public class ServerConfig {
                             "传送请求冷却时间的计算方式：",
                             "COMMON：所有传送共用全局冷却时间，由'teleportRequestCooldown'配置定义。",
                             "INDIVIDUAL：每个指令有单独的冷却时间，由指令自身管理。",
-                            "MIXED：结合两种方式，同时使用全局冷却时间和单独冷却时间。"
+                            "MIXED：结合两种方式，同时使用全局冷却时间和单独冷却时间。",
+                            "Allowed Values: " + EnumCoolDownType.names()
                     )
                     .define("teleportRequestCooldownType", EnumCoolDownType.INDIVIDUAL.name());
 
@@ -1154,7 +1155,9 @@ public class ServerConfig {
             {
                 COST_TP_BOTTOM_TYPE = SERVER_BUILDER
                         .comment("The cost type for 'Teleport to the bottom of current position'"
-                                , "传送到底部的代价类型。")
+                                , "传送到底部的代价类型。"
+                                , "Allowed Values: " + EnumCostType.names()
+                        )
                         .define("costTpBottomType", EnumCostType.NONE.name());
 
                 COST_TP_BOTTOM_NUM = SERVER_BUILDER

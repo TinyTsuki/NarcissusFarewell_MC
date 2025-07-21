@@ -83,6 +83,10 @@ public class I18nUtils {
         return Component.translatable(languageCode, EnumI18nType.WORD, enabled ? "enabled" : "disabled");
     }
 
+    public static Component enabled(boolean enabled) {
+        return Component.translatable(EnumI18nType.WORD, enabled ? "enabled" : "disabled");
+    }
+
     /**
      * 获取I18n文件列表
      */
