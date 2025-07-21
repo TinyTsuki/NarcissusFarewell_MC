@@ -148,6 +148,10 @@ public class I18nUtils {
         return Component.translatable(languageCode, EI18nType.WORD, enabled ? "enabled" : "disabled");
     }
 
+    public static Component enabled(boolean enabled) {
+        return Component.translatable(EI18nType.WORD, enabled ? "enabled" : "disabled");
+    }
+
     /**
      * 获取I18n文件列表
      */

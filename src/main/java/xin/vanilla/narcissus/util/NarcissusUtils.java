@@ -13,6 +13,7 @@ import net.minecraft.entity.monster.IMob;
 import net.minecraft.entity.passive.EntityTameable;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
+import net.minecraft.event.HoverEvent;
 import net.minecraft.init.Blocks;
 import net.minecraft.inventory.IInventory;
 import net.minecraft.item.Item;
@@ -24,7 +25,7 @@ import net.minecraft.network.play.server.S1BPacketEntityAttach;
 import net.minecraft.network.play.server.S29PacketSoundEffect;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.stats.StatList;
-import net.minecraft.util.ChatComponentTranslation;
+import net.minecraft.util.ChatComponentText;
 import net.minecraft.util.DamageSource;
 import net.minecraft.util.IChatComponent;
 import net.minecraft.util.Vec3;
@@ -1656,17 +1657,16 @@ public class NarcissusUtils {
     /**
      * 广播消息
      *
-     * @param player  发送者
+     * @param source  发送者
      * @param message 消息
      */
-    public static void broadcastMessage(EntityPlayerMP player, Component message) {
-        List<IChatComponent> list = message.toChatComponent(NarcissusUtils.getPlayerLanguage(player));
-        for (int i = 0; i < list.size(); i++) {
-            if (i == 0) {
-                NarcissusFarewell.getServerInstance().getConfigurationManager().sendChatMsgImpl(new ChatComponentTranslation("chat.type.announcement", player.getDisplayName(), list.get(i)), false);
-            } else {
-                NarcissusFarewell.getServerInstance().getConfigurationManager().sendChatMsgImpl(list.get(i), false);
-            }
+    public static void broadcastMessage(EntityPlayerMP source, Component message) {
+        for (Object obj : NarcissusFarewell.getServerInstance().getConfigurationManager().playerEntityList) {
+            EntityPlayerMP player = ((EntityPlayerMP) obj);
+            sendMessage(player, Component.literal("[%s] %s")
+                    .appendArg(player.getDisplayName())
+                    .appendArg(message)
+            );
         }
     }
 
@@ -1677,9 +1677,12 @@ public class NarcissusUtils {
      * @param message 消息
      */
     public static void broadcastMessage(MinecraftServer server, Component message) {
-        List<IChatComponent> list = message.toChatComponent();
-        for (int i = 0; i < list.size(); i++) {
-            server.getConfigurationManager().sendChatMsgImpl(list.get(i), i == 0);
+        for (Object obj : NarcissusFarewell.getServerInstance().getConfigurationManager().playerEntityList) {
+            EntityPlayerMP player = ((EntityPlayerMP) obj);
+            sendMessage(player, Component.literal("[%s] %s")
+                    .appendArg(server.getServerModName())
+                    .appendArg(message)
+            );
         }
     }
 
@@ -2069,23 +2072,27 @@ public class NarcissusUtils {
                         }
                     }
                     result = getItemCount(getPlayerInventory(player), itemStack) >= costNeed;
+                    itemStack.stackSize = costNeed;
                     if (!result) {
-                        NarcissusUtils.sendTranslatableMessage(player
-                                , I18nUtils.getKey(EI18nType.MESSAGE, "cost_not_enough")
-                                , NarcissusUtils.getItemName(itemStack)
-                                , costNeed
+                        NarcissusUtils.sendMessage(player
+                                , Component.translatable(EI18nType.MESSAGE, "cost_not_enough"
+                                        , Component.literal(NarcissusUtils.getItemName(itemStack))
+                                                .setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_ITEM, new ChatComponentText(itemStack.writeToNBT(new NBTTagCompound()).toString())))
+                                        , costNeed
+                                )
                         );
                     } else if (submit) {
-                        itemStack.stackSize = costNeed;
                         result = removeItemFromPlayerInventory(player, itemStack);
                         // 代价不足
                         if (result) {
                             data.subTeleportCard(Math.min(data.getTeleportCard(), cardNeed));
                         } else {
-                            NarcissusUtils.sendTranslatableMessage(player
-                                    , I18nUtils.getKey(EI18nType.MESSAGE, "cost_not_enough")
-                                    , NarcissusUtils.getItemName(itemStack)
-                                    , costNeed
+                            NarcissusUtils.sendMessage(player
+                                    , Component.translatable(EI18nType.MESSAGE, "cost_not_enough"
+                                            , Component.literal(NarcissusUtils.getItemName(itemStack))
+                                                    .setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_ITEM, new ChatComponentText(itemStack.writeToNBT(new NBTTagCompound()).toString())))
+                                            , costNeed
+                                    )
                             );
                         }
                     }
