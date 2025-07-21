@@ -17,6 +17,7 @@ import net.minecraft.core.Registry;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.CommonComponents;
+import net.minecraft.network.chat.HoverEvent;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.network.protocol.game.ClientboundPlayerCombatKillPacket;
@@ -1193,11 +1194,16 @@ public class NarcissusUtils {
     /**
      * 广播消息
      *
-     * @param player  发送者
+     * @param source  发送者
      * @param message 消息
      */
-    public static void broadcastMessage(ServerPlayer player, Component message) {
-        player.getServer().getPlayerList().broadcastSystemMessage(net.minecraft.network.chat.Component.translatable("chat.type.announcement", getPlayerName(player), message.toChatComponent()), false);
+    public static void broadcastMessage(ServerPlayer source, Component message) {
+        for (ServerPlayer player : source.getServer().getPlayerList().getPlayers()) {
+            sendMessage(player, Component.literal("[%s] %s")
+                    .appendArg(getPlayerName(player))
+                    .appendArg(message)
+            );
+        }
     }
 
     /**
@@ -1207,7 +1213,12 @@ public class NarcissusUtils {
      * @param message 消息
      */
     public static void broadcastMessage(MinecraftServer server, Component message) {
-        server.getPlayerList().broadcastSystemMessage(net.minecraft.network.chat.Component.translatable("chat.type.announcement", "Server", message.toChatComponent()), false);
+        for (ServerPlayer player : server.getPlayerList().getPlayers()) {
+            sendMessage(player, Component.literal("[%s] %s")
+                    .appendArg(server.getServerModName())
+                    .appendArg(message)
+            );
+        }
     }
 
     /**
@@ -1542,23 +1553,27 @@ public class NarcissusUtils {
                     ItemParser.ItemResult itemResult = new ItemParser(player.registryAccess()).parse(new StringReader(teleportCost.getConf()));
                     ItemStack itemStack = new ItemInput(itemResult.item(), itemResult.components()).createItemStack(1, false);
                     result = getItemCount(getPlayerItemList(player), itemStack) >= costNeed;
+                    itemStack.setCount(costNeed);
                     if (!result) {
-                        NarcissusUtils.sendTranslatableMessage(player
-                                , I18nUtils.getKey(EnumI18nType.MESSAGE, "cost_not_enough")
-                                , NarcissusUtils.getItemName(itemStack)
-                                , costNeed
+                        NarcissusUtils.sendMessage(player
+                                , Component.translatable(EnumI18nType.MESSAGE, "cost_not_enough"
+                                        , Component.literal(NarcissusUtils.getItemName(itemStack))
+                                                .setHoverEvent(new HoverEvent.ShowItem(itemStack))
+                                        , costNeed
+                                )
                         );
                     } else if (submit) {
-                        itemStack.setCount(costNeed);
                         result = removeItemFromPlayerInventory(player, itemStack);
                         // 代价不足
                         if (result) {
                             data.subTeleportCard(Math.min(data.getTeleportCard(), cardNeed));
                         } else {
-                            NarcissusUtils.sendTranslatableMessage(player
-                                    , I18nUtils.getKey(EnumI18nType.MESSAGE, "cost_not_enough")
-                                    , NarcissusUtils.getItemName(itemStack)
-                                    , costNeed
+                            NarcissusUtils.sendMessage(player
+                                    , Component.translatable(EnumI18nType.MESSAGE, "cost_not_enough"
+                                            , Component.literal(NarcissusUtils.getItemName(itemStack))
+                                                    .setHoverEvent(new HoverEvent.ShowItem(itemStack))
+                                            , costNeed
+                                    )
                             );
                         }
                     }
