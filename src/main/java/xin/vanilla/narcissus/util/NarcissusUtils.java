@@ -23,6 +23,7 @@ import net.minecraft.inventory.IInventory;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
+import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.network.IPacket;
 import net.minecraft.network.datasync.DataParameter;
 import net.minecraft.network.play.server.SChatPacket;
@@ -38,7 +39,8 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.ChunkPos;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.text.ChatType;
-import net.minecraft.util.text.TranslationTextComponent;
+import net.minecraft.util.text.StringTextComponent;
+import net.minecraft.util.text.event.HoverEvent;
 import net.minecraft.world.GameRules;
 import net.minecraft.world.World;
 import net.minecraft.world.biome.Biome;
@@ -1605,11 +1607,16 @@ public class NarcissusUtils {
     /**
      * 广播消息
      *
-     * @param player  发送者
+     * @param source  发送者
      * @param message 消息
      */
-    public static void broadcastMessage(ServerPlayerEntity player, Component message) {
-        player.server.getPlayerList().broadcastMessage(new TranslationTextComponent("chat.type.announcement", getPlayerName(player), message.toChatComponent(NarcissusUtils.getPlayerLanguage(player))), true);
+    public static void broadcastMessage(ServerPlayerEntity source, Component message) {
+        for (ServerPlayerEntity player : source.server.getPlayerList().getPlayers()) {
+            sendMessage(player, Component.literal("[%s] %s")
+                    .appendArg(getPlayerName(player))
+                    .appendArg(message)
+            );
+        }
     }
 
     /**
@@ -1619,7 +1626,12 @@ public class NarcissusUtils {
      * @param message 消息
      */
     public static void broadcastMessage(MinecraftServer server, Component message) {
-        server.getPlayerList().broadcastMessage(new TranslationTextComponent("chat.type.announcement", "Server", message.toChatComponent()), true);
+        for (ServerPlayerEntity player : server.getPlayerList().getPlayers()) {
+            sendMessage(player, Component.literal("[%s] %s")
+                    .appendArg(server.getServerModName())
+                    .appendArg(message)
+            );
+        }
     }
 
     /**
@@ -1994,23 +2006,27 @@ public class NarcissusUtils {
                     ItemParser parse = new ItemParser(new StringReader(teleportCost.getConf()), false).parse();
                     ItemStack itemStack = new ItemInput(parse.getItem(), parse.getNbt()).createItemStack(1, false);
                     result = getItemCount(player.inventory.items, itemStack) >= costNeed;
+                    itemStack.setCount(costNeed);
                     if (!result) {
-                        NarcissusUtils.sendTranslatableMessage(player
-                                , I18nUtils.getKey(EnumI18nType.MESSAGE, "cost_not_enough")
-                                , NarcissusUtils.getItemName(itemStack)
-                                , costNeed
+                        NarcissusUtils.sendMessage(player
+                                , Component.translatable(EnumI18nType.MESSAGE, "cost_not_enough"
+                                        , Component.literal(NarcissusUtils.getItemName(itemStack))
+                                                .setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_ITEM, new StringTextComponent(itemStack.save(new CompoundNBT()).toString())))
+                                        , costNeed
+                                )
                         );
                     } else if (submit) {
-                        itemStack.setCount(costNeed);
                         result = removeItemFromPlayerInventory(player, itemStack);
                         // 代价不足
                         if (result) {
                             data.subTeleportCard(Math.min(data.getTeleportCard(), cardNeed));
                         } else {
-                            NarcissusUtils.sendTranslatableMessage(player
-                                    , I18nUtils.getKey(EnumI18nType.MESSAGE, "cost_not_enough")
-                                    , NarcissusUtils.getItemName(itemStack)
-                                    , costNeed
+                            NarcissusUtils.sendMessage(player
+                                    , Component.translatable(EnumI18nType.MESSAGE, "cost_not_enough"
+                                            , Component.literal(NarcissusUtils.getItemName(itemStack))
+                                                    .setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_ITEM, new StringTextComponent(itemStack.save(new CompoundNBT()).toString())))
+                                            , costNeed
+                                    )
                             );
                         }
                     }
