@@ -2382,8 +2382,8 @@ public class FarewellCommand {
                             .then(Commands.literal("teleportCard")
                                     .executes(context -> {
                                         ServerPlayerEntity player = context.getSource().getPlayerOrException();
-                                        Component msg = Component.translatable(I18nUtils.getKey(EnumI18nType.MESSAGE, "server_config_status")
-                                                , I18nUtils.enabled(NarcissusUtils.getPlayerLanguage(player), CommonConfig.TELEPORT_CARD.get())
+                                        Component msg = Component.translatable(EnumI18nType.MESSAGE, "server_config_status"
+                                                , I18nUtils.enabled(CommonConfig.TELEPORT_CARD.get())
                                                 , Component.translatable(NarcissusUtils.getPlayerLanguage(player), EnumI18nType.WORD, "teleport_card"));
                                         NarcissusUtils.sendMessage(player, msg);
                                         return 1;
@@ -2394,8 +2394,8 @@ public class FarewellCommand {
                                                 boolean bool = BoolArgumentType.getBool(context, "bool");
                                                 CommonConfig.TELEPORT_CARD.set(bool);
                                                 ServerPlayerEntity player = context.getSource().getPlayerOrException();
-                                                Component msg = Component.translatable(I18nUtils.getKey(EnumI18nType.MESSAGE, "server_config_status")
-                                                        , I18nUtils.enabled(NarcissusUtils.getPlayerLanguage(player), CommonConfig.TELEPORT_CARD.get())
+                                                Component msg = Component.translatable(EnumI18nType.MESSAGE, "server_config_status"
+                                                        , I18nUtils.enabled(CommonConfig.TELEPORT_CARD.get())
                                                         , Component.translatable(NarcissusUtils.getPlayerLanguage(player), EnumI18nType.WORD, "teleport_card"));
                                                 NarcissusUtils.broadcastMessage(player, msg);
                                                 return 1;
