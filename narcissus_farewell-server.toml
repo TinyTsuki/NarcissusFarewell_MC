@@ -66,7 +66,7 @@
 	#COMMON：所有传送共用全局冷却时间，由'teleportRequestCooldown'配置定义。
 	#INDIVIDUAL：每个指令有单独的冷却时间，由指令自身管理。
 	#MIXED：结合两种方式，同时使用全局冷却时间和单独冷却时间。
-	#Allowed Values: COMMON, INDIVIDUAL, MIXED
+	#Allowed Values: [COMMON, INDIVIDUAL, MIXED]
 	teleportRequestCooldownType = "INDIVIDUAL"
 	#The distance value for teleport cost when teleport across dimensions, 0 means no limit.
 	#跨维度传送时传送代价中传送距离取值，值为0表示不限制。
@@ -346,7 +346,7 @@
 	[cost.TpBottom]
 		#The cost type for 'Teleport to the bottom of current position'
 		#传送到底部的代价类型。
-		#Allowed Values: NONE, EXP_POINT, EXP_LEVEL, HEALTH, HUNGER, ITEM, COMMAND
+		#Allowed Values: [NONE, EXP_POINT, EXP_LEVEL, HEALTH, HUNGER, ITEM, COMMAND]
 		costTpBottomType = "NONE"
 		#The number of cost for 'Teleport to the bottom of current position'
 		#传送到底部的代价数量。
