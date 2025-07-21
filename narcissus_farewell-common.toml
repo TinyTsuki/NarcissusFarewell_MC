@@ -9,26 +9,24 @@
 	#每日可获得的传送卡数量。
 	#Range: 0 ~ 9999
 	teleportCardDaily = 0
-	#The application method of the Teleport Card:
-	#NONE: Teleportation consumes a Teleport Card and requires an additional cost. If the player has insufficient cards, teleportation is not allowed.
-	#LIKE_COST: Teleportation consumes the same number of Teleport Cards as the cost and additionally charges the cost. If there are insufficient Teleport Cards, teleportation cannot proceed.
-	#REFUND_COST: Teleportation consumes a Teleport Card to offset the cost at a 1:1 ratio. If the player has insufficient cards, the corresponding cost will be charged.
-	#REFUND_ALL_COST: Teleportation consumes a Teleport Card to completely offset all costs. If the player has insufficient cards, the corresponding cost will be charged.
-	#REFUND_COOLDOWN: Teleportation consumes a Teleport Card to offset the cooldown time, but the cost must still be paid. If the player has insufficient cards, the corresponding cost will be charged.
-	#REFUND_COST_AND_COOLDOWN: Teleportation consumes a Teleport Card to offset the cost at a 1:1 ratio and offset the cooldown time. If the player has insufficient cards, the corresponding cost will be charged.
-	#REFUND_ALL_COST_AND_COOLDOWN: Teleportation consumes a Teleport Card to completely offset all costs and cooldown time. If the player has insufficient cards, the corresponding cost will be charged.
-	#If both Teleport Cards and the cost are insufficient, teleportation will not proceed. 
-	#If you want the Teleport Card to offset the cost but prohibit teleportation when cards are insufficient, set the cost to zero in the configuration.
+	#Teleport Card Usage Modes:
+	#NONE: A teleport will consume one teleport card and also charge the teleport cost. If there are not enough teleport cards, the teleport will fail.
+	#LIKE_COST: A teleport will consume the same number of teleport cards as the teleport cost, and also charge the teleport cost. If there are not enough cards, the teleport will fail.
+	#REFUND_COST: A teleport will consume teleport cards at a 1:1 ratio to offset the teleport cost. If cards are insufficient, the remaining cost will be charged.
+	#REFUND_ALL_COST: A teleport will consume one teleport card to offset the entire teleport cost. If there are not enough cards, the full cost will be charged.
+	#REFUND_COOLDOWN: A teleport will consume one teleport card to skip the cooldown period, but the teleport cost still applies.
+	#REFUND_COST_AND_COOLDOWN: A teleport will consume teleport cards at a 1:1 ratio to offset both the teleport cost and cooldown. If cards are insufficient, the remaining cost will be charged.
+	#REFUND_ALL_COST_AND_COOLDOWN: A teleport will consume one teleport card to offset all teleport costs and cooldown. If there are not enough cards, the full cost will be charged.
+	#If both teleport cards and cost are insufficient, the teleport will fail. If you want teleport cards to cover the cost but prevent teleporting when insufficient, please set the cost to zero in the config.
 	#传送卡的使用方式：
-	#NONE: 传送会消耗一个传送卡，并额外收取代价。若传送卡不足，则无法传送。
-	#LIKE_COST: 传送会消耗与代价数量一致的传送卡，并额外收取代价。若传送卡不足，则无法传送。
-	#REFUND_COST: 传送会消耗传送卡并按一比一比例抵消代价。若传送卡不足，则收取对应代价。
-	#REFUND_ALL_COST: 传送会消耗传送卡并完全抵消所有代价。若传送卡不足，则收取对应代价。
-	#REFUND_COOLDOWN: 传送会消耗传送卡并抵消冷却时间，但仍需支付代价。若传送卡不足，则收取对应代价。
-	#REFUND_COST_AND_COOLDOWN: 传送会消耗传送卡，按一比一比例抵消代价并抵消冷却时间。若传送卡不足，则收取对应代价。
-	#REFUND_ALL_COST_AND_COOLDOWN: 传送会消耗传送卡，完全抵消所有代价和冷却时间。若传送卡不足，则收取对应代价。
+	#NONE: 传送会消耗一张传送卡，并同时收取代价。若传送卡不足，则无法传送。
+	#LIKE_COST: 传送会消耗与代价数量一致的传送卡，并同时收取代价。若传送卡不足，则无法传送。
+	#REFUND_COST: 传送会按一比一比例消耗传送卡以抵消对应代价。若传送卡不足，则收取剩余代价。
+	#REFUND_ALL_COST: 传送会消耗一张传送卡以抵消所有代价。若传送卡不足，则收取对应代价。
+	#REFUND_COOLDOWN: 传送会消耗一张传送卡并抵消冷却时间，但仍需支付代价。
+	#REFUND_COST_AND_COOLDOWN: 传送会按一比一比例消耗传送卡以抵消对应代价并同时抵消冷却时间。若传送卡不足，则收取剩余代价。
+	#REFUND_ALL_COST_AND_COOLDOWN: 传送会消耗一张传送卡以抵消所有代价并同时抵消冷却时间。若传送卡不足，则收取对应代价。
 	#若传送卡与代价都不足，则无法传送。若希望传送卡能够抵消代价但在不足时禁止传送，请在配置中将代价设置为零。
-	#Allowed Values: NONE, LIKE_COST, REFUND_COST, REFUND_ALL_COST, REFUND_COOLDOWN, REFUND_COST_AND_COOLDOWN, REFUND_ALL_COST_AND_COOLDOWN
 	teleportCardType = "REFUND_ALL_COST"
 	#Whether to disable the original TP command.
 	#是否禁用原版TP指令。
