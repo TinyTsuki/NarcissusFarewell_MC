@@ -347,76 +347,130 @@ public class ServerConfig {
      * 代价倍率(以距离为基准)
      */
     public static final ModConfigSpec.DoubleValue COST_TP_COORDINATE_RATE;
+    /**
+     * 代价数量上限
+     */
+    public static final ModConfigSpec.IntValue COST_TP_COORDINATE_NUM_UPPER;
+    /**
+     * 代价数量下限
+     */
+    public static final ModConfigSpec.IntValue COST_TP_COORDINATE_NUM_LOWER;
+    /**
+     * 代价算法表达式
+     */
+    public static final ModConfigSpec.ConfigValue<String> COST_TP_COORDINATE_EXP;
 
     public static final ModConfigSpec.ConfigValue<String> COST_TP_STRUCTURE_TYPE;
     public static final ModConfigSpec.IntValue COST_TP_STRUCTURE_NUM;
     public static final ModConfigSpec.ConfigValue<String> COST_TP_STRUCTURE_CONF;
     public static final ModConfigSpec.DoubleValue COST_TP_STRUCTURE_RATE;
+    public static final ModConfigSpec.IntValue COST_TP_STRUCTURE_NUM_UPPER;
+    public static final ModConfigSpec.IntValue COST_TP_STRUCTURE_NUM_LOWER;
+    public static final ModConfigSpec.ConfigValue<String> COST_TP_STRUCTURE_EXP;
 
     public static final ModConfigSpec.ConfigValue<String> COST_TP_ASK_TYPE;
     public static final ModConfigSpec.IntValue COST_TP_ASK_NUM;
     public static final ModConfigSpec.ConfigValue<String> COST_TP_ASK_CONF;
     public static final ModConfigSpec.DoubleValue COST_TP_ASK_RATE;
+    public static final ModConfigSpec.IntValue COST_TP_ASK_NUM_UPPER;
+    public static final ModConfigSpec.IntValue COST_TP_ASK_NUM_LOWER;
+    public static final ModConfigSpec.ConfigValue<String> COST_TP_ASK_EXP;
 
     public static final ModConfigSpec.ConfigValue<String> COST_TP_HERE_TYPE;
     public static final ModConfigSpec.IntValue COST_TP_HERE_NUM;
     public static final ModConfigSpec.ConfigValue<String> COST_TP_HERE_CONF;
     public static final ModConfigSpec.DoubleValue COST_TP_HERE_RATE;
+    public static final ModConfigSpec.IntValue COST_TP_HERE_NUM_UPPER;
+    public static final ModConfigSpec.IntValue COST_TP_HERE_NUM_LOWER;
+    public static final ModConfigSpec.ConfigValue<String> COST_TP_HERE_EXP;
 
     public static final ModConfigSpec.ConfigValue<String> COST_TP_RANDOM_TYPE;
     public static final ModConfigSpec.IntValue COST_TP_RANDOM_NUM;
     public static final ModConfigSpec.ConfigValue<String> COST_TP_RANDOM_CONF;
     public static final ModConfigSpec.DoubleValue COST_TP_RANDOM_RATE;
+    public static final ModConfigSpec.IntValue COST_TP_RANDOM_NUM_UPPER;
+    public static final ModConfigSpec.IntValue COST_TP_RANDOM_NUM_LOWER;
+    public static final ModConfigSpec.ConfigValue<String> COST_TP_RANDOM_EXP;
 
     public static final ModConfigSpec.ConfigValue<String> COST_TP_SPAWN_TYPE;
     public static final ModConfigSpec.IntValue COST_TP_SPAWN_NUM;
     public static final ModConfigSpec.ConfigValue<String> COST_TP_SPAWN_CONF;
     public static final ModConfigSpec.DoubleValue COST_TP_SPAWN_RATE;
+    public static final ModConfigSpec.IntValue COST_TP_SPAWN_NUM_UPPER;
+    public static final ModConfigSpec.IntValue COST_TP_SPAWN_NUM_LOWER;
+    public static final ModConfigSpec.ConfigValue<String> COST_TP_SPAWN_EXP;
 
     public static final ModConfigSpec.ConfigValue<String> COST_TP_WORLD_SPAWN_TYPE;
     public static final ModConfigSpec.IntValue COST_TP_WORLD_SPAWN_NUM;
     public static final ModConfigSpec.ConfigValue<String> COST_TP_WORLD_SPAWN_CONF;
     public static final ModConfigSpec.DoubleValue COST_TP_WORLD_SPAWN_RATE;
+    public static final ModConfigSpec.IntValue COST_TP_WORLD_SPAWN_NUM_UPPER;
+    public static final ModConfigSpec.IntValue COST_TP_WORLD_SPAWN_NUM_LOWER;
+    public static final ModConfigSpec.ConfigValue<String> COST_TP_WORLD_SPAWN_EXP;
 
     public static final ModConfigSpec.ConfigValue<String> COST_TP_TOP_TYPE;
     public static final ModConfigSpec.IntValue COST_TP_TOP_NUM;
     public static final ModConfigSpec.ConfigValue<String> COST_TP_TOP_CONF;
     public static final ModConfigSpec.DoubleValue COST_TP_TOP_RATE;
+    public static final ModConfigSpec.IntValue COST_TP_TOP_NUM_UPPER;
+    public static final ModConfigSpec.IntValue COST_TP_TOP_NUM_LOWER;
+    public static final ModConfigSpec.ConfigValue<String> COST_TP_TOP_EXP;
 
     public static final ModConfigSpec.ConfigValue<String> COST_TP_BOTTOM_TYPE;
     public static final ModConfigSpec.IntValue COST_TP_BOTTOM_NUM;
     public static final ModConfigSpec.ConfigValue<String> COST_TP_BOTTOM_CONF;
     public static final ModConfigSpec.DoubleValue COST_TP_BOTTOM_RATE;
+    public static final ModConfigSpec.IntValue COST_TP_BOTTOM_NUM_UPPER;
+    public static final ModConfigSpec.IntValue COST_TP_BOTTOM_NUM_LOWER;
+    public static final ModConfigSpec.ConfigValue<String> COST_TP_BOTTOM_EXP;
 
     public static final ModConfigSpec.ConfigValue<String> COST_TP_UP_TYPE;
     public static final ModConfigSpec.IntValue COST_TP_UP_NUM;
     public static final ModConfigSpec.ConfigValue<String> COST_TP_UP_CONF;
     public static final ModConfigSpec.DoubleValue COST_TP_UP_RATE;
+    public static final ModConfigSpec.IntValue COST_TP_UP_NUM_UPPER;
+    public static final ModConfigSpec.IntValue COST_TP_UP_NUM_LOWER;
+    public static final ModConfigSpec.ConfigValue<String> COST_TP_UP_EXP;
 
     public static final ModConfigSpec.ConfigValue<String> COST_TP_DOWN_TYPE;
     public static final ModConfigSpec.IntValue COST_TP_DOWN_NUM;
     public static final ModConfigSpec.ConfigValue<String> COST_TP_DOWN_CONF;
     public static final ModConfigSpec.DoubleValue COST_TP_DOWN_RATE;
+    public static final ModConfigSpec.IntValue COST_TP_DOWN_NUM_UPPER;
+    public static final ModConfigSpec.IntValue COST_TP_DOWN_NUM_LOWER;
+    public static final ModConfigSpec.ConfigValue<String> COST_TP_DOWN_EXP;
 
     public static final ModConfigSpec.ConfigValue<String> COST_TP_VIEW_TYPE;
     public static final ModConfigSpec.IntValue COST_TP_VIEW_NUM;
     public static final ModConfigSpec.ConfigValue<String> COST_TP_VIEW_CONF;
     public static final ModConfigSpec.DoubleValue COST_TP_VIEW_RATE;
+    public static final ModConfigSpec.IntValue COST_TP_VIEW_NUM_UPPER;
+    public static final ModConfigSpec.IntValue COST_TP_VIEW_NUM_LOWER;
+    public static final ModConfigSpec.ConfigValue<String> COST_TP_VIEW_EXP;
 
     public static final ModConfigSpec.ConfigValue<String> COST_TP_HOME_TYPE;
     public static final ModConfigSpec.IntValue COST_TP_HOME_NUM;
     public static final ModConfigSpec.ConfigValue<String> COST_TP_HOME_CONF;
     public static final ModConfigSpec.DoubleValue COST_TP_HOME_RATE;
+    public static final ModConfigSpec.IntValue COST_TP_HOME_NUM_UPPER;
+    public static final ModConfigSpec.IntValue COST_TP_HOME_NUM_LOWER;
+    public static final ModConfigSpec.ConfigValue<String> COST_TP_HOME_EXP;
 
     public static final ModConfigSpec.ConfigValue<String> COST_TP_STAGE_TYPE;
     public static final ModConfigSpec.IntValue COST_TP_STAGE_NUM;
     public static final ModConfigSpec.ConfigValue<String> COST_TP_STAGE_CONF;
     public static final ModConfigSpec.DoubleValue COST_TP_STAGE_RATE;
+    public static final ModConfigSpec.IntValue COST_TP_STAGE_NUM_UPPER;
+    public static final ModConfigSpec.IntValue COST_TP_STAGE_NUM_LOWER;
+    public static final ModConfigSpec.ConfigValue<String> COST_TP_STAGE_EXP;
 
     public static final ModConfigSpec.ConfigValue<String> COST_TP_BACK_TYPE;
     public static final ModConfigSpec.IntValue COST_TP_BACK_NUM;
     public static final ModConfigSpec.ConfigValue<String> COST_TP_BACK_CONF;
     public static final ModConfigSpec.DoubleValue COST_TP_BACK_RATE;
+    public static final ModConfigSpec.IntValue COST_TP_BACK_NUM_UPPER;
+    public static final ModConfigSpec.IntValue COST_TP_BACK_NUM_LOWER;
+    public static final ModConfigSpec.ConfigValue<String> COST_TP_BACK_EXP;
 
     // endregion 传送代价
 
@@ -930,7 +984,24 @@ public class ServerConfig {
                 COST_TP_COORDINATE_RATE = SERVER_BUILDER
                         .comment("The cost rate for 'Teleport to the specified coordinates', the cost will be multiplied by the distance between the two coordinates."
                                 , "传送到指定坐标的代价倍率，代价会乘以传送前后坐标之间的距离。")
-                        .defineInRange("costTpCoordinateRate", 0.001, 0, 9999);
+                        .defineInRange("costTpCoordinateRate", 0.002, 0, 9999);
+
+                COST_TP_COORDINATE_NUM_UPPER = SERVER_BUILDER
+                        .comment("The upper limit of the cost for 'Teleport to the specified coordinates'."
+                                , "传送到指定坐标的代价数量上限。")
+                        .defineInRange("costTpCoordinateNumUpper", 20, 0, Integer.MAX_VALUE);
+
+                COST_TP_COORDINATE_NUM_LOWER = SERVER_BUILDER
+                        .comment("The lower limit of the cost for 'Teleport to the specified coordinates'."
+                                , "传送到指定坐标的代价数量下限。")
+                        .defineInRange("costTpCoordinateNumLower", 0, 0, Integer.MAX_VALUE);
+
+                COST_TP_COORDINATE_EXP = SERVER_BUILDER
+                        .comment("The expression used to calculate the cost for 'Teleport to the specified coordinates', allowed functions: sqrt, pow, log, sin, cos, abs; allowed variables: num, distance, rate."
+                                , "Example: sqrt(num * distance * rate)、pow(num, 2) / log(distance) + sin(num)、abs(cos(rate) - num) * random(1, 10)"
+                                , "传送到指定坐标的代价计算表达式，支持的函数：sqrt、pow、log、sin、cos、abs；支持的变量：num、distance、rate。"
+                                , "示例：sqrt(num * distance * rate)、pow(num, 2) / log(distance) + sin(num)、abs(cos(rate) - num) * random(1, 10)")
+                        .define("costTpCoordinateExp", "num * distance * rate");
             }
             SERVER_BUILDER.pop();
 
@@ -961,7 +1032,24 @@ public class ServerConfig {
                 COST_TP_STRUCTURE_RATE = SERVER_BUILDER
                         .comment("The cost rate for 'Teleport to the specified structure', the cost will be multiplied by the distance between the two coordinates."
                                 , "传送到指定结构的代价倍率，代价会乘以传送前后坐标之间的距离。")
-                        .defineInRange("costTpStructureRate", 0.001, 0, 9999);
+                        .defineInRange("costTpStructureRate", 0.002, 0, 9999);
+
+                COST_TP_STRUCTURE_NUM_UPPER = SERVER_BUILDER
+                        .comment("The upper limit of the cost for 'Teleport to the specified structure'."
+                                , "传送到指定结构的代价数量上限。")
+                        .defineInRange("costTpStructureNumUpper", 20, 0, Integer.MAX_VALUE);
+
+                COST_TP_STRUCTURE_NUM_LOWER = SERVER_BUILDER
+                        .comment("The lower limit of the cost for 'Teleport to the specified structure'."
+                                , "传送到指定结构的代价数量下限。")
+                        .defineInRange("costTpStructureNumLower", 0, 0, Integer.MAX_VALUE);
+
+                COST_TP_STRUCTURE_EXP = SERVER_BUILDER
+                        .comment("The expression used to calculate the cost for 'Teleport to the specified structure', allowed functions: sqrt, pow, log, sin, cos, abs; allowed variables: num, distance, rate."
+                                , "Example: sqrt(num * distance * rate)、pow(num, 2) / log(distance) + sin(num)、abs(cos(rate) - num) * random(1, 10)"
+                                , "传送到指定结构的代价计算表达式，支持的函数：sqrt、pow、log、sin、cos、abs；支持的变量：num、distance、rate。"
+                                , "示例：sqrt(num * distance * rate)、pow(num, 2) / log(distance) + sin(num)、abs(cos(rate) - num) * random(1, 10)")
+                        .define("costTpStructureExp", "num * distance * rate");
             }
             SERVER_BUILDER.pop();
 
@@ -992,7 +1080,24 @@ public class ServerConfig {
                 COST_TP_ASK_RATE = SERVER_BUILDER
                         .comment("The cost rate for 'Request to teleport oneself to other players', the cost will be multiplied by the distance between the two players"
                                 , "请求传送至玩家的代价倍率，代价会乘以两个玩家之间的距离。")
-                        .defineInRange("costTpAskRate", 0.001, 0, 9999);
+                        .defineInRange("costTpAskRate", 0.002, 0, 9999);
+
+                COST_TP_ASK_NUM_UPPER = SERVER_BUILDER
+                        .comment("The upper limit of the cost for 'Request to teleport oneself to other players'."
+                                , "请求传送至玩家的代价数量上限。")
+                        .defineInRange("costTpAskNumUpper", 20, 0, Integer.MAX_VALUE);
+
+                COST_TP_ASK_NUM_LOWER = SERVER_BUILDER
+                        .comment("The lower limit of the cost for 'Request to teleport oneself to other players'."
+                                , "请求传送至玩家的代价数量下限。")
+                        .defineInRange("costTpAskNumLower", 0, 0, Integer.MAX_VALUE);
+
+                COST_TP_ASK_EXP = SERVER_BUILDER
+                        .comment("The expression used to calculate the cost for 'Request to teleport oneself to other players', allowed functions: sqrt, pow, log, sin, cos, abs; allowed variables: num, distance, rate."
+                                , "Example: sqrt(num * distance * rate)、pow(num, 2) / log(distance) + sin(num)、abs(cos(rate) - num) * random(1, 10)"
+                                , "请求传送至玩家的代价计算表达式，支持的函数：sqrt、pow、log、sin、cos、abs；支持的变量：num、distance、rate。"
+                                , "示例：sqrt(num * distance * rate)、pow(num, 2) / log(distance) + sin(num)、abs(cos(rate) - num) * random(1, 10)")
+                        .define("costTpAskExp", "num * distance * rate");
             }
             SERVER_BUILDER.pop();
 
@@ -1023,7 +1128,24 @@ public class ServerConfig {
                 COST_TP_HERE_RATE = SERVER_BUILDER
                         .comment("The cost rate for 'Request the transfer of other players to oneself', the cost will be multiplied by the distance between the two players"
                                 , "请求将玩家传送至当前位置的代价倍率，代价会乘以两个玩家之间的距离。")
-                        .defineInRange("costTpHereRate", 0.001, 0, 9999);
+                        .defineInRange("costTpHereRate", 0.002, 0, 9999);
+
+                COST_TP_HERE_NUM_UPPER = SERVER_BUILDER
+                        .comment("The upper limit of the cost for 'Request the transfer of other players to oneself'."
+                                , "请求将玩家传送至当前位置的代价数量上限。")
+                        .defineInRange("costTpHereNumUpper", 20, 0, Integer.MAX_VALUE);
+
+                COST_TP_HERE_NUM_LOWER = SERVER_BUILDER
+                        .comment("The lower limit of the cost for 'Request the transfer of other players to oneself'."
+                                , "请求将玩家传送至当前位置的代价数量下限。")
+                        .defineInRange("costTpHereNumLower", 0, 0, Integer.MAX_VALUE);
+
+                COST_TP_HERE_EXP = SERVER_BUILDER
+                        .comment("The expression used to calculate the cost for 'Request the transfer of other players to oneself', allowed functions: sqrt, pow, log, sin, cos, abs; allowed variables: num, distance, rate."
+                                , "Example: sqrt(num * distance * rate)、pow(num, 2) / log(distance) + sin(num)、abs(cos(rate) - num) * random(1, 10)"
+                                , "请求将玩家传送至当前位置的代价计算表达式，支持的函数：sqrt、pow、log、sin、cos、abs；支持的变量：num、distance、rate。"
+                                , "示例：sqrt(num * distance * rate)、pow(num, 2) / log(distance) + sin(num)、abs(cos(rate) - num) * random(1, 10)")
+                        .define("costTpHereExp", "num * distance * rate");
             }
             SERVER_BUILDER.pop();
 
@@ -1054,7 +1176,24 @@ public class ServerConfig {
                 COST_TP_RANDOM_RATE = SERVER_BUILDER
                         .comment("The cost rate for 'Teleport to a random location', the cost will be multiplied by the distance between the two coordinates."
                                 , "随机传送的代价倍率，代价会乘以传送前后坐标之间的距离。")
-                        .defineInRange("costTpRandomRate", 0.001, 0, 9999);
+                        .defineInRange("costTpRandomRate", 0.002, 0, 9999);
+
+                COST_TP_RANDOM_NUM_UPPER = SERVER_BUILDER
+                        .comment("The upper limit of the cost for 'Teleport to a random location'."
+                                , "随机传送的代价数量上限。")
+                        .defineInRange("costTpRandomNumUpper", 20, 0, Integer.MAX_VALUE);
+
+                COST_TP_RANDOM_NUM_LOWER = SERVER_BUILDER
+                        .comment("The lower limit of the cost for 'Teleport to a random location'."
+                                , "随机传送的代价数量下限。")
+                        .defineInRange("costTpRandomNumLower", 0, 0, Integer.MAX_VALUE);
+
+                COST_TP_RANDOM_EXP = SERVER_BUILDER
+                        .comment("The expression used to calculate the cost for 'Teleport to a random location', allowed functions: sqrt, pow, log, sin, cos, abs; allowed variables: num, distance, rate."
+                                , "Example: sqrt(num * distance * rate)、pow(num, 2) / log(distance) + sin(num)、abs(cos(rate) - num) * random(1, 10)"
+                                , "随机传送的代价计算表达式，支持的函数：sqrt、pow、log、sin、cos、abs；支持的变量：num、distance、rate。"
+                                , "示例：sqrt(num * distance * rate)、pow(num, 2) / log(distance) + sin(num)、abs(cos(rate) - num) * random(1, 10)")
+                        .define("costTpRandomExp", "num * distance * rate");
             }
             SERVER_BUILDER.pop();
 
@@ -1085,7 +1224,24 @@ public class ServerConfig {
                 COST_TP_SPAWN_RATE = SERVER_BUILDER
                         .comment("The cost rate for 'Teleport to the spawn of the player', the cost will be multiplied by the distance between the two coordinates."
                                 , "传送到玩家重生点的代价倍率，代价会乘以传送前后坐标之间的距离。")
-                        .defineInRange("costTpSpawnRate", 0.001, 0, 9999);
+                        .defineInRange("costTpSpawnRate", 0.002, 0, 9999);
+
+                COST_TP_SPAWN_NUM_UPPER = SERVER_BUILDER
+                        .comment("The upper limit of the cost for 'Teleport to the spawn of the player'."
+                                , "传送到玩家重生点的代价数量上限。")
+                        .defineInRange("costTpSpawnNumUpper", 20, 0, Integer.MAX_VALUE);
+
+                COST_TP_SPAWN_NUM_LOWER = SERVER_BUILDER
+                        .comment("The lower limit of the cost for 'Teleport to the spawn of the player'."
+                                , "传送到玩家重生点的代价数量下限。")
+                        .defineInRange("costTpSpawnNumLower", 0, 0, Integer.MAX_VALUE);
+
+                COST_TP_SPAWN_EXP = SERVER_BUILDER
+                        .comment("The expression used to calculate the cost for 'Teleport to the spawn of the player', allowed functions: sqrt, pow, log, sin, cos, abs; allowed variables: num, distance, rate."
+                                , "Example: sqrt(num * distance * rate)、pow(num, 2) / log(distance) + sin(num)、abs(cos(rate) - num) * random(1, 10)"
+                                , "传送到玩家重生点的代价计算表达式，支持的函数：sqrt、pow、log、sin、cos、abs；支持的变量：num、distance、rate。"
+                                , "示例：sqrt(num * distance * rate)、pow(num, 2) / log(distance) + sin(num)、abs(cos(rate) - num) * random(1, 10)")
+                        .define("costTpSpawnExp", "num * distance * rate");
             }
             SERVER_BUILDER.pop();
 
@@ -1116,7 +1272,24 @@ public class ServerConfig {
                 COST_TP_WORLD_SPAWN_RATE = SERVER_BUILDER
                         .comment("The cost rate for 'Teleport to the spawn of the world', the cost will be multiplied by the distance between the two coordinates."
                                 , "传送到世界重生点的代价倍率，代价会乘以传送前后坐标之间的距离。")
-                        .defineInRange("costTpWorldSpawnRate", 0.001, 0, 9999);
+                        .defineInRange("costTpWorldSpawnRate", 0.002, 0, 9999);
+
+                COST_TP_WORLD_SPAWN_NUM_UPPER = SERVER_BUILDER
+                        .comment("The upper limit of the cost for 'Teleport to the spawn of the world'."
+                                , "传送到世界重生点的代价数量上限。")
+                        .defineInRange("costTpWorldSpawnNumUpper", 20, 0, Integer.MAX_VALUE);
+
+                COST_TP_WORLD_SPAWN_NUM_LOWER = SERVER_BUILDER
+                        .comment("The lower limit of the cost for 'Teleport to the spawn of the world'."
+                                , "传送到世界重生点的代价数量下限。")
+                        .defineInRange("costTpWorldSpawnNumLower", 0, 0, Integer.MAX_VALUE);
+
+                COST_TP_WORLD_SPAWN_EXP = SERVER_BUILDER
+                        .comment("The expression used to calculate the cost for 'Teleport to the spawn of the world', allowed functions: sqrt, pow, log, sin, cos, abs; allowed variables: num, distance, rate."
+                                , "Example: sqrt(num * distance * rate)、pow(num, 2) / log(distance) + sin(num)、abs(cos(rate) - num) * random(1, 10)"
+                                , "传送到世界重生点的代价计算表达式，支持的函数：sqrt、pow、log、sin、cos、abs；支持的变量：num、distance、rate。"
+                                , "示例：sqrt(num * distance * rate)、pow(num, 2) / log(distance) + sin(num)、abs(cos(rate) - num) * random(1, 10)")
+                        .define("costTpWorldSpawnExp", "num * distance * rate");
             }
             SERVER_BUILDER.pop();
 
@@ -1147,7 +1320,24 @@ public class ServerConfig {
                 COST_TP_TOP_RATE = SERVER_BUILDER
                         .comment("The cost rate for 'Teleport to the top of current position', the cost will be multiplied by the distance between the two coordinates."
                                 , "传送到顶部的代价倍率，代价会乘以传送前后坐标之间的距离。")
-                        .defineInRange("costTpTopRate", 0.001, 0, 9999);
+                        .defineInRange("costTpTopRate", 0.002, 0, 9999);
+
+                COST_TP_TOP_NUM_UPPER = SERVER_BUILDER
+                        .comment("The upper limit of the cost for 'Teleport to the top of current position'."
+                                , "传送到顶部的代价数量上限。")
+                        .defineInRange("costTpTopNumUpper", 20, 0, Integer.MAX_VALUE);
+
+                COST_TP_TOP_NUM_LOWER = SERVER_BUILDER
+                        .comment("The lower limit of the cost for 'Teleport to the top of current position'."
+                                , "传送到顶部的代价数量下限。")
+                        .defineInRange("costTpTopNumLower", 0, 0, Integer.MAX_VALUE);
+
+                COST_TP_TOP_EXP = SERVER_BUILDER
+                        .comment("The expression used to calculate the cost for 'Teleport to the top of current position', allowed functions: sqrt, pow, log, sin, cos, abs; allowed variables: num, distance, rate."
+                                , "Example: sqrt(num * distance * rate)、pow(num, 2) / log(distance) + sin(num)、abs(cos(rate) - num) * random(1, 10)"
+                                , "传送到顶部的代价计算表达式，支持的函数：sqrt、pow、log、sin、cos、abs；支持的变量：num、distance、rate。"
+                                , "示例：sqrt(num * distance * rate)、pow(num, 2) / log(distance) + sin(num)、abs(cos(rate) - num) * random(1, 10)")
+                        .define("costTpTopExp", "num * distance * rate");
             }
             SERVER_BUILDER.pop();
 
@@ -1179,7 +1369,24 @@ public class ServerConfig {
                 COST_TP_BOTTOM_RATE = SERVER_BUILDER
                         .comment("The cost rate for 'Teleport to the bottom of current position', the cost will be multiplied by the distance between the two coordinates."
                                 , "传送到底部的代价倍率，代价会乘以传送前后坐标之间的距离。")
-                        .defineInRange("costTpBottomRate", 0.001, 0, 9999);
+                        .defineInRange("costTpBottomRate", 0.002, 0, 9999);
+
+                COST_TP_BOTTOM_NUM_UPPER = SERVER_BUILDER
+                        .comment("The upper limit of the cost for 'Teleport to the bottom of current position'."
+                                , "传送到底部的代价数量上限。")
+                        .defineInRange("costTpBottomNumUpper", 20, 0, Integer.MAX_VALUE);
+
+                COST_TP_BOTTOM_NUM_LOWER = SERVER_BUILDER
+                        .comment("The lower limit of the cost for 'Teleport to the bottom of current position'."
+                                , "传送到底部的代价数量下限。")
+                        .defineInRange("costTpBottomNumLower", 0, 0, Integer.MAX_VALUE);
+
+                COST_TP_BOTTOM_EXP = SERVER_BUILDER
+                        .comment("The expression used to calculate the cost for 'Teleport to the bottom of current position', allowed functions: sqrt, pow, log, sin, cos, abs; allowed variables: num, distance, rate."
+                                , "Example: sqrt(num * distance * rate)、pow(num, 2) / log(distance) + sin(num)、abs(cos(rate) - num) * random(1, 10)"
+                                , "传送到底部的代价计算表达式，支持的函数：sqrt、pow、log、sin、cos、abs；支持的变量：num、distance、rate。"
+                                , "示例：sqrt(num * distance * rate)、pow(num, 2) / log(distance) + sin(num)、abs(cos(rate) - num) * random(1, 10)")
+                        .define("costTpBottomExp", "num * distance * rate");
             }
             SERVER_BUILDER.pop();
 
@@ -1210,7 +1417,24 @@ public class ServerConfig {
                 COST_TP_UP_RATE = SERVER_BUILDER
                         .comment("The cost rate for 'Teleport to the upper of current position', the cost will be multiplied by the distance between the two coordinates."
                                 , "传送到上方的代价倍率，代价会乘以传送前后坐标之间的距离。")
-                        .defineInRange("costTpUpRate", 0.001, 0, 9999);
+                        .defineInRange("costTpUpRate", 0.002, 0, 9999);
+
+                COST_TP_UP_NUM_UPPER = SERVER_BUILDER
+                        .comment("The upper limit of the cost for 'Teleport to the upper of current position'."
+                                , "传送到上方的代价数量上限。")
+                        .defineInRange("costTpUpNumUpper", 20, 0, Integer.MAX_VALUE);
+
+                COST_TP_UP_NUM_LOWER = SERVER_BUILDER
+                        .comment("The lower limit of the cost for 'Teleport to the upper of current position'."
+                                , "传送到上方的代价数量下限。")
+                        .defineInRange("costTpUpNumLower", 0, 0, Integer.MAX_VALUE);
+
+                COST_TP_UP_EXP = SERVER_BUILDER
+                        .comment("The expression used to calculate the cost for 'Teleport to the upper of current position', allowed functions: sqrt, pow, log, sin, cos, abs; allowed variables: num, distance, rate."
+                                , "Example: sqrt(num * distance * rate)、pow(num, 2) / log(distance) + sin(num)、abs(cos(rate) - num) * random(1, 10)"
+                                , "传送到上方的代价计算表达式，支持的函数：sqrt、pow、log、sin、cos、abs；支持的变量：num、distance、rate。"
+                                , "示例：sqrt(num * distance * rate)、pow(num, 2) / log(distance) + sin(num)、abs(cos(rate) - num) * random(1, 10)")
+                        .define("costTpUpExp", "num * distance * rate");
             }
             SERVER_BUILDER.pop();
 
@@ -1241,7 +1465,24 @@ public class ServerConfig {
                 COST_TP_DOWN_RATE = SERVER_BUILDER
                         .comment("The cost rate for 'Teleport to the lower of current position', the cost will be multiplied by the distance between the two coordinates."
                                 , "传送到下方的代价倍率，代价会乘以传送前后坐标之间的距离。")
-                        .defineInRange("costTpDownRate", 0.001, 0, 9999);
+                        .defineInRange("costTpDownRate", 0.002, 0, 9999);
+
+                COST_TP_DOWN_NUM_UPPER = SERVER_BUILDER
+                        .comment("The upper limit of the cost for 'Teleport to the lower of current position'."
+                                , "传送到下方的代价数量上限。")
+                        .defineInRange("costTpDownNumUpper", 20, 0, Integer.MAX_VALUE);
+
+                COST_TP_DOWN_NUM_LOWER = SERVER_BUILDER
+                        .comment("The lower limit of the cost for 'Teleport to the lower of current position'."
+                                , "传送到下方的代价数量下限。")
+                        .defineInRange("costTpDownNumLower", 0, 0, Integer.MAX_VALUE);
+
+                COST_TP_DOWN_EXP = SERVER_BUILDER
+                        .comment("The expression used to calculate the cost for 'Teleport to the lower of current position', allowed functions: sqrt, pow, log, sin, cos, abs; allowed variables: num, distance, rate."
+                                , "Example: sqrt(num * distance * rate)、pow(num, 2) / log(distance) + sin(num)、abs(cos(rate) - num) * random(1, 10)"
+                                , "传送到下方的代价计算表达式，支持的函数：sqrt、pow、log、sin、cos、abs；支持的变量：num、distance、rate。"
+                                , "示例：sqrt(num * distance * rate)、pow(num, 2) / log(distance) + sin(num)、abs(cos(rate) - num) * random(1, 10)")
+                        .define("costTpDownExp", "num * distance * rate");
             }
             SERVER_BUILDER.pop();
 
@@ -1272,7 +1513,24 @@ public class ServerConfig {
                 COST_TP_VIEW_RATE = SERVER_BUILDER
                         .comment("The cost rate for 'Teleport to the end of the line of sight', the cost will be multiplied by the distance between the two coordinates."
                                 , "传送至视线尽头的代价倍率，代价会乘以传送前后坐标之间的距离。")
-                        .defineInRange("costTpViewRate", 0.001, 0, 9999);
+                        .defineInRange("costTpViewRate", 0.002, 0, 9999);
+
+                COST_TP_VIEW_NUM_UPPER = SERVER_BUILDER
+                        .comment("The upper limit of the cost for 'Teleport to the end of the line of sight'."
+                                , "传送至视线尽头的代价数量上限。")
+                        .defineInRange("costTpViewNumUpper", 20, 0, Integer.MAX_VALUE);
+
+                COST_TP_VIEW_NUM_LOWER = SERVER_BUILDER
+                        .comment("The lower limit of the cost for 'Teleport to the end of the line of sight'."
+                                , "传送至视线尽头的代价数量下限。")
+                        .defineInRange("costTpViewNumLower", 0, 0, Integer.MAX_VALUE);
+
+                COST_TP_VIEW_EXP = SERVER_BUILDER
+                        .comment("The expression used to calculate the cost for 'Teleport to the end of the line of sight', allowed functions: sqrt, pow, log, sin, cos, abs; allowed variables: num, distance, rate."
+                                , "Example: sqrt(num * distance * rate)、pow(num, 2) / log(distance) + sin(num)、abs(cos(rate) - num) * random(1, 10)"
+                                , "传送至视线尽头的代价计算表达式，支持的函数：sqrt、pow、log、sin、cos、abs；支持的变量：num、distance、rate。"
+                                , "示例：sqrt(num * distance * rate)、pow(num, 2) / log(distance) + sin(num)、abs(cos(rate) - num) * random(1, 10)")
+                        .define("costTpViewExp", "num * distance * rate");
             }
             SERVER_BUILDER.pop();
 
@@ -1303,7 +1561,24 @@ public class ServerConfig {
                 COST_TP_HOME_RATE = SERVER_BUILDER
                         .comment("The cost rate for 'Teleport to the home', the cost will be multiplied by the distance between the two coordinates."
                                 , "传送到家的代价倍率，代价会乘以传送前后坐标之间的距离。")
-                        .defineInRange("costTpHomeRate", 0.001, 0, 9999);
+                        .defineInRange("costTpHomeRate", 0.002, 0, 9999);
+
+                COST_TP_HOME_NUM_UPPER = SERVER_BUILDER
+                        .comment("The upper limit of the cost for 'Teleport to the home'."
+                                , "传送到家的代价数量上限。")
+                        .defineInRange("costTpHomeNumUpper", 20, 0, Integer.MAX_VALUE);
+
+                COST_TP_HOME_NUM_LOWER = SERVER_BUILDER
+                        .comment("The lower limit of the cost for 'Teleport to the home'."
+                                , "传送到家的代价数量下限。")
+                        .defineInRange("costTpHomeNumLower", 0, 0, Integer.MAX_VALUE);
+
+                COST_TP_HOME_EXP = SERVER_BUILDER
+                        .comment("The expression used to calculate the cost for 'Teleport to the home', allowed functions: sqrt, pow, log, sin, cos, abs; allowed variables: num, distance, rate."
+                                , "Example: sqrt(num * distance * rate)、pow(num, 2) / log(distance) + sin(num)、abs(cos(rate) - num) * random(1, 10)"
+                                , "传送到家的代价计算表达式，支持的函数：sqrt、pow、log、sin、cos、abs；支持的变量：num、distance、rate。"
+                                , "示例：sqrt(num * distance * rate)、pow(num, 2) / log(distance) + sin(num)、abs(cos(rate) - num) * random(1, 10)")
+                        .define("costTpHomeExp", "num * distance * rate");
             }
             SERVER_BUILDER.pop();
 
@@ -1334,7 +1609,24 @@ public class ServerConfig {
                 COST_TP_STAGE_RATE = SERVER_BUILDER
                         .comment("The cost rate for 'Teleport to the stage', the cost will be multiplied by the distance between the two coordinates."
                                 , "传送到驿站的代价倍率，代价会乘以传送前后坐标之间的距离。")
-                        .defineInRange("costTpStageRate", 0.001, 0, 9999);
+                        .defineInRange("costTpStageRate", 0.002, 0, 9999);
+
+                COST_TP_STAGE_NUM_UPPER = SERVER_BUILDER
+                        .comment("The upper limit of the cost for 'Teleport to the stage'."
+                                , "传送到驿站的代价数量上限。")
+                        .defineInRange("costTpStageNumUpper", 20, 0, Integer.MAX_VALUE);
+
+                COST_TP_STAGE_NUM_LOWER = SERVER_BUILDER
+                        .comment("The lower limit of the cost for 'Teleport to the stage'."
+                                , "传送到驿站的代价数量下限。")
+                        .defineInRange("costTpStageNumLower", 0, 0, Integer.MAX_VALUE);
+
+                COST_TP_STAGE_EXP = SERVER_BUILDER
+                        .comment("The expression used to calculate the cost for 'Teleport to the stage', allowed functions: sqrt, pow, log, sin, cos, abs; allowed variables: num, distance, rate."
+                                , "Example: sqrt(num * distance * rate)、pow(num, 2) / log(distance) + sin(num)、abs(cos(rate) - num) * random(1, 10)"
+                                , "传送到驿站的代价计算表达式，支持的函数：sqrt、pow、log、sin、cos、abs；支持的变量：num、distance、rate。"
+                                , "示例：sqrt(num * distance * rate)、pow(num, 2) / log(distance) + sin(num)、abs(cos(rate) - num) * random(1, 10)")
+                        .define("costTpStageExp", "num * distance * rate");
             }
             SERVER_BUILDER.pop();
 
@@ -1365,7 +1657,24 @@ public class ServerConfig {
                 COST_TP_BACK_RATE = SERVER_BUILDER
                         .comment("The cost rate for 'Teleport to the previous location', the cost will be multiplied by the distance between the two coordinates."
                                 , "传送到上次传送点的代价倍率，代价会乘以传送前后坐标之间的距离。")
-                        .defineInRange("costTpBackRate", 0.001, 0, 9999);
+                        .defineInRange("costTpBackRate", 0.002, 0, 9999);
+
+                COST_TP_BACK_NUM_UPPER = SERVER_BUILDER
+                        .comment("The upper limit of the cost for 'Teleport to the previous location'."
+                                , "传送到上次传送点的代价数量上限。")
+                        .defineInRange("costTpBackNumUpper", 20, 0, Integer.MAX_VALUE);
+
+                COST_TP_BACK_NUM_LOWER = SERVER_BUILDER
+                        .comment("The lower limit of the cost for 'Teleport to the previous location'."
+                                , "传送到上次传送点的代价数量下限。")
+                        .defineInRange("costTpBackNumLower", 0, 0, Integer.MAX_VALUE);
+
+                COST_TP_BACK_EXP = SERVER_BUILDER
+                        .comment("The expression used to calculate the cost for 'Teleport to the previous location', allowed functions: sqrt, pow, log, sin, cos, abs; allowed variables: num, distance, rate."
+                                , "Example: sqrt(num * distance * rate)、pow(num, 2) / log(distance) + sin(num)、abs(cos(rate) - num) * random(1, 10)"
+                                , "传送到上次传送点的代价计算表达式，支持的函数：sqrt、pow、log、sin、cos、abs；支持的变量：num、distance、rate。"
+                                , "示例：sqrt(num * distance * rate)、pow(num, 2) / log(distance) + sin(num)、abs(cos(rate) - num) * random(1, 10)")
+                        .define("costTpBackExp", "num * distance * rate");
             }
             SERVER_BUILDER.pop();
 
@@ -1487,63 +1796,122 @@ public class ServerConfig {
         COST_TP_COORDINATE_TYPE.set(EnumCostType.NONE.name());
         COST_TP_COORDINATE_NUM.set(1);
         COST_TP_COORDINATE_CONF.set("");
-        COST_TP_COORDINATE_RATE.set(0.001);
+        COST_TP_COORDINATE_RATE.set(0.002);
+        COST_TP_COORDINATE_NUM_UPPER.set(20);
+        COST_TP_COORDINATE_NUM_LOWER.set(0);
+        COST_TP_COORDINATE_EXP.set("num * distance * rate");
+
         COST_TP_STRUCTURE_TYPE.set(EnumCostType.NONE.name());
         COST_TP_STRUCTURE_NUM.set(1);
         COST_TP_STRUCTURE_CONF.set("");
-        COST_TP_STRUCTURE_RATE.set(0.001);
+        COST_TP_STRUCTURE_RATE.set(0.002);
+        COST_TP_STRUCTURE_NUM_UPPER.set(20);
+        COST_TP_STRUCTURE_NUM_LOWER.set(0);
+        COST_TP_STRUCTURE_EXP.set("num * distance * rate");
+
         COST_TP_ASK_TYPE.set(EnumCostType.NONE.name());
         COST_TP_ASK_NUM.set(1);
         COST_TP_ASK_CONF.set("");
-        COST_TP_ASK_RATE.set(0.001);
+        COST_TP_ASK_RATE.set(0.002);
+        COST_TP_ASK_NUM_UPPER.set(20);
+        COST_TP_ASK_NUM_LOWER.set(0);
+        COST_TP_ASK_EXP.set("num * distance * rate");
+
         COST_TP_HERE_TYPE.set(EnumCostType.NONE.name());
         COST_TP_HERE_NUM.set(1);
         COST_TP_HERE_CONF.set("");
-        COST_TP_HERE_RATE.set(0.001);
+        COST_TP_HERE_RATE.set(0.002);
+        COST_TP_HERE_NUM_UPPER.set(20);
+        COST_TP_HERE_NUM_LOWER.set(0);
+        COST_TP_HERE_EXP.set("num * distance * rate");
+
         COST_TP_RANDOM_TYPE.set(EnumCostType.NONE.name());
         COST_TP_RANDOM_NUM.set(1);
         COST_TP_RANDOM_CONF.set("");
-        COST_TP_RANDOM_RATE.set(0.001);
+        COST_TP_RANDOM_RATE.set(0.002);
+        COST_TP_RANDOM_NUM_UPPER.set(20);
+        COST_TP_RANDOM_NUM_LOWER.set(0);
+        COST_TP_RANDOM_EXP.set("num * distance * rate");
+
         COST_TP_SPAWN_TYPE.set(EnumCostType.NONE.name());
         COST_TP_SPAWN_NUM.set(1);
         COST_TP_SPAWN_CONF.set("");
-        COST_TP_SPAWN_RATE.set(0.001);
+        COST_TP_SPAWN_RATE.set(0.002);
+        COST_TP_SPAWN_NUM_UPPER.set(20);
+        COST_TP_SPAWN_NUM_LOWER.set(0);
+        COST_TP_SPAWN_EXP.set("num * distance * rate");
+
         COST_TP_WORLD_SPAWN_TYPE.set(EnumCostType.NONE.name());
         COST_TP_WORLD_SPAWN_NUM.set(1);
         COST_TP_WORLD_SPAWN_CONF.set("");
-        COST_TP_WORLD_SPAWN_RATE.set(0.001);
+        COST_TP_WORLD_SPAWN_RATE.set(0.002);
+        COST_TP_WORLD_SPAWN_NUM_UPPER.set(20);
+        COST_TP_WORLD_SPAWN_NUM_LOWER.set(0);
+        COST_TP_WORLD_SPAWN_EXP.set("num * distance * rate");
+
         COST_TP_TOP_TYPE.set(EnumCostType.NONE.name());
         COST_TP_TOP_NUM.set(1);
         COST_TP_TOP_CONF.set("");
-        COST_TP_TOP_RATE.set(0.001);
+        COST_TP_TOP_RATE.set(0.002);
+        COST_TP_TOP_NUM_UPPER.set(20);
+        COST_TP_TOP_NUM_LOWER.set(0);
+        COST_TP_TOP_EXP.set("num * distance * rate");
+
         COST_TP_BOTTOM_TYPE.set(EnumCostType.NONE.name());
         COST_TP_BOTTOM_NUM.set(1);
         COST_TP_BOTTOM_CONF.set("");
-        COST_TP_BOTTOM_RATE.set(0.001);
+        COST_TP_BOTTOM_RATE.set(0.002);
+        COST_TP_BOTTOM_NUM_UPPER.set(20);
+        COST_TP_BOTTOM_NUM_LOWER.set(0);
+        COST_TP_BOTTOM_EXP.set("num * distance * rate");
+
         COST_TP_UP_TYPE.set(EnumCostType.NONE.name());
         COST_TP_UP_NUM.set(1);
         COST_TP_UP_CONF.set("");
-        COST_TP_UP_RATE.set(0.001);
+        COST_TP_UP_RATE.set(0.002);
+        COST_TP_UP_NUM_UPPER.set(20);
+        COST_TP_UP_NUM_LOWER.set(0);
+        COST_TP_UP_EXP.set("num * distance * rate");
+
         COST_TP_DOWN_TYPE.set(EnumCostType.NONE.name());
         COST_TP_DOWN_NUM.set(1);
         COST_TP_DOWN_CONF.set("");
-        COST_TP_DOWN_RATE.set(0.001);
+        COST_TP_DOWN_RATE.set(0.002);
+        COST_TP_DOWN_NUM_UPPER.set(20);
+        COST_TP_DOWN_NUM_LOWER.set(0);
+        COST_TP_DOWN_EXP.set("num * distance * rate");
+
         COST_TP_VIEW_TYPE.set(EnumCostType.NONE.name());
         COST_TP_VIEW_NUM.set(1);
         COST_TP_VIEW_CONF.set("");
-        COST_TP_VIEW_RATE.set(0.001);
+        COST_TP_VIEW_RATE.set(0.002);
+        COST_TP_VIEW_NUM_UPPER.set(20);
+        COST_TP_VIEW_NUM_LOWER.set(0);
+        COST_TP_VIEW_EXP.set("num * distance * rate");
+
         COST_TP_HOME_TYPE.set(EnumCostType.NONE.name());
         COST_TP_HOME_NUM.set(1);
         COST_TP_HOME_CONF.set("");
-        COST_TP_HOME_RATE.set(0.001);
+        COST_TP_HOME_RATE.set(0.002);
+        COST_TP_HOME_NUM_UPPER.set(20);
+        COST_TP_HOME_NUM_LOWER.set(0);
+        COST_TP_HOME_EXP.set("num * distance * rate");
+
         COST_TP_STAGE_TYPE.set(EnumCostType.NONE.name());
         COST_TP_STAGE_NUM.set(1);
         COST_TP_STAGE_CONF.set("");
-        COST_TP_STAGE_RATE.set(0.001);
+        COST_TP_STAGE_RATE.set(0.002);
+        COST_TP_STAGE_NUM_UPPER.set(20);
+        COST_TP_STAGE_NUM_LOWER.set(0);
+        COST_TP_STAGE_EXP.set("num * distance * rate");
+
         COST_TP_BACK_TYPE.set(EnumCostType.NONE.name());
         COST_TP_BACK_NUM.set(1);
         COST_TP_BACK_CONF.set("");
-        COST_TP_BACK_RATE.set(0.001);
+        COST_TP_BACK_RATE.set(0.002);
+        COST_TP_BACK_NUM_UPPER.set(20);
+        COST_TP_BACK_NUM_LOWER.set(0);
+        COST_TP_BACK_EXP.set("num * distance * rate");
 
         SERVER_CONFIG.save();
     }
