@@ -1472,7 +1472,21 @@ public class NarcissusUtils {
             adjustedDistance = ServerConfig.TELEPORT_COST_DISTANCE_ACROSS_DIMENSION.get();
         }
 
-        double need = teleportCost.getNum() * adjustedDistance * teleportCost.getRate();
+        Map<String, Double> vars = new HashMap<>();
+        vars.put("distance", adjustedDistance);
+        vars.put("num", (double) teleportCost.getNum());
+        vars.put("rate", teleportCost.getRate());
+
+        double need;
+        try {
+            need = new SafeExpressionEvaluator(teleportCost.getExp()).evaluate(vars);
+        } catch (Exception e) {
+            LOGGER.error("Failed to calculate cost with expression: {}", teleportCost.getExp(), e);
+            need = teleportCost.getNum() * adjustedDistance * teleportCost.getRate();
+        }
+        need = Math.min(need, teleportCost.getUpper());
+        need = Math.max(need, teleportCost.getLower());
+
         int cardNeed = getTeleportCardNeed(need);
         int costNeed = getTeleportCostNeed(data, cardNeed, (int) Math.ceil(need));
         boolean result = false;
@@ -1627,7 +1641,7 @@ public class NarcissusUtils {
      * @return -1：传送卡不足    0：传送卡足以抵消代价    >0：还须支付多少代价
      */
     public static int getTeleportCostNeed(PlayerTeleportData data, int card, int need) {
-        if (!CommonConfig.TELEPORT_CARD.get()) return 0;
+        if (!CommonConfig.TELEPORT_CARD.get()) return need;
         switch (EnumCardType.valueOf(CommonConfig.TELEPORT_CARD_TYPE.get())) {
             case NONE:
                 // card = 1
@@ -1657,90 +1671,135 @@ public class NarcissusUtils {
                 cost.setNum(ServerConfig.COST_TP_COORDINATE_NUM.get());
                 cost.setRate(ServerConfig.COST_TP_COORDINATE_RATE.get());
                 cost.setConf(ServerConfig.COST_TP_COORDINATE_CONF.get());
+                cost.setLower(ServerConfig.COST_TP_COORDINATE_NUM_LOWER.get());
+                cost.setUpper(ServerConfig.COST_TP_COORDINATE_NUM_UPPER.get());
+                cost.setExp(ServerConfig.COST_TP_COORDINATE_EXP.get());
                 break;
             case TP_STRUCTURE:
                 cost.setType(ServerConfig.COST_TP_STRUCTURE_TYPE.get());
                 cost.setNum(ServerConfig.COST_TP_STRUCTURE_NUM.get());
                 cost.setRate(ServerConfig.COST_TP_STRUCTURE_RATE.get());
                 cost.setConf(ServerConfig.COST_TP_STRUCTURE_CONF.get());
+                cost.setLower(ServerConfig.COST_TP_STRUCTURE_NUM_LOWER.get());
+                cost.setUpper(ServerConfig.COST_TP_STRUCTURE_NUM_UPPER.get());
+                cost.setExp(ServerConfig.COST_TP_STRUCTURE_EXP.get());
                 break;
             case TP_ASK:
                 cost.setType(ServerConfig.COST_TP_ASK_TYPE.get());
                 cost.setNum(ServerConfig.COST_TP_ASK_NUM.get());
                 cost.setRate(ServerConfig.COST_TP_ASK_RATE.get());
                 cost.setConf(ServerConfig.COST_TP_ASK_CONF.get());
+                cost.setLower(ServerConfig.COST_TP_ASK_NUM_LOWER.get());
+                cost.setUpper(ServerConfig.COST_TP_ASK_NUM_UPPER.get());
+                cost.setExp(ServerConfig.COST_TP_ASK_EXP.get());
                 break;
             case TP_HERE:
                 cost.setType(ServerConfig.COST_TP_HERE_TYPE.get());
                 cost.setNum(ServerConfig.COST_TP_HERE_NUM.get());
                 cost.setRate(ServerConfig.COST_TP_HERE_RATE.get());
                 cost.setConf(ServerConfig.COST_TP_HERE_CONF.get());
+                cost.setLower(ServerConfig.COST_TP_HERE_NUM_LOWER.get());
+                cost.setUpper(ServerConfig.COST_TP_HERE_NUM_UPPER.get());
+                cost.setExp(ServerConfig.COST_TP_HERE_EXP.get());
                 break;
             case TP_RANDOM:
                 cost.setType(ServerConfig.COST_TP_RANDOM_TYPE.get());
                 cost.setNum(ServerConfig.COST_TP_RANDOM_NUM.get());
                 cost.setRate(ServerConfig.COST_TP_RANDOM_RATE.get());
                 cost.setConf(ServerConfig.COST_TP_RANDOM_CONF.get());
+                cost.setLower(ServerConfig.COST_TP_RANDOM_NUM_LOWER.get());
+                cost.setUpper(ServerConfig.COST_TP_RANDOM_NUM_UPPER.get());
+                cost.setExp(ServerConfig.COST_TP_RANDOM_EXP.get());
                 break;
             case TP_SPAWN:
                 cost.setType(ServerConfig.COST_TP_SPAWN_TYPE.get());
                 cost.setNum(ServerConfig.COST_TP_SPAWN_NUM.get());
                 cost.setRate(ServerConfig.COST_TP_SPAWN_RATE.get());
                 cost.setConf(ServerConfig.COST_TP_SPAWN_CONF.get());
+                cost.setLower(ServerConfig.COST_TP_SPAWN_NUM_LOWER.get());
+                cost.setUpper(ServerConfig.COST_TP_SPAWN_NUM_UPPER.get());
+                cost.setExp(ServerConfig.COST_TP_SPAWN_EXP.get());
                 break;
             case TP_WORLD_SPAWN:
                 cost.setType(ServerConfig.COST_TP_WORLD_SPAWN_TYPE.get());
                 cost.setNum(ServerConfig.COST_TP_WORLD_SPAWN_NUM.get());
                 cost.setRate(ServerConfig.COST_TP_WORLD_SPAWN_RATE.get());
                 cost.setConf(ServerConfig.COST_TP_WORLD_SPAWN_CONF.get());
+                cost.setLower(ServerConfig.COST_TP_WORLD_SPAWN_NUM_LOWER.get());
+                cost.setUpper(ServerConfig.COST_TP_WORLD_SPAWN_NUM_UPPER.get());
+                cost.setExp(ServerConfig.COST_TP_WORLD_SPAWN_EXP.get());
                 break;
             case TP_TOP:
                 cost.setType(ServerConfig.COST_TP_TOP_TYPE.get());
                 cost.setNum(ServerConfig.COST_TP_TOP_NUM.get());
                 cost.setRate(ServerConfig.COST_TP_TOP_RATE.get());
                 cost.setConf(ServerConfig.COST_TP_TOP_CONF.get());
+                cost.setLower(ServerConfig.COST_TP_TOP_NUM_LOWER.get());
+                cost.setUpper(ServerConfig.COST_TP_TOP_NUM_UPPER.get());
+                cost.setExp(ServerConfig.COST_TP_TOP_EXP.get());
                 break;
             case TP_BOTTOM:
                 cost.setType(ServerConfig.COST_TP_BOTTOM_TYPE.get());
                 cost.setNum(ServerConfig.COST_TP_BOTTOM_NUM.get());
                 cost.setRate(ServerConfig.COST_TP_BOTTOM_RATE.get());
                 cost.setConf(ServerConfig.COST_TP_BOTTOM_CONF.get());
+                cost.setLower(ServerConfig.COST_TP_BOTTOM_NUM_LOWER.get());
+                cost.setUpper(ServerConfig.COST_TP_BOTTOM_NUM_UPPER.get());
+                cost.setExp(ServerConfig.COST_TP_BOTTOM_EXP.get());
                 break;
             case TP_UP:
                 cost.setType(ServerConfig.COST_TP_UP_TYPE.get());
                 cost.setNum(ServerConfig.COST_TP_UP_NUM.get());
                 cost.setRate(ServerConfig.COST_TP_UP_RATE.get());
                 cost.setConf(ServerConfig.COST_TP_UP_CONF.get());
+                cost.setLower(ServerConfig.COST_TP_UP_NUM_LOWER.get());
+                cost.setUpper(ServerConfig.COST_TP_UP_NUM_UPPER.get());
+                cost.setExp(ServerConfig.COST_TP_UP_EXP.get());
                 break;
             case TP_DOWN:
                 cost.setType(ServerConfig.COST_TP_DOWN_TYPE.get());
                 cost.setNum(ServerConfig.COST_TP_DOWN_NUM.get());
                 cost.setRate(ServerConfig.COST_TP_DOWN_RATE.get());
                 cost.setConf(ServerConfig.COST_TP_DOWN_CONF.get());
+                cost.setLower(ServerConfig.COST_TP_DOWN_NUM_LOWER.get());
+                cost.setUpper(ServerConfig.COST_TP_DOWN_NUM_UPPER.get());
+                cost.setExp(ServerConfig.COST_TP_DOWN_EXP.get());
                 break;
             case TP_VIEW:
                 cost.setType(ServerConfig.COST_TP_VIEW_TYPE.get());
                 cost.setNum(ServerConfig.COST_TP_VIEW_NUM.get());
                 cost.setRate(ServerConfig.COST_TP_VIEW_RATE.get());
                 cost.setConf(ServerConfig.COST_TP_VIEW_CONF.get());
+                cost.setLower(ServerConfig.COST_TP_VIEW_NUM_LOWER.get());
+                cost.setUpper(ServerConfig.COST_TP_VIEW_NUM_UPPER.get());
+                cost.setExp(ServerConfig.COST_TP_VIEW_EXP.get());
                 break;
             case TP_HOME:
                 cost.setType(ServerConfig.COST_TP_HOME_TYPE.get());
                 cost.setNum(ServerConfig.COST_TP_HOME_NUM.get());
                 cost.setRate(ServerConfig.COST_TP_HOME_RATE.get());
                 cost.setConf(ServerConfig.COST_TP_HOME_CONF.get());
+                cost.setLower(ServerConfig.COST_TP_HOME_NUM_LOWER.get());
+                cost.setUpper(ServerConfig.COST_TP_HOME_NUM_UPPER.get());
+                cost.setExp(ServerConfig.COST_TP_HOME_EXP.get());
                 break;
             case TP_STAGE:
                 cost.setType(ServerConfig.COST_TP_STAGE_TYPE.get());
                 cost.setNum(ServerConfig.COST_TP_STAGE_NUM.get());
                 cost.setRate(ServerConfig.COST_TP_STAGE_RATE.get());
                 cost.setConf(ServerConfig.COST_TP_STAGE_CONF.get());
+                cost.setLower(ServerConfig.COST_TP_STAGE_NUM_LOWER.get());
+                cost.setUpper(ServerConfig.COST_TP_STAGE_NUM_UPPER.get());
+                cost.setExp(ServerConfig.COST_TP_STAGE_EXP.get());
                 break;
             case TP_BACK:
                 cost.setType(ServerConfig.COST_TP_BACK_TYPE.get());
                 cost.setNum(ServerConfig.COST_TP_BACK_NUM.get());
                 cost.setRate(ServerConfig.COST_TP_BACK_RATE.get());
                 cost.setConf(ServerConfig.COST_TP_BACK_CONF.get());
+                cost.setLower(ServerConfig.COST_TP_BACK_NUM_LOWER.get());
+                cost.setUpper(ServerConfig.COST_TP_BACK_NUM_UPPER.get());
+                cost.setExp(ServerConfig.COST_TP_BACK_EXP.get());
                 break;
             default:
                 break;
