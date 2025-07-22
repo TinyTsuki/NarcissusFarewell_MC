@@ -2079,7 +2079,7 @@ public class NarcissusUtils {
      * @return -1：传送卡不足    0：传送卡足以抵消代价    >0：还须支付多少代价
      */
     public static int getTeleportCostNeed(IPlayerTeleportData data, int card, int need) {
-        if (!CommonConfig.TELEPORT_CARD.get()) return 0;
+        if (!CommonConfig.TELEPORT_CARD.get()) return need;
         switch (EnumCardType.valueOf(CommonConfig.TELEPORT_CARD_TYPE.get())) {
             case NONE:
                 // card = 1
