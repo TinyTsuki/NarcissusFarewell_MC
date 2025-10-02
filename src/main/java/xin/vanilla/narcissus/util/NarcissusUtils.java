@@ -15,6 +15,9 @@ import net.minecraft.core.Holder;
 import net.minecraft.core.HolderSet;
 import net.minecraft.core.Registry;
 import net.minecraft.core.registries.Registries;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.NbtAccounter;
+import net.minecraft.nbt.NbtIo;
 import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.HoverEvent;
 import net.minecraft.network.protocol.Packet;
@@ -57,13 +60,15 @@ import xin.vanilla.narcissus.config.CommonConfig;
 import xin.vanilla.narcissus.config.CustomConfig;
 import xin.vanilla.narcissus.config.ServerConfig;
 import xin.vanilla.narcissus.data.*;
-import xin.vanilla.narcissus.data.player.IPlayerTeleportData;
-import xin.vanilla.narcissus.data.player.PlayerTeleportDataCapability;
+import xin.vanilla.narcissus.data.player.PlayerTeleportData;
 import xin.vanilla.narcissus.data.world.WorldStageData;
 import xin.vanilla.narcissus.enums.*;
 import xin.vanilla.narcissus.network.ModNetworkHandler;
 
 import javax.annotation.Nullable;
+import java.io.File;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.*;
@@ -697,7 +702,7 @@ public class NarcissusUtils {
     }
 
     public static String getHomeDimensionByName(ServerPlayer player, String name) {
-        IPlayerTeleportData data = PlayerTeleportDataCapability.getData(player);
+        PlayerTeleportData data = PlayerTeleportData.getData(player);
         List<KeyValue<String, String>> list = data.getHomeCoordinate().keySet().stream()
                 .filter(key -> key.getValue().equals(name))
                 .toList();
@@ -708,7 +713,7 @@ public class NarcissusUtils {
     }
 
     public static KeyValue<String, String> getPlayerHomeKey(ServerPlayer player, ResourceKey<Level> dimension, String name) {
-        IPlayerTeleportData data = PlayerTeleportDataCapability.getData(player);
+        PlayerTeleportData data = PlayerTeleportData.getData(player);
         Map<String, String> defaultHome = data.getDefaultHome();
         if (defaultHome.isEmpty() && dimension == null && StringUtils.isNullOrEmpty(name) && data.getHomeCoordinate().size() != 1) {
             return null;
@@ -758,7 +763,7 @@ public class NarcissusUtils {
      * @param name      名称
      */
     public static Coordinate getPlayerHome(ServerPlayer player, ResourceKey<Level> dimension, String name) {
-        return PlayerTeleportDataCapability.getData(player).getHomeCoordinate().getOrDefault(getPlayerHomeKey(player, dimension, name), null);
+        return PlayerTeleportData.getData(player).getHomeCoordinate().getOrDefault(getPlayerHomeKey(player, dimension, name), null);
     }
 
     public static String getStageDimensionByName(String name) {
@@ -804,7 +809,7 @@ public class NarcissusUtils {
     public static TeleportRecord getBackTeleportRecord(ServerPlayer player, @Nullable EnumTeleportType type, @Nullable ResourceKey<Level> dimension) {
         TeleportRecord result = null;
         // 获取玩家的传送数据
-        IPlayerTeleportData data = PlayerTeleportDataCapability.getData(player);
+        PlayerTeleportData data = PlayerTeleportData.getData(player);
         List<TeleportRecord> records = data.getTeleportRecords();
         Stream<TeleportRecord> stream = records.stream()
                 .filter(record -> type == null || record.getTeleportType() == type);
@@ -823,7 +828,7 @@ public class NarcissusUtils {
     }
 
     public static void removeBackTeleportRecord(ServerPlayer player, TeleportRecord record) {
-        PlayerTeleportDataCapability.getData(player).getTeleportRecords().remove(record);
+        PlayerTeleportData.getData(player).getTeleportRecords().remove(record);
     }
 
     // endregion 坐标查找
@@ -965,7 +970,7 @@ public class NarcissusUtils {
         record.setTeleportType(type);
         record.setBefore(before);
         record.setAfter(after);
-        PlayerTeleportDataCapability.getData(player).addTeleportRecords(record);
+        PlayerTeleportData.getData(player).addTeleportRecords(record);
     }
 
     /**
@@ -1358,13 +1363,13 @@ public class NarcissusUtils {
         if (EnumCardType.REFUND_COOLDOWN.name().equalsIgnoreCase(CommonConfig.TELEPORT_CARD_TYPE.get())
                 || EnumCardType.REFUND_ALL_COST_AND_COOLDOWN.name().equalsIgnoreCase(CommonConfig.TELEPORT_CARD_TYPE.get())
         ) {
-            if (PlayerTeleportDataCapability.getData(player).getTeleportCard() > 0) {
+            if (PlayerTeleportData.getData(player).getTeleportCard() > 0) {
                 return 0;
             }
         }
         Instant current = Instant.now();
         int commandCoolDown = getCommandCoolDown(type);
-        Instant lastTpTime = PlayerTeleportDataCapability.getData(player).getTeleportRecords(type).stream()
+        Instant lastTpTime = PlayerTeleportData.getData(player).getTeleportRecords(type).stream()
                 .map(TeleportRecord::getTeleportTime)
                 .max(Comparator.comparing(Date::toInstant))
                 .orElse(new Date(0)).toInstant();
@@ -1462,7 +1467,7 @@ public class NarcissusUtils {
     private static boolean validateCost(ServerPlayer player, ResourceKey<Level> targetDim, double distance, EnumTeleportType teleportType, boolean submit) {
         TeleportCost teleportCost = NarcissusUtils.getCommandCost(teleportType);
         if (teleportCost.getType() == EnumCostType.NONE) return true;
-        IPlayerTeleportData data = PlayerTeleportDataCapability.getData(player);
+        PlayerTeleportData data = PlayerTeleportData.getData(player);
 
         double adjustedDistance;
         if (player.level().dimension() == targetDim) {
@@ -1640,7 +1645,7 @@ public class NarcissusUtils {
      *
      * @return -1：传送卡不足    0：传送卡足以抵消代价    >0：还须支付多少代价
      */
-    public static int getTeleportCostNeed(IPlayerTeleportData data, int card, int need) {
+    public static int getTeleportCostNeed(PlayerTeleportData data, int card, int need) {
         if (!CommonConfig.TELEPORT_CARD.get()) return need;
         switch (EnumCardType.valueOf(CommonConfig.TELEPORT_CARD_TYPE.get())) {
             case NONE:
@@ -1820,6 +1825,50 @@ public class NarcissusUtils {
     }
 
     // endregion 传送代价
+
+    // region nbt文件读写
+
+    public static CompoundTag readCompressed(InputStream stream) {
+        try {
+            return NbtIo.readCompressed(stream, NbtAccounter.unlimitedHeap());
+        } catch (Exception e) {
+            LOGGER.error("Failed to read compressed stream", e);
+            return new CompoundTag();
+        }
+    }
+
+    public static CompoundTag readCompressed(File file) {
+        try {
+            return NbtIo.readCompressed(file.toPath(), NbtAccounter.unlimitedHeap());
+        } catch (Exception e) {
+            LOGGER.error("Failed to read compressed file: {}", file.getAbsolutePath(), e);
+            return new CompoundTag();
+        }
+    }
+
+    public static boolean writeCompressed(CompoundTag tag, File file) {
+        boolean result = false;
+        try {
+            NbtIo.writeCompressed(tag, file.toPath());
+            result = true;
+        } catch (Exception e) {
+            LOGGER.error("Failed to write compressed file: {}", file.getAbsolutePath(), e);
+        }
+        return result;
+    }
+
+    public static boolean writeCompressed(CompoundTag tag, OutputStream stream) {
+        boolean result = false;
+        try {
+            NbtIo.writeCompressed(tag, stream);
+            result = true;
+        } catch (Exception e) {
+            LOGGER.error("Failed to write compressed stream", e);
+        }
+        return result;
+    }
+
+    // endregion nbt文件读写
 
     // region 杂项
 
