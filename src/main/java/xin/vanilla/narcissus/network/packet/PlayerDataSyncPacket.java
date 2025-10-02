@@ -6,7 +6,6 @@ import net.minecraftforge.event.network.CustomPayloadEvent;
 import xin.vanilla.narcissus.data.Coordinate;
 import xin.vanilla.narcissus.data.KeyValue;
 import xin.vanilla.narcissus.data.TeleportRecord;
-import xin.vanilla.narcissus.data.player.IPlayerTeleportData;
 import xin.vanilla.narcissus.data.player.PlayerTeleportData;
 import xin.vanilla.narcissus.network.ClientProxy;
 import xin.vanilla.narcissus.network.SplitPacket;
@@ -26,7 +25,7 @@ public class PlayerDataSyncPacket extends SplitPacket {
     private final Map<KeyValue<String, String>, Coordinate> homeCoordinate;
     private final Map<String, String> defaultHome;
 
-    public PlayerDataSyncPacket(UUID playerUUID, IPlayerTeleportData data) {
+    public PlayerDataSyncPacket(UUID playerUUID, PlayerTeleportData data) {
         super();
         this.playerUUID = playerUUID;
         this.lastCardTime = data.getLastCardTime();
@@ -177,8 +176,10 @@ public class PlayerDataSyncPacket extends SplitPacket {
         return result;
     }
 
-    public IPlayerTeleportData getData() {
-        IPlayerTeleportData data = new PlayerTeleportData();
+    public PlayerTeleportData getData() {
+        PlayerTeleportData data = ClientProxy.createClientData();
+        if (data == null) return null;
+
         data.setLastCardTime(this.lastCardTime);
         data.setLastTpTime(this.lastTpTime);
         data.setTeleportCard(this.teleportCard);
