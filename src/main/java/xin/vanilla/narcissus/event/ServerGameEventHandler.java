@@ -1,8 +1,6 @@
 package xin.vanilla.narcissus.event;
 
-import net.minecraft.world.entity.Entity;
 import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.event.AttachCapabilitiesEvent;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.entity.EntityJoinLevelEvent;
 import net.minecraftforge.event.entity.EntityTeleportEvent;
@@ -29,22 +27,6 @@ public class ServerGameEventHandler {
     }
 
     /**
-     * 玩家Tick事件
-     */
-    @SubscribeEvent
-    public static void onPlayerTick(TickEvent.PlayerTickEvent event) {
-        EventHandlerProxy.onPlayerTick(event);
-    }
-
-    /**
-     * 能力附加事件
-     */
-    @SubscribeEvent
-    public static void onAttachCapabilityEvent(AttachCapabilitiesEvent<Entity> event) {
-        EventHandlerProxy.onAttachCapability(event);
-    }
-
-    /**
      * 玩家死亡后重生或者从末地回主世界
      */
     @SubscribeEvent
@@ -68,11 +50,4 @@ public class ServerGameEventHandler {
         EventHandlerProxy.onEntityTeleport(event);
     }
 
-    /**
-     * 玩家登录事件
-     */
-    @SubscribeEvent
-    public static void onPlayerLoggedOut(PlayerEvent.PlayerLoggedOutEvent event) {
-        EventHandlerProxy.onPlayerLoggedOut(event);
-    }
 }
