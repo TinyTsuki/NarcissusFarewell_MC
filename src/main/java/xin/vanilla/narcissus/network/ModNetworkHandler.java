@@ -11,7 +11,6 @@ public class ModNetworkHandler {
         final PayloadRegistrar registrar = event.registrar(PROTOCOL_VERSION).optional();
 
         registrar.playToClient(PlayerDataSyncPacket.TYPE, PlayerDataSyncPacket.STREAM_CODEC, PlayerDataSyncPacket::handle);
-        registrar.playToServer(PlayerDataReceivedNotice.TYPE, PlayerDataReceivedNotice.STREAM_CODEC, PlayerDataReceivedNotice::handle);
         registrar.playToServer(ClientModLoadedNotice.TYPE, ClientModLoadedNotice.STREAM_CODEC, ClientModLoadedNotice::handle);
         registrar.playToServer(TpHomeNotice.TYPE, TpHomeNotice.STREAM_CODEC, TpHomeNotice::handle);
         registrar.playToServer(TpBackNotice.TYPE, TpBackNotice.STREAM_CODEC, TpBackNotice::handle);

@@ -196,7 +196,8 @@ public class PlayerDataSyncPacket extends SplitPacket implements CustomPacketPay
     }
 
     public PlayerTeleportData getData() {
-        PlayerTeleportData data = new PlayerTeleportData();
+        PlayerTeleportData data = ClientProxy.createClientData();
+        if (data == null) return null;
         data.setLastCardTime(this.lastCardTime);
         data.setLastTpTime(this.lastTpTime);
         data.setTeleportCard(this.teleportCard);
