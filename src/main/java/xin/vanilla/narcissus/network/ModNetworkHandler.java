@@ -20,7 +20,6 @@ public class ModNetworkHandler {
 
     public static void registerPackets() {
         INSTANCE.messageBuilder(PlayerDataSyncPacket.class, nextID()).encoder(PlayerDataSyncPacket::toBytes).decoder(PlayerDataSyncPacket::new).consumerMainThread(PlayerDataSyncPacket::handle).add();
-        INSTANCE.messageBuilder(PlayerDataReceivedNotice.class, nextID()).encoder(PlayerDataReceivedNotice::toBytes).decoder(PlayerDataReceivedNotice::new).consumerMainThread(PlayerDataReceivedNotice::handle).add();
         INSTANCE.messageBuilder(ClientModLoadedNotice.class, nextID()).encoder(ClientModLoadedNotice::toBytes).decoder(ClientModLoadedNotice::new).consumerMainThread(ClientModLoadedNotice::handle).add();
         INSTANCE.messageBuilder(TpHomeNotice.class, nextID()).encoder(TpHomeNotice::toBytes).decoder(TpHomeNotice::new).consumerMainThread(TpHomeNotice::handle).add();
         INSTANCE.messageBuilder(TpBackNotice.class, nextID()).encoder(TpBackNotice::toBytes).decoder(TpBackNotice::new).consumerMainThread(TpBackNotice::handle).add();
