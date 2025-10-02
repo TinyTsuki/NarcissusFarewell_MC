@@ -3,8 +3,7 @@ package xin.vanilla.narcissus.network.packet;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraftforge.network.NetworkEvent;
-import xin.vanilla.narcissus.NarcissusFarewell;
-import xin.vanilla.narcissus.data.player.PlayerTeleportDataCapability;
+import xin.vanilla.narcissus.data.player.PlayerTeleportData;
 
 import java.util.function.Supplier;
 
@@ -23,9 +22,8 @@ public class ClientModLoadedNotice {
         ctx.get().enqueueWork(() -> {
             ServerPlayer player = ctx.get().getSender();
             if (player != null) {
-                NarcissusFarewell.getPlayerCapabilityStatus().put(player.getStringUUID(), false);
                 // 同步玩家传送数据到客户端
-                PlayerTeleportDataCapability.syncPlayerData(player);
+                PlayerTeleportData.syncPlayerData(player);
             }
         });
         ctx.get().setPacketHandled(true);
