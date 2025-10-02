@@ -76,14 +76,6 @@ public class ClientGameEventHandler {
     }
 
     /**
-     * 玩家Tick事件
-     */
-    @SubscribeEvent
-    public static void onPlayerTick(TickEvent.PlayerTickEvent event) {
-        EventHandlerProxy.onPlayerTick(event);
-    }
-
-    /**
      * 服务端Tick事件
      */
     @SubscribeEvent
@@ -113,14 +105,6 @@ public class ClientGameEventHandler {
     @SubscribeEvent
     public static void onEntityTeleport(EntityTeleportEvent event) {
         EventHandlerProxy.onEntityTeleport(event);
-    }
-
-    /**
-     * 玩家登录事件
-     */
-    @SubscribeEvent
-    public static void onPlayerLoggedOut(PlayerEvent.PlayerLoggedOutEvent event) {
-        EventHandlerProxy.onPlayerLoggedOut(event);
     }
 
 }

@@ -7,7 +7,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
 import org.jetbrains.annotations.NotNull;
 import xin.vanilla.narcissus.NarcissusFarewell;
-import xin.vanilla.narcissus.data.player.PlayerDataAttachment;
+import xin.vanilla.narcissus.data.player.PlayerTeleportData;
 
 public class ClientModLoadedNotice implements CustomPacketPayload {
     public final static ResourceLocation ID = new ResourceLocation(NarcissusFarewell.MODID, "client_mod_loaded");
@@ -30,9 +30,8 @@ public class ClientModLoadedNotice implements CustomPacketPayload {
         if (ctx.flow().isServerbound()) {
             ctx.workHandler().execute(() -> {
                 ctx.player().ifPresent(player -> {
-                    NarcissusFarewell.getPlayerCapabilityStatus().put(player.getStringUUID(), false);
                     // 同步玩家传送数据到客户端
-                    PlayerDataAttachment.syncPlayerData((ServerPlayer) player);
+                    PlayerTeleportData.syncPlayerData((ServerPlayer) player);
                 });
             });
         }

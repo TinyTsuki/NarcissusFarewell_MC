@@ -27,7 +27,6 @@ import xin.vanilla.narcissus.config.CustomConfig;
 import xin.vanilla.narcissus.config.ServerConfig;
 import xin.vanilla.narcissus.data.SafeBlock;
 import xin.vanilla.narcissus.data.TeleportRequest;
-import xin.vanilla.narcissus.data.player.PlayerDataAttachment;
 import xin.vanilla.narcissus.event.ClientModEventHandler;
 import xin.vanilla.narcissus.network.ModNetworkHandler;
 import xin.vanilla.narcissus.network.packet.SplitPacket;
@@ -60,12 +59,6 @@ public class NarcissusFarewell {
     private static final Map<String, List<? extends SplitPacket>> packetCache = new ConcurrentHashMap<>();
 
     /**
-     * 玩家能力同步状态
-     */
-    @Getter
-    private static final Map<String, Boolean> playerCapabilityStatus = new ConcurrentHashMap<>();
-
-    /**
      * 最近一次传送请求
      */
     @Getter
@@ -95,8 +88,6 @@ public class NarcissusFarewell {
         // 注册配置
         ModLoadingContext.get().registerConfig(ModConfig.Type.COMMON, CommonConfig.COMMON_CONFIG);
         ModLoadingContext.get().registerConfig(ModConfig.Type.SERVER, ServerConfig.SERVER_CONFIG);
-        // 注册数据附件
-        PlayerDataAttachment.ATTACHMENT_TYPES.register(modEventBus);
 
         // 注册客户端设置事件
         modEventBus.addListener(this::onClientSetup);

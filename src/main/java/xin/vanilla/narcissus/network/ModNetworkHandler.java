@@ -11,8 +11,6 @@ public class ModNetworkHandler {
 
         registrar.play(PlayerDataSyncPacket.ID, PlayerDataSyncPacket::new,
                 handler -> handler.client(PlayerDataSyncPacket::handle));
-        registrar.play(PlayerDataReceivedNotice.ID, PlayerDataReceivedNotice::new,
-                handler -> handler.server(PlayerDataReceivedNotice::handle));
         registrar.play(ClientModLoadedNotice.ID, ClientModLoadedNotice::new,
                 handler -> handler.server(ClientModLoadedNotice::handle));
         registrar.play(TpHomeNotice.ID, TpHomeNotice::new,
