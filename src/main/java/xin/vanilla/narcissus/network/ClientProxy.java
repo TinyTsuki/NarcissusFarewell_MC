@@ -4,11 +4,8 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.entity.player.ClientPlayerEntity;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import xin.vanilla.narcissus.data.player.IPlayerTeleportData;
-import xin.vanilla.narcissus.data.player.PlayerTeleportDataCapability;
-import xin.vanilla.narcissus.network.packet.PlayerDataReceivedNotice;
+import xin.vanilla.narcissus.data.player.PlayerTeleportData;
 import xin.vanilla.narcissus.network.packet.PlayerDataSyncPacket;
-import xin.vanilla.narcissus.util.NarcissusUtils;
 
 public class ClientProxy {
     public static final Logger LOGGER = LogManager.getLogger();
@@ -17,13 +14,20 @@ public class ClientProxy {
         ClientPlayerEntity player = Minecraft.getInstance().player;
         if (player != null) {
             try {
-                IPlayerTeleportData clientData = PlayerTeleportDataCapability.getData(player);
-                PlayerTeleportDataCapability.PLAYER_DATA.readNBT(clientData, null, packet.getData().serializeNBT());
-                NarcissusUtils.sendPacketToServer(new PlayerDataReceivedNotice());
+                PlayerTeleportData clientData = PlayerTeleportData.getData(player);
+                clientData.copyFrom(packet.getData());
                 LOGGER.debug("Client: Player data received successfully.");
             } catch (Exception ignored) {
                 LOGGER.debug("Client: Player data received failed.");
             }
         }
+    }
+
+    public static PlayerTeleportData createClientData() {
+        ClientPlayerEntity player = Minecraft.getInstance().player;
+        if (player != null) {
+            return PlayerTeleportData.getData(player);
+        }
+        return null;
     }
 }

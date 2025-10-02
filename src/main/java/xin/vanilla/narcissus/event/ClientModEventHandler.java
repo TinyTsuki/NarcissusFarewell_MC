@@ -2,14 +2,11 @@ package xin.vanilla.narcissus.event;
 
 import net.minecraft.client.settings.KeyBinding;
 import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.client.registry.ClientRegistry;
 import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import xin.vanilla.narcissus.NarcissusFarewell;
-import xin.vanilla.narcissus.data.player.PlayerTeleportDataCapability;
 
 /**
  * 客户端 Mod事件处理器
@@ -40,8 +37,4 @@ public class ClientModEventHandler {
         ClientRegistry.registerKeyBinding(TP_REQ_NO);
     }
 
-    @SubscribeEvent
-    public static void onCommonSetup(FMLCommonSetupEvent event) {
-        PlayerTeleportDataCapability.register();
-    }
 }
