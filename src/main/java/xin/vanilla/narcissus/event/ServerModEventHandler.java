@@ -9,4 +9,5 @@ import org.apache.logging.log4j.Logger;
 // @EventBusSubscriber(modid = NarcissusFarewell.MODID, value = Dist.DEDICATED_SERVER, bus = EventBusSubscriber.Bus.MOD)
 public class ServerModEventHandler {
     private static final Logger LOGGER = LogManager.getLogger();
+
 }

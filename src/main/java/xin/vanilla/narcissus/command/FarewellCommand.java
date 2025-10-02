@@ -39,7 +39,6 @@ import xin.vanilla.narcissus.config.CommonConfig;
 import xin.vanilla.narcissus.config.CustomConfig;
 import xin.vanilla.narcissus.config.ServerConfig;
 import xin.vanilla.narcissus.data.*;
-import xin.vanilla.narcissus.data.player.PlayerDataAttachment;
 import xin.vanilla.narcissus.data.player.PlayerTeleportData;
 import xin.vanilla.narcissus.data.world.WorldStageData;
 import xin.vanilla.narcissus.enums.*;
@@ -212,7 +211,7 @@ public class FarewellCommand {
         };
         SuggestionProvider<CommandSourceStack> homeSuggestions = (context, builder) -> {
             ServerPlayer player = context.getSource().getPlayerOrException();
-            PlayerTeleportData data = PlayerDataAttachment.getData(player);
+            PlayerTeleportData data = PlayerTeleportData.getData(player);
             for (KeyValue<String, String> key : data.getHomeCoordinate().keySet()) {
                 builder.suggest(StringUtils.formatString(key.getValue()));
             }
@@ -311,7 +310,7 @@ public class FarewellCommand {
             } else {
                 language = ServerConfig.DEFAULT_LANGUAGE.get();
             }
-            PlayerTeleportData data = PlayerDataAttachment.getData(target);
+            PlayerTeleportData data = PlayerTeleportData.getData(target);
             switch (type) {
                 case "set":
                     data.setTeleportCard(num);
@@ -353,7 +352,7 @@ public class FarewellCommand {
 
             // 若为home
             if (name.contains("->")) {
-                PlayerTeleportData data = PlayerDataAttachment.getData(player);
+                PlayerTeleportData data = PlayerTeleportData.getData(player);
                 KeyValue<String, Coordinate> keyValue = data.getHomeCoordinate().entrySet().stream()
                         .map(entry -> new KeyValue<>(entry.getKey().getValue() + "->" + entry.getKey().getKey(), entry.getValue()))
                         .filter(kv -> name.equals(kv.getKey()))
@@ -604,7 +603,7 @@ public class FarewellCommand {
             request.setSafe("safe".equalsIgnoreCase(getStringEmpty(context, "safe")));
             if (checkTeleportPost(request)) return 0;
 
-            PlayerAccess targetAccess = PlayerDataAttachment.getData(target).getAccess();
+            PlayerAccess targetAccess = PlayerTeleportData.getData(target).getAccess();
             String playerUUIDString = NarcissusUtils.getPlayerUUIDString(player);
             boolean ignore = targetAccess.getBlackList().contains(playerUUIDString)
                     || (!targetAccess.getWhiteList().isEmpty() && !targetAccess.getWhiteList().contains(playerUUIDString));
@@ -724,7 +723,7 @@ public class FarewellCommand {
             request.setSafe("safe".equalsIgnoreCase(getStringEmpty(context, "safe")));
             if (checkTeleportPost(request)) return 0;
 
-            PlayerAccess targetAccess = PlayerDataAttachment.getData(target).getAccess();
+            PlayerAccess targetAccess = PlayerTeleportData.getData(target).getAccess();
             String playerUUIDString = NarcissusUtils.getPlayerUUIDString(player);
             boolean ignore = targetAccess.getBlackList().contains(playerUUIDString)
                     || (!targetAccess.getWhiteList().isEmpty() && !targetAccess.getWhiteList().contains(playerUUIDString));
@@ -1017,7 +1016,7 @@ public class FarewellCommand {
             // 传送功能前置校验
             if (checkTeleportPre(context.getSource(), EnumCommandType.SET_HOME)) return 0;
             // 判断设置数量是否超过限制
-            PlayerTeleportData data = PlayerDataAttachment.getData(player);
+            PlayerTeleportData data = PlayerTeleportData.getData(player);
             if (data.getHomeCoordinate().size() >= ServerConfig.TELEPORT_HOME_LIMIT.get()) {
                 NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EnumI18nType.MESSAGE, "home_limit"), ServerConfig.TELEPORT_HOME_LIMIT.get());
                 return 0;
@@ -1051,7 +1050,7 @@ public class FarewellCommand {
             ServerPlayer player = context.getSource().getPlayerOrException();
             // 传送功能前置校验
             if (checkTeleportPre(context.getSource(), EnumCommandType.DEL_HOME)) return 0;
-            PlayerTeleportData data = PlayerDataAttachment.getData(player);
+            PlayerTeleportData data = PlayerTeleportData.getData(player);
             String name = StringArgumentType.getString(context, "name");
             String dimension;
             try {
@@ -1061,6 +1060,7 @@ public class FarewellCommand {
                 dimension = NarcissusUtils.getHomeDimensionByName(player, name);
             }
             Coordinate remove = data.getHomeCoordinate().remove(new KeyValue<>(dimension, name));
+            data.setDirty();
             if (remove == null) {
                 NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EnumI18nType.MESSAGE, "home_not_found_with_name_in_dimension"), dimension, name);
                 return 0;
@@ -1068,6 +1068,7 @@ public class FarewellCommand {
             if (data.getDefaultHome().containsKey(dimension)) {
                 if (data.getDefaultHome().get(dimension).equals(name)) {
                     data.getDefaultHome().remove(dimension);
+                    data.setDirty();
                     NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EnumI18nType.MESSAGE, "home_default_remove"), name);
                 }
             }
@@ -1080,7 +1081,7 @@ public class FarewellCommand {
             // 传送功能前置校验
             if (checkTeleportPre(context.getSource(), EnumCommandType.GET_HOME)) return 0;
             Component component;
-            PlayerTeleportData data = PlayerDataAttachment.getData(player);
+            PlayerTeleportData data = PlayerTeleportData.getData(player);
             String language = NarcissusUtils.getPlayerLanguage(player);
             if (data.getHomeCoordinate().isEmpty()) {
                 component = Component.translatable(language, EnumI18nType.MESSAGE, "home_is_empty");
@@ -1393,7 +1394,7 @@ public class FarewellCommand {
                 throw CommandSyntaxException.BUILT_IN_EXCEPTIONS.dispatcherUnknownArgument().create();
             }
             ServerPlayer player = context.getSource().getPlayerOrException();
-            PlayerTeleportData data = PlayerDataAttachment.getData(player);
+            PlayerTeleportData data = PlayerTeleportData.getData(player);
             PlayerAccess access = data.getAccess();
             String[] uuids = players.stream().map(NarcissusUtils::getPlayerUUIDString).toArray(String[]::new);
             Component msg;
@@ -1419,6 +1420,7 @@ public class FarewellCommand {
                     break;
                     default:
                 }
+                data.setDirty();
             } else {
                 msg = Component.translatable(EnumI18nType.MESSAGE, "list_add_fail", getBlacklistOrWhitelistHelp(player, false), getBlacklistOrWhitelistHelp(player, true));
             }
@@ -1435,7 +1437,7 @@ public class FarewellCommand {
                 throw CommandSyntaxException.BUILT_IN_EXCEPTIONS.dispatcherUnknownArgument().create();
             }
             ServerPlayer player = context.getSource().getPlayerOrException();
-            PlayerTeleportData data = PlayerDataAttachment.getData(player);
+            PlayerTeleportData data = PlayerTeleportData.getData(player);
             PlayerAccess access = data.getAccess();
             String[] uuids = players.stream().map(NarcissusUtils::getPlayerUUIDString).toArray(String[]::new);
             switch (mode) {
@@ -1456,6 +1458,7 @@ public class FarewellCommand {
                     access.removeWhiteList(uuids);
                 }
             }
+            data.setDirty();
             Component msg = Component.translatable(EnumI18nType.MESSAGE, "remove_success")
                     .append(getWhiteListMessage(player, access));
             NarcissusUtils.sendMessage(player, msg);
@@ -1519,7 +1522,7 @@ public class FarewellCommand {
                                     CommandSourceStack source = context.getSource();
                                     ServerPlayer player = source.getPlayerOrException();
                                     // 获取玩家私人传送点
-                                    PlayerTeleportData data = PlayerDataAttachment.getData(player);
+                                    PlayerTeleportData data = PlayerTeleportData.getData(player);
                                     for (KeyValue<String, String> home : data.getHomeCoordinate().keySet()) {
                                         // -> 用于标识home，方便shareCommand中识别
                                         String homeString = home.getValue() + "->" + home.getKey();
@@ -1784,7 +1787,7 @@ public class FarewellCommand {
                                             String name = getStringDefault(context, "name", null);
                                             if ("true".equals(name) || "false".equals(name)) {
                                                 ServerPlayer player = context.getSource().getPlayerOrException();
-                                                PlayerTeleportData data = PlayerDataAttachment.getData(player);
+                                                PlayerTeleportData data = PlayerTeleportData.getData(player);
                                                 for (KeyValue<String, String> keyValue : data.getHomeCoordinate().keySet()) {
                                                     builder.suggest(keyValue.getKey());
                                                 }
@@ -1803,7 +1806,7 @@ public class FarewellCommand {
                                         .then(Commands.argument("dimension", StringArgumentType.greedyString())
                                                 .suggests((context, builder) -> {
                                                     ServerPlayer player = context.getSource().getPlayerOrException();
-                                                    PlayerTeleportData data = PlayerDataAttachment.getData(player);
+                                                    PlayerTeleportData data = PlayerTeleportData.getData(player);
                                                     String name = StringArgumentType.getString(context, "name");
                                                     for (KeyValue<String, String> keyValue : data.getHomeCoordinate().keySet()) {
                                                         if (keyValue.getValue().equals(name))
@@ -1846,7 +1849,7 @@ public class FarewellCommand {
                                 .then(Commands.argument("dimension", StringArgumentType.greedyString())
                                         .suggests((context, builder) -> {
                                             ServerPlayer player = context.getSource().getPlayerOrException();
-                                            PlayerTeleportData data = PlayerDataAttachment.getData(player);
+                                            PlayerTeleportData data = PlayerTeleportData.getData(player);
                                             String name = StringArgumentType.getString(context, "name");
                                             for (KeyValue<String, String> keyValue : data.getHomeCoordinate().keySet()) {
                                                 if (keyValue.getValue().equals(name))
@@ -1947,7 +1950,7 @@ public class FarewellCommand {
                                         .then(Commands.argument("dimension", StringArgumentType.greedyString())
                                                 .suggests((context, builder) -> {
                                                     ServerPlayer player = context.getSource().getPlayerOrException();
-                                                    PlayerTeleportData data = PlayerDataAttachment.getData(player);
+                                                    PlayerTeleportData data = PlayerTeleportData.getData(player);
                                                     EnumTeleportType type = EnumTeleportType.nullableValueOf(getStringEmpty(context, "type"));
                                                     data.getTeleportRecords().stream()
                                                             .filter(record -> type == null || record.getTeleportType().equals(type))
@@ -2009,7 +2012,7 @@ public class FarewellCommand {
                         .then(Commands.literal("get")
                                 .executes(context -> {
                                     ServerPlayer player = context.getSource().getPlayerOrException();
-                                    PlayerTeleportData data = PlayerDataAttachment.getData(player);
+                                    PlayerTeleportData data = PlayerTeleportData.getData(player);
                                     PlayerAccess access = data.getAccess();
                                     Component msg;
                                     if (CollectionUtils.isNullOrEmpty(access.getBlackList())) {
@@ -2034,11 +2037,12 @@ public class FarewellCommand {
                                                 return 0;
                                             }
                                             ServerPlayer player = context.getSource().getPlayerOrException();
-                                            PlayerTeleportData data = PlayerDataAttachment.getData(player);
+                                            PlayerTeleportData data = PlayerTeleportData.getData(player);
                                             PlayerAccess access = data.getAccess();
                                             String[] uuids = players.stream().map(NarcissusUtils::getPlayerUUIDString).toArray(String[]::new);
                                             Component msg;
                                             if (access.addBlackList(uuids)) {
+                                                data.setDirty();
                                                 msg = Component.translatable(EnumI18nType.MESSAGE, "list_add_success"
                                                         , getBlacklistOrWhitelistHelp(player, true)
                                                         , players.stream().map(NarcissusUtils::getPlayerName)
@@ -2060,10 +2064,11 @@ public class FarewellCommand {
                                                 return 0;
                                             }
                                             ServerPlayer player = context.getSource().getPlayerOrException();
-                                            PlayerTeleportData data = PlayerDataAttachment.getData(player);
+                                            PlayerTeleportData data = PlayerTeleportData.getData(player);
                                             PlayerAccess access = data.getAccess();
                                             String[] uuids = players.stream().map(NarcissusUtils::getPlayerUUIDString).toArray(String[]::new);
                                             access.removeBlackList(uuids);
+                                            data.setDirty();
                                             Component msg = Component.translatable(EnumI18nType.MESSAGE, "remove_success");
                                             if (CollectionUtils.isNullOrEmpty(access.getBlackList())) {
                                                 msg.append(Component.translatable(EnumI18nType.MESSAGE, "list_is_empty", getBlacklistOrWhitelistHelp(player, true)));
@@ -2085,7 +2090,7 @@ public class FarewellCommand {
                         .then(Commands.literal("get")
                                 .executes(context -> {
                                     ServerPlayer player = context.getSource().getPlayerOrException();
-                                    PlayerTeleportData data = PlayerDataAttachment.getData(player);
+                                    PlayerTeleportData data = PlayerTeleportData.getData(player);
                                     PlayerAccess access = data.getAccess();
                                     Component msg = getWhiteListMessage(player, access);
                                     NarcissusUtils.sendMessage(player, msg);
@@ -2684,7 +2689,7 @@ public class FarewellCommand {
         CommandSourceStack source = context.getSource();
         Entity entity = source.getEntity();
         if (entity instanceof ServerPlayer player) {
-            PlayerTeleportData data = PlayerDataAttachment.getData(player);
+            PlayerTeleportData data = PlayerTeleportData.getData(player);
             if (!data.isNotified()) {
                 Component button = Component.literal("/" + NarcissusUtils.getCommandPrefix())
                         .setColor(EnumMCColor.AQUA.getColor())
