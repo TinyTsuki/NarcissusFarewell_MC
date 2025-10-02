@@ -58,12 +58,6 @@ public class NarcissusFarewell {
     private static final Map<String, List<? extends SplitPacket>> packetCache = new ConcurrentHashMap<>();
 
     /**
-     * 玩家能力同步状态
-     */
-    @Getter
-    private static final Map<String, Boolean> playerCapabilityStatus = new ConcurrentHashMap<>();
-
-    /**
      * 最近一次传送请求
      */
     @Getter
