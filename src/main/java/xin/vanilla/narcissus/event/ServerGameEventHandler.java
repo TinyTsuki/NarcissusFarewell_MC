@@ -6,7 +6,6 @@ import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.entity.EntityJoinLevelEvent;
 import net.neoforged.neoforge.event.entity.EntityTeleportEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
-import net.neoforged.neoforge.event.tick.PlayerTickEvent;
 import net.neoforged.neoforge.event.tick.ServerTickEvent;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -25,14 +24,6 @@ public class ServerGameEventHandler {
     @SubscribeEvent
     public static void onServerTick(ServerTickEvent.Post event) {
         EventHandlerProxy.onServerTick(event);
-    }
-
-    /**
-     * 玩家Tick事件
-     */
-    @SubscribeEvent
-    public static void onPlayerTick(PlayerTickEvent.Post event) {
-        EventHandlerProxy.onPlayerTick(event);
     }
 
     /**
@@ -59,11 +50,4 @@ public class ServerGameEventHandler {
         EventHandlerProxy.onEntityTeleport(event);
     }
 
-    /**
-     * 玩家登录事件
-     */
-    @SubscribeEvent
-    public static void onPlayerLoggedOut(PlayerEvent.PlayerLoggedOutEvent event) {
-        EventHandlerProxy.onPlayerLoggedOut(event);
-    }
 }
