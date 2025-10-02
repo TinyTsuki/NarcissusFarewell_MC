@@ -3,8 +3,6 @@ package xin.vanilla.narcissus.event;
 import net.minecraft.client.KeyMapping;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.ClientRegistry;
-import net.minecraftforge.common.capabilities.RegisterCapabilitiesEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -39,8 +37,4 @@ public class ClientModEventHandler {
         ClientRegistry.registerKeyBinding(TP_REQ_NO);
     }
 
-    @SubscribeEvent
-    public static void registerCaps(RegisterCapabilitiesEvent event) {
-        EventHandlerProxy.registerCaps(event);
-    }
 }

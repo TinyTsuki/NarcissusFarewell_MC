@@ -2,6 +2,7 @@ package xin.vanilla.narcissus.util;
 
 
 import java.util.Collection;
+import java.util.Map;
 import java.util.Random;
 import java.util.concurrent.ThreadLocalRandom;
 
@@ -26,6 +27,14 @@ public class CollectionUtils {
 
     public static boolean isNullOrEmpty(int[] array) {
         return array == null || array.length == 0;
+    }
+
+    public static boolean isNullOrEmpty(Map<?, ?> map) {
+        return map == null || map.isEmpty();
+    }
+
+    public static boolean isNotNullOrEmpty(Map<?, ?> map) {
+        return !isNullOrEmpty(map);
     }
 
     /**

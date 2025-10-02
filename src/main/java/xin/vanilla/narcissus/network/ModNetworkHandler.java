@@ -21,7 +21,6 @@ public class ModNetworkHandler {
 
     public static void registerPackets() {
         INSTANCE.registerMessage(nextID(), PlayerDataSyncPacket.class, PlayerDataSyncPacket::toBytes, PlayerDataSyncPacket::new, PlayerDataSyncPacket::handle);
-        INSTANCE.registerMessage(nextID(), PlayerDataReceivedNotice.class, PlayerDataReceivedNotice::toBytes, PlayerDataReceivedNotice::new, PlayerDataReceivedNotice::handle);
         INSTANCE.registerMessage(nextID(), ClientModLoadedNotice.class, ClientModLoadedNotice::toBytes, ClientModLoadedNotice::new, ClientModLoadedNotice::handle);
         INSTANCE.registerMessage(nextID(), TpHomeNotice.class, TpHomeNotice::toBytes, TpHomeNotice::new, TpHomeNotice::handle);
         INSTANCE.registerMessage(nextID(), TpBackNotice.class, TpBackNotice::toBytes, TpBackNotice::new, TpBackNotice::handle);
