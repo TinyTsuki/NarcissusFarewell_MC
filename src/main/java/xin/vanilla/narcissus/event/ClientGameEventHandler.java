@@ -1,10 +1,8 @@
 package xin.vanilla.narcissus.event;
 
 import net.minecraft.client.Minecraft;
-import net.minecraft.entity.Entity;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.event.ClientPlayerNetworkEvent;
-import net.minecraftforge.event.AttachCapabilitiesEvent;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.entity.EntityJoinWorldEvent;
 import net.minecraftforge.event.entity.player.PlayerEvent;
@@ -77,27 +75,11 @@ public class ClientGameEventHandler {
     }
 
     /**
-     * 玩家Tick事件
-     */
-    @SubscribeEvent
-    public static void onPlayerTick(TickEvent.PlayerTickEvent event) {
-        EventHandlerProxy.onPlayerTick(event);
-    }
-
-    /**
      * 服务端Tick事件
      */
     @SubscribeEvent
     public static void onServerTick(TickEvent.ServerTickEvent event) {
         EventHandlerProxy.onServerTick(event);
-    }
-
-    /**
-     * 能力附加事件
-     */
-    @SubscribeEvent
-    public static void onAttachCapabilityEvent(AttachCapabilitiesEvent<Entity> event) {
-        EventHandlerProxy.onAttachCapability(event);
     }
 
     /**
@@ -114,14 +96,6 @@ public class ClientGameEventHandler {
     @SubscribeEvent
     public static void onEntityJoinWorld(EntityJoinWorldEvent event) {
         EventHandlerProxy.onEntityJoinWorld(event);
-    }
-
-    /**
-     * 玩家登录事件
-     */
-    @SubscribeEvent
-    public static void onPlayerLoggedOut(PlayerEvent.PlayerLoggedOutEvent event) {
-        EventHandlerProxy.onPlayerLoggedOut(event);
     }
 
 }
