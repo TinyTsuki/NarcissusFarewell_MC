@@ -563,7 +563,7 @@ public class FarewellCommand {
                 coordinate.setSafe(safe);
                 // 验证传送代价
                 if (checkTeleportPost(player, coordinate, EnumTeleportType.TP_STRUCTURE, true)) return;
-                player.getServer().submit(() -> NarcissusUtils.teleportTo(player, coordinate, EnumTeleportType.TP_STRUCTURE));
+                player.level().getServer().submit(() -> NarcissusUtils.teleportTo(player, coordinate, EnumTeleportType.TP_STRUCTURE));
             }).start();
             return 1;
         };
@@ -843,14 +843,14 @@ public class FarewellCommand {
                 target = player;
             }
             Coordinate coordinate = new Coordinate(target);
-            BlockPos respawnPosition = target.getRespawnConfig().pos();
-            coordinate.setDimension(target.getRespawnConfig().dimension());
+            BlockPos respawnPosition = target.getRespawnConfig().respawnData().pos();
+            coordinate.setDimension(target.getRespawnConfig().respawnData().dimension());
             if (respawnPosition == null) {
-                respawnPosition = target.level().getSharedSpawnPos();
+                respawnPosition = target.level().getRespawnData().pos();
                 coordinate.setDimension(target.level().dimension());
             }
             if (respawnPosition == null) {
-                respawnPosition = target.getServer().getLevel(Level.OVERWORLD).getSharedSpawnPos();
+                respawnPosition = target.level().getServer().getLevel(Level.OVERWORLD).getRespawnData().pos();
                 coordinate.setDimension(Level.OVERWORLD);
             }
             coordinate.fromBlockPos(respawnPosition);
@@ -866,10 +866,10 @@ public class FarewellCommand {
             // 传送功能前置校验
             if (checkTeleportPre(context.getSource(), EnumCommandType.TP_WORLD_SPAWN)) return 0;
             Coordinate coordinate = new Coordinate(player);
-            BlockPos respawnPosition = player.level().getSharedSpawnPos();
+            BlockPos respawnPosition = player.level().getRespawnData().pos();
             coordinate.setDimension(player.level().dimension());
             if (respawnPosition == null) {
-                respawnPosition = player.getServer().getLevel(Level.OVERWORLD).getSharedSpawnPos();
+                respawnPosition = player.level().getServer().getLevel(Level.OVERWORLD).getRespawnData().pos();
                 coordinate.setDimension(Level.OVERWORLD);
             }
             coordinate.fromBlockPos(respawnPosition);
@@ -969,7 +969,7 @@ public class FarewellCommand {
                 coordinate.setSafeMode(EnumSafeMode.Y_C_OFFSET_3);
                 // 验证传送代价
                 if (checkTeleportPost(player, coordinate, EnumTeleportType.TP_VIEW, true)) return;
-                player.getServer().submit(() -> NarcissusUtils.teleportTo(player, coordinate, EnumTeleportType.TP_VIEW));
+                player.level().getServer().submit(() -> NarcissusUtils.teleportTo(player, coordinate, EnumTeleportType.TP_VIEW));
             }).start();
             return 1;
         };

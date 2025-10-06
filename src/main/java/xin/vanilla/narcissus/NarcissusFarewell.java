@@ -94,7 +94,7 @@ public class NarcissusFarewell {
         // 注册公共设置事件
         modEventBus.addListener(this::onCommonSetup);
 
-        if (FMLEnvironment.dist == Dist.CLIENT) {
+        if (FMLEnvironment.getDist() == Dist.CLIENT) {
             modEventBus.addListener(ClientModEventHandler::registerKeyBindings);
         }
     }
