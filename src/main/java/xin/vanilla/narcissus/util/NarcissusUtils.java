@@ -345,7 +345,7 @@ public class NarcissusUtils {
     public static boolean executeCommand(@NonNull ServerPlayer player, @NonNull String command) {
         AtomicBoolean result = new AtomicBoolean(false);
         try {
-            player.getServer().getCommands().performPrefixedCommand(player.createCommandSourceStack()
+            player.level().getServer().getCommands().performPrefixedCommand(player.createCommandSourceStack()
                             .withCallback((success, r) -> result.set(success && r > 0))
                     , command
             );
@@ -881,7 +881,7 @@ public class NarcissusUtils {
     public static void teleportTo(@NonNull ServerPlayer player, @NonNull Coordinate after, EnumTeleportType type) {
         Coordinate before = new Coordinate(player);
         Level world = player.level();
-        MinecraftServer server = player.getServer();
+        MinecraftServer server = player.level().getServer();
         // 别听Idea的
         if (world != null && server != null) {
             ServerLevel level = server.getLevel(after.getDimension());
@@ -934,7 +934,7 @@ public class NarcissusUtils {
                             runnable = null;
                         }
                         Coordinate finalAfter1 = finalAfter;
-                        player.getServer().submit(() -> {
+                        player.level().getServer().submit(() -> {
                             if (runnable != null) runnable.run();
                             teleportPlayer(player, finalAfter1, type, before, level);
                         });
@@ -959,7 +959,7 @@ public class NarcissusUtils {
         doTeleport(player, after, level);
         // 使玩家重新坐上载体
         if (vehicle != null) {
-            player.startRiding(vehicle, true);
+            player.startRiding(vehicle, true, false);
             // 同步客户端状态
             broadcastPacket(new ClientboundSetPassengersPacket(vehicle));
         }
@@ -1011,7 +1011,7 @@ public class NarcissusUtils {
             } else if (entity.getVehicle() == null) {
                 int oldId = entity.getId();
                 entity = doTeleport(entity, coordinate, level);
-                entity.startRiding(passenger, true);
+                entity.startRiding(passenger, true, false);
                 // 更新玩家乘坐的实体对象
                 if (playerVehicle != null && oldId == playerVehicle.getId()) {
                     playerVehicle = entity;
@@ -1203,7 +1203,7 @@ public class NarcissusUtils {
      * @param message 消息
      */
     public static void broadcastMessage(ServerPlayer source, Component message) {
-        for (ServerPlayer player : source.getServer().getPlayerList().getPlayers()) {
+        for (ServerPlayer player : source.level().getServer().getPlayerList().getPlayers()) {
             sendMessage(player, Component.literal("[%s] %s")
                     .appendArg(getPlayerName(player))
                     .appendArg(message)
@@ -1932,7 +1932,7 @@ public class NarcissusUtils {
     @SuppressWarnings("unchecked")
     public static boolean killPlayer(ServerPlayer player) {
         try {
-            if (player.isSleeping() && !player.level().isClientSide) {
+            if (player.isSleeping() && !player.level().isClientSide()) {
                 player.stopSleeping();
             }
             player.getEntityData().set((EntityDataAccessor<? super Float>) FieldUtils.getPrivateFieldValue(LivingEntity.class, null, FieldUtils.getEntityHealthFieldName()), 0f);

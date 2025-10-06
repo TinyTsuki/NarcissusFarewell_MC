@@ -4,6 +4,7 @@ import net.minecraft.client.KeyMapping;
 import net.minecraftforge.client.event.RegisterKeyMappingsEvent;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import xin.vanilla.narcissus.NarcissusFarewell;
 
 /**
  * 客户端 Mod事件处理器
@@ -12,7 +13,7 @@ import org.apache.logging.log4j.Logger;
 public class ClientModEventHandler {
     private static final Logger LOGGER = LogManager.getLogger();
 
-    private static final String CATEGORIES = "key.narcissus_farewell.categories";
+    private static final KeyMapping.Category CATEGORIES = new KeyMapping.Category(NarcissusFarewell.createResource("categories"));
 
     // 定义按键绑定
     public static KeyMapping TP_HOME_KEY = new KeyMapping("key.narcissus_farewell.tp_home",

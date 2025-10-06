@@ -91,7 +91,7 @@ public class NarcissusFarewell {
         FMLCommonSetupEvent.getBus(context.getModBusGroup()).addListener(this::onCommonSetup);
 
         if (FMLEnvironment.dist == Dist.CLIENT) {
-            RegisterKeyMappingsEvent.getBus(context.getModBusGroup()).addListener(ClientModEventHandler::registerKeyBindings);
+            RegisterKeyMappingsEvent.BUS.addListener(ClientModEventHandler::registerKeyBindings);
         }
     }
 
