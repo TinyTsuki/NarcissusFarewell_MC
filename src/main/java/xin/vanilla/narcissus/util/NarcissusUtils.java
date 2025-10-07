@@ -29,6 +29,7 @@ import net.minecraft.network.IPacket;
 import net.minecraft.network.datasync.DataParameter;
 import net.minecraft.network.play.server.SChatPacket;
 import net.minecraft.network.play.server.SCombatPacket;
+import net.minecraft.network.play.server.SPlayerAbilitiesPacket;
 import net.minecraft.network.play.server.SSetPassengersPacket;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.stats.Stats;
@@ -179,6 +180,9 @@ public class NarcissusUtils {
             case TP_BACK:
             case TP_BACK_CONCISE:
                 return CommonConfig.SWITCH_TP_BACK.get();
+            case FLY:
+            case FLY_CONCISE:
+                return CommonConfig.SWITCH_FLY.get();
             default:
                 return true;
         }
@@ -364,6 +368,10 @@ public class NarcissusUtils {
                 return prefix + " " + CommonConfig.COMMAND_TP_BACK.get();
             case TP_BACK_CONCISE:
                 return isConciseEnabled(type) ? CommonConfig.COMMAND_TP_BACK.get() : "";
+            case FLY:
+                return prefix + " " + CommonConfig.COMMAND_FLY.get();
+            case FLY_CONCISE:
+                return isConciseEnabled(type) ? CommonConfig.COMMAND_FLY.get() : "";
             case VIRTUAL_OP:
                 return prefix + " " + CommonConfig.COMMAND_VIRTUAL_OP.get();
             case VIRTUAL_OP_CONCISE:
@@ -456,6 +464,9 @@ public class NarcissusUtils {
             case TP_BACK:
             case TP_BACK_CONCISE:
                 return ServerConfig.PERMISSION_TP_BACK.get();
+            case FLY:
+            case FLY_CONCISE:
+                return ServerConfig.PERMISSION_FLY.get();
             case VIRTUAL_OP:
             case VIRTUAL_OP_CONCISE:
                 return ServerConfig.PERMISSION_VIRTUAL_OP.get();
@@ -608,6 +619,9 @@ public class NarcissusUtils {
             case TP_BACK:
             case TP_BACK_CONCISE:
                 return CommonConfig.CONCISE_TP_BACK.get();
+            case FLY:
+            case FLY_CONCISE:
+                return CommonConfig.CONCISE_FLY.get();
             case VIRTUAL_OP:
             case VIRTUAL_OP_CONCISE:
                 return CommonConfig.CONCISE_VIRTUAL_OP.get();
@@ -2331,6 +2345,26 @@ public class NarcissusUtils {
 
     public static String getItemName(Item item) {
         return getItemName(new ItemStack(item));
+    }
+
+    public static void setPlayerFlightMode(ServerPlayerEntity player) {
+        setPlayerFlightMode(player, null);
+    }
+
+    public static void setPlayerFlightMode(ServerPlayerEntity player, Boolean enable) {
+        setPlayerFlightMode(player, enable, null);
+    }
+
+    public static void setPlayerFlightMode(ServerPlayerEntity player, Boolean enable, Float speed) {
+        CompoundNBT root = new CompoundNBT();
+        player.abilities.addSaveData(root);
+        CompoundNBT abilities = root.getCompound("abilities");
+        if (enable == null) enable = !abilities.getBoolean("mayfly");
+        abilities.putBoolean("mayfly", enable);
+        if (!enable) abilities.putBoolean("flying", false);
+        if (speed != null) abilities.putFloat("flySpeed", speed);
+        player.abilities.loadSaveData(root);
+        player.connection.send(new SPlayerAbilitiesPacket(player.abilities));
     }
 
     // endregion 杂项
