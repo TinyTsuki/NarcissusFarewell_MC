@@ -220,6 +220,10 @@ public final class PlayerTeleportData implements IPlayerData<PlayerTeleportData>
         }
     }
 
+    public static void clear() {
+        CACHE.clear();
+    }
+
     // endregion override
 
 

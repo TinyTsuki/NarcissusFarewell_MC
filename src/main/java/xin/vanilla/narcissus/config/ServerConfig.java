@@ -192,6 +192,8 @@ public class ServerConfig {
 
     public static final ModConfigSpec.IntValue PERMISSION_TP_BACK;
 
+    public static final ModConfigSpec.IntValue PERMISSION_FLY;
+
     public static final ModConfigSpec.IntValue PERMISSION_VIRTUAL_OP;
 
     public static final ModConfigSpec.IntValue PERMISSION_SET_CARD;
@@ -612,78 +614,83 @@ public class ServerConfig {
                             "是否在被敌对生物锁定（仇恨）时限制玩家进行传送操作。")
                     .define("tpWithEnemy", false);
 
-            SERVER_BUILDER.comment("Safe Teleport", "安全传送").push("Safe");
-            // 不安全的方块
-            UNSAFE_BLOCKS = SERVER_BUILDER
-                    .comment("The list of unsafe blocks, players will not be teleported to these blocks.",
-                            "不安全的方块列表，玩家不会传送到这些方块上。")
-                    .defineList("unsafeBlocks", Stream.of(
-                                            Blocks.LAVA,
-                                            Blocks.FIRE,
-                                            Blocks.CAMPFIRE,
-                                            Blocks.SOUL_FIRE,
-                                            Blocks.SOUL_CAMPFIRE,
-                                            Blocks.CACTUS,
-                                            Blocks.MAGMA_BLOCK,
-                                            Blocks.SWEET_BERRY_BUSH
-                                    ).map(block -> {
-                                        Optional<ResourceKey<Block>> key = block.defaultBlockState().getBlockHolder().unwrapKey();
-                                        return key.map(blockResourceKey -> blockResourceKey.location().toString()).orElse("");
-                                    })
-                                    .collect(Collectors.toList())
-                            , s -> s instanceof String
-                    );
 
-            // 窒息的方块
-            SUFFOCATING_BLOCKS = SERVER_BUILDER
-                    .comment("The list of suffocating blocks, players will not be teleported to these blocks.",
-                            "窒息的方块列表，玩家头不会处于这些方块里面。")
-                    .defineList("suffocatingBlocks", Stream.of(
-                                            Blocks.LAVA,
-                                            Blocks.WATER
-                                    ).map(block -> {
-                                        Optional<ResourceKey<Block>> key = block.defaultBlockState().getBlockHolder().unwrapKey();
-                                        return key.map(blockResourceKey -> blockResourceKey.location().toString()).orElse("");
-                                    })
-                                    .collect(Collectors.toList())
-                            , s -> s instanceof String
-                    );
+            {
+                SERVER_BUILDER.comment("Safe Teleport", "安全传送").push("Safe");
 
-            // 安全传送放置方块
-            SETBLOCK_WHEN_SAFE_NOT_FOUND = SERVER_BUILDER
-                    .comment("When performing a safe teleport, whether to place a block underfoot if a safe coordinate is not found.",
-                            "当进行安全传送时，如果未找到安全坐标，是否在脚下放置方块。")
-                    .define("setBlockWhenSafeNotFound", false);
+                // 不安全的方块
+                UNSAFE_BLOCKS = SERVER_BUILDER
+                        .comment("The list of unsafe blocks, players will not be teleported to these blocks.",
+                                "不安全的方块列表，玩家不会传送到这些方块上。")
+                        .defineList("unsafeBlocks", Stream.of(
+                                                Blocks.LAVA,
+                                                Blocks.FIRE,
+                                                Blocks.CAMPFIRE,
+                                                Blocks.SOUL_FIRE,
+                                                Blocks.SOUL_CAMPFIRE,
+                                                Blocks.CACTUS,
+                                                Blocks.MAGMA_BLOCK,
+                                                Blocks.SWEET_BERRY_BUSH
+                                        ).map(block -> {
+                                            Optional<ResourceKey<Block>> key = block.defaultBlockState().getBlockHolder().unwrapKey();
+                                            return key.map(blockResourceKey -> blockResourceKey.location().toString()).orElse("");
+                                        })
+                                        .collect(Collectors.toList())
+                                , s -> s instanceof String
+                        );
 
-            // 从背包获取安全方块
-            GETBLOCK_FROM_INVENTORY = SERVER_BUILDER
-                    .comment("When performing a safe teleport, whether to only use placeable blocks from the player's inventory if a safe coordinate is not found.",
-                            "当进行安全传送时，如果未找到安全坐标，是否仅从背包中获取可放置的方块。")
-                    .define("getBlockFromInventory", true);
+                // 窒息的方块
+                SUFFOCATING_BLOCKS = SERVER_BUILDER
+                        .comment("The list of suffocating blocks, players will not be teleported to these blocks.",
+                                "窒息的方块列表，玩家头不会处于这些方块里面。")
+                        .defineList("suffocatingBlocks", Stream.of(
+                                                Blocks.LAVA,
+                                                Blocks.WATER
+                                        ).map(block -> {
+                                            Optional<ResourceKey<Block>> key = block.defaultBlockState().getBlockHolder().unwrapKey();
+                                            return key.map(blockResourceKey -> blockResourceKey.location().toString()).orElse("");
+                                        })
+                                        .collect(Collectors.toList())
+                                , s -> s instanceof String
+                        );
 
-            // 安全方块类型
-            SAFE_BLOCKS = SERVER_BUILDER
-                    .comment("When performing a safe teleport, the list of blocks to place if a safe coordinate is not found. If 'getBlockFromInventory' is set to false, the first block in the list will always be used.",
-                            "当进行安全传送时，如果未找到安全坐标，放置方块的列表。若'getBlockFromInventory'为false，则始终使用列表中的第一个方块。")
-                    .defineList("safeBlocks", Stream.of(
-                                            Blocks.GRASS_BLOCK,
-                                            Blocks.DIRT_PATH,
-                                            Blocks.DIRT,
-                                            Blocks.COBBLESTONE
-                                    ).map(block -> {
-                                        Optional<ResourceKey<Block>> key = block.defaultBlockState().getBlockHolder().unwrapKey();
-                                        return key.map(blockResourceKey -> blockResourceKey.location().toString()).orElse("");
-                                    })
-                                    .collect(Collectors.toList())
-                            , s -> s instanceof String
-                    );
+                // 安全传送放置方块
+                SETBLOCK_WHEN_SAFE_NOT_FOUND = SERVER_BUILDER
+                        .comment("When performing a safe teleport, whether to place a block underfoot if a safe coordinate is not found.",
+                                "当进行安全传送时，如果未找到安全坐标，是否在脚下放置方块。")
+                        .define("setBlockWhenSafeNotFound", false);
 
-            // 寻找安全坐标的区块范围
-            SAFE_CHUNK_RANGE = SERVER_BUILDER
-                    .comment("The chunk range for finding a safe coordinate, in chunks.",
-                            "当进行安全传送时，寻找安全坐标的半径，单位为区块。")
-                    .defineInRange("safeChunkRange", 1, 1, 16);
-            SERVER_BUILDER.pop();
+                // 从背包获取安全方块
+                GETBLOCK_FROM_INVENTORY = SERVER_BUILDER
+                        .comment("When performing a safe teleport, whether to only use placeable blocks from the player's inventory if a safe coordinate is not found.",
+                                "当进行安全传送时，如果未找到安全坐标，是否仅从背包中获取可放置的方块。")
+                        .define("getBlockFromInventory", true);
+
+                // 安全方块类型
+                SAFE_BLOCKS = SERVER_BUILDER
+                        .comment("When performing a safe teleport, the list of blocks to place if a safe coordinate is not found. If 'getBlockFromInventory' is set to false, the first block in the list will always be used.",
+                                "当进行安全传送时，如果未找到安全坐标，放置方块的列表。若'getBlockFromInventory'为false，则始终使用列表中的第一个方块。")
+                        .defineList("safeBlocks", Stream.of(
+                                                Blocks.GRASS_BLOCK,
+                                                Blocks.DIRT_PATH,
+                                                Blocks.DIRT,
+                                                Blocks.COBBLESTONE
+                                        ).map(block -> {
+                                            Optional<ResourceKey<Block>> key = block.defaultBlockState().getBlockHolder().unwrapKey();
+                                            return key.map(blockResourceKey -> blockResourceKey.location().toString()).orElse("");
+                                        })
+                                        .collect(Collectors.toList())
+                                , s -> s instanceof String
+                        );
+
+                // 寻找安全坐标的区块范围
+                SAFE_CHUNK_RANGE = SERVER_BUILDER
+                        .comment("The chunk range for finding a safe coordinate, in chunks.",
+                                "当进行安全传送时，寻找安全坐标的半径，单位为区块。")
+                        .defineInRange("safeChunkRange", 1, 1, 16);
+
+                SERVER_BUILDER.pop();
+            }
 
             SERVER_BUILDER.pop();
         }
@@ -693,8 +700,8 @@ public class ServerConfig {
         {
             SERVER_BUILDER.comment("Command Permission", "指令权限").push("permission");
 
-            SERVER_BUILDER.comment("Command Permission", "指令权限").push("command");
             {
+                SERVER_BUILDER.comment("Command Permission", "指令权限").push("command");
 
                 PERMISSION_FEED_OTHER = SERVER_BUILDER
                         .comment("The permission level required to use the 'Poisoning others' command."
@@ -798,6 +805,11 @@ public class ServerConfig {
                                 , "传送到上次传送点指令所需的权限等级。")
                         .defineInRange("permissionTpBack", 0, 0, 4);
 
+                PERMISSION_FLY = SERVER_BUILDER
+                        .comment("The permission level required to use the 'Fly' command."
+                                , "飞行指令所需的权限等级。")
+                        .defineInRange("permissionFly", 2, 0, 4);
+
                 PERMISSION_VIRTUAL_OP = SERVER_BUILDER
                         .comment("The permission level required to use the 'Set virtual permission' command, and also used as the permission level for modifying server configuration."
                                 , "设置虚拟权限指令所需的权限等级，同时用于控制使用'修改服务器配置指令'的权限。")
@@ -807,11 +819,13 @@ public class ServerConfig {
                         .comment("The permission level required to use the 'Set the number of Teleport Card of the player' command."
                                 , "设置玩家传送卡数量指令所需的权限等级。")
                         .defineInRange("permissionSetCard", 2, 0, 4);
-            }
-            SERVER_BUILDER.pop();
 
-            SERVER_BUILDER.comment("Across dimensions Switch", "跨维度权限").push("across");
+                SERVER_BUILDER.pop();
+            }
+
             {
+                SERVER_BUILDER.comment("Across dimensions Switch", "跨维度权限").push("across");
+
                 PERMISSION_TP_COORDINATE_ACROSS_DIMENSION = SERVER_BUILDER
                         .comment("The permission level required to use the 'Teleport to the specified coordinates' command across dimensions, -1 means disabled."
                                 , "跨维度传送到指定坐标指令所需的权限等级，若为-1则禁用跨维度传送。")
@@ -861,8 +875,8 @@ public class ServerConfig {
                         .comment("The permission level required to use the 'Teleport to the previous location' command across dimensions, -1 means disabled."
                                 , "跨维度传送到上次传送点指令所需的权限等级，若为-1则禁用跨维度传送。")
                         .defineInRange("permissionTpBackAcrossDimension", 0, -1, 4);
+                SERVER_BUILDER.pop();
             }
-            SERVER_BUILDER.pop();
 
             SERVER_BUILDER.pop();
         }
@@ -957,8 +971,9 @@ public class ServerConfig {
         {
             SERVER_BUILDER.comment("Teleport Cost", "传送代价").push("cost");
 
-            SERVER_BUILDER.comment("Teleport to the specified coordinates", "传送到指定坐标").push("TpCoordinate");
             {
+                SERVER_BUILDER.comment("Teleport to the specified coordinates", "传送到指定坐标").push("TpCoordinate");
+
                 COST_TP_COORDINATE_TYPE = SERVER_BUILDER
                         .comment("The cost type for 'Teleport to the specified coordinates'"
                                 , "传送到指定坐标的代价类型。"
@@ -1002,11 +1017,13 @@ public class ServerConfig {
                                 , "传送到指定坐标的代价计算表达式，支持的函数：sqrt、pow、log、sin、cos、abs；支持的变量：num、distance、rate。"
                                 , "示例：sqrt(num * distance * rate)、pow(num, 2) / log(distance) + sin(num)、abs(cos(rate) - num) * random(1, 10)")
                         .define("costTpCoordinateExp", "num * distance * rate");
-            }
-            SERVER_BUILDER.pop();
 
-            SERVER_BUILDER.comment("Teleport to the specified structure", "传送到指定结构").push("TpStructure");
+                SERVER_BUILDER.pop();
+            }
+
             {
+                SERVER_BUILDER.comment("Teleport to the specified structure", "传送到指定结构").push("TpStructure");
+
                 COST_TP_STRUCTURE_TYPE = SERVER_BUILDER
                         .comment("The cost type for 'Teleport to the specified structure'"
                                 , "传送到指定结构的代价类型。"
@@ -1050,11 +1067,13 @@ public class ServerConfig {
                                 , "传送到指定结构的代价计算表达式，支持的函数：sqrt、pow、log、sin、cos、abs；支持的变量：num、distance、rate。"
                                 , "示例：sqrt(num * distance * rate)、pow(num, 2) / log(distance) + sin(num)、abs(cos(rate) - num) * random(1, 10)")
                         .define("costTpStructureExp", "num * distance * rate");
-            }
-            SERVER_BUILDER.pop();
 
-            SERVER_BUILDER.comment("Request to teleport oneself to other players", "请求传送至玩家").push("TpAsk");
+                SERVER_BUILDER.pop();
+            }
+
             {
+                SERVER_BUILDER.comment("Request to teleport oneself to other players", "请求传送至玩家").push("TpAsk");
+
                 COST_TP_ASK_TYPE = SERVER_BUILDER
                         .comment("The cost type for 'Request to teleport oneself to other players'"
                                 , "请求传送至玩家的代价类型。"
@@ -1098,11 +1117,13 @@ public class ServerConfig {
                                 , "请求传送至玩家的代价计算表达式，支持的函数：sqrt、pow、log、sin、cos、abs；支持的变量：num、distance、rate。"
                                 , "示例：sqrt(num * distance * rate)、pow(num, 2) / log(distance) + sin(num)、abs(cos(rate) - num) * random(1, 10)")
                         .define("costTpAskExp", "num * distance * rate");
-            }
-            SERVER_BUILDER.pop();
 
-            SERVER_BUILDER.comment("Request the transfer of other players to oneself", "请求将玩家传送至当前位置").push("TpHere");
+                SERVER_BUILDER.pop();
+            }
+
             {
+                SERVER_BUILDER.comment("Request the transfer of other players to oneself", "请求将玩家传送至当前位置").push("TpHere");
+
                 COST_TP_HERE_TYPE = SERVER_BUILDER
                         .comment("The cost type for 'Request the transfer of other players to oneself'"
                                 , "请求将玩家传送至当前位置的代价类型。"
@@ -1146,11 +1167,13 @@ public class ServerConfig {
                                 , "请求将玩家传送至当前位置的代价计算表达式，支持的函数：sqrt、pow、log、sin、cos、abs；支持的变量：num、distance、rate。"
                                 , "示例：sqrt(num * distance * rate)、pow(num, 2) / log(distance) + sin(num)、abs(cos(rate) - num) * random(1, 10)")
                         .define("costTpHereExp", "num * distance * rate");
-            }
-            SERVER_BUILDER.pop();
 
-            SERVER_BUILDER.comment("Teleport to a random location", "随机传送").push("TpRandom");
+                SERVER_BUILDER.pop();
+            }
+
             {
+                SERVER_BUILDER.comment("Teleport to a random location", "随机传送").push("TpRandom");
+
                 COST_TP_RANDOM_TYPE = SERVER_BUILDER
                         .comment("The cost type for 'Teleport to a random location'"
                                 , "随机传送的代价类型。"
@@ -1194,11 +1217,13 @@ public class ServerConfig {
                                 , "随机传送的代价计算表达式，支持的函数：sqrt、pow、log、sin、cos、abs；支持的变量：num、distance、rate。"
                                 , "示例：sqrt(num * distance * rate)、pow(num, 2) / log(distance) + sin(num)、abs(cos(rate) - num) * random(1, 10)")
                         .define("costTpRandomExp", "num * distance * rate");
-            }
-            SERVER_BUILDER.pop();
 
-            SERVER_BUILDER.comment("Teleport to the spawn of the player", "传送到玩家重生点").push("TpSpawn");
+                SERVER_BUILDER.pop();
+            }
+
             {
+                SERVER_BUILDER.comment("Teleport to the spawn of the player", "传送到玩家重生点").push("TpSpawn");
+
                 COST_TP_SPAWN_TYPE = SERVER_BUILDER
                         .comment("The cost type for 'Teleport to the spawn of the player'"
                                 , "传送到玩家重生点的代价类型。"
@@ -1242,11 +1267,13 @@ public class ServerConfig {
                                 , "传送到玩家重生点的代价计算表达式，支持的函数：sqrt、pow、log、sin、cos、abs；支持的变量：num、distance、rate。"
                                 , "示例：sqrt(num * distance * rate)、pow(num, 2) / log(distance) + sin(num)、abs(cos(rate) - num) * random(1, 10)")
                         .define("costTpSpawnExp", "num * distance * rate");
-            }
-            SERVER_BUILDER.pop();
 
-            SERVER_BUILDER.comment("Teleport to the spawn of the world", "传送到世界重生点").push("TpWorldSpawn");
+                SERVER_BUILDER.pop();
+            }
+
             {
+                SERVER_BUILDER.comment("Teleport to the spawn of the world", "传送到世界重生点").push("TpWorldSpawn");
+
                 COST_TP_WORLD_SPAWN_TYPE = SERVER_BUILDER
                         .comment("The cost type for 'Teleport to the spawn of the world'"
                                 , "传送到世界重生点的代价类型。"
@@ -1290,11 +1317,13 @@ public class ServerConfig {
                                 , "传送到世界重生点的代价计算表达式，支持的函数：sqrt、pow、log、sin、cos、abs；支持的变量：num、distance、rate。"
                                 , "示例：sqrt(num * distance * rate)、pow(num, 2) / log(distance) + sin(num)、abs(cos(rate) - num) * random(1, 10)")
                         .define("costTpWorldSpawnExp", "num * distance * rate");
-            }
-            SERVER_BUILDER.pop();
 
-            SERVER_BUILDER.comment("Teleport to the top of current position", "传送到顶部").push("TpTop");
+                SERVER_BUILDER.pop();
+            }
+
             {
+                SERVER_BUILDER.comment("Teleport to the top of current position", "传送到顶部").push("TpTop");
+
                 COST_TP_TOP_TYPE = SERVER_BUILDER
                         .comment("The cost type for 'Teleport to the top of current position'"
                                 , "传送到顶部的代价类型。"
@@ -1338,11 +1367,13 @@ public class ServerConfig {
                                 , "传送到顶部的代价计算表达式，支持的函数：sqrt、pow、log、sin、cos、abs；支持的变量：num、distance、rate。"
                                 , "示例：sqrt(num * distance * rate)、pow(num, 2) / log(distance) + sin(num)、abs(cos(rate) - num) * random(1, 10)")
                         .define("costTpTopExp", "num * distance * rate");
-            }
-            SERVER_BUILDER.pop();
 
-            SERVER_BUILDER.comment("Teleport to the bottom of current position", "传送到底部").push("TpBottom");
+                SERVER_BUILDER.pop();
+            }
+
             {
+                SERVER_BUILDER.comment("Teleport to the bottom of current position", "传送到底部").push("TpBottom");
+
                 COST_TP_BOTTOM_TYPE = SERVER_BUILDER
                         .comment("The cost type for 'Teleport to the bottom of current position'"
                                 , "传送到底部的代价类型。"
@@ -1387,11 +1418,13 @@ public class ServerConfig {
                                 , "传送到底部的代价计算表达式，支持的函数：sqrt、pow、log、sin、cos、abs；支持的变量：num、distance、rate。"
                                 , "示例：sqrt(num * distance * rate)、pow(num, 2) / log(distance) + sin(num)、abs(cos(rate) - num) * random(1, 10)")
                         .define("costTpBottomExp", "num * distance * rate");
-            }
-            SERVER_BUILDER.pop();
 
-            SERVER_BUILDER.comment("Teleport to the upper of current position", "传送到上方").push("TpUp");
+                SERVER_BUILDER.pop();
+            }
+
             {
+                SERVER_BUILDER.comment("Teleport to the upper of current position", "传送到上方").push("TpUp");
+
                 COST_TP_UP_TYPE = SERVER_BUILDER
                         .comment("The cost type for 'Teleport to the upper of current position'"
                                 , "传送到上方的代价类型。"
@@ -1435,11 +1468,13 @@ public class ServerConfig {
                                 , "传送到上方的代价计算表达式，支持的函数：sqrt、pow、log、sin、cos、abs；支持的变量：num、distance、rate。"
                                 , "示例：sqrt(num * distance * rate)、pow(num, 2) / log(distance) + sin(num)、abs(cos(rate) - num) * random(1, 10)")
                         .define("costTpUpExp", "num * distance * rate");
-            }
-            SERVER_BUILDER.pop();
 
-            SERVER_BUILDER.comment("Teleport to the lower of current position", "传送到下方").push("TpDown");
+                SERVER_BUILDER.pop();
+            }
+
             {
+                SERVER_BUILDER.comment("Teleport to the lower of current position", "传送到下方").push("TpDown");
+
                 COST_TP_DOWN_TYPE = SERVER_BUILDER
                         .comment("The cost type for 'Teleport to the lower of current position'"
                                 , "传送到下方的代价类型。"
@@ -1483,11 +1518,13 @@ public class ServerConfig {
                                 , "传送到下方的代价计算表达式，支持的函数：sqrt、pow、log、sin、cos、abs；支持的变量：num、distance、rate。"
                                 , "示例：sqrt(num * distance * rate)、pow(num, 2) / log(distance) + sin(num)、abs(cos(rate) - num) * random(1, 10)")
                         .define("costTpDownExp", "num * distance * rate");
-            }
-            SERVER_BUILDER.pop();
 
-            SERVER_BUILDER.comment("Teleport to the end of the line of sight", "This function is independent of the player's render distance setting.", "传送至视线尽头", "该功能与玩家设置的视距无关。").push("TpView");
+                SERVER_BUILDER.pop();
+            }
+
             {
+                SERVER_BUILDER.comment("Teleport to the end of the line of sight", "This function is independent of the player's render distance setting.", "传送至视线尽头", "该功能与玩家设置的视距无关。").push("TpView");
+
                 COST_TP_VIEW_TYPE = SERVER_BUILDER
                         .comment("The cost type for 'Teleport to the end of the line of sight'"
                                 , "传送至视线尽头的代价类型。"
@@ -1531,11 +1568,13 @@ public class ServerConfig {
                                 , "传送至视线尽头的代价计算表达式，支持的函数：sqrt、pow、log、sin、cos、abs；支持的变量：num、distance、rate。"
                                 , "示例：sqrt(num * distance * rate)、pow(num, 2) / log(distance) + sin(num)、abs(cos(rate) - num) * random(1, 10)")
                         .define("costTpViewExp", "num * distance * rate");
-            }
-            SERVER_BUILDER.pop();
 
-            SERVER_BUILDER.comment("Teleport to the home", "传送到家").push("TpHome");
+                SERVER_BUILDER.pop();
+            }
+
             {
+                SERVER_BUILDER.comment("Teleport to the home", "传送到家").push("TpHome");
+
                 COST_TP_HOME_TYPE = SERVER_BUILDER
                         .comment("The cost type for 'Teleport to the home'"
                                 , "传送到家的代价类型。"
@@ -1579,11 +1618,13 @@ public class ServerConfig {
                                 , "传送到家的代价计算表达式，支持的函数：sqrt、pow、log、sin、cos、abs；支持的变量：num、distance、rate。"
                                 , "示例：sqrt(num * distance * rate)、pow(num, 2) / log(distance) + sin(num)、abs(cos(rate) - num) * random(1, 10)")
                         .define("costTpHomeExp", "num * distance * rate");
-            }
-            SERVER_BUILDER.pop();
 
-            SERVER_BUILDER.comment("Teleport to the stage", "传送到驿站").push("TpStage");
+                SERVER_BUILDER.pop();
+            }
+
             {
+                SERVER_BUILDER.comment("Teleport to the stage", "传送到驿站").push("TpStage");
+
                 COST_TP_STAGE_TYPE = SERVER_BUILDER
                         .comment("The cost type for 'Teleport to the stage'"
                                 , "传送到驿站的代价类型。"
@@ -1627,11 +1668,13 @@ public class ServerConfig {
                                 , "传送到驿站的代价计算表达式，支持的函数：sqrt、pow、log、sin、cos、abs；支持的变量：num、distance、rate。"
                                 , "示例：sqrt(num * distance * rate)、pow(num, 2) / log(distance) + sin(num)、abs(cos(rate) - num) * random(1, 10)")
                         .define("costTpStageExp", "num * distance * rate");
-            }
-            SERVER_BUILDER.pop();
 
-            SERVER_BUILDER.comment("Teleport to the previous location", "传送到上次传送点").push("TpBack");
+                SERVER_BUILDER.pop();
+            }
+
             {
+                SERVER_BUILDER.comment("Teleport to the previous location", "传送到上次传送点").push("TpBack");
+
                 COST_TP_BACK_TYPE = SERVER_BUILDER
                         .comment("The cost type for 'Teleport to the previous location'"
                                 , "传送到上次传送点的代价类型。"
@@ -1675,8 +1718,9 @@ public class ServerConfig {
                                 , "传送到上次传送点的代价计算表达式，支持的函数：sqrt、pow、log、sin、cos、abs；支持的变量：num、distance、rate。"
                                 , "示例：sqrt(num * distance * rate)、pow(num, 2) / log(distance) + sin(num)、abs(cos(rate) - num) * random(1, 10)")
                         .define("costTpBackExp", "num * distance * rate");
+
+                SERVER_BUILDER.pop();
             }
-            SERVER_BUILDER.pop();
 
             SERVER_BUILDER.pop();
         }
@@ -1764,8 +1808,10 @@ public class ServerConfig {
         PERMISSION_DEL_STAGE.set(2);
         PERMISSION_GET_STAGE.set(0);
         PERMISSION_TP_BACK.set(0);
+        PERMISSION_FLY.set(2);
         PERMISSION_VIRTUAL_OP.set(4);
         PERMISSION_SET_CARD.set(2);
+
         PERMISSION_TP_COORDINATE_ACROSS_DIMENSION.set(2);
         PERMISSION_TP_STRUCTURE_ACROSS_DIMENSION.set(2);
         PERMISSION_TP_ASK_ACROSS_DIMENSION.set(0);
