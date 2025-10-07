@@ -23,6 +23,7 @@ import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.HoverEvent;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.minecraft.network.protocol.game.ClientboundPlayerAbilitiesPacket;
 import net.minecraft.network.protocol.game.ClientboundPlayerCombatKillPacket;
 import net.minecraft.network.protocol.game.ClientboundSetPassengersPacket;
 import net.minecraft.network.syncher.EntityDataAccessor;
@@ -42,6 +43,7 @@ import net.minecraft.world.entity.TamableAnimal;
 import net.minecraft.world.entity.ai.goal.TemptGoal;
 import net.minecraft.world.entity.ai.memory.MemoryModuleType;
 import net.minecraft.world.entity.monster.Monster;
+import net.minecraft.world.entity.player.Abilities;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
@@ -124,6 +126,7 @@ public class NarcissusUtils {
             case TP_STAGE, SET_STAGE, DEL_STAGE, GET_STAGE, TP_STAGE_CONCISE, SET_STAGE_CONCISE, DEL_STAGE_CONCISE,
                  GET_STAGE_CONCISE -> CommonConfig.SWITCH_TP_STAGE.get();
             case TP_BACK, TP_BACK_CONCISE -> CommonConfig.SWITCH_TP_BACK.get();
+            case FLY, FLY_CONCISE -> CommonConfig.SWITCH_FLY.get();
             default -> true;
         };
     }
@@ -220,6 +223,8 @@ public class NarcissusUtils {
             case GET_STAGE_CONCISE -> isConciseEnabled(type) ? CommonConfig.COMMAND_GET_STAGE.get() : "";
             case TP_BACK -> prefix + " " + CommonConfig.COMMAND_TP_BACK.get();
             case TP_BACK_CONCISE -> isConciseEnabled(type) ? CommonConfig.COMMAND_TP_BACK.get() : "";
+            case FLY -> prefix + " " + CommonConfig.COMMAND_FLY.get();
+            case FLY_CONCISE -> isConciseEnabled(type) ? CommonConfig.COMMAND_FLY.get() : "";
             case VIRTUAL_OP -> prefix + " " + CommonConfig.COMMAND_VIRTUAL_OP.get();
             case VIRTUAL_OP_CONCISE -> isConciseEnabled(type) ? CommonConfig.COMMAND_VIRTUAL_OP.get() : "";
             default -> "";
@@ -260,6 +265,7 @@ public class NarcissusUtils {
             case DEL_STAGE, DEL_STAGE_CONCISE -> ServerConfig.PERMISSION_DEL_STAGE.get();
             case GET_STAGE, GET_STAGE_CONCISE -> ServerConfig.PERMISSION_GET_STAGE.get();
             case TP_BACK, TP_BACK_CONCISE -> ServerConfig.PERMISSION_TP_BACK.get();
+            case FLY, FLY_CONCISE -> ServerConfig.PERMISSION_FLY.get();
             case VIRTUAL_OP, VIRTUAL_OP_CONCISE -> ServerConfig.PERMISSION_VIRTUAL_OP.get();
             default -> 0;
         };
@@ -322,6 +328,7 @@ public class NarcissusUtils {
             case DEL_STAGE, DEL_STAGE_CONCISE -> CommonConfig.CONCISE_DEL_STAGE.get();
             case GET_STAGE, GET_STAGE_CONCISE -> CommonConfig.CONCISE_GET_STAGE.get();
             case TP_BACK, TP_BACK_CONCISE -> CommonConfig.CONCISE_TP_BACK.get();
+            case FLY, FLY_CONCISE -> CommonConfig.CONCISE_FLY.get();
             case VIRTUAL_OP, VIRTUAL_OP_CONCISE -> CommonConfig.CONCISE_VIRTUAL_OP.get();
             default -> false;
         };
@@ -2035,6 +2042,23 @@ public class NarcissusUtils {
 
     public static String getItemName(Item item) {
         return getItemName(new ItemStack(item));
+    }
+
+    public static void setPlayerFlightMode(ServerPlayer player) {
+        setPlayerFlightMode(player, null);
+    }
+
+    public static void setPlayerFlightMode(ServerPlayer player, Boolean enable) {
+        setPlayerFlightMode(player, enable, null);
+    }
+
+    public static void setPlayerFlightMode(ServerPlayer player, Boolean enable, Float speed) {
+        Abilities abilities = player.getAbilities();
+        if (enable == null) enable = !abilities.mayfly;
+        abilities.mayfly = enable;
+        if (!enable) abilities.flying = false;
+        if (speed != null) abilities.setFlyingSpeed(speed);
+        player.connection.send(new ClientboundPlayerAbilitiesPacket(abilities));
     }
 
     // endregion 杂项
