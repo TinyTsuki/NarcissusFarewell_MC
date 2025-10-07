@@ -77,6 +77,8 @@ public enum EnumCommandType {
     GET_STAGE_CONCISE(),
     TP_BACK(),
     TP_BACK_CONCISE(),
+    FLY(),
+    FLY_CONCISE(),
     VIRTUAL_OP(),
     VIRTUAL_OP_CONCISE();
 
