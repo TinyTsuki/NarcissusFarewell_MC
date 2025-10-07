@@ -27,6 +27,7 @@ import xin.vanilla.narcissus.config.CustomConfig;
 import xin.vanilla.narcissus.config.ServerConfig;
 import xin.vanilla.narcissus.data.SafeBlock;
 import xin.vanilla.narcissus.data.TeleportRequest;
+import xin.vanilla.narcissus.data.player.PlayerTeleportData;
 import xin.vanilla.narcissus.event.ClientModEventHandler;
 import xin.vanilla.narcissus.network.ModNetworkHandler;
 import xin.vanilla.narcissus.network.SplitPacket;
@@ -128,6 +129,7 @@ public class NarcissusFarewell {
     }
 
     private void onServerStopping(ServerStoppingEvent event) {
+        PlayerTeleportData.clear();
     }
 
     @SubscribeEvent
