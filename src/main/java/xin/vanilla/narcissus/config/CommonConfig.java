@@ -31,6 +31,15 @@ public class CommonConfig {
      */
     public static final ForgeConfigSpec.BooleanValue REMOVE_ORIGINAL_TP;
 
+    /**
+     * 创造飞行最低速度
+     */
+    public static final ForgeConfigSpec.DoubleValue FLY_SPEED_MIN;
+    /**
+     * 创造飞行最高速度
+     */
+    public static final ForgeConfigSpec.DoubleValue FLY_SPEED_MAX;
+
     // endregion 基础设置
 
 
@@ -120,6 +129,11 @@ public class CommonConfig {
      * 传送到上次传送点 开关
      */
     public static final ForgeConfigSpec.BooleanValue SWITCH_TP_BACK;
+
+    /**
+     * 创造飞行 开关
+     */
+    public static final ForgeConfigSpec.BooleanValue SWITCH_FLY;
 
     // endregion 功能开关
 
@@ -297,6 +311,11 @@ public class CommonConfig {
     public static final ForgeConfigSpec.ConfigValue<String> COMMAND_TP_BACK;
 
     /**
+     * 创造飞行
+     */
+    public static final ForgeConfigSpec.ConfigValue<String> COMMAND_FLY;
+
+    /**
      * 设置虚拟权限
      */
     public static final ForgeConfigSpec.ConfigValue<String> COMMAND_VIRTUAL_OP;
@@ -472,9 +491,15 @@ public class CommonConfig {
     public static final ForgeConfigSpec.BooleanValue CONCISE_TP_BACK;
 
     /**
+     * 创造飞行
+     */
+    public static final ForgeConfigSpec.BooleanValue CONCISE_FLY;
+
+    /**
      * 设置虚拟权限
      */
     public static final ForgeConfigSpec.BooleanValue CONCISE_VIRTUAL_OP;
+
 
     // endregion 简化指令
 
@@ -525,6 +550,18 @@ public class CommonConfig {
                     .comment("Whether to disable the original TP command.",
                             "是否禁用原版TP指令。")
                     .define("removeOriginalTp", false);
+
+            // 创造飞行最低速度
+            FLY_SPEED_MIN = SERVER_BUILDER
+                    .comment("The minimum speed of creative flight.",
+                            "创造飞行允许设置的最低速度。")
+                    .defineInRange("flySpeedMin", -5d, -1.0f * Integer.MAX_VALUE, 1.0f * Integer.MAX_VALUE);
+
+            // 创造飞行最高速度
+            FLY_SPEED_MAX = SERVER_BUILDER
+                    .comment("The maximum speed of creative flight.",
+                            "创造飞行允许设置的最高速度。")
+                    .defineInRange("flySpeedMax", 5d, -1.0f * Integer.MAX_VALUE, 1.0f * Integer.MAX_VALUE);
 
             SERVER_BUILDER.pop();
         }
@@ -620,6 +657,11 @@ public class CommonConfig {
                     .comment("Enable or disable the option to 'Teleport to the previous location'."
                             , "是否启用传送到上次传送点。")
                     .define("switchTpBack", true);
+
+            SWITCH_FLY = SERVER_BUILDER
+                    .comment("Enable or disable the option to 'Fly'."
+                            , "是否启用创造飞行指令。")
+                    .define("switchFly", true);
 
             SERVER_BUILDER.pop();
         }
@@ -845,6 +887,11 @@ public class CommonConfig {
                             , "传送到上次传送点的指令。")
                     .define("commandTpBack", "back");
 
+            COMMAND_FLY = SERVER_BUILDER
+                    .comment("The command to fly."
+                            , "开启创造飞行的指令。")
+                    .define("commandFly", "fly");
+
             // 设置虚拟权限
             COMMAND_VIRTUAL_OP = SERVER_BUILDER
                     .comment("The command to set virtual permission."
@@ -1034,6 +1081,11 @@ public class CommonConfig {
                             "是否启用无前缀版本的 '传送到上次传送点' 指令。")
                     .define("conciseTpBack", true);
 
+            CONCISE_FLY = SERVER_BUILDER
+                    .comment("Enable or disable the concise version of the 'Fly' command.",
+                            "是否启用无前缀版本的 '创造飞行' 指令。")
+                    .define("conciseFly", true);
+
             CONCISE_VIRTUAL_OP = SERVER_BUILDER
                     .comment("Enable or disable the concise version of the 'Set virtual permission' command.",
                             "是否启用无前缀版本的 '设置虚拟权限' 指令。")
@@ -1054,6 +1106,8 @@ public class CommonConfig {
         TELEPORT_CARD_DAILY.set(0);
         TELEPORT_CARD_TYPE.set(EnumCardType.REFUND_ALL_COST.name());
         REMOVE_ORIGINAL_TP.set(false);
+        FLY_SPEED_MIN.set(-5d);
+        FLY_SPEED_MAX.set(5d);
 
         SWITCH_SHARE.set(true);
         SWITCH_FEED.set(true);
@@ -1072,6 +1126,7 @@ public class CommonConfig {
         SWITCH_TP_HOME.set(true);
         SWITCH_TP_STAGE.set(true);
         SWITCH_TP_BACK.set(true);
+        SWITCH_FLY.set(true);
 
         COMMAND_PREFIX.set(NarcissusFarewell.DEFAULT_COMMAND_PREFIX);
         COMMAND_LANGUAGE.set("language");
@@ -1107,6 +1162,7 @@ public class CommonConfig {
         COMMAND_DEL_STAGE.set("delstage");
         COMMAND_GET_STAGE.set("getstage");
         COMMAND_TP_BACK.set("back");
+        COMMAND_FLY.set("fly");
         COMMAND_VIRTUAL_OP.set("opv");
 
         CONCISE_LANGUAGE.set(false);
@@ -1142,6 +1198,7 @@ public class CommonConfig {
         CONCISE_DEL_STAGE.set(true);
         CONCISE_GET_STAGE.set(true);
         CONCISE_TP_BACK.set(true);
+        CONCISE_FLY.set(true);
         CONCISE_VIRTUAL_OP.set(false);
 
         COMMON_CONFIG.save();
