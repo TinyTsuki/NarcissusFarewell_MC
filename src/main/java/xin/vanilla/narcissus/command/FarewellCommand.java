@@ -4,6 +4,7 @@ package xin.vanilla.narcissus.command;
 import com.mojang.brigadier.Command;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.BoolArgumentType;
+import com.mojang.brigadier.arguments.DoubleArgumentType;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
@@ -1313,6 +1314,32 @@ public class FarewellCommand {
             NarcissusUtils.teleportTo(player, coordinate, EnumTeleportType.TP_BACK);
             return 1;
         };
+        Command<CommandSourceStack> flyCommand = context -> {
+            notifyHelp(context);
+            CommandSourceStack source = context.getSource();
+            // 传送功能前置校验
+            if (checkTeleportPre(source, EnumCommandType.FLY)) return 0;
+            ServerPlayer target;
+            try {
+                target = EntityArgument.getPlayer(context, "player");
+            } catch (IllegalArgumentException ig) {
+                target = source.getPlayerOrException();
+            }
+            Boolean enable;
+            try {
+                enable = BoolArgumentType.getBool(context, "enable");
+            } catch (IllegalArgumentException ig) {
+                enable = null;
+            }
+            Float speed;
+            try {
+                speed = (float) DoubleArgumentType.getDouble(context, "speed");
+            } catch (IllegalArgumentException ig) {
+                speed = null;
+            }
+            NarcissusUtils.setPlayerFlightMode(target, enable, speed);
+            return 1;
+        };
         Command<CommandSourceStack> virtualOpCommand = context -> {
             notifyHelp(context);
             CommandSourceStack source = context.getSource();
@@ -1954,6 +1981,29 @@ public class FarewellCommand {
                                         )
                                 )
                         );// endregion tpBack
+        LiteralArgumentBuilder<CommandSourceStack> fly = // region fly
+                Commands.literal(CommonConfig.COMMAND_FLY.get())
+                        .requires(source -> NarcissusUtils.hasCommandPermission(source, EnumCommandType.FLY))
+                        .executes(flyCommand)
+                        .then(Commands.argument("enable", BoolArgumentType.bool())
+                                .executes(flyCommand)
+                                .then(Commands.argument("player", EntityArgument.player())
+                                        .executes(flyCommand)
+                                        .then(Commands.argument("speed", DoubleArgumentType.doubleArg(CommonConfig.FLY_SPEED_MIN.get(), CommonConfig.FLY_SPEED_MAX.get()))
+                                                .suggests((context, builder) -> {
+                                                    Double min = CommonConfig.FLY_SPEED_MIN.get();
+                                                    Double max = CommonConfig.FLY_SPEED_MAX.get();
+                                                    builder.suggest(String.valueOf(min));
+                                                    if (0.05F >= min && 0.05F <= max) {
+                                                        builder.suggest("0.05");
+                                                    }
+                                                    builder.suggest(String.valueOf(max));
+                                                    return builder.buildFuture();
+                                                })
+                                                .executes(flyCommand)
+                                        )
+                                )
+                        );// endregion fly
         LiteralArgumentBuilder<CommandSourceStack> virtualOp = // region virtualOp
                 Commands.literal(CommonConfig.COMMAND_VIRTUAL_OP.get())
                         .requires(source -> NarcissusUtils.hasCommandPermission(source, EnumCommandType.VIRTUAL_OP))
@@ -2294,6 +2344,11 @@ public class FarewellCommand {
                 dispatcher.register(tpBack);
             }
 
+            // 创造飞行 /fly
+            if (CommonConfig.CONCISE_FLY.get() && CommonConfig.SWITCH_FLY.get()) {
+                dispatcher.register(fly);
+            }
+
             // 设置虚拟权限
             if (CommonConfig.CONCISE_VIRTUAL_OP.get()) {
                 dispatcher.register(virtualOp);
@@ -2378,6 +2433,8 @@ public class FarewellCommand {
                     .then(getStage)
                     // 返回上次离开地方 /narcissus back
                     .then(tpBack)
+                    // 创造飞行 /narcissus fly
+                    .then(fly)
                     // 设置虚拟权限 /narcissus opv
                     .then(virtualOp)
                     // 获取服务器配置 /narcissus config get
