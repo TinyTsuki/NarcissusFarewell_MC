@@ -1,84 +1,91 @@
 package xin.vanilla.narcissus.enums;
 
 import lombok.Getter;
+import net.minecraft.command.CommandBase;
+import net.minecraft.command.CommandHelp;
+import xin.vanilla.narcissus.command.concise.*;
+
+import javax.annotation.CheckForNull;
+import javax.annotation.Nullable;
+import java.util.function.Supplier;
 
 @Getter
 public enum ECommandType {
-    HELP(false, false),
-    LANGUAGE(false, false),
-    LANGUAGE_CONCISE(),
-    UUID(),
-    UUID_CONCISE(),
-    DIMENSION(),
-    DIMENSION_CONCISE(),
-    CARD(false, false),
-    CARD_CONCISE(),
-    SET_CARD(true),
-    SET_CARD_CONCISE(),
-    SHARE(),
-    SHARE_CONCISE(),
-    FEED(false, false),
-    FEED_CONCISE(),
-    FEED_OTHER(true),
-    FEED_OTHER_CONCISE(true),
-    TP_COORDINATE(),
-    TP_COORDINATE_CONCISE(),
-    TP_STRUCTURE(),
-    TP_STRUCTURE_CONCISE(),
-    TP_ASK(),
-    TP_ASK_CONCISE(),
-    TP_ASK_YES(false, false),
-    TP_ASK_YES_CONCISE(),
-    TP_ASK_NO(false, false),
-    TP_ASK_NO_CONCISE(),
-    TP_ASK_CANCEL(false, false),
-    TP_ASK_CANCEL_CONCISE(),
-    TP_HERE(),
-    TP_HERE_CONCISE(),
-    TP_HERE_YES(false, false),
-    TP_HERE_YES_CONCISE(),
-    TP_HERE_NO(false, false),
-    TP_HERE_NO_CONCISE(),
-    TP_HERE_CANCEL(false, false),
-    TP_HERE_CANCEL_CONCISE(),
-    TP_RANDOM(),
-    TP_RANDOM_CONCISE(),
-    TP_SPAWN(),
-    TP_SPAWN_OTHER(true),
-    TP_SPAWN_CONCISE(),
-    TP_SPAWN_OTHER_CONCISE(true),
-    TP_WORLD_SPAWN(),
-    TP_WORLD_SPAWN_CONCISE(),
-    TP_TOP(),
-    TP_TOP_CONCISE(),
-    TP_BOTTOM(),
-    TP_BOTTOM_CONCISE(),
-    TP_UP(),
-    TP_UP_CONCISE(),
-    TP_DOWN(),
-    TP_DOWN_CONCISE(),
-    TP_VIEW(),
-    TP_VIEW_CONCISE(),
-    TP_HOME(),
-    TP_HOME_CONCISE(),
-    SET_HOME(false, false),
-    SET_HOME_CONCISE(),
-    DEL_HOME(false, false),
-    DEL_HOME_CONCISE(),
-    GET_HOME(false, false),
-    GET_HOME_CONCISE(),
-    TP_STAGE(),
-    TP_STAGE_CONCISE(),
-    SET_STAGE(),
-    SET_STAGE_CONCISE(),
-    DEL_STAGE(),
-    DEL_STAGE_CONCISE(),
-    GET_STAGE(),
-    GET_STAGE_CONCISE(),
-    TP_BACK(),
-    TP_BACK_CONCISE(),
-    VIRTUAL_OP(),
-    VIRTUAL_OP_CONCISE();
+    HELP(null, false, false),
+    LANGUAGE(LanguageCommand::new, false, false),
+    LANGUAGE_CONCISE(null),
+    UUID(UuidCommand::new),
+    UUID_CONCISE(null),
+    DIMENSION(DimensionCommand::new),
+    DIMENSION_CONCISE(null),
+    CARD(CardCommand::new, false, false),
+    CARD_CONCISE(null),
+    SET_CARD(null, true),
+    SET_CARD_CONCISE(null),
+    SHARE(ShareCommand::new),
+    SHARE_CONCISE(null),
+    FEED(FeedCommand::new, false, false),
+    FEED_CONCISE(null),
+    FEED_OTHER(null, true),
+    FEED_OTHER_CONCISE(null, true),
+    TP_COORDINATE(CoordinateCommand::new),
+    TP_COORDINATE_CONCISE(null),
+    TP_STRUCTURE(StructureCommand::new),
+    TP_STRUCTURE_CONCISE(null),
+    TP_ASK(AskCommand::new),
+    TP_ASK_CONCISE(null),
+    TP_ASK_YES(AskYesCommand::new, false, false),
+    TP_ASK_YES_CONCISE(null),
+    TP_ASK_NO(AskNoCommand::new, false, false),
+    TP_ASK_NO_CONCISE(null),
+    TP_ASK_CANCEL(AskCancelCommand::new, false, false),
+    TP_ASK_CANCEL_CONCISE(null),
+    TP_HERE(HereCommand::new),
+    TP_HERE_CONCISE(null),
+    TP_HERE_YES(HereYesCommand::new, false, false),
+    TP_HERE_YES_CONCISE(null),
+    TP_HERE_NO(HereNoCommand::new, false, false),
+    TP_HERE_NO_CONCISE(null),
+    TP_HERE_CANCEL(HereCancelCommand::new, false, false),
+    TP_HERE_CANCEL_CONCISE(null),
+    TP_RANDOM(RandomCommand::new),
+    TP_RANDOM_CONCISE(null),
+    TP_SPAWN(SpawnCommand::new),
+    TP_SPAWN_OTHER(null, true),
+    TP_SPAWN_CONCISE(null),
+    TP_SPAWN_OTHER_CONCISE(null, true),
+    TP_WORLD_SPAWN(WorldSpawnCommand::new),
+    TP_WORLD_SPAWN_CONCISE(null),
+    TP_TOP(TopCommand::new),
+    TP_TOP_CONCISE(null),
+    TP_BOTTOM(BottomCommand::new),
+    TP_BOTTOM_CONCISE(null),
+    TP_UP(UpCommand::new),
+    TP_UP_CONCISE(null),
+    TP_DOWN(DownCommand::new),
+    TP_DOWN_CONCISE(null),
+    TP_VIEW(ViewCommand::new),
+    TP_VIEW_CONCISE(null),
+    TP_HOME(HomeCommand::new),
+    TP_HOME_CONCISE(null),
+    SET_HOME(SetHomeCommand::new, false, false),
+    SET_HOME_CONCISE(null),
+    DEL_HOME(DelHomeCommand::new, false, false),
+    DEL_HOME_CONCISE(null),
+    GET_HOME(GetHomeCommand::new, false, false),
+    GET_HOME_CONCISE(null),
+    TP_STAGE(StageCommand::new),
+    TP_STAGE_CONCISE(null),
+    SET_STAGE(SetStageCommand::new),
+    SET_STAGE_CONCISE(null),
+    DEL_STAGE(DelStageCommand::new),
+    DEL_STAGE_CONCISE(null),
+    GET_STAGE(GetStageCommand::new),
+    GET_STAGE_CONCISE(null),
+    TP_BACK(BackCommand::new),
+    TP_BACK_CONCISE(null),
+    VIRTUAL_OP(VirtualOpCommand::new),
+    VIRTUAL_OP_CONCISE(null);
 
     /**
      * 在帮助信息内忽略
@@ -93,17 +100,26 @@ public enum ECommandType {
      */
     private final boolean op;
 
-    ECommandType() {
+    @CheckForNull
+    private final Supplier<? extends CommandBase> instance;
+
+    ECommandType(@Nullable final Supplier<? extends CommandBase> instance) {
+        this.instance = instance;
         this.ignore = false;
         this.op = !this.concise;
     }
 
-    ECommandType(boolean ig) {
+    ECommandType(@Nullable final Supplier<? extends CommandBase> instance,
+                 final boolean ig) {
+        this.instance = instance;
         this.ignore = ig;
         this.op = !this.concise;
     }
 
-    ECommandType(boolean ig, boolean op) {
+    ECommandType(@Nullable Supplier<? extends CommandBase> instance,
+                 final boolean ig,
+                 final boolean op) {
+        this.instance = instance;
         this.ignore = ig;
         this.op = !this.concise && op;
     }

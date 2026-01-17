@@ -24,12 +24,20 @@ import xin.vanilla.narcissus.util.LogoModifier;
 import xin.vanilla.narcissus.util.NarcissusUtils;
 import xin.vanilla.narcissus.util.ServerTaskExecutor;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Supplier;
 
 // 先运行 gradle tasks: generateBuildConfig 生成 BuildConfig
-@Mod(modid = BuildConfig.MODID, name = BuildConfig.NAME, version = BuildConfig.VERSION, useMetadata = true, acceptableRemoteVersions = "*")
+@Mod(
+    modid = BuildConfig.MODID,
+    name = BuildConfig.NAME,
+    version = BuildConfig.VERSION,
+    useMetadata = true,
+    acceptableRemoteVersions = "*")
 public class NarcissusFarewell {
     @Mod.Instance(BuildConfig.MODID)
     public static NarcissusFarewell instance;
@@ -105,75 +113,14 @@ public class NarcissusFarewell {
         ServerTaskExecutor.init();
         DimensionUtils.init();
         LOGGER.debug("Registering commands");
+        Arrays.stream(ECommandType.values())
+            .filter(it -> Objects.nonNull(it.getInstance()))
+            .filter(NarcissusUtils::isConciseEnabled)
+            .map(ECommandType::getInstance)
+            .map(Supplier::get)
+            .forEach(event::registerServerCommand);
+
         event.registerServerCommand(new FarewellCommand());
-        if (NarcissusUtils.isConciseEnabled(ECommandType.LANGUAGE))
-            event.registerServerCommand(new LanguageCommand());
-        if (NarcissusUtils.isConciseEnabled(ECommandType.UUID))
-            event.registerServerCommand(new UuidCommand());
-        if (NarcissusUtils.isConciseEnabled(ECommandType.CARD))
-            event.registerServerCommand(new CardCommand());
-        if (NarcissusUtils.isConciseEnabled(ECommandType.SHARE))
-            event.registerServerCommand(new ShareCommand());
-        if (NarcissusUtils.isConciseEnabled(ECommandType.DIMENSION))
-            event.registerServerCommand(new DimensionCommand());
-        if (NarcissusUtils.isConciseEnabled(ECommandType.FEED))
-            event.registerServerCommand(new FeedCommand());
-        if (NarcissusUtils.isConciseEnabled(ECommandType.TP_COORDINATE))
-            event.registerServerCommand(new CoordinateCommand());
-        if (NarcissusUtils.isConciseEnabled(ECommandType.TP_STRUCTURE))
-            event.registerServerCommand(new StructureCommand());
-        if (NarcissusUtils.isConciseEnabled(ECommandType.TP_ASK))
-            event.registerServerCommand(new AskCommand());
-        if (NarcissusUtils.isConciseEnabled(ECommandType.TP_ASK_YES))
-            event.registerServerCommand(new AskYesCommand());
-        if (NarcissusUtils.isConciseEnabled(ECommandType.TP_ASK_NO))
-            event.registerServerCommand(new AskNoCommand());
-        if (NarcissusUtils.isConciseEnabled(ECommandType.TP_ASK_CANCEL))
-            event.registerServerCommand(new AskCancelCommand());
-        if (NarcissusUtils.isConciseEnabled(ECommandType.TP_HERE))
-            event.registerServerCommand(new HereCommand());
-        if (NarcissusUtils.isConciseEnabled(ECommandType.TP_HERE_YES))
-            event.registerServerCommand(new HereYesCommand());
-        if (NarcissusUtils.isConciseEnabled(ECommandType.TP_HERE_NO))
-            event.registerServerCommand(new HereNoCommand());
-        if (NarcissusUtils.isConciseEnabled(ECommandType.TP_HERE_CANCEL))
-            event.registerServerCommand(new HereCancelCommand());
-        if (NarcissusUtils.isConciseEnabled(ECommandType.TP_RANDOM))
-            event.registerServerCommand(new RandomCommand());
-        if (NarcissusUtils.isConciseEnabled(ECommandType.TP_SPAWN))
-            event.registerServerCommand(new SpawnCommand());
-        if (NarcissusUtils.isConciseEnabled(ECommandType.TP_WORLD_SPAWN))
-            event.registerServerCommand(new WorldSpawnCommand());
-        if (NarcissusUtils.isConciseEnabled(ECommandType.TP_TOP))
-            event.registerServerCommand(new TopCommand());
-        if (NarcissusUtils.isConciseEnabled(ECommandType.TP_BOTTOM))
-            event.registerServerCommand(new BottomCommand());
-        if (NarcissusUtils.isConciseEnabled(ECommandType.TP_UP))
-            event.registerServerCommand(new UpCommand());
-        if (NarcissusUtils.isConciseEnabled(ECommandType.TP_DOWN))
-            event.registerServerCommand(new DownCommand());
-        if (NarcissusUtils.isConciseEnabled(ECommandType.TP_VIEW))
-            event.registerServerCommand(new ViewCommand());
-        if (NarcissusUtils.isConciseEnabled(ECommandType.TP_HOME))
-            event.registerServerCommand(new HomeCommand());
-        if (NarcissusUtils.isConciseEnabled(ECommandType.SET_HOME))
-            event.registerServerCommand(new SetHomeCommand());
-        if (NarcissusUtils.isConciseEnabled(ECommandType.DEL_HOME))
-            event.registerServerCommand(new DelHomeCommand());
-        if (NarcissusUtils.isConciseEnabled(ECommandType.GET_HOME))
-            event.registerServerCommand(new GetHomeCommand());
-        if (NarcissusUtils.isConciseEnabled(ECommandType.TP_STAGE))
-            event.registerServerCommand(new StageCommand());
-        if (NarcissusUtils.isConciseEnabled(ECommandType.SET_STAGE))
-            event.registerServerCommand(new SetStageCommand());
-        if (NarcissusUtils.isConciseEnabled(ECommandType.DEL_STAGE))
-            event.registerServerCommand(new DelStageCommand());
-        if (NarcissusUtils.isConciseEnabled(ECommandType.GET_STAGE))
-            event.registerServerCommand(new GetStageCommand());
-        if (NarcissusUtils.isConciseEnabled(ECommandType.TP_BACK))
-            event.registerServerCommand(new BackCommand());
-        if (NarcissusUtils.isConciseEnabled(ECommandType.VIRTUAL_OP))
-            event.registerServerCommand(new VirtualOpCommand());
     }
 
 }

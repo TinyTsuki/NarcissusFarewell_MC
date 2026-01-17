@@ -1,6 +1,5 @@
 package xin.vanilla.narcissus.command;
 
-
 import lombok.NonNull;
 import net.minecraft.command.CommandBase;
 import net.minecraft.command.CommandException;
@@ -25,23 +24,2887 @@ import xin.vanilla.narcissus.data.TeleportRecord;
 import xin.vanilla.narcissus.data.player.IPlayerTeleportData;
 import xin.vanilla.narcissus.data.player.PlayerTeleportData;
 import xin.vanilla.narcissus.data.world.WorldStageData;
-import xin.vanilla.narcissus.enums.*;
+import xin.vanilla.narcissus.enums.ECommandType;
+import xin.vanilla.narcissus.enums.EI18nType;
+import xin.vanilla.narcissus.enums.EMCColor;
+import xin.vanilla.narcissus.enums.EOperationType;
+import xin.vanilla.narcissus.enums.ESafeMode;
+import xin.vanilla.narcissus.enums.ETeleportType;
+import xin.vanilla.narcissus.util.BiomeUtils;
+import xin.vanilla.narcissus.util.CollectionUtils;
 import xin.vanilla.narcissus.util.Component;
-import xin.vanilla.narcissus.util.*;
+import xin.vanilla.narcissus.util.DimensionUtils;
+import xin.vanilla.narcissus.util.I18nUtils;
+import xin.vanilla.narcissus.util.NarcissusUtils;
+import xin.vanilla.narcissus.util.ServerTaskExecutor;
+import xin.vanilla.narcissus.util.StringUtils;
+import xin.vanilla.narcissus.util.VirtualPermissionManager;
 
 import javax.annotation.ParametersAreNonnullByDefault;
 import java.awt.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
-import java.util.*;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Random;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 public class FarewellCommand extends CommandBase {
-    // 才发现CommandBase里面有很多工具方法，但是懒得改了，就这样吧
+  // 才发现CommandBase里面有很多工具方法，但是懒得改了，就这样吧
 
-    // region 实现CommandBase
+  // region 实现CommandBase
 
-    @Override
-    public int getRequiredPermissionLevel() {
+  public static final List<KeyValue<String, ECommandType>> HELP_MESSAGE =
+      Arrays.stream(ECommandType.values())
+          .map(type -> {
+            String command = NarcissusUtils.getCommand(type);
+            if (StringUtils.isNotNullOrEmpty(command)) {
+              return new KeyValue<>(command, type);
+            }
+            return null;
+          })
+          .filter(Objects::nonNull)
+          .filter(keyValue -> !keyValue.getValue().isIgnore())
+          .sorted(Comparator.comparing(keyValue -> keyValue.getValue().getSort()))
+          .collect(Collectors.toList());
+
+  public static void verifyExecuteResult(ICommandSender sender, int result) {
+    if (result < 0) {
+      NarcissusUtils.sendTranslatableMessage((EntityPlayerMP) sender,
+          I18nUtils.getKey(EI18nType.MESSAGE, "command_failed"));
+    }
+  }
+
+  /**
+   * 获取指令补全提示(快乐堆粪)
+   *
+   * @param sender 指令发送者
+   * @param args   指令参数
+   * @return 指令补全提示
+   */
+  public static List<String> getSuggestions(ICommandSender sender, String[] args) {
+    final MinecraftServer server = NarcissusFarewell.getServerInstance();
+    final EntityPlayer player = (EntityPlayer) sender;
+    final List<String> suggestions = new ArrayList<>();
+
+    if (args.length == 0) {
+      Arrays.stream(ECommandType.values())
+          .filter(type -> !type.isIgnore())
+          .filter(NarcissusUtils::isTeleportEnabled)
+          .filter(type -> NarcissusUtils.hasCommandPermission(player, type))
+          .sorted(Comparator.comparing(ECommandType::getSort))
+          .map(value -> NarcissusUtils.getCommand(value, false))
+          .distinct()
+          .forEach(suggestions::add);
+
+      if (NarcissusUtils.hasCommandPermission(player, ECommandType.VIRTUAL_OP)) {
+        suggestions.add("config");
+      }
+
+      return suggestions;
+    }
+
+    if (args.length == 1) {
+      Arrays.stream(ECommandType.values())
+          .filter(type -> !type.isIgnore())
+          .filter(NarcissusUtils::isTeleportEnabled)
+          .filter(type -> NarcissusUtils.hasCommandPermission(player, type))
+          .sorted(Comparator.comparing(ECommandType::getSort))
+          .map(value -> NarcissusUtils.getCommand(value, false))
+          .filter(command -> StringUtils.isNullOrEmpty(args[0]) || command.startsWith(args[0]))
+          .distinct()
+          .forEach(suggestions::add);
+
+      if (!NarcissusUtils.hasCommandPermission(player, ECommandType.VIRTUAL_OP)) {
+        return suggestions;
+      }
+
+      if (StringUtils.isNullOrEmpty(args[0]) || "config".startsWith(args[0])) {
+        suggestions.add("config");
+      }
+      return suggestions;
+    }
+
+    // 根据指令帮助中的参数列表进行补全提示
+    final String arg = args[args.length - 1];
+
+    final String argStart = args[0];
+    // 帮助信息
+
+    if (argStart.equals("help")) {
+      if (args.length != 2) {
+        return suggestions;
+      }
+      String input = args[1];
+      boolean isInputEmpty = StringUtils.isNullOrEmpty(input);
+      int totalPages =
+          (int) Math.ceil((double) HELP_MESSAGE.size() / ServerConfig.HELP_INFO_NUM_PER_PAGE);
+      for (int i = 0; i < totalPages && isInputEmpty; i++) {
+        suggestions.add(String.valueOf(i + 1));
+      }
+      Arrays.stream(ECommandType.values())
+          .filter(type -> type != ECommandType.HELP)
+          .filter(type -> !type.isIgnore())
+          .filter(type -> !type.name().toLowerCase().contains("concise"))
+          .filter(type -> isInputEmpty || type.name().toLowerCase().contains(input.toLowerCase()))
+          .sorted(Comparator.comparing(ECommandType::getSort))
+          .forEach(type -> suggestions.add(type.name()));
+      return suggestions;
+    }
+
+    // 设置语言
+    if (argStart.equals(ServerConfig.COMMAND_LANGUAGE)) {
+      if (args.length != 2) {
+        return suggestions;
+      }
+
+      suggestions.add("client");
+      suggestions.add("server");
+      suggestions.addAll(I18nUtils.getI18nFiles());
+      return suggestions;
+    }
+
+    // 获取UUID
+    if (argStart.equals(ServerConfig.COMMAND_UUID)) {
+      if (!NarcissusUtils.isTeleportEnabled(ECommandType.UUID)
+          || !NarcissusUtils.hasCommandPermission(player, ECommandType.UUID)
+          || args.length != 2) {
+        return suggestions;
+      }
+      suggestions.addAll(getPlayerNameSuggestions(server, args));
+      return suggestions;
+    }
+
+    // 传送卡
+    if (argStart.equals(ServerConfig.COMMAND_CARD)) {
+      if (!NarcissusUtils.isTeleportEnabled(ECommandType.CARD)
+          || !NarcissusUtils.hasCommandPermission(player, ECommandType.SET_CARD)) {
+        return suggestions;
+      }
+
+      switch (args.length) {
+        case 2:
+          suggestions.add("get");
+          suggestions.add("add");
+          suggestions.add("set");
+          break;
+        case 3:
+          suggestions.addAll(getPlayerNameSuggestions(server, args));
+          break;
+        case 4:
+          suggestions.add("-5");
+          suggestions.add("-1");
+          suggestions.add("1");
+          suggestions.add("5");
+          suggestions.add("10");
+          suggestions.add("20");
+          break;
+      }
+
+      return suggestions;
+    }
+
+    // 分享坐标
+    if (argStart.equals(ServerConfig.COMMAND_SHARE)) {
+      if (!NarcissusUtils.isTeleportEnabled(ECommandType.SHARE)
+          || !NarcissusUtils.hasCommandPermission(player, ECommandType.SHARE)) {
+        return suggestions;
+      }
+      switch (args.length) {
+        case 2:
+          // 获取玩家私人传送点
+          final String name = args[1];
+          final IPlayerTeleportData data = PlayerTeleportData.get(player);
+          for (KeyValue<String, String> home : data.getHomeCoordinate().keySet()) {
+            // -> 用于标识home，方便shareCommand中识别
+            String homeString = home.getValue() + "->" + home.getKey();
+            if (StringUtils.isNullOrEmptyEx(name) || homeString.toLowerCase().contains(name)) {
+              // suggestions.add(StringUtils.formatString(homeString));
+              suggestions.add(homeString);
+            }
+          }
+          break;
+        case 3:
+          suggestions.addAll(getPlayerNameSuggestions(server, args));
+          suggestions.add("@a");
+          break;
+      }
+
+      return suggestions;
+    }
+
+    // 毒杀玩家
+    if (argStart.equals(ServerConfig.COMMAND_FEED)) {
+      if (!NarcissusUtils.isTeleportEnabled(ECommandType.FEED)
+          || !NarcissusUtils.hasCommandPermission(player, ECommandType.FEED_OTHER)) {
+        return suggestions;
+      }
+      if (args.length == 2) {
+        suggestions.addAll(getPlayerNameSuggestions(server, args));
+        suggestions.add("@a");
+      }
+      return suggestions;
+    }
+
+    // 传送到指定坐标
+    if (argStart.equals(ServerConfig.COMMAND_TP_COORDINATE)) {
+      if (!NarcissusUtils.isTeleportEnabled(ECommandType.TP_COORDINATE)
+          || !NarcissusUtils.hasCommandPermission(player, ECommandType.TP_COORDINATE)) {
+        return suggestions;
+      }
+
+      switch (args.length) {
+        case 2:
+          suggestions.addAll(getPlayerNameSuggestions(server, args));
+          suggestions.addAll(getCoordinateSuggestions(new Coordinate(player), args, 1));
+          break;
+
+        case 3:
+          List<String> coordinateSuggestions = getCoordinateSuggestions(new Coordinate(player),
+              args, 1);
+          suggestions.addAll(coordinateSuggestions);
+          if (!coordinateSuggestions.isEmpty() || StringUtils.isNullOrEmptyEx(arg)) {
+            break;
+          }
+
+          if ("safe".startsWith(arg)) {
+            suggestions.add("safe");
+          } else if ("unsafe".contains(arg)) {
+            suggestions.add("unsafe");
+          }
+          break;
+
+        case 4:
+          suggestions.addAll(getCoordinateSuggestions(new Coordinate(player), args, 1));
+          break;
+
+        case 5:
+          if (StringUtils.isNullOrEmptyEx(arg)) {
+            suggestions.add("safe");
+            suggestions.add("unsafe");
+            break;
+          }
+          if ("safe".startsWith(arg)) {
+            suggestions.add("safe");
+          } else if ("unsafe".contains(arg)) {
+            suggestions.add("unsafe");
+          }
+          break;
+
+        case 6:
+          DimensionUtils.getStringIds().stream()
+              .filter(string -> StringUtils.isNullOrEmpty(arg) || string.contains(arg))
+              .filter(StringUtils::isNotNullOrEmpty)
+              .distinct()
+              .forEach(suggestions::add);
+          break;
+      }
+
+      return suggestions;
+    }
+
+    // 传送到指定结构
+    if (argStart.equals(ServerConfig.COMMAND_TP_STRUCTURE)) {
+      if (!NarcissusUtils.isTeleportEnabled(ECommandType.TP_STRUCTURE)
+          || !NarcissusUtils.hasCommandPermission(player, ECommandType.TP_STRUCTURE)) {
+        return suggestions;
+      }
+      switch (args.length) {
+        case 2:
+          NarcissusUtils.getStructureList().stream()
+              .filter(string -> StringUtils.isNullOrEmpty(arg) || string.contains(arg))
+              .forEach(suggestions::add);
+          BiomeUtils.getStringIds().stream()
+              .filter(biome -> StringUtils.isNullOrEmpty(arg) || biome.contains(arg))
+              .forEach(suggestions::add);
+          break;
+
+        case 3:
+          if (StringUtils.isNullOrEmptyEx(arg)) {
+            suggestions.add("safe");
+            suggestions.add("unsafe");
+            break;
+          }
+          if ("safe".startsWith(arg)) {
+            suggestions.add("safe");
+          } else if ("unsafe".contains(arg)) {
+            suggestions.add("unsafe");
+          }
+          break;
+
+        case 4:
+          DimensionUtils.getStringIds().stream()
+              .filter(string -> StringUtils.isNullOrEmpty(arg) || string.contains(arg))
+              .forEach(suggestions::add);
+          break;
+      }
+
+      return suggestions;
+    }
+
+    // 请求传送到指定玩家
+    if (argStart.equals(ServerConfig.COMMAND_TP_ASK)) {
+      if (!NarcissusUtils.isTeleportEnabled(ECommandType.TP_ASK)
+          || !NarcissusUtils.hasCommandPermission(player, ECommandType.TP_ASK)) {
+        return suggestions;
+      }
+
+      switch (args.length) {
+        case 2:
+          suggestions.addAll(getPlayerNameSuggestions(server, args));
+          break;
+        case 3:
+          if (StringUtils.isNullOrEmptyEx(arg) || "safe".startsWith(arg)) {
+            suggestions.add("safe");
+          }
+          if (StringUtils.isNullOrEmptyEx(arg) || "unsafe".contains(arg)) {
+            suggestions.add("unsafe");
+          }
+          break;
+      }
+
+      return suggestions;
+    }
+
+    // 同意传送请求
+    if (argStart.equals(ServerConfig.COMMAND_TP_ASK_YES)) {
+      if (!NarcissusUtils.isTeleportEnabled(ECommandType.TP_ASK)
+          || !NarcissusUtils.hasCommandPermission(player, ECommandType.TP_ASK_YES)) {
+        return suggestions;
+      }
+
+      if (args.length == 2) {
+        suggestions.addAll(getReqIndexSuggestions(player, ETeleportType.TP_ASK, arg, true));
+      }
+      return suggestions;
+    }
+
+    // 拒绝传送请求
+    if (argStart.equals(ServerConfig.COMMAND_TP_ASK_NO)) {
+      if (!NarcissusUtils.isTeleportEnabled(ECommandType.TP_ASK)
+          || !NarcissusUtils.hasCommandPermission(player, ECommandType.TP_ASK_NO)) {
+        return suggestions;
+      }
+      if (args.length == 2) {
+        suggestions.addAll(getReqIndexSuggestions(player, ETeleportType.TP_ASK, arg, true));
+      }
+      return suggestions;
+    }
+
+    // 取消传送请求
+    else if (argStart.equals(ServerConfig.COMMAND_TP_ASK_CANCEL)) {
+      if (!NarcissusUtils.isTeleportEnabled(ECommandType.TP_ASK)
+          || !NarcissusUtils.hasCommandPermission(player, ECommandType.TP_ASK_CANCEL)) {
+        return suggestions;
+      }
+
+      if (args.length == 2) {
+        suggestions.addAll(getReqIndexSuggestions(player, ETeleportType.TP_ASK, arg, false));
+      }
+      return suggestions;
+    }
+
+    // 请求指定玩家传送
+    else if (argStart.equals(ServerConfig.COMMAND_TP_HERE)) {
+      if (!NarcissusUtils.isTeleportEnabled(ECommandType.TP_HERE)
+          || !NarcissusUtils.hasCommandPermission(player, ECommandType.TP_HERE)) {
+        return suggestions;
+      }
+
+      switch (args.length) {
+        case 2:
+          suggestions.addAll(getPlayerNameSuggestions(server, args));
+          break;
+
+        case 3:
+          if (StringUtils.isNullOrEmptyEx(arg)) {
+            suggestions.add("safe");
+            suggestions.add("unsafe");
+            break;
+          }
+          if ("safe".startsWith(arg)) {
+            suggestions.add("safe");
+          } else if ("unsafe".contains(arg)) {
+            suggestions.add("unsafe");
+          }
+          break;
+      }
+      return suggestions;
+    }
+
+    // 同意传送请求
+    if (args.equals(ServerConfig.COMMAND_TP_HERE_YES)) {
+      if (!NarcissusUtils.isTeleportEnabled(ECommandType.TP_HERE)
+          || !NarcissusUtils.hasCommandPermission(player, ECommandType.TP_HERE_YES)) {
+        return suggestions;
+      }
+
+      if (args.length == 2) {
+        suggestions.addAll(getReqIndexSuggestions(player, ETeleportType.TP_HERE, arg, true));
+      }
+
+      return suggestions;
+    }
+
+    // 拒绝传送请求
+    if (argStart.equals(ServerConfig.COMMAND_TP_HERE_NO)) {
+      if (!NarcissusUtils.isTeleportEnabled(ECommandType.TP_HERE)
+          || !NarcissusUtils.hasCommandPermission(player, ECommandType.TP_HERE_NO)) {
+        return suggestions;
+      }
+      if (args.length == 2) {
+        suggestions.addAll(getReqIndexSuggestions(player, ETeleportType.TP_HERE, arg, true));
+      }
+      return suggestions;
+    }
+
+    // 拒绝传送请求
+    if (argStart.equals(ServerConfig.COMMAND_TP_HERE_CANCEL)) {
+      if (!NarcissusUtils.isTeleportEnabled(ECommandType.TP_HERE)
+          || !NarcissusUtils.hasCommandPermission(player, ECommandType.TP_HERE_CANCEL)) {
+        return suggestions;
+      }
+
+      if (args.length == 2) {
+        suggestions.addAll(getReqIndexSuggestions(player, ETeleportType.TP_HERE, arg, false));
+      }
+      return suggestions;
+    }
+
+    // 传送到随机位置
+    if (argStart.equals(ServerConfig.COMMAND_TP_RANDOM)) {
+      if (!NarcissusUtils.isTeleportEnabled(ECommandType.TP_RANDOM)
+          || !NarcissusUtils.hasCommandPermission(player, ECommandType.TP_RANDOM)) {
+        return suggestions;
+      }
+
+      switch (args.length) {
+        case 2:
+          for (int i = 1; i <= 5; i++) {
+            int index = (int) Math.pow(10, i);
+            if (index <= ServerConfig.TELEPORT_RANDOM_DISTANCE_LIMIT) {
+              suggestions.add(String.valueOf(index));
+            }
+          }
+          break;
+
+        case 3:
+          if (StringUtils.isNullOrEmptyEx(arg)) {
+            suggestions.add("safe");
+            suggestions.add("unsafe");
+            break;
+          }
+          if ("safe".startsWith(arg)) {
+            suggestions.add("safe");
+          } else if ("unsafe".contains(arg)) {
+            suggestions.add("unsafe");
+          }
+          break;
+
+        case 4:
+          DimensionUtils.getStringIds().stream()
+              .filter(string -> StringUtils.isNullOrEmpty(arg) || string.contains(arg))
+              .forEach(suggestions::add);
+          break;
+      }
+
+      return suggestions;
+    }
+
+    // 传送到出生点
+    if (argStart.equals(ServerConfig.COMMAND_TP_SPAWN)) {
+      if (!NarcissusUtils.isTeleportEnabled(ECommandType.TP_SPAWN)
+          || !NarcissusUtils.hasCommandPermission(player, ECommandType.TP_SPAWN)) {
+        return suggestions;
+      }
+
+      if (args.length != 2 || StringUtils.isNullOrEmptyEx(arg)) {
+        suggestions.add("safe");
+        suggestions.add("unsafe");
+        return suggestions;
+      }
+      if ("safe".startsWith(arg)) {
+        suggestions.add("safe");
+      } else if ("unsafe".contains(arg)) {
+        suggestions.add("unsafe");
+      }
+      return suggestions;
+    }
+
+    // 传送到世界出生点
+    if (argStart.equals(ServerConfig.COMMAND_TP_WORLD_SPAWN)) {
+      if (!NarcissusUtils.isTeleportEnabled(ECommandType.TP_WORLD_SPAWN)
+          || !NarcissusUtils.hasCommandPermission(player, ECommandType.TP_WORLD_SPAWN)) {
+        return suggestions;
+      }
+
+      if (args.length != 2 || StringUtils.isNullOrEmptyEx(arg)) {
+        suggestions.add("safe");
+        suggestions.add("unsafe");
+        return suggestions;
+      }
+      if ("safe".startsWith(arg)) {
+        suggestions.add("safe");
+      } else if ("unsafe".contains(arg)) {
+        suggestions.add("unsafe");
+      }
+      return suggestions;
+    }
+
+    // 传送到顶部
+    if (argStart.equals(ServerConfig.COMMAND_TP_TOP)) {
+      if (!NarcissusUtils.isTeleportEnabled(ECommandType.TP_TOP)
+          || !NarcissusUtils.hasCommandPermission(player, ECommandType.TP_TOP)) {
+        return suggestions;
+      }
+
+      if (args.length != 2 || StringUtils.isNullOrEmptyEx(arg)) {
+        suggestions.add("safe");
+        suggestions.add("unsafe");
+        return suggestions;
+      }
+      if ("safe".startsWith(arg)) {
+        suggestions.add("safe");
+      } else if ("unsafe".contains(arg)) {
+        suggestions.add("unsafe");
+      }
+      return suggestions;
+    }
+
+    // 传送到底部
+    if (argStart.equals(ServerConfig.COMMAND_TP_BOTTOM)) {
+      if (!NarcissusUtils.isTeleportEnabled(ECommandType.TP_BOTTOM)
+          || !NarcissusUtils.hasCommandPermission(player, ECommandType.TP_BOTTOM)) {
+        return suggestions;
+      }
+
+      if (args.length != 2 || StringUtils.isNullOrEmptyEx(arg)) {
+        suggestions.add("safe");
+        suggestions.add("unsafe");
+        return suggestions;
+      }
+      if ("safe".startsWith(arg)) {
+        suggestions.add("safe");
+      } else if ("unsafe".contains(arg)) {
+        suggestions.add("unsafe");
+      }
+      return suggestions;
+    }
+
+    // 传送到上方
+    if (argStart.equals(ServerConfig.COMMAND_TP_UP)) {
+      if (!NarcissusUtils.isTeleportEnabled(ECommandType.TP_UP)
+          || !NarcissusUtils.hasCommandPermission(player, ECommandType.TP_UP)) {
+        return suggestions;
+      }
+
+      if (args.length != 2 || StringUtils.isNullOrEmptyEx(arg)) {
+        suggestions.add("safe");
+        suggestions.add("unsafe");
+        return suggestions;
+      }
+      if ("safe".startsWith(arg)) {
+        suggestions.add("safe");
+      } else if ("unsafe".contains(arg)) {
+        suggestions.add("unsafe");
+      }
+      return suggestions;
+    }
+
+    // 传送到下方
+    if (argStart.equals(ServerConfig.COMMAND_TP_DOWN)) {
+      if (!NarcissusUtils.isTeleportEnabled(ECommandType.TP_DOWN)
+          || !NarcissusUtils.hasCommandPermission(player, ECommandType.TP_DOWN)) {
+        return suggestions;
+      }
+
+      if (args.length != 2 || StringUtils.isNullOrEmptyEx(arg)) {
+        suggestions.add("safe");
+        suggestions.add("unsafe");
+        return suggestions;
+      }
+      if ("safe".startsWith(arg)) {
+        suggestions.add("safe");
+      } else if ("unsafe".contains(arg)) {
+        suggestions.add("unsafe");
+      }
+      return suggestions;
+    }
+
+    // 传送到视线尽头
+    if (argStart.equals(ServerConfig.COMMAND_TP_VIEW)) {
+      if (!NarcissusUtils.isTeleportEnabled(ECommandType.TP_VIEW)
+          || !NarcissusUtils.hasCommandPermission(player, ECommandType.TP_VIEW)) {
+        return suggestions;
+      }
+
+      if (args.length != 2 || StringUtils.isNullOrEmptyEx(arg)) {
+        suggestions.add("safe");
+        suggestions.add("unsafe");
+        return suggestions;
+      }
+      if ("safe".startsWith(arg)) {
+        suggestions.add("safe");
+      } else if ("unsafe".contains(arg)) {
+        suggestions.add("unsafe");
+      }
+
+      return suggestions;
+    }
+
+    // 传送到预设位置
+    if (argStart.equals(ServerConfig.COMMAND_TP_HOME)) {
+
+      if (!NarcissusUtils.isTeleportEnabled(ECommandType.TP_HOME)
+          || !NarcissusUtils.hasCommandPermission(player, ECommandType.TP_HOME)) {
+        return suggestions;
+      }
+
+      switch (args.length) {
+        case 2:
+          if (StringUtils.isNullOrEmptyEx(arg)) {
+            suggestions.add("safe");
+            suggestions.add("unsafe");
+            break;
+          }
+
+          if ("safe".startsWith(arg)) {
+            suggestions.add("safe");
+          } else if ("unsafe".contains(arg)) {
+            suggestions.add("unsafe");
+          }
+
+          PlayerTeleportData.get(player).getHomeCoordinate().keySet().stream()
+              .filter(keyValue -> keyValue.getValue().startsWith(arg))
+              .map(KeyValue::getValue)
+              .forEach(suggestions::add);
+          break;
+
+        case 3:
+          if (StringUtils.isNullOrEmptyEx(arg)) {
+            suggestions.add("safe");
+            suggestions.add("unsafe");
+            break;
+          }
+          if ("safe".startsWith(arg)) {
+            suggestions.add("safe");
+          } else if ("unsafe".contains(arg)) {
+            suggestions.add("unsafe");
+          }
+          PlayerTeleportData.get(player).getHomeCoordinate().keySet().stream()
+              .filter(keyValue -> keyValue.getKey().contains(arg))
+              .map(KeyValue::getKey)
+              .forEach(suggestions::add);
+          break;
+
+        case 4:
+          PlayerTeleportData.get(player).getHomeCoordinate().keySet().stream()
+              .filter(keyValue -> keyValue.getValue().equals(args[1]))
+              .filter(keyValue -> StringUtils.isNullOrEmpty(arg) || keyValue.getKey().contains(arg))
+              .map(KeyValue::getKey)
+              .forEach(suggestions::add);
+          break;
+      }
+
+      return suggestions;
+    }
+
+    // 添加预设位置
+    if (argStart.equals(ServerConfig.COMMAND_SET_HOME)) {
+      if (!NarcissusUtils.isTeleportEnabled(ECommandType.TP_HOME)
+          || !NarcissusUtils.hasCommandPermission(player, ECommandType.SET_HOME)) {
+        return suggestions;
+      }
+
+      switch (args.length) {
+        case 2:
+          String name = "home";
+          int index = 0;
+          while (true) {
+            int finalIndex = index;
+            if (PlayerTeleportData.get(player).getHomeCoordinate().keySet().stream()
+                .noneMatch(keyValue -> keyValue.getValue().equals(name + (finalIndex == 0 ? "" :
+                    finalIndex)))) {
+              suggestions.add(name + index);
+              break;
+            }
+            index++;
+          }
+          break;
+
+        case 3:
+          if (StringUtils.isNullOrEmptyEx(arg)) {
+            suggestions.add("default");
+            suggestions.add("notdefault");
+            break;
+          }
+          if ("default".startsWith(arg)) {
+            suggestions.add("default");
+          } else if ("notdefault".startsWith(arg)) {
+            suggestions.add("notdefault");
+          }
+          break;
+      }
+
+      return suggestions;
+    }
+
+    // 删除预设位置
+    if (argStart.equals(ServerConfig.COMMAND_DEL_HOME)) {
+      if (!NarcissusUtils.isTeleportEnabled(ECommandType.TP_HOME)
+          || !NarcissusUtils.hasCommandPermission(player, ECommandType.DEL_HOME)) {
+        return suggestions;
+      }
+
+      switch (args.length) {
+        case 2:
+          PlayerTeleportData.get(player).getHomeCoordinate().keySet().stream()
+              .filter(keyValue -> StringUtils.isNullOrEmpty(arg) || keyValue.getValue().startsWith(arg))
+              .map(KeyValue::getValue)
+              .forEach(suggestions::add);
+          break;
+
+        case 3:
+          PlayerTeleportData.get(player).getHomeCoordinate().keySet().stream()
+              .filter(keyValue -> keyValue.getValue().equals(args[1]))
+              .filter(keyValue -> StringUtils.isNullOrEmpty(arg) || keyValue.getKey().contains(arg))
+              .map(KeyValue::getKey)
+              .forEach(suggestions::add);
+          break;
+      }
+
+      return suggestions;
+    }
+
+    // 传送到驿站
+    if (argStart.equals(ServerConfig.COMMAND_TP_STAGE)) {
+      if (!NarcissusUtils.isTeleportEnabled(ECommandType.TP_STAGE)
+          || !NarcissusUtils.hasCommandPermission(player, ECommandType.TP_STAGE)) {
+        return suggestions;
+      }
+
+      switch (args.length) {
+        case 2:
+          WorldStageData.get().getStageCoordinate().keySet().stream()
+              .filter(keyValue -> StringUtils.isNullOrEmpty(arg) || keyValue.getValue().contains(arg))
+              .map(KeyValue::getValue)
+              .forEach(suggestions::add);
+          break;
+
+        case 3:
+          if (StringUtils.isNullOrEmptyEx(arg)) {
+            suggestions.add("safe");
+            suggestions.add("unsafe");
+            break;
+          }
+
+          if ("safe".startsWith(arg)) {
+            suggestions.add("safe");
+          } else if ("unsafe".contains(arg)) {
+            suggestions.add("unsafe");
+          }
+          break;
+
+        case 4:
+          WorldStageData.get().getStageCoordinate().keySet().stream()
+              .filter(keyValue -> keyValue.getValue().equals(args[1]))
+              .filter(keyValue -> StringUtils.isNullOrEmpty(arg) || keyValue.getKey().contains(arg))
+              .map(KeyValue::getKey)
+              .forEach(suggestions::add);
+          break;
+      }
+
+      return suggestions;
+    }
+
+    // 添加驿站
+    if (argStart.equals(ServerConfig.COMMAND_SET_STAGE)) {
+      if (!NarcissusUtils.isTeleportEnabled(ECommandType.TP_STAGE)
+          || !NarcissusUtils.hasCommandPermission(player, ECommandType.SET_STAGE)) {
+        return suggestions;
+      }
+
+      switch (args.length) {
+        case 2:
+          String name = "stage";
+          for (int i = 0; i < Integer.MAX_VALUE; i++) {
+            final String n = name + (i == 0 ? "" : i);
+            if (WorldStageData.get().getStageCoordinate().keySet().stream()
+                .map(KeyValue::getKey)
+                .noneMatch(n::equals)
+            ) {
+              suggestions.add(name + i);
+              break;
+            }
+          }
+          break;
+
+        case 3:
+        case 4:
+        case 5:
+          suggestions.addAll(getCoordinateSuggestions(new Coordinate(player), args, 2));
+          break;
+        case 6:
+          DimensionUtils.getStringIds().stream()
+              .filter(string -> StringUtils.isNullOrEmpty(arg) || string.contains(arg))
+              .forEach(suggestions::add);
+      }
+
+      return suggestions;
+    }
+
+    // 删除驿站
+    if (argStart.equals(ServerConfig.COMMAND_DEL_STAGE)) {
+      if (!NarcissusUtils.isTeleportEnabled(ECommandType.TP_STAGE)
+          || !NarcissusUtils.hasCommandPermission(player, ECommandType.DEL_STAGE)) {
+        return suggestions;
+      }
+
+      switch (args.length) {
+        case 2:
+          WorldStageData.get().getStageCoordinate().keySet().stream()
+              .filter(keyValue -> StringUtils.isNullOrEmpty(arg) || keyValue.getValue().contains(arg))
+              .map(KeyValue::getValue)
+              .forEach(suggestions::add);
+          break;
+
+        case 3:
+          WorldStageData.get().getStageCoordinate().keySet().stream()
+              .filter(keyValue -> keyValue.getValue().equals(args[1]))
+              .filter(keyValue -> StringUtils.isNullOrEmpty(arg) || keyValue.getKey().contains(arg))
+              .map(KeyValue::getKey)
+              .forEach(suggestions::add);
+          break;
+      }
+
+      return suggestions;
+    }
+
+    // 传送到上一次离开位置
+    if (argStart.equals(ServerConfig.COMMAND_TP_BACK)) {
+      if (!NarcissusUtils.isTeleportEnabled(ECommandType.TP_BACK)
+          || !NarcissusUtils.hasCommandPermission(player, ECommandType.TP_BACK)) {
+        return suggestions;
+      }
+
+      switch (args.length) {
+        case 2:
+          if (StringUtils.isNullOrEmptyEx(arg)) {
+            suggestions.add("safe");
+            suggestions.add("unsafe");
+            break;
+          }
+          if ("safe".startsWith(arg)) {
+            suggestions.add("safe");
+          } else if ("unsafe".contains(arg)) {
+            suggestions.add("unsafe");
+          }
+          break;
+
+        case 3:
+          Arrays.stream(ETeleportType.values()).map(Enum::name)
+              .filter(string -> StringUtils.isNullOrEmpty(arg) || string.contains(arg))
+              .forEach(suggestions::add);
+          break;
+
+        case 4:
+          PlayerTeleportData.get(player).getTeleportRecords().stream()
+              .filter(record -> record.getTeleportType() == ETeleportType.valueOf(args[2]))
+              .map(record -> record.getBefore().getDimension())
+              .filter(string -> StringUtils.isNullOrEmpty(arg) || string.contains(arg))
+              .forEach(suggestions::add);
+          break;
+      }
+      return suggestions;
+    }
+
+    // 虚拟OP
+    if (argStart.equals(ServerConfig.COMMAND_VIRTUAL_OP)) {
+      if (!NarcissusUtils.isTeleportEnabled(ECommandType.VIRTUAL_OP)
+          || !NarcissusUtils.hasCommandPermission(player, ECommandType.VIRTUAL_OP)) {
+        return suggestions;
+      }
+
+      switch (args.length) {
+        case 2:
+          final boolean flag = StringUtils.isNullOrEmptyEx(arg);
+          final String dat = arg.toLowerCase();
+          Arrays.stream(EOperationType.values())
+              .map(EOperationType::name)
+              .map(String::toLowerCase)
+              .filter(name -> flag || name.contains(dat))
+              .forEach(suggestions::add);
+          break;
+
+        case 3:
+          suggestions.addAll(getPlayerNameSuggestions(server, args));
+          suggestions.add("@a");
+          break;
+
+        case 4:
+          Arrays.stream(ECommandType.values())
+              .filter(ECommandType::isOp)
+              .filter(type -> StringUtils.isNullOrEmptyEx(arg) || type.name().startsWith(arg))
+              .sorted(Comparator.comparing(ECommandType::getSort))
+              .map(ECommandType::name)
+              .forEach(suggestions::add);
+          break;
+      }
+
+      return suggestions;
+    }
+    // 服务器配置
+
+    if (args[0].equals("config")) {
+      if (!NarcissusUtils.hasCommandPermission(player, ECommandType.VIRTUAL_OP)) {
+        return suggestions;
+      }
+
+      if (args.length == 2) {
+        suggestions.add("get");
+        suggestions.add("set");
+        return suggestions;
+      }
+
+      if (args[1].equals("get")) {
+        if (args.length == 3) {
+          suggestions.add("teleportCard");
+        }
+        return suggestions;
+      }
+
+      if (args[1].equals("set")) {
+        if (args.length == 3) {
+          suggestions.add("teleportCard");
+          suggestions.add("mode");
+          return suggestions;
+        }
+
+        if (args.length == 4) {
+          if (args[2].equals("teleportCard")) {
+            suggestions.add("true");
+            suggestions.add("false");
+            return suggestions;
+          }
+
+          if (args[2].equals("mode")) {
+            suggestions.add("0");
+            suggestions.add("1");
+            suggestions.add("2");
+            suggestions.add("3");
+            return suggestions;
+          }
+          return suggestions;
+        }
+      }
+
+      return suggestions;
+    }
+
+    return suggestions;
+  }
+
+  /**
+   * 解析并执行指令(快乐堆粪)
+   *
+   * @param sender 指令发送者
+   * @param args   指令参数
+   */
+  public static int executeCommand(@NonNull ICommandSender sender,
+                                   @ParametersAreNonnullByDefault String[] args) throws PlayerNotFoundException {
+    MinecraftServer server = NarcissusFarewell.getServerInstance();
+    EntityPlayerMP player;
+    if (sender instanceof EntityPlayerMP) {
+      player = (EntityPlayerMP) sender;
+    } else {
+      player = null;
+      if (!(args.length == 2 && args[0].equals(ServerConfig.COMMAND_FEED)) && !args[0].equals(ServerConfig.COMMAND_VIRTUAL_OP)) {
+        throw new PlayerNotFoundException("commands.generic.player.unspecified");
+      }
+    }
+    // 帮助信息
+    if (args.length == 0 || ((args.length == 1 || args.length == 2) && args[0].equals("help"))) {
+      String command;
+      int page;
+      if (args.length == 2) {
+        command = args[1];
+        page = StringUtils.toInt(command);
+      } else {
+        command = "";
+        page = 1;
+      }
+      if (page > 0) {
+        int pages =
+            (int) Math.ceil((double) HELP_MESSAGE.size() / ServerConfig.HELP_INFO_NUM_PER_PAGE);
+        Component helpInfo = Component.literal(StringUtils.format(ServerConfig.HELP_HEADER, page,
+            pages));
+        NarcissusUtils.sendMessage(player, helpInfo);
+        for (int i = 0; (page - 1) * ServerConfig.HELP_INFO_NUM_PER_PAGE + i < HELP_MESSAGE.size() && i < ServerConfig.HELP_INFO_NUM_PER_PAGE; i++) {
+          KeyValue<String, ECommandType> keyValue =
+              HELP_MESSAGE.get((page - 1) * ServerConfig.HELP_INFO_NUM_PER_PAGE + i);
+          Component commandTips;
+          if (keyValue.getValue().name().toLowerCase().contains("concise")) {
+            commandTips = Component.translatable(NarcissusUtils.getPlayerLanguage(player),
+                EI18nType.COMMAND, "concise",
+                NarcissusUtils.getCommand(keyValue.getValue().replaceConcise()));
+          } else {
+            commandTips = Component.translatable(NarcissusUtils.getPlayerLanguage(player),
+                EI18nType.COMMAND, keyValue.getValue().name().toLowerCase());
+          }
+          commandTips.setColor(Color.GRAY.getRGB());
+          NarcissusUtils.sendMessage(player, Component.literal("/").append(keyValue.getKey())
+              .append(new Component(" -> ").setColor(Color.YELLOW.getRGB()))
+              .append(commandTips));
+        }
+        // 添加翻页按钮
+        if (pages > 1) {
+          Component pageButton = Component.literal("");
+          Component prevButton = Component.literal("<<< ");
+          if (page > 1) {
+            prevButton.setColor(EMCColor.AQUA.getColor())
+                .setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND,
+                    String.format("/%s %s %d", NarcissusUtils.getCommandPrefix(), "help",
+                        page - 1)))
+                .setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT,
+                    Component.translatable(NarcissusUtils.getPlayerLanguage(player),
+                        EI18nType.MESSAGE, "previous_page").toTextComponent()));
+          } else {
+            prevButton.setColor(EMCColor.DARK_AQUA.getColor());
+          }
+          pageButton.append(prevButton);
+
+          pageButton.append(Component.literal(String.format(" %s/%s "
+                  , StringUtils.padOptimizedLeft(page, String.valueOf(pages).length(), " ")
+                  , pages))
+              .setColor(EMCColor.WHITE.getColor()));
+
+          Component nextButton = Component.literal(" >>>");
+          if (page < pages) {
+            nextButton.setColor(EMCColor.AQUA.getColor())
+                .setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND,
+                    String.format("/%s %s %d", NarcissusUtils.getCommandPrefix(), "help",
+                        page + 1)))
+                .setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT,
+                    Component.translatable(NarcissusUtils.getPlayerLanguage(player),
+                        EI18nType.MESSAGE, "next_page").toTextComponent()));
+          } else {
+            nextButton.setColor(EMCColor.DARK_AQUA.getColor());
+          }
+          pageButton.append(nextButton);
+          NarcissusUtils.sendMessage(player, pageButton);
+        }
+      } else {
+        ECommandType type = ECommandType.valueOf(command);
+        NarcissusUtils.sendMessage(player,
+            Component.literal("/").append(NarcissusUtils.getCommand(type)));
+        NarcissusUtils.sendMessage(player, Component.literal("")
+            .setColor(Color.GRAY.getRGB())
+            .append(Component.translatable(NarcissusUtils.getPlayerLanguage(player)
+                    , EI18nType.COMMAND
+                    , command.toLowerCase() + "_detail")
+                .setColor(Color.GRAY.getRGB())
+            )
+        );
+      }
+      return 1;
+    } else {
+      notifyHelp(player);
+
+      String prefix = args[0];
+      // 设置语言
+      if (prefix.equals(ServerConfig.COMMAND_LANGUAGE)) {
+        // 传送功能前置校验
+        if (checkTeleportPre(player, ECommandType.LANGUAGE)) {
+          return 0;
+        }
+        if (args.length == 2) {
+          IPlayerTeleportData signInData = PlayerTeleportData.get(player);
+          String language = args[1];
+          if (I18nUtils.getI18nFiles().contains(language)) {
+            signInData.setLanguage(language);
+            NarcissusUtils.sendMessage(player, Component.translatable(player, EI18nType.MESSAGE,
+                "player_default_language", language));
+          } else if ("server".equalsIgnoreCase(language) || "client".equalsIgnoreCase(language)) {
+            signInData.setLanguage(language);
+            NarcissusUtils.sendMessage(player, Component.translatable(player, EI18nType.MESSAGE,
+                "player_default_language", language));
+          } else {
+            NarcissusUtils.sendMessage(player, Component.translatable(player, EI18nType.MESSAGE,
+                "language_not_exist").setColor(0xFFFF0000));
+          }
+          return 1;
+        }
+      }
+      // 玩家UUID
+      else if (prefix.equals(ServerConfig.COMMAND_UUID)) {
+        // 传送功能前置校验
+        if (checkTeleportPre(player, ECommandType.UUID)) {
+          return 0;
+        }
+        EntityPlayerMP target = null;
+        if (args.length == 1) {
+          target = player;
+        } else if (args.length == 2) {
+          try {
+            target = CommandBase.getPlayer(sender, args[1]);
+          } catch (CommandException ignored) {
+          }
+        }
+        if (target == null) return -1;
+        String language = ServerConfig.DEFAULT_LANGUAGE;
+        if (player != null) {
+          language = NarcissusUtils.getPlayerLanguage(player);
+        }
+        Component uuid = Component.literal(target.getUniqueID().toString());
+        uuid.setColor(EMCColor.GREEN.getColor())
+            .setClickEvent(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND,
+                target.getUniqueID().toString()))
+            .setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT,
+                Component.translatable(language, EI18nType.MESSAGE, "chat_copy_click").toTextComponent()));
+        Component component = Component.translatable(NarcissusUtils.getPlayerLanguage(target),
+            EI18nType.MESSAGE, "player_uuid", target.getDisplayName(), uuid);
+        NarcissusUtils.sendMessage(sender, component);
+        return 1;
+      }
+      // 传送卡
+      else if (prefix.equals(ServerConfig.COMMAND_CARD)) {
+        // 传送功能前置校验
+        if (checkTeleportPre(player, ECommandType.CARD)) {
+          return 0;
+        }
+        EntityPlayerMP target = null;
+        if (args.length == 1) {
+          target = player;
+        } else if (args.length >= 3) {
+          try {
+            target = CommandBase.getPlayer(sender, args[2]);
+          } catch (CommandException ignored) {
+          }
+        }
+        String type = "get";
+        if (args.length > 2) {
+          type = args[1];
+        }
+        int num = 0;
+        if (args.length == 4) {
+          StringUtils.toInt(args[3]);
+        } else if ((args.length == 2 || args.length == 3) && !type.equals("get")) {
+          return -1;
+        }
+        String language = ServerConfig.DEFAULT_LANGUAGE;
+        if (player != null) {
+          language = NarcissusUtils.getPlayerLanguage(player);
+        }
+        IPlayerTeleportData data = PlayerTeleportData.get(target);
+        switch (type) {
+          case "set":
+            data.setTeleportCard(num);
+            break;
+          case "add":
+            data.plusTeleportCard(num);
+            break;
+          case "get":
+            break;
+          default:
+            throw new IllegalArgumentException("Type " + type + " is not supported");
+        }
+        Component component = Component.translatable(language, EI18nType.MESSAGE, "player_card"
+            , target.getDisplayName()
+            , data.getTeleportCard());
+        NarcissusUtils.sendMessage(player, component);
+        return 1;
+      }
+      // 分享坐标
+      else if (prefix.equals(ServerConfig.COMMAND_SHARE)) {
+        // 传送功能前置校验
+        if (checkTeleportPre(player, ECommandType.SHARE)) {
+          return 0;
+        }
+
+        String name = args.length > 1 ? args[1] : "Shared";
+
+        List<EntityPlayerMP> targetList = new ArrayList<>();
+        if (args.length == 4) {
+          try {
+            targetList.add(CommandBase.getPlayer(sender, args[3]));
+          } catch (IllegalArgumentException | CommandException ignored) {
+            return -1;
+          }
+        } else {
+          targetList.addAll(server.getConfigurationManager().playerEntityList);
+        }
+
+        Component nameComponent;
+        Component tpButton = Component.translatable(EI18nType.MESSAGE, "tp_button");
+        // Component addButton = Component.translatable(EI18nType.MESSAGE, "add_button");
+        Component copyButton = Component.translatable(EI18nType.MESSAGE, "copy_button");
+
+        // 若为home
+        if (name.contains("->")) {
+          IPlayerTeleportData data = PlayerTeleportData.get(player);
+          KeyValue<String, Coordinate> keyValue = data.getHomeCoordinate().entrySet().stream()
+              .map(entry -> new KeyValue<>(entry.getKey().getValue() + "->" + entry.getKey().getKey(), entry.getValue()))
+              .filter(kv -> name.equals(kv.getKey()))
+              .findFirst()
+              .orElse(new KeyValue<>(name, null));
+          String[] split = keyValue.getKey().split("->");
+          Coordinate coordinate = keyValue.getValue();
+          if (coordinate == null) {
+            NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EI18nType.MESSAGE,
+                    "home_not_found_with_name_in_dimension")
+                , split[1], split[0]);
+            return 0;
+          }
+          nameComponent = Component.literal(split[0]);
+
+          String tpCommand = String.format("/%s %s %s %s unsafe %s"
+              , NarcissusUtils.getCommand(ECommandType.TP_COORDINATE)
+              , coordinate.toXString()
+              , coordinate.toYString()
+              , coordinate.toZString()
+              , coordinate.getDimension()
+          );
+          tpButton.setColor(EMCColor.GREEN.getColor())
+              .setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, tpCommand))
+              .setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT,
+                  Component.literal(tpCommand).toTextComponent()));
+          copyButton.setColor(EMCColor.GREEN.getColor())
+              .setClickEvent(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, tpCommand))
+              .setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT,
+                  Component.literal(tpCommand).toTextComponent()));
+
+        }
+        // 若为stage
+        else if (name.contains(">>")) {
+          KeyValue<String, Coordinate> keyValue =
+              WorldStageData.get().getStageCoordinate().entrySet().stream()
+                  .map(entry -> new KeyValue<>(entry.getKey().getValue() + ">>" + entry.getKey().getKey(), entry.getValue()))
+                  .filter(kv -> name.equals(kv.getKey()))
+                  .findFirst()
+                  .orElse(new KeyValue<>(name, null));
+          String[] split = keyValue.getKey().split(">>");
+          Coordinate coordinate = keyValue.getValue();
+          if (coordinate == null) {
+            NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EI18nType.MESSAGE,
+                    "stage_not_found_with_name_in_dimension")
+                , split[1], split[0]);
+            return 0;
+          }
+          nameComponent = Component.literal(split[0]);
+
+          String tpCommand = String.format("/%s %s %s %s unsafe %s"
+              , NarcissusUtils.getCommand(ECommandType.TP_COORDINATE)
+              , coordinate.toXString()
+              , coordinate.toYString()
+              , coordinate.toZString()
+              , coordinate.getDimension()
+          );
+          tpButton.setColor(EMCColor.GREEN.getColor())
+              .setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, tpCommand))
+              .setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT,
+                  Component.literal(tpCommand).toTextComponent()));
+          copyButton.setColor(EMCColor.GREEN.getColor())
+              .setClickEvent(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, tpCommand))
+              .setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT,
+                  Component.literal(tpCommand).toTextComponent()));
+        }
+        // 玩家当前坐标
+        else {
+          nameComponent = Component.literal(name);
+          Coordinate coordinate = new Coordinate(player);
+
+          String tpCommand = String.format("/%s %s %s %s unsafe %s"
+              , NarcissusUtils.getCommand(ECommandType.TP_COORDINATE)
+              , coordinate.toXString()
+              , coordinate.toYString()
+              , coordinate.toZString()
+              , coordinate.getDimension()
+          );
+          tpButton.setColor(EMCColor.GREEN.getColor())
+              .setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, tpCommand))
+              .setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT,
+                  Component.literal(tpCommand).toTextComponent()));
+          copyButton.setColor(EMCColor.GREEN.getColor())
+              .setClickEvent(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, tpCommand))
+              .setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT,
+                  Component.literal(tpCommand).toTextComponent()));
+        }
+
+        String lang = NarcissusUtils.getPlayerLanguage(player);
+        Component component = Component.translatable(lang, EI18nType.MESSAGE, "shared_coordinates"
+            , player.getDisplayName()
+            , nameComponent
+            , tpButton
+            // , addButton
+            , copyButton);
+        for (EntityPlayerMP target : targetList) {
+          if (!target.getUniqueID().equals(player.getUniqueID())) {
+            NarcissusUtils.sendMessage(target, component);
+          }
+        }
+        NarcissusUtils.sendMessage(player, component);
+        return 1;
+      }
+      // 当前纬度ID
+      else if (prefix.equals(ServerConfig.COMMAND_DIMENSION)) {
+        // 传送功能前置校验
+        if (checkTeleportPre(player, ECommandType.DIMENSION)) {
+          return 0;
+        }
+        String dimString = DimensionUtils.getStringId(player.getEntityWorld().provider);
+        Component dim = Component.literal(dimString);
+        dim.setColor(EMCColor.GREEN.getColor())
+            .setClickEvent(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, dimString))
+            .setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT,
+                Component.translatable(NarcissusUtils.getPlayerLanguage(player), EI18nType.MESSAGE,
+                    "chat_copy_click").toTextComponent()));
+        Component msg = Component.translatable(NarcissusUtils.getPlayerLanguage(player),
+            EI18nType.MESSAGE, "dimension_info", dim);
+        NarcissusUtils.sendMessage(player, msg);
+        return 1;
+      }
+      // 自杀或毒杀
+      else if (prefix.equals(ServerConfig.COMMAND_FEED)) {
+        // 传送功能前置校验
+        if (checkTeleportPre(player, ECommandType.FEED)) {
+          return 0;
+        }
+        if (args.length <= 2) {
+          List<EntityPlayerMP> targetList = new ArrayList<>();
+          if (args.length == 1) {
+            targetList.add(player);
+          } else {
+            // 判断是否有毒杀权限
+            if (player != null) {
+              if (!NarcissusUtils.hasCommandPermission(player, ECommandType.FEED_OTHER)) {
+                NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EI18nType.MESSAGE
+                    , "command_no_permission"));
+                return 0;
+              }
+            }
+            try {
+              targetList.add(CommandBase.getPlayer(sender, args[1]));
+            } catch (CommandException ignored) {
+            }
+            // targetList.addAll(NarcissusUtils.getPlayer(player, args[1]));
+          }
+          if (CollectionUtils.isNullOrEmpty(targetList)) {
+            if (player != null)
+              NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EI18nType.MESSAGE,
+                  "player_not_found"));
+            else
+              NarcissusUtils.sendMessage(sender,
+                  Component.translatable(I18nUtils.getKey(EI18nType.MESSAGE, "player_not_found")).getString(ServerConfig.DEFAULT_LANGUAGE));
+            return 0;
+          }
+          for (EntityPlayerMP target : targetList) {
+            if (NarcissusUtils.killPlayer(target)) {
+              if (player != null) {
+                NarcissusUtils.broadcastMessage(player,
+                    Component.translatable(NarcissusUtils.getPlayerLanguage(target),
+                        EI18nType.MESSAGE, "died_of_narcissus_" + (new Random().nextInt(4) + 1),
+                        target.getDisplayName()));
+              } else {
+                NarcissusUtils.broadcastMessage(server,
+                    Component.translatable(NarcissusUtils.getPlayerLanguage(target),
+                        EI18nType.MESSAGE, "died_of_narcissus_" + (new Random().nextInt(4) + 1),
+                        target.getDisplayName()));
+              }
+            }
+          }
+          return 1;
+        }
+      }
+      // 传送到指定坐标
+      else if (prefix.equals(ServerConfig.COMMAND_TP_COORDINATE)) {
+        if (args.length <= 6) {
+          // 传送功能前置校验
+          if (checkTeleportPre(player, ECommandType.TP_COORDINATE)) return 0;
+          Coordinate coordinate = null;
+          if (args.length == 2 || args.length == 3) {
+            List<EntityPlayerMP> targetList = new ArrayList<>();
+            try {
+              targetList.add(CommandBase.getPlayer(sender, args[1]));
+            } catch (CommandException ignored) {
+            }
+            // List<EntityPlayerMP> targetList = NarcissusUtils.getPlayer(player, args[1]);
+            if (CollectionUtils.isNotNullOrEmpty(targetList)) {
+              coordinate =
+                  new Coordinate(targetList.get(0)).setSafe(args[args.length - 1].equals("safe"));
+            } else {
+              NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EI18nType.MESSAGE,
+                  "player_not_found"));
+            }
+          } else {
+            Double x = StringUtils.toCoordinate(args[1], player.posX);
+            Double y = StringUtils.toCoordinate(args[2], player.posY);
+            Double z = StringUtils.toCoordinate(args[3], player.posZ);
+            if (x != null && y != null && z != null) {
+              coordinate = new Coordinate(x, y, z, player.cameraYaw, player.cameraPitch,
+                  DimensionUtils.getStringId(player.getEntityWorld().provider.dimensionId));
+              if (args.length > 4) {
+                coordinate.setSafe(args[4].equals("safe"));
+                if (args.length == 6) {
+                  String dim = DimensionUtils.getStringId(args[5]);
+                  if (StringUtils.isNullOrEmptyEx(dim)) {
+                    NarcissusUtils.sendTranslatableMessage(player,
+                        I18nUtils.getKey(EI18nType.MESSAGE, "dimension_not_found"), args[5]);
+                    return 0;
+                  }
+                  coordinate.setDimension(dim);
+                }
+              }
+            }
+          }
+          if (coordinate == null) {
+            return -1;
+          }
+          // 验证传送代价
+          if (checkTeleportPost(player, coordinate, ETeleportType.TP_COORDINATE, true)) return 0;
+          NarcissusUtils.teleportTo(player, coordinate, ETeleportType.TP_COORDINATE);
+          return 1;
+        }
+      }
+      // 传送到指定结构
+      else if (prefix.equals(ServerConfig.COMMAND_TP_STRUCTURE)) {
+        if (checkTeleportPre(player, ECommandType.TP_STRUCTURE)) {
+          return 0;
+        }
+        if (args.length >= 2) {
+          String structId = args[1];
+          BiomeGenBase biome = NarcissusUtils.getBiome(structId);
+          if (!NarcissusUtils.getStructureList().contains(structId) && biome == null) {
+            NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EI18nType.MESSAGE,
+                "structure_biome_not_found"), structId);
+            return 0;
+          }
+          int range = ServerConfig.TELEPORT_RANDOM_DISTANCE_LIMIT;
+          if (args.length >= 3) {
+            int anInt = StringUtils.toInt(args[2]);
+            range = anInt > 0 ? anInt : range;
+          }
+          range = NarcissusUtils.checkRange(player, ETeleportType.TP_STRUCTURE, range);
+          String targetLevel = null;
+          if (args.length == 4) {
+            targetLevel = DimensionUtils.getStringId(args[3]);
+          }
+          if (StringUtils.isNullOrEmptyEx(targetLevel)) {
+            targetLevel = DimensionUtils.getStringId(player.getEntityWorld().provider.dimensionId);
+          }
+          WorldServer world =
+              Objects.requireNonNull(DimensionManager.getWorld(DimensionUtils.getDimensionType(targetLevel)));
+          Coordinate start = new Coordinate(player).setDimension(targetLevel);
+          int finalRange = range;
+          NarcissusUtils.sendMessage(player,
+              Component.translatable(NarcissusUtils.getPlayerLanguage(player), EI18nType.MESSAGE,
+                  "tp_structure_searching"));
+          new Thread(() -> {
+            Coordinate coordinate;
+            if (biome != null) {
+              coordinate = NarcissusUtils.findNearestBiome(world, start, biome, finalRange, 8);
+            } else {
+              coordinate = NarcissusUtils.findNearestStruct(world, start, structId, finalRange);
+            }
+            if (coordinate == null) {
+              NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EI18nType.MESSAGE,
+                  "structure_biome_not_found_in_range"), structId);
+              return;
+            }
+            coordinate.setSafe(true);
+            // 验证传送代价
+            if (checkTeleportPost(player, coordinate, ETeleportType.TP_STRUCTURE, true)) return;
+            ServerTaskExecutor.run(() -> NarcissusUtils.teleportTo(player, coordinate,
+                ETeleportType.TP_STRUCTURE));
+          }).start();
+          return 1;
+        }
+      }
+      // 请求传送到指定玩家
+      else if (prefix.equals(ServerConfig.COMMAND_TP_ASK)) {
+        // 传送功能前置校验
+        if (checkTeleportPre(player, ECommandType.TP_ASK)) {
+          return 0;
+        }
+        if (args.length <= 3) {
+          EntityPlayerMP target = null;
+          if (args.length == 1) {
+            // 如果没有指定目标玩家，则使用最近一次传送请求的目标玩家，依旧没有就随机一名幸运玩家
+            target = NarcissusFarewell.getTeleportRequest().values().stream()
+                .filter(request -> request.getRequester().getUniqueID().equals(player.getUniqueID()))
+                .filter(request -> {
+                  EntityPlayer entity = request.getTarget();
+                  return NarcissusUtils.isTeleportTypeAcrossDimensionEnabled(player,
+                      ETeleportType.TP_ASK)
+                      || entity != null && entity.getEntityWorld().provider == player.getEntityWorld().provider;
+                })
+                .max(Comparator.comparing(TeleportRequest::getRequestTime))
+                .orElse(new TeleportRequest().setTarget(NarcissusFarewell.getLastTeleportRequest()
+                    .getOrDefault(player, NarcissusUtils.getRandomPlayer())))
+                .getTarget();
+          } else {
+            List<EntityPlayerMP> targetList = new ArrayList<>();
+            try {
+              targetList.add(CommandBase.getPlayer(sender, args[1]));
+            } catch (CommandException ignored) {
+            }
+            // List<EntityPlayerMP> targetList = NarcissusUtils.getPlayer(player, args[1]);
+            if (CollectionUtils.isNotNullOrEmpty(targetList)) {
+              target = targetList.get(0);
+            }
+          }
+          if (target == null) {
+            NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EI18nType.MESSAGE,
+                "player_not_found"));
+            return 0;
+          }
+          // 验证并添加传送请求
+          TeleportRequest request = new TeleportRequest()
+              .setRequester(player)
+              .setTarget(target)
+              .setTeleportType(ETeleportType.TP_ASK)
+              .setRequestTime(new Date());
+          try {
+            request.setSafe("safe".equalsIgnoreCase(args[args.length - 1]));
+          } catch (IllegalArgumentException ignored) {
+          }
+          if (checkTeleportPost(request)) return 0;
+          NarcissusFarewell.getTeleportRequest().put(request.getRequestId(), request);
+
+          // 通知目标玩家
+          {
+            // 创建 "Yes" 按钮
+            Component yesButton = Component.translatable(NarcissusUtils.getPlayerLanguage(target)
+                    , EI18nType.MESSAGE, "yes_button", NarcissusUtils.getPlayerLanguage(target))
+                .setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, String.format("/%s " +
+                        "%s %s", NarcissusUtils.getCommandPrefix(), ServerConfig.COMMAND_TP_ASK_YES,
+                    request.getRequestId())));
+            // 创建 "No" 按钮
+            Component noButton = Component.translatable(NarcissusUtils.getPlayerLanguage(target),
+                    EI18nType.MESSAGE, "no_button", NarcissusUtils.getPlayerLanguage(target))
+                .setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, String.format("/%s " +
+                        "%s %s", NarcissusUtils.getCommandPrefix(), ServerConfig.COMMAND_TP_ASK_NO,
+                    request.getRequestId())));
+            Component msg = Component.translatable(NarcissusUtils.getPlayerLanguage(target),
+                EI18nType.MESSAGE, "tp_ask_request_received"
+                , player.getDisplayName(), yesButton, noButton);
+            NarcissusUtils.sendMessage(target, msg);
+          }
+          // 通知请求者
+          {
+            // 创建 "Cancel" 按钮
+            Component cancelButton =
+                Component.translatable(NarcissusUtils.getPlayerLanguage(target), EI18nType.MESSAGE,
+                        "cancel_button", NarcissusUtils.getPlayerLanguage(target))
+                    .setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, String.format(
+                        "/%s " +
+                            "%s %s", NarcissusUtils.getCommandPrefix(),
+                        ServerConfig.COMMAND_TP_ASK_CANCEL,
+                        request.getRequestId())));
+            Component msg = Component.translatable(NarcissusUtils.getPlayerLanguage(player),
+                EI18nType.MESSAGE, "tp_ask_request_sent"
+                , target.getDisplayName(), cancelButton);
+            NarcissusUtils.sendMessage(player, msg);
+          }
+          return 1;
+        }
+      }
+      // 同意传送请求
+      else if (prefix.equals(ServerConfig.COMMAND_TP_ASK_YES)) {
+        // 传送功能前置校验
+        if (checkTeleportPre(player, ECommandType.TP_ASK_YES)) {
+          return 0;
+        }
+        if (args.length == 1 || args.length == 2) {
+          String id = getRequestId(player, args.length == 2 ? args[1] : "", ETeleportType.TP_ASK,
+              true);
+          if (StringUtils.isNullOrEmpty(id) || !NarcissusFarewell.getTeleportRequest().containsKey(id)) {
+            NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EI18nType.MESSAGE,
+                "tp_ask_not_found"));
+            return 0;
+          }
+          TeleportRequest request = NarcissusFarewell.getTeleportRequest().remove(id);
+          if (checkTeleportPost(request, true)) {
+            NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EI18nType.MESSAGE,
+                "tp_ask_invalid"));
+            return 0;
+          }
+          NarcissusUtils.teleportTo(request);
+          return 1;
+        }
+      }
+      // 拒绝传送请求
+      else if (prefix.equals(ServerConfig.COMMAND_TP_ASK_NO)) {
+        // 传送功能前置校验
+        if (checkTeleportPre(player, ECommandType.TP_ASK_NO)) {
+          return 0;
+        }
+        if (args.length == 1 || args.length == 2) {
+          String id = getRequestId(player, args.length == 2 ? args[1] : "", ETeleportType.TP_ASK,
+              true);
+          if (StringUtils.isNullOrEmpty(id) || !NarcissusFarewell.getTeleportRequest().containsKey(id)) {
+            NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EI18nType.MESSAGE,
+                "tp_ask_not_found"));
+            return 0;
+          }
+          TeleportRequest request = NarcissusFarewell.getTeleportRequest().remove(id);
+          NarcissusUtils.sendTranslatableMessage(request.getRequester(),
+              I18nUtils.getKey(EI18nType.MESSAGE, "tp_ask_rejected"),
+              request.getTarget().getDisplayName());
+          return 1;
+        }
+      }
+      // 取消传送请求
+      else if (prefix.equals(ServerConfig.COMMAND_TP_ASK_CANCEL)) {
+        // 传送功能前置校验
+        if (checkTeleportPre(player, ECommandType.TP_ASK_CANCEL)) {
+          return 0;
+        }
+        if (args.length == 1 || args.length == 2) {
+          String id = getRequestId(player, args.length == 2 ? args[1] : "", ETeleportType.TP_ASK,
+              false);
+          if (StringUtils.isNullOrEmpty(id) || !NarcissusFarewell.getTeleportRequest().containsKey(id)) {
+            NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EI18nType.MESSAGE,
+                "tp_ask_not_found"));
+            return 0;
+          }
+          TeleportRequest request = NarcissusFarewell.getTeleportRequest().remove(id);
+          NarcissusUtils.sendTranslatableMessage(request.getRequester(),
+              I18nUtils.getKey(EI18nType.MESSAGE, "tp_ask_cancelled"),
+              request.getRequester().getDisplayName());
+          if (!request.getRequester().getUniqueID().equals(request.getTarget().getUniqueID())) {
+            NarcissusUtils.sendTranslatableMessage(request.getTarget(),
+                I18nUtils.getKey(EI18nType.MESSAGE, "tp_ask_cancelled"),
+                request.getRequester().getDisplayName());
+          }
+          return 1;
+        }
+      }
+      // 请求指定玩家传送
+      else if (prefix.equals(ServerConfig.COMMAND_TP_HERE)) {
+        // 传送功能前置校验
+        if (checkTeleportPre(player, ECommandType.TP_HERE)) {
+          return 0;
+        }
+        if (args.length <= 3) {
+          EntityPlayerMP target = null;
+          if (args.length == 1) {
+            // 如果没有指定目标玩家，则使用最近一次传送请求的目标玩家，依旧没有就随机一名幸运玩家
+            target = NarcissusFarewell.getTeleportRequest().values().stream()
+                .filter(request -> request.getRequester().getUniqueID().equals(player.getUniqueID()))
+                .filter(request -> {
+                  EntityPlayer entity = request.getTarget();
+                  return NarcissusUtils.isTeleportTypeAcrossDimensionEnabled(player,
+                      ETeleportType.TP_HERE)
+                      || entity != null && entity.getEntityWorld().provider == player.getEntityWorld().provider;
+                })
+                .max(Comparator.comparing(TeleportRequest::getRequestTime))
+                .orElse(new TeleportRequest().setTarget(NarcissusFarewell.getLastTeleportRequest()
+                    .getOrDefault(player, NarcissusUtils.getRandomPlayer())))
+                .getTarget();
+          } else {
+            List<EntityPlayerMP> targetList = new ArrayList<>();
+            try {
+              targetList.add(CommandBase.getPlayer(sender, args[1]));
+            } catch (CommandException ignored) {
+            }
+            // List<EntityPlayerMP> targetList = NarcissusUtils.getPlayer(player, args[1]);
+            if (CollectionUtils.isNotNullOrEmpty(targetList)) {
+              target = targetList.get(0);
+            }
+          }
+          if (target == null) {
+            NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EI18nType.MESSAGE,
+                "player_not_found"));
+            return 0;
+          }
+          // 验证并添加传送请求
+          TeleportRequest request = new TeleportRequest()
+              .setRequester(player)
+              .setTarget(target)
+              .setTeleportType(ETeleportType.TP_HERE)
+              .setRequestTime(new Date());
+          try {
+            request.setSafe("safe".equalsIgnoreCase(args[args.length - 1]));
+          } catch (IllegalArgumentException ignored) {
+          }
+          if (checkTeleportPost(request)) return 0;
+          NarcissusFarewell.getTeleportRequest().put(request.getRequestId(), request);
+
+          // 通知目标玩家
+          {
+            // 创建 "Yes" 按钮
+            Component yesButton = Component.translatable(NarcissusUtils.getPlayerLanguage(target)
+                    , EI18nType.MESSAGE, "yes_button", NarcissusUtils.getPlayerLanguage(target))
+                .setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, String.format("/%s " +
+                        "%s %s", NarcissusUtils.getCommandPrefix(),
+                    ServerConfig.COMMAND_TP_HERE_YES,
+                    request.getRequestId())));
+            // 创建 "No" 按钮
+            Component noButton = Component.translatable(NarcissusUtils.getPlayerLanguage(target),
+                    EI18nType.MESSAGE, "no_button", NarcissusUtils.getPlayerLanguage(target))
+                .setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, String.format("/%s " +
+                        "%s %s", NarcissusUtils.getCommandPrefix(), ServerConfig.COMMAND_TP_HERE_NO,
+                    request.getRequestId())));
+            Component msg = Component.translatable(NarcissusUtils.getPlayerLanguage(target),
+                EI18nType.MESSAGE, "tp_here_request_received"
+                , player.getDisplayName(),
+                Component.translatable(NarcissusUtils.getPlayerLanguage(target), EI18nType.WORD,
+                    request.isSafe() ? "tp_here_safe" : "tp_here_unsafe"), yesButton, noButton);
+            NarcissusUtils.sendMessage(target, msg);
+          }
+          // 通知请求者
+          {
+            // 创建 "Cancel" 按钮
+            Component cancelButton =
+                Component.translatable(NarcissusUtils.getPlayerLanguage(target), EI18nType.MESSAGE,
+                        "cancel_button", NarcissusUtils.getPlayerLanguage(target))
+                    .setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, String.format(
+                        "/%s " +
+                            "%s %s", NarcissusUtils.getCommandPrefix(),
+                        ServerConfig.COMMAND_TP_HERE_CANCEL,
+                        request.getRequestId())));
+            Component msg = Component.translatable(NarcissusUtils.getPlayerLanguage(player),
+                EI18nType.MESSAGE, "tp_here_request_sent"
+                , target.getDisplayName(), cancelButton);
+            NarcissusUtils.sendMessage(player, msg);
+          }
+          return 1;
+        }
+      }
+      // 同意传送请求
+      else if (prefix.equals(ServerConfig.COMMAND_TP_HERE_YES)) {
+        // 传送功能前置校验
+        if (checkTeleportPre(player, ECommandType.TP_HERE_YES)) {
+          return 0;
+        }
+        if (args.length == 1 || args.length == 2) {
+          String id = getRequestId(player, args.length == 2 ? args[1] : "", ETeleportType.TP_HERE
+              , true);
+          if (StringUtils.isNullOrEmpty(id) || !NarcissusFarewell.getTeleportRequest().containsKey(id)) {
+            NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EI18nType.MESSAGE,
+                "tp_here_not_found"));
+            return 0;
+          }
+          TeleportRequest request = NarcissusFarewell.getTeleportRequest().remove(id);
+          if (checkTeleportPost(request, true)) {
+            NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EI18nType.MESSAGE,
+                "tp_here_invalid"));
+            return 0;
+          }
+          NarcissusUtils.teleportTo(request);
+          return 1;
+        }
+      }
+      // 拒绝传送请求
+      else if (prefix.equals(ServerConfig.COMMAND_TP_HERE_NO)) {
+        // 传送功能前置校验
+        if (checkTeleportPre(player, ECommandType.TP_HERE_NO)) {
+          return 0;
+        }
+        if (args.length == 1 || args.length == 2) {
+          String id = getRequestId(player, args.length == 2 ? args[1] : "", ETeleportType.TP_HERE
+              , true);
+          if (StringUtils.isNullOrEmpty(id) || !NarcissusFarewell.getTeleportRequest().containsKey(id)) {
+            NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EI18nType.MESSAGE,
+                "tp_here_not_found"));
+            return 0;
+          }
+          TeleportRequest request = NarcissusFarewell.getTeleportRequest().remove(id);
+          NarcissusUtils.sendTranslatableMessage(request.getRequester(),
+              I18nUtils.getKey(EI18nType.MESSAGE, "tp_here_rejected"),
+              request.getTarget().getDisplayName());
+          return 1;
+        }
+      }
+      // 取消传送请求
+      else if (prefix.equals(ServerConfig.COMMAND_TP_HERE_CANCEL)) {
+        // 传送功能前置校验
+        if (checkTeleportPre(player, ECommandType.TP_HERE_CANCEL)) {
+          return 0;
+        }
+        if (args.length == 1 || args.length == 2) {
+          String id = getRequestId(player, args.length == 2 ? args[1] : "", ETeleportType.TP_HERE
+              , false);
+          if (StringUtils.isNullOrEmpty(id) || !NarcissusFarewell.getTeleportRequest().containsKey(id)) {
+            NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EI18nType.MESSAGE,
+                "tp_here_not_found"));
+            return 0;
+          }
+          TeleportRequest request = NarcissusFarewell.getTeleportRequest().remove(id);
+          NarcissusUtils.sendTranslatableMessage(request.getRequester(),
+              I18nUtils.getKey(EI18nType.MESSAGE, "tp_here_cancelled"),
+              request.getRequester().getDisplayName());
+          if (!request.getRequester().getUniqueID().equals(request.getTarget().getUniqueID())) {
+            NarcissusUtils.sendTranslatableMessage(request.getTarget(),
+                I18nUtils.getKey(EI18nType.MESSAGE, "tp_here_cancelled"),
+                request.getRequester().getDisplayName());
+          }
+          return 1;
+        }
+      }
+      // 传送到随机位置
+      else if (prefix.equals(ServerConfig.COMMAND_TP_RANDOM)) {
+        // 传送功能前置校验
+        if (checkTeleportPre(player, ECommandType.TP_RANDOM)) {
+          return 0;
+        }
+        if (args.length <= 4) {
+          int range = ServerConfig.TELEPORT_RANDOM_DISTANCE_LIMIT;
+          if (args.length >= 2) {
+            int anInt = StringUtils.toInt(args[1]);
+            range = anInt > 0 ? anInt : range;
+          }
+          range = NarcissusUtils.checkRange(player, ETeleportType.TP_RANDOM, range);
+          boolean safe = false;
+          if (args.length >= 3) {
+            safe = args[2].equals("safe");
+          }
+          String targetLevel = null;
+          if (args.length == 4) {
+            targetLevel = DimensionUtils.getStringId(args[3]);
+          }
+          if (StringUtils.isNullOrEmptyEx(targetLevel)) {
+            targetLevel = DimensionUtils.getStringId(player.getEntityWorld().provider.dimensionId);
+          }
+          Coordinate coordinate = Coordinate.random(player, range, targetLevel).setSafe(safe);
+          // 验证传送代价
+          if (checkTeleportPost(player, coordinate, ETeleportType.TP_RANDOM, true)) return 0;
+          NarcissusUtils.teleportTo(player, coordinate, ETeleportType.TP_RANDOM);
+          return 1;
+        }
+      }
+      // 传送到出生点
+      else if (prefix.equals(ServerConfig.COMMAND_TP_SPAWN)) {
+        // 传送功能前置校验
+        if (checkTeleportPre(player, ECommandType.TP_SPAWN)) {
+          return 0;
+        }
+        if (args.length <= 3) {
+          EntityPlayerMP target = player;
+          if (args.length == 3) {
+            if (NarcissusUtils.hasCommandPermission(player, ECommandType.TP_SPAWN_OTHER)) {
+              List<EntityPlayerMP> targetList = new ArrayList<>();
+              try {
+                targetList.add(CommandBase.getPlayer(sender, args[1]));
+              } catch (CommandException ignored) {
+              }
+              // List<EntityPlayerMP> targetList = NarcissusUtils.getPlayer(player, args[1]);
+              if (CollectionUtils.isNotNullOrEmpty(targetList)) {
+                target = targetList.get(0);
+              }
+            } else {
+              NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EI18nType.MESSAGE,
+                  "command_no_permission"));
+              return 0;
+            }
+          }
+          Coordinate coordinate = new Coordinate(target);
+          ChunkCoordinates respawnPosition =
+              target.getBedLocation(player.getEntityWorld().provider.dimensionId);
+          // idea很烦诶，明明就会是null非警告我不会为null
+          if (respawnPosition == null && !(target.getEntityWorld().provider instanceof WorldProviderSurface)) {
+            int dimensionId = DimensionUtils.getOverworldDimensionId();
+            respawnPosition = target.getBedLocation(dimensionId);
+            coordinate.setDimension(DimensionUtils.getStringId(dimensionId));
+          }
+          if (respawnPosition == null) {
+            respawnPosition = target.getEntityWorld().getSpawnPoint();
+            coordinate.setDimension(DimensionUtils.getStringId(target.getEntityWorld().provider.dimensionId));
+          }
+          if (respawnPosition == null) {
+            respawnPosition =
+                DimensionManager.getWorld(DimensionUtils.getOverworldDimensionId()).getSpawnPoint();
+            coordinate.setDimension(DimensionUtils.getOverworldDimensionStringId());
+          }
+          coordinate.setX(respawnPosition.posX).setY(respawnPosition.posY).setZ(respawnPosition.posZ);
+          try {
+            coordinate.setSafe("safe".equalsIgnoreCase(args[args.length - 1]));
+          } catch (IllegalArgumentException ignored) {
+            coordinate.setSafe(true);
+          }
+          // 验证传送代价
+          if (checkTeleportPost(player, coordinate, ETeleportType.TP_SPAWN, true)) return 0;
+          NarcissusUtils.teleportTo(player, coordinate, ETeleportType.TP_SPAWN);
+          return 1;
+        }
+      }
+      // 传送到世界出生点
+      else if (prefix.equals(ServerConfig.COMMAND_TP_WORLD_SPAWN)) {
+        // 传送功能前置校验
+        if (checkTeleportPre(player, ECommandType.TP_WORLD_SPAWN)) {
+          return 0;
+        }
+        if (args.length <= 2) {
+          Coordinate coordinate = new Coordinate(player);
+          ChunkCoordinates respawnPosition = player.getEntityWorld().getSpawnPoint();
+          if (respawnPosition == null) {
+            respawnPosition =
+                DimensionManager.getWorld(DimensionUtils.getOverworldDimensionId()).getSpawnPoint();
+            coordinate.setDimension(DimensionUtils.getOverworldDimensionStringId());
+          }
+          coordinate.setX(respawnPosition.posX).setY(respawnPosition.posY).setZ(respawnPosition.posZ);
+          try {
+            coordinate.setSafe("safe".equalsIgnoreCase(args[args.length - 1]));
+          } catch (IllegalArgumentException ignored) {
+            coordinate.setSafe(true);
+          }
+          // 验证传送代价
+          if (checkTeleportPost(player, coordinate, ETeleportType.TP_WORLD_SPAWN, true)) return 0;
+          NarcissusUtils.teleportTo(player, coordinate, ETeleportType.TP_WORLD_SPAWN);
+          return 1;
+        }
+      }
+      // 传送到顶部
+      else if (prefix.equals(ServerConfig.COMMAND_TP_TOP)) {
+        // 传送功能前置校验
+        if (checkTeleportPre(player, ECommandType.TP_TOP)) {
+          return 0;
+        }
+        if (args.length <= 2) {
+          Coordinate coordinate = NarcissusUtils.findTopCandidate(player.getServerForPlayer(),
+              new Coordinate(player));
+          if (coordinate == null) {
+            NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EI18nType.MESSAGE,
+                "tp_top_not_found"));
+            return 0;
+          }
+          try {
+            coordinate.setSafe("safe".equalsIgnoreCase(args[args.length - 1])).setSafeMode(ESafeMode.Y_DOWN);
+          } catch (IllegalArgumentException ignored) {
+            coordinate.setSafe(true).setSafeMode(ESafeMode.Y_DOWN);
+          }
+          // 验证传送代价
+          if (checkTeleportPost(player, coordinate, ETeleportType.TP_TOP, true)) return 0;
+          NarcissusUtils.teleportTo(player, coordinate, ETeleportType.TP_TOP);
+          return 1;
+        }
+      }
+      // 传送到底部
+      else if (prefix.equals(ServerConfig.COMMAND_TP_BOTTOM)) {
+        // 传送功能前置校验
+        if (checkTeleportPre(player, ECommandType.TP_BOTTOM)) {
+          return 0;
+        }
+        if (args.length <= 2) {
+          Coordinate coordinate = NarcissusUtils.findBottomCandidate(player.getServerForPlayer(),
+              new Coordinate(player));
+          if (coordinate == null) {
+            NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EI18nType.MESSAGE,
+                "tp_bottom_not_found"));
+            return 0;
+          }
+          try {
+            coordinate.setSafe("safe".equalsIgnoreCase(args[args.length - 1])).setSafeMode(ESafeMode.Y_UP);
+          } catch (IllegalArgumentException ignored) {
+            coordinate.setSafe(true).setSafeMode(ESafeMode.Y_UP);
+          }
+          // 验证传送代价
+          if (checkTeleportPost(player, coordinate, ETeleportType.TP_BOTTOM, true)) return 0;
+          NarcissusUtils.teleportTo(player, coordinate, ETeleportType.TP_BOTTOM);
+          return 1;
+        }
+      }
+      // 传送到上方
+      else if (prefix.equals(ServerConfig.COMMAND_TP_UP)) {
+        // 传送功能前置校验
+        if (checkTeleportPre(player, ECommandType.TP_UP)) {
+          return 0;
+        }
+        if (args.length <= 2) {
+          Coordinate coordinate = NarcissusUtils.findUpCandidate(player.getServerForPlayer(),
+              new Coordinate(player));
+          if (coordinate == null) {
+            NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EI18nType.MESSAGE,
+                "tp_up_not_found"));
+            return 0;
+          }
+          try {
+            coordinate.setSafe("safe".equalsIgnoreCase(args[args.length - 1])).setSafeMode(ESafeMode.Y_UP);
+          } catch (IllegalArgumentException ignored) {
+            coordinate.setSafe(true).setSafeMode(ESafeMode.Y_UP);
+          }
+          // 验证传送代价
+          if (checkTeleportPost(player, coordinate, ETeleportType.TP_UP, true)) return 0;
+          NarcissusUtils.teleportTo(player, coordinate, ETeleportType.TP_UP);
+          return 1;
+        }
+      }
+      // 传送到下方
+      else if (prefix.equals(ServerConfig.COMMAND_TP_DOWN)) {
+        // 传送功能前置校验
+        if (checkTeleportPre(player, ECommandType.TP_DOWN)) {
+          return 0;
+        }
+        if (args.length <= 2) {
+          Coordinate coordinate = NarcissusUtils.findDownCandidate(player.getServerForPlayer(),
+              new Coordinate(player));
+          if (coordinate == null) {
+            NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EI18nType.MESSAGE,
+                "tp_down_not_found"));
+            return 0;
+          }
+          try {
+            coordinate.setSafe("safe".equalsIgnoreCase(args[args.length - 1])).setSafeMode(ESafeMode.Y_DOWN);
+          } catch (IllegalArgumentException ignored) {
+            coordinate.setSafe(true).setSafeMode(ESafeMode.Y_DOWN);
+          }
+          // 验证传送代价
+          if (checkTeleportPost(player, coordinate, ETeleportType.TP_DOWN, true)) return 0;
+          NarcissusUtils.teleportTo(player, coordinate, ETeleportType.TP_DOWN);
+          return 1;
+        }
+      }
+      // 传送到视线尽头
+      else if (prefix.equals(ServerConfig.COMMAND_TP_VIEW)) {
+        // 传送功能前置校验
+        if (checkTeleportPre(player, ECommandType.TP_VIEW)) {
+          return 0;
+        }
+        if (args.length <= 3) {
+          boolean safe;
+          if (args.length >= 2) {
+            safe = args[1].equals("safe");
+          } else {
+            safe = false;
+          }
+          int range = ServerConfig.TELEPORT_VIEW_DISTANCE_LIMIT;
+          if (args.length == 3) {
+            int anInt = StringUtils.toInt(args[2]);
+            range = anInt > 0 ? anInt : range;
+          }
+          range = NarcissusUtils.checkRange(player, ETeleportType.TP_VIEW, range);
+          int finalRange = range;
+          NarcissusUtils.sendMessage(player,
+              Component.translatable(NarcissusUtils.getPlayerLanguage(player), EI18nType.MESSAGE,
+                  "tp_view_searching"));
+          new Thread(() -> {
+            Coordinate coordinate = NarcissusUtils.findViewEndCandidate(player, safe, finalRange);
+            if (coordinate == null) {
+              NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EI18nType.MESSAGE,
+                  safe ? "tp_view_safe_not_found" : "tp_view_not_found"));
+              return;
+            }
+            coordinate.setSafeMode(ESafeMode.Y_OFFSET_3);
+            // 验证传送代价
+            if (checkTeleportPost(player, coordinate, ETeleportType.TP_VIEW, true)) return;
+            ServerTaskExecutor.run(() -> NarcissusUtils.teleportTo(player, coordinate,
+                ETeleportType.TP_VIEW));
+          }).start();
+          return 1;
+        }
+      }
+      // 传送到预设位置
+      else if (prefix.equals(ServerConfig.COMMAND_TP_HOME)) {
+        // 传送功能前置校验
+        if (checkTeleportPre(player, ECommandType.TP_HOME)) {
+          return 0;
+        }
+        if (args.length <= 4) {
+          String targetLevel = null;
+          String targetDimension = DimensionUtils.getStringId(args[args.length - 1]);
+          if (StringUtils.isNotNullOrEmpty(targetDimension)) {
+            targetLevel = targetDimension;
+          }
+          String name = null;
+          if (args.length >= 2 && NarcissusUtils.isPlayerHome(player, args[1])) {
+            name = args[1];
+          }
+          Coordinate coordinate = NarcissusUtils.getPlayerHome(player, targetLevel, name);
+          if (coordinate == null) {
+            if (targetLevel == null && name == null) {
+              NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EI18nType.MESSAGE,
+                  "home_not_found"));
+            } else if (targetLevel != null && name == null) {
+              NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EI18nType.MESSAGE,
+                  "home_not_found_in_dimension"), DimensionUtils.getStringId(targetLevel));
+            } else if (targetLevel == null) {
+              NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EI18nType.MESSAGE,
+                  "home_not_found_with_name"), name);
+            } else {
+              NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EI18nType.MESSAGE,
+                      "home_not_found_with_name_in_dimension"),
+                  DimensionUtils.getStringId(targetLevel),
+                  name);
+            }
+            return 0;
+          }
+          try {
+            coordinate.setSafe(args.length >= 2 && args[args.length - 2].equals("safe"));
+          } catch (IllegalArgumentException ignored) {
+          }
+          // 验证传送代价
+          if (checkTeleportPost(player, coordinate, ETeleportType.TP_HOME, true)) return 0;
+          NarcissusUtils.teleportTo(player, coordinate, ETeleportType.TP_HOME);
+          return 1;
+        }
+      }
+      // 添加预设位置
+      else if (prefix.equals(ServerConfig.COMMAND_SET_HOME)) {
+        // 传送功能前置校验
+        if (checkTeleportPre(player, ECommandType.SET_HOME)) {
+          return 0;
+        }
+        if (args.length <= 3) {
+          // 判断设置数量是否超过限制
+          IPlayerTeleportData data = PlayerTeleportData.get(player);
+          if (data.getHomeCoordinate().size() >= ServerConfig.TELEPORT_HOME_LIMIT) {
+            NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EI18nType.MESSAGE,
+                "home_limit"), ServerConfig.TELEPORT_HOME_LIMIT);
+            return 0;
+          }
+          String name = "home";
+          if (args.length >= 2) {
+            name = args[1];
+          }
+          boolean defaultHome = false;
+          if (args.length == 3) {
+            defaultHome = args[2].equals("default");
+          }
+          Coordinate coordinate = new Coordinate(player);
+          String dimension = DimensionUtils.getStringId(player.getEntityWorld().provider);
+          KeyValue<String, String> key = new KeyValue<>(dimension, name);
+          if (data.getHomeCoordinate().containsKey(key)) {
+            NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EI18nType.MESSAGE,
+                "home_already_exists"), key.getKey(), key.getValue());
+            return 0;
+          }
+          data.addHomeCoordinate(key, coordinate);
+          if (defaultHome) {
+            if (data.getDefaultHome().containsKey(dimension)) {
+              NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EI18nType.MESSAGE,
+                  "home_default_remove"), data.getDefaultHome(dimension).getValue());
+            }
+            data.addDefaultHome(dimension, name);
+            NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EI18nType.MESSAGE,
+                "home_set_default"), name, coordinate.toXyzString());
+          } else {
+            NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EI18nType.MESSAGE,
+                "home_set"), name, coordinate.toXyzString());
+          }
+          return 1;
+        }
+      }
+      // 删除预设位置
+      else if (prefix.equals(ServerConfig.COMMAND_DEL_HOME)) {
+        // 传送功能前置校验
+        if (checkTeleportPre(player, ECommandType.DEL_HOME)) {
+          return 0;
+        }
+        if (args.length >= 2) {
+          IPlayerTeleportData data = PlayerTeleportData.get(player);
+          String name = args[1];
+          String dimension;
+          if (args.length == 3 && DimensionUtils.getDimensionType(args[2]) != null) {
+            dimension = args[2];
+          } else {
+            dimension = NarcissusUtils.getHomeDimensionByName(player, name);
+          }
+          if (StringUtils.isNullOrEmptyEx(dimension)) {
+            NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EI18nType.MESSAGE,
+                "dimension_not_found"), args[2]);
+            return 0;
+          }
+          Coordinate remove = data.getHomeCoordinate().remove(new KeyValue<>(dimension, name));
+          if (remove == null) {
+            NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EI18nType.MESSAGE,
+                "home_not_found_with_name_in_dimension"), dimension, name);
+            return 0;
+          }
+          if (data.getDefaultHome().containsKey(dimension)) {
+            if (data.getDefaultHome().get(dimension).equals(name)) {
+              data.getDefaultHome().remove(dimension);
+              NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EI18nType.MESSAGE,
+                  "home_default_remove"), name);
+            }
+          }
+          NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EI18nType.MESSAGE,
+              "home_del"), dimension, name);
+          return 1;
+        }
+      }
+      // 获取预设位置
+      else if (prefix.equals(ServerConfig.COMMAND_GET_HOME)) {
+        // 传送功能前置校验
+        if (checkTeleportPre(player, ECommandType.GET_HOME)) {
+          return 0;
+        }
+        if (args.length == 1) {
+          IPlayerTeleportData data = PlayerTeleportData.get(player);
+          String language = NarcissusUtils.getPlayerLanguage(player);
+          if (data.getHomeCoordinate().isEmpty()) {
+            NarcissusUtils.sendMessage(player, Component.translatable(language, EI18nType.MESSAGE
+                , "home_is_empty"));
+          } else {
+            List<Component> infoList = new ArrayList<>();
+            // dimension:name coordinate 转为 dimension [name:coordinate]
+            Map<String, List<KeyValue<String, Coordinate>>> map =
+                data.getHomeCoordinate().entrySet().stream()
+                    .collect(Collectors.groupingBy(
+                        entry -> entry.getKey().getKey(),
+                        Collectors.mapping(
+                            entry -> new KeyValue<>(entry.getKey().getValue(), entry.getValue()),
+                            Collectors.toList()
+                        )
+                    ));
+            for (Map.Entry<String, List<KeyValue<String, Coordinate>>> entry : map.entrySet()) {
+              Component dimension =
+                  Component.literal(entry.getKey()).setColor(EMCColor.DARK_GREEN.getColor());
+              dimension.setClickEvent(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND,
+                  entry.getKey()));
+              dimension.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT,
+                  Component.literal(entry.getKey()).toTextComponent()));
+              dimension.append(Component.literal(": ").setColor(EMCColor.GRAY.getColor()));
+              for (KeyValue<String, Coordinate> coordinates : entry.getValue()) {
+                Component defHome;
+                if (data.getDefaultHome().getOrDefault(entry.getKey(), "").equalsIgnoreCase(coordinates.getKey())) {
+                  defHome =
+                      Component.translatable(language, EI18nType.WORD, "default").setColor(EMCColor.GRAY.getColor());
+                } else {
+                  defHome = Component.empty();
+                }
+                Component name = Component.translatable(language, EI18nType.MESSAGE, "home_info"
+                    , coordinates.getKey()
+                    , coordinates.getValue().toXString()
+                    , coordinates.getValue().toYString()
+                    , coordinates.getValue().toZString()
+                    , defHome);
+                name.toChatComponent();
+                Component name_hover = Component.translatable(language, EI18nType.MESSAGE,
+                    "home_info_hover"
+                    , coordinates.getKey()
+                    , coordinates.getValue().toXString()
+                    , coordinates.getValue().toYString()
+                    , coordinates.getValue().toZString()
+                    , defHome);
+                name.setColor(EMCColor.GREEN.getColor());
+                name.setClickEvent(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND,
+                    name_hover.toString(true)));
+                name.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT,
+                    name_hover.toTextComponent()));
+                dimension.append(name);
+                dimension.append(Component.literal(", ").setColor(EMCColor.GRAY.getColor()));
+              }
+              infoList.add(dimension);
+            }
+            NarcissusUtils.sendMessage(player, Component.translatable(language, EI18nType.MESSAGE
+                , "home_is"));
+            for (Component info : infoList) {
+              NarcissusUtils.sendMessage(player, info);
+            }
+          }
+          return 1;
+        }
+      }
+      // 传送到驿站
+      else if (prefix.equals(ServerConfig.COMMAND_TP_STAGE)) {
+        // 传送功能前置校验
+        if (checkTeleportPre(player, ECommandType.TP_STAGE)) {
+          return 0;
+        }
+        if (args.length <= 4) {
+          String name = null;
+          if (args.length >= 2) {
+            name = args[1];
+          }
+          String targetLevel = null;
+          if (args.length == 4) {
+            targetLevel = DimensionUtils.getStringId(args[3]);
+          }
+          String dimension = StringUtils.isNotNullOrEmpty(targetLevel) ? args[3] : null;
+          if (StringUtils.isNullOrEmptyEx(name)) {
+            KeyValue<String, String> stageKey = NarcissusUtils.findNearestStageKey(player);
+            if (stageKey == null) {
+              NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EI18nType.MESSAGE,
+                  "stage_nearest_not_found"));
+              return 0;
+            }
+            name = stageKey.getValue();
+            dimension = stageKey.getKey();
+          }
+          WorldStageData stageData = WorldStageData.get();
+          Coordinate coordinate = null;
+          if (dimension == null) {
+            int coordinateSize = stageData.getCoordinateSize(name);
+            if (coordinateSize == 1) {
+              coordinate = stageData.getCoordinate(name);
+            } else if (coordinateSize > 1) {
+              coordinate =
+                  stageData.getCoordinate(DimensionUtils.getStringId(player.getEntityWorld().provider), name);
+            }
+            if (coordinate == null) {
+              NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EI18nType.MESSAGE,
+                  "stage_not_found"), name);
+              return 0;
+            }
+          } else {
+            coordinate = stageData.getCoordinate(dimension, name);
+            if (coordinate == null) {
+              NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EI18nType.MESSAGE,
+                  "stage_not_found_with_name_in_dimension"), dimension, name);
+              return 0;
+            }
+          }
+          try {
+            coordinate.setSafe(args.length >= 3 && "safe".equalsIgnoreCase(args[2]));
+          } catch (IllegalArgumentException ignored) {
+          }
+          // 验证传送代价
+          if (checkTeleportPost(player, coordinate, ETeleportType.TP_STAGE, true)) return 0;
+          NarcissusUtils.teleportTo(player, coordinate, ETeleportType.TP_STAGE);
+          return 1;
+        }
+      }
+      // 添加驿站
+      else if (prefix.equals(ServerConfig.COMMAND_SET_STAGE)) {
+        // 传送功能前置校验
+        if (checkTeleportPre(player, ECommandType.SET_STAGE)) {
+          return 0;
+        }
+        if (args.length > 1 && args.length <= 6) {
+          WorldStageData stageData = WorldStageData.get();
+          String name = args[1];
+          String targetLevel = null;
+          if (args.length == 6) {
+            targetLevel = DimensionUtils.getStringId(args[5]);
+          }
+          if (StringUtils.isNullOrEmptyEx(targetLevel)) {
+            targetLevel = DimensionUtils.getStringId(player.getEntityWorld().provider.dimensionId);
+          }
+          String dimension = DimensionUtils.getStringId(targetLevel);
+          KeyValue<String, String> key = new KeyValue<>(dimension, name);
+          if (stageData.getStageCoordinate().containsKey(key)) {
+            NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EI18nType.MESSAGE,
+                "stage_already_exists"), key.getKey(), key.getValue());
+            return 0;
+          }
+          Coordinate coordinate = new Coordinate(player).setDimension(targetLevel);
+          if (args.length >= 5) {
+            Double x = StringUtils.toCoordinate(args[2], player.posX);
+            Double y = StringUtils.toCoordinate(args[3], player.posY);
+            Double z = StringUtils.toCoordinate(args[4], player.posZ);
+            if (x == null || y == null || z == null) {
+              return -1;
+            }
+            coordinate.setX(x).setY(y).setZ(z);
+          }
+          stageData.addCoordinate(key, coordinate);
+          NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EI18nType.MESSAGE,
+              "stage_set"), name, coordinate.toXyzString());
+          return 1;
+        }
+      }
+      // 删除驿站
+      else if (prefix.equals(ServerConfig.COMMAND_DEL_STAGE)) {
+        // 传送功能前置校验
+        if (checkTeleportPre(player, ECommandType.DEL_STAGE)) {
+          return 0;
+        }
+        if (args.length >= 2) {
+          String name = args[1];
+          String dimension;
+          if (args.length == 3 && DimensionUtils.getDimensionType(args[2]) != null) {
+            dimension = args[2];
+          } else {
+            dimension = NarcissusUtils.getStageDimensionByName(name);
+          }
+          if (StringUtils.isNullOrEmptyEx(dimension)) {
+            NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EI18nType.MESSAGE,
+                "dimension_not_found"), args[2]);
+            return 0;
+          }
+          WorldStageData stageData = WorldStageData.get();
+          Coordinate remove = stageData.getStageCoordinate().remove(new KeyValue<>(dimension,
+              name));
+          stageData.markDirty();
+          if (remove == null) {
+            NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EI18nType.MESSAGE,
+                "stage_not_found_with_name_in_dimension"), dimension, name);
+            return 0;
+          }
+          NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EI18nType.MESSAGE,
+              "stage_del"), dimension, name);
+          return 1;
+        }
+      }
+      // 获取驿站
+      else if (prefix.equals(ServerConfig.COMMAND_GET_STAGE)) {
+        // 传送功能前置校验
+        if (checkTeleportPre(player, ECommandType.GET_STAGE)) {
+          return 0;
+        }
+        WorldStageData data = WorldStageData.get();
+        String language = NarcissusUtils.getPlayerLanguage(player);
+        if (data.getStageCoordinate().isEmpty()) {
+          NarcissusUtils.sendMessage(player, Component.translatable(language, EI18nType.MESSAGE,
+              "stage_is_empty"));
+        } else {
+          List<Component> infoList = new ArrayList<>();
+          // dimension:name coordinate 转为 dimension [name:coordinate]
+          Map<String, List<KeyValue<String, Coordinate>>> map =
+              data.getStageCoordinate().entrySet().stream()
+                  .collect(Collectors.groupingBy(
+                      entry -> entry.getKey().getKey(),
+                      Collectors.mapping(
+                          entry -> new KeyValue<>(entry.getKey().getValue(), entry.getValue()),
+                          Collectors.toList()
+                      )
+                  ));
+          for (Map.Entry<String, List<KeyValue<String, Coordinate>>> entry : map.entrySet()) {
+            Component dimension =
+                Component.literal(entry.getKey()).setColor(EMCColor.DARK_GREEN.getColor());
+            dimension.setClickEvent(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND,
+                entry.getKey()));
+            dimension.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT,
+                Component.literal(entry.getKey()).toTextComponent()));
+            dimension.append(Component.literal(": ").setColor(EMCColor.GRAY.getColor()));
+            for (KeyValue<String, Coordinate> coordinates : entry.getValue()) {
+              Component name = Component.translatable(language, EI18nType.MESSAGE, "stage_info"
+                  , coordinates.getKey()
+                  , coordinates.getValue().toXString()
+                  , coordinates.getValue().toYString()
+                  , coordinates.getValue().toZString());
+              Component name_hover = Component.translatable(language, EI18nType.MESSAGE,
+                  "stage_info_hover"
+                  , coordinates.getKey()
+                  , coordinates.getValue().toXString()
+                  , coordinates.getValue().toYString()
+                  , coordinates.getValue().toZString());
+              name.setColor(EMCColor.GREEN.getColor());
+              name.setClickEvent(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND,
+                  name_hover.toString(true)));
+              name.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT,
+                  name_hover.toTextComponent()));
+              dimension.append(name);
+              dimension.append(Component.literal(", ").setColor(EMCColor.GRAY.getColor()));
+            }
+            infoList.add(dimension);
+          }
+          NarcissusUtils.sendMessage(player, Component.translatable(language, EI18nType.MESSAGE,
+              "stage_is"));
+          for (Component info : infoList) {
+            NarcissusUtils.sendMessage(player, info);
+          }
+        }
+        return 1;
+      }
+      // 传送到上一次离开位置
+      else if (prefix.equals(ServerConfig.COMMAND_TP_BACK)) {
+        // 传送功能前置校验
+        if (checkTeleportPre(player, ECommandType.TP_BACK)) {
+          return 0;
+        }
+        if (args.length <= 4) {
+          ETeleportType type = null;
+          if (args.length >= 3) {
+            type = ETeleportType.valueOf(args[2]);
+          }
+          String targetLevel = null;
+          if (args.length == 4) {
+            targetLevel = DimensionUtils.getStringId(args[3]);
+          }
+          TeleportRecord record = NarcissusUtils.getBackTeleportRecord(player, type, targetLevel);
+          if (record == null) {
+            NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EI18nType.MESSAGE,
+                "back_not_found"));
+            return 0;
+          }
+          Coordinate coordinate = record.getBefore().clone();
+          try {
+            coordinate.setSafe(args.length >= 2 && "safe".equalsIgnoreCase(args[1]));
+          } catch (IllegalArgumentException ignored) {
+          }
+          // 验证传送代价
+          if (checkTeleportPost(player, coordinate, ETeleportType.TP_BACK, true)) return 0;
+          NarcissusUtils.removeBackTeleportRecord(player, record);
+          NarcissusUtils.teleportTo(player, coordinate, ETeleportType.TP_BACK);
+          return 1;
+        }
+      }
+      // 虚拟权限
+      else if (prefix.equals(ServerConfig.COMMAND_VIRTUAL_OP)) {
+        // 传送功能前置校验
+        if (checkTeleportPre(player, ECommandType.VIRTUAL_OP)) {
+          return 0;
+        }
+        if (player == null || NarcissusUtils.hasCommandPermission(player,
+            ECommandType.VIRTUAL_OP)) {
+          if (args.length == 3 || args.length == 4) {
+            EOperationType type = EOperationType.fromString(args[1]);
+            List<EntityPlayerMP> targetList = new ArrayList<>();
+            try {
+              targetList.add(CommandBase.getPlayer(sender, args[2]));
+            } catch (CommandException ignored) {
+            }
+            if (CollectionUtils.isNullOrEmpty(targetList)) {
+              NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EI18nType.MESSAGE,
+                  "player_not_found"));
+              return 0;
+            }
+            ECommandType[] rules;
+            try {
+              rules = Arrays.stream(args[3].split(","))
+                  .filter(StringUtils::isNotNullOrEmpty)
+                  .map(String::trim)
+                  .map(String::toUpperCase)
+                  .map(ECommandType::valueOf).toArray(ECommandType[]::new);
+            } catch (Exception ignored) {
+              rules = new ECommandType[]{};
+            }
+            String language = ServerConfig.DEFAULT_LANGUAGE;
+            if (player != null) {
+              language = NarcissusUtils.getPlayerLanguage(player);
+            }
+            for (EntityPlayerMP target : targetList) {
+              switch (type) {
+                case ADD:
+                  VirtualPermissionManager.addVirtualPermission(target, rules);
+                  break;
+                case SET:
+                  VirtualPermissionManager.setVirtualPermission(target, rules);
+                  break;
+                case DEL:
+                case REMOVE:
+                  VirtualPermissionManager.delVirtualPermission(target, rules);
+                  break;
+                case CLEAR:
+                  VirtualPermissionManager.clearVirtualPermission(target);
+                  break;
+              }
+              String permissions =
+                  VirtualPermissionManager.buildPermissionsString(VirtualPermissionManager.getVirtualPermission(target));
+              NarcissusUtils.sendTranslatableMessage(target, I18nUtils.getKey(EI18nType.MESSAGE,
+                  "player_virtual_op"), target.getDisplayName());
+              NarcissusUtils.sendMessage(target, Component.literal(permissions));
+              if (player != null) {
+                if (!target.getUniqueID().toString().equalsIgnoreCase(player.getUniqueID().toString())) {
+                  NarcissusUtils.sendTranslatableMessage(player,
+                      I18nUtils.getKey(EI18nType.MESSAGE, "player_virtual_op"),
+                      target.getDisplayName());
+                  NarcissusUtils.sendMessage(player, Component.literal(permissions));
+                }
+              } else {
+                NarcissusUtils.sendMessage(sender, Component.translatable(language,
+                    EI18nType.MESSAGE, "player_virtual_op", target.getDisplayName()));
+                NarcissusUtils.sendMessage(sender, Component.literal(permissions));
+              }
+              // 更新权限信息
+              // server.getPlayerList().updatePermissionLevel(target);
+            }
+            return 1;
+          }
+        }
+      }
+      // 服务器配置
+      else if (prefix.equals("config")) {
+        // 权限判断
+        if (!NarcissusUtils.hasCommandPermission(player, ECommandType.VIRTUAL_OP)) {
+          NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EI18nType.MESSAGE,
+              "command_no_permission"));
+          return 0;
+        }
+        if (args.length == 3 && args[1].equals("get")) {
+          if (args[2].equals("teleportCard")) {
+            Component msg = Component.translatable(I18nUtils.getKey(EI18nType.MESSAGE,
+                    "server_config_status")
+                , I18nUtils.enabled(NarcissusUtils.getPlayerLanguage(player),
+                    ServerConfig.TELEPORT_CARD)
+                , Component.translatable(NarcissusUtils.getPlayerLanguage(player), EI18nType.WORD
+                    , "teleport_card"));
+            NarcissusUtils.sendMessage(player, msg);
+            return 1;
+          }
+        } else if (args.length == 4 && args[1].equals("set")) {
+          if (args[2].equals("teleportCard")) {
+            ServerConfig.TELEPORT_CARD = StringUtils.stringToBoolean(args[3]);
+            Component msg = Component.translatable(I18nUtils.getKey(EI18nType.MESSAGE,
+                    "server_config_status")
+                , I18nUtils.enabled(NarcissusUtils.getPlayerLanguage(player),
+                    ServerConfig.TELEPORT_CARD)
+                , Component.translatable(NarcissusUtils.getPlayerLanguage(player), EI18nType.WORD
+                    , "teleport_card"));
+            NarcissusUtils.broadcastMessage(player, msg);
+            return 1;
+          } else if (args[2].equals("mode")) {
+            int mode = StringUtils.toInt(args[3]);
+            switch (mode) {
+              case 0:
+                ServerConfig.resetConfig();
+                break;
+              case 1:
+                ServerConfig.resetConfigWithMode1();
+                break;
+              case 2:
+                ServerConfig.resetConfigWithMode2();
+                break;
+              case 3:
+                ServerConfig.resetConfigWithMode3();
+                break;
+              default: {
+                throw new IllegalArgumentException("Mode " + mode + " does not exist");
+              }
+            }
+            Component component = Component.translatable(EI18nType.MESSAGE, "server_config_mode",
+                mode);
+            NarcissusUtils.sendMessage(player, component);
+            // 更新权限信息
+            // server.getPlayerList().getPlayers()
+            //         .forEach(target -> server.getPlayerList()
+            //                 .updatePermissionLevel(target)
+            //         );
+            return 1;
+          }
+        }
+      }
+    }
+    return -1;
+  }
+
+  private static List<String> getPlayerNameSuggestions(MinecraftServer server, String[] args) {
+    List<String> result = new ArrayList<>();
+    if (StringUtils.isNullOrEmptyEx(args[args.length - 1]) || args[args.length - 1].equals("@")) {
+      result.add("@p");
+      result.add("@r");
+      result.add("@s");
+    }
+    result.addAll(getListOfStringsMatchingLastWord(args,
+        server.getConfigurationManager().getAllUsernames()));
+    return result;
+  }
+
+  private static List<String> getCoordinateSuggestions(Coordinate playerPos, String[] args,
+                                                       int start) {
+    List<String> result = new ArrayList<>();
+    if (args.length - 1 == start) {
+      result.add("~");
+      result.add(String.valueOf(playerPos.getX()));
+    } else if (args.length - 1 == start + 1) {
+      String pre = args[args.length - 2];
+      if (StringUtils.isNotNullOrEmpty(pre) && (pre.equals("~") || pre.equals(StringUtils.toInt(pre) + ""))) {
+        result.add("~");
+        result.add(String.valueOf(playerPos.getY()));
+      }
+    } else if (args.length - 1 == start + 2) {
+      String pre = args[args.length - 2];
+      String prePre = args[args.length - 3];
+      if ((StringUtils.isNotNullOrEmpty(pre) && (pre.equals("~") || pre.equals(StringUtils.toInt(pre) + "")))
+          && (StringUtils.isNotNullOrEmpty(prePre) && (prePre.equals("~") || prePre.equals(StringUtils.toInt(prePre) + "")))) {
+        result.add("~");
+        result.add(String.valueOf(playerPos.getZ()));
+      }
+    }
+    return result;
+  }
+
+  // endregion 实现CommandBase
+
+  private static List<String> getReqIndexSuggestions(EntityPlayer player,
+                                                     ETeleportType teleportType, String arg,
+                                                     final boolean isTarget) {
+    Set<String> result = new HashSet<>();
+    NarcissusFarewell.getTeleportRequest().entrySet().stream()
+        .filter(entry -> isTarget ?
+            entry.getValue().getRequester().getUniqueID().equals(player.getUniqueID()) :
+            entry.getValue().getTarget().getUniqueID().equals(player.getUniqueID()))
+        .filter(entry -> entry.getValue().getTeleportType() == teleportType)
+        .filter(entry -> StringUtils.isNullOrEmpty(arg) || entry.getKey().contains(arg))
+        .forEach(entry -> {
+          result.add(entry.getKey());
+          result.add(entry.getValue().getRequester().getDisplayName());
+        });
+    if (StringUtils.isNullOrEmpty(arg)) {
+      for (int i = 0; i < NarcissusFarewell.getTeleportRequest().entrySet().stream()
+          .filter(entry -> isTarget ?
+              entry.getValue().getRequester().getUniqueID().equals(player.getUniqueID()) :
+              entry.getValue().getTarget().getUniqueID().equals(player.getUniqueID()))
+          .filter(entry -> entry.getValue().getTeleportType() == teleportType)
+          .count(); i++) {
+        result.add(String.valueOf(i + 1));
+      }
+    }
+    return result.stream().sorted().collect(Collectors.toList());
+  }
+
+  /**
+   * 传送解析前置校验
+   *
+   * @return true 表示校验失败，不应该执行传送
+   */
+  private static boolean checkTeleportPre(EntityPlayerMP player, ECommandType teleportType) {
+    // 判断是否开启传送功能
+    if (!NarcissusUtils.isCommandEnabled(teleportType)) {
+      NarcissusUtils.sendTranslatableMessage(player, false, I18nUtils.getKey(EI18nType.MESSAGE,
+          "command_disabled"));
+      return true;
+    }
+    // 判断是否有冷却时间
+    if (player != null) {
+      ETeleportType type = teleportType.toTeleportType();
+      if (type != null && !(teleportType.name().toLowerCase().contains("yes") || teleportType.name().toLowerCase().contains("no"))) {
+        int teleportCoolDown = NarcissusUtils.getTeleportCoolDown(player, type);
+        if (teleportCoolDown > 0) {
+          NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EI18nType.MESSAGE,
+              "command_cooldown"), teleportCoolDown);
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  /**
+   * 传送解析后置校验
+   *
+   * @return true 表示校验失败，不应该执行传送
+   */
+  private static boolean checkTeleportPost(TeleportRequest request) {
+    return checkTeleportPost(request, false);
+  }
+
+  /**
+   * 传送解析后置校验
+   *
+   * @param submit 是否收取代价
+   * @return true 表示校验失败，不应该执行传送
+   */
+  private static boolean checkTeleportPost(TeleportRequest request, boolean submit) {
+    boolean result;
+    // 判断跨维度传送
+    result = NarcissusUtils.isTeleportAcrossDimensionEnabled(request.getRequester(),
+        DimensionUtils.getStringId(request.getTarget().getEntityWorld().provider.dimensionId),
+        request.getTeleportType());
+    // 判断是否有传送代价
+    result = result && NarcissusUtils.validTeleportCost(request, submit);
+    return !result;
+  }
+
+  /**
+   * 传送解析后置校验
+   *
+   * @param player 请求传送的玩家
+   * @param target 目标坐标
+   * @param type   传送类型
+   * @return true 表示校验失败，不应该执行传送
+   */
+  public static boolean checkTeleportPost(EntityPlayerMP player, Coordinate target,
+                                          ETeleportType type) {
+    return checkTeleportPost(player, target, type, false);
+  }
+
+  /**
+   * 传送解析后置校验
+   *
+   * @param player 请求传送的玩家
+   * @param target 目标坐标
+   * @param type   传送类型
+   * @param submit 是否收取代价
+   * @return true 表示校验失败，不应该执行传送
+   */
+  public static boolean checkTeleportPost(EntityPlayerMP player, Coordinate target,
+                                          ETeleportType type, boolean submit) {
+    boolean result;
+    // 判断跨维度传送
+    result = NarcissusUtils.isTeleportAcrossDimensionEnabled(player, target.getDimension(), type);
+    // 判断是否有传送代价
+    result = result && NarcissusUtils.validTeleportCost(player, target, type, submit);
+    return !result;
+  }
+
+  /**
+   * 获取传送请求ID
+   *
+   * @param teleportType 传送类型
+   * @param isTarget     是否根据接收方查找
+   */
+  private static String getRequestId(EntityPlayerMP player, String arg,
+                                     ETeleportType teleportType, final boolean isTarget) {
+    String result = null;
+    try {
+      List<EntityPlayerMP> playerMPList = new ArrayList<>();
+      try {
+        playerMPList.add(CommandBase.getPlayer(player, arg));
+      } catch (CommandException ignored) {
+      }
+      // List<EntityPlayerMP> playerMPList = NarcissusUtils.getPlayer(player, arg);
+      if (CollectionUtils.isNotNullOrEmpty(playerMPList)) {
+        EntityPlayerMP requester = playerMPList.get(0);
+        Map.Entry<String, TeleportRequest> entry1 =
+            NarcissusFarewell.getTeleportRequest().entrySet().stream()
+                .filter(entry -> isTarget ?
+                    entry.getValue().getTarget().getUniqueID().equals(player.getUniqueID()) :
+                    entry.getValue().getRequester().getUniqueID().equals(player.getUniqueID()))
+                .filter(entry -> isTarget ?
+                    entry.getValue().getRequester().getUniqueID().equals(requester.getUniqueID()) :
+                    entry.getValue().getTarget().getUniqueID().equals(requester.getUniqueID()))
+                .filter(entry -> entry.getValue().getTeleportType() == teleportType)
+                .max(Comparator.comparing(entry -> entry.getValue().getRequestTime()))
+                .orElse(null);
+        if (entry1 != null) {
+          result = entry1.getKey();
+        }
+      } else if (NarcissusFarewell.getTeleportRequest().containsKey(arg)) {
+        result = arg;
+      } else if (String.valueOf(StringUtils.toInt(arg)).equals(arg)) {
+        int askIndex = StringUtils.toInt(arg);
+        List<Map.Entry<String, TeleportRequest>> entryList =
+            NarcissusFarewell.getTeleportRequest().entrySet().stream()
+                .filter(entry -> isTarget ?
+                    entry.getValue().getTarget().getUniqueID().equals(player.getUniqueID()) :
+                    entry.getValue().getRequester().getUniqueID().equals(player.getUniqueID()))
+                .filter(entry -> entry.getValue().getTeleportType() == teleportType)
+                // 使用负数实现倒序排列
+                .sorted(Comparator.comparing(entry -> -entry.getValue().getRequestTime().getTime()))
+                .collect(Collectors.toList());
+        if (askIndex > 0 && askIndex <= entryList.size()) {
+          result = entryList.get(askIndex - 1).getKey();
+        }
+      } else {
+        // 使用负数实现倒序排列
+        Map.Entry<String, TeleportRequest> entry1 =
+            NarcissusFarewell.getTeleportRequest().entrySet().stream()
+                .filter(entry -> isTarget ?
+                    entry.getValue().getTarget().getUniqueID().equals(player.getUniqueID()) :
+                    entry.getValue().getRequester().getUniqueID().equals(player.getUniqueID()))
+                .filter(entry -> entry.getValue().getTeleportType() == teleportType)
+                .max(Comparator.comparing(entry -> entry.getValue().getRequestTime()))
+                .orElse(null);
+        if (entry1 != null) {
+          result = entry1.getKey();
+        }
+      }
+    } catch (Exception ignored) {
+    }
+    return result;
+  }
+
+  /**
+   * 若为第一次使用指令则进行提示
+   */
+  public static void notifyHelp(EntityPlayerMP player) {
+    if (player != null) {
+      IPlayerTeleportData data = PlayerTeleportData.get(player);
+      if (!data.isNotified()) {
+        Component button = Component.literal("/" + NarcissusUtils.getCommandPrefix())
+            .setColor(EMCColor.AQUA.getColor())
+            .setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND,
+                "/" + NarcissusUtils.getCommandPrefix()))
+            .setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT,
+                Component.literal("/" + NarcissusUtils.getCommandPrefix())
+                    .toTextComponent())
+            );
+        NarcissusUtils.sendMessage(player, Component.translatable(EI18nType.MESSAGE, "notify_help"
+            , button));
+        data.setNotified(true);
+      }
+    }
+  }
+
+  @Override
+  public int getRequiredPermissionLevel() {
         /*
             OP权限等级：
                 1：绕过服务器原版的出生点保护系统，可以破坏出生点地形。
@@ -55,2295 +2918,38 @@ public class FarewellCommand extends CommandBase {
                 §8：深灰 §9：淡紫 §a：浅绿 §b：淡蓝
                 §c：淡红 §d：淡紫 §e：淡黄 §f：白色
         */
-        return 0;
-    }
+    return 0;
+  }
 
-    @Override
-    @ParametersAreNonnullByDefault
-    public boolean canCommandSenderUseCommand(ICommandSender sender) {
-        return NarcissusUtils.hasPermissions(sender, this.getRequiredPermissionLevel());
-    }
+  @Override
+  @ParametersAreNonnullByDefault
+  public boolean canCommandSenderUseCommand(ICommandSender sender) {
+    return NarcissusUtils.hasPermissions(sender, this.getRequiredPermissionLevel());
+  }
 
-    @Override
-    @NonNull
-    public String getCommandName() {
-        return NarcissusUtils.getCommandPrefix();
-    }
+  @Override
+  @NonNull
+  public String getCommandName() {
+    return NarcissusUtils.getCommandPrefix();
+  }
 
-    @Override
-    @NonNull
-    public String getCommandUsage(@NonNull ICommandSender sender) {
-        return "/" + ServerConfig.COMMAND_PREFIX + " help";
-    }
+  @Override
+  @NonNull
+  public String getCommandUsage(@NonNull ICommandSender sender) {
+    return "/" + ServerConfig.COMMAND_PREFIX + " help";
+  }
 
-    @Override
-    @NonNull
-    @ParametersAreNonnullByDefault
-    public List<String> addTabCompletionOptions(ICommandSender sender, String[] args) {
-        return getSuggestions(sender, args);
-    }
+  @Override
+  @NonNull
+  @ParametersAreNonnullByDefault
+  public List<String> addTabCompletionOptions(ICommandSender sender, String[] args) {
+    return getSuggestions(sender, args);
+  }
 
-    @Override
-    @ParametersAreNonnullByDefault
-    public void processCommand(@NonNull ICommandSender sender, @ParametersAreNonnullByDefault String[] args) throws PlayerNotFoundException {
-        verifyExecuteResult(sender, executeCommand(sender, args));
-    }
-
-    // endregion 实现CommandBase
-
-    public static final List<KeyValue<String, ECommandType>> HELP_MESSAGE = Arrays.stream(ECommandType.values())
-            .map(type -> {
-                String command = NarcissusUtils.getCommand(type);
-                if (StringUtils.isNotNullOrEmpty(command)) {
-                    return new KeyValue<>(command, type);
-                }
-                return null;
-            })
-            .filter(Objects::nonNull)
-            .filter(keyValue -> !keyValue.getValue().isIgnore())
-            .sorted(Comparator.comparing(keyValue -> keyValue.getValue().getSort()))
-            .collect(Collectors.toList());
-
-    public static void verifyExecuteResult(ICommandSender sender, int result) {
-        if (result < 0) {
-            NarcissusUtils.sendTranslatableMessage((EntityPlayerMP) sender, I18nUtils.getKey(EI18nType.MESSAGE, "command_failed"));
-        }
-    }
-
-    /**
-     * 获取指令补全提示(快乐堆粪)
-     *
-     * @param sender 指令发送者
-     * @param args   指令参数
-     * @return 指令补全提示
-     */
-    public static List<String> getSuggestions(ICommandSender sender, String[] args) {
-        MinecraftServer server = NarcissusFarewell.getServerInstance();
-        EntityPlayer player = (EntityPlayer) sender;
-        List<String> suggestions = new ArrayList<>();
-
-        if (args.length == 0) {
-            Arrays.stream(ECommandType.values())
-                    .filter(type -> !type.isIgnore())
-                    .filter(NarcissusUtils::isTeleportEnabled)
-                    .filter(type -> NarcissusUtils.hasCommandPermission(player, type))
-                    .sorted(Comparator.comparing(ECommandType::getSort))
-                    .map(value -> NarcissusUtils.getCommand(value, false))
-                    .distinct()
-                    .forEach(suggestions::add);
-            if (NarcissusUtils.hasCommandPermission(player, ECommandType.VIRTUAL_OP)) {
-                suggestions.add("config");
-            }
-        } else if (args.length == 1) {
-            Arrays.stream(ECommandType.values())
-                    .filter(type -> !type.isIgnore())
-                    .filter(NarcissusUtils::isTeleportEnabled)
-                    .filter(type -> NarcissusUtils.hasCommandPermission(player, type))
-                    .sorted(Comparator.comparing(ECommandType::getSort))
-                    .map(value -> NarcissusUtils.getCommand(value, false))
-                    .filter(command -> StringUtils.isNullOrEmpty(args[0]) || command.startsWith(args[0]))
-                    .distinct()
-                    .forEach(suggestions::add);
-            if (NarcissusUtils.hasCommandPermission(player, ECommandType.VIRTUAL_OP)) {
-                if (StringUtils.isNullOrEmpty(args[0]) || "config".startsWith(args[0])) {
-                    suggestions.add("config");
-                }
-            }
-        }
-        // 根据指令帮助中的参数列表进行补全提示
-        else {
-            String arg = args[args.length - 1];
-            // 帮助信息
-            if (args[0].equals("help")) {
-                if (args.length == 2) {
-                    String input = args[1];
-                    boolean isInputEmpty = StringUtils.isNullOrEmpty(input);
-                    int totalPages = (int) Math.ceil((double) HELP_MESSAGE.size() / ServerConfig.HELP_INFO_NUM_PER_PAGE);
-                    for (int i = 0; i < totalPages && isInputEmpty; i++) {
-                        suggestions.add(String.valueOf(i + 1));
-                    }
-                    Arrays.stream(ECommandType.values())
-                            .filter(type -> type != ECommandType.HELP)
-                            .filter(type -> !type.isIgnore())
-                            .filter(type -> !type.name().toLowerCase().contains("concise"))
-                            .filter(type -> isInputEmpty || type.name().toLowerCase().contains(input.toLowerCase()))
-                            .sorted(Comparator.comparing(ECommandType::getSort))
-                            .forEach(type -> suggestions.add(type.name()));
-                }
-            }
-            // 设置语言
-            else if (args[0].equals(ServerConfig.COMMAND_LANGUAGE)) {
-                if (args.length == 2) {
-                    suggestions.add("client");
-                    suggestions.add("server");
-                    suggestions.addAll(I18nUtils.getI18nFiles());
-                }
-            }
-            // 获取UUID
-            else if (args[0].equals(ServerConfig.COMMAND_UUID) && NarcissusUtils.isTeleportEnabled(ECommandType.UUID) && NarcissusUtils.hasCommandPermission(player, ECommandType.UUID)) {
-                if (args.length == 2) {
-                    suggestions.addAll(getPlayerNameSuggestions(server, args));
-                }
-            }
-            // 传送卡
-            else if (args[0].equals(ServerConfig.COMMAND_CARD) && NarcissusUtils.isTeleportEnabled(ECommandType.CARD) && NarcissusUtils.hasCommandPermission(player, ECommandType.SET_CARD)) {
-                if (args.length == 2) {
-                    suggestions.add("get");
-                    suggestions.add("add");
-                    suggestions.add("set");
-                } else if (args.length == 3) {
-                    suggestions.addAll(getPlayerNameSuggestions(server, args));
-                } else if (args.length == 4) {
-                    suggestions.add("-5");
-                    suggestions.add("-1");
-                    suggestions.add("1");
-                    suggestions.add("5");
-                    suggestions.add("10");
-                    suggestions.add("20");
-                }
-            }
-            // 分享坐标
-            else if (args[0].equals(ServerConfig.COMMAND_SHARE) && NarcissusUtils.isTeleportEnabled(ECommandType.SHARE) && NarcissusUtils.hasCommandPermission(player, ECommandType.SHARE)) {
-                if (args.length == 2) {
-                    String name = args[1];
-                    // 获取玩家私人传送点
-                    IPlayerTeleportData data = PlayerTeleportData.get(player);
-                    for (KeyValue<String, String> home : data.getHomeCoordinate().keySet()) {
-                        // -> 用于标识home，方便shareCommand中识别
-                        String homeString = home.getValue() + "->" + home.getKey();
-                        if (StringUtils.isNullOrEmptyEx(name) || homeString.toLowerCase().contains(name)) {
-                            // suggestions.add(StringUtils.formatString(homeString));
-                            suggestions.add(homeString);
-                        }
-                    }
-                    // 获取公共传送点
-                    for (KeyValue<String, String> stage : WorldStageData.get().getStageCoordinate().keySet()) {
-                        // >> 用于标识stage，方便shareCommand中识别
-                        String stageString = stage.getValue() + ">>" + stage.getKey();
-                        if (StringUtils.isNullOrEmptyEx(name) || stageString.toLowerCase().contains(name)) {
-                            // suggestions.add(StringUtils.formatString(stageString));
-                            suggestions.add(stageString);
-                        }
-                    }
-                } else if (args.length == 3) {
-                    suggestions.addAll(getPlayerNameSuggestions(server, args));
-                    suggestions.add("@a");
-                }
-            }
-            // 毒杀玩家
-            else if (args[0].equals(ServerConfig.COMMAND_FEED) && NarcissusUtils.isTeleportEnabled(ECommandType.FEED) && NarcissusUtils.hasCommandPermission(player, ECommandType.FEED_OTHER)) {
-                if (args.length == 2) {
-                    suggestions.addAll(getPlayerNameSuggestions(server, args));
-                    suggestions.add("@a");
-                }
-            }
-            // 传送到指定坐标
-            else if (args[0].equals(ServerConfig.COMMAND_TP_COORDINATE) && NarcissusUtils.isTeleportEnabled(ECommandType.TP_COORDINATE) && NarcissusUtils.hasCommandPermission(player, ECommandType.TP_COORDINATE)) {
-                if (args.length == 2) {
-                    suggestions.addAll(getPlayerNameSuggestions(server, args));
-                    suggestions.addAll(getCoordinateSuggestions(new Coordinate(player), args, 1));
-                } else if (args.length == 3) {
-                    List<String> coordinateSuggestions = getCoordinateSuggestions(new Coordinate(player), args, 1);
-                    suggestions.addAll(coordinateSuggestions);
-                    if (coordinateSuggestions.isEmpty()) {
-                        if (StringUtils.isNullOrEmptyEx(arg) || "safe".startsWith(arg)) {
-                            suggestions.add("safe");
-                        }
-                        if (StringUtils.isNullOrEmptyEx(arg) || "unsafe".contains(arg)) {
-                            suggestions.add("unsafe");
-                        }
-                    }
-                } else if (args.length == 4) {
-                    suggestions.addAll(getCoordinateSuggestions(new Coordinate(player), args, 1));
-                } else if (args.length == 5) {
-                    if (StringUtils.isNullOrEmptyEx(arg) || "safe".startsWith(arg)) {
-                        suggestions.add("safe");
-                    }
-                    if (StringUtils.isNullOrEmptyEx(arg) || "unsafe".contains(arg)) {
-                        suggestions.add("unsafe");
-                    }
-                } else if (args.length == 6) {
-                    DimensionUtils.getStringIds().stream()
-                            .filter(string -> StringUtils.isNullOrEmpty(arg) || string.contains(arg))
-                            .filter(StringUtils::isNotNullOrEmpty)
-                            .distinct()
-                            .forEach(suggestions::add);
-                }
-            }
-            // 传送到指定结构
-            else if (args[0].equals(ServerConfig.COMMAND_TP_STRUCTURE) && NarcissusUtils.isTeleportEnabled(ECommandType.TP_STRUCTURE) && NarcissusUtils.hasCommandPermission(player, ECommandType.TP_STRUCTURE)) {
-                if (args.length == 2) {
-                    NarcissusUtils.getStructureList().stream()
-                            .filter(string -> StringUtils.isNullOrEmpty(arg) || string.contains(arg))
-                            .forEach(suggestions::add);
-                    BiomeUtils.getStringIds().stream()
-                            .filter(biome -> StringUtils.isNullOrEmpty(arg) || biome.contains(arg))
-                            .forEach(biome -> suggestions.add(biome));
-                } else if (args.length == 3) {
-                    if (StringUtils.isNullOrEmptyEx(arg) || "safe".startsWith(arg)) {
-                        suggestions.add("safe");
-                    }
-                    if (StringUtils.isNullOrEmptyEx(arg) || "unsafe".contains(arg)) {
-                        suggestions.add("unsafe");
-                    }
-                } else if (args.length == 4) {
-                    DimensionUtils.getStringIds().stream()
-                            .filter(string -> StringUtils.isNullOrEmpty(arg) || string.contains(arg))
-                            .forEach(suggestions::add);
-                }
-            }
-            // 请求传送到指定玩家
-            else if (args[0].equals(ServerConfig.COMMAND_TP_ASK) && NarcissusUtils.isTeleportEnabled(ECommandType.TP_ASK) && NarcissusUtils.hasCommandPermission(player, ECommandType.TP_ASK)) {
-                if (args.length == 2) {
-                    suggestions.addAll(getPlayerNameSuggestions(server, args));
-                } else if (args.length == 3) {
-                    if (StringUtils.isNullOrEmptyEx(arg) || "safe".startsWith(arg)) {
-                        suggestions.add("safe");
-                    }
-                    if (StringUtils.isNullOrEmptyEx(arg) || "unsafe".contains(arg)) {
-                        suggestions.add("unsafe");
-                    }
-                }
-            }
-            // 同意传送请求
-            else if (args[0].equals(ServerConfig.COMMAND_TP_ASK_YES) && NarcissusUtils.isTeleportEnabled(ECommandType.TP_ASK) && NarcissusUtils.hasCommandPermission(player, ECommandType.TP_ASK_YES)) {
-                if (args.length == 2) {
-                    suggestions.addAll(getReqIndexSuggestions(player, ETeleportType.TP_ASK, arg, true));
-                }
-            }
-            // 拒绝传送请求
-            else if (args[0].equals(ServerConfig.COMMAND_TP_ASK_NO) && NarcissusUtils.isTeleportEnabled(ECommandType.TP_ASK) && NarcissusUtils.hasCommandPermission(player, ECommandType.TP_ASK_NO)) {
-                if (args.length == 2) {
-                    suggestions.addAll(getReqIndexSuggestions(player, ETeleportType.TP_ASK, arg, true));
-                }
-            }
-            // 取消传送请求
-            else if (args[0].equals(ServerConfig.COMMAND_TP_ASK_CANCEL) && NarcissusUtils.isTeleportEnabled(ECommandType.TP_ASK) && NarcissusUtils.hasCommandPermission(player, ECommandType.TP_ASK_CANCEL)) {
-                if (args.length == 2) {
-                    suggestions.addAll(getReqIndexSuggestions(player, ETeleportType.TP_ASK, arg, false));
-                }
-            }
-            // 请求指定玩家传送
-            else if (args[0].equals(ServerConfig.COMMAND_TP_HERE) && NarcissusUtils.isTeleportEnabled(ECommandType.TP_HERE) && NarcissusUtils.hasCommandPermission(player, ECommandType.TP_HERE)) {
-                if (args.length == 2) {
-                    suggestions.addAll(getPlayerNameSuggestions(server, args));
-                } else if (args.length == 3) {
-                    if (StringUtils.isNullOrEmptyEx(arg) || "safe".startsWith(arg)) {
-                        suggestions.add("safe");
-                    }
-                    if (StringUtils.isNullOrEmptyEx(arg) || "unsafe".contains(arg)) {
-                        suggestions.add("unsafe");
-                    }
-                }
-            }
-            // 同意传送请求
-            else if (args[0].equals(ServerConfig.COMMAND_TP_HERE_YES) && NarcissusUtils.isTeleportEnabled(ECommandType.TP_HERE) && NarcissusUtils.hasCommandPermission(player, ECommandType.TP_HERE_YES)) {
-                if (args.length == 2) {
-                    suggestions.addAll(getReqIndexSuggestions(player, ETeleportType.TP_HERE, arg, true));
-                }
-            }
-            // 拒绝传送请求
-            else if (args[0].equals(ServerConfig.COMMAND_TP_HERE_NO) && NarcissusUtils.isTeleportEnabled(ECommandType.TP_HERE) && NarcissusUtils.hasCommandPermission(player, ECommandType.TP_HERE_NO)) {
-                if (args.length == 2) {
-                    suggestions.addAll(getReqIndexSuggestions(player, ETeleportType.TP_HERE, arg, true));
-                }
-            }
-            // 拒绝传送请求
-            else if (args[0].equals(ServerConfig.COMMAND_TP_HERE_CANCEL) && NarcissusUtils.isTeleportEnabled(ECommandType.TP_HERE) && NarcissusUtils.hasCommandPermission(player, ECommandType.TP_HERE_CANCEL)) {
-                if (args.length == 2) {
-                    suggestions.addAll(getReqIndexSuggestions(player, ETeleportType.TP_HERE, arg, false));
-                }
-            }
-            // 传送到随机位置
-            else if (args[0].equals(ServerConfig.COMMAND_TP_RANDOM) && NarcissusUtils.isTeleportEnabled(ECommandType.TP_RANDOM) && NarcissusUtils.hasCommandPermission(player, ECommandType.TP_RANDOM)) {
-                if (args.length == 2) {
-                    for (int i = 1; i <= 5; i++) {
-                        int index = (int) Math.pow(10, i);
-                        if (index <= ServerConfig.TELEPORT_RANDOM_DISTANCE_LIMIT) {
-                            suggestions.add(String.valueOf(index));
-                        }
-                    }
-                } else if (args.length == 3) {
-                    if (StringUtils.isNullOrEmptyEx(arg) || "safe".startsWith(arg)) {
-                        suggestions.add("safe");
-                    }
-                    if (StringUtils.isNullOrEmptyEx(arg) || "unsafe".contains(arg)) {
-                        suggestions.add("unsafe");
-                    }
-                } else if (args.length == 4) {
-                    DimensionUtils.getStringIds().stream()
-                            .filter(string -> StringUtils.isNullOrEmpty(arg) || string.contains(arg))
-                            .forEach(suggestions::add);
-                }
-            }
-            // 传送到出生点
-            else if (args[0].equals(ServerConfig.COMMAND_TP_SPAWN) && NarcissusUtils.isTeleportEnabled(ECommandType.TP_SPAWN) && NarcissusUtils.hasCommandPermission(player, ECommandType.TP_SPAWN)) {
-                if (args.length == 2) {
-                    if (StringUtils.isNullOrEmptyEx(arg) || "safe".startsWith(arg)) {
-                        suggestions.add("safe");
-                    }
-                    if (StringUtils.isNullOrEmptyEx(arg) || "unsafe".contains(arg)) {
-                        suggestions.add("unsafe");
-                    }
-                }
-                // else if (args.length == 3) {
-                //     suggestions.addAll(getPlayerNameSuggestions(server, args));
-                // }
-            }
-            // 传送到世界出生点
-            else if (args[0].equals(ServerConfig.COMMAND_TP_WORLD_SPAWN) && NarcissusUtils.isTeleportEnabled(ECommandType.TP_WORLD_SPAWN) && NarcissusUtils.hasCommandPermission(player, ECommandType.TP_WORLD_SPAWN)) {
-                if (args.length == 2) {
-                    if (StringUtils.isNullOrEmptyEx(arg) || "safe".startsWith(arg)) {
-                        suggestions.add("safe");
-                    }
-                    if (StringUtils.isNullOrEmptyEx(arg) || "unsafe".contains(arg)) {
-                        suggestions.add("unsafe");
-                    }
-                }
-            }
-            // 传送到顶部
-            else if (args[0].equals(ServerConfig.COMMAND_TP_TOP) && NarcissusUtils.isTeleportEnabled(ECommandType.TP_TOP) && NarcissusUtils.hasCommandPermission(player, ECommandType.TP_TOP)) {
-                if (args.length == 2) {
-                    if (StringUtils.isNullOrEmptyEx(arg) || "safe".startsWith(arg)) {
-                        suggestions.add("safe");
-                    }
-                    if (StringUtils.isNullOrEmptyEx(arg) || "unsafe".contains(arg)) {
-                        suggestions.add("unsafe");
-                    }
-                }
-            }
-            // 传送到底部
-            else if (args[0].equals(ServerConfig.COMMAND_TP_BOTTOM) && NarcissusUtils.isTeleportEnabled(ECommandType.TP_BOTTOM) && NarcissusUtils.hasCommandPermission(player, ECommandType.TP_BOTTOM)) {
-                if (args.length == 2) {
-                    if (StringUtils.isNullOrEmptyEx(arg) || "safe".startsWith(arg)) {
-                        suggestions.add("safe");
-                    }
-                    if (StringUtils.isNullOrEmptyEx(arg) || "unsafe".contains(arg)) {
-                        suggestions.add("unsafe");
-                    }
-                }
-            }
-            // 传送到上方
-            else if (args[0].equals(ServerConfig.COMMAND_TP_UP) && NarcissusUtils.isTeleportEnabled(ECommandType.TP_UP) && NarcissusUtils.hasCommandPermission(player, ECommandType.TP_UP)) {
-                if (args.length == 2) {
-                    if (StringUtils.isNullOrEmptyEx(arg) || "safe".startsWith(arg)) {
-                        suggestions.add("safe");
-                    }
-                    if (StringUtils.isNullOrEmptyEx(arg) || "unsafe".contains(arg)) {
-                        suggestions.add("unsafe");
-                    }
-                }
-            }
-            // 传送到下方
-            else if (args[0].equals(ServerConfig.COMMAND_TP_DOWN) && NarcissusUtils.isTeleportEnabled(ECommandType.TP_DOWN) && NarcissusUtils.hasCommandPermission(player, ECommandType.TP_DOWN)) {
-                if (args.length == 2) {
-                    if (StringUtils.isNullOrEmptyEx(arg) || "safe".startsWith(arg)) {
-                        suggestions.add("safe");
-                    }
-                    if (StringUtils.isNullOrEmptyEx(arg) || "unsafe".contains(arg)) {
-                        suggestions.add("unsafe");
-                    }
-                }
-            }
-            // 传送到视线尽头
-            else if (args[0].equals(ServerConfig.COMMAND_TP_VIEW) && NarcissusUtils.isTeleportEnabled(ECommandType.TP_VIEW) && NarcissusUtils.hasCommandPermission(player, ECommandType.TP_VIEW)) {
-                if (args.length == 2) {
-                    if (StringUtils.isNullOrEmptyEx(arg) || "safe".startsWith(arg)) {
-                        suggestions.add("safe");
-                    }
-                    if (StringUtils.isNullOrEmptyEx(arg) || "unsafe".contains(arg)) {
-                        suggestions.add("unsafe");
-                    }
-                } else if (args.length == 3) {
-                    for (int i = 1; i <= 5; i++) {
-                        int index = (int) Math.pow(10, i);
-                        if (index <= ServerConfig.TELEPORT_RANDOM_DISTANCE_LIMIT) {
-                            suggestions.add(String.valueOf(index));
-                        }
-                    }
-                }
-            }
-            // 传送到预设位置
-            else if (args[0].equals(ServerConfig.COMMAND_TP_HOME) && NarcissusUtils.isTeleportEnabled(ECommandType.TP_HOME) && NarcissusUtils.hasCommandPermission(player, ECommandType.TP_HOME)) {
-                if (args.length == 2) {
-                    if (StringUtils.isNullOrEmptyEx(arg) || "safe".startsWith(arg)) {
-                        suggestions.add("safe");
-                    }
-                    if (StringUtils.isNullOrEmptyEx(arg) || "unsafe".contains(arg)) {
-                        suggestions.add("unsafe");
-                    }
-                    PlayerTeleportData.get(player).getHomeCoordinate().keySet().stream()
-                            .filter(keyValue -> StringUtils.isNullOrEmpty(arg) || keyValue.getValue().startsWith(arg))
-                            .map(KeyValue::getValue)
-                            .forEach(suggestions::add);
-                } else if (args.length == 3) {
-                    if (StringUtils.isNullOrEmptyEx(arg) || "safe".startsWith(arg)) {
-                        suggestions.add("safe");
-                    }
-                    if (StringUtils.isNullOrEmptyEx(arg) || "unsafe".contains(arg)) {
-                        suggestions.add("unsafe");
-                    }
-                    PlayerTeleportData.get(player).getHomeCoordinate().keySet().stream()
-                            .filter(keyValue -> StringUtils.isNullOrEmpty(arg) || keyValue.getKey().contains(arg))
-                            .map(KeyValue::getKey)
-                            .forEach(suggestions::add);
-                } else if (args.length == 4) {
-                    PlayerTeleportData.get(player).getHomeCoordinate().keySet().stream()
-                            .filter(keyValue -> keyValue.getValue().equals(args[1]))
-                            .filter(keyValue -> StringUtils.isNullOrEmpty(arg) || keyValue.getKey().contains(arg))
-                            .map(KeyValue::getKey)
-                            .forEach(suggestions::add);
-                }
-            }
-            // 添加预设位置
-            else if (args[0].equals(ServerConfig.COMMAND_SET_HOME) && NarcissusUtils.isTeleportEnabled(ECommandType.TP_HOME) && NarcissusUtils.hasCommandPermission(player, ECommandType.SET_HOME)) {
-                if (args.length == 2) {
-                    String name = "home";
-                    int index = 0;
-                    while (true) {
-                        int finalIndex = index;
-                        if (PlayerTeleportData.get(player).getHomeCoordinate().keySet().stream()
-                                .noneMatch(keyValue -> keyValue.getValue().equals(name + (finalIndex == 0 ? "" : finalIndex)))) {
-                            suggestions.add(name + index);
-                            break;
-                        }
-                        index++;
-                    }
-                } else if (args.length == 3) {
-                    if (StringUtils.isNullOrEmptyEx(arg) || "default".startsWith(arg)) {
-                        suggestions.add("default");
-                    }
-                    if (StringUtils.isNullOrEmptyEx(arg) || "notdefault".startsWith(arg)) {
-                        suggestions.add("notdefault");
-                    }
-                }
-            }
-            // 删除预设位置
-            else if (args[0].equals(ServerConfig.COMMAND_DEL_HOME) && NarcissusUtils.isTeleportEnabled(ECommandType.TP_HOME) && NarcissusUtils.hasCommandPermission(player, ECommandType.DEL_HOME)) {
-                if (args.length == 2) {
-                    PlayerTeleportData.get(player).getHomeCoordinate().keySet().stream()
-                            .filter(keyValue -> StringUtils.isNullOrEmpty(arg) || keyValue.getValue().startsWith(arg))
-                            .map(KeyValue::getValue)
-                            .forEach(suggestions::add);
-                } else if (args.length == 3) {
-                    PlayerTeleportData.get(player).getHomeCoordinate().keySet().stream()
-                            .filter(keyValue -> keyValue.getValue().equals(args[1]))
-                            .filter(keyValue -> StringUtils.isNullOrEmpty(arg) || keyValue.getKey().contains(arg))
-                            .map(KeyValue::getKey)
-                            .forEach(suggestions::add);
-                }
-            }
-            // 传送到驿站
-            else if (args[0].equals(ServerConfig.COMMAND_TP_STAGE) && NarcissusUtils.isTeleportEnabled(ECommandType.TP_STAGE) && NarcissusUtils.hasCommandPermission(player, ECommandType.TP_STAGE)) {
-                if (args.length == 2) {
-                    WorldStageData.get().getStageCoordinate().keySet().stream()
-                            .filter(keyValue -> StringUtils.isNullOrEmpty(arg) || keyValue.getValue().contains(arg))
-                            .map(KeyValue::getValue)
-                            .forEach(suggestions::add);
-                } else if (args.length == 3) {
-                    if (StringUtils.isNullOrEmptyEx(arg) || "safe".startsWith(arg)) {
-                        suggestions.add("safe");
-                    }
-                    if (StringUtils.isNullOrEmptyEx(arg) || "unsafe".contains(arg)) {
-                        suggestions.add("unsafe");
-                    }
-                } else if (args.length == 4) {
-                    WorldStageData.get().getStageCoordinate().keySet().stream()
-                            .filter(keyValue -> keyValue.getValue().equals(args[1]))
-                            .filter(keyValue -> StringUtils.isNullOrEmpty(arg) || keyValue.getKey().contains(arg))
-                            .map(KeyValue::getKey)
-                            .forEach(suggestions::add);
-                }
-            }
-            // 添加驿站
-            else if (args[0].equals(ServerConfig.COMMAND_SET_STAGE) && NarcissusUtils.isTeleportEnabled(ECommandType.TP_STAGE) && NarcissusUtils.hasCommandPermission(player, ECommandType.SET_STAGE)) {
-                if (args.length == 2) {
-                    String name = "stage";
-                    int index = 0;
-                    while (true) {
-                        int finalIndex = index;
-                        if (WorldStageData.get().getStageCoordinate().keySet().stream()
-                                .noneMatch(keyValue -> keyValue.getValue().equals(name + (finalIndex == 0 ? "" : finalIndex)))) {
-                            suggestions.add(name + index);
-                            break;
-                        }
-                        index++;
-                    }
-                } else if (args.length == 3) {
-                    suggestions.addAll(getCoordinateSuggestions(new Coordinate(player), args, 2));
-                } else if (args.length == 4) {
-                    suggestions.addAll(getCoordinateSuggestions(new Coordinate(player), args, 2));
-                } else if (args.length == 5) {
-                    suggestions.addAll(getCoordinateSuggestions(new Coordinate(player), args, 2));
-                } else if (args.length == 6) {
-                    DimensionUtils.getStringIds().stream()
-                            .filter(string -> StringUtils.isNullOrEmpty(arg) || string.contains(arg))
-                            .forEach(suggestions::add);
-                }
-            }
-            // 删除驿站
-            else if (args[0].equals(ServerConfig.COMMAND_DEL_STAGE) && NarcissusUtils.isTeleportEnabled(ECommandType.TP_STAGE) && NarcissusUtils.hasCommandPermission(player, ECommandType.DEL_STAGE)) {
-                if (args.length == 2) {
-                    WorldStageData.get().getStageCoordinate().keySet().stream()
-                            .filter(keyValue -> StringUtils.isNullOrEmpty(arg) || keyValue.getValue().contains(arg))
-                            .map(KeyValue::getValue)
-                            .forEach(suggestions::add);
-                } else if (args.length == 3) {
-                    WorldStageData.get().getStageCoordinate().keySet().stream()
-                            .filter(keyValue -> keyValue.getValue().equals(args[1]))
-                            .filter(keyValue -> StringUtils.isNullOrEmpty(arg) || keyValue.getKey().contains(arg))
-                            .map(KeyValue::getKey)
-                            .forEach(suggestions::add);
-                }
-            }
-            // 传送到上一次离开位置
-            else if (args[0].equals(ServerConfig.COMMAND_TP_BACK) && NarcissusUtils.isTeleportEnabled(ECommandType.TP_BACK) && NarcissusUtils.hasCommandPermission(player, ECommandType.TP_BACK)) {
-                if (args.length == 2) {
-                    if (StringUtils.isNullOrEmptyEx(arg) || "safe".startsWith(arg)) {
-                        suggestions.add("safe");
-                    }
-                    if (StringUtils.isNullOrEmptyEx(arg) || "unsafe".contains(arg)) {
-                        suggestions.add("unsafe");
-                    }
-                } else if (args.length == 3) {
-                    Arrays.stream(ETeleportType.values()).map(Enum::name)
-                            .filter(string -> StringUtils.isNullOrEmpty(arg) || string.contains(arg))
-                            .forEach(suggestions::add);
-                } else if (args.length == 4) {
-                    PlayerTeleportData.get(player).getTeleportRecords().stream()
-                            .filter(record -> record.getTeleportType() == ETeleportType.valueOf(args[2]))
-                            .map(record -> record.getBefore().getDimension())
-                            .filter(string -> StringUtils.isNullOrEmpty(arg) || string.contains(arg))
-                            .forEach(suggestions::add);
-                }
-            }
-            // 虚拟OP
-            else if (args[0].equals(ServerConfig.COMMAND_VIRTUAL_OP) && NarcissusUtils.isTeleportEnabled(ECommandType.VIRTUAL_OP) && NarcissusUtils.hasCommandPermission(player, ECommandType.VIRTUAL_OP)) {
-                if (args.length == 2) {
-                    for (EOperationType value : EOperationType.values()) {
-                        if (StringUtils.isNullOrEmptyEx(arg) || value.name().toLowerCase().contains(arg.toLowerCase())) {
-                            suggestions.add(value.name().toLowerCase());
-                        }
-                    }
-                } else if (args.length == 3) {
-                    suggestions.addAll(getPlayerNameSuggestions(server, args));
-                    suggestions.add("@a");
-                } else if (args.length == 4) {
-                    for (ECommandType value : Arrays.stream(ECommandType.values())
-                            .filter(ECommandType::isOp)
-                            .filter(type -> StringUtils.isNullOrEmptyEx(arg) || type.name().startsWith(arg))
-                            .sorted(Comparator.comparing(ECommandType::getSort))
-                            .collect(Collectors.toList())) {
-                        suggestions.add(value.name());
-                    }
-                }
-            }
-            // 服务器配置
-            else if (args[0].equals("config") && NarcissusUtils.hasCommandPermission(player, ECommandType.VIRTUAL_OP)) {
-                if (args.length == 2) {
-                    suggestions.add("get");
-                    suggestions.add("set");
-                } else {
-                    if (args[1].equals("get")) {
-                        if (args.length == 3) {
-                            suggestions.add("teleportCard");
-                        }
-                    } else if (args[1].equals("set")) {
-                        if (args.length == 3) {
-                            suggestions.add("teleportCard");
-                            suggestions.add("mode");
-                        } else if (args.length == 4) {
-                            if (args[2].equals("teleportCard")) {
-                                suggestions.add("true");
-                                suggestions.add("false");
-                            } else if (args[2].equals("mode")) {
-                                suggestions.add("0");
-                                suggestions.add("1");
-                                suggestions.add("2");
-                                suggestions.add("3");
-                            }
-                        }
-                    }
-                }
-            }
-        }
-        return suggestions;
-    }
-
-    /**
-     * 解析并执行指令(快乐堆粪)
-     *
-     * @param sender 指令发送者
-     * @param args   指令参数
-     */
-    public static int executeCommand(@NonNull ICommandSender sender, @ParametersAreNonnullByDefault String[] args) throws PlayerNotFoundException {
-        MinecraftServer server = NarcissusFarewell.getServerInstance();
-        EntityPlayerMP player;
-        if (sender instanceof EntityPlayerMP) {
-            player = (EntityPlayerMP) sender;
-        } else {
-            player = null;
-            if (!(args.length == 2 && args[0].equals(ServerConfig.COMMAND_FEED)) && !args[0].equals(ServerConfig.COMMAND_VIRTUAL_OP)) {
-                throw new PlayerNotFoundException("commands.generic.player.unspecified");
-            }
-        }
-        // 帮助信息
-        if (args.length == 0 || ((args.length == 1 || args.length == 2) && args[0].equals("help"))) {
-            String command;
-            int page;
-            if (args.length == 2) {
-                command = args[1];
-                page = StringUtils.toInt(command);
-            } else {
-                command = "";
-                page = 1;
-            }
-            if (page > 0) {
-                int pages = (int) Math.ceil((double) HELP_MESSAGE.size() / ServerConfig.HELP_INFO_NUM_PER_PAGE);
-                Component helpInfo = Component.literal(StringUtils.format(ServerConfig.HELP_HEADER, page, pages));
-                NarcissusUtils.sendMessage(player, helpInfo);
-                for (int i = 0; (page - 1) * ServerConfig.HELP_INFO_NUM_PER_PAGE + i < HELP_MESSAGE.size() && i < ServerConfig.HELP_INFO_NUM_PER_PAGE; i++) {
-                    KeyValue<String, ECommandType> keyValue = HELP_MESSAGE.get((page - 1) * ServerConfig.HELP_INFO_NUM_PER_PAGE + i);
-                    Component commandTips;
-                    if (keyValue.getValue().name().toLowerCase().contains("concise")) {
-                        commandTips = Component.translatable(NarcissusUtils.getPlayerLanguage(player), EI18nType.COMMAND, "concise", NarcissusUtils.getCommand(keyValue.getValue().replaceConcise()));
-                    } else {
-                        commandTips = Component.translatable(NarcissusUtils.getPlayerLanguage(player), EI18nType.COMMAND, keyValue.getValue().name().toLowerCase());
-                    }
-                    commandTips.setColor(Color.GRAY.getRGB());
-                    NarcissusUtils.sendMessage(player, Component.literal("/").append(keyValue.getKey())
-                            .append(new Component(" -> ").setColor(Color.YELLOW.getRGB()))
-                            .append(commandTips));
-                }
-                // 添加翻页按钮
-                if (pages > 1) {
-                    Component pageButton = Component.literal("");
-                    Component prevButton = Component.literal("<<< ");
-                    if (page > 1) {
-                        prevButton.setColor(EMCColor.AQUA.getColor())
-                                .setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND,
-                                        String.format("/%s %s %d", NarcissusUtils.getCommandPrefix(), "help", page - 1)))
-                                .setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT,
-                                        Component.translatable(NarcissusUtils.getPlayerLanguage(player), EI18nType.MESSAGE, "previous_page").toTextComponent()));
-                    } else {
-                        prevButton.setColor(EMCColor.DARK_AQUA.getColor());
-                    }
-                    pageButton.append(prevButton);
-
-                    pageButton.append(Component.literal(String.format(" %s/%s "
-                                    , StringUtils.padOptimizedLeft(page, String.valueOf(pages).length(), " ")
-                                    , pages))
-                            .setColor(EMCColor.WHITE.getColor()));
-
-                    Component nextButton = Component.literal(" >>>");
-                    if (page < pages) {
-                        nextButton.setColor(EMCColor.AQUA.getColor())
-                                .setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND,
-                                        String.format("/%s %s %d", NarcissusUtils.getCommandPrefix(), "help", page + 1)))
-                                .setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT,
-                                        Component.translatable(NarcissusUtils.getPlayerLanguage(player), EI18nType.MESSAGE, "next_page").toTextComponent()));
-                    } else {
-                        nextButton.setColor(EMCColor.DARK_AQUA.getColor());
-                    }
-                    pageButton.append(nextButton);
-                    NarcissusUtils.sendMessage(player, pageButton);
-                }
-            } else {
-                ECommandType type = ECommandType.valueOf(command);
-                NarcissusUtils.sendMessage(player, Component.literal("/").append(NarcissusUtils.getCommand(type)));
-                NarcissusUtils.sendMessage(player, Component.literal("")
-                        .setColor(Color.GRAY.getRGB())
-                        .append(Component.translatable(NarcissusUtils.getPlayerLanguage(player)
-                                        , EI18nType.COMMAND
-                                        , command.toLowerCase() + "_detail")
-                                .setColor(Color.GRAY.getRGB())
-                        )
-                );
-            }
-            return 1;
-        } else {
-            notifyHelp(player);
-
-            String prefix = args[0];
-            // 设置语言
-            if (prefix.equals(ServerConfig.COMMAND_LANGUAGE)) {
-                // 传送功能前置校验
-                if (checkTeleportPre(player, ECommandType.LANGUAGE)) {
-                    return 0;
-                }
-                if (args.length == 2) {
-                    IPlayerTeleportData signInData = PlayerTeleportData.get(player);
-                    String language = args[1];
-                    if (I18nUtils.getI18nFiles().contains(language)) {
-                        signInData.setLanguage(language);
-                        NarcissusUtils.sendMessage(player, Component.translatable(player, EI18nType.MESSAGE, "player_default_language", language));
-                    } else if ("server".equalsIgnoreCase(language) || "client".equalsIgnoreCase(language)) {
-                        signInData.setLanguage(language);
-                        NarcissusUtils.sendMessage(player, Component.translatable(player, EI18nType.MESSAGE, "player_default_language", language));
-                    } else {
-                        NarcissusUtils.sendMessage(player, Component.translatable(player, EI18nType.MESSAGE, "language_not_exist").setColor(0xFFFF0000));
-                    }
-                    return 1;
-                }
-            }
-            // 玩家UUID
-            else if (prefix.equals(ServerConfig.COMMAND_UUID)) {
-                // 传送功能前置校验
-                if (checkTeleportPre(player, ECommandType.UUID)) {
-                    return 0;
-                }
-                EntityPlayerMP target = null;
-                if (args.length == 1) {
-                    target = player;
-                } else if (args.length == 2) {
-                    try {
-                        target = CommandBase.getPlayer(sender, args[1]);
-                    } catch (CommandException ignored) {
-                    }
-                }
-                if (target == null) return -1;
-                String language = ServerConfig.DEFAULT_LANGUAGE;
-                if (player != null) {
-                    language = NarcissusUtils.getPlayerLanguage(player);
-                }
-                Component uuid = Component.literal(target.getUniqueID().toString());
-                uuid.setColor(EMCColor.GREEN.getColor())
-                        .setClickEvent(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, target.getUniqueID().toString()))
-                        .setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.translatable(language, EI18nType.MESSAGE, "chat_copy_click").toTextComponent()));
-                Component component = Component.translatable(NarcissusUtils.getPlayerLanguage(target), EI18nType.MESSAGE, "player_uuid", target.getDisplayName(), uuid);
-                NarcissusUtils.sendMessage(sender, component);
-                return 1;
-            }
-            // 传送卡
-            else if (prefix.equals(ServerConfig.COMMAND_CARD)) {
-                // 传送功能前置校验
-                if (checkTeleportPre(player, ECommandType.CARD)) {
-                    return 0;
-                }
-                EntityPlayerMP target = null;
-                if (args.length == 1) {
-                    target = player;
-                } else if (args.length >= 3) {
-                    try {
-                        target = CommandBase.getPlayer(sender, args[2]);
-                    } catch (CommandException ignored) {
-                    }
-                }
-                String type = "get";
-                if (args.length > 2) {
-                    type = args[1];
-                }
-                int num = 0;
-                if (args.length == 4) {
-                    StringUtils.toInt(args[3]);
-                } else if ((args.length == 2 || args.length == 3) && !type.equals("get")) {
-                    return -1;
-                }
-                String language = ServerConfig.DEFAULT_LANGUAGE;
-                if (player != null) {
-                    language = NarcissusUtils.getPlayerLanguage(player);
-                }
-                IPlayerTeleportData data = PlayerTeleportData.get(target);
-                switch (type) {
-                    case "set":
-                        data.setTeleportCard(num);
-                        break;
-                    case "add":
-                        data.plusTeleportCard(num);
-                        break;
-                    case "get":
-                        break;
-                    default:
-                        throw new IllegalArgumentException("Type " + type + " is not supported");
-                }
-                Component component = Component.translatable(language, EI18nType.MESSAGE, "player_card"
-                        , target.getDisplayName()
-                        , data.getTeleportCard());
-                NarcissusUtils.sendMessage(player, component);
-                return 1;
-            }
-            // 分享坐标
-            else if (prefix.equals(ServerConfig.COMMAND_SHARE)) {
-                // 传送功能前置校验
-                if (checkTeleportPre(player, ECommandType.SHARE)) {
-                    return 0;
-                }
-
-                String name = args.length > 1 ? args[1] : "Shared";
-
-                List<EntityPlayerMP> targetList = new ArrayList<>();
-                if (args.length == 4) {
-                    try {
-                        targetList.add(CommandBase.getPlayer(sender, args[3]));
-                    } catch (IllegalArgumentException | CommandException ignored) {
-                        return -1;
-                    }
-                } else {
-                    targetList.addAll(server.getConfigurationManager().playerEntityList);
-                }
-
-                Component nameComponent;
-                Component tpButton = Component.translatable(EI18nType.MESSAGE, "tp_button");
-                // Component addButton = Component.translatable(EI18nType.MESSAGE, "add_button");
-                Component copyButton = Component.translatable(EI18nType.MESSAGE, "copy_button");
-
-                // 若为home
-                if (name.contains("->")) {
-                    IPlayerTeleportData data = PlayerTeleportData.get(player);
-                    KeyValue<String, Coordinate> keyValue = data.getHomeCoordinate().entrySet().stream()
-                            .map(entry -> new KeyValue<>(entry.getKey().getValue() + "->" + entry.getKey().getKey(), entry.getValue()))
-                            .filter(kv -> name.equals(kv.getKey()))
-                            .findFirst()
-                            .orElse(new KeyValue<>(name, null));
-                    String[] split = keyValue.getKey().split("->");
-                    Coordinate coordinate = keyValue.getValue();
-                    if (coordinate == null) {
-                        NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EI18nType.MESSAGE, "home_not_found_with_name_in_dimension")
-                                , split[1], split[0]);
-                        return 0;
-                    }
-                    nameComponent = Component.literal(split[0]);
-
-                    String tpCommand = String.format("/%s %s %s %s unsafe %s"
-                            , NarcissusUtils.getCommand(ECommandType.TP_COORDINATE)
-                            , coordinate.toXString()
-                            , coordinate.toYString()
-                            , coordinate.toZString()
-                            , coordinate.getDimension()
-                    );
-                    tpButton.setColor(EMCColor.GREEN.getColor())
-                            .setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, tpCommand))
-                            .setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.literal(tpCommand).toTextComponent()));
-                    copyButton.setColor(EMCColor.GREEN.getColor())
-                            .setClickEvent(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, tpCommand))
-                            .setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.literal(tpCommand).toTextComponent()));
-
-                }
-                // 若为stage
-                else if (name.contains(">>")) {
-                    KeyValue<String, Coordinate> keyValue = WorldStageData.get().getStageCoordinate().entrySet().stream()
-                            .map(entry -> new KeyValue<>(entry.getKey().getValue() + ">>" + entry.getKey().getKey(), entry.getValue()))
-                            .filter(kv -> name.equals(kv.getKey()))
-                            .findFirst()
-                            .orElse(new KeyValue<>(name, null));
-                    String[] split = keyValue.getKey().split(">>");
-                    Coordinate coordinate = keyValue.getValue();
-                    if (coordinate == null) {
-                        NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EI18nType.MESSAGE, "stage_not_found_with_name_in_dimension")
-                                , split[1], split[0]);
-                        return 0;
-                    }
-                    nameComponent = Component.literal(split[0]);
-
-                    String tpCommand = String.format("/%s %s %s %s unsafe %s"
-                            , NarcissusUtils.getCommand(ECommandType.TP_COORDINATE)
-                            , coordinate.toXString()
-                            , coordinate.toYString()
-                            , coordinate.toZString()
-                            , coordinate.getDimension()
-                    );
-                    tpButton.setColor(EMCColor.GREEN.getColor())
-                            .setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, tpCommand))
-                            .setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.literal(tpCommand).toTextComponent()));
-                    copyButton.setColor(EMCColor.GREEN.getColor())
-                            .setClickEvent(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, tpCommand))
-                            .setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.literal(tpCommand).toTextComponent()));
-                }
-                // 玩家当前坐标
-                else {
-                    nameComponent = Component.literal(name);
-                    Coordinate coordinate = new Coordinate(player);
-
-                    String tpCommand = String.format("/%s %s %s %s unsafe %s"
-                            , NarcissusUtils.getCommand(ECommandType.TP_COORDINATE)
-                            , coordinate.toXString()
-                            , coordinate.toYString()
-                            , coordinate.toZString()
-                            , coordinate.getDimension()
-                    );
-                    tpButton.setColor(EMCColor.GREEN.getColor())
-                            .setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, tpCommand))
-                            .setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.literal(tpCommand).toTextComponent()));
-                    copyButton.setColor(EMCColor.GREEN.getColor())
-                            .setClickEvent(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, tpCommand))
-                            .setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.literal(tpCommand).toTextComponent()));
-                }
-
-                String lang = NarcissusUtils.getPlayerLanguage(player);
-                Component component = Component.translatable(lang, EI18nType.MESSAGE, "shared_coordinates"
-                        , player.getDisplayName()
-                        , nameComponent
-                        , tpButton
-                        // , addButton
-                        , copyButton);
-                for (EntityPlayerMP target : targetList) {
-                    if (!target.getUniqueID().equals(player.getUniqueID())) {
-                        NarcissusUtils.sendMessage(target, component);
-                    }
-                }
-                NarcissusUtils.sendMessage(player, component);
-                return 1;
-            }
-            // 当前纬度ID
-            else if (prefix.equals(ServerConfig.COMMAND_DIMENSION)) {
-                // 传送功能前置校验
-                if (checkTeleportPre(player, ECommandType.DIMENSION)) {
-                    return 0;
-                }
-                String dimString = DimensionUtils.getStringId(player.getEntityWorld().provider);
-                Component dim = Component.literal(dimString);
-                dim.setColor(EMCColor.GREEN.getColor())
-                        .setClickEvent(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, dimString))
-                        .setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.translatable(NarcissusUtils.getPlayerLanguage(player), EI18nType.MESSAGE, "chat_copy_click").toTextComponent()));
-                Component msg = Component.translatable(NarcissusUtils.getPlayerLanguage(player), EI18nType.MESSAGE, "dimension_info", dim);
-                NarcissusUtils.sendMessage(player, msg);
-                return 1;
-            }
-            // 自杀或毒杀
-            else if (prefix.equals(ServerConfig.COMMAND_FEED)) {
-                // 传送功能前置校验
-                if (checkTeleportPre(player, ECommandType.FEED)) {
-                    return 0;
-                }
-                if (args.length <= 2) {
-                    List<EntityPlayerMP> targetList = new ArrayList<>();
-                    if (args.length == 1) {
-                        targetList.add(player);
-                    } else {
-                        // 判断是否有毒杀权限
-                        if (player != null) {
-                            if (!NarcissusUtils.hasCommandPermission(player, ECommandType.FEED_OTHER)) {
-                                NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EI18nType.MESSAGE, "command_no_permission"));
-                                return 0;
-                            }
-                        }
-                        try {
-                            targetList.add(CommandBase.getPlayer(sender, args[1]));
-                        } catch (CommandException ignored) {
-                        }
-                        // targetList.addAll(NarcissusUtils.getPlayer(player, args[1]));
-                    }
-                    if (CollectionUtils.isNullOrEmpty(targetList)) {
-                        if (player != null)
-                            NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EI18nType.MESSAGE, "player_not_found"));
-                        else
-                            NarcissusUtils.sendMessage(sender, Component.translatable(I18nUtils.getKey(EI18nType.MESSAGE, "player_not_found")).getString(ServerConfig.DEFAULT_LANGUAGE));
-                        return 0;
-                    }
-                    for (EntityPlayerMP target : targetList) {
-                        if (NarcissusUtils.killPlayer(target)) {
-                            if (player != null) {
-                                NarcissusUtils.broadcastMessage(player, Component.translatable(NarcissusUtils.getPlayerLanguage(target), EI18nType.MESSAGE, "died_of_narcissus_" + (new Random().nextInt(4) + 1), target.getDisplayName()));
-                            } else {
-                                NarcissusUtils.broadcastMessage(server, Component.translatable(NarcissusUtils.getPlayerLanguage(target), EI18nType.MESSAGE, "died_of_narcissus_" + (new Random().nextInt(4) + 1), target.getDisplayName()));
-                            }
-                        }
-                    }
-                    return 1;
-                }
-            }
-            // 传送到指定坐标
-            else if (prefix.equals(ServerConfig.COMMAND_TP_COORDINATE)) {
-                if (args.length <= 6) {
-                    // 传送功能前置校验
-                    if (checkTeleportPre(player, ECommandType.TP_COORDINATE)) return 0;
-                    Coordinate coordinate = null;
-                    if (args.length == 2 || args.length == 3) {
-                        List<EntityPlayerMP> targetList = new ArrayList<>();
-                        try {
-                            targetList.add(CommandBase.getPlayer(sender, args[1]));
-                        } catch (CommandException ignored) {
-                        }
-                        // List<EntityPlayerMP> targetList = NarcissusUtils.getPlayer(player, args[1]);
-                        if (CollectionUtils.isNotNullOrEmpty(targetList)) {
-                            coordinate = new Coordinate(targetList.get(0)).setSafe(args[args.length - 1].equals("safe"));
-                        } else {
-                            NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EI18nType.MESSAGE, "player_not_found"));
-                        }
-                    } else {
-                        Double x = StringUtils.toCoordinate(args[1], player.posX);
-                        Double y = StringUtils.toCoordinate(args[2], player.posY);
-                        Double z = StringUtils.toCoordinate(args[3], player.posZ);
-                        if (x != null && y != null && z != null) {
-                            coordinate = new Coordinate(x, y, z, player.cameraYaw, player.cameraPitch, DimensionUtils.getStringId(player.getEntityWorld().provider.dimensionId));
-                            if (args.length > 4) {
-                                coordinate.setSafe(args[4].equals("safe"));
-                                if (args.length == 6) {
-                                    String dim = DimensionUtils.getStringId(args[5]);
-                                    if (StringUtils.isNullOrEmptyEx(dim)) {
-                                        NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EI18nType.MESSAGE, "dimension_not_found"), args[5]);
-                                        return 0;
-                                    }
-                                    coordinate.setDimension(dim);
-                                }
-                            }
-                        }
-                    }
-                    if (coordinate == null) {
-                        return -1;
-                    }
-                    // 验证传送代价
-                    if (checkTeleportPost(player, coordinate, ETeleportType.TP_COORDINATE, true)) return 0;
-                    NarcissusUtils.teleportTo(player, coordinate, ETeleportType.TP_COORDINATE);
-                    return 1;
-                }
-            }
-            // 传送到指定结构
-            else if (prefix.equals(ServerConfig.COMMAND_TP_STRUCTURE)) {
-                if (checkTeleportPre(player, ECommandType.TP_STRUCTURE)) {
-                    return 0;
-                }
-                if (args.length >= 2) {
-                    String structId = args[1];
-                    BiomeGenBase biome = NarcissusUtils.getBiome(structId);
-                    if (!NarcissusUtils.getStructureList().contains(structId) && biome == null) {
-                        NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EI18nType.MESSAGE, "structure_biome_not_found"), structId);
-                        return 0;
-                    }
-                    int range = ServerConfig.TELEPORT_RANDOM_DISTANCE_LIMIT;
-                    if (args.length >= 3) {
-                        int anInt = StringUtils.toInt(args[2]);
-                        range = anInt > 0 ? anInt : range;
-                    }
-                    range = NarcissusUtils.checkRange(player, ETeleportType.TP_STRUCTURE, range);
-                    String targetLevel = null;
-                    if (args.length == 4) {
-                        targetLevel = DimensionUtils.getStringId(args[3]);
-                    }
-                    if (StringUtils.isNullOrEmptyEx(targetLevel)) {
-                        targetLevel = DimensionUtils.getStringId(player.getEntityWorld().provider.dimensionId);
-                    }
-                    WorldServer world = Objects.requireNonNull(DimensionManager.getWorld(DimensionUtils.getDimensionType(targetLevel)));
-                    Coordinate start = new Coordinate(player).setDimension(targetLevel);
-                    int finalRange = range;
-                    NarcissusUtils.sendMessage(player, Component.translatable(NarcissusUtils.getPlayerLanguage(player), EI18nType.MESSAGE, "tp_structure_searching"));
-                    new Thread(() -> {
-                        Coordinate coordinate;
-                        if (biome != null) {
-                            coordinate = NarcissusUtils.findNearestBiome(world, start, biome, finalRange, 8);
-                        } else {
-                            coordinate = NarcissusUtils.findNearestStruct(world, start, structId, finalRange);
-                        }
-                        if (coordinate == null) {
-                            NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EI18nType.MESSAGE, "structure_biome_not_found_in_range"), structId);
-                            return;
-                        }
-                        coordinate.setSafe(true);
-                        // 验证传送代价
-                        if (checkTeleportPost(player, coordinate, ETeleportType.TP_STRUCTURE, true)) return;
-                        ServerTaskExecutor.run(() -> NarcissusUtils.teleportTo(player, coordinate, ETeleportType.TP_STRUCTURE));
-                    }).start();
-                    return 1;
-                }
-            }
-            // 请求传送到指定玩家
-            else if (prefix.equals(ServerConfig.COMMAND_TP_ASK)) {
-                // 传送功能前置校验
-                if (checkTeleportPre(player, ECommandType.TP_ASK)) {
-                    return 0;
-                }
-                if (args.length <= 3) {
-                    EntityPlayerMP target = null;
-                    if (args.length == 1) {
-                        // 如果没有指定目标玩家，则使用最近一次传送请求的目标玩家，依旧没有就随机一名幸运玩家
-                        target = NarcissusFarewell.getTeleportRequest().values().stream()
-                                .filter(request -> request.getRequester().getUniqueID().equals(player.getUniqueID()))
-                                .filter(request -> {
-                                    EntityPlayer entity = request.getTarget();
-                                    return NarcissusUtils.isTeleportTypeAcrossDimensionEnabled(player, ETeleportType.TP_ASK)
-                                            || entity != null && entity.getEntityWorld().provider == player.getEntityWorld().provider;
-                                })
-                                .max(Comparator.comparing(TeleportRequest::getRequestTime))
-                                .orElse(new TeleportRequest().setTarget(NarcissusFarewell.getLastTeleportRequest()
-                                        .getOrDefault(player, NarcissusUtils.getRandomPlayer())))
-                                .getTarget();
-                    } else {
-                        List<EntityPlayerMP> targetList = new ArrayList<>();
-                        try {
-                            targetList.add(CommandBase.getPlayer(sender, args[1]));
-                        } catch (CommandException ignored) {
-                        }
-                        // List<EntityPlayerMP> targetList = NarcissusUtils.getPlayer(player, args[1]);
-                        if (CollectionUtils.isNotNullOrEmpty(targetList)) {
-                            target = targetList.get(0);
-                        }
-                    }
-                    if (target == null) {
-                        NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EI18nType.MESSAGE, "player_not_found"));
-                        return 0;
-                    }
-                    // 验证并添加传送请求
-                    TeleportRequest request = new TeleportRequest()
-                            .setRequester(player)
-                            .setTarget(target)
-                            .setTeleportType(ETeleportType.TP_ASK)
-                            .setRequestTime(new Date());
-                    try {
-                        request.setSafe("safe".equalsIgnoreCase(args[args.length - 1]));
-                    } catch (IllegalArgumentException ignored) {
-                    }
-                    if (checkTeleportPost(request)) return 0;
-                    NarcissusFarewell.getTeleportRequest().put(request.getRequestId(), request);
-
-                    // 通知目标玩家
-                    {
-                        // 创建 "Yes" 按钮
-                        Component yesButton = Component.translatable(NarcissusUtils.getPlayerLanguage(target), EI18nType.MESSAGE, "yes_button", NarcissusUtils.getPlayerLanguage(target))
-                                .setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, String.format("/%s %s %s", NarcissusUtils.getCommandPrefix(), ServerConfig.COMMAND_TP_ASK_YES, request.getRequestId())));
-                        // 创建 "No" 按钮
-                        Component noButton = Component.translatable(NarcissusUtils.getPlayerLanguage(target), EI18nType.MESSAGE, "no_button", NarcissusUtils.getPlayerLanguage(target))
-                                .setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, String.format("/%s %s %s", NarcissusUtils.getCommandPrefix(), ServerConfig.COMMAND_TP_ASK_NO, request.getRequestId())));
-                        Component msg = Component.translatable(NarcissusUtils.getPlayerLanguage(target), EI18nType.MESSAGE, "tp_ask_request_received"
-                                , player.getDisplayName(), yesButton, noButton);
-                        NarcissusUtils.sendMessage(target, msg);
-                    }
-                    // 通知请求者
-                    {
-                        // 创建 "Cancel" 按钮
-                        Component cancelButton = Component.translatable(NarcissusUtils.getPlayerLanguage(target), EI18nType.MESSAGE, "cancel_button", NarcissusUtils.getPlayerLanguage(target))
-                                .setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, String.format("/%s %s %s", NarcissusUtils.getCommandPrefix(), ServerConfig.COMMAND_TP_ASK_CANCEL, request.getRequestId())));
-                        Component msg = Component.translatable(NarcissusUtils.getPlayerLanguage(player), EI18nType.MESSAGE, "tp_ask_request_sent"
-                                , target.getDisplayName(), cancelButton);
-                        NarcissusUtils.sendMessage(player, msg);
-                    }
-                    return 1;
-                }
-            }
-            // 同意传送请求
-            else if (prefix.equals(ServerConfig.COMMAND_TP_ASK_YES)) {
-                // 传送功能前置校验
-                if (checkTeleportPre(player, ECommandType.TP_ASK_YES)) {
-                    return 0;
-                }
-                if (args.length == 1 || args.length == 2) {
-                    String id = getRequestId(player, args.length == 2 ? args[1] : "", ETeleportType.TP_ASK, true);
-                    if (StringUtils.isNullOrEmpty(id) || !NarcissusFarewell.getTeleportRequest().containsKey(id)) {
-                        NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EI18nType.MESSAGE, "tp_ask_not_found"));
-                        return 0;
-                    }
-                    TeleportRequest request = NarcissusFarewell.getTeleportRequest().remove(id);
-                    if (checkTeleportPost(request, true)) {
-                        NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EI18nType.MESSAGE, "tp_ask_invalid"));
-                        return 0;
-                    }
-                    NarcissusUtils.teleportTo(request);
-                    return 1;
-                }
-            }
-            // 拒绝传送请求
-            else if (prefix.equals(ServerConfig.COMMAND_TP_ASK_NO)) {
-                // 传送功能前置校验
-                if (checkTeleportPre(player, ECommandType.TP_ASK_NO)) {
-                    return 0;
-                }
-                if (args.length == 1 || args.length == 2) {
-                    String id = getRequestId(player, args.length == 2 ? args[1] : "", ETeleportType.TP_ASK, true);
-                    if (StringUtils.isNullOrEmpty(id) || !NarcissusFarewell.getTeleportRequest().containsKey(id)) {
-                        NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EI18nType.MESSAGE, "tp_ask_not_found"));
-                        return 0;
-                    }
-                    TeleportRequest request = NarcissusFarewell.getTeleportRequest().remove(id);
-                    NarcissusUtils.sendTranslatableMessage(request.getRequester(), I18nUtils.getKey(EI18nType.MESSAGE, "tp_ask_rejected"), request.getTarget().getDisplayName());
-                    return 1;
-                }
-            }
-            // 取消传送请求
-            else if (prefix.equals(ServerConfig.COMMAND_TP_ASK_CANCEL)) {
-                // 传送功能前置校验
-                if (checkTeleportPre(player, ECommandType.TP_ASK_CANCEL)) {
-                    return 0;
-                }
-                if (args.length == 1 || args.length == 2) {
-                    String id = getRequestId(player, args.length == 2 ? args[1] : "", ETeleportType.TP_ASK, false);
-                    if (StringUtils.isNullOrEmpty(id) || !NarcissusFarewell.getTeleportRequest().containsKey(id)) {
-                        NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EI18nType.MESSAGE, "tp_ask_not_found"));
-                        return 0;
-                    }
-                    TeleportRequest request = NarcissusFarewell.getTeleportRequest().remove(id);
-                    NarcissusUtils.sendTranslatableMessage(request.getRequester(), I18nUtils.getKey(EI18nType.MESSAGE, "tp_ask_cancelled"), request.getRequester().getDisplayName());
-                    if (!request.getRequester().getUniqueID().equals(request.getTarget().getUniqueID())) {
-                        NarcissusUtils.sendTranslatableMessage(request.getTarget(), I18nUtils.getKey(EI18nType.MESSAGE, "tp_ask_cancelled"), request.getRequester().getDisplayName());
-                    }
-                    return 1;
-                }
-            }
-            // 请求指定玩家传送
-            else if (prefix.equals(ServerConfig.COMMAND_TP_HERE)) {
-                // 传送功能前置校验
-                if (checkTeleportPre(player, ECommandType.TP_HERE)) {
-                    return 0;
-                }
-                if (args.length <= 3) {
-                    EntityPlayerMP target = null;
-                    if (args.length == 1) {
-                        // 如果没有指定目标玩家，则使用最近一次传送请求的目标玩家，依旧没有就随机一名幸运玩家
-                        target = NarcissusFarewell.getTeleportRequest().values().stream()
-                                .filter(request -> request.getRequester().getUniqueID().equals(player.getUniqueID()))
-                                .filter(request -> {
-                                    EntityPlayer entity = request.getTarget();
-                                    return NarcissusUtils.isTeleportTypeAcrossDimensionEnabled(player, ETeleportType.TP_HERE)
-                                            || entity != null && entity.getEntityWorld().provider == player.getEntityWorld().provider;
-                                })
-                                .max(Comparator.comparing(TeleportRequest::getRequestTime))
-                                .orElse(new TeleportRequest().setTarget(NarcissusFarewell.getLastTeleportRequest()
-                                        .getOrDefault(player, NarcissusUtils.getRandomPlayer())))
-                                .getTarget();
-                    } else {
-                        List<EntityPlayerMP> targetList = new ArrayList<>();
-                        try {
-                            targetList.add(CommandBase.getPlayer(sender, args[1]));
-                        } catch (CommandException ignored) {
-                        }
-                        // List<EntityPlayerMP> targetList = NarcissusUtils.getPlayer(player, args[1]);
-                        if (CollectionUtils.isNotNullOrEmpty(targetList)) {
-                            target = targetList.get(0);
-                        }
-                    }
-                    if (target == null) {
-                        NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EI18nType.MESSAGE, "player_not_found"));
-                        return 0;
-                    }
-                    // 验证并添加传送请求
-                    TeleportRequest request = new TeleportRequest()
-                            .setRequester(player)
-                            .setTarget(target)
-                            .setTeleportType(ETeleportType.TP_HERE)
-                            .setRequestTime(new Date());
-                    try {
-                        request.setSafe("safe".equalsIgnoreCase(args[args.length - 1]));
-                    } catch (IllegalArgumentException ignored) {
-                    }
-                    if (checkTeleportPost(request)) return 0;
-                    NarcissusFarewell.getTeleportRequest().put(request.getRequestId(), request);
-
-                    // 通知目标玩家
-                    {
-                        // 创建 "Yes" 按钮
-                        Component yesButton = Component.translatable(NarcissusUtils.getPlayerLanguage(target), EI18nType.MESSAGE, "yes_button", NarcissusUtils.getPlayerLanguage(target))
-                                .setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, String.format("/%s %s %s", NarcissusUtils.getCommandPrefix(), ServerConfig.COMMAND_TP_HERE_YES, request.getRequestId())));
-                        // 创建 "No" 按钮
-                        Component noButton = Component.translatable(NarcissusUtils.getPlayerLanguage(target), EI18nType.MESSAGE, "no_button", NarcissusUtils.getPlayerLanguage(target))
-                                .setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, String.format("/%s %s %s", NarcissusUtils.getCommandPrefix(), ServerConfig.COMMAND_TP_HERE_NO, request.getRequestId())));
-                        Component msg = Component.translatable(NarcissusUtils.getPlayerLanguage(target), EI18nType.MESSAGE, "tp_here_request_received"
-                                , player.getDisplayName(), Component.translatable(NarcissusUtils.getPlayerLanguage(target), EI18nType.WORD, request.isSafe() ? "tp_here_safe" : "tp_here_unsafe"), yesButton, noButton);
-                        NarcissusUtils.sendMessage(target, msg);
-                    }
-                    // 通知请求者
-                    {
-                        // 创建 "Cancel" 按钮
-                        Component cancelButton = Component.translatable(NarcissusUtils.getPlayerLanguage(target), EI18nType.MESSAGE, "cancel_button", NarcissusUtils.getPlayerLanguage(target))
-                                .setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, String.format("/%s %s %s", NarcissusUtils.getCommandPrefix(), ServerConfig.COMMAND_TP_HERE_CANCEL, request.getRequestId())));
-                        Component msg = Component.translatable(NarcissusUtils.getPlayerLanguage(player), EI18nType.MESSAGE, "tp_here_request_sent"
-                                , target.getDisplayName(), cancelButton);
-                        NarcissusUtils.sendMessage(player, msg);
-                    }
-                    return 1;
-                }
-            }
-            // 同意传送请求
-            else if (prefix.equals(ServerConfig.COMMAND_TP_HERE_YES)) {
-                // 传送功能前置校验
-                if (checkTeleportPre(player, ECommandType.TP_HERE_YES)) {
-                    return 0;
-                }
-                if (args.length == 1 || args.length == 2) {
-                    String id = getRequestId(player, args.length == 2 ? args[1] : "", ETeleportType.TP_HERE, true);
-                    if (StringUtils.isNullOrEmpty(id) || !NarcissusFarewell.getTeleportRequest().containsKey(id)) {
-                        NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EI18nType.MESSAGE, "tp_here_not_found"));
-                        return 0;
-                    }
-                    TeleportRequest request = NarcissusFarewell.getTeleportRequest().remove(id);
-                    if (checkTeleportPost(request, true)) {
-                        NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EI18nType.MESSAGE, "tp_here_invalid"));
-                        return 0;
-                    }
-                    NarcissusUtils.teleportTo(request);
-                    return 1;
-                }
-            }
-            // 拒绝传送请求
-            else if (prefix.equals(ServerConfig.COMMAND_TP_HERE_NO)) {
-                // 传送功能前置校验
-                if (checkTeleportPre(player, ECommandType.TP_HERE_NO)) {
-                    return 0;
-                }
-                if (args.length == 1 || args.length == 2) {
-                    String id = getRequestId(player, args.length == 2 ? args[1] : "", ETeleportType.TP_HERE, true);
-                    if (StringUtils.isNullOrEmpty(id) || !NarcissusFarewell.getTeleportRequest().containsKey(id)) {
-                        NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EI18nType.MESSAGE, "tp_here_not_found"));
-                        return 0;
-                    }
-                    TeleportRequest request = NarcissusFarewell.getTeleportRequest().remove(id);
-                    NarcissusUtils.sendTranslatableMessage(request.getRequester(), I18nUtils.getKey(EI18nType.MESSAGE, "tp_here_rejected"), request.getTarget().getDisplayName());
-                    return 1;
-                }
-            }
-            // 取消传送请求
-            else if (prefix.equals(ServerConfig.COMMAND_TP_HERE_CANCEL)) {
-                // 传送功能前置校验
-                if (checkTeleportPre(player, ECommandType.TP_HERE_CANCEL)) {
-                    return 0;
-                }
-                if (args.length == 1 || args.length == 2) {
-                    String id = getRequestId(player, args.length == 2 ? args[1] : "", ETeleportType.TP_HERE, false);
-                    if (StringUtils.isNullOrEmpty(id) || !NarcissusFarewell.getTeleportRequest().containsKey(id)) {
-                        NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EI18nType.MESSAGE, "tp_here_not_found"));
-                        return 0;
-                    }
-                    TeleportRequest request = NarcissusFarewell.getTeleportRequest().remove(id);
-                    NarcissusUtils.sendTranslatableMessage(request.getRequester(), I18nUtils.getKey(EI18nType.MESSAGE, "tp_here_cancelled"), request.getRequester().getDisplayName());
-                    if (!request.getRequester().getUniqueID().equals(request.getTarget().getUniqueID())) {
-                        NarcissusUtils.sendTranslatableMessage(request.getTarget(), I18nUtils.getKey(EI18nType.MESSAGE, "tp_here_cancelled"), request.getRequester().getDisplayName());
-                    }
-                    return 1;
-                }
-            }
-            // 传送到随机位置
-            else if (prefix.equals(ServerConfig.COMMAND_TP_RANDOM)) {
-                // 传送功能前置校验
-                if (checkTeleportPre(player, ECommandType.TP_RANDOM)) {
-                    return 0;
-                }
-                if (args.length <= 4) {
-                    int range = ServerConfig.TELEPORT_RANDOM_DISTANCE_LIMIT;
-                    if (args.length >= 2) {
-                        int anInt = StringUtils.toInt(args[1]);
-                        range = anInt > 0 ? anInt : range;
-                    }
-                    range = NarcissusUtils.checkRange(player, ETeleportType.TP_RANDOM, range);
-                    boolean safe = false;
-                    if (args.length >= 3) {
-                        safe = args[2].equals("safe");
-                    }
-                    String targetLevel = null;
-                    if (args.length == 4) {
-                        targetLevel = DimensionUtils.getStringId(args[3]);
-                    }
-                    if (StringUtils.isNullOrEmptyEx(targetLevel)) {
-                        targetLevel = DimensionUtils.getStringId(player.getEntityWorld().provider.dimensionId);
-                    }
-                    Coordinate coordinate = Coordinate.random(player, range, targetLevel).setSafe(safe);
-                    // 验证传送代价
-                    if (checkTeleportPost(player, coordinate, ETeleportType.TP_RANDOM, true)) return 0;
-                    NarcissusUtils.teleportTo(player, coordinate, ETeleportType.TP_RANDOM);
-                    return 1;
-                }
-            }
-            // 传送到出生点
-            else if (prefix.equals(ServerConfig.COMMAND_TP_SPAWN)) {
-                // 传送功能前置校验
-                if (checkTeleportPre(player, ECommandType.TP_SPAWN)) {
-                    return 0;
-                }
-                if (args.length <= 3) {
-                    EntityPlayerMP target = player;
-                    if (args.length == 3) {
-                        if (NarcissusUtils.hasCommandPermission(player, ECommandType.TP_SPAWN_OTHER)) {
-                            List<EntityPlayerMP> targetList = new ArrayList<>();
-                            try {
-                                targetList.add(CommandBase.getPlayer(sender, args[1]));
-                            } catch (CommandException ignored) {
-                            }
-                            // List<EntityPlayerMP> targetList = NarcissusUtils.getPlayer(player, args[1]);
-                            if (CollectionUtils.isNotNullOrEmpty(targetList)) {
-                                target = targetList.get(0);
-                            }
-                        } else {
-                            NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EI18nType.MESSAGE, "command_no_permission"));
-                            return 0;
-                        }
-                    }
-                    Coordinate coordinate = new Coordinate(target);
-                    ChunkCoordinates respawnPosition = target.getBedLocation(player.getEntityWorld().provider.dimensionId);
-                    // idea很烦诶，明明就会是null非警告我不会为null
-                    if (respawnPosition == null && !(target.getEntityWorld().provider instanceof WorldProviderSurface)) {
-                        int dimensionId = DimensionUtils.getOverworldDimensionId();
-                        respawnPosition = target.getBedLocation(dimensionId);
-                        coordinate.setDimension(DimensionUtils.getStringId(dimensionId));
-                    }
-                    if (respawnPosition == null) {
-                        respawnPosition = target.getEntityWorld().getSpawnPoint();
-                        coordinate.setDimension(DimensionUtils.getStringId(target.getEntityWorld().provider.dimensionId));
-                    }
-                    if (respawnPosition == null) {
-                        respawnPosition = DimensionManager.getWorld(DimensionUtils.getOverworldDimensionId()).getSpawnPoint();
-                        coordinate.setDimension(DimensionUtils.getOverworldDimensionStringId());
-                    }
-                    coordinate.setX(respawnPosition.posX).setY(respawnPosition.posY).setZ(respawnPosition.posZ);
-                    try {
-                        coordinate.setSafe("safe".equalsIgnoreCase(args[args.length - 1]));
-                    } catch (IllegalArgumentException ignored) {
-                        coordinate.setSafe(true);
-                    }
-                    // 验证传送代价
-                    if (checkTeleportPost(player, coordinate, ETeleportType.TP_SPAWN, true)) return 0;
-                    NarcissusUtils.teleportTo(player, coordinate, ETeleportType.TP_SPAWN);
-                    return 1;
-                }
-            }
-            // 传送到世界出生点
-            else if (prefix.equals(ServerConfig.COMMAND_TP_WORLD_SPAWN)) {
-                // 传送功能前置校验
-                if (checkTeleportPre(player, ECommandType.TP_WORLD_SPAWN)) {
-                    return 0;
-                }
-                if (args.length <= 2) {
-                    Coordinate coordinate = new Coordinate(player);
-                    ChunkCoordinates respawnPosition = player.getEntityWorld().getSpawnPoint();
-                    if (respawnPosition == null) {
-                        respawnPosition = DimensionManager.getWorld(DimensionUtils.getOverworldDimensionId()).getSpawnPoint();
-                        coordinate.setDimension(DimensionUtils.getOverworldDimensionStringId());
-                    }
-                    coordinate.setX(respawnPosition.posX).setY(respawnPosition.posY).setZ(respawnPosition.posZ);
-                    try {
-                        coordinate.setSafe("safe".equalsIgnoreCase(args[args.length - 1]));
-                    } catch (IllegalArgumentException ignored) {
-                        coordinate.setSafe(true);
-                    }
-                    // 验证传送代价
-                    if (checkTeleportPost(player, coordinate, ETeleportType.TP_WORLD_SPAWN, true)) return 0;
-                    NarcissusUtils.teleportTo(player, coordinate, ETeleportType.TP_WORLD_SPAWN);
-                    return 1;
-                }
-            }
-            // 传送到顶部
-            else if (prefix.equals(ServerConfig.COMMAND_TP_TOP)) {
-                // 传送功能前置校验
-                if (checkTeleportPre(player, ECommandType.TP_TOP)) {
-                    return 0;
-                }
-                if (args.length <= 2) {
-                    Coordinate coordinate = NarcissusUtils.findTopCandidate(player.getServerForPlayer(), new Coordinate(player));
-                    if (coordinate == null) {
-                        NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EI18nType.MESSAGE, "tp_top_not_found"));
-                        return 0;
-                    }
-                    try {
-                        coordinate.setSafe("safe".equalsIgnoreCase(args[args.length - 1])).setSafeMode(ESafeMode.Y_DOWN);
-                    } catch (IllegalArgumentException ignored) {
-                        coordinate.setSafe(true).setSafeMode(ESafeMode.Y_DOWN);
-                    }
-                    // 验证传送代价
-                    if (checkTeleportPost(player, coordinate, ETeleportType.TP_TOP, true)) return 0;
-                    NarcissusUtils.teleportTo(player, coordinate, ETeleportType.TP_TOP);
-                    return 1;
-                }
-            }
-            // 传送到底部
-            else if (prefix.equals(ServerConfig.COMMAND_TP_BOTTOM)) {
-                // 传送功能前置校验
-                if (checkTeleportPre(player, ECommandType.TP_BOTTOM)) {
-                    return 0;
-                }
-                if (args.length <= 2) {
-                    Coordinate coordinate = NarcissusUtils.findBottomCandidate(player.getServerForPlayer(), new Coordinate(player));
-                    if (coordinate == null) {
-                        NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EI18nType.MESSAGE, "tp_bottom_not_found"));
-                        return 0;
-                    }
-                    try {
-                        coordinate.setSafe("safe".equalsIgnoreCase(args[args.length - 1])).setSafeMode(ESafeMode.Y_UP);
-                    } catch (IllegalArgumentException ignored) {
-                        coordinate.setSafe(true).setSafeMode(ESafeMode.Y_UP);
-                    }
-                    // 验证传送代价
-                    if (checkTeleportPost(player, coordinate, ETeleportType.TP_BOTTOM, true)) return 0;
-                    NarcissusUtils.teleportTo(player, coordinate, ETeleportType.TP_BOTTOM);
-                    return 1;
-                }
-            }
-            // 传送到上方
-            else if (prefix.equals(ServerConfig.COMMAND_TP_UP)) {
-                // 传送功能前置校验
-                if (checkTeleportPre(player, ECommandType.TP_UP)) {
-                    return 0;
-                }
-                if (args.length <= 2) {
-                    Coordinate coordinate = NarcissusUtils.findUpCandidate(player.getServerForPlayer(), new Coordinate(player));
-                    if (coordinate == null) {
-                        NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EI18nType.MESSAGE, "tp_up_not_found"));
-                        return 0;
-                    }
-                    try {
-                        coordinate.setSafe("safe".equalsIgnoreCase(args[args.length - 1])).setSafeMode(ESafeMode.Y_UP);
-                    } catch (IllegalArgumentException ignored) {
-                        coordinate.setSafe(true).setSafeMode(ESafeMode.Y_UP);
-                    }
-                    // 验证传送代价
-                    if (checkTeleportPost(player, coordinate, ETeleportType.TP_UP, true)) return 0;
-                    NarcissusUtils.teleportTo(player, coordinate, ETeleportType.TP_UP);
-                    return 1;
-                }
-            }
-            // 传送到下方
-            else if (prefix.equals(ServerConfig.COMMAND_TP_DOWN)) {
-                // 传送功能前置校验
-                if (checkTeleportPre(player, ECommandType.TP_DOWN)) {
-                    return 0;
-                }
-                if (args.length <= 2) {
-                    Coordinate coordinate = NarcissusUtils.findDownCandidate(player.getServerForPlayer(), new Coordinate(player));
-                    if (coordinate == null) {
-                        NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EI18nType.MESSAGE, "tp_down_not_found"));
-                        return 0;
-                    }
-                    try {
-                        coordinate.setSafe("safe".equalsIgnoreCase(args[args.length - 1])).setSafeMode(ESafeMode.Y_DOWN);
-                    } catch (IllegalArgumentException ignored) {
-                        coordinate.setSafe(true).setSafeMode(ESafeMode.Y_DOWN);
-                    }
-                    // 验证传送代价
-                    if (checkTeleportPost(player, coordinate, ETeleportType.TP_DOWN, true)) return 0;
-                    NarcissusUtils.teleportTo(player, coordinate, ETeleportType.TP_DOWN);
-                    return 1;
-                }
-            }
-            // 传送到视线尽头
-            else if (prefix.equals(ServerConfig.COMMAND_TP_VIEW)) {
-                // 传送功能前置校验
-                if (checkTeleportPre(player, ECommandType.TP_VIEW)) {
-                    return 0;
-                }
-                if (args.length <= 3) {
-                    boolean safe;
-                    if (args.length >= 2) {
-                        safe = args[1].equals("safe");
-                    } else {
-                        safe = false;
-                    }
-                    int range = ServerConfig.TELEPORT_VIEW_DISTANCE_LIMIT;
-                    if (args.length == 3) {
-                        int anInt = StringUtils.toInt(args[2]);
-                        range = anInt > 0 ? anInt : range;
-                    }
-                    range = NarcissusUtils.checkRange(player, ETeleportType.TP_VIEW, range);
-                    int finalRange = range;
-                    NarcissusUtils.sendMessage(player, Component.translatable(NarcissusUtils.getPlayerLanguage(player), EI18nType.MESSAGE, "tp_view_searching"));
-                    new Thread(() -> {
-                        Coordinate coordinate = NarcissusUtils.findViewEndCandidate(player, safe, finalRange);
-                        if (coordinate == null) {
-                            NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EI18nType.MESSAGE, safe ? "tp_view_safe_not_found" : "tp_view_not_found"));
-                            return;
-                        }
-                        coordinate.setSafeMode(ESafeMode.Y_OFFSET_3);
-                        // 验证传送代价
-                        if (checkTeleportPost(player, coordinate, ETeleportType.TP_VIEW, true)) return;
-                        ServerTaskExecutor.run(() -> NarcissusUtils.teleportTo(player, coordinate, ETeleportType.TP_VIEW));
-                    }).start();
-                    return 1;
-                }
-            }
-            // 传送到预设位置
-            else if (prefix.equals(ServerConfig.COMMAND_TP_HOME)) {
-                // 传送功能前置校验
-                if (checkTeleportPre(player, ECommandType.TP_HOME)) {
-                    return 0;
-                }
-                if (args.length <= 4) {
-                    String targetLevel = null;
-                    String targetDimension = DimensionUtils.getStringId(args[args.length - 1]);
-                    if (StringUtils.isNotNullOrEmpty(targetDimension)) {
-                        targetLevel = targetDimension;
-                    }
-                    String name = null;
-                    if (args.length >= 2 && NarcissusUtils.isPlayerHome(player, args[1])) {
-                        name = args[1];
-                    }
-                    Coordinate coordinate = NarcissusUtils.getPlayerHome(player, targetLevel, name);
-                    if (coordinate == null) {
-                        if (targetLevel == null && name == null) {
-                            NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EI18nType.MESSAGE, "home_not_found"));
-                        } else if (targetLevel != null && name == null) {
-                            NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EI18nType.MESSAGE, "home_not_found_in_dimension"), DimensionUtils.getStringId(targetLevel));
-                        } else if (targetLevel == null) {
-                            NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EI18nType.MESSAGE, "home_not_found_with_name"), name);
-                        } else {
-                            NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EI18nType.MESSAGE, "home_not_found_with_name_in_dimension"), DimensionUtils.getStringId(targetLevel), name);
-                        }
-                        return 0;
-                    }
-                    try {
-                        coordinate.setSafe(args.length >= 2 && args[args.length - 2].equals("safe"));
-                    } catch (IllegalArgumentException ignored) {
-                    }
-                    // 验证传送代价
-                    if (checkTeleportPost(player, coordinate, ETeleportType.TP_HOME, true)) return 0;
-                    NarcissusUtils.teleportTo(player, coordinate, ETeleportType.TP_HOME);
-                    return 1;
-                }
-            }
-            // 添加预设位置
-            else if (prefix.equals(ServerConfig.COMMAND_SET_HOME)) {
-                // 传送功能前置校验
-                if (checkTeleportPre(player, ECommandType.SET_HOME)) {
-                    return 0;
-                }
-                if (args.length <= 3) {
-                    // 判断设置数量是否超过限制
-                    IPlayerTeleportData data = PlayerTeleportData.get(player);
-                    if (data.getHomeCoordinate().size() >= ServerConfig.TELEPORT_HOME_LIMIT) {
-                        NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EI18nType.MESSAGE, "home_limit"), ServerConfig.TELEPORT_HOME_LIMIT);
-                        return 0;
-                    }
-                    String name = "home";
-                    if (args.length >= 2) {
-                        name = args[1];
-                    }
-                    boolean defaultHome = false;
-                    if (args.length == 3) {
-                        defaultHome = args[2].equals("default");
-                    }
-                    Coordinate coordinate = new Coordinate(player);
-                    String dimension = DimensionUtils.getStringId(player.getEntityWorld().provider);
-                    KeyValue<String, String> key = new KeyValue<>(dimension, name);
-                    if (data.getHomeCoordinate().containsKey(key)) {
-                        NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EI18nType.MESSAGE, "home_already_exists"), key.getKey(), key.getValue());
-                        return 0;
-                    }
-                    data.addHomeCoordinate(key, coordinate);
-                    if (defaultHome) {
-                        if (data.getDefaultHome().containsKey(dimension)) {
-                            NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EI18nType.MESSAGE, "home_default_remove"), data.getDefaultHome(dimension).getValue());
-                        }
-                        data.addDefaultHome(dimension, name);
-                        NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EI18nType.MESSAGE, "home_set_default"), name, coordinate.toXyzString());
-                    } else {
-                        NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EI18nType.MESSAGE, "home_set"), name, coordinate.toXyzString());
-                    }
-                    return 1;
-                }
-            }
-            // 删除预设位置
-            else if (prefix.equals(ServerConfig.COMMAND_DEL_HOME)) {
-                // 传送功能前置校验
-                if (checkTeleportPre(player, ECommandType.DEL_HOME)) {
-                    return 0;
-                }
-                if (args.length >= 2) {
-                    IPlayerTeleportData data = PlayerTeleportData.get(player);
-                    String name = args[1];
-                    String dimension;
-                    if (args.length == 3 && DimensionUtils.getDimensionType(args[2]) != null) {
-                        dimension = args[2];
-                    } else {
-                        dimension = NarcissusUtils.getHomeDimensionByName(player, name);
-                    }
-                    if (StringUtils.isNullOrEmptyEx(dimension)) {
-                        NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EI18nType.MESSAGE, "dimension_not_found"), args[2]);
-                        return 0;
-                    }
-                    Coordinate remove = data.getHomeCoordinate().remove(new KeyValue<>(dimension, name));
-                    if (remove == null) {
-                        NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EI18nType.MESSAGE, "home_not_found_with_name_in_dimension"), dimension, name);
-                        return 0;
-                    }
-                    if (data.getDefaultHome().containsKey(dimension)) {
-                        if (data.getDefaultHome().get(dimension).equals(name)) {
-                            data.getDefaultHome().remove(dimension);
-                            NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EI18nType.MESSAGE, "home_default_remove"), name);
-                        }
-                    }
-                    NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EI18nType.MESSAGE, "home_del"), dimension, name);
-                    return 1;
-                }
-            }
-            // 获取预设位置
-            else if (prefix.equals(ServerConfig.COMMAND_GET_HOME)) {
-                // 传送功能前置校验
-                if (checkTeleportPre(player, ECommandType.GET_HOME)) {
-                    return 0;
-                }
-                if (args.length == 1) {
-                    IPlayerTeleportData data = PlayerTeleportData.get(player);
-                    String language = NarcissusUtils.getPlayerLanguage(player);
-                    if (data.getHomeCoordinate().isEmpty()) {
-                        NarcissusUtils.sendMessage(player, Component.translatable(language, EI18nType.MESSAGE, "home_is_empty"));
-                    } else {
-                        List<Component> infoList = new ArrayList<>();
-                        // dimension:name coordinate 转为 dimension [name:coordinate]
-                        Map<String, List<KeyValue<String, Coordinate>>> map = data.getHomeCoordinate().entrySet().stream()
-                                .collect(Collectors.groupingBy(
-                                        entry -> entry.getKey().getKey(),
-                                        Collectors.mapping(
-                                                entry -> new KeyValue<>(entry.getKey().getValue(), entry.getValue()),
-                                                Collectors.toList()
-                                        )
-                                ));
-                        for (Map.Entry<String, List<KeyValue<String, Coordinate>>> entry : map.entrySet()) {
-                            Component dimension = Component.literal(entry.getKey()).setColor(EMCColor.DARK_GREEN.getColor());
-                            dimension.setClickEvent(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, entry.getKey()));
-                            dimension.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.literal(entry.getKey()).toTextComponent()));
-                            dimension.append(Component.literal(": ").setColor(EMCColor.GRAY.getColor()));
-                            for (KeyValue<String, Coordinate> coordinates : entry.getValue()) {
-                                Component defHome;
-                                if (data.getDefaultHome().getOrDefault(entry.getKey(), "").equalsIgnoreCase(coordinates.getKey())) {
-                                    defHome = Component.translatable(language, EI18nType.WORD, "default").setColor(EMCColor.GRAY.getColor());
-                                } else {
-                                    defHome = Component.empty();
-                                }
-                                Component name = Component.translatable(language, EI18nType.MESSAGE, "home_info"
-                                        , coordinates.getKey()
-                                        , coordinates.getValue().toXString()
-                                        , coordinates.getValue().toYString()
-                                        , coordinates.getValue().toZString()
-                                        , defHome);
-                                name.toChatComponent();
-                                Component name_hover = Component.translatable(language, EI18nType.MESSAGE, "home_info_hover"
-                                        , coordinates.getKey()
-                                        , coordinates.getValue().toXString()
-                                        , coordinates.getValue().toYString()
-                                        , coordinates.getValue().toZString()
-                                        , defHome);
-                                name.setColor(EMCColor.GREEN.getColor());
-                                name.setClickEvent(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, name_hover.toString(true)));
-                                name.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, name_hover.toTextComponent()));
-                                dimension.append(name);
-                                dimension.append(Component.literal(", ").setColor(EMCColor.GRAY.getColor()));
-                            }
-                            infoList.add(dimension);
-                        }
-                        NarcissusUtils.sendMessage(player, Component.translatable(language, EI18nType.MESSAGE, "home_is"));
-                        for (Component info : infoList) {
-                            NarcissusUtils.sendMessage(player, info);
-                        }
-                    }
-                    return 1;
-                }
-            }
-            // 传送到驿站
-            else if (prefix.equals(ServerConfig.COMMAND_TP_STAGE)) {
-                // 传送功能前置校验
-                if (checkTeleportPre(player, ECommandType.TP_STAGE)) {
-                    return 0;
-                }
-                if (args.length <= 4) {
-                    String name = null;
-                    if (args.length >= 2) {
-                        name = args[1];
-                    }
-                    String targetLevel = null;
-                    if (args.length == 4) {
-                        targetLevel = DimensionUtils.getStringId(args[3]);
-                    }
-                    String dimension = StringUtils.isNotNullOrEmpty(targetLevel) ? args[3] : null;
-                    if (StringUtils.isNullOrEmptyEx(name)) {
-                        KeyValue<String, String> stageKey = NarcissusUtils.findNearestStageKey(player);
-                        if (stageKey == null) {
-                            NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EI18nType.MESSAGE, "stage_nearest_not_found"));
-                            return 0;
-                        }
-                        name = stageKey.getValue();
-                        dimension = stageKey.getKey();
-                    }
-                    WorldStageData stageData = WorldStageData.get();
-                    Coordinate coordinate = null;
-                    if (dimension == null) {
-                        int coordinateSize = stageData.getCoordinateSize(name);
-                        if (coordinateSize == 1) {
-                            coordinate = stageData.getCoordinate(name);
-                        } else if (coordinateSize > 1) {
-                            coordinate = stageData.getCoordinate(DimensionUtils.getStringId(player.getEntityWorld().provider), name);
-                        }
-                        if (coordinate == null) {
-                            NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EI18nType.MESSAGE, "stage_not_found"), name);
-                            return 0;
-                        }
-                    } else {
-                        coordinate = stageData.getCoordinate(dimension, name);
-                        if (coordinate == null) {
-                            NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EI18nType.MESSAGE, "stage_not_found_with_name_in_dimension"), dimension, name);
-                            return 0;
-                        }
-                    }
-                    try {
-                        coordinate.setSafe(args.length >= 3 && "safe".equalsIgnoreCase(args[2]));
-                    } catch (IllegalArgumentException ignored) {
-                    }
-                    // 验证传送代价
-                    if (checkTeleportPost(player, coordinate, ETeleportType.TP_STAGE, true)) return 0;
-                    NarcissusUtils.teleportTo(player, coordinate, ETeleportType.TP_STAGE);
-                    return 1;
-                }
-            }
-            // 添加驿站
-            else if (prefix.equals(ServerConfig.COMMAND_SET_STAGE)) {
-                // 传送功能前置校验
-                if (checkTeleportPre(player, ECommandType.SET_STAGE)) {
-                    return 0;
-                }
-                if (args.length > 1 && args.length <= 6) {
-                    WorldStageData stageData = WorldStageData.get();
-                    String name = args[1];
-                    String targetLevel = null;
-                    if (args.length == 6) {
-                        targetLevel = DimensionUtils.getStringId(args[5]);
-                    }
-                    if (StringUtils.isNullOrEmptyEx(targetLevel)) {
-                        targetLevel = DimensionUtils.getStringId(player.getEntityWorld().provider.dimensionId);
-                    }
-                    String dimension = DimensionUtils.getStringId(targetLevel);
-                    KeyValue<String, String> key = new KeyValue<>(dimension, name);
-                    if (stageData.getStageCoordinate().containsKey(key)) {
-                        NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EI18nType.MESSAGE, "stage_already_exists"), key.getKey(), key.getValue());
-                        return 0;
-                    }
-                    Coordinate coordinate = new Coordinate(player).setDimension(targetLevel);
-                    if (args.length >= 5) {
-                        Double x = StringUtils.toCoordinate(args[2], player.posX);
-                        Double y = StringUtils.toCoordinate(args[3], player.posY);
-                        Double z = StringUtils.toCoordinate(args[4], player.posZ);
-                        if (x == null || y == null || z == null) {
-                            return -1;
-                        }
-                        coordinate.setX(x).setY(y).setZ(z);
-                    }
-                    stageData.addCoordinate(key, coordinate);
-                    NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EI18nType.MESSAGE, "stage_set"), name, coordinate.toXyzString());
-                    return 1;
-                }
-            }
-            // 删除驿站
-            else if (prefix.equals(ServerConfig.COMMAND_DEL_STAGE)) {
-                // 传送功能前置校验
-                if (checkTeleportPre(player, ECommandType.DEL_STAGE)) {
-                    return 0;
-                }
-                if (args.length >= 2) {
-                    String name = args[1];
-                    String dimension;
-                    if (args.length == 3 && DimensionUtils.getDimensionType(args[2]) != null) {
-                        dimension = args[2];
-                    } else {
-                        dimension = NarcissusUtils.getStageDimensionByName(name);
-                    }
-                    if (StringUtils.isNullOrEmptyEx(dimension)) {
-                        NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EI18nType.MESSAGE, "dimension_not_found"), args[2]);
-                        return 0;
-                    }
-                    WorldStageData stageData = WorldStageData.get();
-                    Coordinate remove = stageData.getStageCoordinate().remove(new KeyValue<>(dimension, name));
-                    stageData.markDirty();
-                    if (remove == null) {
-                        NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EI18nType.MESSAGE, "stage_not_found_with_name_in_dimension"), dimension, name);
-                        return 0;
-                    }
-                    NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EI18nType.MESSAGE, "stage_del"), dimension, name);
-                    return 1;
-                }
-            }
-            // 获取驿站
-            else if (prefix.equals(ServerConfig.COMMAND_GET_STAGE)) {
-                // 传送功能前置校验
-                if (checkTeleportPre(player, ECommandType.GET_STAGE)) {
-                    return 0;
-                }
-                WorldStageData data = WorldStageData.get();
-                String language = NarcissusUtils.getPlayerLanguage(player);
-                if (data.getStageCoordinate().isEmpty()) {
-                    NarcissusUtils.sendMessage(player, Component.translatable(language, EI18nType.MESSAGE, "stage_is_empty"));
-                } else {
-                    List<Component> infoList = new ArrayList<>();
-                    // dimension:name coordinate 转为 dimension [name:coordinate]
-                    Map<String, List<KeyValue<String, Coordinate>>> map = data.getStageCoordinate().entrySet().stream()
-                            .collect(Collectors.groupingBy(
-                                    entry -> entry.getKey().getKey(),
-                                    Collectors.mapping(
-                                            entry -> new KeyValue<>(entry.getKey().getValue(), entry.getValue()),
-                                            Collectors.toList()
-                                    )
-                            ));
-                    for (Map.Entry<String, List<KeyValue<String, Coordinate>>> entry : map.entrySet()) {
-                        Component dimension = Component.literal(entry.getKey()).setColor(EMCColor.DARK_GREEN.getColor());
-                        dimension.setClickEvent(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, entry.getKey()));
-                        dimension.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.literal(entry.getKey()).toTextComponent()));
-                        dimension.append(Component.literal(": ").setColor(EMCColor.GRAY.getColor()));
-                        for (KeyValue<String, Coordinate> coordinates : entry.getValue()) {
-                            Component name = Component.translatable(language, EI18nType.MESSAGE, "stage_info"
-                                    , coordinates.getKey()
-                                    , coordinates.getValue().toXString()
-                                    , coordinates.getValue().toYString()
-                                    , coordinates.getValue().toZString());
-                            Component name_hover = Component.translatable(language, EI18nType.MESSAGE, "stage_info_hover"
-                                    , coordinates.getKey()
-                                    , coordinates.getValue().toXString()
-                                    , coordinates.getValue().toYString()
-                                    , coordinates.getValue().toZString());
-                            name.setColor(EMCColor.GREEN.getColor());
-                            name.setClickEvent(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, name_hover.toString(true)));
-                            name.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, name_hover.toTextComponent()));
-                            dimension.append(name);
-                            dimension.append(Component.literal(", ").setColor(EMCColor.GRAY.getColor()));
-                        }
-                        infoList.add(dimension);
-                    }
-                    NarcissusUtils.sendMessage(player, Component.translatable(language, EI18nType.MESSAGE, "stage_is"));
-                    for (Component info : infoList) {
-                        NarcissusUtils.sendMessage(player, info);
-                    }
-                }
-                return 1;
-            }
-            // 传送到上一次离开位置
-            else if (prefix.equals(ServerConfig.COMMAND_TP_BACK)) {
-                // 传送功能前置校验
-                if (checkTeleportPre(player, ECommandType.TP_BACK)) {
-                    return 0;
-                }
-                if (args.length <= 4) {
-                    ETeleportType type = null;
-                    if (args.length >= 3) {
-                        type = ETeleportType.valueOf(args[2]);
-                    }
-                    String targetLevel = null;
-                    if (args.length == 4) {
-                        targetLevel = DimensionUtils.getStringId(args[3]);
-                    }
-                    TeleportRecord record = NarcissusUtils.getBackTeleportRecord(player, type, targetLevel);
-                    if (record == null) {
-                        NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EI18nType.MESSAGE, "back_not_found"));
-                        return 0;
-                    }
-                    Coordinate coordinate = record.getBefore().clone();
-                    try {
-                        coordinate.setSafe(args.length >= 2 && "safe".equalsIgnoreCase(args[1]));
-                    } catch (IllegalArgumentException ignored) {
-                    }
-                    // 验证传送代价
-                    if (checkTeleportPost(player, coordinate, ETeleportType.TP_BACK, true)) return 0;
-                    NarcissusUtils.removeBackTeleportRecord(player, record);
-                    NarcissusUtils.teleportTo(player, coordinate, ETeleportType.TP_BACK);
-                    return 1;
-                }
-            }
-            // 虚拟权限
-            else if (prefix.equals(ServerConfig.COMMAND_VIRTUAL_OP)) {
-                // 传送功能前置校验
-                if (checkTeleportPre(player, ECommandType.VIRTUAL_OP)) {
-                    return 0;
-                }
-                if (player == null || NarcissusUtils.hasCommandPermission(player, ECommandType.VIRTUAL_OP)) {
-                    if (args.length == 3 || args.length == 4) {
-                        EOperationType type = EOperationType.fromString(args[1]);
-                        List<EntityPlayerMP> targetList = new ArrayList<>();
-                        try {
-                            targetList.add(CommandBase.getPlayer(sender, args[2]));
-                        } catch (CommandException ignored) {
-                        }
-                        if (CollectionUtils.isNullOrEmpty(targetList)) {
-                            NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EI18nType.MESSAGE, "player_not_found"));
-                            return 0;
-                        }
-                        ECommandType[] rules;
-                        try {
-                            rules = Arrays.stream(args[3].split(","))
-                                    .filter(StringUtils::isNotNullOrEmpty)
-                                    .map(String::trim)
-                                    .map(String::toUpperCase)
-                                    .map(ECommandType::valueOf).toArray(ECommandType[]::new);
-                        } catch (Exception ignored) {
-                            rules = new ECommandType[]{};
-                        }
-                        String language = ServerConfig.DEFAULT_LANGUAGE;
-                        if (player != null) {
-                            language = NarcissusUtils.getPlayerLanguage(player);
-                        }
-                        for (EntityPlayerMP target : targetList) {
-                            switch (type) {
-                                case ADD:
-                                    VirtualPermissionManager.addVirtualPermission(target, rules);
-                                    break;
-                                case SET:
-                                    VirtualPermissionManager.setVirtualPermission(target, rules);
-                                    break;
-                                case DEL:
-                                case REMOVE:
-                                    VirtualPermissionManager.delVirtualPermission(target, rules);
-                                    break;
-                                case CLEAR:
-                                    VirtualPermissionManager.clearVirtualPermission(target);
-                                    break;
-                            }
-                            String permissions = VirtualPermissionManager.buildPermissionsString(VirtualPermissionManager.getVirtualPermission(target));
-                            NarcissusUtils.sendTranslatableMessage(target, I18nUtils.getKey(EI18nType.MESSAGE, "player_virtual_op"), target.getDisplayName());
-                            NarcissusUtils.sendMessage(target, Component.literal(permissions));
-                            if (player != null) {
-                                if (!target.getUniqueID().toString().equalsIgnoreCase(player.getUniqueID().toString())) {
-                                    NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EI18nType.MESSAGE, "player_virtual_op"), target.getDisplayName());
-                                    NarcissusUtils.sendMessage(player, Component.literal(permissions));
-                                }
-                            } else {
-                                NarcissusUtils.sendMessage(sender, Component.translatable(language, EI18nType.MESSAGE, "player_virtual_op", target.getDisplayName()));
-                                NarcissusUtils.sendMessage(sender, Component.literal(permissions));
-                            }
-                            // 更新权限信息
-                            // server.getPlayerList().updatePermissionLevel(target);
-                        }
-                        return 1;
-                    }
-                }
-            }
-            // 服务器配置
-            else if (prefix.equals("config")) {
-                // 权限判断
-                if (!NarcissusUtils.hasCommandPermission(player, ECommandType.VIRTUAL_OP)) {
-                    NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EI18nType.MESSAGE, "command_no_permission"));
-                    return 0;
-                }
-                if (args.length == 3 && args[1].equals("get")) {
-                    if (args[2].equals("teleportCard")) {
-                        Component msg = Component.translatable(I18nUtils.getKey(EI18nType.MESSAGE, "server_config_status")
-                                , I18nUtils.enabled(NarcissusUtils.getPlayerLanguage(player), ServerConfig.TELEPORT_CARD)
-                                , Component.translatable(NarcissusUtils.getPlayerLanguage(player), EI18nType.WORD, "teleport_card"));
-                        NarcissusUtils.sendMessage(player, msg);
-                        return 1;
-                    }
-                } else if (args.length == 4 && args[1].equals("set")) {
-                    if (args[2].equals("teleportCard")) {
-                        ServerConfig.TELEPORT_CARD = StringUtils.stringToBoolean(args[3]);
-                        Component msg = Component.translatable(I18nUtils.getKey(EI18nType.MESSAGE, "server_config_status")
-                                , I18nUtils.enabled(NarcissusUtils.getPlayerLanguage(player), ServerConfig.TELEPORT_CARD)
-                                , Component.translatable(NarcissusUtils.getPlayerLanguage(player), EI18nType.WORD, "teleport_card"));
-                        NarcissusUtils.broadcastMessage(player, msg);
-                        return 1;
-                    } else if (args[2].equals("mode")) {
-                        int mode = StringUtils.toInt(args[3]);
-                        switch (mode) {
-                            case 0:
-                                ServerConfig.resetConfig();
-                                break;
-                            case 1:
-                                ServerConfig.resetConfigWithMode1();
-                                break;
-                            case 2:
-                                ServerConfig.resetConfigWithMode2();
-                                break;
-                            case 3:
-                                ServerConfig.resetConfigWithMode3();
-                                break;
-                            default: {
-                                throw new IllegalArgumentException("Mode " + mode + " does not exist");
-                            }
-                        }
-                        Component component = Component.translatable(EI18nType.MESSAGE, "server_config_mode", mode);
-                        NarcissusUtils.sendMessage(player, component);
-                        // 更新权限信息
-                        // server.getPlayerList().getPlayers()
-                        //         .forEach(target -> server.getPlayerList()
-                        //                 .updatePermissionLevel(target)
-                        //         );
-                        return 1;
-                    }
-                }
-            }
-        }
-        return -1;
-    }
-
-    private static List<String> getPlayerNameSuggestions(MinecraftServer server, String[] args) {
-        List<String> result = new ArrayList<>();
-        if (StringUtils.isNullOrEmptyEx(args[args.length - 1]) || args[args.length - 1].equals("@")) {
-            result.add("@p");
-            result.add("@r");
-            result.add("@s");
-        }
-        result.addAll(getListOfStringsMatchingLastWord(args, server.getConfigurationManager().getAllUsernames()));
-        return result;
-    }
-
-    private static List<String> getCoordinateSuggestions(Coordinate playerPos, String[] args, int start) {
-        List<String> result = new ArrayList<>();
-        if (args.length - 1 == start) {
-            result.add("~");
-            result.add(String.valueOf(playerPos.getX()));
-        } else if (args.length - 1 == start + 1) {
-            String pre = args[args.length - 2];
-            if (StringUtils.isNotNullOrEmpty(pre) && (pre.equals("~") || pre.equals(StringUtils.toInt(pre) + ""))) {
-                result.add("~");
-                result.add(String.valueOf(playerPos.getY()));
-            }
-        } else if (args.length - 1 == start + 2) {
-            String pre = args[args.length - 2];
-            String prePre = args[args.length - 3];
-            if ((StringUtils.isNotNullOrEmpty(pre) && (pre.equals("~") || pre.equals(StringUtils.toInt(pre) + "")))
-                    && (StringUtils.isNotNullOrEmpty(prePre) && (prePre.equals("~") || prePre.equals(StringUtils.toInt(prePre) + "")))) {
-                result.add("~");
-                result.add(String.valueOf(playerPos.getZ()));
-            }
-        }
-        return result;
-    }
-
-    private static List<String> getReqIndexSuggestions(EntityPlayer player, ETeleportType teleportType, String arg, final boolean isTarget) {
-        Set<String> result = new HashSet<>();
-        NarcissusFarewell.getTeleportRequest().entrySet().stream()
-                .filter(entry -> isTarget ? entry.getValue().getRequester().getUniqueID().equals(player.getUniqueID()) : entry.getValue().getTarget().getUniqueID().equals(player.getUniqueID()))
-                .filter(entry -> entry.getValue().getTeleportType() == teleportType)
-                .filter(entry -> StringUtils.isNullOrEmpty(arg) || entry.getKey().contains(arg))
-                .forEach(entry -> {
-                    result.add(entry.getKey());
-                    result.add(entry.getValue().getRequester().getDisplayName());
-                });
-        if (StringUtils.isNullOrEmpty(arg)) {
-            for (int i = 0; i < NarcissusFarewell.getTeleportRequest().entrySet().stream()
-                    .filter(entry -> isTarget ? entry.getValue().getRequester().getUniqueID().equals(player.getUniqueID()) : entry.getValue().getTarget().getUniqueID().equals(player.getUniqueID()))
-                    .filter(entry -> entry.getValue().getTeleportType() == teleportType)
-                    .count(); i++) {
-                result.add(String.valueOf(i + 1));
-            }
-        }
-        return result.stream().sorted().collect(Collectors.toList());
-    }
-
-    /**
-     * 传送解析前置校验
-     *
-     * @return true 表示校验失败，不应该执行传送
-     */
-    private static boolean checkTeleportPre(EntityPlayerMP player, ECommandType teleportType) {
-        // 判断是否开启传送功能
-        if (!NarcissusUtils.isCommandEnabled(teleportType)) {
-            NarcissusUtils.sendTranslatableMessage(player, false, I18nUtils.getKey(EI18nType.MESSAGE, "command_disabled"));
-            return true;
-        }
-        // 判断是否有冷却时间
-        if (player != null) {
-            ETeleportType type = teleportType.toTeleportType();
-            if (type != null && !(teleportType.name().toLowerCase().contains("yes") || teleportType.name().toLowerCase().contains("no"))) {
-                int teleportCoolDown = NarcissusUtils.getTeleportCoolDown(player, type);
-                if (teleportCoolDown > 0) {
-                    NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EI18nType.MESSAGE, "command_cooldown"), teleportCoolDown);
-                    return true;
-                }
-            }
-        }
-        return false;
-    }
-
-    /**
-     * 传送解析后置校验
-     *
-     * @return true 表示校验失败，不应该执行传送
-     */
-    private static boolean checkTeleportPost(TeleportRequest request) {
-        return checkTeleportPost(request, false);
-    }
-
-    /**
-     * 传送解析后置校验
-     *
-     * @param submit 是否收取代价
-     * @return true 表示校验失败，不应该执行传送
-     */
-    private static boolean checkTeleportPost(TeleportRequest request, boolean submit) {
-        boolean result;
-        // 判断跨维度传送
-        result = NarcissusUtils.isTeleportAcrossDimensionEnabled(request.getRequester(), DimensionUtils.getStringId(request.getTarget().getEntityWorld().provider.dimensionId), request.getTeleportType());
-        // 判断是否有传送代价
-        result = result && NarcissusUtils.validTeleportCost(request, submit);
-        return !result;
-    }
-
-    /**
-     * 传送解析后置校验
-     *
-     * @param player 请求传送的玩家
-     * @param target 目标坐标
-     * @param type   传送类型
-     * @return true 表示校验失败，不应该执行传送
-     */
-    public static boolean checkTeleportPost(EntityPlayerMP player, Coordinate target, ETeleportType type) {
-        return checkTeleportPost(player, target, type, false);
-    }
-
-    /**
-     * 传送解析后置校验
-     *
-     * @param player 请求传送的玩家
-     * @param target 目标坐标
-     * @param type   传送类型
-     * @param submit 是否收取代价
-     * @return true 表示校验失败，不应该执行传送
-     */
-    public static boolean checkTeleportPost(EntityPlayerMP player, Coordinate target, ETeleportType type, boolean submit) {
-        boolean result;
-        // 判断跨维度传送
-        result = NarcissusUtils.isTeleportAcrossDimensionEnabled(player, target.getDimension(), type);
-        // 判断是否有传送代价
-        result = result && NarcissusUtils.validTeleportCost(player, target, type, submit);
-        return !result;
-    }
-
-    /**
-     * 获取传送请求ID
-     *
-     * @param teleportType 传送类型
-     * @param isTarget     是否根据接收方查找
-     */
-    private static String getRequestId(EntityPlayerMP player, String arg, ETeleportType teleportType, final boolean isTarget) {
-        String result = null;
-        try {
-            List<EntityPlayerMP> playerMPList = new ArrayList<>();
-            try {
-                playerMPList.add(CommandBase.getPlayer(player, arg));
-            } catch (CommandException ignored) {
-            }
-            // List<EntityPlayerMP> playerMPList = NarcissusUtils.getPlayer(player, arg);
-            if (CollectionUtils.isNotNullOrEmpty(playerMPList)) {
-                EntityPlayerMP requester = playerMPList.get(0);
-                Map.Entry<String, TeleportRequest> entry1 = NarcissusFarewell.getTeleportRequest().entrySet().stream()
-                        .filter(entry -> isTarget ? entry.getValue().getTarget().getUniqueID().equals(player.getUniqueID()) : entry.getValue().getRequester().getUniqueID().equals(player.getUniqueID()))
-                        .filter(entry -> isTarget ? entry.getValue().getRequester().getUniqueID().equals(requester.getUniqueID()) : entry.getValue().getTarget().getUniqueID().equals(requester.getUniqueID()))
-                        .filter(entry -> entry.getValue().getTeleportType() == teleportType)
-                        .max(Comparator.comparing(entry -> entry.getValue().getRequestTime()))
-                        .orElse(null);
-                if (entry1 != null) {
-                    result = entry1.getKey();
-                }
-            } else if (NarcissusFarewell.getTeleportRequest().containsKey(arg)) {
-                result = arg;
-            } else if (String.valueOf(StringUtils.toInt(arg)).equals(arg)) {
-                int askIndex = StringUtils.toInt(arg);
-                List<Map.Entry<String, TeleportRequest>> entryList = NarcissusFarewell.getTeleportRequest().entrySet().stream()
-                        .filter(entry -> isTarget ? entry.getValue().getTarget().getUniqueID().equals(player.getUniqueID()) : entry.getValue().getRequester().getUniqueID().equals(player.getUniqueID()))
-                        .filter(entry -> entry.getValue().getTeleportType() == teleportType)
-                        // 使用负数实现倒序排列
-                        .sorted(Comparator.comparing(entry -> -entry.getValue().getRequestTime().getTime()))
-                        .collect(Collectors.toList());
-                if (askIndex > 0 && askIndex <= entryList.size()) {
-                    result = entryList.get(askIndex - 1).getKey();
-                }
-            } else {
-                // 使用负数实现倒序排列
-                Map.Entry<String, TeleportRequest> entry1 = NarcissusFarewell.getTeleportRequest().entrySet().stream()
-                        .filter(entry -> isTarget ? entry.getValue().getTarget().getUniqueID().equals(player.getUniqueID()) : entry.getValue().getRequester().getUniqueID().equals(player.getUniqueID()))
-                        .filter(entry -> entry.getValue().getTeleportType() == teleportType)
-                        .max(Comparator.comparing(entry -> entry.getValue().getRequestTime()))
-                        .orElse(null);
-                if (entry1 != null) {
-                    result = entry1.getKey();
-                }
-            }
-        } catch (Exception ignored) {
-        }
-        return result;
-    }
-
-    /**
-     * 若为第一次使用指令则进行提示
-     */
-    public static void notifyHelp(EntityPlayerMP player) {
-        if (player != null) {
-            IPlayerTeleportData data = PlayerTeleportData.get(player);
-            if (!data.isNotified()) {
-                Component button = Component.literal("/" + NarcissusUtils.getCommandPrefix())
-                        .setColor(EMCColor.AQUA.getColor())
-                        .setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/" + NarcissusUtils.getCommandPrefix()))
-                        .setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.literal("/" + NarcissusUtils.getCommandPrefix())
-                                .toTextComponent())
-                        );
-                NarcissusUtils.sendMessage(player, Component.translatable(EI18nType.MESSAGE, "notify_help", button));
-                data.setNotified(true);
-            }
-        }
-    }
+  @Override
+  @ParametersAreNonnullByDefault
+  public void processCommand(@NonNull ICommandSender sender,
+                             @ParametersAreNonnullByDefault String[] args) throws PlayerNotFoundException {
+    verifyExecuteResult(sender, executeCommand(sender, args));
+  }
 }
