@@ -28,6 +28,7 @@ import net.minecraft.stats.StatList;
 import net.minecraft.util.ChatComponentText;
 import net.minecraft.util.DamageSource;
 import net.minecraft.util.IChatComponent;
+import net.minecraft.util.MathHelper;
 import net.minecraft.util.Vec3;
 import net.minecraft.world.ChunkPosition;
 import net.minecraft.world.World;
@@ -93,10 +94,10 @@ public class NarcissusUtils {
       .collect(Collectors.toList());
   private static final List<Block> SUFFOCATING_BLOCKS =
       Arrays.stream(ServerConfig.SUFFOCATING_BLOCKS)
-      .map(Block::getBlockFromName)
-      .filter(Objects::nonNull)
-      .distinct()
-      .collect(Collectors.toList());
+          .map(Block::getBlockFromName)
+          .filter(Objects::nonNull)
+          .distinct()
+          .collect(Collectors.toList());
   private static final List<Block> SAFE_BLOCKS = Arrays.stream(ServerConfig.SAFE_BLOCKS)
       .map(Block::getBlockFromName)
       .filter(Objects::nonNull)
@@ -760,9 +761,9 @@ public class NarcissusUtils {
     // }
     // int permLevel = 0;
     // if (NarcissusFarewell.getServerInstance().getPlayerList().canSendCommands(player
-      // .getGameProfile())) {
+    // .getGameProfile())) {
     //     UserListOpsEntry opsEntry = NarcissusFarewell.getServerInstance().getPlayerList()
-      //     .getOppedPlayers().getEntry(player.getGameProfile());
+    //     .getOppedPlayers().getEntry(player.getGameProfile());
     //     // idea又坑老实人，opsEntry是会为null的
     //     if (opsEntry != null) {
     //         permLevel = opsEntry.getPermissionLevel();
@@ -1093,7 +1094,7 @@ public class NarcissusUtils {
    */
   public static WorldServer getWorld(int dimensionId) {
     // return DimensionManager.getWorld(NarcissusFarewell.getServerInstance(), dimension, true,
-      // true);
+    // true);
     return NarcissusFarewell.getServerInstance().worldServerForDimension(dimensionId);
   }
 
@@ -1261,15 +1262,15 @@ public class NarcissusUtils {
     WorldStageData stageData = WorldStageData.get();
     Map.Entry<KeyValue<String, String>, Coordinate> stageEntry =
         stageData.getStageCoordinate().entrySet().stream()
-        .filter(entry -> entry.getKey().getKey().equals(DimensionUtils.getStringId(player.getEntityWorld().provider)))
-        .min(Comparator.comparingInt(entry -> {
-          Coordinate value = entry.getValue();
-          double dx = value.getX() - player.posX;
-          double dy = value.getY() - player.posY;
-          double dz = value.getZ() - player.posZ;
-          // 返回欧几里得距离的平方（避免开方操作，提高性能）
-          return (int) (dx * dx + dy * dy + dz * dz);
-        })).orElse(null);
+            .filter(entry -> entry.getKey().getKey().equals(DimensionUtils.getStringId(player.getEntityWorld().provider)))
+            .min(Comparator.comparingInt(entry -> {
+              Coordinate value = entry.getValue();
+              double dx = value.getX() - player.posX;
+              double dy = value.getY() - player.posY;
+              double dz = value.getZ() - player.posZ;
+              // 返回欧几里得距离的平方（避免开方操作，提高性能）
+              return (int) (dx * dx + dy * dy + dz * dz);
+            })).orElse(null);
     return stageEntry != null ? stageEntry.getKey() : null;
   }
 
@@ -1317,14 +1318,10 @@ public class NarcissusUtils {
    */
   public static int checkRange(EntityPlayerMP player, ETeleportType type, int range) {
     int maxRange;
-    switch (type) {
-      case TP_VIEW:
-        maxRange = ServerConfig.TELEPORT_VIEW_DISTANCE_LIMIT;
-        break;
-      default:
-        maxRange = ServerConfig.TELEPORT_RANDOM_DISTANCE_LIMIT;
-        break;
-    }
+    maxRange = Objects.requireNonNull(type) == ETeleportType.TP_VIEW
+        ? ServerConfig.TELEPORT_VIEW_DISTANCE_LIMIT
+        : ServerConfig.TELEPORT_RANDOM_DISTANCE_LIMIT;
+
     if (range > maxRange) {
       NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EI18nType.MESSAGE,
           "range_too_large"), maxRange);
@@ -1405,16 +1402,30 @@ public class NarcissusUtils {
 
       final Block blockState = ServerConfig.GETBLOCK_FROM_INVENTORY
           ? SAFE_BLOCKS.stream()
-          .filter(block -> playerItemList.stream()
-              .map(ItemStack::getItem)
-              .anyMatch(item -> new ItemStack(block).getItem().equals(item)))
-          .findFirst().orElse(null)
+          .filter(block ->
+              playerItemList.stream()
+                  .map(ItemStack::getItem)
+                  .anyMatch((new ItemStack(block)).getItem()::equals)
+          )
+          .findFirst()
+          .orElse(null)
           : SAFE_BLOCKS.get(0);
 
-      Item blockItem = new ItemStack(blockState).getItem();
-      Item remove =
-          playerItemList.stream().map(ItemStack::getItem).filter(blockItem::equals).findFirst().orElse(null);
-      if (remove == null) {
+      if (Objects.isNull(blockState)) {
+        ServerTaskExecutor.run(() -> teleportPlayer(player, finalAfter, type, before, level));
+        return;
+      }
+
+      final Item blockItem = Item.getItemFromBlock(blockState);
+
+      // FIXME - 这和 blockItem 有区别吗？
+      final Item remove = playerItemList.stream()
+          .map(ItemStack::getItem)
+          .filter(blockItem::equals)
+          .findFirst()
+          .orElse(null);
+
+      if (Objects.isNull(remove)) {
         ServerTaskExecutor.run(() -> teleportPlayer(player, finalAfter, type, before, level));
         return;
       }
@@ -1422,7 +1433,10 @@ public class NarcissusUtils {
       ItemStack itemStack = new ItemStack(remove);
       itemStack.stackSize = 1;
       if (removeItemFromPlayerInventory(player, itemStack)) {
-        getWorld(DimensionUtils.getDimensionType(after.getDimension())).setBlock((int) airCoordinate.getX(), (int) (airCoordinate.getY() - 1), (int) airCoordinate.getZ(), blockState);
+        getWorld(DimensionUtils.getDimensionType(after.getDimension())).setBlock(
+            MathHelper.floor_double(airCoordinate.getX()),
+            MathHelper.floor_double(airCoordinate.getY()) - 1,
+            MathHelper.floor_double(airCoordinate.getZ()), blockState);
       }
 
       ServerTaskExecutor.run(() -> teleportPlayer(player, finalAfter, type, before, level));
@@ -1430,9 +1444,9 @@ public class NarcissusUtils {
   }
 
   public static Entity getLowestRidingEntity(Entity entity) {
-    Entity result;
-    for (result = entity.ridingEntity; result != null && result.ridingEntity != null; result =
-        result.ridingEntity) {
+    Entity result = entity.ridingEntity;
+    if (Objects.nonNull(result) && Objects.nonNull(result.ridingEntity)) {
+      result = result.ridingEntity;
     }
     return result;
   }
@@ -2012,9 +2026,9 @@ public class NarcissusUtils {
                                        int cooldown, ETeleportType type) {
     Optional<TeleportRequest> latestRequest =
         NarcissusFarewell.getTeleportRequest().values().stream()
-        .filter(request -> request.getRequester().getUniqueID().equals(uuid))
-        .filter(request -> type == null || request.getTeleportType() == type)
-        .max(Comparator.comparing(TeleportRequest::getRequestTime));
+            .filter(request -> request.getRequester().getUniqueID().equals(uuid))
+            .filter(request -> type == null || request.getTeleportType() == type)
+            .max(Comparator.comparing(TeleportRequest::getRequestTime));
 
     Instant lastRequestTime =
         latestRequest.map(r -> r.getRequestTime().toInstant()).orElse(current.minusSeconds(cooldown));
