@@ -2,7 +2,6 @@ package xin.vanilla.narcissus.enums;
 
 import lombok.Getter;
 import net.minecraft.command.CommandBase;
-import net.minecraft.command.CommandHelp;
 import xin.vanilla.narcissus.command.concise.*;
 
 import javax.annotation.CheckForNull;
