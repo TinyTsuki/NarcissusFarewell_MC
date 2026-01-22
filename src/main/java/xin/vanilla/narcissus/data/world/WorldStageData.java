@@ -13,6 +13,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.datafix.DataFixTypes;
 import net.minecraft.world.level.saveddata.SavedData;
 import net.minecraft.world.level.saveddata.SavedDataType;
+import org.jetbrains.annotations.NotNull;
 import xin.vanilla.narcissus.NarcissusFarewell;
 import xin.vanilla.narcissus.data.Coordinate;
 import xin.vanilla.narcissus.data.KeyValue;
@@ -48,10 +49,10 @@ public class WorldStageData extends SavedData {
             }
     );
 
-    public static final SavedDataType<WorldStageData> TYPE = new SavedDataType<>(
+    public static final SavedDataType<@NotNull WorldStageData> TYPE = new SavedDataType<>(
             DATA_NAME,
-            context -> new WorldStageData(new HashMap<>()),
-            ctx -> CODEC,
+            () -> new WorldStageData(new HashMap<>()),
+            CODEC,
             DataFixTypes.SAVED_DATA_MAP_DATA
     );
 

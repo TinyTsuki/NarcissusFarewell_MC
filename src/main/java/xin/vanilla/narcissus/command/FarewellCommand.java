@@ -16,14 +16,14 @@ import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.commands.arguments.DimensionArgument;
 import net.minecraft.commands.arguments.EntityArgument;
-import net.minecraft.commands.arguments.ResourceLocationArgument;
+import net.minecraft.commands.arguments.IdentifierArgument;
 import net.minecraft.commands.arguments.coordinates.Vec3Argument;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.ClickEvent;
 import net.minecraft.network.chat.HoverEvent;
+import net.minecraft.resources.Identifier;
 import net.minecraft.resources.ResourceKey;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.tags.TagKey;
@@ -36,6 +36,7 @@ import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.registries.ForgeRegistries;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.jetbrains.annotations.NotNull;
 import xin.vanilla.narcissus.NarcissusFarewell;
 import xin.vanilla.narcissus.config.CommonConfig;
 import xin.vanilla.narcissus.config.CustomConfig;
@@ -49,6 +50,8 @@ import xin.vanilla.narcissus.util.*;
 import java.util.*;
 import java.util.stream.Collectors;
 
+
+@SuppressWarnings("resource")
 public class FarewellCommand {
     private static final Logger LOGGER = LogManager.getLogger();
 
@@ -177,7 +180,7 @@ public class FarewellCommand {
 
         SuggestionProvider<CommandSourceStack> dimensionSuggestions = (context, builder) -> {
             for (ServerLevel level : context.getSource().getServer().getAllLevels()) {
-                builder.suggest(level.dimension().location().toString());
+                builder.suggest(level.dimension().identifier().toString());
             }
             return builder.buildFuture();
         };
@@ -246,7 +249,7 @@ public class FarewellCommand {
             // 传送功能前置校验
             if (checkTeleportPre(context.getSource(), EnumCommandType.DIMENSION)) return 0;
             ServerPlayer player = context.getSource().getPlayerOrException();
-            String dimString = player.level().dimension().location().toString();
+            String dimString = player.level().dimension().identifier().toString();
             Component dim = Component.literal(dimString);
             dim.setColor(EnumMCColor.GREEN.getColor())
                     .setClickEvent(new ClickEvent.CopyToClipboard(dimString))
@@ -502,7 +505,7 @@ public class FarewellCommand {
             Coordinate coordinate;
             try {
                 Vec3 pos = Vec3Argument.getCoordinates(context, "coordinate").getPosition(context.getSource());
-                ResourceKey<Level> targetLevel;
+                ResourceKey<@NotNull Level> targetLevel;
                 try {
                     targetLevel = DimensionArgument.getDimension(context, "dimension").dimension();
                 } catch (IllegalArgumentException ignored) {
@@ -524,16 +527,16 @@ public class FarewellCommand {
             ServerPlayer player = context.getSource().getPlayerOrException();
             // 传送功能前置校验
             if (checkTeleportPre(context.getSource(), EnumCommandType.TP_STRUCTURE)) return 0;
-            ResourceLocation structId = ResourceLocationArgument.getId(context, "struct");
-            ResourceKey<Structure> structure = NarcissusUtils.getStructure(structId);
-            TagKey<Structure> structureTag = NarcissusUtils.getStructureTag(structId);
-            ResourceKey<Biome> biome = NarcissusUtils.getBiome(structId);
+            Identifier structId = IdentifierArgument.getId(context, "struct");
+            ResourceKey<@NotNull Structure> structure = NarcissusUtils.getStructure(structId);
+            TagKey<@NotNull Structure> structureTag = NarcissusUtils.getStructureTag(structId);
+            ResourceKey<@NotNull Biome> biome = NarcissusUtils.getBiome(structId);
             if (structure == null && structureTag == null && biome == null) {
                 NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EnumI18nType.MESSAGE, "structure_biome_not_found"), structId);
                 return 0;
             }
             int range;
-            ResourceKey<Level> targetLevel;
+            ResourceKey<@NotNull Level> targetLevel;
             try {
                 range = IntegerArgumentType.getInteger(context, "range");
             } catch (IllegalArgumentException ignored) {
@@ -545,7 +548,7 @@ public class FarewellCommand {
             } catch (IllegalArgumentException ignored) {
                 targetLevel = player.level().dimension();
             }
-            ResourceKey<Level> finalTargetLevel = targetLevel;
+            ResourceKey<@NotNull Level> finalTargetLevel = targetLevel;
             boolean safe = "safe".equalsIgnoreCase(getStringDefault(context, "safe", "safe"));
             int finalRange = range;
             NarcissusUtils.sendActionBarMessage(player, Component.translatable(NarcissusUtils.getPlayerLanguage(player), EnumI18nType.MESSAGE, "tp_structure_searching"));
@@ -814,7 +817,7 @@ public class FarewellCommand {
             ServerPlayer player = context.getSource().getPlayerOrException();
             // 传送功能前置校验
             if (checkTeleportPre(context.getSource(), EnumCommandType.TP_RANDOM)) return 0;
-            ResourceKey<Level> targetLevel;
+            ResourceKey<@NotNull Level> targetLevel;
             int range;
             try {
                 range = IntegerArgumentType.getInteger(context, "range");
@@ -980,9 +983,9 @@ public class FarewellCommand {
             ServerPlayer player = context.getSource().getPlayerOrException();
             // 传送功能前置校验
             if (checkTeleportPre(context.getSource(), EnumCommandType.TP_HOME)) return 0;
-            ResourceKey<Level> targetLevel = null;
+            ResourceKey<@NotNull Level> targetLevel = null;
             try {
-                ResourceKey<Level> targetDimension = ResourceKey.create(Registries.DIMENSION, NarcissusFarewell.parseResource(StringArgumentType.getString(context, "dimension")));
+                ResourceKey<@NotNull Level> targetDimension = ResourceKey.create(Registries.DIMENSION, NarcissusFarewell.parseResource(StringArgumentType.getString(context, "dimension")));
                 ServerLevel level = context.getSource().getServer().getLevel(targetDimension);
                 if (level != null) {
                     targetLevel = targetDimension;
@@ -995,11 +998,11 @@ public class FarewellCommand {
                 if (targetLevel == null && name == null) {
                     NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EnumI18nType.MESSAGE, "home_not_found"));
                 } else if (targetLevel != null && name == null) {
-                    NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EnumI18nType.MESSAGE, "home_not_found_in_dimension"), targetLevel.location().toString());
+                    NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EnumI18nType.MESSAGE, "home_not_found_in_dimension"), targetLevel.identifier().toString());
                 } else if (targetLevel == null) {
                     NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EnumI18nType.MESSAGE, "home_not_found_with_name"), name);
                 } else {
-                    NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EnumI18nType.MESSAGE, "home_not_found_with_name_in_dimension"), targetLevel.location().toString(), name);
+                    NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EnumI18nType.MESSAGE, "home_not_found_with_name_in_dimension"), targetLevel.identifier().toString(), name);
                 }
                 return 0;
             }
@@ -1030,17 +1033,17 @@ public class FarewellCommand {
             } catch (IllegalArgumentException ignored) {
             }
             Coordinate coordinate = new Coordinate(player);
-            KeyValue<String, String> key = new KeyValue<>(player.level().dimension().location().toString(), name);
+            KeyValue<String, String> key = new KeyValue<>(player.level().dimension().identifier().toString(), name);
             if (data.getHomeCoordinate().containsKey(key)) {
                 NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EnumI18nType.MESSAGE, "home_already_exists"), key.getKey(), key.getValue());
                 return 0;
             }
             data.addHomeCoordinate(key, coordinate);
             if (defaultHome) {
-                if (data.getDefaultHome().containsKey(player.level().dimension().location().toString())) {
-                    NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EnumI18nType.MESSAGE, "home_default_remove"), data.getDefaultHome(player.level().dimension().location().toString()).getValue());
+                if (data.getDefaultHome().containsKey(player.level().dimension().identifier().toString())) {
+                    NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EnumI18nType.MESSAGE, "home_default_remove"), data.getDefaultHome(player.level().dimension().identifier().toString()).getValue());
                 }
-                data.addDefaultHome(player.level().dimension().location().toString(), name);
+                data.addDefaultHome(player.level().dimension().identifier().toString(), name);
                 NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EnumI18nType.MESSAGE, "home_set_default"), name, coordinate.toXyzString());
             } else {
                 NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EnumI18nType.MESSAGE, "home_set"), name, coordinate.toXyzString());
@@ -1056,8 +1059,8 @@ public class FarewellCommand {
             String name = StringArgumentType.getString(context, "name");
             String dimension;
             try {
-                ResourceKey<Level> targetLevel = ResourceKey.create(Registries.DIMENSION, NarcissusFarewell.parseResource(StringArgumentType.getString(context, "dimension")));
-                dimension = targetLevel.location().toString();
+                ResourceKey<@NotNull Level> targetLevel = ResourceKey.create(Registries.DIMENSION, NarcissusFarewell.parseResource(StringArgumentType.getString(context, "dimension")));
+                dimension = targetLevel.identifier().toString();
             } catch (IllegalArgumentException ignored) {
                 dimension = NarcissusUtils.getHomeDimensionByName(player, name);
             }
@@ -1141,17 +1144,17 @@ public class FarewellCommand {
             ServerPlayer player = context.getSource().getPlayerOrException();
             // 传送功能前置校验
             if (checkTeleportPre(context.getSource(), EnumCommandType.TP_STAGE)) return 0;
-            ResourceKey<Level> targetLevel = null;
+            ResourceKey<@NotNull Level> targetLevel = null;
             String name = getStringDefault(context, "name", null);
             try {
-                ResourceKey<Level> targetDimension = ResourceKey.create(Registries.DIMENSION, NarcissusFarewell.parseResource(StringArgumentType.getString(context, "dimension")));
+                ResourceKey<@NotNull Level> targetDimension = ResourceKey.create(Registries.DIMENSION, NarcissusFarewell.parseResource(StringArgumentType.getString(context, "dimension")));
                 ServerLevel level = context.getSource().getServer().getLevel(targetDimension);
                 if (level != null) {
                     targetLevel = targetDimension;
                 }
             } catch (IllegalArgumentException ignored) {
             }
-            String dimension = targetLevel != null ? targetLevel.location().toString() : null;
+            String dimension = targetLevel != null ? targetLevel.identifier().toString() : null;
             if (StringUtils.isNullOrEmptyEx(name)) {
                 KeyValue<String, String> stageKey = NarcissusUtils.findNearestStageKey(player);
                 if (stageKey == null) {
@@ -1168,7 +1171,7 @@ public class FarewellCommand {
                 if (coordinateSize == 1) {
                     coordinate = stageData.getCoordinate(name);
                 } else if (coordinateSize > 1) {
-                    coordinate = stageData.getCoordinate(player.level().dimension().location().toString(), name);
+                    coordinate = stageData.getCoordinate(player.level().dimension().identifier().toString(), name);
                 }
                 if (coordinate == null) {
                     NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EnumI18nType.MESSAGE, "stage_not_found"), name);
@@ -1194,9 +1197,9 @@ public class FarewellCommand {
             if (checkTeleportPre(context.getSource(), EnumCommandType.SET_STAGE)) return 0;
             WorldStageData stageData = WorldStageData.get();
             String name = StringArgumentType.getString(context, "name");
-            ResourceKey<Level> targetLevel;
+            ResourceKey<@NotNull Level> targetLevel;
             try {
-                ResourceKey<Level> targetDimension = ResourceKey.create(Registries.DIMENSION, NarcissusFarewell.parseResource(StringArgumentType.getString(context, "dimension")));
+                ResourceKey<@NotNull Level> targetDimension = ResourceKey.create(Registries.DIMENSION, NarcissusFarewell.parseResource(StringArgumentType.getString(context, "dimension")));
                 ServerLevel level = context.getSource().getServer().getLevel(targetDimension);
                 if (level != null) {
                     targetLevel = targetDimension;
@@ -1206,7 +1209,7 @@ public class FarewellCommand {
             } catch (IllegalArgumentException ignored) {
                 targetLevel = player.level().dimension();
             }
-            String dimension = targetLevel.location().toString();
+            String dimension = targetLevel.identifier().toString();
             KeyValue<String, String> key = new KeyValue<>(dimension, name);
             if (stageData.getStageCoordinate().containsKey(key)) {
                 NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EnumI18nType.MESSAGE, "stage_already_exists"), key.getKey(), key.getValue());
@@ -1229,8 +1232,8 @@ public class FarewellCommand {
             String name = StringArgumentType.getString(context, "name");
             String dimension;
             try {
-                ResourceKey<Level> targetLevel = ResourceKey.create(Registries.DIMENSION, NarcissusFarewell.parseResource(StringArgumentType.getString(context, "dimension")));
-                dimension = targetLevel.location().toString();
+                ResourceKey<@NotNull Level> targetLevel = ResourceKey.create(Registries.DIMENSION, NarcissusFarewell.parseResource(StringArgumentType.getString(context, "dimension")));
+                dimension = targetLevel.identifier().toString();
             } catch (IllegalArgumentException ignored) {
                 dimension = NarcissusUtils.getStageDimensionByName(name);
             }
@@ -1300,9 +1303,9 @@ public class FarewellCommand {
             // 传送功能前置校验
             if (checkTeleportPre(context.getSource(), EnumCommandType.TP_BACK)) return 0;
             EnumTeleportType type = EnumTeleportType.nullableValueOf(getStringEmpty(context, "type"));
-            ResourceKey<Level> targetLevel = null;
+            ResourceKey<@NotNull Level> targetLevel = null;
             try {
-                ResourceKey<Level> targetDimension = ResourceKey.create(Registries.DIMENSION, NarcissusFarewell.parseResource(StringArgumentType.getString(context, "dimension")));
+                ResourceKey<@NotNull Level> targetDimension = ResourceKey.create(Registries.DIMENSION, NarcissusFarewell.parseResource(StringArgumentType.getString(context, "dimension")));
                 ServerLevel level = context.getSource().getServer().getLevel(targetDimension);
                 if (level != null) {
                     targetLevel = targetDimension;
@@ -1603,7 +1606,7 @@ public class FarewellCommand {
         LiteralArgumentBuilder<CommandSourceStack> tpst = // region tpst
                 Commands.literal(CommonConfig.COMMAND_TP_STRUCTURE.get())
                         .requires(source -> NarcissusUtils.hasCommandPermission(source, EnumCommandType.TP_STRUCTURE))
-                        .then(Commands.argument("struct", ResourceLocationArgument.id())
+                        .then(Commands.argument("struct", IdentifierArgument.id())
                                 .suggests(structureSuggestions)
                                 .executes(tpStructureCommand)
                                 .then(Commands.argument("range", IntegerArgumentType.integer(1))
@@ -1983,7 +1986,7 @@ public class FarewellCommand {
                                                     data.getTeleportRecords().stream()
                                                             .filter(record -> type == null || record.getTeleportType().equals(type))
                                                             .filter(Objects::nonNull)
-                                                            .map(record -> record.getBefore().getDimension().location().toString())
+                                                            .map(record -> record.getBefore().getDimension().identifier().toString())
                                                             .filter(StringUtils::isNotNullOrEmpty)
                                                             .forEach(builder::suggest);
                                                     return builder.buildFuture();
@@ -2179,6 +2182,7 @@ public class FarewellCommand {
             if (CommonConfig.REMOVE_ORIGINAL_TP.get()) {
                 for (String fieldName : FieldUtils.getPrivateFieldNames(CommandNode.class, Map.class)) {
                     try {
+                        @SuppressWarnings("unchecked")
                         Map<String, ?> map = (Map<String, ?>) FieldUtils.getPrivateFieldValue(CommandNode.class, dispatcher.getRoot(), fieldName);
                         if (map != null) {
                             map.remove("tp");

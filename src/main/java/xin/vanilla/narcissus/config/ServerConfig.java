@@ -5,6 +5,7 @@ import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraftforge.common.ForgeConfigSpec;
+import org.jetbrains.annotations.NotNull;
 import xin.vanilla.narcissus.enums.EnumCoolDownType;
 import xin.vanilla.narcissus.enums.EnumCostType;
 import xin.vanilla.narcissus.enums.EnumTeleportType;
@@ -633,8 +634,8 @@ public class ServerConfig {
                                                 Blocks.MAGMA_BLOCK,
                                                 Blocks.SWEET_BERRY_BUSH
                                         ).map(block -> {
-                                            Optional<ResourceKey<Block>> key = block.defaultBlockState().getBlockHolder().unwrapKey();
-                                            return key.map(blockResourceKey -> blockResourceKey.location().toString()).orElse("");
+                                            Optional<ResourceKey<@NotNull Block>> key = block.defaultBlockState().getBlockHolder().unwrapKey();
+                                            return key.map(blockResourceKey -> blockResourceKey.identifier().toString()).orElse("");
                                         })
                                         .collect(Collectors.toList())
                                 , s -> s instanceof String
@@ -648,8 +649,8 @@ public class ServerConfig {
                                                 Blocks.LAVA,
                                                 Blocks.WATER
                                         ).map(block -> {
-                                            Optional<ResourceKey<Block>> key = block.defaultBlockState().getBlockHolder().unwrapKey();
-                                            return key.map(blockResourceKey -> blockResourceKey.location().toString()).orElse("");
+                                            Optional<ResourceKey<@NotNull Block>> key = block.defaultBlockState().getBlockHolder().unwrapKey();
+                                            return key.map(blockResourceKey -> blockResourceKey.identifier().toString()).orElse("");
                                         })
                                         .collect(Collectors.toList())
                                 , s -> s instanceof String
@@ -677,8 +678,8 @@ public class ServerConfig {
                                                 Blocks.DIRT,
                                                 Blocks.COBBLESTONE
                                         ).map(block -> {
-                                            Optional<ResourceKey<Block>> key = block.defaultBlockState().getBlockHolder().unwrapKey();
-                                            return key.map(blockResourceKey -> blockResourceKey.location().toString()).orElse("");
+                                            Optional<ResourceKey<@NotNull Block>> key = block.defaultBlockState().getBlockHolder().unwrapKey();
+                                            return key.map(blockResourceKey -> blockResourceKey.identifier().toString()).orElse("");
                                         })
                                         .collect(Collectors.toList())
                                 , s -> s instanceof String
@@ -1756,16 +1757,16 @@ public class ServerConfig {
                         Blocks.MAGMA_BLOCK,
                         Blocks.SWEET_BERRY_BUSH
                 ).map(block -> {
-                    Optional<ResourceKey<Block>> key = block.defaultBlockState().getBlockHolder().unwrapKey();
-                    return key.map(blockResourceKey -> blockResourceKey.location().toString()).orElse("");
+                    Optional<ResourceKey<@NotNull Block>> key = block.defaultBlockState().getBlockHolder().unwrapKey();
+                    return key.map(blockResourceKey -> blockResourceKey.identifier().toString()).orElse("");
                 })
                 .collect(Collectors.toList()));
         SUFFOCATING_BLOCKS.set(Stream.of(
                         Blocks.LAVA,
                         Blocks.WATER
                 ).map(block -> {
-                    Optional<ResourceKey<Block>> key = block.defaultBlockState().getBlockHolder().unwrapKey();
-                    return key.map(blockResourceKey -> blockResourceKey.location().toString()).orElse("");
+                    Optional<ResourceKey<@NotNull Block>> key = block.defaultBlockState().getBlockHolder().unwrapKey();
+                    return key.map(blockResourceKey -> blockResourceKey.identifier().toString()).orElse("");
                 })
                 .collect(Collectors.toList()));
         SETBLOCK_WHEN_SAFE_NOT_FOUND.set(false);
@@ -1776,8 +1777,8 @@ public class ServerConfig {
                         Blocks.DIRT,
                         Blocks.COBBLESTONE
                 ).map(block -> {
-                    Optional<ResourceKey<Block>> key = block.defaultBlockState().getBlockHolder().unwrapKey();
-                    return key.map(blockResourceKey -> blockResourceKey.location().toString()).orElse("");
+                    Optional<ResourceKey<@NotNull Block>> key = block.defaultBlockState().getBlockHolder().unwrapKey();
+                    return key.map(blockResourceKey -> blockResourceKey.identifier().toString()).orElse("");
                 })
                 .collect(Collectors.toList()));
         SAFE_CHUNK_RANGE.set(1);
