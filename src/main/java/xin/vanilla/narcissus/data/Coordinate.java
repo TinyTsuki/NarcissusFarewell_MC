@@ -13,6 +13,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
+import org.jetbrains.annotations.NotNull;
 import xin.vanilla.narcissus.NarcissusFarewell;
 import xin.vanilla.narcissus.config.ServerConfig;
 import xin.vanilla.narcissus.enums.EnumSafeMode;
@@ -28,13 +29,14 @@ import java.util.Random;
 @Accessors(chain = true)
 @AllArgsConstructor
 @NoArgsConstructor
+@SuppressWarnings("resource")
 public class Coordinate implements Serializable, Cloneable {
     private double x = 0;
     private double y = 0;
     private double z = 0;
     private double yaw = 0;
     private double pitch = 0;
-    private ResourceKey<Level> dimension = Level.OVERWORLD;
+    private ResourceKey<@NotNull Level> dimension = Level.OVERWORLD;
     private boolean safe = false;
     private EnumSafeMode safeMode = EnumSafeMode.NONE;
 
@@ -53,7 +55,7 @@ public class Coordinate implements Serializable, Cloneable {
         this.z = z;
     }
 
-    public Coordinate(double x, double y, double z, ResourceKey<Level> dimension) {
+    public Coordinate(double x, double y, double z, ResourceKey<@NotNull Level> dimension) {
         this.x = x;
         this.y = y;
         this.z = z;
@@ -68,7 +70,7 @@ public class Coordinate implements Serializable, Cloneable {
         this.pitch = pitch;
     }
 
-    public Coordinate(double x, double y, double z, double yaw, double pitch, ResourceKey<Level> dimension) {
+    public Coordinate(double x, double y, double z, double yaw, double pitch, ResourceKey<@NotNull Level> dimension) {
         this.x = x;
         this.y = y;
         this.z = z;
@@ -128,7 +130,7 @@ public class Coordinate implements Serializable, Cloneable {
         return random(player, range, player.level().dimension());
     }
 
-    public static Coordinate random(ServerPlayer player, int range, ResourceKey<Level> dimension) {
+    public static Coordinate random(ServerPlayer player, int range, ResourceKey<@NotNull Level> dimension) {
         ServerLevel world = NarcissusUtils.getWorld(dimension);
         range = Math.min(Math.max(range, 1), ServerConfig.TELEPORT_RANDOM_DISTANCE_LIMIT.get());
         double x = player.getX() + (Math.random() * 2 - 1) * range;
@@ -184,7 +186,7 @@ public class Coordinate implements Serializable, Cloneable {
         tag.putDouble("z", z);
         tag.putDouble("yaw", yaw);
         tag.putDouble("pitch", pitch);
-        tag.putString("dimension", dimension.location().toString());
+        tag.putString("dimension", dimension.identifier().toString());
         return tag;
     }
 
@@ -205,7 +207,7 @@ public class Coordinate implements Serializable, Cloneable {
         coordinate.z = tag.getDouble("z").orElse(0D);
         coordinate.yaw = tag.getDouble("yaw").orElse(0D);
         coordinate.pitch = tag.getDouble("pitch").orElse(0D);
-        coordinate.dimension = ResourceKey.create(Registries.DIMENSION, NarcissusFarewell.parseResource(tag.getString("dimension").orElse(Level.OVERWORLD.location().toString())));
+        coordinate.dimension = ResourceKey.create(Registries.DIMENSION, NarcissusFarewell.parseResource(tag.getString("dimension").orElse(Level.OVERWORLD.identifier().toString())));
         return coordinate;
     }
 
@@ -268,6 +270,6 @@ public class Coordinate implements Serializable, Cloneable {
     }
 
     public String getDimensionResourceId() {
-        return dimension.location().toString();
+        return dimension.identifier().toString();
     }
 }

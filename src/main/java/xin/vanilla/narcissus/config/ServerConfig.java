@@ -5,6 +5,7 @@ import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.neoforged.neoforge.common.ModConfigSpec;
+import org.jetbrains.annotations.NotNull;
 import xin.vanilla.narcissus.enums.EnumCoolDownType;
 import xin.vanilla.narcissus.enums.EnumCostType;
 import xin.vanilla.narcissus.enums.EnumTeleportType;
@@ -31,7 +32,7 @@ public class ServerConfig {
     /**
      * back指令默认忽略的传送类型
      */
-    public static final ModConfigSpec.ConfigValue<List<? extends String>> TELEPORT_BACK_SKIP_TYPE;
+    public static final ModConfigSpec.ConfigValue<@NotNull List<? extends String>> TELEPORT_BACK_SKIP_TYPE;
     /**
      * 跨维度传送
      */
@@ -60,7 +61,7 @@ public class ServerConfig {
     /**
      * 传送请求冷却时间计算方式
      */
-    public static final ModConfigSpec.ConfigValue<String> TELEPORT_REQUEST_COOLDOWN_TYPE;
+    public static final ModConfigSpec.ConfigValue<@NotNull String> TELEPORT_REQUEST_COOLDOWN_TYPE;
 
     /**
      * 传送请求冷却时间
@@ -80,12 +81,12 @@ public class ServerConfig {
     /**
      * 不安全的方块
      */
-    public static final ModConfigSpec.ConfigValue<List<? extends String>> UNSAFE_BLOCKS;
+    public static final ModConfigSpec.ConfigValue<@NotNull List<? extends String>> UNSAFE_BLOCKS;
 
     /**
      * 窒息的方块
      */
-    public static final ModConfigSpec.ConfigValue<List<? extends String>> SUFFOCATING_BLOCKS;
+    public static final ModConfigSpec.ConfigValue<@NotNull List<? extends String>> SUFFOCATING_BLOCKS;
 
     /**
      * 当安全传送未找到安全坐标时，是否在脚下放置方块
@@ -100,7 +101,7 @@ public class ServerConfig {
     /**
      * 当安全传送未找到安全坐标时，放置的方块类型
      */
-    public static final ModConfigSpec.ConfigValue<List<? extends String>> SAFE_BLOCKS;
+    public static final ModConfigSpec.ConfigValue<@NotNull List<? extends String>> SAFE_BLOCKS;
 
     /**
      * 寻找安全坐标的区块范围
@@ -110,12 +111,12 @@ public class ServerConfig {
     /**
      * 帮助指令信息头部内容
      */
-    public static final ModConfigSpec.ConfigValue<String> HELP_HEADER;
+    public static final ModConfigSpec.ConfigValue<@NotNull String> HELP_HEADER;
 
     /**
      * 传送音效
      */
-    public static final ModConfigSpec.ConfigValue<String> TP_SOUND;
+    public static final ModConfigSpec.ConfigValue<@NotNull String> TP_SOUND;
 
     /**
      * 是否允许载具一起传送
@@ -140,7 +141,7 @@ public class ServerConfig {
     /**
      * 服务器默认语言
      */
-    public static final ModConfigSpec.ConfigValue<String> DEFAULT_LANGUAGE;
+    public static final ModConfigSpec.ConfigValue<@NotNull String> DEFAULT_LANGUAGE;
 
     /**
      * 被敌对生物锁定时是否限制传送
@@ -336,7 +337,7 @@ public class ServerConfig {
     /**
      * 代价类型
      */
-    public static final ModConfigSpec.ConfigValue<String> COST_TP_COORDINATE_TYPE;
+    public static final ModConfigSpec.ConfigValue<@NotNull String> COST_TP_COORDINATE_TYPE;
     /**
      * 代价数量
      */
@@ -344,7 +345,7 @@ public class ServerConfig {
     /**
      * 代价配置
      */
-    public static final ModConfigSpec.ConfigValue<String> COST_TP_COORDINATE_CONF;
+    public static final ModConfigSpec.ConfigValue<@NotNull String> COST_TP_COORDINATE_CONF;
     /**
      * 代价倍率(以距离为基准)
      */
@@ -360,119 +361,119 @@ public class ServerConfig {
     /**
      * 代价算法表达式
      */
-    public static final ModConfigSpec.ConfigValue<String> COST_TP_COORDINATE_EXP;
+    public static final ModConfigSpec.ConfigValue<@NotNull String> COST_TP_COORDINATE_EXP;
 
-    public static final ModConfigSpec.ConfigValue<String> COST_TP_STRUCTURE_TYPE;
+    public static final ModConfigSpec.ConfigValue<@NotNull String> COST_TP_STRUCTURE_TYPE;
     public static final ModConfigSpec.IntValue COST_TP_STRUCTURE_NUM;
-    public static final ModConfigSpec.ConfigValue<String> COST_TP_STRUCTURE_CONF;
+    public static final ModConfigSpec.ConfigValue<@NotNull String> COST_TP_STRUCTURE_CONF;
     public static final ModConfigSpec.DoubleValue COST_TP_STRUCTURE_RATE;
     public static final ModConfigSpec.IntValue COST_TP_STRUCTURE_NUM_UPPER;
     public static final ModConfigSpec.IntValue COST_TP_STRUCTURE_NUM_LOWER;
-    public static final ModConfigSpec.ConfigValue<String> COST_TP_STRUCTURE_EXP;
+    public static final ModConfigSpec.ConfigValue<@NotNull String> COST_TP_STRUCTURE_EXP;
 
-    public static final ModConfigSpec.ConfigValue<String> COST_TP_ASK_TYPE;
+    public static final ModConfigSpec.ConfigValue<@NotNull String> COST_TP_ASK_TYPE;
     public static final ModConfigSpec.IntValue COST_TP_ASK_NUM;
-    public static final ModConfigSpec.ConfigValue<String> COST_TP_ASK_CONF;
+    public static final ModConfigSpec.ConfigValue<@NotNull String> COST_TP_ASK_CONF;
     public static final ModConfigSpec.DoubleValue COST_TP_ASK_RATE;
     public static final ModConfigSpec.IntValue COST_TP_ASK_NUM_UPPER;
     public static final ModConfigSpec.IntValue COST_TP_ASK_NUM_LOWER;
-    public static final ModConfigSpec.ConfigValue<String> COST_TP_ASK_EXP;
+    public static final ModConfigSpec.ConfigValue<@NotNull String> COST_TP_ASK_EXP;
 
-    public static final ModConfigSpec.ConfigValue<String> COST_TP_HERE_TYPE;
+    public static final ModConfigSpec.ConfigValue<@NotNull String> COST_TP_HERE_TYPE;
     public static final ModConfigSpec.IntValue COST_TP_HERE_NUM;
-    public static final ModConfigSpec.ConfigValue<String> COST_TP_HERE_CONF;
+    public static final ModConfigSpec.ConfigValue<@NotNull String> COST_TP_HERE_CONF;
     public static final ModConfigSpec.DoubleValue COST_TP_HERE_RATE;
     public static final ModConfigSpec.IntValue COST_TP_HERE_NUM_UPPER;
     public static final ModConfigSpec.IntValue COST_TP_HERE_NUM_LOWER;
-    public static final ModConfigSpec.ConfigValue<String> COST_TP_HERE_EXP;
+    public static final ModConfigSpec.ConfigValue<@NotNull String> COST_TP_HERE_EXP;
 
-    public static final ModConfigSpec.ConfigValue<String> COST_TP_RANDOM_TYPE;
+    public static final ModConfigSpec.ConfigValue<@NotNull String> COST_TP_RANDOM_TYPE;
     public static final ModConfigSpec.IntValue COST_TP_RANDOM_NUM;
-    public static final ModConfigSpec.ConfigValue<String> COST_TP_RANDOM_CONF;
+    public static final ModConfigSpec.ConfigValue<@NotNull String> COST_TP_RANDOM_CONF;
     public static final ModConfigSpec.DoubleValue COST_TP_RANDOM_RATE;
     public static final ModConfigSpec.IntValue COST_TP_RANDOM_NUM_UPPER;
     public static final ModConfigSpec.IntValue COST_TP_RANDOM_NUM_LOWER;
-    public static final ModConfigSpec.ConfigValue<String> COST_TP_RANDOM_EXP;
+    public static final ModConfigSpec.ConfigValue<@NotNull String> COST_TP_RANDOM_EXP;
 
-    public static final ModConfigSpec.ConfigValue<String> COST_TP_SPAWN_TYPE;
+    public static final ModConfigSpec.ConfigValue<@NotNull String> COST_TP_SPAWN_TYPE;
     public static final ModConfigSpec.IntValue COST_TP_SPAWN_NUM;
-    public static final ModConfigSpec.ConfigValue<String> COST_TP_SPAWN_CONF;
+    public static final ModConfigSpec.ConfigValue<@NotNull String> COST_TP_SPAWN_CONF;
     public static final ModConfigSpec.DoubleValue COST_TP_SPAWN_RATE;
     public static final ModConfigSpec.IntValue COST_TP_SPAWN_NUM_UPPER;
     public static final ModConfigSpec.IntValue COST_TP_SPAWN_NUM_LOWER;
-    public static final ModConfigSpec.ConfigValue<String> COST_TP_SPAWN_EXP;
+    public static final ModConfigSpec.ConfigValue<@NotNull String> COST_TP_SPAWN_EXP;
 
-    public static final ModConfigSpec.ConfigValue<String> COST_TP_WORLD_SPAWN_TYPE;
+    public static final ModConfigSpec.ConfigValue<@NotNull String> COST_TP_WORLD_SPAWN_TYPE;
     public static final ModConfigSpec.IntValue COST_TP_WORLD_SPAWN_NUM;
-    public static final ModConfigSpec.ConfigValue<String> COST_TP_WORLD_SPAWN_CONF;
+    public static final ModConfigSpec.ConfigValue<@NotNull String> COST_TP_WORLD_SPAWN_CONF;
     public static final ModConfigSpec.DoubleValue COST_TP_WORLD_SPAWN_RATE;
     public static final ModConfigSpec.IntValue COST_TP_WORLD_SPAWN_NUM_UPPER;
     public static final ModConfigSpec.IntValue COST_TP_WORLD_SPAWN_NUM_LOWER;
-    public static final ModConfigSpec.ConfigValue<String> COST_TP_WORLD_SPAWN_EXP;
+    public static final ModConfigSpec.ConfigValue<@NotNull String> COST_TP_WORLD_SPAWN_EXP;
 
-    public static final ModConfigSpec.ConfigValue<String> COST_TP_TOP_TYPE;
+    public static final ModConfigSpec.ConfigValue<@NotNull String> COST_TP_TOP_TYPE;
     public static final ModConfigSpec.IntValue COST_TP_TOP_NUM;
-    public static final ModConfigSpec.ConfigValue<String> COST_TP_TOP_CONF;
+    public static final ModConfigSpec.ConfigValue<@NotNull String> COST_TP_TOP_CONF;
     public static final ModConfigSpec.DoubleValue COST_TP_TOP_RATE;
     public static final ModConfigSpec.IntValue COST_TP_TOP_NUM_UPPER;
     public static final ModConfigSpec.IntValue COST_TP_TOP_NUM_LOWER;
-    public static final ModConfigSpec.ConfigValue<String> COST_TP_TOP_EXP;
+    public static final ModConfigSpec.ConfigValue<@NotNull String> COST_TP_TOP_EXP;
 
-    public static final ModConfigSpec.ConfigValue<String> COST_TP_BOTTOM_TYPE;
+    public static final ModConfigSpec.ConfigValue<@NotNull String> COST_TP_BOTTOM_TYPE;
     public static final ModConfigSpec.IntValue COST_TP_BOTTOM_NUM;
-    public static final ModConfigSpec.ConfigValue<String> COST_TP_BOTTOM_CONF;
+    public static final ModConfigSpec.ConfigValue<@NotNull String> COST_TP_BOTTOM_CONF;
     public static final ModConfigSpec.DoubleValue COST_TP_BOTTOM_RATE;
     public static final ModConfigSpec.IntValue COST_TP_BOTTOM_NUM_UPPER;
     public static final ModConfigSpec.IntValue COST_TP_BOTTOM_NUM_LOWER;
-    public static final ModConfigSpec.ConfigValue<String> COST_TP_BOTTOM_EXP;
+    public static final ModConfigSpec.ConfigValue<@NotNull String> COST_TP_BOTTOM_EXP;
 
-    public static final ModConfigSpec.ConfigValue<String> COST_TP_UP_TYPE;
+    public static final ModConfigSpec.ConfigValue<@NotNull String> COST_TP_UP_TYPE;
     public static final ModConfigSpec.IntValue COST_TP_UP_NUM;
-    public static final ModConfigSpec.ConfigValue<String> COST_TP_UP_CONF;
+    public static final ModConfigSpec.ConfigValue<@NotNull String> COST_TP_UP_CONF;
     public static final ModConfigSpec.DoubleValue COST_TP_UP_RATE;
     public static final ModConfigSpec.IntValue COST_TP_UP_NUM_UPPER;
     public static final ModConfigSpec.IntValue COST_TP_UP_NUM_LOWER;
-    public static final ModConfigSpec.ConfigValue<String> COST_TP_UP_EXP;
+    public static final ModConfigSpec.ConfigValue<@NotNull String> COST_TP_UP_EXP;
 
-    public static final ModConfigSpec.ConfigValue<String> COST_TP_DOWN_TYPE;
+    public static final ModConfigSpec.ConfigValue<@NotNull String> COST_TP_DOWN_TYPE;
     public static final ModConfigSpec.IntValue COST_TP_DOWN_NUM;
-    public static final ModConfigSpec.ConfigValue<String> COST_TP_DOWN_CONF;
+    public static final ModConfigSpec.ConfigValue<@NotNull String> COST_TP_DOWN_CONF;
     public static final ModConfigSpec.DoubleValue COST_TP_DOWN_RATE;
     public static final ModConfigSpec.IntValue COST_TP_DOWN_NUM_UPPER;
     public static final ModConfigSpec.IntValue COST_TP_DOWN_NUM_LOWER;
-    public static final ModConfigSpec.ConfigValue<String> COST_TP_DOWN_EXP;
+    public static final ModConfigSpec.ConfigValue<@NotNull String> COST_TP_DOWN_EXP;
 
-    public static final ModConfigSpec.ConfigValue<String> COST_TP_VIEW_TYPE;
+    public static final ModConfigSpec.ConfigValue<@NotNull String> COST_TP_VIEW_TYPE;
     public static final ModConfigSpec.IntValue COST_TP_VIEW_NUM;
-    public static final ModConfigSpec.ConfigValue<String> COST_TP_VIEW_CONF;
+    public static final ModConfigSpec.ConfigValue<@NotNull String> COST_TP_VIEW_CONF;
     public static final ModConfigSpec.DoubleValue COST_TP_VIEW_RATE;
     public static final ModConfigSpec.IntValue COST_TP_VIEW_NUM_UPPER;
     public static final ModConfigSpec.IntValue COST_TP_VIEW_NUM_LOWER;
-    public static final ModConfigSpec.ConfigValue<String> COST_TP_VIEW_EXP;
+    public static final ModConfigSpec.ConfigValue<@NotNull String> COST_TP_VIEW_EXP;
 
-    public static final ModConfigSpec.ConfigValue<String> COST_TP_HOME_TYPE;
+    public static final ModConfigSpec.ConfigValue<@NotNull String> COST_TP_HOME_TYPE;
     public static final ModConfigSpec.IntValue COST_TP_HOME_NUM;
-    public static final ModConfigSpec.ConfigValue<String> COST_TP_HOME_CONF;
+    public static final ModConfigSpec.ConfigValue<@NotNull String> COST_TP_HOME_CONF;
     public static final ModConfigSpec.DoubleValue COST_TP_HOME_RATE;
     public static final ModConfigSpec.IntValue COST_TP_HOME_NUM_UPPER;
     public static final ModConfigSpec.IntValue COST_TP_HOME_NUM_LOWER;
-    public static final ModConfigSpec.ConfigValue<String> COST_TP_HOME_EXP;
+    public static final ModConfigSpec.ConfigValue<@NotNull String> COST_TP_HOME_EXP;
 
-    public static final ModConfigSpec.ConfigValue<String> COST_TP_STAGE_TYPE;
+    public static final ModConfigSpec.ConfigValue<@NotNull String> COST_TP_STAGE_TYPE;
     public static final ModConfigSpec.IntValue COST_TP_STAGE_NUM;
-    public static final ModConfigSpec.ConfigValue<String> COST_TP_STAGE_CONF;
+    public static final ModConfigSpec.ConfigValue<@NotNull String> COST_TP_STAGE_CONF;
     public static final ModConfigSpec.DoubleValue COST_TP_STAGE_RATE;
     public static final ModConfigSpec.IntValue COST_TP_STAGE_NUM_UPPER;
     public static final ModConfigSpec.IntValue COST_TP_STAGE_NUM_LOWER;
-    public static final ModConfigSpec.ConfigValue<String> COST_TP_STAGE_EXP;
+    public static final ModConfigSpec.ConfigValue<@NotNull String> COST_TP_STAGE_EXP;
 
-    public static final ModConfigSpec.ConfigValue<String> COST_TP_BACK_TYPE;
+    public static final ModConfigSpec.ConfigValue<@NotNull String> COST_TP_BACK_TYPE;
     public static final ModConfigSpec.IntValue COST_TP_BACK_NUM;
-    public static final ModConfigSpec.ConfigValue<String> COST_TP_BACK_CONF;
+    public static final ModConfigSpec.ConfigValue<@NotNull String> COST_TP_BACK_CONF;
     public static final ModConfigSpec.DoubleValue COST_TP_BACK_RATE;
     public static final ModConfigSpec.IntValue COST_TP_BACK_NUM_UPPER;
     public static final ModConfigSpec.IntValue COST_TP_BACK_NUM_LOWER;
-    public static final ModConfigSpec.ConfigValue<String> COST_TP_BACK_EXP;
+    public static final ModConfigSpec.ConfigValue<@NotNull String> COST_TP_BACK_EXP;
 
     // endregion 传送代价
 
@@ -632,8 +633,8 @@ public class ServerConfig {
                                                 Blocks.MAGMA_BLOCK,
                                                 Blocks.SWEET_BERRY_BUSH
                                         ).map(block -> {
-                                            Optional<ResourceKey<Block>> key = block.defaultBlockState().getBlockHolder().unwrapKey();
-                                            return key.map(blockResourceKey -> blockResourceKey.location().toString()).orElse("");
+                                            Optional<ResourceKey<@NotNull Block>> key = block.defaultBlockState().getBlockHolder().unwrapKey();
+                                            return key.map(blockResourceKey -> blockResourceKey.identifier().toString()).orElse("");
                                         })
                                         .collect(Collectors.toList())
                                 , s -> s instanceof String
@@ -647,8 +648,8 @@ public class ServerConfig {
                                                 Blocks.LAVA,
                                                 Blocks.WATER
                                         ).map(block -> {
-                                            Optional<ResourceKey<Block>> key = block.defaultBlockState().getBlockHolder().unwrapKey();
-                                            return key.map(blockResourceKey -> blockResourceKey.location().toString()).orElse("");
+                                            Optional<ResourceKey<@NotNull Block>> key = block.defaultBlockState().getBlockHolder().unwrapKey();
+                                            return key.map(blockResourceKey -> blockResourceKey.identifier().toString()).orElse("");
                                         })
                                         .collect(Collectors.toList())
                                 , s -> s instanceof String
@@ -676,8 +677,8 @@ public class ServerConfig {
                                                 Blocks.DIRT,
                                                 Blocks.COBBLESTONE
                                         ).map(block -> {
-                                            Optional<ResourceKey<Block>> key = block.defaultBlockState().getBlockHolder().unwrapKey();
-                                            return key.map(blockResourceKey -> blockResourceKey.location().toString()).orElse("");
+                                            Optional<ResourceKey<@NotNull Block>> key = block.defaultBlockState().getBlockHolder().unwrapKey();
+                                            return key.map(blockResourceKey -> blockResourceKey.identifier().toString()).orElse("");
                                         })
                                         .collect(Collectors.toList())
                                 , s -> s instanceof String
@@ -1755,16 +1756,16 @@ public class ServerConfig {
                         Blocks.MAGMA_BLOCK,
                         Blocks.SWEET_BERRY_BUSH
                 ).map(block -> {
-                    Optional<ResourceKey<Block>> key = block.defaultBlockState().getBlockHolder().unwrapKey();
-                    return key.map(blockResourceKey -> blockResourceKey.location().toString()).orElse("");
+                    Optional<ResourceKey<@NotNull Block>> key = block.defaultBlockState().getBlockHolder().unwrapKey();
+                    return key.map(blockResourceKey -> blockResourceKey.identifier().toString()).orElse("");
                 })
                 .collect(Collectors.toList()));
         SUFFOCATING_BLOCKS.set(Stream.of(
                         Blocks.LAVA,
                         Blocks.WATER
                 ).map(block -> {
-                    Optional<ResourceKey<Block>> key = block.defaultBlockState().getBlockHolder().unwrapKey();
-                    return key.map(blockResourceKey -> blockResourceKey.location().toString()).orElse("");
+                    Optional<ResourceKey<@NotNull Block>> key = block.defaultBlockState().getBlockHolder().unwrapKey();
+                    return key.map(blockResourceKey -> blockResourceKey.identifier().toString()).orElse("");
                 })
                 .collect(Collectors.toList()));
         SETBLOCK_WHEN_SAFE_NOT_FOUND.set(false);
@@ -1775,8 +1776,8 @@ public class ServerConfig {
                         Blocks.DIRT,
                         Blocks.COBBLESTONE
                 ).map(block -> {
-                    Optional<ResourceKey<Block>> key = block.defaultBlockState().getBlockHolder().unwrapKey();
-                    return key.map(blockResourceKey -> blockResourceKey.location().toString()).orElse("");
+                    Optional<ResourceKey<@NotNull Block>> key = block.defaultBlockState().getBlockHolder().unwrapKey();
+                    return key.map(blockResourceKey -> blockResourceKey.identifier().toString()).orElse("");
                 })
                 .collect(Collectors.toList()));
         SAFE_CHUNK_RANGE.set(1);

@@ -1,6 +1,7 @@
 package xin.vanilla.narcissus.config;
 
 import net.neoforged.neoforge.common.ModConfigSpec;
+import org.jetbrains.annotations.NotNull;
 import xin.vanilla.narcissus.NarcissusFarewell;
 import xin.vanilla.narcissus.enums.EnumCardType;
 
@@ -24,7 +25,7 @@ public class CommonConfig {
     /**
      * 传送卡应用方式
      */
-    public static final ModConfigSpec.ConfigValue<String> TELEPORT_CARD_TYPE;
+    public static final ModConfigSpec.ConfigValue<@NotNull String> TELEPORT_CARD_TYPE;
 
     /**
      * 是否禁用原版TP指令
@@ -143,182 +144,182 @@ public class CommonConfig {
     /**
      * 命令前缀
      */
-    public static final ModConfigSpec.ConfigValue<String> COMMAND_PREFIX;
+    public static final ModConfigSpec.ConfigValue<@NotNull String> COMMAND_PREFIX;
 
     /**
      * 设置语言
      */
-    public static final ModConfigSpec.ConfigValue<String> COMMAND_LANGUAGE;
+    public static final ModConfigSpec.ConfigValue<@NotNull String> COMMAND_LANGUAGE;
 
     /**
      * 获取玩家的UUID
      */
-    public static final ModConfigSpec.ConfigValue<String> COMMAND_UUID;
+    public static final ModConfigSpec.ConfigValue<@NotNull String> COMMAND_UUID;
 
     /**
      * 获取当前世界的维度ID
      */
-    public static final ModConfigSpec.ConfigValue<String> COMMAND_DIMENSION;
+    public static final ModConfigSpec.ConfigValue<@NotNull String> COMMAND_DIMENSION;
 
     /**
      * 获取传送卡数量
      */
-    public static final ModConfigSpec.ConfigValue<String> COMMAND_CARD;
+    public static final ModConfigSpec.ConfigValue<@NotNull String> COMMAND_CARD;
 
     /**
      * 分享坐标
      */
-    public static final ModConfigSpec.ConfigValue<String> COMMAND_SHARE;
+    public static final ModConfigSpec.ConfigValue<@NotNull String> COMMAND_SHARE;
 
     /**
      * 自杀或毒杀(水仙是有毒的可不能吃哦)
      */
-    public static final ModConfigSpec.ConfigValue<String> COMMAND_FEED;
+    public static final ModConfigSpec.ConfigValue<@NotNull String> COMMAND_FEED;
 
     /**
      * 传送到指定坐标
      */
-    public static final ModConfigSpec.ConfigValue<String> COMMAND_TP_COORDINATE;
+    public static final ModConfigSpec.ConfigValue<@NotNull String> COMMAND_TP_COORDINATE;
 
     /**
      * 传送到指定结构
      */
-    public static final ModConfigSpec.ConfigValue<String> COMMAND_TP_STRUCTURE;
+    public static final ModConfigSpec.ConfigValue<@NotNull String> COMMAND_TP_STRUCTURE;
 
     /**
      * 请求传送至玩家
      */
-    public static final ModConfigSpec.ConfigValue<String> COMMAND_TP_ASK;
+    public static final ModConfigSpec.ConfigValue<@NotNull String> COMMAND_TP_ASK;
 
     /**
      * 接受请求传送至玩家
      */
-    public static final ModConfigSpec.ConfigValue<String> COMMAND_TP_ASK_YES;
+    public static final ModConfigSpec.ConfigValue<@NotNull String> COMMAND_TP_ASK_YES;
 
     /**
      * 拒绝请求传送至玩家
      */
-    public static final ModConfigSpec.ConfigValue<String> COMMAND_TP_ASK_NO;
+    public static final ModConfigSpec.ConfigValue<@NotNull String> COMMAND_TP_ASK_NO;
 
     /**
      * 取消传送至玩家的请求
      */
-    public static final ModConfigSpec.ConfigValue<String> COMMAND_TP_ASK_CANCEL;
+    public static final ModConfigSpec.ConfigValue<@NotNull String> COMMAND_TP_ASK_CANCEL;
 
     /**
      * 请求将玩家传送至当前位置
      */
-    public static final ModConfigSpec.ConfigValue<String> COMMAND_TP_HERE;
+    public static final ModConfigSpec.ConfigValue<@NotNull String> COMMAND_TP_HERE;
 
     /**
      * 接受请求将玩家传送至当前位置
      */
-    public static final ModConfigSpec.ConfigValue<String> COMMAND_TP_HERE_YES;
+    public static final ModConfigSpec.ConfigValue<@NotNull String> COMMAND_TP_HERE_YES;
 
     /**
      * 拒绝请求将玩家传送至当前位置
      */
-    public static final ModConfigSpec.ConfigValue<String> COMMAND_TP_HERE_NO;
+    public static final ModConfigSpec.ConfigValue<@NotNull String> COMMAND_TP_HERE_NO;
 
     /**
      * 取消将玩家传送至当前位置的请求
      */
-    public static final ModConfigSpec.ConfigValue<String> COMMAND_TP_HERE_CANCEL;
+    public static final ModConfigSpec.ConfigValue<@NotNull String> COMMAND_TP_HERE_CANCEL;
 
     /**
      * 随机传送
      */
-    public static final ModConfigSpec.ConfigValue<String> COMMAND_TP_RANDOM;
+    public static final ModConfigSpec.ConfigValue<@NotNull String> COMMAND_TP_RANDOM;
 
     /**
      * 传送到玩家重生点
      */
-    public static final ModConfigSpec.ConfigValue<String> COMMAND_TP_SPAWN;
+    public static final ModConfigSpec.ConfigValue<@NotNull String> COMMAND_TP_SPAWN;
 
     /**
      * 传送到世界重生点
      */
-    public static final ModConfigSpec.ConfigValue<String> COMMAND_TP_WORLD_SPAWN;
+    public static final ModConfigSpec.ConfigValue<@NotNull String> COMMAND_TP_WORLD_SPAWN;
 
     /**
      * 传送到顶部
      */
-    public static final ModConfigSpec.ConfigValue<String> COMMAND_TP_TOP;
+    public static final ModConfigSpec.ConfigValue<@NotNull String> COMMAND_TP_TOP;
 
     /**
      * 传送到底部
      */
-    public static final ModConfigSpec.ConfigValue<String> COMMAND_TP_BOTTOM;
+    public static final ModConfigSpec.ConfigValue<@NotNull String> COMMAND_TP_BOTTOM;
 
     /**
      * 传送到上方
      */
-    public static final ModConfigSpec.ConfigValue<String> COMMAND_TP_UP;
+    public static final ModConfigSpec.ConfigValue<@NotNull String> COMMAND_TP_UP;
 
     /**
      * 传送到下方
      */
-    public static final ModConfigSpec.ConfigValue<String> COMMAND_TP_DOWN;
+    public static final ModConfigSpec.ConfigValue<@NotNull String> COMMAND_TP_DOWN;
 
     /**
      * 传送至视线尽头
      */
-    public static final ModConfigSpec.ConfigValue<String> COMMAND_TP_VIEW;
+    public static final ModConfigSpec.ConfigValue<@NotNull String> COMMAND_TP_VIEW;
 
     /**
      * 传送到家
      */
-    public static final ModConfigSpec.ConfigValue<String> COMMAND_TP_HOME;
+    public static final ModConfigSpec.ConfigValue<@NotNull String> COMMAND_TP_HOME;
 
     /**
      * 设置家
      */
-    public static final ModConfigSpec.ConfigValue<String> COMMAND_SET_HOME;
+    public static final ModConfigSpec.ConfigValue<@NotNull String> COMMAND_SET_HOME;
 
     /**
      * 删除家
      */
-    public static final ModConfigSpec.ConfigValue<String> COMMAND_DEL_HOME;
+    public static final ModConfigSpec.ConfigValue<@NotNull String> COMMAND_DEL_HOME;
 
     /**
      * 查询家
      */
-    public static final ModConfigSpec.ConfigValue<String> COMMAND_GET_HOME;
+    public static final ModConfigSpec.ConfigValue<@NotNull String> COMMAND_GET_HOME;
 
     /**
      * 传送到驿站
      */
-    public static final ModConfigSpec.ConfigValue<String> COMMAND_TP_STAGE;
+    public static final ModConfigSpec.ConfigValue<@NotNull String> COMMAND_TP_STAGE;
 
     /**
      * 设置驿站
      */
-    public static final ModConfigSpec.ConfigValue<String> COMMAND_SET_STAGE;
+    public static final ModConfigSpec.ConfigValue<@NotNull String> COMMAND_SET_STAGE;
 
     /**
      * 删除驿站
      */
-    public static final ModConfigSpec.ConfigValue<String> COMMAND_DEL_STAGE;
+    public static final ModConfigSpec.ConfigValue<@NotNull String> COMMAND_DEL_STAGE;
 
     /**
      * 查询驿站
      */
-    public static final ModConfigSpec.ConfigValue<String> COMMAND_GET_STAGE;
+    public static final ModConfigSpec.ConfigValue<@NotNull String> COMMAND_GET_STAGE;
 
     /**
      * 传送到上次传送点
      */
-    public static final ModConfigSpec.ConfigValue<String> COMMAND_TP_BACK;
+    public static final ModConfigSpec.ConfigValue<@NotNull String> COMMAND_TP_BACK;
 
     /**
      * 创造飞行
      */
-    public static final ModConfigSpec.ConfigValue<String> COMMAND_FLY;
+    public static final ModConfigSpec.ConfigValue<@NotNull String> COMMAND_FLY;
 
     /**
      * 设置虚拟权限
      */
-    public static final ModConfigSpec.ConfigValue<String> COMMAND_VIRTUAL_OP;
+    public static final ModConfigSpec.ConfigValue<@NotNull String> COMMAND_VIRTUAL_OP;
 
     // endregion 自定义指令
 
