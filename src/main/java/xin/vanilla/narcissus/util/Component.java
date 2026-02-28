@@ -19,9 +19,8 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-@Accessors(chain = true)
 @NoArgsConstructor
-// TODO 优化掉这玩意
+@Accessors(chain = true, fluent = true)
 public class Component implements Cloneable, Serializable {
 
     // region 属性定义
@@ -60,18 +59,19 @@ public class Component implements Cloneable, Serializable {
     /**
      * 语言代码
      */
+    @Getter
     @Setter
     private String languageCode;
     /**
      * 文本颜色
      */
     @Getter
-    private Integer color = 0xFFFFFFFF;
+    private xin.vanilla.narcissus.data.Color color = xin.vanilla.narcissus.data.Color.white();
     /**
      * 文本背景色
      */
     @Getter
-    private Integer bgColor = 0xFFFFFFFF;
+    private xin.vanilla.narcissus.data.Color bgColor = xin.vanilla.narcissus.data.Color.argb(0x00000000);
     /**
      * 是否有阴影
      */
@@ -128,39 +128,29 @@ public class Component implements Cloneable, Serializable {
         this.i18nType = i18nType;
     }
 
-    /**
-     * 设置文本颜色，若为RGB，则转换为ARGB
-     * 无法判断全透明的情况，全透明直接设置为null
-     *
-     * @param color 颜色
-     */
-    public Component setColor(Integer color) {
-        if (color == null || (color >> 24) != 0) {
-            this.color = color;
-        } else {
-            this.color = color | 0xFF000000;
-        }
+    public Component color(xin.vanilla.narcissus.data.Color color) {
+        this.color = color;
         return this;
     }
 
-    /**
-     * 设置文本颜色，若为RGB，则转换为ARGB
-     * 无法判断全透明的情况，全透明直接设置为null
-     *
-     * @param bgColor 颜色
-     */
-    public Component setBgColor(Integer bgColor) {
-        if (bgColor == null || (bgColor >> 24) != 0) {
-            this.bgColor = bgColor;
-        } else {
-            this.bgColor = bgColor | 0xFF000000;
-        }
+    public Component color(int rgb) {
+        this.color = xin.vanilla.narcissus.data.Color.rgb(rgb);
         return this;
     }
 
-    public Component setLanguageCodeIfEmpty(String languageCode) {
+    public Component bgColor(xin.vanilla.narcissus.data.Color color) {
+        this.bgColor = color;
+        return this;
+    }
+
+    public Component bgColor(int rgb) {
+        this.bgColor = xin.vanilla.narcissus.data.Color.rgb(rgb);
+        return this;
+    }
+
+    public Component languageCodeIfEmpty(String languageCode) {
         if (this.isLanguageCodeEmpty()) {
-            this.setLanguageCode(languageCode);
+            this.languageCode(languageCode);
         }
         return this;
     }
@@ -168,51 +158,68 @@ public class Component implements Cloneable, Serializable {
     // region NonNull Getter
 
     /**
+     * 内容是否为空
+     */
+    public boolean isEmpty() {
+        return StringUtils.isNullOrEmptyEx(this.text())
+                && this.original() == null
+                && this.getChildren().isEmpty()
+                && this.getArgs().isEmpty();
+    }
+
+    /**
      * 获取语言代码
      */
-    public @NonNull String getLanguageCode() {
+    public @NonNull String languageCodeOrDefault(String defaultLanguage) {
+        return this.languageCode == null ? defaultLanguage : this.languageCode;
+    }
+
+    /**
+     * 获取语言代码
+     */
+    public @NonNull String languageCodeOrDefault() {
         return this.languageCode == null ? ServerConfig.DEFAULT_LANGUAGE.get() : this.languageCode;
     }
 
     /**
      * 是否有阴影
      */
-    public boolean isShadow() {
+    public boolean shadow() {
         return this.shadow != null && this.shadow;
     }
 
     /**
      * 是否粗体
      */
-    public boolean isBold() {
+    public boolean bold() {
         return this.bold != null && this.bold;
     }
 
     /**
      * 是否斜体
      */
-    public boolean isItalic() {
+    public boolean italic() {
         return this.italic != null && this.italic;
     }
 
     /**
      * 是否下划线
      */
-    public boolean isUnderlined() {
+    public boolean underlined() {
         return this.underlined != null && this.underlined;
     }
 
     /**
      * 是否中划线
      */
-    public boolean isStrikethrough() {
+    public boolean strikethrough() {
         return this.strikethrough != null && this.strikethrough;
     }
 
     /**
      * 是否混淆
      */
-    public boolean isObfuscated() {
+    public boolean obfuscated() {
         return this.obfuscated != null && this.obfuscated;
     }
 
@@ -225,20 +232,6 @@ public class Component implements Cloneable, Serializable {
      */
     public boolean isLanguageCodeEmpty() {
         return this.languageCode == null;
-    }
-
-    /**
-     * 文本颜色是否为空
-     */
-    public boolean isColorEmpty() {
-        return this.color == null;
-    }
-
-    /**
-     * 文本背景色是否为空
-     */
-    public boolean isBgColorEmpty() {
-        return this.bgColor == null;
     }
 
     /**
@@ -285,12 +278,12 @@ public class Component implements Cloneable, Serializable {
 
     // endregion 样式元素是否为空(用于父组件样式传递)
 
-    private Component setChildren(List<Component> children) {
+    private Component children(List<Component> children) {
         this.children = children;
         return this;
     }
 
-    private Component setArgs(List<Component> args) {
+    private Component args(List<Component> args) {
         this.args = args;
         return this;
     }
@@ -298,28 +291,28 @@ public class Component implements Cloneable, Serializable {
     public Component clone() {
         try {
             Component component = (Component) super.clone();
-            component.setText(this.text)
-                    .setI18nType(this.i18nType)
-                    .setLanguageCode(this.languageCode)
-                    .setColor(this.color)
-                    .setBgColor(this.bgColor)
-                    .setShadow(this.shadow)
-                    .setBold(this.bold)
-                    .setItalic(this.italic)
-                    .setUnderlined(this.underlined)
-                    .setStrikethrough(this.strikethrough)
-                    .setObfuscated(this.obfuscated)
-                    .setClickEvent(this.clickEvent)
-                    .setHoverEvent(this.hoverEvent);
+            component.text(this.text)
+                    .i18nType(this.i18nType)
+                    .languageCode(this.languageCode)
+                    .color(this.color)
+                    .bgColor(this.bgColor)
+                    .shadow(this.shadow)
+                    .bold(this.bold)
+                    .italic(this.italic)
+                    .underlined(this.underlined)
+                    .strikethrough(this.strikethrough)
+                    .obfuscated(this.obfuscated)
+                    .clickEvent(this.clickEvent)
+                    .hoverEvent(this.hoverEvent);
 
             if (CollectionUtils.isNotNullOrEmpty(this.getChildren())) {
                 List<Component> clonedChildren = new ArrayList<>(this.getChildren().size());
                 for (Component child : this.getChildren()) {
                     clonedChildren.add(child != null ? child.clone() : null);
                 }
-                component.setChildren(clonedChildren);
+                component.children(clonedChildren);
             } else {
-                component.setChildren(null);
+                component.children(null);
             }
 
             if (CollectionUtils.isNotNullOrEmpty(this.getArgs())) {
@@ -327,9 +320,9 @@ public class Component implements Cloneable, Serializable {
                 for (Component arg : this.getArgs()) {
                     clonedArgs.add(arg != null ? arg.clone() : null);
                 }
-                component.setArgs(clonedArgs);
+                component.args(clonedArgs);
             } else {
-                component.setArgs(null);
+                component.args(null);
             }
 
             return component;
@@ -355,10 +348,10 @@ public class Component implements Cloneable, Serializable {
     }
 
     public Component appendArg(Object... objs) {
-        return this.appendArg(this.getArgs().size(), objs);
+        return this.appendArgIndex(this.getArgs().size(), objs);
     }
 
-    public Component appendArg(int index, Object... objs) {
+    public Component appendArgIndex(int index, Object... objs) {
         for (int i = 0; i < objs.length; i++) {
             Object obj = objs[i];
             if (obj instanceof Component) {
@@ -403,31 +396,31 @@ public class Component implements Cloneable, Serializable {
      */
     public Component withStyle(Component component) {
         if (this.isLanguageCodeEmpty() && !component.isLanguageCodeEmpty()) {
-            this.setLanguageCode(component.getLanguageCode());
+            this.languageCode(component.languageCode());
         }
-        if ((this.isColorEmpty() || this.getColor() == 0xFFFFFFFF) && !component.isColorEmpty()) {
-            this.setColor(component.getColor());
+        if ((this.color().isEmpty()) && !component.color().isEmpty()) {
+            this.color(component.color());
         }
-        if ((this.isBgColorEmpty() || this.getBgColor() == 0xFFFFFFFF) && !component.isBgColorEmpty()) {
-            this.setBgColor(component.getBgColor());
+        if ((this.bgColor().isEmpty()) && !component.bgColor().isEmpty()) {
+            this.bgColor(component.bgColor());
         }
         if (this.isShadowEmpty() && !component.isShadowEmpty()) {
-            this.setShadow(component.isShadow());
+            this.shadow(component.shadow());
         }
         if (this.isBoldEmpty() && !component.isBoldEmpty()) {
-            this.setBold(component.isBold());
+            this.bold(component.bold());
         }
         if (this.isItalicEmpty() && !component.isItalicEmpty()) {
-            this.setItalic(component.isItalic());
+            this.italic(component.italic());
         }
         if (this.isUnderlinedEmpty() && !component.isUnderlinedEmpty()) {
-            this.setUnderlined(component.isUnderlined());
+            this.underlined(component.underlined());
         }
         if (this.isStrikethroughEmpty() && !component.isStrikethroughEmpty()) {
-            this.setStrikethrough(component.isStrikethrough());
+            this.strikethrough(component.strikethrough());
         }
         if (this.isObfuscatedEmpty() && !component.isObfuscatedEmpty()) {
-            this.setObfuscated(component.isObfuscated());
+            this.obfuscated(component.obfuscated());
         }
         if (this.clickEvent == null && component.clickEvent != null) {
             this.clickEvent = component.clickEvent;
@@ -440,13 +433,13 @@ public class Component implements Cloneable, Serializable {
 
     public Style getStyle() {
         Style style = Style.EMPTY;
-        if (!isColorEmpty() && getColor() != 0xFFFFFFFF)
-            style = style.withColor(TextColor.fromRgb(getColor()));
-        style = style.withUnderlined(this.isUnderlined())
-                .withStrikethrough(this.isStrikethrough())
-                .withObfuscated(this.isObfuscated())
-                .withBold(this.isBold())
-                .withItalic(this.isItalic())
+        if (!this.color().isEmpty() && this.color().rgb() != 0xFFFFFF)
+            style = style.withColor(TextColor.fromRgb(color().rgb()));
+        style = style.withUnderlined(this.underlined())
+                .withStrikethrough(this.strikethrough())
+                .withObfuscated(this.obfuscated())
+                .withBold(this.bold())
+                .withItalic(this.italic())
                 .withClickEvent(this.clickEvent)
                 .withHoverEvent(this.hoverEvent);
         return style;
@@ -456,7 +449,7 @@ public class Component implements Cloneable, Serializable {
      * 获取文本
      */
     public String toString() {
-        return this.getString(this.getLanguageCode(), false, true);
+        return this.getString(this.languageCodeOrDefault(), false, true);
     }
 
     /**
@@ -465,7 +458,7 @@ public class Component implements Cloneable, Serializable {
      * @param igStyle 是否忽略样式
      */
     public String toString(boolean igStyle) {
-        return this.getString(this.getLanguageCode(), igStyle, true);
+        return this.getString(this.languageCodeOrDefault(), igStyle, true);
     }
 
     /**
@@ -486,32 +479,32 @@ public class Component implements Cloneable, Serializable {
      */
     public String getString(String languageCode, boolean igStyle, boolean igColor) {
         StringBuilder result = new StringBuilder();
-        String colorStr = isColorEmpty() ? "§f" : StringUtils.argbToMinecraftColorString(getColor());
+        String colorStr = this.color().isEmpty() ? "§f" : ColorUtils.argbToMinecraftColorString(color().rgb());
         igColor = igColor && colorStr.equalsIgnoreCase("§f");
-        // 如果颜色值为null则说明为透明，则不显示内容，所以返回空文本
-        if (!this.isColorEmpty()) {
+        // 如果颜色值为透明，则不显示内容，所以返回空文本
+        if (!this.color().isEmpty()) {
             if (!igStyle) {
                 if (!igColor) {
                     result.append(colorStr);
                 }
                 // 添加样式：粗体
-                if (isBold()) {
+                if (bold()) {
                     result.append("§l");
                 }
                 // 添加样式：斜体
-                if (isItalic()) {
+                if (italic()) {
                     result.append("§o");
                 }
                 // 添加样式：下划线
-                if (isUnderlined()) {
+                if (underlined()) {
                     result.append("§n");
                 }
                 // 添加样式：中划线
-                if (isStrikethrough()) {
+                if (strikethrough()) {
                     result.append("§m");
                 }
                 // 添加样式：混淆
-                if (isObfuscated()) {
+                if (obfuscated()) {
                     result.append("§k");
                 }
             }
@@ -520,7 +513,8 @@ public class Component implements Cloneable, Serializable {
             } else if (i18nType == EnumI18nType.ORIGINAL) {
                 result.append(((net.minecraft.network.chat.Component) this.original).getString());
             } else {
-                result.append(I18nUtils.getTranslation(I18nUtils.getKey(this.i18nType, this.text), languageCode));
+                String fullKey = I18nUtils.getKey(this.i18nType, this.text);
+                result.append(I18nUtils.getTranslation(fullKey, this.languageCodeOrDefault(languageCode)));
             }
         }
         boolean finalIgColor = igColor;
@@ -532,7 +526,7 @@ public class Component implements Cloneable, Serializable {
      * 获取文本组件
      */
     public net.minecraft.network.chat.Component toTextComponent() {
-        return this.toTextComponent(this.getLanguageCode());
+        return this.toTextComponent(this.languageCodeOrDefault());
     }
 
     /**
@@ -546,9 +540,9 @@ public class Component implements Cloneable, Serializable {
             components.add((MutableComponent) this.original);
         } else {
             // 如果颜色值为null则说明为透明，则不显示内容，所以返回空文本组件
-            if (!this.isColorEmpty()) {
+            if (!this.color().isEmpty()) {
                 if (this.i18nType != EnumI18nType.PLAIN) {
-                    String text = I18nUtils.getTranslation(I18nUtils.getKey(this.i18nType, this.text), languageCode);
+                    String text = I18nUtils.getTranslation(this.i18nType, this.text, this.languageCodeOrDefault(languageCode));
                     String[] split = text.split(StringUtils.FORMAT_REGEX, -1);
                     for (String s : split) {
                         components.add(new TextComponent(s).withStyle(this.getStyle()));
@@ -558,7 +552,7 @@ public class Component implements Cloneable, Serializable {
                     int i = 0;
                     while (matcher.find()) {
                         String placeholder = matcher.group();
-                        int index = placeholder.contains("$") ? StringUtils.toInt(placeholder.split("\\$")[0].substring(1)) - 1 : -1;
+                        int index = placeholder.contains("$") ? NumberUtils.toInt(placeholder.split("\\$")[0].substring(1)) - 1 : -1;
                         if (index == -1) {
                             index = i;
                         }
@@ -568,10 +562,10 @@ public class Component implements Cloneable, Serializable {
                                 formattedArg = new Component();
                             } else {
                                 Component argComponent = this.getArgs().get(index);
-                                if (argComponent.getI18nType() != EnumI18nType.PLAIN) {
+                                if (argComponent.i18nType() != EnumI18nType.PLAIN) {
                                     // 语言代码传递
                                     if (argComponent.isLanguageCodeEmpty()) {
-                                        argComponent.setLanguageCode(languageCode);
+                                        argComponent.languageCode(languageCode);
                                     }
                                     try {
                                         // 颜色代码传递
@@ -579,15 +573,15 @@ public class Component implements Cloneable, Serializable {
                                         formattedArg = new Component(String.format(placeholder.replaceAll("^%\\d+\\$", "%"), colorCode + argComponent)).withStyle(argComponent);
                                     } catch (Exception e) {
                                         // 颜色传递
-                                        if (argComponent.isColorEmpty()) {
-                                            argComponent.setColor(this.color);
+                                        if (argComponent.color().isEmpty()) {
+                                            argComponent.color(this.color);
                                         }
                                         formattedArg = argComponent;
                                     }
                                 } else {
                                     // 颜色传递
-                                    if (argComponent.isColorEmpty()) {
-                                        argComponent.setColor(this.color);
+                                    if (argComponent.color().isEmpty()) {
+                                        argComponent.color(this.color);
                                     }
                                     formattedArg = argComponent;
                                 }
@@ -599,7 +593,7 @@ public class Component implements Cloneable, Serializable {
                         i++;
                     }
                 } else {
-                    this.args.forEach(arg -> arg.setLanguageCodeIfEmpty(languageCode));
+                    this.args.forEach(arg -> arg.languageCodeIfEmpty(languageCode));
                     components.add(new TextComponent(StringUtils.format(this.text, this.args.toArray())).withStyle(this.getStyle()));
                 }
             }
@@ -620,7 +614,7 @@ public class Component implements Cloneable, Serializable {
      */
     public net.minecraft.network.chat.Component toTranslatedTextComponent() {
         MutableComponent result = new TranslatableComponent("");
-        if (!this.isColorEmpty() || !this.isBgColorEmpty()) {
+        if (!this.color().isEmpty() || !this.bgColor().isEmpty()) {
             if (this.i18nType != EnumI18nType.PLAIN) {
                 Object[] objects = this.getArgs().stream().map(component -> {
                     if (component.i18nType == EnumI18nType.PLAIN) {
@@ -629,10 +623,11 @@ public class Component implements Cloneable, Serializable {
                         return component.toTranslatedTextComponent();
                     }
                 }).toArray();
+                String fullKey = I18nUtils.getKey(this.i18nType, this.text);
                 if (CollectionUtils.isNotNullOrEmpty(objects)) {
-                    result = new TranslatableComponent(I18nUtils.getKey(this.i18nType, this.text), objects);
+                    result = new TranslatableComponent(fullKey, objects);
                 } else {
-                    result = new TranslatableComponent(I18nUtils.getKey(this.i18nType, this.text));
+                    result = new TranslatableComponent(fullKey);
                 }
             } else {
                 result = new TextComponent(this.text).withStyle(this.getStyle());
@@ -650,7 +645,7 @@ public class Component implements Cloneable, Serializable {
      * @return 格式化颜色后的文本组件
      */
     public net.minecraft.network.chat.Component toChatComponent() {
-        return this.toChatComponent(this.getLanguageCode());
+        return this.toChatComponent(this.languageCodeOrDefault());
     }
 
     /**
@@ -662,12 +657,11 @@ public class Component implements Cloneable, Serializable {
         return rewriteColor(this.toTextComponent(languageCode));
     }
 
-    // 😵‍💫
     public static net.minecraft.network.chat.Component rewriteColor(net.minecraft.network.chat.Component component) {
         if (component instanceof MutableComponent) {
             TextColor color = component.getStyle().getColor();
             if (color != null && color.serialize().startsWith("#")) {
-                Style style = component.getStyle().withColor(TextColor.parseColor(StringUtils.argbToMinecraftColor(StringUtils.argbToHex(color.serialize())).name().toLowerCase()));
+                Style style = component.getStyle().withColor(TextColor.parseColor(ColorUtils.argbToMinecraftColor(ColorUtils.parseArgb(color.serialize())).name().toLowerCase()));
                 ((MutableComponent) component).setStyle(style);
             }
         }
@@ -687,8 +681,8 @@ public class Component implements Cloneable, Serializable {
     /**
      * 获取原始组件
      */
-    public static Component original(Object original) {
-        return empty().setOriginal(original).setI18nType(EnumI18nType.ORIGINAL);
+    public static Component object(Object original) {
+        return empty().original(original).i18nType(EnumI18nType.ORIGINAL);
     }
 
     /**
@@ -697,7 +691,7 @@ public class Component implements Cloneable, Serializable {
      * @param text 文本
      */
     public static Component literal(String text) {
-        return new Component().setText(text);
+        return new Component().text(text);
     }
 
     /**
@@ -706,29 +700,50 @@ public class Component implements Cloneable, Serializable {
      * @param key  翻译键
      * @param args 参数
      */
-    public static Component translatable(String key, Object... args) {
+    public static Component trans(String key, Object... args) {
         return new Component(key, EnumI18nType.NONE).appendArg(args);
     }
 
     /**
      * 获取翻译文本组件
      *
-     * @param type 翻译类型
-     * @param key  翻译键
-     * @param args 参数
+     * @param key 翻译键
      */
-    public static Component translatable(EnumI18nType type, String key, Object... args) {
+    public static Component trans(String key) {
+        return new Component(key, EnumI18nType.NONE);
+    }
+
+    /**
+     * 获取翻译文本组件
+     */
+    public static Component trans(EnumI18nType type, String key, Object... args) {
         return new Component(key, type).appendArg(args);
     }
 
     /**
      * 获取翻译文本组件
+     */
+    public static Component trans(String languageCode, EnumI18nType type, String key, Object... args) {
+        return new Component(key, type).languageCode(languageCode).appendArg(args);
+    }
+
+    /**
+     * 获取翻译文本组件
      *
      * @param key  翻译键
      * @param args 参数
      */
-    public static Component translatableClient(String key, Object... args) {
-        return new Component(key, EnumI18nType.NONE).setLanguageCode(NarcissusUtils.getClientLanguage()).appendArg(args);
+    public static Component transClient(String key, Object... args) {
+        return new Component(key, EnumI18nType.NONE).languageCode(I18nUtils.getClientLanguage()).appendArg(args);
+    }
+
+    /**
+     * 获取翻译文本组件
+     *
+     * @param key 翻译键
+     */
+    public static Component transClient(String key) {
+        return new Component(key, EnumI18nType.NONE).languageCode(I18nUtils.getClientLanguage());
     }
 
     /**
@@ -738,20 +753,8 @@ public class Component implements Cloneable, Serializable {
      * @param key  翻译键
      * @param args 参数
      */
-    public static Component translatableClient(EnumI18nType type, String key, Object... args) {
-        return new Component(key, type).setLanguageCode(NarcissusUtils.getClientLanguage()).appendArg(args);
-    }
-
-    /**
-     * 获取翻译文本组件
-     *
-     * @param languageCode 语言代码
-     * @param type         翻译类型
-     * @param key          翻译键
-     * @param args         参数
-     */
-    public static Component translatable(String languageCode, EnumI18nType type, String key, Object... args) {
-        return new Component(key, type).setLanguageCode(languageCode).appendArg(args);
+    public static Component transClient(EnumI18nType type, String key, Object... args) {
+        return new Component(key, type).languageCode(I18nUtils.getClientLanguage()).appendArg(args);
     }
 
     /**
@@ -762,69 +765,94 @@ public class Component implements Cloneable, Serializable {
      * @param key    翻译键
      * @param args   参数
      */
-    public static Component translatable(ServerPlayer player, EnumI18nType type, String key, Object... args) {
-        return new Component(key, type).setLanguageCode(NarcissusUtils.getPlayerLanguage(player)).appendArg(args);
+    public static Component trans(ServerPlayer player, EnumI18nType type, String key, Object... args) {
+        return new Component(key, type).languageCode(I18nUtils.getPlayerLanguage(player)).appendArg(args);
     }
 
     public static Component deserialize(JsonObject jsonObject) {
         Component result = new Component();
-        result.setText(jsonObject.get("text").getAsString());
-        result.setI18nType(EnumI18nType.valueOf(jsonObject.get("i18nType").getAsString()));
-        result.setLanguageCode(jsonObject.get("languageCode").getAsString());
-        result.setColor(jsonObject.get("color").getAsInt());
-        result.setBgColor(jsonObject.get("bgColor").getAsInt());
-        result.setShadow(jsonObject.get("shadow").getAsBoolean());
-        result.setBold(jsonObject.get("bold").getAsBoolean());
-        result.setItalic(jsonObject.get("italic").getAsBoolean());
-        result.setUnderlined(jsonObject.get("underlined").getAsBoolean());
-        result.setStrikethrough(jsonObject.get("strikethrough").getAsBoolean());
-        result.setObfuscated(jsonObject.get("obfuscated").getAsBoolean());
-        if (jsonObject.has("clickEvent.action") && jsonObject.has("clickEvent.value")) {
-            result.setClickEvent(new ClickEvent(ClickEvent.Action.valueOf(jsonObject.get("clickEvent.action").getAsString()), jsonObject.get("clickEvent.value").getAsString()));
+        result.text(JsonUtils.getString(jsonObject, "text"));
+        result.i18nType(EnumI18nType.valueOf(JsonUtils.getString(jsonObject, "i18nType")));
+        result.languageCode(JsonUtils.getString(jsonObject, "languageCode", null));
+        result.color(xin.vanilla.narcissus.data.Color.argb(JsonUtils.getInt(jsonObject, "color", 0)));
+        result.bgColor(xin.vanilla.narcissus.data.Color.argb(JsonUtils.getInt(jsonObject, "bgColor", 0)));
+        result.shadow(JsonUtils.getBoolean(jsonObject, "shadow", false));
+        result.bold(JsonUtils.getBoolean(jsonObject, "bold", false));
+        result.italic(JsonUtils.getBoolean(jsonObject, "italic", false));
+        result.underlined(JsonUtils.getBoolean(jsonObject, "underlined", false));
+        result.strikethrough(JsonUtils.getBoolean(jsonObject, "strikethrough", false));
+        result.obfuscated(JsonUtils.getBoolean(jsonObject, "obfuscated", false));
+        String clickAction = JsonUtils.getString(jsonObject, "clickEvent.action", "");
+        String clickValue = JsonUtils.getString(jsonObject, "clickEvent.value", "");
+        if (StringUtils.isNotNullOrEmpty(clickAction) && StringUtils.isNotNullOrEmpty(clickValue)) {
+            result.clickEvent(new ClickEvent(ClickEvent.Action.valueOf(clickAction), clickValue));
         }
-        if (jsonObject.has("hoverEvent")) {
-            result.setHoverEvent(HoverEvent.deserialize(jsonObject.get("hoverEvent").getAsJsonObject()));
+        JsonObject hover = JsonUtils.getJsonObject(jsonObject, "hoverEvent", null);
+        if (hover != null) {
+            result.hoverEvent(HoverEvent.deserialize(hover));
         }
-        for (JsonElement childJson : jsonObject.getAsJsonArray("children")) {
+        for (JsonElement childJson : JsonUtils.getJsonArray(jsonObject, "children", new JsonArray())) {
             result.getChildren().add(deserialize((JsonObject) childJson));
         }
-        for (JsonElement argJson : jsonObject.getAsJsonArray("args")) {
+        for (JsonElement argJson : JsonUtils.getJsonArray(jsonObject, "args", new JsonArray())) {
             result.getArgs().add(deserialize((JsonObject) argJson));
         }
         return result;
     }
 
-    public static JsonObject serialize(Component reward) {
+    public static JsonObject serialize(Component component) {
         JsonObject result = new JsonObject();
-        result.addProperty("text", reward.getText());
-        result.addProperty("i18nType", reward.getI18nType().name());
-        result.addProperty("languageCode", reward.getLanguageCode());
-        result.addProperty("color", reward.getColor());
-        result.addProperty("bgColor", reward.getBgColor());
-        result.addProperty("shadow", reward.isShadow());
-        result.addProperty("bold", reward.isBold());
-        result.addProperty("italic", reward.isItalic());
-        result.addProperty("underlined", reward.isUnderlined());
-        result.addProperty("strikethrough", reward.isStrikethrough());
-        result.addProperty("obfuscated", reward.isObfuscated());
-        if (reward.getClickEvent() != null) {
-            result.addProperty("clickEvent.action", reward.getClickEvent().getAction().getName());
-            result.addProperty("clickEvent.value", reward.getClickEvent().getValue());
+        JsonUtils.set(result, "text", component.text());
+        JsonUtils.set(result, "i18nType", component.i18nType().name());
+        if (!component.isLanguageCodeEmpty()) {
+            JsonUtils.set(result, "languageCode", component.languageCode());
         }
-        if (reward.getHoverEvent() != null) {
-            result.add("hoverEvent", reward.getHoverEvent().serialize());
+        if (!component.color().isEmpty()) {
+            JsonUtils.set(result, "color", component.color().argb());
+        }
+        if (!component.bgColor().isEmpty()) {
+            JsonUtils.set(result, "bgColor", component.bgColor().argb());
+        }
+        if (component.shadow()) {
+            JsonUtils.set(result, "shadow", component.shadow());
+        }
+        if (component.bold()) {
+            JsonUtils.set(result, "bold", component.bold());
+        }
+        if (component.italic()) {
+            JsonUtils.set(result, "italic", component.italic());
+        }
+        if (component.underlined()) {
+            JsonUtils.set(result, "underlined", component.underlined());
+        }
+        if (component.strikethrough()) {
+            JsonUtils.set(result, "strikethrough", component.strikethrough());
+        }
+        if (component.obfuscated()) {
+            JsonUtils.set(result, "obfuscated", component.obfuscated());
+        }
+        if (component.clickEvent() != null) {
+            JsonUtils.set(result, "clickEvent.action", component.clickEvent().getAction().getName());
+            JsonUtils.set(result, "clickEvent.value", component.clickEvent().getValue());
+        }
+        if (component.hoverEvent() != null) {
+            JsonUtils.set(result, "hoverEvent", component.hoverEvent().serialize());
         }
         JsonArray children = new JsonArray();
-        for (Component child : reward.getChildren()) {
+        for (Component child : component.getChildren()) {
             children.add(serialize(child));
         }
-        result.add("children", children);
+        JsonUtils.set(result, "children", children);
         JsonArray args = new JsonArray();
-        for (Component arg : reward.getArgs()) {
+        for (Component arg : component.getArgs()) {
             args.add(serialize(arg));
         }
-        result.add("args", args);
+        JsonUtils.set(result, "args", args);
         return result;
+    }
+
+    public JsonObject toJson() {
+        return serialize(this);
     }
 
 }

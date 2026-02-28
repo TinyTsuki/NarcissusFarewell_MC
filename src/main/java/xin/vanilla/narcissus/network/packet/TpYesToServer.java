@@ -14,18 +14,18 @@ import xin.vanilla.narcissus.util.NarcissusUtils;
 import java.util.Comparator;
 import java.util.function.Supplier;
 
-public class TpYesNotice {
+public class TpYesToServer {
 
-    public TpYesNotice() {
+    public TpYesToServer() {
     }
 
-    public TpYesNotice(FriendlyByteBuf buf) {
+    public TpYesToServer(FriendlyByteBuf buf) {
     }
 
     public void toBytes(FriendlyByteBuf buf) {
     }
 
-    public static void handle(TpYesNotice packet, Supplier<NetworkEvent.Context> ctx) {
+    public static void handle(TpYesToServer packet, Supplier<NetworkEvent.Context> ctx) {
         ctx.get().enqueueWork(() -> {
             ServerPlayer player = ctx.get().getSender();
             if (player != null) {
@@ -39,7 +39,7 @@ public class TpYesNotice {
                     EnumCommandType type = EnumTeleportType.TP_HERE == teleportType ? EnumCommandType.TP_HERE_YES : EnumCommandType.TP_ASK_YES;
                     NarcissusUtils.executeCommand(player, NarcissusUtils.getCommand(type));
                 } else {
-                    NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EnumI18nType.MESSAGE, "tp_ask_not_found"));
+                    NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EnumI18nType.FORMAT, "tp_ask_not_found"));
                 }
             }
         });
