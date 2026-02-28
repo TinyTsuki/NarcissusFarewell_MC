@@ -4,7 +4,7 @@ import lombok.Data;
 import lombok.experimental.Accessors;
 
 @Data
-@Accessors(chain = true)
+@Accessors(chain = true, fluent = true)
 public class KeyValue<K, V> {
     private K key;
     private V value;
@@ -12,5 +12,17 @@ public class KeyValue<K, V> {
     public KeyValue(K key, V value) {
         this.key = key;
         this.value = value;
+    }
+
+    public V val() {
+        return value;
+    }
+
+    public K left() {
+        return key;
+    }
+
+    public V right() {
+        return value;
     }
 }

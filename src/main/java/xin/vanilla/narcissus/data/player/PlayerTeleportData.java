@@ -11,7 +11,7 @@ import xin.vanilla.narcissus.data.KeyValue;
 import xin.vanilla.narcissus.data.PlayerAccess;
 import xin.vanilla.narcissus.data.TeleportRecord;
 import xin.vanilla.narcissus.enums.EnumTeleportType;
-import xin.vanilla.narcissus.network.packet.PlayerDataSyncPacket;
+import xin.vanilla.narcissus.network.packet.PlayerDataSyncToClient;
 import xin.vanilla.narcissus.util.CollectionUtils;
 import xin.vanilla.narcissus.util.DateUtils;
 import xin.vanilla.narcissus.util.NarcissusUtils;
@@ -74,8 +74,8 @@ public final class PlayerTeleportData implements IPlayerData<PlayerTeleportData>
 
         buffer.writeInt(this.getHomeCoordinate().size());
         for (Map.Entry<KeyValue<String, String>, Coordinate> entry : this.getHomeCoordinate().entrySet()) {
-            buffer.writeUtf(entry.getKey().getKey());
-            buffer.writeUtf(entry.getKey().getValue());
+            buffer.writeUtf(entry.getKey().key());
+            buffer.writeUtf(entry.getKey().value());
             buffer.writeNbt(entry.getValue().writeToNBT());
         }
 
@@ -100,7 +100,7 @@ public final class PlayerTeleportData implements IPlayerData<PlayerTeleportData>
             this.teleportRecords.add(TeleportRecord.readFromNBT(Objects.requireNonNull(buffer.readNbt())));
         }
 
-        this.homeCoordinate = new HashMap<>();
+        this.homeCoordinate = new LinkedHashMap<>();
         for (int i = 0; i < buffer.readInt(); i++) {
             this.homeCoordinate.put(new KeyValue<>(buffer.readUtf(), buffer.readUtf()), Coordinate.readFromNBT(Objects.requireNonNull(buffer.readNbt())));
         }
@@ -134,8 +134,8 @@ public final class PlayerTeleportData implements IPlayerData<PlayerTeleportData>
         ListTag homeCoordinateNBT = new ListTag();
         for (Map.Entry<KeyValue<String, String>, Coordinate> entry : this.getHomeCoordinate().entrySet()) {
             CompoundTag homeCoordinateTag = new CompoundTag();
-            homeCoordinateTag.putString("key", entry.getKey().getKey());
-            homeCoordinateTag.putString("value", entry.getKey().getValue());
+            homeCoordinateTag.putString("key", entry.getKey().key());
+            homeCoordinateTag.putString("value", entry.getKey().value());
             homeCoordinateTag.put("coordinate", entry.getValue().writeToNBT());
             homeCoordinateNBT.add(homeCoordinateTag);
         }
@@ -173,7 +173,7 @@ public final class PlayerTeleportData implements IPlayerData<PlayerTeleportData>
 
         // 反序列化家坐标
         ListTag homeCoordinateNBT = nbt.getList("homeCoordinate").orElse(new ListTag());
-        Map<KeyValue<String, String>, Coordinate> homeCoordinateMap = new HashMap<>();
+        Map<KeyValue<String, String>, Coordinate> homeCoordinateMap = new LinkedHashMap<>();
         for (int i = 0; i < homeCoordinateNBT.size(); i++) {
             CompoundTag homeCoordinateTag = homeCoordinateNBT.getCompound(i).orElse(new CompoundTag());
             homeCoordinateMap.put(new KeyValue<>(homeCoordinateTag.getString("key").orElse(""), homeCoordinateTag.getString("value").orElse("")),
@@ -319,7 +319,7 @@ public final class PlayerTeleportData implements IPlayerData<PlayerTeleportData>
 
     public Map<KeyValue<String, String>, Coordinate> getHomeCoordinate() {
         if (this.isDirty()) this.saveEx();
-        return this.homeCoordinate = this.homeCoordinate == null ? new HashMap<>() : this.homeCoordinate;
+        return this.homeCoordinate = this.homeCoordinate == null ? new LinkedHashMap<>() : this.homeCoordinate;
     }
 
     public void setHomeCoordinate(Map<KeyValue<String, String>, Coordinate> homeCoordinate) {
@@ -370,8 +370,8 @@ public final class PlayerTeleportData implements IPlayerData<PlayerTeleportData>
      */
     public static void syncPlayerData(ServerPlayer player) {
         // 创建自定义包并发送到客户端
-        PlayerDataSyncPacket packet = new PlayerDataSyncPacket(player.getUUID(), getData(player));
-        for (PlayerDataSyncPacket syncPacket : packet.split()) {
+        PlayerDataSyncToClient packet = new PlayerDataSyncToClient(player.getUUID(), getData(player));
+        for (PlayerDataSyncToClient syncPacket : packet.split()) {
             NarcissusUtils.sendPacketToPlayer(syncPacket, player);
         }
     }
