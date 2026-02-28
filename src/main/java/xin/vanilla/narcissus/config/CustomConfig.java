@@ -32,7 +32,12 @@ public class CustomConfig {
 
     public static final String FILE_NAME = "common_config.json";
 
+    @Getter
     private static JsonObject customConfig = new JsonObject();
+
+    @Getter
+    @Setter
+    private static JsonObject clientConfig = new JsonObject();
 
     private static Map<Object, Method> vanillaModMap;
 
@@ -182,6 +187,10 @@ public class CustomConfig {
         return JsonUtils.getString(customConfig, String.format("player.%s.language", uuid), "client");
     }
 
+    public static String getPlayerLanguageClient(String uuid) {
+        return JsonUtils.getString(clientConfig, String.format("player.%s.language", uuid), "client");
+    }
+
     public static void setPlayerLanguage(String uuid, String language) {
         JsonUtils.setString(customConfig, String.format("player.%s.language", uuid), language);
         setDirty(true);
@@ -189,6 +198,10 @@ public class CustomConfig {
 
     public static JsonObject getVirtualPermission() {
         return JsonUtils.getJsonObject(customConfig, "server.virtual_permission", new JsonObject());
+    }
+
+    public static JsonObject getVirtualPermissionClient() {
+        return JsonUtils.getJsonObject(clientConfig, "server.virtual_permission", new JsonObject());
     }
 
     public static void setVirtualPermission(JsonObject virtualPermission) {

@@ -1,34 +1,30 @@
 package xin.vanilla.narcissus;
 
 import lombok.Getter;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.RegisterCommandsEvent;
 import net.minecraftforge.event.server.ServerStartedEvent;
 import net.minecraftforge.event.server.ServerStartingEvent;
 import net.minecraftforge.event.server.ServerStoppingEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.ModList;
 import net.minecraftforge.fml.ModLoadingContext;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.config.ModConfig;
 import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
 import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
-import net.minecraftforge.fml.loading.FMLEnvironment;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import xin.vanilla.narcissus.command.FarewellCommand;
+import xin.vanilla.narcissus.command.NarcissusCommand;
+import xin.vanilla.narcissus.config.ClientConfig;
 import xin.vanilla.narcissus.config.CommonConfig;
 import xin.vanilla.narcissus.config.CustomConfig;
 import xin.vanilla.narcissus.config.ServerConfig;
 import xin.vanilla.narcissus.data.SafeBlock;
 import xin.vanilla.narcissus.data.TeleportRequest;
 import xin.vanilla.narcissus.data.player.PlayerTeleportData;
-import xin.vanilla.narcissus.event.ClientModEventHandler;
 import xin.vanilla.narcissus.network.ModNetworkHandler;
 import xin.vanilla.narcissus.network.SplitPacket;
 import xin.vanilla.narcissus.util.LogoModifier;
@@ -90,15 +86,12 @@ public class NarcissusFarewell {
         // 注册配置
         ModLoadingContext.get().registerConfig(ModConfig.Type.COMMON, CommonConfig.COMMON_CONFIG);
         ModLoadingContext.get().registerConfig(ModConfig.Type.SERVER, ServerConfig.SERVER_CONFIG);
+        ModLoadingContext.get().registerConfig(ModConfig.Type.CLIENT, ClientConfig.CLIENT_CONFIG);
 
         // 注册客户端设置事件
         FMLJavaModLoadingContext.get().getModEventBus().addListener(this::onClientSetup);
         // 注册公共设置事件
         FMLJavaModLoadingContext.get().getModEventBus().addListener(this::onCommonSetup);
-
-        if (FMLEnvironment.dist == Dist.CLIENT) {
-            FMLJavaModLoadingContext.get().getModEventBus().addListener(ClientModEventHandler::registerKeyBindings);
-        }
     }
 
     /**
@@ -107,10 +100,7 @@ public class NarcissusFarewell {
     @SubscribeEvent
     public void onClientSetup(final FMLClientSetupEvent event) {
         // 修改logo为随机logo
-        ModList.get().getMods().stream()
-                .filter(info -> info.getModId().equals(MODID))
-                .findFirst()
-                .ifPresent(LogoModifier::modifyLogo);
+        LogoModifier.register(MODID, () -> Math.random() > 0.5 ? "logo_.png" : "logo.png");
     }
 
     /**
@@ -135,29 +125,8 @@ public class NarcissusFarewell {
     @SubscribeEvent
     public void onRegisterCommands(RegisterCommandsEvent event) {
         LOGGER.debug("Registering commands");
-        FarewellCommand.register(event.getDispatcher());
+        NarcissusCommand.register(event.getDispatcher());
     }
-
-
-    // region 资源ID
-
-    public static ResourceLocation emptyResource() {
-        return createResource("", "");
-    }
-
-    public static ResourceLocation createResource(String path) {
-        return createResource(NarcissusFarewell.MODID, path);
-    }
-
-    public static ResourceLocation createResource(String namespace, String path) {
-        return ResourceLocation.tryBuild(namespace, path);
-    }
-
-    public static ResourceLocation parseResource(String location) {
-        return ResourceLocation.tryParse(location);
-    }
-
-    // endregion 资源ID
 
 
     // region 外部方法
