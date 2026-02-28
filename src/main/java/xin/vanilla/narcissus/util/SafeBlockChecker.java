@@ -1,6 +1,7 @@
 package xin.vanilla.narcissus.util;
 
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Blocks;
@@ -21,6 +22,10 @@ public class SafeBlockChecker {
         this.entity = entity;
         safeBlock = NarcissusFarewell.getSafeBlock();
         safeBlock.init();
+    }
+
+    public SafeBlockChecker(Level level) {
+        this(level, null);
     }
 
     private final Map<BlockPos, BlockState> blockStateCaches = new HashMap<>();
@@ -68,7 +73,10 @@ public class SafeBlockChecker {
             isBelowValid = !safeBlock.getUnsafeBlocksState().contains(blockBelow)
                     && !safeBlock.getUnsafeBlocks().contains(blockBelow.getBlock());
         } else {
-            isBelowValid = blockBelow.entityCanStandOn(level, below, entity)
+            boolean canStand = entity != null
+                    ? blockBelow.entityCanStandOn(level, below, entity)
+                    : blockBelow.isFaceSturdy(level, below, Direction.UP);
+            isBelowValid = canStand
                     && !safeBlock.getUnsafeBlocksState().contains(blockBelow)
                     && !safeBlock.getUnsafeBlocks().contains(blockBelow.getBlock())
 
