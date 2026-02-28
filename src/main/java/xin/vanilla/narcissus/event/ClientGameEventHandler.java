@@ -2,7 +2,9 @@ package xin.vanilla.narcissus.event;
 
 import net.minecraft.client.Minecraft;
 import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.client.event.ClientPlayerNetworkEvent;
+import net.minecraftforge.client.event.ScreenOpenEvent;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.entity.EntityJoinWorldEvent;
 import net.minecraftforge.event.entity.EntityTeleportEvent;
@@ -12,7 +14,9 @@ import net.minecraftforge.fml.common.Mod;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import xin.vanilla.narcissus.NarcissusFarewell;
+import xin.vanilla.narcissus.integration.ScreenHelper;
 import xin.vanilla.narcissus.network.packet.*;
+import xin.vanilla.narcissus.util.LogoModifier;
 import xin.vanilla.narcissus.util.NarcissusUtils;
 
 /**
@@ -33,28 +37,42 @@ public class ClientGameEventHandler {
             // 快捷回家
             if (ClientModEventHandler.TP_HOME_KEY.consumeClick()) {
                 if (!keyDown) {
-                    NarcissusUtils.sendPacketToServer(new TpHomeNotice());
+                    NarcissusUtils.sendPacketToServer(new TpHomeToServer());
+                    keyDown = true;
+                }
+            }
+            // 快速返回死亡地点
+            else if (ClientModEventHandler.TP_GRAVE_KEY.consumeClick()) {
+                if (!keyDown) {
+                    NarcissusUtils.sendPacketToServer(new TpGraveToServer());
                     keyDown = true;
                 }
             }
             // 快捷返回
             else if (ClientModEventHandler.TP_BACK_KEY.consumeClick()) {
                 if (!keyDown) {
-                    NarcissusUtils.sendPacketToServer(new TpBackNotice());
+                    NarcissusUtils.sendPacketToServer(new TpBackToServer());
                     keyDown = true;
                 }
             }
             // 快捷同意最近一条传送请求
             else if (ClientModEventHandler.TP_REQ_YES.consumeClick()) {
                 if (!keyDown) {
-                    NarcissusUtils.sendPacketToServer(new TpYesNotice());
+                    NarcissusUtils.sendPacketToServer(new TpYesToServer());
                     keyDown = true;
                 }
             }
             // 快捷拒绝最近一条传送请求
             else if (ClientModEventHandler.TP_REQ_NO.consumeClick()) {
                 if (!keyDown) {
-                    NarcissusUtils.sendPacketToServer(new TpNoNotice());
+                    NarcissusUtils.sendPacketToServer(new TpNoToServer());
+                    keyDown = true;
+                }
+            }
+            // 打开界面
+            else if (ClientModEventHandler.OPEN_SCREEN_KEY.consumeClick()) {
+                if (!keyDown) {
+                    ScreenHelper.openScreen();
                     keyDown = true;
                 }
             } else {
@@ -63,11 +81,17 @@ public class ClientGameEventHandler {
         }
     }
 
+    @OnlyIn(Dist.CLIENT)
+    @SubscribeEvent
+    public static void onGuiOpen(ScreenOpenEvent event) {
+        LogoModifier.modifyLogo();
+    }
+
     @SubscribeEvent
     public static void onPlayerLoggedIn(ClientPlayerNetworkEvent.LoggedInEvent event) {
         LOGGER.debug("Client: Player logged in.");
         // 同步客户端配置到服务器
-        NarcissusUtils.sendPacketToServer(new ClientModLoadedNotice());
+        NarcissusUtils.sendPacketToServer(new ModLoadedToBoth());
     }
 
     @SubscribeEvent
