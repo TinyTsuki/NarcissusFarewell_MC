@@ -1,7 +1,6 @@
 package xin.vanilla.narcissus;
 
 import lombok.Getter;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraftforge.api.distmarker.Dist;
@@ -11,7 +10,6 @@ import net.minecraftforge.event.server.ServerStartedEvent;
 import net.minecraftforge.event.server.ServerStartingEvent;
 import net.minecraftforge.event.server.ServerStoppingEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.ModList;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.config.ModConfig;
 import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
@@ -20,7 +18,8 @@ import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import net.minecraftforge.fml.loading.FMLEnvironment;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import xin.vanilla.narcissus.command.FarewellCommand;
+import xin.vanilla.narcissus.command.NarcissusCommand;
+import xin.vanilla.narcissus.config.ClientConfig;
 import xin.vanilla.narcissus.config.CommonConfig;
 import xin.vanilla.narcissus.config.CustomConfig;
 import xin.vanilla.narcissus.config.ServerConfig;
@@ -89,6 +88,7 @@ public class NarcissusFarewell {
         // 注册配置
         context.registerConfig(ModConfig.Type.COMMON, CommonConfig.COMMON_CONFIG);
         context.registerConfig(ModConfig.Type.SERVER, ServerConfig.SERVER_CONFIG);
+        context.registerConfig(ModConfig.Type.CLIENT, ClientConfig.CLIENT_CONFIG);
 
         // 注册客户端设置事件
         context.getModEventBus().addListener(this::onClientSetup);
@@ -106,10 +106,7 @@ public class NarcissusFarewell {
     @SubscribeEvent
     public void onClientSetup(final FMLClientSetupEvent event) {
         // 修改logo为随机logo
-        ModList.get().getMods().stream()
-                .filter(info -> info.getModId().equals(MODID))
-                .findFirst()
-                .ifPresent(LogoModifier::modifyLogo);
+        LogoModifier.register(MODID, () -> Math.random() > 0.5 ? "logo_.png" : "logo.png");
     }
 
     /**
@@ -134,29 +131,8 @@ public class NarcissusFarewell {
     @SubscribeEvent
     public void onRegisterCommands(RegisterCommandsEvent event) {
         LOGGER.debug("Registering commands");
-        FarewellCommand.register(event.getDispatcher());
+        NarcissusCommand.register(event.getDispatcher());
     }
-
-
-    // region 资源ID
-
-    public static ResourceLocation emptyResource() {
-        return createResource("", "");
-    }
-
-    public static ResourceLocation createResource(String path) {
-        return createResource(NarcissusFarewell.MODID, path);
-    }
-
-    public static ResourceLocation createResource(String namespace, String path) {
-        return new ResourceLocation(namespace, path);
-    }
-
-    public static ResourceLocation parseResource(String location) {
-        return ResourceLocation.tryParse(location);
-    }
-
-    // endregion 资源ID
 
 
     // region 外部方法
