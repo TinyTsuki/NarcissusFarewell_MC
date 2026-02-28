@@ -10,14 +10,12 @@ import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.util.RegistryKey;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.vector.Vector3d;
-import net.minecraft.util.registry.Registry;
 import net.minecraft.world.World;
 import net.minecraft.world.server.ServerWorld;
-import xin.vanilla.narcissus.NarcissusFarewell;
 import xin.vanilla.narcissus.config.ServerConfig;
 import xin.vanilla.narcissus.enums.EnumSafeMode;
 import xin.vanilla.narcissus.util.NarcissusUtils;
-import xin.vanilla.narcissus.util.StringUtils;
+import xin.vanilla.narcissus.util.NumberUtils;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -25,7 +23,7 @@ import java.util.List;
 import java.util.Random;
 
 @Data
-@Accessors(chain = true)
+@Accessors(chain = true, fluent = true)
 @AllArgsConstructor
 @NoArgsConstructor
 public class Coordinate implements Serializable, Cloneable {
@@ -58,6 +56,13 @@ public class Coordinate implements Serializable, Cloneable {
         this.y = y;
         this.z = z;
         this.dimension = dimension;
+    }
+
+    public Coordinate(double x, double y, double z, String dimension) {
+        this.x = x;
+        this.y = y;
+        this.z = z;
+        this.dimension = NarcissusUtils.parseDimension(dimension);
     }
 
     public Coordinate(double x, double y, double z, double yaw, double pitch) {
@@ -205,7 +210,7 @@ public class Coordinate implements Serializable, Cloneable {
         coordinate.z = tag.getDouble("z");
         coordinate.yaw = tag.getDouble("yaw");
         coordinate.pitch = tag.getDouble("pitch");
-        coordinate.dimension = RegistryKey.create(Registry.DIMENSION_REGISTRY, NarcissusFarewell.parseResource(tag.getString("dimension")));
+        coordinate.dimension = NarcissusUtils.parseDimension(tag.getString("dimension"));
         return coordinate;
     }
 
@@ -248,23 +253,31 @@ public class Coordinate implements Serializable, Cloneable {
     }
 
     public String toXString() {
-        return StringUtils.toFixedEx(x, 1);
+        return NumberUtils.toFixedEx(x, 1);
     }
 
     public String toYString() {
-        return StringUtils.toFixedEx(y, 1);
+        return NumberUtils.toFixedEx(y, 1);
     }
 
     public String toZString() {
-        return StringUtils.toFixedEx(z, 1);
+        return NumberUtils.toFixedEx(z, 1);
     }
 
     public String toXyzIntString() {
-        return getXInt() + ", " + getYInt() + ", " + getZInt();
+        return toXyzIntString(", ");
+    }
+
+    public String toXyzIntString(String separator) {
+        return getXInt() + separator + getYInt() + separator + getZInt();
     }
 
     public String toXyzString() {
-        return StringUtils.toFixedEx(x, 1) + ", " + StringUtils.toFixedEx(y, 1) + ", " + StringUtils.toFixedEx(z, 1);
+        return toXyzString(", ");
+    }
+
+    public String toXyzString(String separator) {
+        return NumberUtils.toFixedEx(x, 1) + separator + NumberUtils.toFixedEx(y, 1) + separator + NumberUtils.toFixedEx(z, 1);
     }
 
     public String getDimensionResourceId() {
