@@ -4,7 +4,13 @@
   "package": "xin.vanilla.narcissus.mixin",
   "compatibilityLevel": "JAVA_8",
   "refmap": "narcissus_farewell.refmap.json",
-  "mixins": [],
+  "mixins": [
+    "CombatTrackerMixin",
+    "LivingEntityInvoker",
+    "ServerPlayerAccessor",
+    "ServerPlayerMixin",
+    "TemptGoalAccessor"
+  ],
   "client": [
     "MinecraftClientMixin"
   ],

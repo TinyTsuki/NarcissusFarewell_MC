@@ -126,11 +126,17 @@ repositories {
     // Put repositories for dependencies here
     // ForgeGradle automatically adds the Forge maven and Maven Central for you
 
+    // CurseMaven：用于解析 curse.maven 依赖（遗体/墓碑模组）
+    maven {
+        url "https://cursemaven.com/"
+        content { includeGroup "curse.maven" }
+    }
+
     // If you have mod jar dependencies in ./libs, you can declare them as a repository like so.
     // See https://docs.gradle.org/current/userguide/declaring_repositories.html#sub:flat_dir_resolver
-    // flatDir {
-    //     dir 'libs'
-    // }
+    flatDir {
+        dir 'libs'
+    }
 }
 
 dependencies {
@@ -140,8 +146,6 @@ dependencies {
     // If the group id is "net.minecraft" and the artifact id is one of ["client", "server", "joined"],
     // then special handling is done to allow a setup of a vanilla dependency without the use of an external repository.
     minecraft "net.minecraftforge:forge:${minecraft_version}-${forge_version}"
-
-    // implementation "com.alibaba.fastjson2:fastjson2:2.0.53"
 
     testImplementation 'junit:junit:4.13.2'
 
@@ -162,6 +166,27 @@ dependencies {
     // This maps to ./libs/coolmod-${mc_version}-${coolmod_version}.jar
     // The group id is ignored when searching -- in this case, it is "blank"
     // implementation fg.deobf("blank:coolmod-${mc_version}:${coolmod_version}")
+
+    // implementation fg.deobf("curse.maven:apricityui-1470115:${apricityui_id}")
+    compileOnly "blank:apricityui:1.0.0"
+
+    compileOnly fg.deobf("curse.maven:gravestone-mod-238551:${gravestone_id}")
+    compileOnly fg.deobf("curse.maven:corpse-316582:${corpse_id}")
+    compileOnly fg.deobf("curse.maven:simple-tomb-399669:${simple_tomb_id}")
+    // compileOnly fg.deobf("curse.maven:corail-tombstone-243707:${corail_tomb_id}")
+    compileOnly fg.deobf("blank:tombstone-1.16:${corail_tomb_version}")
+
+    compileOnly fg.deobf("curse.maven:xaeros-minimap-263420:${xaeros_minimap_id}")
+    // compileOnly fg.deobf("curse.maven:xaeros-world-map-317780:${xaeros_world_map_id}")
+    // compileOnly fg.deobf("curse.maven:xaerolib-1417462:${xaerolib_id}")
+    compileOnly fg.deobf("curse.maven:journeymap-32274:${journeymap_id}")
+
+    compileOnly fg.deobf("curse.maven:ftb-chunks-forge-314906:${ftb_chunk_id}")
+    compileOnly fg.deobf("curse.maven:architectury-api-419699:${architectury_api_id}")
+    compileOnly fg.deobf("curse.maven:ftb-library-forge-404465:${ftb_library_id}")
+    compileOnly fg.deobf("curse.maven:ftb-teams-forge-404468:${ftb_teams_id}")
+
+    runtimeOnly fg.deobf("curse.maven:jade-324717:${jade_id}")
 
     // For more info:
     // http://www.gradle.org/docs/current/userguide/artifact_dependencies_tutorial.html

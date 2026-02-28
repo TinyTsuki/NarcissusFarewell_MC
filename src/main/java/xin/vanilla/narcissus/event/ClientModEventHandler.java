@@ -26,6 +26,10 @@ public class ClientModEventHandler {
             -1, CATEGORIES);
     public static KeyBinding TP_REQ_NO = new KeyBinding("key.narcissus_farewell.tp_req_no",
             -1, CATEGORIES);
+    public static KeyBinding TP_GRAVE_KEY = new KeyBinding("key.narcissus_farewell.tp_grave",
+            -1, CATEGORIES);
+    public static KeyBinding OPEN_SCREEN_KEY = new KeyBinding("key.narcissus_farewell.open_screen",
+            -1, CATEGORIES);
 
     /**
      * 注册键绑定
@@ -35,6 +39,8 @@ public class ClientModEventHandler {
         ClientRegistry.registerKeyBinding(TP_BACK_KEY);
         ClientRegistry.registerKeyBinding(TP_REQ_YES);
         ClientRegistry.registerKeyBinding(TP_REQ_NO);
+        ClientRegistry.registerKeyBinding(TP_GRAVE_KEY);
+        ClientRegistry.registerKeyBinding(OPEN_SCREEN_KEY);
     }
 
 }
