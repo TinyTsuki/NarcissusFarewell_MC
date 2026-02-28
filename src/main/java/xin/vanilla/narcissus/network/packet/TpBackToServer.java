@@ -3,27 +3,27 @@ package xin.vanilla.narcissus.network.packet;
 import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.network.PacketBuffer;
 import net.minecraftforge.fml.network.NetworkEvent;
-import xin.vanilla.narcissus.data.player.PlayerTeleportData;
+import xin.vanilla.narcissus.enums.EnumCommandType;
+import xin.vanilla.narcissus.util.NarcissusUtils;
 
 import java.util.function.Supplier;
 
-public class ClientModLoadedNotice {
+public class TpBackToServer {
 
-    public ClientModLoadedNotice() {
+    public TpBackToServer() {
     }
 
-    public ClientModLoadedNotice(PacketBuffer buf) {
+    public TpBackToServer(PacketBuffer buf) {
     }
 
     public void toBytes(PacketBuffer buf) {
     }
 
-    public static void handle(ClientModLoadedNotice packet, Supplier<NetworkEvent.Context> ctx) {
+    public static void handle(TpBackToServer packet, Supplier<NetworkEvent.Context> ctx) {
         ctx.get().enqueueWork(() -> {
             ServerPlayerEntity player = ctx.get().getSender();
             if (player != null) {
-                // 同步玩家传送数据到客户端
-                PlayerTeleportData.syncPlayerData(player);
+                NarcissusUtils.executeCommand(player, NarcissusUtils.getCommand(EnumCommandType.TP_BACK));
             }
         });
         ctx.get().setPacketHandled(true);

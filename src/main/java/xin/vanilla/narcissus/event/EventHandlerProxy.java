@@ -37,9 +37,9 @@ public class EventHandlerProxy {
                             TeleportRequest request = NarcissusFarewell.getTeleportRequest().remove(entry.getKey());
                             if (request != null) {
                                 if (request.getTeleportType() == EnumTeleportType.TP_ASK) {
-                                    NarcissusUtils.sendTranslatableMessage(request.getRequester(), I18nUtils.getKey(EnumI18nType.MESSAGE, "tp_ask_expired"), request.getTarget().getDisplayName().getString());
+                                    NarcissusUtils.sendTranslatableMessage(request.getRequester(), I18nUtils.getKey(EnumI18nType.FORMAT, "tp_ask_expired"), request.getTarget().getDisplayName().getString());
                                 } else if (request.getTeleportType() == EnumTeleportType.TP_HERE) {
-                                    NarcissusUtils.sendTranslatableMessage(request.getRequester(), I18nUtils.getKey(EnumI18nType.MESSAGE, "tp_here_expired"), request.getTarget().getDisplayName().getString());
+                                    NarcissusUtils.sendTranslatableMessage(request.getRequester(), I18nUtils.getKey(EnumI18nType.FORMAT, "tp_here_expired"), request.getTarget().getDisplayName().getString());
                                 }
                             }
                         });
@@ -70,8 +70,8 @@ public class EventHandlerProxy {
                 TeleportRecord record = new TeleportRecord();
                 record.setTeleportTime(new Date());
                 record.setTeleportType(EnumTeleportType.DEATH);
-                record.setBefore(new Coordinate().setX(original.getX()).setY(original.getY()).setZ(original.getZ()).setDimension(original.level.dimension()));
-                record.setAfter(new Coordinate().setX(newPlayer.getX()).setY(newPlayer.getY()).setZ(newPlayer.getZ()).setDimension(newPlayer.level.dimension()));
+                record.setBefore(new Coordinate().x(original.getX()).y(original.getY()).z(original.getZ()).dimension(original.level.dimension()));
+                record.setAfter(new Coordinate().x(newPlayer.getX()).y(newPlayer.getY()).z(newPlayer.getZ()).dimension(newPlayer.level.dimension()));
                 PlayerTeleportData.getData(newPlayer).addTeleportRecords(record);
             }
         }

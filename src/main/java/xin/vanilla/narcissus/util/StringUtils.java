@@ -2,27 +2,31 @@ package xin.vanilla.narcissus.util;
 
 
 import lombok.NonNull;
-import xin.vanilla.narcissus.enums.EnumMCColor;
+import xin.vanilla.narcissus.data.KeyValue;
 
-import java.math.BigDecimal;
-import java.math.RoundingMode;
-import java.util.Arrays;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 @SuppressWarnings("unused")
-public class StringUtils {
+public final class StringUtils {
+    private StringUtils() {
+    }
 
     public static final String FORMAT_REGEX = "%(\\d+\\$)?([-#+ 0,(<]*)?(\\d+)?(\\.\\d+)?([tT])?([a-zA-Z%])";
 
+
     /**
-     * 将字符串转为逻辑真假
-     *
-     * @param s 0|1|真|假|是|否|true|false|y|n|t|f
+     * 将字符串转为 boolean
      */
     public static boolean stringToBoolean(String s) {
         if (null == s) return false;
-        switch (s.toLowerCase().trim()) {
+        switch (s.toLowerCase(Locale.ROOT).trim()) {
             case "1":
             case "真":
             case "是":
@@ -57,12 +61,14 @@ public class StringUtils {
         return s != null;
     }
 
-    /**
-     * @param s 字符串
-     * @return 空字符串or本身
-     */
     public static String nullToEmpty(String s) {
         return s == null ? "" : s;
+    }
+
+    public static String firstChar(String s) {
+        if (s == null || s.isEmpty()) return "";
+        int end = s.offsetByCodePoints(0, 1);
+        return s.substring(0, end);
     }
 
     public static String substring(String s, int start, int end) {
@@ -109,7 +115,7 @@ public class StringUtils {
      * 替换换行符
      */
     @NonNull
-    public static String replaceLine(String s) {
+    public static String replaceLineBreak(String s) {
         if (s == null) return "";
         return s.replaceAll("<br>", "\n")
                 .replaceAll("\\\\n", "\n")
@@ -121,215 +127,7 @@ public class StringUtils {
 
     public static int getLineCount(String s) {
         if (StringUtils.isNullOrEmpty(s)) return 0;
-        return StringUtils.replaceLine(s).split("\n").length;
-    }
-
-    private static final String[] NUM = {"零", "壹", "贰", "叁", "肆", "伍", "陆", "柒", "捌", "玖"};
-    private static final String[] UNIT = {"", "拾", "佰", "仟"
-            , "万", "拾万", "佰万", "仟万"
-            , "亿", "拾亿", "佰亿", "仟亿"
-            , "兆", "拾兆", "佰兆", "仟兆"
-            , "京", "拾京", "佰京", "仟京"
-            , "垓", "拾垓", "佰垓", "仟垓"
-            , "秭", "拾秭", "佰秭", "仟秭"
-            , "穰", "拾穰", "佰穰", "仟穰"
-            , "沟", "拾沟", "佰沟", "仟沟"
-            , "涧", "拾涧", "佰涧", "仟涧"
-            , "正", "拾正", "佰正", "仟正"
-            , "载", "拾载", "佰载", "仟载"};
-    private static final String[] DECIMAL = {"角", "分"};
-
-    /**
-     * 将金额转换为大写
-     */
-    public static String toChineseCapitalized(BigDecimal amount) {
-        StringBuilder sb = new StringBuilder();
-        int scale = amount.scale();
-        if (scale > 2) {
-            amount = amount.setScale(2, RoundingMode.HALF_UP);
-        }
-        String str = amount.toString();
-        String[] parts = str.split("\\.");
-        String integerPart = parts[0];
-        String decimalPart = "00";
-        if (parts.length > 1) {
-            decimalPart = parts[1];
-        }
-        int integerLen = integerPart.length();
-        int decimalLen = decimalPart.length();
-        if (integerLen == 1 && integerPart.charAt(0) == '0') {
-            sb.append(NUM[0]);
-        } else {
-            for (int i = 0; i < integerLen; i++) {
-                int digit = integerPart.charAt(i) - '0';
-                int unitIndex = integerLen - i - 1;
-                int unit = unitIndex % 4;
-                if (digit == 0) {
-                    if (unit != 0 && sb.length() > 0 && sb.charAt(sb.length() - 1) != '零') {
-                        sb.append(NUM[0]);
-                    }
-                } else {
-                    sb.append(NUM[digit]);
-                    sb.append(UNIT[unit]);
-                }
-                if (unit == 0 && unitIndex > 0 && sb.charAt(sb.length() - 1) != '亿') {
-                    sb.append(UNIT[unitIndex]);
-                }
-            }
-        }
-
-        sb.append("元");
-        if (decimalLen == 1) {
-            decimalPart += "0";
-        }
-
-        // 若小数部分不为0
-        if (!decimalPart.equals("00")) {
-            for (int i = 0; i < decimalLen; i++) {
-                int digit = decimalPart.charAt(i) - '0';
-                // 若小数位不为0
-                if (digit != 0) {
-                    sb.append(NUM[digit]);
-                    sb.append(DECIMAL[i]);
-                }
-            }
-        }
-
-        if (decimalPart.equals("00")) {
-            sb.append("整");
-        }
-        return sb.toString();
-    }
-
-    public static int toInt(String s) {
-        return toInt(s, 0);
-    }
-
-    public static int toInt(String s, int defaultValue) {
-        int result = defaultValue;
-        if (StringUtils.isNotNullOrEmpty(s)) {
-            try {
-                result = Integer.parseInt(s.trim());
-            } catch (NumberFormatException ignored) {
-            }
-        }
-        return result;
-    }
-
-    public static long toLong(String s) {
-        return toLong(s, 0);
-    }
-
-    public static long toLong(String s, long defaultValue) {
-        long result = defaultValue;
-        if (StringUtils.isNotNullOrEmpty(s)) {
-            try {
-                result = Long.parseLong(s.trim());
-            } catch (NumberFormatException ignored) {
-            }
-        }
-        return result;
-    }
-
-    public static float toFloat(String s) {
-        return toFloat(s, 0);
-    }
-
-    public static float toFloat(String s, float defaultValue) {
-        float result = defaultValue;
-        if (StringUtils.isNotNullOrEmpty(s)) {
-            try {
-                result = Float.parseFloat(s.trim());
-            } catch (NumberFormatException ignored) {
-            }
-        }
-        return result;
-    }
-
-    public static double toDouble(String s) {
-        return toDouble(s, 0);
-    }
-
-    public static double toDouble(String s, double defaultValue) {
-        double result = defaultValue;
-        if (StringUtils.isNotNullOrEmpty(s)) {
-            try {
-                result = Double.parseDouble(s.trim());
-            } catch (NumberFormatException ignored) {
-            }
-        }
-        return result;
-    }
-
-    public static BigDecimal toBigDecimal(String s) {
-        return toBigDecimal(s, BigDecimal.ZERO);
-    }
-
-    public static BigDecimal toBigDecimal(String s, BigDecimal defaultValue) {
-        BigDecimal result = defaultValue;
-        if (StringUtils.isNotNullOrEmpty(s)) {
-            try {
-                result = new BigDecimal(s.trim());
-            } catch (NumberFormatException ignored) {
-            }
-        }
-        return result;
-    }
-
-    /**
-     * 整数转罗马数字
-     */
-    public static String intToRoman(int num) {
-        StringBuilder roman = new StringBuilder();
-        int[] values = {1000, 900, 500, 400, 100, 90, 50, 40, 10, 9, 5, 4, 1};
-        String[] symbols = {"M", "CM", "D", "CD", "C", "XC", "L", "XL", "X", "IX", "V", "IV", "I"};
-        for (int i = 0; i < values.length; i++) {
-            while (num >= values[i]) {
-                roman.append(symbols[i]);
-                num -= values[i];
-            }
-        }
-        return roman.toString();
-    }
-
-    /**
-     * 转百分数
-     */
-    public static String toPercent(double num) {
-        return toPercent(num, 2);
-    }
-
-    /**
-     * 转百分数
-     */
-    public static String toPercent(double num, int scale) {
-        return String.format(String.format("%%.%df%%%%", scale), num * 100);
-    }
-
-    /**
-     * 转百分数
-     */
-    public static String toPercent(BigDecimal num) {
-        return toPercent(num.doubleValue());
-    }
-
-    /**
-     * 转百分数
-     */
-    public static String toPercent(BigDecimal num, int scale) {
-        return toPercent(num.doubleValue(), scale);
-    }
-
-    public static String toFixed(double d, int scale) {
-        return new BigDecimal(d).setScale(scale, RoundingMode.HALF_UP).toPlainString();
-    }
-
-    public static String toFixedEx(double d, int scale) {
-        return toFixed(d, scale).replaceAll("0+$", "").replaceAll("[.]$", "");
-    }
-
-    public static String toFixedEx(BigDecimal d, int scale) {
-        return d.setScale(scale, RoundingMode.HALF_UP).stripTrailingZeros().toPlainString().replaceAll("0+$", "").replaceAll("[.]$", "");
+        return StringUtils.replaceLineBreak(s).split("\n").length;
     }
 
     /**
@@ -361,7 +159,7 @@ public class StringUtils {
             String placeholder = matcher.group();
 
             // 获取位置标识符，如 %1$s 中的 1
-            int index = placeholder.contains("$") ? toInt(placeholder.split("\\$")[0].substring(1)) - 1 : -1;
+            int index = placeholder.contains("$") ? NumberUtils.toInt(placeholder.split("\\$")[0].substring(1)) - 1 : -1;
             // 如果占位符中没有显式的数字索引，则默认按顺序处理
             if (index == -1) {
                 index = i;
@@ -385,61 +183,13 @@ public class StringUtils {
      * @param arg         参数
      */
     private static String formatArgument(String placeholder, Object arg) {
-        if (arg == null) return "null";  // 如果参数是 null，直接返回 null
+        if (arg == null) return "null";
         try {
-            return String.format(placeholder.replaceAll("^%\\d+\\$", "%"), arg);  // 默认处理
+            return String.format(placeholder.replaceAll("^%\\d+\\$", "%"), arg);
         } catch (Exception e) {
             // 如果出现异常，直接转换为字符串
             return arg.toString();
         }
-    }
-
-    public static int argbToHex(String argb) {
-        try {
-            if (argb.startsWith("#")) {
-                return (int) Long.parseLong(argb.substring(1), 16);
-            } else if (argb.startsWith("0x")) {
-                return (int) Long.parseLong(argb.substring(2), 16);
-            } else {
-                return (int) Long.parseLong(argb, 16);
-            }
-        } catch (Exception e) {
-            return 0;
-        }
-    }
-
-    /**
-     * RGB颜色转换为Minecraft颜色代码
-     *
-     * @param color 颜色值 (ARGB: 0xAARRGGBB 或 RGB: 0xRRGGBB)
-     * @return 颜色代码
-     */
-    public static String argbToMinecraftColorString(int color) {
-        return "§" + argbToMinecraftColor(color).getCode();
-    }
-
-    public static EnumMCColor argbToMinecraftColor(int color) {
-        // 获取 RGB 分量
-        int red = (color >> 16) & 0xFF;
-        int green = (color >> 8) & 0xFF;
-        int blue = color & 0xFF;
-        // 颜色匹配
-        double closestDistance = Double.MAX_VALUE;
-        // 默认为白色
-        EnumMCColor result = EnumMCColor.WHITE;
-        for (EnumMCColor mcColor : EnumMCColor.values()) {
-            int colorRGB = mcColor.getColor();
-            int r = (colorRGB >> 16) & 0xFF;
-            int g = (colorRGB >> 8) & 0xFF;
-            int b = colorRGB & 0xFF;
-            // 加权欧几里得距离计算
-            double distance = Math.sqrt(2 * Math.pow(red - r, 2) + 4 * Math.pow(green - g, 2) + 3 * Math.pow(blue - b, 2));
-            if (distance < closestDistance) {
-                closestDistance = distance;
-                result = mcColor;
-            }
-        }
-        return result;
     }
 
     /**
@@ -464,6 +214,91 @@ public class StringUtils {
             }
         }
         return result.toString();
+    }
+
+    /**
+     * 将字符串转换为小写蛇形命名
+     */
+    public static String toSnakeCase(String input) {
+        if (isNullOrEmptyEx(input)) return "";
+
+        StringBuilder result = new StringBuilder();
+        boolean firstChar = true;
+
+        for (int i = 0; i < input.length(); i++) {
+            char c = input.charAt(i);
+
+            if (Character.isLetterOrDigit(c)) {
+                if (!firstChar && Character.isUpperCase(c)) {
+                    char prevChar = input.charAt(i - 1);
+                    if (Character.isLetterOrDigit(prevChar) && !Character.isUpperCase(prevChar)) {
+                        result.append('_');
+                    } else if (i < input.length() - 1) {
+                        char nextChar = input.charAt(i + 1);
+                        if (Character.isLowerCase(nextChar)) {
+                            result.append('_');
+                        }
+                    }
+                }
+                result.append(Character.toLowerCase(c));
+                firstChar = false;
+            } else if (c != '_') {
+                if (!firstChar && i < input.length() - 1) {
+                    char nextChar = input.charAt(i + 1);
+                    if (Character.isLetterOrDigit(nextChar)) {
+                        result.append('_');
+                    }
+                }
+            }
+        }
+        return result.toString();
+    }
+
+    /**
+     * 将字符串转换为大写蛇形命名
+     */
+    public static String toSnakeCaseUpper(String input) {
+        return toSnakeCase(input).toUpperCase(Locale.ROOT);
+    }
+
+    /**
+     * 检查字符串是否被 left 和 right 包裹
+     */
+    public static boolean isWrappedBy(String str, KeyValue<String, String> keyValue) {
+        return isWrappedBy(str, keyValue.left(), keyValue.right());
+    }
+
+    /**
+     * 检查字符串是否被 left 和 right 包裹
+     */
+    public static boolean isWrappedBy(String str, String left, String right) {
+        if (str == null || left == null || right == null) {
+            return false;
+        }
+        if (str.length() < left.length() + right.length()) {
+            return false;
+        }
+        return str.startsWith(left) && str.endsWith(right);
+    }
+
+    /**
+     * 删除字符串的 left 和 right
+     */
+    public static String unwrap(String str, KeyValue<String, String> keyValue) {
+        return unwrap(str, keyValue.left(), keyValue.right());
+    }
+
+    /**
+     * 删除字符串的 left 和 right 包裹
+     */
+    public static String unwrap(String str, String left, String right) {
+        if (str == null || left == null || right == null) {
+            return str;
+        }
+        if (isWrappedBy(str, left, right)) {
+            return str.substring(left.length(), str.length() - right.length());
+        }
+        return str;
     }
 
     public static String padOptimizedLeft(Object value, int length, String padChar) {
@@ -507,13 +342,146 @@ public class StringUtils {
         return "'" + input.replaceAll("'", "\\\\'") + "'";
     }
 
-    public static void main(String[] args) {
-        // 测试案例：不同类型的参数与格式字符串
-        System.out.println(format("%2$s-%1$s-%1$s", "a", "b"));  // 输出 b-a-a
-        System.out.println(format("%1$s-%2$s", "hello", "world"));  // 输出 hello-world
-        System.out.println(format("%2$s-%1$s-%1$s-%2$s", "apple", "banana"));  // 输出 banana-apple-apple-banana
-        System.out.println(format("%s-%d-%f", "Test", 5, 3.1415));  // 输出 Test-5-3.14
-        System.out.println(format("%s-%s-%s-%s", "a", "b", "c"));  // 输出 a-b-c-%s
-        System.out.println(format("%1$s-%2$s-%3$s-%4$s", "x", "y", "z"));  // 输出 x-y-z-%4$s
+    /**
+     * 计算字符串的 MD5 值
+     *
+     * @param input 输入字符串
+     * @return 32位小写 MD5 值
+     */
+    public static String md5(String input) {
+        if (input == null) return null;
+        try {
+            MessageDigest md = MessageDigest.getInstance("MD5");
+            byte[] digest = md.digest(input.getBytes());
+            return bytesToHex(digest);
+        } catch (NoSuchAlgorithmException e) {
+            throw new RuntimeException("MD5 algorithm not found", e);
+        }
     }
+
+    /**
+     * 计算文件的 MD5 值
+     *
+     * @param file 目标文件
+     * @return 32位小写 MD5 值
+     */
+    public static String md5(File file) {
+        if (file == null || !file.isFile()) return null;
+
+        try (FileInputStream in = new FileInputStream(file)) {
+            MessageDigest md = MessageDigest.getInstance("MD5");
+            byte[] buffer = new byte[8192];
+            int length;
+
+            while ((length = in.read(buffer)) != -1) {
+                md.update(buffer, 0, length);
+            }
+            return bytesToHex(md.digest());
+        } catch (IOException | NoSuchAlgorithmException e) {
+            throw new RuntimeException("Failed to calculate file MD5", e);
+        }
+    }
+
+    /**
+     * 将字节数组转换为十六进制字符串
+     *
+     * @param bytes 字节数组
+     * @return 小写十六进制字符串
+     */
+    private static String bytesToHex(byte[] bytes) {
+        StringBuilder hexString = new StringBuilder();
+        for (byte b : bytes) {
+            String hex = Integer.toHexString(0xff & b);
+            if (hex.length() == 1) {
+                hexString.append('0');
+            }
+            hexString.append(hex);
+        }
+        return hexString.toString();
+    }
+
+    /**
+     * 根据分隔符翻转字符串
+     */
+    public static String reverseBySeparatorElegant(String str, String separator) {
+        if (str == null) {
+            return null;
+        }
+        if (isNullOrEmpty(separator)) {
+            return new StringBuilder(str).reverse().toString();
+        }
+
+        int sepLen = separator.length();
+        List<String> parts = new ArrayList<>();
+        int from = 0;
+        int idx;
+        while ((idx = str.indexOf(separator, from)) >= 0) {
+            parts.add(str.substring(from, idx));
+            from = idx + sepLen;
+        }
+        parts.add(str.substring(from));
+
+        Collections.reverse(parts);
+        return String.join(separator, parts);
+    }
+
+    /**
+     * 根据分隔符翻转字符串
+     */
+    public static String reverseBySeparator(String str) {
+        return reverseBySeparatorElegant(str, "");
+    }
+
+    /**
+     * 按正则表达式分割字符串
+     *
+     * @param text    待分割的文本
+     * @param pattern 正则表达式
+     * @return 分割后的字符串列表
+     */
+    public static List<String> splitStrings(String text, Pattern pattern) {
+        List<String> segments = new ArrayList<>();
+        int lastIndex = 0;
+        Matcher matcher = pattern.matcher(text);
+
+        while (matcher.find()) {
+            // 添加分隔符前的文本段
+            if (matcher.start() > lastIndex) {
+                String segment = text.substring(lastIndex, matcher.start());
+                if (!segment.isEmpty()) {
+                    segments.add(segment);
+                }
+            }
+            // 添加分隔符本身
+            segments.add(matcher.group());
+            lastIndex = matcher.end();
+        }
+        // 添加最后一段文本
+        if (lastIndex < text.length()) {
+            String segment = text.substring(lastIndex);
+            if (!segment.isEmpty()) {
+                segments.add(segment);
+            }
+        }
+        return segments;
+    }
+
+    /**
+     * string是否匹配输入
+     */
+    public static boolean matches(String string, String input) {
+        if (StringUtils.isNullOrEmpty(input)) return true;
+        return string != null && (string.equals(input) || string.contains(input));
+    }
+
+    /**
+     * 匹配度：0=精确 1=前缀 2=包含，数值越小匹配度越高
+     */
+    public static int matchDegree(String string, String input) {
+        if (string == null || input == null) return 2;
+        if (string.equals(input)) return 0;
+        if (string.startsWith(input)) return 1;
+        return 2;
+    }
+
 }
