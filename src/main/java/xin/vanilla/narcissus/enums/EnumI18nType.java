@@ -1,14 +1,21 @@
 package xin.vanilla.narcissus.enums;
 
 public enum EnumI18nType {
-    KEY,
-    WORD,
-    TIPS,
-    TITLE,
-    OPTION,
-    COMMAND,
-    MESSAGE,
     NONE,
+    /**
+     * 无参文本
+     */
+    WORD,
+    /**
+     * 有参文本
+     */
+    FORMAT,
+    /**
+     * 纯文本
+     */
     PLAIN,
+    /**
+     * 原始对象
+     */
     ORIGINAL,
 }
