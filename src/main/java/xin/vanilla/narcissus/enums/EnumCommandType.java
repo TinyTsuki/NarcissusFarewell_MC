@@ -1,86 +1,98 @@
 package xin.vanilla.narcissus.enums;
 
+import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import lombok.Getter;
+import net.minecraft.commands.CommandSourceStack;
+import xin.vanilla.narcissus.command.impl.*;
+
+import javax.annotation.Nullable;
+import java.util.function.Supplier;
 
 @Getter
 public enum EnumCommandType {
-    HELP(false, false),
-    LANGUAGE(false, false),
+    HELP(HelpCommand::create, false, false),
+    LANGUAGE(LanguageCommand::create, false, false),
     LANGUAGE_CONCISE(),
-    UUID(),
+    UUID(UuidCommand::create),
     UUID_CONCISE(),
-    DIMENSION(),
+    DIMENSION(DimensionCommand::create),
     DIMENSION_CONCISE(),
-    CARD(false, false),
+    CARD(CardCommand::create, false, false),
     CARD_CONCISE(),
     SET_CARD(true),
     SET_CARD_CONCISE(),
-    SHARE(),
+    SHARE(ShareCommand::create),
     SHARE_CONCISE(),
-    FEED(false, false),
+    FEED(FeedCommand::create, false, false),
     FEED_CONCISE(),
     FEED_OTHER(true),
     FEED_OTHER_CONCISE(true),
-    TP_COORDINATE(),
+    TP_COORDINATE(TpCoordinateCommand::create),
     TP_COORDINATE_CONCISE(),
-    TP_STRUCTURE(),
+    TP_STRUCTURE(TpStructureCommand::create),
     TP_STRUCTURE_CONCISE(),
-    TP_ASK(),
+    TP_ASK(TpAskCommand::create),
     TP_ASK_CONCISE(),
-    TP_ASK_YES(false, false),
+    TP_ASK_YES(TpAskYesCommand::create, false, false),
     TP_ASK_YES_CONCISE(),
-    TP_ASK_NO(false, false),
+    TP_ASK_NO(TpAskNoCommand::create, false, false),
     TP_ASK_NO_CONCISE(),
-    TP_ASK_CANCEL(false, false),
+    TP_ASK_CANCEL(TpAskCancelCommand::create, false, false),
     TP_ASK_CANCEL_CONCISE(),
-    TP_HERE(),
+    TP_HERE(TpHereCommand::create),
     TP_HERE_CONCISE(),
-    TP_HERE_YES(false, false),
+    TP_HERE_YES(TpHereYesCommand::create, false, false),
     TP_HERE_YES_CONCISE(),
-    TP_HERE_NO(false, false),
+    TP_HERE_NO(TpHereNoCommand::create, false, false),
     TP_HERE_NO_CONCISE(),
-    TP_HERE_CANCEL(false, false),
+    TP_HERE_CANCEL(TpHereCancelCommand::create, false, false),
     TP_HERE_CANCEL_CONCISE(),
-    TP_RANDOM(),
+    TP_RANDOM(TpRandomCommand::create),
     TP_RANDOM_CONCISE(),
-    TP_SPAWN(),
+    TP_SPAWN(TpSpawnCommand::create),
     TP_SPAWN_OTHER(true),
     TP_SPAWN_CONCISE(),
     TP_SPAWN_OTHER_CONCISE(true),
-    TP_WORLD_SPAWN(),
+    TP_WORLD_SPAWN(TpWorldSpawnCommand::create),
     TP_WORLD_SPAWN_CONCISE(),
-    TP_TOP(),
+    TP_TOP(TpTopCommand::create),
     TP_TOP_CONCISE(),
-    TP_BOTTOM(),
+    TP_BOTTOM(TpBottomCommand::create),
     TP_BOTTOM_CONCISE(),
-    TP_UP(),
+    TP_UP(TpUpCommand::create),
     TP_UP_CONCISE(),
-    TP_DOWN(),
+    TP_DOWN(TpDownCommand::create),
     TP_DOWN_CONCISE(),
-    TP_VIEW(),
+    TP_VIEW(TpViewCommand::create),
     TP_VIEW_CONCISE(),
-    TP_HOME(),
+    TP_HOME(TpHomeCommand::create),
     TP_HOME_CONCISE(),
-    SET_HOME(false, false),
+    SET_HOME(SetHomeCommand::create, false, false),
     SET_HOME_CONCISE(),
-    DEL_HOME(false, false),
+    DEL_HOME(DelHomeCommand::create, false, false),
     DEL_HOME_CONCISE(),
-    GET_HOME(false, false),
+    GET_HOME(GetHomeCommand::create, false, false),
     GET_HOME_CONCISE(),
-    TP_STAGE(),
+    TP_STAGE(TpStageCommand::create),
     TP_STAGE_CONCISE(),
-    SET_STAGE(),
+    SET_STAGE(SetStageCommand::create),
     SET_STAGE_CONCISE(),
-    DEL_STAGE(),
+    DEL_STAGE(DelStageCommand::create),
     DEL_STAGE_CONCISE(),
-    GET_STAGE(),
+    GET_STAGE(GetStageCommand::create),
     GET_STAGE_CONCISE(),
-    TP_BACK(),
+    TP_BACK(TpBackCommand::create),
     TP_BACK_CONCISE(),
-    FLY(),
+    TP_GRAVE(TpGraveCommand::create),
+    TP_GRAVE_CONCISE(),
+    FLY(FlyCommand::create),
     FLY_CONCISE(),
-    VIRTUAL_OP(),
-    VIRTUAL_OP_CONCISE();
+    VIRTUAL_OP(VirtualOpCommand::create),
+    VIRTUAL_OP_CONCISE(),
+    CONFIG(ConfigCommand::create, true),
+    BLACKLIST(false, false),
+    WHITELIST(false, false),
+    ;
 
     /**
      * 在帮助信息内忽略
@@ -95,17 +107,41 @@ public enum EnumCommandType {
      */
     private final boolean op;
 
+    @Nullable
+    private final Supplier<LiteralArgumentBuilder<CommandSourceStack>> instance;
+
     EnumCommandType() {
+        this.instance = null;
         this.ignore = false;
         this.op = !this.concise;
     }
 
     EnumCommandType(boolean ig) {
+        this.instance = null;
         this.ignore = ig;
         this.op = !this.concise;
     }
 
     EnumCommandType(boolean ig, boolean op) {
+        this.instance = null;
+        this.ignore = ig;
+        this.op = !this.concise && op;
+    }
+
+    EnumCommandType(@Nullable Supplier<LiteralArgumentBuilder<CommandSourceStack>> instance) {
+        this.instance = instance;
+        this.ignore = false;
+        this.op = !this.concise;
+    }
+
+    EnumCommandType(@Nullable Supplier<LiteralArgumentBuilder<CommandSourceStack>> instance, boolean ig) {
+        this.instance = instance;
+        this.ignore = ig;
+        this.op = !this.concise;
+    }
+
+    EnumCommandType(@Nullable Supplier<LiteralArgumentBuilder<CommandSourceStack>> instance, boolean ig, boolean op) {
+        this.instance = instance;
         this.ignore = ig;
         this.op = !this.concise && op;
     }
@@ -166,6 +202,7 @@ public enum EnumCommandType {
                 // case GET_STAGE_CONCISE:
                     EnumTeleportType.TP_STAGE;
             case TP_BACK, TP_BACK_CONCISE -> EnumTeleportType.TP_BACK;
+            case TP_GRAVE, TP_GRAVE_CONCISE -> EnumTeleportType.TP_GRAVE;
             default -> null;
         };
     }
