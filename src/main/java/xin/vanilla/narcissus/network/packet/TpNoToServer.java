@@ -14,18 +14,18 @@ import xin.vanilla.narcissus.util.NarcissusUtils;
 import java.util.Comparator;
 import java.util.function.Supplier;
 
-public class TpNoNotice {
+public class TpNoToServer {
 
-    public TpNoNotice() {
+    public TpNoToServer() {
     }
 
-    public TpNoNotice(FriendlyByteBuf buf) {
+    public TpNoToServer(FriendlyByteBuf buf) {
     }
 
     public void toBytes(FriendlyByteBuf buf) {
     }
 
-    public static void handle(TpNoNotice packet, Supplier<NetworkEvent.Context> ctx) {
+    public static void handle(TpNoToServer packet, Supplier<NetworkEvent.Context> ctx) {
         // 获取网络事件上下文并排队执行工作
         ctx.get().enqueueWork(() -> {
             // 获取发送数据包的玩家实体
@@ -41,7 +41,7 @@ public class TpNoNotice {
                     EnumCommandType type = EnumTeleportType.TP_HERE == teleportType ? EnumCommandType.TP_HERE_NO : EnumCommandType.TP_ASK_NO;
                     NarcissusUtils.executeCommand(player, NarcissusUtils.getCommand(type));
                 } else {
-                    NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EnumI18nType.MESSAGE, "tp_ask_not_found"));
+                    NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EnumI18nType.FORMAT, "tp_ask_not_found"));
                 }
             }
         });
