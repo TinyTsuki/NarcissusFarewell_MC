@@ -1,0 +1,79 @@
+package xin.vanilla.narcissus.network.packet;
+
+import lombok.Getter;
+import lombok.experimental.Accessors;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraftforge.event.network.CustomPayloadEvent;
+import xin.vanilla.narcissus.config.CommonConfig;
+import xin.vanilla.narcissus.enums.EnumTeleportType;
+import xin.vanilla.narcissus.util.NarcissusUtils;
+import xin.vanilla.narcissus.util.StringUtils;
+
+
+@Getter
+@Accessors(fluent = true)
+public class WaypointTeleportToServer {
+
+    private static final int MAX_NAME_LEN = 64;
+    private static final int MAX_DIMENSION_LEN = 256;
+
+    private final int typeOrdinal;
+    private final String name;
+    private final String dimension;
+
+    public WaypointTeleportToServer(EnumTeleportType type, String name, String dimension) {
+        this.typeOrdinal = type.ordinal();
+        this.name = name != null ? name : "";
+        this.dimension = dimension != null ? dimension : "";
+    }
+
+    public WaypointTeleportToServer(FriendlyByteBuf buf) {
+        this.typeOrdinal = buf.readVarInt();
+        this.name = buf.readUtf(MAX_NAME_LEN);
+        this.dimension = buf.readUtf(MAX_DIMENSION_LEN);
+    }
+
+    public void toBytes(FriendlyByteBuf buf) {
+        buf.writeVarInt(typeOrdinal);
+        buf.writeUtf(name, MAX_NAME_LEN);
+        buf.writeUtf(dimension, MAX_DIMENSION_LEN);
+    }
+
+    public static void handle(WaypointTeleportToServer packet, CustomPayloadEvent.Context ctx) {
+        ctx.enqueueWork(() -> {
+            if (ctx.isServerSide()) {
+                ServerPlayer sender = ctx.getSender();
+                if (sender == null) return;
+                EnumTeleportType type;
+                try {
+                    type = EnumTeleportType.values()[packet.typeOrdinal()];
+                } catch (ArrayIndexOutOfBoundsException e) {
+                    return;
+                }
+                String prefix = NarcissusUtils.getCommandPrefix();
+                String cmd;
+                switch (type) {
+                    case TP_HOME:
+                        cmd = prefix + " " + CommonConfig.COMMAND_TP_HOME.get();
+                        if (!packet.name().isEmpty()) cmd += " " + StringUtils.formatString(packet.name());
+                        if (!packet.dimension().isEmpty()) cmd += " true " + packet.dimension();
+                        break;
+                    case TP_STAGE:
+                        cmd = prefix + " " + CommonConfig.COMMAND_TP_STAGE.get();
+                        if (!packet.name().isEmpty()) cmd += " " + StringUtils.formatString(packet.name());
+                        if (!packet.dimension().isEmpty()) cmd += " safe " + packet.dimension();
+                        break;
+                    case TP_BACK:
+                        cmd = prefix + " " + CommonConfig.COMMAND_TP_BACK.get();
+                        if (!packet.name().isEmpty()) cmd += " safe " + packet.name();
+                        break;
+                    default:
+                        return;
+                }
+                NarcissusUtils.executeCommand(sender, cmd);
+            }
+        });
+        ctx.setPacketHandled(true);
+    }
+}

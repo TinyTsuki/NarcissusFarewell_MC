@@ -35,3 +35,9 @@ logoFile = "logo.png"
     versionRange = "[1.0.0,)"
     ordering = "NONE"
     side = "CLIENT"
+[[dependencies."${mod_id}"]]
+    modId = "apricityui"
+    mandatory = false
+    versionRange = "[1.0.0,)"
+    ordering = "NONE"
+    side = "CLIENT"
