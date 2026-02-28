@@ -3,13 +3,15 @@ package xin.vanilla.narcissus.network.packet;
 import lombok.Getter;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.fml.DistExecutor;
 import net.minecraftforge.fmllegacy.network.NetworkEvent;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import xin.vanilla.narcissus.data.Coordinate;
 import xin.vanilla.narcissus.data.KeyValue;
 import xin.vanilla.narcissus.data.TeleportRecord;
 import xin.vanilla.narcissus.data.player.PlayerTeleportData;
-import xin.vanilla.narcissus.network.ClientProxy;
 import xin.vanilla.narcissus.network.SplitPacket;
 import xin.vanilla.narcissus.util.CollectionUtils;
 import xin.vanilla.narcissus.util.DateUtils;
@@ -19,7 +21,7 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 @Getter
-public class PlayerDataSyncPacket extends SplitPacket {
+public class PlayerDataSyncToClient extends SplitPacket {
     private final UUID playerUUID;
     private final Date lastCardTime;
     private final Date lastTpTime;
@@ -28,7 +30,7 @@ public class PlayerDataSyncPacket extends SplitPacket {
     private final Map<KeyValue<String, String>, Coordinate> homeCoordinate;
     private final Map<String, String> defaultHome;
 
-    public PlayerDataSyncPacket(UUID playerUUID, PlayerTeleportData data) {
+    public PlayerDataSyncToClient(UUID playerUUID, PlayerTeleportData data) {
         super();
         this.playerUUID = playerUUID;
         this.lastCardTime = data.getLastCardTime();
@@ -39,7 +41,7 @@ public class PlayerDataSyncPacket extends SplitPacket {
         this.defaultHome = data.getDefaultHome();
     }
 
-    public PlayerDataSyncPacket(FriendlyByteBuf buffer) {
+    public PlayerDataSyncToClient(FriendlyByteBuf buffer) {
         super(buffer);
         this.playerUUID = buffer.readUUID();
         this.lastCardTime = DateUtils.format(buffer.readUtf());
@@ -65,25 +67,25 @@ public class PlayerDataSyncPacket extends SplitPacket {
         }
     }
 
-    public PlayerDataSyncPacket(List<PlayerDataSyncPacket> packets) {
+    public PlayerDataSyncToClient(List<PlayerDataSyncToClient> packets) {
         super();
         this.playerUUID = packets.get(0).playerUUID;
         this.lastCardTime = packets.get(0).lastCardTime;
         this.lastTpTime = packets.get(0).lastTpTime;
         this.teleportCard = packets.get(0).teleportCard;
         this.teleportRecords = packets.stream()
-                .map(PlayerDataSyncPacket::getTeleportRecords)
+                .map(PlayerDataSyncToClient::getTeleportRecords)
                 .flatMap(Collection::stream)
                 .sorted(Comparator.comparing(TeleportRecord::getTeleportTime))
                 .collect(Collectors.toList());
         this.homeCoordinate = packets.stream()
-                .map(PlayerDataSyncPacket::getHomeCoordinate)
+                .map(PlayerDataSyncToClient::getHomeCoordinate)
                 .flatMap(map -> map.entrySet().stream())
                 .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (v1, v2) -> v1));
         this.defaultHome = packets.get(0).defaultHome;
     }
 
-    private PlayerDataSyncPacket(UUID playerUUID, Date lastCardTime, Date lastTpTime, int teleportCard) {
+    private PlayerDataSyncToClient(UUID playerUUID, Date lastCardTime, Date lastTpTime, int teleportCard) {
         super();
         this.playerUUID = playerUUID;
         this.lastCardTime = lastCardTime;
@@ -106,8 +108,8 @@ public class PlayerDataSyncPacket extends SplitPacket {
         }
         buffer.writeInt(this.homeCoordinate.size());
         for (Map.Entry<KeyValue<String, String>, Coordinate> entry : this.homeCoordinate.entrySet()) {
-            buffer.writeUtf(entry.getKey().getKey());
-            buffer.writeUtf(entry.getKey().getValue());
+            buffer.writeUtf(entry.getKey().key());
+            buffer.writeUtf(entry.getKey().value());
             buffer.writeNbt(entry.getValue().writeToNBT());
         }
         buffer.writeInt(this.defaultHome.size());
@@ -117,13 +119,13 @@ public class PlayerDataSyncPacket extends SplitPacket {
         }
     }
 
-    public static void handle(PlayerDataSyncPacket packet, Supplier<NetworkEvent.Context> ctx) {
+    public static void handle(PlayerDataSyncToClient packet, Supplier<NetworkEvent.Context> ctx) {
         ctx.get().enqueueWork(() -> {
             if (ctx.get().getDirection().getReceptionSide().isClient()) {
                 // 获取玩家并更新 Capability 数据
-                List<PlayerDataSyncPacket> packets = SplitPacket.handle(packet);
+                List<PlayerDataSyncToClient> packets = SplitPacket.handle(packet);
                 if (CollectionUtils.isNotNullOrEmpty(packets)) {
-                    DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> ClientProxy.handleSynPlayerData(new PlayerDataSyncPacket(packets)));
+                    DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> ClientSide.handle(new PlayerDataSyncToClient(packets)));
                 }
             }
         });
@@ -138,8 +140,9 @@ public class PlayerDataSyncPacket extends SplitPacket {
     /**
      * 将数据包拆分为多个小包
      */
-    public List<PlayerDataSyncPacket> split() {
-        List<PlayerDataSyncPacket> result = new ArrayList<>();
+    @SuppressWarnings("unchecked")
+    public List<PlayerDataSyncToClient> split() {
+        List<PlayerDataSyncToClient> result = new ArrayList<>();
         KeyValue<String, String>[] keyArray = this.homeCoordinate.keySet().toArray(new KeyValue[0]);
         int teleportIndex = 0;
         int homeIndex = 0;
@@ -147,7 +150,7 @@ public class PlayerDataSyncPacket extends SplitPacket {
         int totalChunks = (int) Math.ceil((double) (teleportRecords.size() + homeCoordinate.size()) / getChunkSize());
 
         for (int i = 0; i < totalChunks; i++) {
-            PlayerDataSyncPacket packet = new PlayerDataSyncPacket(this.playerUUID, this.lastCardTime, this.lastTpTime, this.teleportCard);
+            PlayerDataSyncToClient packet = new PlayerDataSyncToClient(this.playerUUID, this.lastCardTime, this.lastTpTime, this.teleportCard);
             // teleportRecords
             for (int j = 0; j < getChunkSize() && teleportIndex < teleportRecords.size(); j++) {
                 packet.teleportRecords.add(this.teleportRecords.get(teleportIndex));
@@ -165,12 +168,12 @@ public class PlayerDataSyncPacket extends SplitPacket {
         }
 
         int totalPackets = result.size();
-        for (PlayerDataSyncPacket packet : result) {
+        for (PlayerDataSyncToClient packet : result) {
             packet.setId(this.getId());
             packet.setTotal(totalPackets);
         }
         if (result.isEmpty()) {
-            PlayerDataSyncPacket packet = new PlayerDataSyncPacket(this.playerUUID, this.lastCardTime, this.lastTpTime, this.teleportCard);
+            PlayerDataSyncToClient packet = new PlayerDataSyncToClient(this.playerUUID, this.lastCardTime, this.lastTpTime, this.teleportCard);
             packet.setSort(0);
             packet.setId(this.getId());
             packet.setTotal(1);
@@ -179,15 +182,35 @@ public class PlayerDataSyncPacket extends SplitPacket {
         return result;
     }
 
-    public PlayerTeleportData getData() {
-        PlayerTeleportData data = ClientProxy.createClientData();
-        if (data == null) return null;
+    @OnlyIn(Dist.CLIENT)
+    private static final class ClientSide {
+        public static final Logger LOGGER = LogManager.getLogger();
 
-        data.setLastCardTime(this.lastCardTime);
-        data.setLastTpTime(this.lastTpTime);
-        data.setTeleportCard(this.teleportCard);
-        data.setTeleportRecords(this.teleportRecords);
-        data.setHomeCoordinate(this.homeCoordinate);
-        return data;
+        public static void handle(PlayerDataSyncToClient packet) {
+            net.minecraft.client.player.LocalPlayer player = net.minecraft.client.Minecraft.getInstance().player;
+            if (player != null) {
+                try {
+                    PlayerTeleportData clientData = PlayerTeleportData.getData(player);
+                    clientData.copyFrom(getData(packet));
+                    LOGGER.debug("Client: Player data received successfully.");
+                } catch (Exception ignored) {
+                    LOGGER.debug("Client: Player data received failed.");
+                }
+            }
+        }
+
+        public static PlayerTeleportData getData(PlayerDataSyncToClient packet) {
+            net.minecraft.client.player.LocalPlayer player = net.minecraft.client.Minecraft.getInstance().player;
+            if (player == null) return null;
+            PlayerTeleportData data = PlayerTeleportData.getData(player);
+            if (data == null) return null;
+
+            data.setLastCardTime(packet.lastCardTime);
+            data.setLastTpTime(packet.lastTpTime);
+            data.setTeleportCard(packet.teleportCard);
+            data.setTeleportRecords(packet.teleportRecords);
+            data.setHomeCoordinate(packet.homeCoordinate);
+            return data;
+        }
     }
 }

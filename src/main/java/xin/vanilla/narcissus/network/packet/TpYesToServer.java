@@ -14,21 +14,19 @@ import xin.vanilla.narcissus.util.NarcissusUtils;
 import java.util.Comparator;
 import java.util.function.Supplier;
 
-public class TpNoNotice {
+public class TpYesToServer {
 
-    public TpNoNotice() {
+    public TpYesToServer() {
     }
 
-    public TpNoNotice(FriendlyByteBuf buf) {
+    public TpYesToServer(FriendlyByteBuf buf) {
     }
 
     public void toBytes(FriendlyByteBuf buf) {
     }
 
-    public static void handle(TpNoNotice packet, Supplier<NetworkEvent.Context> ctx) {
-        // 获取网络事件上下文并排队执行工作
+    public static void handle(TpYesToServer packet, Supplier<NetworkEvent.Context> ctx) {
         ctx.get().enqueueWork(() -> {
-            // 获取发送数据包的玩家实体
             ServerPlayer player = ctx.get().getSender();
             if (player != null) {
                 EnumTeleportType teleportType = NarcissusFarewell.getTeleportRequest().values().stream()
@@ -38,14 +36,13 @@ public class TpNoNotice {
                         .orElse(new TeleportRequest())
                         .getTeleportType();
                 if (EnumTeleportType.TP_ASK == teleportType || EnumTeleportType.TP_HERE == teleportType) {
-                    EnumCommandType type = EnumTeleportType.TP_HERE == teleportType ? EnumCommandType.TP_HERE_NO : EnumCommandType.TP_ASK_NO;
+                    EnumCommandType type = EnumTeleportType.TP_HERE == teleportType ? EnumCommandType.TP_HERE_YES : EnumCommandType.TP_ASK_YES;
                     NarcissusUtils.executeCommand(player, NarcissusUtils.getCommand(type));
                 } else {
-                    NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EnumI18nType.MESSAGE, "tp_ask_not_found"));
+                    NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EnumI18nType.FORMAT, "tp_ask_not_found"));
                 }
             }
         });
-        // 设置数据包已处理状态，防止重复处理
         ctx.get().setPacketHandled(true);
     }
 }

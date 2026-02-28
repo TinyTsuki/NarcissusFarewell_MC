@@ -3,11 +3,16 @@ package xin.vanilla.narcissus.util;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import lombok.NonNull;
+import net.minecraft.client.Minecraft;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.player.Player;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import xin.vanilla.narcissus.NarcissusFarewell;
+import xin.vanilla.narcissus.config.ServerConfig;
 import xin.vanilla.narcissus.enums.EnumI18nType;
 
+import javax.annotation.Nullable;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
@@ -41,6 +46,12 @@ public class I18nUtils {
                 LOGGER.error("Failed to load language file: {}", languageCode, e);
             }
         }
+    }
+
+    public static boolean hasTranslation(@NonNull EnumI18nType type, @NonNull String key) {
+        String languageCode = NarcissusUtils.getClientLanguage();
+        JsonObject language = LANGUAGES.getOrDefault(languageCode, LANGUAGES.get(DEFAULT_LANGUAGE));
+        return language != null && language.has(getKey(type, key));
     }
 
     /**
@@ -80,11 +91,11 @@ public class I18nUtils {
     }
 
     public static Component enabled(@NonNull String languageCode, boolean enabled) {
-        return Component.translatable(languageCode, EnumI18nType.WORD, enabled ? "enabled" : "disabled");
+        return Component.trans(languageCode, EnumI18nType.WORD, enabled ? "enabled" : "disabled");
     }
 
     public static Component enabled(boolean enabled) {
-        return Component.translatable(EnumI18nType.WORD, enabled ? "enabled" : "disabled");
+        return Component.trans(EnumI18nType.WORD, enabled ? "enabled" : "disabled");
     }
 
     /**
@@ -106,5 +117,43 @@ public class I18nUtils {
             LOGGER.error("Failed to get I18n file name list", e);
         }
         return result;
+    }
+
+
+    public static String getClientLanguage() {
+        return Minecraft.getInstance().getLanguageManager().getSelected().getCode();
+    }
+
+    public static String getServerLanguage() {
+        return ServerConfig.DEFAULT_LANGUAGE.get();
+    }
+
+    public static String getServerPlayerLanguage(ServerPlayer player) {
+        return player.getLanguage();
+    }
+
+    public static String getValidLanguage(@Nullable Player player, @Nullable String language) {
+        String result;
+        if (StringUtils.isNullOrEmptyEx(language) || "client".equalsIgnoreCase(language)) {
+            if (player instanceof ServerPlayer) {
+                result = I18nUtils.getServerPlayerLanguage((ServerPlayer) player);
+            } else {
+                result = I18nUtils.getClientLanguage();
+            }
+        } else if ("server".equalsIgnoreCase(language)) {
+            return ServerConfig.DEFAULT_LANGUAGE.get();
+        } else {
+            result = language;
+        }
+        return result;
+    }
+
+    public static String getPlayerLanguage(@NonNull Player player) {
+        try {
+            String language = ServerConfig.DEFAULT_LANGUAGE.get();
+            return I18nUtils.getValidLanguage(player, language);
+        } catch (IllegalArgumentException i) {
+            return ServerConfig.DEFAULT_LANGUAGE.get();
+        }
     }
 }

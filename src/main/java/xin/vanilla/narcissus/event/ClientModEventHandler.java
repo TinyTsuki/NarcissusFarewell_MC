@@ -15,16 +15,20 @@ import xin.vanilla.narcissus.NarcissusFarewell;
 public class ClientModEventHandler {
     private static final Logger LOGGER = LogManager.getLogger();
 
-    private static final String CATEGORIES = "key.narcissus_farewell.categories";
+    private static final String CATEGORIES = "word.narcissus_farewell.categories";
 
     // 定义按键绑定
-    public static KeyMapping TP_HOME_KEY = new KeyMapping("key.narcissus_farewell.tp_home",
+    public static KeyMapping TP_HOME_KEY = new KeyMapping("word.narcissus_farewell.tp_home",
             -1, CATEGORIES);
-    public static KeyMapping TP_BACK_KEY = new KeyMapping("key.narcissus_farewell.tp_back",
+    public static KeyMapping TP_BACK_KEY = new KeyMapping("word.narcissus_farewell.tp_back",
             -1, CATEGORIES);
-    public static KeyMapping TP_REQ_YES = new KeyMapping("key.narcissus_farewell.tp_req_yes",
+    public static KeyMapping TP_REQ_YES = new KeyMapping("word.narcissus_farewell.tp_req_yes",
             -1, CATEGORIES);
-    public static KeyMapping TP_REQ_NO = new KeyMapping("key.narcissus_farewell.tp_req_no",
+    public static KeyMapping TP_REQ_NO = new KeyMapping("word.narcissus_farewell.tp_req_no",
+            -1, CATEGORIES);
+    public static KeyMapping TP_GRAVE_KEY = new KeyMapping("word.narcissus_farewell.tp_grave",
+            -1, CATEGORIES);
+    public static KeyMapping OPEN_SCREEN_KEY = new KeyMapping("word.narcissus_farewell.open_screen",
             -1, CATEGORIES);
 
     /**
@@ -35,6 +39,8 @@ public class ClientModEventHandler {
         ClientRegistry.registerKeyBinding(TP_BACK_KEY);
         ClientRegistry.registerKeyBinding(TP_REQ_YES);
         ClientRegistry.registerKeyBinding(TP_REQ_NO);
+        ClientRegistry.registerKeyBinding(TP_GRAVE_KEY);
+        ClientRegistry.registerKeyBinding(OPEN_SCREEN_KEY);
     }
 
 }

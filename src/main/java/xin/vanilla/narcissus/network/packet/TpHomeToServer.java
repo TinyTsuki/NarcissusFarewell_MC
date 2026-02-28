@@ -8,18 +8,18 @@ import xin.vanilla.narcissus.util.NarcissusUtils;
 
 import java.util.function.Supplier;
 
-public class TpHomeNotice {
+public class TpHomeToServer {
 
-    public TpHomeNotice() {
+    public TpHomeToServer() {
     }
 
-    public TpHomeNotice(FriendlyByteBuf buf) {
+    public TpHomeToServer(FriendlyByteBuf buf) {
     }
 
     public void toBytes(FriendlyByteBuf buf) {
     }
 
-    public static void handle(TpHomeNotice packet, Supplier<NetworkEvent.Context> ctx) {
+    public static void handle(TpHomeToServer packet, Supplier<NetworkEvent.Context> ctx) {
         ctx.get().enqueueWork(() -> {
             ServerPlayer player = ctx.get().getSender();
             if (player != null) {

@@ -131,6 +131,11 @@ public class CommonConfig {
     public static final ForgeConfigSpec.BooleanValue SWITCH_TP_BACK;
 
     /**
+     * 返回死亡地点 开关
+     */
+    public static final ForgeConfigSpec.BooleanValue SWITCH_TP_GRAVE;
+
+    /**
      * 创造飞行 开关
      */
     public static final ForgeConfigSpec.BooleanValue SWITCH_FLY;
@@ -309,6 +314,11 @@ public class CommonConfig {
      * 传送到上次传送点
      */
     public static final ForgeConfigSpec.ConfigValue<String> COMMAND_TP_BACK;
+
+    /**
+     * 返回死亡地点
+     */
+    public static final ForgeConfigSpec.ConfigValue<String> COMMAND_TP_GRAVE;
 
     /**
      * 创造飞行
@@ -491,6 +501,11 @@ public class CommonConfig {
     public static final ForgeConfigSpec.BooleanValue CONCISE_TP_BACK;
 
     /**
+     * 返回死亡地点
+     */
+    public static final ForgeConfigSpec.BooleanValue CONCISE_TP_GRAVE;
+
+    /**
      * 创造飞行
      */
     public static final ForgeConfigSpec.BooleanValue CONCISE_FLY;
@@ -657,6 +672,11 @@ public class CommonConfig {
                     .comment("Enable or disable the option to 'Teleport to the previous location'."
                             , "是否启用传送到上次传送点。")
                     .define("switchTpBack", true);
+
+            SWITCH_TP_GRAVE = SERVER_BUILDER
+                    .comment("Enable or disable the option to 'Return to death location'."
+                            , "是否启用返回死亡地点。")
+                    .define("switchTpGrave", true);
 
             SWITCH_FLY = SERVER_BUILDER
                     .comment("Enable or disable the option to 'Fly'."
@@ -887,6 +907,11 @@ public class CommonConfig {
                             , "传送到上次传送点的指令。")
                     .define("commandTpBack", "back");
 
+            COMMAND_TP_GRAVE = SERVER_BUILDER
+                    .comment("The command to return to death location."
+                            , "返回死亡地点的指令。")
+                    .define("commandTpGrave", "grave");
+
             COMMAND_FLY = SERVER_BUILDER
                     .comment("The command to fly."
                             , "开启创造飞行的指令。")
@@ -1081,6 +1106,11 @@ public class CommonConfig {
                             "是否启用无前缀版本的 '传送到上次传送点' 指令。")
                     .define("conciseTpBack", true);
 
+            CONCISE_TP_GRAVE = SERVER_BUILDER
+                    .comment("Enable or disable the concise version of the 'Return to death location' command.",
+                            "是否启用无前缀版本的 '返回死亡地点' 指令。")
+                    .define("conciseTpGrave", true);
+
             CONCISE_FLY = SERVER_BUILDER
                     .comment("Enable or disable the concise version of the 'Fly' command.",
                             "是否启用无前缀版本的 '创造飞行' 指令。")
@@ -1126,6 +1156,7 @@ public class CommonConfig {
         SWITCH_TP_HOME.set(true);
         SWITCH_TP_STAGE.set(true);
         SWITCH_TP_BACK.set(true);
+        SWITCH_TP_GRAVE.set(true);
         SWITCH_FLY.set(true);
 
         COMMAND_PREFIX.set(NarcissusFarewell.DEFAULT_COMMAND_PREFIX);
@@ -1162,6 +1193,7 @@ public class CommonConfig {
         COMMAND_DEL_STAGE.set("delstage");
         COMMAND_GET_STAGE.set("getstage");
         COMMAND_TP_BACK.set("back");
+        COMMAND_TP_GRAVE.set("grave");
         COMMAND_FLY.set("fly");
         COMMAND_VIRTUAL_OP.set("opv");
 
@@ -1198,6 +1230,7 @@ public class CommonConfig {
         CONCISE_DEL_STAGE.set(true);
         CONCISE_GET_STAGE.set(true);
         CONCISE_TP_BACK.set(true);
+        CONCISE_TP_GRAVE.set(true);
         CONCISE_FLY.set(true);
         CONCISE_VIRTUAL_OP.set(false);
 
