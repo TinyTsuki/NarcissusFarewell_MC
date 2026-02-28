@@ -5,7 +5,6 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.experimental.Accessors;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ServerLevel;
@@ -14,11 +13,12 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
-import xin.vanilla.narcissus.NarcissusFarewell;
+import org.joml.Vector3d;
 import xin.vanilla.narcissus.config.ServerConfig;
 import xin.vanilla.narcissus.enums.EnumSafeMode;
+import xin.vanilla.narcissus.util.DimensionUtils;
 import xin.vanilla.narcissus.util.NarcissusUtils;
-import xin.vanilla.narcissus.util.StringUtils;
+import xin.vanilla.narcissus.util.NumberUtils;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -26,7 +26,7 @@ import java.util.List;
 import java.util.Random;
 
 @Data
-@Accessors(chain = true)
+@Accessors(chain = true, fluent = true)
 @AllArgsConstructor
 @NoArgsConstructor
 @SuppressWarnings("resource")
@@ -60,6 +60,13 @@ public class Coordinate implements Serializable, Cloneable {
         this.y = y;
         this.z = z;
         this.dimension = dimension;
+    }
+
+    public Coordinate(double x, double y, double z, String dimension) {
+        this.x = x;
+        this.y = y;
+        this.z = z;
+        this.dimension = DimensionUtils.parse(dimension);
     }
 
     public Coordinate(double x, double y, double z, double yaw, double pitch) {
@@ -131,7 +138,7 @@ public class Coordinate implements Serializable, Cloneable {
     }
 
     public static Coordinate random(ServerPlayer player, int range, ResourceKey<@NotNull Level> dimension) {
-        ServerLevel world = NarcissusUtils.getWorld(dimension);
+        ServerLevel world = DimensionUtils.getLevel(dimension);
         range = Math.min(Math.max(range, 1), ServerConfig.TELEPORT_RANDOM_DISTANCE_LIMIT.get());
         double x = player.getX() + (Math.random() * 2 - 1) * range;
         double y = getRandomWithWeight(NarcissusUtils.getWorldMinY(world), NarcissusUtils.getWorldMaxY(world), (int) player.getY(), 0.75);
@@ -143,6 +150,10 @@ public class Coordinate implements Serializable, Cloneable {
         return BlockPos.containing(x, y, z);
     }
 
+    public Vector3d toVector3d() {
+        return new Vector3d(x, y, z);
+    }
+
     public Vec3 toVec3() {
         return new Vec3(x, y, z);
     }
@@ -151,6 +162,13 @@ public class Coordinate implements Serializable, Cloneable {
         this.x = pos.getX();
         this.y = pos.getY();
         this.z = pos.getZ();
+        return this;
+    }
+
+    public Coordinate fromVector3d(Vector3d pos) {
+        this.x = pos.x;
+        this.y = pos.y;
+        this.z = pos.z;
         return this;
     }
 
@@ -207,7 +225,7 @@ public class Coordinate implements Serializable, Cloneable {
         coordinate.z = tag.getDouble("z").orElse(0D);
         coordinate.yaw = tag.getDouble("yaw").orElse(0D);
         coordinate.pitch = tag.getDouble("pitch").orElse(0D);
-        coordinate.dimension = ResourceKey.create(Registries.DIMENSION, NarcissusFarewell.parseResource(tag.getString("dimension").orElse(Level.OVERWORLD.identifier().toString())));
+        coordinate.dimension = DimensionUtils.parse(tag.getString("dimension").orElse(Level.OVERWORLD.identifier().toString()));
         return coordinate;
     }
 
@@ -250,23 +268,31 @@ public class Coordinate implements Serializable, Cloneable {
     }
 
     public String toXString() {
-        return StringUtils.toFixedEx(x, 1);
+        return NumberUtils.toFixedEx(x, 1);
     }
 
     public String toYString() {
-        return StringUtils.toFixedEx(y, 1);
+        return NumberUtils.toFixedEx(y, 1);
     }
 
     public String toZString() {
-        return StringUtils.toFixedEx(z, 1);
+        return NumberUtils.toFixedEx(z, 1);
     }
 
     public String toXyzIntString() {
-        return getXInt() + ", " + getYInt() + ", " + getZInt();
+        return toXyzIntString(", ");
+    }
+
+    public String toXyzIntString(String separator) {
+        return getXInt() + separator + getYInt() + separator + getZInt();
     }
 
     public String toXyzString() {
-        return StringUtils.toFixedEx(x, 1) + ", " + StringUtils.toFixedEx(y, 1) + ", " + StringUtils.toFixedEx(z, 1);
+        return toXyzString(", ");
+    }
+
+    public String toXyzString(String separator) {
+        return NumberUtils.toFixedEx(x, 1) + separator + NumberUtils.toFixedEx(y, 1) + separator + NumberUtils.toFixedEx(z, 1);
     }
 
     public String getDimensionResourceId() {

@@ -1,0 +1,17 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "xin.vanilla.narcissus.mixin",
+  "compatibilityLevel": "JAVA_17",
+  "refmap": "narcissus_farewell.refmap.json",
+  "mixins": [
+    "CombatTrackerMixin",
+    "LivingEntityInvoker",
+    "ServerPlayerAccessor",
+    "ServerPlayerMixin",
+    "TemptGoalAccessor"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

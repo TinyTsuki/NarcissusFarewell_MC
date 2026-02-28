@@ -74,6 +74,11 @@ public class ServerConfig {
     public static final ForgeConfigSpec.IntValue TELEPORT_RANDOM_DISTANCE_LIMIT;
 
     /**
+     * grave 指令 range 参数的最大搜索范围
+     */
+    public static final ForgeConfigSpec.IntValue GRAVE_SEARCH_RANGE_LIMIT;
+
+    /**
      * 家的数量
      */
     public static final ForgeConfigSpec.IntValue TELEPORT_HOME_LIMIT;
@@ -193,6 +198,8 @@ public class ServerConfig {
 
     public static final ForgeConfigSpec.IntValue PERMISSION_TP_BACK;
 
+    public static final ForgeConfigSpec.IntValue PERMISSION_TP_GRAVE;
+
     public static final ForgeConfigSpec.IntValue PERMISSION_FLY;
 
     public static final ForgeConfigSpec.IntValue PERMISSION_VIRTUAL_OP;
@@ -248,6 +255,11 @@ public class ServerConfig {
      * 跨维度传送到上次传送点权限
      */
     public static final ForgeConfigSpec.IntValue PERMISSION_TP_BACK_ACROSS_DIMENSION;
+
+    /**
+     * 跨维度返回死亡地点权限
+     */
+    public static final ForgeConfigSpec.IntValue PERMISSION_TP_GRAVE_ACROSS_DIMENSION;
 
     // endregion 指令权限
 
@@ -328,6 +340,11 @@ public class ServerConfig {
      * 传送到上次传送点冷却时间
      */
     public static final ForgeConfigSpec.IntValue COOLDOWN_TP_BACK;
+
+    /**
+     * 返回死亡地点冷却时间
+     */
+    public static final ForgeConfigSpec.IntValue COOLDOWN_TP_GRAVE;
 
     // endregion 冷却时间
 
@@ -475,6 +492,14 @@ public class ServerConfig {
     public static final ForgeConfigSpec.IntValue COST_TP_BACK_NUM_LOWER;
     public static final ForgeConfigSpec.ConfigValue<String> COST_TP_BACK_EXP;
 
+    public static final ForgeConfigSpec.ConfigValue<String> COST_TP_GRAVE_TYPE;
+    public static final ForgeConfigSpec.IntValue COST_TP_GRAVE_NUM;
+    public static final ForgeConfigSpec.ConfigValue<String> COST_TP_GRAVE_CONF;
+    public static final ForgeConfigSpec.DoubleValue COST_TP_GRAVE_RATE;
+    public static final ForgeConfigSpec.IntValue COST_TP_GRAVE_NUM_UPPER;
+    public static final ForgeConfigSpec.IntValue COST_TP_GRAVE_NUM_LOWER;
+    public static final ForgeConfigSpec.ConfigValue<String> COST_TP_GRAVE_EXP;
+
     // endregion 传送代价
 
 
@@ -561,6 +586,12 @@ public class ServerConfig {
                     .comment("The maximum distance limit for random teleportation or teleportation to a specified structure.",
                             "随机传送与传送至指定结构的最大距离限制。")
                     .defineInRange("teleportRandomDistanceLimit", 10000, 5, Integer.MAX_VALUE);
+
+            // grave 指令 range 参数的最大搜索范围
+            GRAVE_SEARCH_RANGE_LIMIT = SERVER_BUILDER
+                    .comment("The maximum search range for the grave command's range parameter, in blocks.",
+                            "grave 指令 range 参数的最大搜索范围，单位为方块。")
+                    .defineInRange("graveSearchRangeLimit", 32, 1, 256);
 
             // 玩家可设置的家的数量
             TELEPORT_HOME_LIMIT = SERVER_BUILDER
@@ -807,6 +838,11 @@ public class ServerConfig {
                                 , "传送到上次传送点指令所需的权限等级。")
                         .defineInRange("permissionTpBack", 0, 0, 4);
 
+                PERMISSION_TP_GRAVE = SERVER_BUILDER
+                        .comment("The permission level required to use the 'Return to death location' command."
+                                , "返回死亡地点指令所需的权限等级。")
+                        .defineInRange("permissionTpGrave", 0, 0, 4);
+
                 PERMISSION_FLY = SERVER_BUILDER
                         .comment("The permission level required to use the 'Fly' command."
                                 , "飞行指令所需的权限等级。")
@@ -877,6 +913,11 @@ public class ServerConfig {
                         .comment("The permission level required to use the 'Teleport to the previous location' command across dimensions, -1 means disabled."
                                 , "跨维度传送到上次传送点指令所需的权限等级，若为-1则禁用跨维度传送。")
                         .defineInRange("permissionTpBackAcrossDimension", 0, -1, 4);
+
+                PERMISSION_TP_GRAVE_ACROSS_DIMENSION = SERVER_BUILDER
+                        .comment("The permission level required to use the 'Return to death location' command across dimensions, -1 means disabled."
+                                , "跨维度返回死亡地点指令所需的权限等级，若为-1则禁用跨维度传送。")
+                        .defineInRange("permissionTpGraveAcrossDimension", 0, -1, 4);
                 SERVER_BUILDER.pop();
             }
 
@@ -964,6 +1005,11 @@ public class ServerConfig {
                     .comment("The cooldown time for 'Teleport to the previous location', in seconds."
                             , "传送到上次传送点的冷却时间，单位为秒。")
                     .defineInRange("cooldownTpBack", 10, 0, 60 * 60 * 24);
+
+            COOLDOWN_TP_GRAVE = SERVER_BUILDER
+                    .comment("The cooldown time for 'Return to death location', in seconds."
+                            , "返回死亡地点的冷却时间，单位为秒。")
+                    .defineInRange("cooldownTpGrave", 10, 0, 60 * 60 * 24);
 
             SERVER_BUILDER.pop();
         }
@@ -1724,6 +1770,50 @@ public class ServerConfig {
                 SERVER_BUILDER.pop();
             }
 
+            {
+                SERVER_BUILDER.comment("Return to death location", "返回死亡地点").push("TpDeath");
+
+                COST_TP_GRAVE_TYPE = SERVER_BUILDER
+                        .comment("The cost type for 'Return to death location'"
+                                , "返回死亡地点的代价类型。"
+                                , "Allowed Values: NONE, EXP_POINT, EXP_LEVEL, HEALTH, HUNGER, ITEM, COMMAND")
+                        .define("costTpGraveType", EnumCostType.NONE.name());
+
+                COST_TP_GRAVE_NUM = SERVER_BUILDER
+                        .comment("The number of cost for 'Return to death location'"
+                                , "返回死亡地点的代价数量。")
+                        .defineInRange("costTpGraveNum", 1, 0, 9999);
+
+                COST_TP_GRAVE_CONF = SERVER_BUILDER
+                        .comment("The configuration for 'Return to death location'.",
+                                "If the type is ITEM, the value should be the item ID with optional NBT data.",
+                                "If the type is COMMAND, the value should be a specific command string.",
+                                "返回死亡地点的代价配置。")
+                        .define("costTpGraveConf", "");
+
+                COST_TP_GRAVE_RATE = SERVER_BUILDER
+                        .comment("The cost rate for 'Return to death location'."
+                                , "返回死亡地点的代价倍率。")
+                        .defineInRange("costTpGraveRate", 0.002, 0, 9999);
+
+                COST_TP_GRAVE_NUM_UPPER = SERVER_BUILDER
+                        .comment("The upper limit of the cost for 'Return to death location'."
+                                , "返回死亡地点的代价数量上限。")
+                        .defineInRange("costTpGraveNumUpper", 20, 0, Integer.MAX_VALUE);
+
+                COST_TP_GRAVE_NUM_LOWER = SERVER_BUILDER
+                        .comment("The lower limit of the cost for 'Return to death location'."
+                                , "返回死亡地点的代价数量下限。")
+                        .defineInRange("costTpGraveNumLower", 0, 0, Integer.MAX_VALUE);
+
+                COST_TP_GRAVE_EXP = SERVER_BUILDER
+                        .comment("The expression used to calculate the cost for 'Return to death location'."
+                                , "返回死亡地点的代价计算表达式。")
+                        .define("costTpGraveExp", "num * distance * rate");
+
+                SERVER_BUILDER.pop();
+            }
+
             SERVER_BUILDER.pop();
         }
 
@@ -1746,6 +1836,7 @@ public class ServerConfig {
         TELEPORT_REQUEST_COOLDOWN_TYPE.set(EnumCoolDownType.INDIVIDUAL.name());
         TELEPORT_REQUEST_COOLDOWN.set(10);
         TELEPORT_RANDOM_DISTANCE_LIMIT.set(10000);
+        GRAVE_SEARCH_RANGE_LIMIT.set(32);
         TELEPORT_HOME_LIMIT.set(5);
         UNSAFE_BLOCKS.set(Stream.of(
                         Blocks.LAVA,
@@ -1810,6 +1901,7 @@ public class ServerConfig {
         PERMISSION_DEL_STAGE.set(2);
         PERMISSION_GET_STAGE.set(0);
         PERMISSION_TP_BACK.set(0);
+        PERMISSION_TP_GRAVE.set(0);
         PERMISSION_FLY.set(2);
         PERMISSION_VIRTUAL_OP.set(4);
         PERMISSION_SET_CARD.set(2);
@@ -1824,6 +1916,7 @@ public class ServerConfig {
         PERMISSION_TP_HOME_ACROSS_DIMENSION.set(0);
         PERMISSION_TP_STAGE_ACROSS_DIMENSION.set(0);
         PERMISSION_TP_BACK_ACROSS_DIMENSION.set(0);
+        PERMISSION_TP_GRAVE_ACROSS_DIMENSION.set(0);
 
         COOLDOWN_TP_COORDINATE.set(10);
         COOLDOWN_TP_STRUCTURE.set(10);
@@ -1840,6 +1933,7 @@ public class ServerConfig {
         COOLDOWN_TP_HOME.set(10);
         COOLDOWN_TP_STAGE.set(10);
         COOLDOWN_TP_BACK.set(10);
+        COOLDOWN_TP_GRAVE.set(10);
 
         COST_TP_COORDINATE_TYPE.set(EnumCostType.NONE.name());
         COST_TP_COORDINATE_NUM.set(1);
@@ -1960,6 +2054,13 @@ public class ServerConfig {
         COST_TP_BACK_NUM_UPPER.set(20);
         COST_TP_BACK_NUM_LOWER.set(0);
         COST_TP_BACK_EXP.set("num * distance * rate");
+        COST_TP_GRAVE_TYPE.set(EnumCostType.NONE.name());
+        COST_TP_GRAVE_NUM.set(1);
+        COST_TP_GRAVE_CONF.set("");
+        COST_TP_GRAVE_RATE.set(0.002);
+        COST_TP_GRAVE_NUM_UPPER.set(20);
+        COST_TP_GRAVE_NUM_LOWER.set(0);
+        COST_TP_GRAVE_EXP.set("num * distance * rate");
 
         SERVER_CONFIG.save();
     }

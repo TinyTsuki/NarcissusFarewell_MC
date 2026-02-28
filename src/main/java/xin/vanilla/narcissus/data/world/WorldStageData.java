@@ -69,7 +69,7 @@ public class WorldStageData extends SavedData {
     public static WorldStageData load(CompoundTag nbt) {
         WorldStageData data = new WorldStageData();
         ListTag stageCoordinateNBT = nbt.getList("stageCoordinate").orElse(new ListTag());
-        Map<KeyValue<String, String>, Coordinate> stageCoordinate = new HashMap<>();
+        Map<KeyValue<String, String>, Coordinate> stageCoordinate = new LinkedHashMap<>();
         for (int i = 0; i < stageCoordinateNBT.size(); i++) {
             CompoundTag stageCoordinateTag = stageCoordinateNBT.getCompound(i).orElse(new CompoundTag());
             stageCoordinate.put(new KeyValue<>(stageCoordinateTag.getString("key").orElse(""), stageCoordinateTag.getString("value").orElse("")),
@@ -84,8 +84,8 @@ public class WorldStageData extends SavedData {
         ListTag stageCoordinateNBT = new ListTag();
         for (Map.Entry<KeyValue<String, String>, Coordinate> entry : this.getStageCoordinate().entrySet()) {
             CompoundTag stageCoordinateTag = new CompoundTag();
-            stageCoordinateTag.putString("key", entry.getKey().getKey());
-            stageCoordinateTag.putString("value", entry.getKey().getValue());
+            stageCoordinateTag.putString("key", entry.getKey().key());
+            stageCoordinateTag.putString("value", entry.getKey().value());
             stageCoordinateTag.put("coordinate", entry.getValue().writeToNBT());
             stageCoordinateNBT.add(stageCoordinateTag);
         }
@@ -104,23 +104,23 @@ public class WorldStageData extends SavedData {
     }
 
     public int getCoordinateSize(String name) {
-        return (int) this.getStageCoordinate().keySet().stream().filter(keyValue -> keyValue.getValue().equals(name)).count();
+        return (int) this.getStageCoordinate().keySet().stream().filter(keyValue -> keyValue.value().equals(name)).count();
     }
 
     public int getCoordinateSize(String dimension, String name) {
-        return (int) this.getStageCoordinate().keySet().stream().filter(keyValue -> keyValue.getKey().equals(dimension) && keyValue.getValue().equals(name)).count();
+        return (int) this.getStageCoordinate().keySet().stream().filter(keyValue -> keyValue.key().equals(dimension) && keyValue.value().equals(name)).count();
     }
 
     public Coordinate getCoordinate(String name) {
         return getCoordinateSize(name) == 1 ? this.getStageCoordinate().entrySet().stream()
-                .filter(entry -> entry.getKey().getValue().equals(name))
+                .filter(entry -> entry.getKey().value().equals(name))
                 .findFirst().map(Map.Entry::getValue).orElse(null)
                 : null;
     }
 
     public Coordinate getCoordinate(String dimension, String name) {
         return getCoordinateSize(dimension, name) == 1 ? this.getStageCoordinate().entrySet().stream()
-                .filter(entry -> entry.getKey().getKey().equals(dimension) && entry.getKey().getValue().equals(name))
+                .filter(entry -> entry.getKey().key().equals(dimension) && entry.getKey().value().equals(name))
                 .findFirst().map(Map.Entry::getValue).orElse(null)
                 : null;
     }
