@@ -20,6 +20,7 @@ public enum EnumTeleportType {
     TP_HOME,
     TP_STAGE,
     TP_BACK,
+    TP_GRAVE,
     DEATH,
     OTHER;
 
@@ -55,6 +56,8 @@ public enum EnumTeleportType {
                 return EnumCommandType.TP_STAGE;
             case TP_BACK:
                 return EnumCommandType.TP_BACK;
+            case TP_GRAVE:
+                return EnumCommandType.TP_GRAVE;
             default:
                 return null;
         }

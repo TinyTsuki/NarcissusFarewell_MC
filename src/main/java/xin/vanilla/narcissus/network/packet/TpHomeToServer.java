@@ -8,22 +8,22 @@ import xin.vanilla.narcissus.util.NarcissusUtils;
 
 import java.util.function.Supplier;
 
-public class TpBackNotice {
+public class TpHomeToServer {
 
-    public TpBackNotice() {
+    public TpHomeToServer() {
     }
 
-    public TpBackNotice(PacketBuffer buf) {
+    public TpHomeToServer(PacketBuffer buf) {
     }
 
     public void toBytes(PacketBuffer buf) {
     }
 
-    public static void handle(TpBackNotice packet, Supplier<NetworkEvent.Context> ctx) {
+    public static void handle(TpHomeToServer packet, Supplier<NetworkEvent.Context> ctx) {
         ctx.get().enqueueWork(() -> {
             ServerPlayerEntity player = ctx.get().getSender();
             if (player != null) {
-                NarcissusUtils.executeCommand(player, NarcissusUtils.getCommand(EnumCommandType.TP_BACK));
+                NarcissusUtils.executeCommand(player, NarcissusUtils.getCommand(EnumCommandType.TP_HOME));
             }
         });
         ctx.get().setPacketHandled(true);

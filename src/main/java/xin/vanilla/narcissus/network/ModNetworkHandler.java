@@ -20,11 +20,20 @@ public class ModNetworkHandler {
     }
 
     public static void registerPackets() {
-        INSTANCE.registerMessage(nextID(), PlayerDataSyncPacket.class, PlayerDataSyncPacket::toBytes, PlayerDataSyncPacket::new, PlayerDataSyncPacket::handle);
-        INSTANCE.registerMessage(nextID(), ClientModLoadedNotice.class, ClientModLoadedNotice::toBytes, ClientModLoadedNotice::new, ClientModLoadedNotice::handle);
-        INSTANCE.registerMessage(nextID(), TpHomeNotice.class, TpHomeNotice::toBytes, TpHomeNotice::new, TpHomeNotice::handle);
-        INSTANCE.registerMessage(nextID(), TpBackNotice.class, TpBackNotice::toBytes, TpBackNotice::new, TpBackNotice::handle);
-        INSTANCE.registerMessage(nextID(), TpYesNotice.class, TpYesNotice::toBytes, TpYesNotice::new, TpYesNotice::handle);
-        INSTANCE.registerMessage(nextID(), TpNoNotice.class, TpNoNotice::toBytes, TpNoNotice::new, TpNoNotice::handle);
+        INSTANCE.registerMessage(nextID(), CustomConfigSyncToClient.class, CustomConfigSyncToClient::toBytes, CustomConfigSyncToClient::new, CustomConfigSyncToClient::handle);
+        INSTANCE.registerMessage(nextID(), PlayerDataSyncToClient.class, PlayerDataSyncToClient::toBytes, PlayerDataSyncToClient::new, PlayerDataSyncToClient::handle);
+        INSTANCE.registerMessage(nextID(), WaypointSyncToClient.class, WaypointSyncToClient::toBytes, WaypointSyncToClient::new, WaypointSyncToClient::handle);
+        INSTANCE.registerMessage(nextID(), StageDataSyncToClient.class, StageDataSyncToClient::toBytes, StageDataSyncToClient::new, StageDataSyncToClient::handle);
+        INSTANCE.registerMessage(nextID(), CostConfigSyncToClient.class, CostConfigSyncToClient::toBytes, CostConfigSyncToClient::new, CostConfigSyncToClient::handle);
+
+        INSTANCE.registerMessage(nextID(), ModLoadedToBoth.class, ModLoadedToBoth::toBytes, ModLoadedToBoth::new, ModLoadedToBoth::handle);
+        INSTANCE.registerMessage(nextID(), WaypointTeleportToServer.class, WaypointTeleportToServer::toBytes, WaypointTeleportToServer::new, WaypointTeleportToServer::handle);
+        INSTANCE.registerMessage(nextID(), WaypointDelToServer.class, WaypointDelToServer::toBytes, WaypointDelToServer::new, WaypointDelToServer::handle);
+
+        INSTANCE.registerMessage(nextID(), TpBackToServer.class, TpBackToServer::toBytes, TpBackToServer::new, TpBackToServer::handle);
+        INSTANCE.registerMessage(nextID(), TpGraveToServer.class, TpGraveToServer::toBytes, TpGraveToServer::new, TpGraveToServer::handle);
+        INSTANCE.registerMessage(nextID(), TpHomeToServer.class, TpHomeToServer::toBytes, TpHomeToServer::new, TpHomeToServer::handle);
+        INSTANCE.registerMessage(nextID(), TpNoToServer.class, TpNoToServer::toBytes, TpNoToServer::new, TpNoToServer::handle);
+        INSTANCE.registerMessage(nextID(), TpYesToServer.class, TpYesToServer::toBytes, TpYesToServer::new, TpYesToServer::handle);
     }
 }
