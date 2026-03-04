@@ -17,10 +17,7 @@ import xin.vanilla.narcissus.enums.EnumCommandType;
 import xin.vanilla.narcissus.enums.EnumI18nType;
 import xin.vanilla.narcissus.network.packet.StageDataSyncToClient;
 import xin.vanilla.narcissus.network.packet.WaypointSyncToClient;
-import xin.vanilla.narcissus.util.CommandUtils;
-import xin.vanilla.narcissus.util.Component;
-import xin.vanilla.narcissus.util.I18nUtils;
-import xin.vanilla.narcissus.util.NarcissusUtils;
+import xin.vanilla.narcissus.util.*;
 
 
 public final class DelStageCommand {
@@ -38,7 +35,7 @@ public final class DelStageCommand {
         String name = StringArgumentType.getString(context, "name");
         String dimension;
         try {
-            RegistryKey<World> targetLevel = NarcissusUtils.parseDimension(StringArgumentType.getString(context, "dimension"));
+            RegistryKey<World> targetLevel = DimensionUtils.parse(StringArgumentType.getString(context, "dimension"));
             dimension = targetLevel.location().toString();
         } catch (IllegalArgumentException ignored) {
             dimension = NarcissusUtils.getStageDimensionByName(player, name);

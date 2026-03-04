@@ -8,7 +8,7 @@ import net.minecraft.util.RegistryKey;
 import net.minecraft.world.World;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import xin.vanilla.narcissus.util.NarcissusUtils;
+import xin.vanilla.narcissus.util.DimensionUtils;
 
 import java.awt.*;
 
@@ -21,7 +21,7 @@ public final class FtbChunks {
 
     public static void addWaypoint(String name, String dimension, double x, double y, double z) {
         try {
-            RegistryKey<World> dim = NarcissusUtils.parseDimension(dimension);
+            RegistryKey<World> dim = DimensionUtils.parse(dimension);
             MapDimension map = MapManager.inst.getDimension(dim);
             Waypoint waypoint = new Waypoint(map);
             waypoint.name = name;
@@ -38,7 +38,7 @@ public final class FtbChunks {
 
     public static void removeWaypoint(String name, String dimension, double x, double y, double z) {
         try {
-            RegistryKey<World> dim = NarcissusUtils.parseDimension(dimension);
+            RegistryKey<World> dim = DimensionUtils.parse(dimension);
             MapDimension map = MapManager.inst.getDimension(dim);
             for (Waypoint waypoint : map.getWaypoints()) {
                 if (waypoint.name.equals(name)

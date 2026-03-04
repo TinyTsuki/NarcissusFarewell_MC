@@ -22,6 +22,7 @@ import xin.vanilla.narcissus.enums.EnumI18nType;
 import xin.vanilla.narcissus.network.packet.StageDataSyncToClient;
 import xin.vanilla.narcissus.network.packet.WaypointSyncToClient;
 import xin.vanilla.narcissus.util.CommandUtils;
+import xin.vanilla.narcissus.util.DimensionUtils;
 import xin.vanilla.narcissus.util.I18nUtils;
 import xin.vanilla.narcissus.util.NarcissusUtils;
 
@@ -39,7 +40,7 @@ public final class SetStageCommand {
         String name = StringArgumentType.getString(context, "name");
         RegistryKey<World> targetLevel;
         try {
-            RegistryKey<World> targetDimension = NarcissusUtils.parseDimension(StringArgumentType.getString(context, "dimension"));
+            RegistryKey<World> targetDimension = DimensionUtils.parse(StringArgumentType.getString(context, "dimension"));
             ServerWorld level = context.getSource().getServer().getLevel(targetDimension);
             if (level != null) {
                 targetLevel = targetDimension;
@@ -80,6 +81,7 @@ public final class SetStageCommand {
                         .executes(SetStageCommand::execute)
                         .then(Commands.argument("coordinate", Vec3Argument.vec3())
                                 .then(Commands.argument("dimension", StringArgumentType.greedyString())
+                                        .suggests(CommandUtils::dimSuggestion)
                                         .executes(SetStageCommand::execute)
                                 )
                         )
