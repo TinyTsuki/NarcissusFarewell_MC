@@ -16,6 +16,7 @@ import xin.vanilla.narcissus.integration.grave.CorailTombstoneIntegration;
 import xin.vanilla.narcissus.integration.grave.CorpseGraveIntegration;
 import xin.vanilla.narcissus.integration.grave.GravestoneModGraveIntegration;
 import xin.vanilla.narcissus.integration.grave.SimpleTombGraveIntegration;
+import xin.vanilla.narcissus.util.DimensionUtils;
 import xin.vanilla.narcissus.util.NarcissusUtils;
 import xin.vanilla.narcissus.util.SafeBlockChecker;
 
@@ -118,7 +119,7 @@ public final class GraveHelper {
      * 检查坐标是否安全可站立
      */
     public static boolean isCoordinateSafe(Coordinate coord) {
-        ServerWorld world = NarcissusUtils.getWorld(coord.dimension());
+        ServerWorld world = DimensionUtils.getLevel(coord.dimension());
         if (world == null) return false;
         SafeBlockChecker checker = new SafeBlockChecker(world);
         BlockPos pos = coord.toBlockPos();

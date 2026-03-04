@@ -15,20 +15,20 @@ import xin.vanilla.narcissus.NarcissusFarewell;
 public class ClientModEventHandler {
     private static final Logger LOGGER = LogManager.getLogger();
 
-    private static final String CATEGORIES = "key.narcissus_farewell.categories";
+    private static final String CATEGORIES = "word.narcissus_farewell.categories";
 
     // 定义按键绑定
-    public static KeyBinding TP_HOME_KEY = new KeyBinding("key.narcissus_farewell.tp_home",
+    public static KeyBinding TP_HOME_KEY = new KeyBinding("word.narcissus_farewell.tp_home",
             -1, CATEGORIES);
-    public static KeyBinding TP_BACK_KEY = new KeyBinding("key.narcissus_farewell.tp_back",
+    public static KeyBinding TP_BACK_KEY = new KeyBinding("word.narcissus_farewell.tp_back",
             -1, CATEGORIES);
-    public static KeyBinding TP_REQ_YES = new KeyBinding("key.narcissus_farewell.tp_req_yes",
+    public static KeyBinding TP_REQ_YES = new KeyBinding("word.narcissus_farewell.tp_req_yes",
             -1, CATEGORIES);
-    public static KeyBinding TP_REQ_NO = new KeyBinding("key.narcissus_farewell.tp_req_no",
+    public static KeyBinding TP_REQ_NO = new KeyBinding("word.narcissus_farewell.tp_req_no",
             -1, CATEGORIES);
-    public static KeyBinding TP_GRAVE_KEY = new KeyBinding("key.narcissus_farewell.tp_grave",
+    public static KeyBinding TP_GRAVE_KEY = new KeyBinding("word.narcissus_farewell.tp_grave",
             -1, CATEGORIES);
-    public static KeyBinding OPEN_SCREEN_KEY = new KeyBinding("key.narcissus_farewell.open_screen",
+    public static KeyBinding OPEN_SCREEN_KEY = new KeyBinding("word.narcissus_farewell.open_screen",
             -1, CATEGORIES);
 
     /**

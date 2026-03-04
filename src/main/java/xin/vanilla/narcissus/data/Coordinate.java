@@ -14,6 +14,7 @@ import net.minecraft.world.World;
 import net.minecraft.world.server.ServerWorld;
 import xin.vanilla.narcissus.config.ServerConfig;
 import xin.vanilla.narcissus.enums.EnumSafeMode;
+import xin.vanilla.narcissus.util.DimensionUtils;
 import xin.vanilla.narcissus.util.NarcissusUtils;
 import xin.vanilla.narcissus.util.NumberUtils;
 
@@ -62,7 +63,7 @@ public class Coordinate implements Serializable, Cloneable {
         this.x = x;
         this.y = y;
         this.z = z;
-        this.dimension = NarcissusUtils.parseDimension(dimension);
+        this.dimension = DimensionUtils.parse(dimension);
     }
 
     public Coordinate(double x, double y, double z, double yaw, double pitch) {
@@ -134,7 +135,7 @@ public class Coordinate implements Serializable, Cloneable {
     }
 
     public static Coordinate random(ServerPlayerEntity player, int range, RegistryKey<World> dimension) {
-        ServerWorld world = NarcissusUtils.getWorld(dimension);
+        ServerWorld world = DimensionUtils.getLevel(dimension);
         range = Math.min(Math.max(range, 1), ServerConfig.TELEPORT_RANDOM_DISTANCE_LIMIT.get());
         double x = player.getX() + (Math.random() * 2 - 1) * range;
         double y = getRandomWithWeight(NarcissusUtils.getWorldMinY(world), NarcissusUtils.getWorldMaxY(world), (int) player.getY(), 0.75);
@@ -210,7 +211,7 @@ public class Coordinate implements Serializable, Cloneable {
         coordinate.z = tag.getDouble("z");
         coordinate.yaw = tag.getDouble("yaw");
         coordinate.pitch = tag.getDouble("pitch");
-        coordinate.dimension = NarcissusUtils.parseDimension(tag.getString("dimension"));
+        coordinate.dimension = DimensionUtils.parse(tag.getString("dimension"));
         return coordinate;
     }
 
