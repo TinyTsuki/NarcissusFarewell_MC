@@ -11,7 +11,7 @@ import xaero.hud.minimap.waypoint.WaypointColor;
 import xaero.hud.minimap.waypoint.set.WaypointSet;
 import xaero.hud.minimap.world.MinimapWorld;
 import xaero.hud.path.XaeroPath;
-import xin.vanilla.narcissus.util.NarcissusUtils;
+import xin.vanilla.narcissus.util.DimensionUtils;
 import xin.vanilla.narcissus.util.StringUtils;
 
 
@@ -23,7 +23,7 @@ public final class XaeroMinimap {
 
     public static void addWaypoint(String name, String dimension, double x, double y, double z) {
         try {
-            RegistryKey<World> dimKey = NarcissusUtils.parseDimension(dimension);
+            RegistryKey<World> dimKey = DimensionUtils.parse(dimension);
             Waypoint waypoint = new Waypoint((int) x, (int) y, (int) z, name, StringUtils.firstChar(name), WaypointColor.GREEN);
             MinimapSession session = BuiltInHudModules.MINIMAP.getCurrentSession();
 
@@ -42,7 +42,7 @@ public final class XaeroMinimap {
 
     public static void removeWaypoint(String name, String dimension, double x, double y, double z) {
         try {
-            RegistryKey<World> dimKey = NarcissusUtils.parseDimension(dimension);
+            RegistryKey<World> dimKey = DimensionUtils.parse(dimension);
             Waypoint waypoint = new Waypoint((int) x, (int) y, (int) z, name, StringUtils.firstChar(name), WaypointColor.GREEN);
             MinimapSession session = BuiltInHudModules.MINIMAP.getCurrentSession();
 

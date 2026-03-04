@@ -12,7 +12,7 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 import net.minecraft.world.server.ServerWorld;
 import xin.vanilla.narcissus.data.Coordinate;
-import xin.vanilla.narcissus.util.NarcissusUtils;
+import xin.vanilla.narcissus.util.DimensionUtils;
 
 import java.util.List;
 import java.util.UUID;
@@ -31,7 +31,7 @@ public final class SimpleTombGraveIntegration {
     public static void findNear(Coordinate center, int radius, UUID playerUuid, List<Coordinate> out) {
         try {
             RegistryKey<World> dim = center.dimension();
-            ServerWorld world = NarcissusUtils.getWorld(dim);
+            ServerWorld world = DimensionUtils.getLevel(dim);
             if (world == null) return;
 
             BlockPos centerPos = center.toBlockPos();

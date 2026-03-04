@@ -751,7 +751,7 @@ public class NarcissusUtils {
     }
 
     public static Coordinate findSafeCoordinate(Coordinate coordinate, boolean belowAllowAir) {
-        World world = getWorld(coordinate.dimension());
+        World world = DimensionUtils.getLevel(coordinate.dimension());
         int chunkX = (int) coordinate.x() >> 4;
         int chunkZ = (int) coordinate.z() >> 4;
         Coordinate result = new SafeCoordinateFinder(world).searchInChunk(coordinate, chunkX, chunkZ, belowAllowAir);
@@ -762,13 +762,6 @@ public class NarcissusUtils {
     // endregion 安全坐标
 
     // region 坐标查找
-
-    /**
-     * 获取指定维度的世界实例
-     */
-    public static ServerWorld getWorld(RegistryKey<World> dimension) {
-        return NarcissusFarewell.getServerInstance().getLevel(dimension);
-    }
 
     public static Biome getBiome(String id) {
         return getBiome(NarcissusFarewell.parseResource(id));
@@ -1105,9 +1098,8 @@ public class NarcissusUtils {
     public static void teleportTo(@NonNull ServerPlayerEntity player, @NonNull Coordinate after, EnumTeleportType type) {
         Coordinate before = new Coordinate(player);
         World world = player.level;
-        MinecraftServer server = player.getServer();
-        if (world != null && server != null) {
-            ServerWorld level = server.getLevel(after.dimension());
+        if (world != null) {
+            ServerWorld level = DimensionUtils.getLevel(after.dimension());
             if (level != null) {
                 if (after.safe()) {
                     // 异步的代价就是粪吗
@@ -2349,10 +2341,6 @@ public class NarcissusUtils {
         if (speed != null) abilities.putFloat("flySpeed", speed);
         player.abilities.loadSaveData(root);
         player.connection.send(new SPlayerAbilitiesPacket(player.abilities));
-    }
-
-    public static RegistryKey<World> parseDimension(String dimension) {
-        return RegistryKey.create(Registry.DIMENSION_REGISTRY, NarcissusFarewell.parseResource(dimension));
     }
 
     // endregion 杂项

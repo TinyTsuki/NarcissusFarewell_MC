@@ -21,10 +21,7 @@ import xin.vanilla.narcissus.enums.EnumI18nType;
 import xin.vanilla.narcissus.enums.EnumSafeMode;
 import xin.vanilla.narcissus.enums.EnumTeleportType;
 import xin.vanilla.narcissus.integration.GraveHelper;
-import xin.vanilla.narcissus.util.CommandUtils;
-import xin.vanilla.narcissus.util.I18nUtils;
-import xin.vanilla.narcissus.util.NarcissusUtils;
-import xin.vanilla.narcissus.util.StringUtils;
+import xin.vanilla.narcissus.util.*;
 
 import java.util.concurrent.CompletableFuture;
 
@@ -158,7 +155,7 @@ public final class TpGraveCommand {
 
                             RegistryKey<World> dim = null;
                             try {
-                                RegistryKey<World> d = NarcissusUtils.parseDimension(arg);
+                                RegistryKey<World> d = DimensionUtils.parse(arg);
                                 if (ctx.getSource().getServer().getLevel(d) != null) dim = d;
                             } catch (IllegalArgumentException ignored) {
                             }
