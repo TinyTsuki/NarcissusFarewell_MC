@@ -7,7 +7,7 @@ import net.minecraft.util.RegistryKey;
 import net.minecraft.world.World;
 import net.minecraft.world.server.ServerWorld;
 import xin.vanilla.narcissus.data.Coordinate;
-import xin.vanilla.narcissus.util.NarcissusUtils;
+import xin.vanilla.narcissus.util.DimensionUtils;
 
 import java.util.List;
 import java.util.UUID;
@@ -27,7 +27,7 @@ public final class CorpseGraveIntegration {
         try {
 
             RegistryKey<World> dim = center.dimension();
-            ServerWorld world = NarcissusUtils.getWorld(dim);
+            ServerWorld world = DimensionUtils.getLevel(dim);
             if (world == null) return;
 
             double cx = center.x(), cy = center.y(), cz = center.z();

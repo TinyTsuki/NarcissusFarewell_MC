@@ -151,6 +151,13 @@ public class Component implements Cloneable, Serializable {
         return this;
     }
 
+    public Component languageCodeIfEmpty(String languageCode) {
+        if (this.isLanguageCodeEmpty()) {
+            this.languageCode(languageCode);
+        }
+        return this;
+    }
+
     // region NonNull Getter
 
     /**
@@ -589,7 +596,8 @@ public class Component implements Cloneable, Serializable {
                         i++;
                     }
                 } else {
-                    components.add(new StringTextComponent(this.text).withStyle(this.getStyle()));
+                    this.args.forEach(arg -> arg.languageCodeIfEmpty(languageCode));
+                    components.add(new StringTextComponent(StringUtils.format(this.text, this.args.toArray())).withStyle(this.getStyle()));
                 }
             }
         }

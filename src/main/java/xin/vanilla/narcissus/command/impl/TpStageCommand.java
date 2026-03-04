@@ -16,6 +16,7 @@ import xin.vanilla.narcissus.enums.EnumCommandType;
 import xin.vanilla.narcissus.enums.EnumI18nType;
 import xin.vanilla.narcissus.enums.EnumTeleportType;
 import xin.vanilla.narcissus.util.CommandUtils;
+import xin.vanilla.narcissus.util.DimensionUtils;
 import xin.vanilla.narcissus.util.I18nUtils;
 import xin.vanilla.narcissus.util.NarcissusUtils;
 
@@ -29,7 +30,7 @@ public final class TpStageCommand {
         if (CommandUtils.checkTeleportPre(context.getSource(), EnumCommandType.TP_STAGE)) return 0;
         RegistryKey<World> targetLevel = null;
         try {
-            RegistryKey<World> targetDimension = NarcissusUtils.parseDimension(StringArgumentType.getString(context, "dimension"));
+            RegistryKey<World> targetDimension = DimensionUtils.parse(StringArgumentType.getString(context, "dimension"));
             ServerWorld level = context.getSource().getServer().getLevel(targetDimension);
             if (level != null) {
                 targetLevel = targetDimension;

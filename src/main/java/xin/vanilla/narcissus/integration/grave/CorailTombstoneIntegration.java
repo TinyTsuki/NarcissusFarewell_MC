@@ -12,6 +12,7 @@ import ovh.corail.tombstone.helper.Location;
 import ovh.corail.tombstone.item.ItemGraveKey;
 import ovh.corail.tombstone.tileentity.TileEntityGrave;
 import xin.vanilla.narcissus.data.Coordinate;
+import xin.vanilla.narcissus.util.DimensionUtils;
 import xin.vanilla.narcissus.util.NarcissusUtils;
 
 import java.util.List;
@@ -28,7 +29,7 @@ public final class CorailTombstoneIntegration {
     public static void findNear(Coordinate center, int radius, UUID playerUuid, List<Coordinate> out) {
         try {
             RegistryKey<World> dim = center.dimension();
-            ServerWorld world = NarcissusUtils.getWorld(dim);
+            ServerWorld world = DimensionUtils.getLevel(dim);
             if (world == null) return;
 
             BlockPos centerPos = center.toBlockPos();

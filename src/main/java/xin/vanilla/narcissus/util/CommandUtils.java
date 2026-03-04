@@ -296,7 +296,7 @@ public class CommandUtils {
                 if (entry1 != null) result = entry1.getKey();
             } catch (IllegalArgumentException ignored) {
                 try {
-                    result = StringArgumentType.getString(context, "requestId");
+                    result = getStringEmpty(context, "requestId");
                     if (!NarcissusFarewell.getTeleportRequest().containsKey(result))
                         result = null;
                 } catch (IllegalArgumentException ignored1) {
@@ -380,6 +380,15 @@ public class CommandUtils {
 
     // region suggestions
 
+    public static CompletableFuture<Suggestions> dimSuggestion(CommandContext<CommandSource> context, SuggestionsBuilder builder) {
+        String name = getStringEmpty(context, "dimension");
+        for (String dim : DimensionUtils.stringSet()) {
+            if (StringUtils.isNullOrEmpty(name) || dim.contains(name))
+                builder.suggest(dim);
+        }
+        return builder.buildFuture();
+    }
+
     public static CompletableFuture<Suggestions> safeSuggestion(CommandContext<CommandSource> context, SuggestionsBuilder builder) {
         builder.suggest("safe");
         builder.suggest("unsafe");
@@ -413,7 +422,7 @@ public class CommandUtils {
     public static CompletableFuture<Suggestions> homeDimSuggestion(CommandContext<CommandSource> context, SuggestionsBuilder builder) throws CommandSyntaxException {
         ServerPlayerEntity player = context.getSource().getPlayerOrException();
         PlayerTeleportData data = PlayerTeleportData.getData(player);
-        String name = StringArgumentType.getString(context, "name");
+        String name = getStringEmpty(context, "name");
         for (KeyValue<String, String> keyValue : data.getHomeCoordinate().keySet()) {
             if (keyValue.value().equals(name))
                 builder.suggest(keyValue.key());
@@ -423,9 +432,9 @@ public class CommandUtils {
 
     public static CompletableFuture<Suggestions> stageDimSuggestion(CommandContext<CommandSource> context, SuggestionsBuilder builder) {
         WorldStageData data = WorldStageData.get();
-        String name = StringArgumentType.getString(context, "name");
+        String name = getStringEmpty(context, "name");
         for (KeyValue<String, String> keyValue : data.getStageCoordinate().keySet()) {
-            if (keyValue.value().equals(name) || (name != null && keyValue.value().contains(name)))
+            if (name == null || keyValue.value().contains(name))
                 builder.suggest(keyValue.key());
         }
         return builder.buildFuture();

@@ -19,10 +19,7 @@ import xin.vanilla.narcissus.data.player.PlayerTeleportData;
 import xin.vanilla.narcissus.enums.EnumCommandType;
 import xin.vanilla.narcissus.enums.EnumI18nType;
 import xin.vanilla.narcissus.enums.EnumTeleportType;
-import xin.vanilla.narcissus.util.CommandUtils;
-import xin.vanilla.narcissus.util.I18nUtils;
-import xin.vanilla.narcissus.util.NarcissusUtils;
-import xin.vanilla.narcissus.util.StringUtils;
+import xin.vanilla.narcissus.util.*;
 
 import java.util.concurrent.CompletableFuture;
 
@@ -37,7 +34,7 @@ public final class TpBackCommand {
         EnumTeleportType type = EnumTeleportType.nullableValueOf(CommandUtils.getStringEmpty(context, "type"));
         RegistryKey<World> targetLevel = null;
         try {
-            RegistryKey<World> targetDimension = NarcissusUtils.parseDimension(StringArgumentType.getString(context, "dimension"));
+            RegistryKey<World> targetDimension = DimensionUtils.parse(StringArgumentType.getString(context, "dimension"));
             ServerWorld level = context.getSource().getServer().getLevel(targetDimension);
             if (level != null) {
                 targetLevel = targetDimension;

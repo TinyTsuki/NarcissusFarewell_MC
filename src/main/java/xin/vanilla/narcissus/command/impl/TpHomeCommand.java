@@ -21,6 +21,7 @@ import xin.vanilla.narcissus.enums.EnumCommandType;
 import xin.vanilla.narcissus.enums.EnumI18nType;
 import xin.vanilla.narcissus.enums.EnumTeleportType;
 import xin.vanilla.narcissus.util.CommandUtils;
+import xin.vanilla.narcissus.util.DimensionUtils;
 import xin.vanilla.narcissus.util.I18nUtils;
 import xin.vanilla.narcissus.util.NarcissusUtils;
 
@@ -36,7 +37,7 @@ public final class TpHomeCommand {
         if (CommandUtils.checkTeleportPre(context.getSource(), EnumCommandType.TP_HOME)) return 0;
         RegistryKey<World> targetLevel = null;
         try {
-            RegistryKey<World> targetDimension = NarcissusUtils.parseDimension(StringArgumentType.getString(context, "dimension"));
+            RegistryKey<World> targetDimension = DimensionUtils.parse(StringArgumentType.getString(context, "dimension"));
             ServerWorld level = context.getSource().getServer().getLevel(targetDimension);
             if (level != null) {
                 targetLevel = targetDimension;
@@ -105,6 +106,7 @@ public final class TpHomeCommand {
                 .then(Commands.argument("safe", BoolArgumentType.bool())
                         .executes(TpHomeCommand::execute)
                         .then(Commands.argument("dimension", StringArgumentType.greedyString())
+                                .suggests(CommandUtils::homeDimSuggestion)
                                 .executes(TpHomeCommand::execute)
                         )
                 );
