@@ -2,14 +2,14 @@ package xin.vanilla.narcissus.network;
 
 import net.minecraftforge.fml.network.NetworkRegistry;
 import net.minecraftforge.fml.network.simple.SimpleChannel;
-import xin.vanilla.narcissus.NarcissusFarewell;
 import xin.vanilla.narcissus.network.packet.*;
+import xin.vanilla.narcissus.util.Identifier;
 
 public class ModNetworkHandler {
     private static final String PROTOCOL_VERSION = "1";
     private static int ID = 0;
     public static final SimpleChannel INSTANCE = NetworkRegistry.newSimpleChannel(
-            NarcissusFarewell.createResource("main_network"),
+            Identifier.create("main_network"),
             () -> PROTOCOL_VERSION,
             clientVersion -> true,      // 客户端版本始终有效
             serverVersion -> true       // 服务端版本始终有效
