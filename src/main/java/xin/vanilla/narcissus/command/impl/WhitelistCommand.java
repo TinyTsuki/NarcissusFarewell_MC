@@ -109,7 +109,12 @@ public final class WhitelistCommand {
     }
 
     private static CompletableFuture<Suggestions> suggestion(CommandContext<CommandSourceStack> context, SuggestionsBuilder builder) {
-        for (String mode : CommandUtils.WHITE_LIST_MODES) builder.suggest(mode);
+        String lang = CommandUtils.getLanguage(context.getSource());
+        String[] tooltipKeys = {"suggest_whitelist_none", "suggest_whitelist_both", "suggest_whitelist_auto_accept_tpa", "suggest_whitelist_auto_accept_tph"};
+        for (int i = 0; i < CommandUtils.WHITE_LIST_MODES.length; i++) {
+            Component tooltip = Component.trans(lang, xin.vanilla.narcissus.enums.EnumI18nType.FORMAT, tooltipKeys[i]);
+            builder.suggest(CommandUtils.WHITE_LIST_MODES[i], tooltip.toTextComponent());
+        }
         return builder.buildFuture();
     }
 

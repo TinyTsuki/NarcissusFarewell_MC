@@ -19,6 +19,7 @@ import xin.vanilla.narcissus.enums.EnumCommandType;
 import xin.vanilla.narcissus.enums.EnumI18nType;
 import xin.vanilla.narcissus.network.packet.WaypointSyncToClient;
 import xin.vanilla.narcissus.util.CommandUtils;
+import xin.vanilla.narcissus.util.Component;
 import xin.vanilla.narcissus.util.I18nUtils;
 import xin.vanilla.narcissus.util.NarcissusUtils;
 
@@ -64,8 +65,20 @@ public final class SetHomeCommand {
     }
 
     public static CompletableFuture<Suggestions> suggestion(CommandContext<CommandSourceStack> context, SuggestionsBuilder builder) {
-        builder.suggest("home");
-        builder.suggest("name");
+        String lang = CommandUtils.getLanguage(context.getSource());
+        Component homeTooltip = xin.vanilla.narcissus.util.Component.trans(lang, EnumI18nType.FORMAT, "suggest_home_name");
+        Component nameTooltip = xin.vanilla.narcissus.util.Component.trans(lang, EnumI18nType.FORMAT, "suggest_custom_name");
+        builder.suggest("home", homeTooltip.toTextComponent());
+        builder.suggest("name", nameTooltip.toTextComponent());
+        return builder.buildFuture();
+    }
+
+    public static CompletableFuture<Suggestions> defaultSuggestion(CommandContext<CommandSourceStack> context, SuggestionsBuilder builder) {
+        String lang = CommandUtils.getLanguage(context.getSource());
+        Component trueTooltip = xin.vanilla.narcissus.util.Component.trans(lang, EnumI18nType.FORMAT, "suggest_default_home_true");
+        Component falseTooltip = xin.vanilla.narcissus.util.Component.trans(lang, EnumI18nType.FORMAT, "suggest_default_home_false");
+        builder.suggest("true", trueTooltip.toTextComponent());
+        builder.suggest("false", falseTooltip.toTextComponent());
         return builder.buildFuture();
     }
 
@@ -77,6 +90,7 @@ public final class SetHomeCommand {
                         .suggests(SetHomeCommand::suggestion)
                         .executes(SetHomeCommand::execute)
                         .then(Commands.argument("default", BoolArgumentType.bool())
+                                .suggests(SetHomeCommand::defaultSuggestion)
                                 .executes(SetHomeCommand::execute)
                         )
                 );

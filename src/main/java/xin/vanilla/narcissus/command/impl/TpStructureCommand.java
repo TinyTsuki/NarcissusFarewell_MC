@@ -13,11 +13,11 @@ import net.minecraft.commands.arguments.DimensionArgument;
 import net.minecraft.commands.arguments.ResourceLocationArgument;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.levelgen.feature.StructureFeature;
-import net.minecraftforge.registries.ForgeRegistries;
 import xin.vanilla.narcissus.NarcissusFarewell;
 import xin.vanilla.narcissus.config.CommonConfig;
 import xin.vanilla.narcissus.config.ServerConfig;
@@ -39,8 +39,8 @@ public final class TpStructureCommand {
         ServerPlayer player = context.getSource().getPlayerOrException();
         if (CommandUtils.checkTeleportPre(context.getSource(), EnumCommandType.TP_STRUCTURE)) return 0;
         ResourceLocation structId = ResourceLocationArgument.getId(context, "struct");
-        StructureFeature<?> structure = NarcissusUtils.getStructure(structId);
-        Biome biome = NarcissusUtils.getBiome(structId);
+        StructureFeature<?> structure = StructureUtils.getStructure(structId);
+        Biome biome = BiomeUtils.getBiome(structId);
         if (structure == null && biome == null) {
             NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EnumI18nType.FORMAT, "structure_biome_not_found"), structId);
             return 0;
@@ -50,16 +50,21 @@ public final class TpStructureCommand {
         ResourceKey<Level> targetLevel = CommandUtils.getDimensionKeyDefault(context, "dimension", player.getLevel().dimension());
         boolean safe = "safe".equalsIgnoreCase(CommandUtils.getStringDefault(context, "safe", "safe"));
         int finalRange = range;
-        NarcissusUtils.sendActionBarMessage(player, Component.trans(NarcissusUtils.getPlayerLanguage(player), EnumI18nType.FORMAT, "tp_structure_searching"));
+        boolean isBiome = biome != null;
+        String searchingKey = isBiome ? "tp_structure_searching_biome" : "tp_structure_searching_structure";
+        NarcissusUtils.sendActionBarMessage(player, Component.trans(NarcissusUtils.getPlayerLanguage(player), EnumI18nType.FORMAT, searchingKey, structId));
         new Thread(() -> {
+            ServerLevel world = Objects.requireNonNull(NarcissusFarewell.getServerInstance().getLevel(targetLevel));
             Coordinate coordinate;
             if (biome != null) {
-                coordinate = NarcissusUtils.findNearestBiome(Objects.requireNonNull(NarcissusFarewell.getServerInstance().getLevel(targetLevel)), new Coordinate(player).dimension(targetLevel), biome, finalRange, 8);
+                Biome biomeFromWorld = BiomeUtils.getBiome(world, structId);
+                coordinate = biomeFromWorld != null ? BiomeUtils.findNearestBiome(world, new Coordinate(player).dimension(targetLevel), biomeFromWorld, finalRange, 8) : null;
             } else {
-                coordinate = NarcissusUtils.findNearestStruct(Objects.requireNonNull(NarcissusFarewell.getServerInstance().getLevel(targetLevel)), new Coordinate(player).dimension(targetLevel), structure, finalRange);
+                coordinate = StructureUtils.findNearestStructure(Objects.requireNonNull(NarcissusFarewell.getServerInstance().getLevel(targetLevel)), new Coordinate(player).dimension(targetLevel), structure, finalRange);
             }
             if (coordinate == null) {
-                NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EnumI18nType.FORMAT, "structure_biome_not_found_in_range"), structId);
+                String notFoundKey = isBiome ? "biome_not_found_in_range" : "structure_not_found_in_range";
+                NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EnumI18nType.FORMAT, notFoundKey), structId);
                 return;
             }
             coordinate.safe(safe);
@@ -71,14 +76,21 @@ public final class TpStructureCommand {
     }
 
     public static CompletableFuture<Suggestions> suggestion(CommandContext<CommandSourceStack> context, SuggestionsBuilder builder) {
-        String input = CommandUtils.getStringEmpty(context, "rules");
+        String input = CommandUtils.getStringEx(context, "struct", "");
         boolean isInputEmpty = StringUtils.isNullOrEmpty(input);
-        ForgeRegistries.STRUCTURE_FEATURES.getKeys().stream()
-                .filter(resourceLocation -> isInputEmpty || resourceLocation.toString().contains(input))
-                .forEach(location -> builder.suggest(location.toString()));
-        ForgeRegistries.BIOMES.getValues().stream()
-                .filter(resourceLocation -> isInputEmpty || resourceLocation.toString().contains(input))
-                .forEach(biome -> builder.suggest(biome.toString()));
+        String language = ServerConfig.DEFAULT_LANGUAGE.get();
+        try {
+            language = NarcissusUtils.getPlayerLanguage(context.getSource().getPlayerOrException());
+        } catch (CommandSyntaxException ignored) {
+        }
+        Component structureTooltip = Component.trans(language, EnumI18nType.FORMAT, "tp_structure_type_structure");
+        Component biomeTooltip = Component.trans(language, EnumI18nType.FORMAT, "tp_structure_type_biome");
+        for (String id : StructureUtils.getAllIds()) {
+            if (isInputEmpty || id.contains(input)) builder.suggest(id, structureTooltip.toTextComponent());
+        }
+        for (String id : BiomeUtils.getAllIds()) {
+            if (isInputEmpty || id.contains(input)) builder.suggest(id, biomeTooltip.toTextComponent());
+        }
         return builder.buildFuture();
     }
 

@@ -39,7 +39,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
-public class CommandUtils {
+public final class CommandUtils {
     private static final Logger LOGGER = LogManager.getLogger();
 
 
@@ -379,23 +379,32 @@ public class CommandUtils {
 
     public static CompletableFuture<Suggestions> dimSuggestion(CommandContext<CommandSourceStack> context, SuggestionsBuilder builder) {
         String name = getStringEmpty(context, "dimension");
-        for (String dim : DimensionUtils.stringSet()) {
+        String lang = getLanguage(context.getSource());
+        Component dimTooltip = Component.trans(lang, EnumI18nType.FORMAT, "suggest_dimension");
+        for (String dim : DimensionUtils.getAllIds()) {
             if (StringUtils.isNullOrEmpty(name) || dim.contains(name))
-                builder.suggest(dim);
+                builder.suggest(dim, dimTooltip.toTextComponent());
         }
         return builder.buildFuture();
     }
 
     public static CompletableFuture<Suggestions> safeSuggestion(CommandContext<CommandSourceStack> context, SuggestionsBuilder builder) {
-        builder.suggest("safe");
-        builder.suggest("unsafe");
+        String lang = getLanguage(context.getSource());
+        Component safeTooltip = Component.trans(lang, EnumI18nType.FORMAT, "suggest_safe");
+        Component unsafeTooltip = Component.trans(lang, EnumI18nType.FORMAT, "suggest_unsafe");
+        builder.suggest("safe", safeTooltip.toTextComponent());
+        builder.suggest("unsafe", unsafeTooltip.toTextComponent());
         return builder.buildFuture();
     }
 
     public static CompletableFuture<Suggestions> rangeSuggestion(CommandContext<CommandSourceStack> context, SuggestionsBuilder builder) {
+        String lang = getLanguage(context.getSource());
         for (int i = 1; i <= 5; i++) {
             int index = (int) Math.pow(10, i);
-            if (index <= ServerConfig.TELEPORT_RANDOM_DISTANCE_LIMIT.get()) builder.suggest(index);
+            if (index <= ServerConfig.TELEPORT_RANDOM_DISTANCE_LIMIT.get()) {
+                Component tooltip = Component.trans(lang, EnumI18nType.FORMAT, "suggest_range", index);
+                builder.suggest(index, tooltip.toTextComponent());
+            }
         }
         return builder.buildFuture();
     }
@@ -403,15 +412,19 @@ public class CommandUtils {
     public static CompletableFuture<Suggestions> homeSuggestion(CommandContext<CommandSourceStack> context, SuggestionsBuilder builder) throws CommandSyntaxException {
         ServerPlayer player = context.getSource().getPlayerOrException();
         PlayerTeleportData data = PlayerTeleportData.getData(player);
+        String lang = getLanguage(context.getSource());
+        Component tooltip = Component.trans(lang, EnumI18nType.FORMAT, "suggest_home");
         for (KeyValue<String, String> key : data.getHomeCoordinate().keySet()) {
-            builder.suggest(StringUtils.formatString(key.value()));
+            builder.suggest(StringUtils.formatString(key.value()), tooltip.toTextComponent());
         }
         return builder.buildFuture();
     }
 
     public static CompletableFuture<Suggestions> stageSuggestion(CommandContext<CommandSourceStack> context, SuggestionsBuilder builder) {
+        String lang = getLanguage(context.getSource());
+        Component tooltip = Component.trans(lang, EnumI18nType.FORMAT, "suggest_stage");
         for (KeyValue<String, String> key : WorldStageData.get().getStageCoordinate().keySet()) {
-            builder.suggest(StringUtils.formatString(key.value()));
+            builder.suggest(StringUtils.formatString(key.value()), tooltip.toTextComponent());
         }
         return builder.buildFuture();
     }
@@ -420,9 +433,11 @@ public class CommandUtils {
         ServerPlayer player = context.getSource().getPlayerOrException();
         PlayerTeleportData data = PlayerTeleportData.getData(player);
         String name = getStringEmpty(context, "name");
+        String lang = getLanguage(context.getSource());
+        Component tooltip = Component.trans(lang, EnumI18nType.FORMAT, "suggest_dimension");
         for (KeyValue<String, String> keyValue : data.getHomeCoordinate().keySet()) {
             if (keyValue.value().equals(name))
-                builder.suggest(keyValue.key());
+                builder.suggest(keyValue.key(), tooltip.toTextComponent());
         }
         return builder.buildFuture();
     }
@@ -430,9 +445,11 @@ public class CommandUtils {
     public static CompletableFuture<Suggestions> stageDimSuggestion(CommandContext<CommandSourceStack> context, SuggestionsBuilder builder) {
         WorldStageData data = WorldStageData.get();
         String name = getStringEmpty(context, "name");
+        String lang = getLanguage(context.getSource());
+        Component tooltip = Component.trans(lang, EnumI18nType.FORMAT, "suggest_dimension");
         for (KeyValue<String, String> keyValue : data.getStageCoordinate().keySet()) {
             if (name == null || keyValue.value().contains(name))
-                builder.suggest(keyValue.key());
+                builder.suggest(keyValue.key(), tooltip.toTextComponent());
         }
         return builder.buildFuture();
     }

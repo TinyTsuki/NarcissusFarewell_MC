@@ -12,6 +12,7 @@ import net.minecraft.server.level.ServerPlayer;
 import xin.vanilla.narcissus.config.CommonConfig;
 import xin.vanilla.narcissus.config.CustomConfig;
 import xin.vanilla.narcissus.enums.EnumI18nType;
+import xin.vanilla.narcissus.util.CommandUtils;
 import xin.vanilla.narcissus.util.Component;
 import xin.vanilla.narcissus.util.I18nUtils;
 import xin.vanilla.narcissus.util.NarcissusUtils;
@@ -38,8 +39,11 @@ public final class LanguageCommand {
     }
 
     private static CompletableFuture<Suggestions> suggestion(CommandContext<CommandSourceStack> context, SuggestionsBuilder builder) {
-        builder.suggest("client");
-        builder.suggest("server");
+        String lang = CommandUtils.getLanguage(context.getSource());
+        Component clientTooltip = Component.trans(lang, EnumI18nType.FORMAT, "suggest_language_client");
+        Component serverTooltip = Component.trans(lang, EnumI18nType.FORMAT, "suggest_language_server");
+        builder.suggest("client", clientTooltip.toTextComponent());
+        builder.suggest("server", serverTooltip.toTextComponent());
         I18nUtils.getI18nFiles().forEach(builder::suggest);
         return builder.buildFuture();
     }

@@ -1,7 +1,6 @@
 package xin.vanilla.narcissus;
 
 import lombok.Getter;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraftforge.common.MinecraftForge;
@@ -132,27 +131,6 @@ public class NarcissusFarewell {
         LOGGER.debug("Registering commands");
         NarcissusCommand.register(event.getDispatcher());
     }
-
-
-    // region 资源ID
-
-    public static ResourceLocation emptyResource() {
-        return createResource("", "");
-    }
-
-    public static ResourceLocation createResource(String path) {
-        return createResource(NarcissusFarewell.MODID, path);
-    }
-
-    public static ResourceLocation createResource(String namespace, String path) {
-        return new ResourceLocation(namespace, path);
-    }
-
-    public static ResourceLocation parseResource(String location) {
-        return ResourceLocation.tryParse(location);
-    }
-
-    // endregion 资源ID
 
 
     // region 外部方法
