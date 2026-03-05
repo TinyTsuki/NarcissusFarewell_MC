@@ -20,10 +20,7 @@ import xin.vanilla.narcissus.data.player.PlayerTeleportData;
 import xin.vanilla.narcissus.enums.EnumCommandType;
 import xin.vanilla.narcissus.enums.EnumI18nType;
 import xin.vanilla.narcissus.enums.EnumTeleportType;
-import xin.vanilla.narcissus.util.CommandUtils;
-import xin.vanilla.narcissus.util.DimensionUtils;
-import xin.vanilla.narcissus.util.I18nUtils;
-import xin.vanilla.narcissus.util.NarcissusUtils;
+import xin.vanilla.narcissus.util.*;
 
 import java.util.concurrent.CompletableFuture;
 
@@ -69,20 +66,24 @@ public final class TpHomeCommand {
 
     public static CompletableFuture<Suggestions> safeSuggestion(CommandContext<CommandSource> context, SuggestionsBuilder builder) throws CommandSyntaxException {
         String name = CommandUtils.getStringDefault(context, "name", null);
+        String lang = CommandUtils.getLanguage(context.getSource());
+        Component trueTooltip = Component.trans(lang, EnumI18nType.FORMAT, "suggest_safe_true");
+        Component falseTooltip = Component.trans(lang, EnumI18nType.FORMAT, "suggest_safe_false");
+        Component dimTooltip = Component.trans(lang, EnumI18nType.FORMAT, "suggest_dimension");
         if ("true".equals(name) || "false".equals(name)) {
             ServerPlayerEntity player = context.getSource().getPlayerOrException();
             PlayerTeleportData data = PlayerTeleportData.getData(player);
             for (KeyValue<String, String> keyValue : data.getHomeCoordinate().keySet()) {
-                builder.suggest(keyValue.key());
+                builder.suggest(keyValue.key(), dimTooltip.toTextComponent());
             }
             if (data.getHomeCoordinate().keySet().stream()
                     .anyMatch(kv -> kv.value().equals("true") || kv.value().equals("false"))) {
-                builder.suggest("true");
-                builder.suggest("false");
+                builder.suggest("true", trueTooltip.toTextComponent());
+                builder.suggest("false", falseTooltip.toTextComponent());
             }
         } else {
-            builder.suggest("true");
-            builder.suggest("false");
+            builder.suggest("true", trueTooltip.toTextComponent());
+            builder.suggest("false", falseTooltip.toTextComponent());
         }
         return builder.buildFuture();
     }

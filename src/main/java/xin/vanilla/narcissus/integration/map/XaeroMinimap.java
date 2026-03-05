@@ -4,6 +4,7 @@ import net.minecraft.util.RegistryKey;
 import net.minecraft.world.World;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import xaero.common.HudMod;
 import xaero.common.minimap.waypoints.Waypoint;
 import xaero.hud.minimap.BuiltInHudModules;
 import xaero.hud.minimap.module.MinimapSession;
@@ -29,7 +30,7 @@ public final class XaeroMinimap {
 
             XaeroPath root = session.getWorldState().getAutoWorldPath().getRoot();
             XaeroPath resolved = root.resolve(session.getDimensionHelper().getDimensionDirectoryName(dimKey))
-                    .resolve(session.getWorldStateUpdater().getPotentialWorldNode(dimKey, false));
+                    .resolve(session.getWorldStateUpdater().getPotentialWorldNode(dimKey, HudMod.INSTANCE != null && HudMod.INSTANCE.getSupportMods().worldmap()));
             MinimapWorld world = session.getWorldManager().getWorld(resolved);
 
             WaypointSet waypointSet = world.getCurrentWaypointSet();
@@ -48,7 +49,7 @@ public final class XaeroMinimap {
 
             XaeroPath root = session.getWorldState().getAutoWorldPath().getRoot();
             XaeroPath resolved = root.resolve(session.getDimensionHelper().getDimensionDirectoryName(dimKey))
-                    .resolve(session.getWorldStateUpdater().getPotentialWorldNode(dimKey, false));
+                    .resolve(session.getWorldStateUpdater().getPotentialWorldNode(dimKey, HudMod.INSTANCE != null && HudMod.INSTANCE.getSupportMods().worldmap()));
             MinimapWorld world = session.getWorldManager().getWorld(resolved);
 
             WaypointSet waypointSet = world.getCurrentWaypointSet();

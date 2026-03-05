@@ -32,16 +32,12 @@ import net.minecraft.network.play.server.SPlayerAbilitiesPacket;
 import net.minecraft.network.play.server.SSetPassengersPacket;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.*;
-import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.ChunkPos;
-import net.minecraft.util.registry.Registry;
 import net.minecraft.util.text.ChatType;
 import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.StringTextComponent;
 import net.minecraft.util.text.event.HoverEvent;
 import net.minecraft.world.World;
-import net.minecraft.world.biome.Biome;
-import net.minecraft.world.gen.feature.structure.Structure;
 import net.minecraft.world.server.ServerWorld;
 import net.minecraft.world.server.TicketType;
 import net.minecraftforge.common.UsernameCache;
@@ -763,55 +759,6 @@ public class NarcissusUtils {
 
     // region 坐标查找
 
-    public static Biome getBiome(String id) {
-        return getBiome(NarcissusFarewell.parseResource(id));
-    }
-
-    public static Biome getBiome(ResourceLocation id) {
-        return NarcissusFarewell.getServerInstance().registryAccess().registryOrThrow(Registry.BIOME_REGISTRY).getOptional(id).orElse(null);
-    }
-
-    /**
-     * 获取指定范围内某个生物群系位置
-     *
-     * @param world       世界
-     * @param start       开始位置
-     * @param biome       目标生物群系
-     * @param radius      搜索半径
-     * @param minDistance 最小距离
-     */
-    public static Coordinate findNearestBiome(ServerWorld world, Coordinate start, Biome biome, int radius, int minDistance) {
-        BlockPos pos = world.findNearestBiome(biome, start.toBlockPos(), radius, minDistance);
-        if (pos != null) {
-            return start.clone().x(pos.getX()).z(pos.getZ()).safe(true);
-        }
-        return null;
-    }
-
-    public static Structure<?> getStructure(String id) {
-        return getStructure(NarcissusFarewell.parseResource(id));
-    }
-
-    public static Structure<?> getStructure(ResourceLocation id) {
-        return ForgeRegistries.STRUCTURE_FEATURES.getValue(id);
-    }
-
-    /**
-     * 获取指定范围内某个生物群系位置
-     *
-     * @param world  世界
-     * @param start  开始位置
-     * @param struct 目标结构
-     * @param radius 搜索半径
-     */
-    public static Coordinate findNearestStruct(ServerWorld world, Coordinate start, Structure<?> struct, int radius) {
-        BlockPos pos = world.findNearestMapFeature(struct, start.toBlockPos(), radius, true);
-        if (pos != null) {
-            return start.clone().x(pos.getX()).z(pos.getZ()).safe(true);
-        }
-        return null;
-    }
-
     public static String getHomeDimensionByName(ServerPlayerEntity player, String name) {
         PlayerTeleportData data = PlayerTeleportData.getData(player);
         List<KeyValue<String, String>> list = data.getHomeCoordinate().keySet().stream()
@@ -1162,7 +1109,7 @@ public class NarcissusUtils {
     }
 
     private static void teleportPlayer(@NonNull ServerPlayerEntity player, @NonNull Coordinate after, EnumTeleportType type, Coordinate before, ServerWorld level) {
-        ResourceLocation sound = NarcissusFarewell.parseResource(ServerConfig.TP_SOUND.get());
+        ResourceLocation sound = Identifier.parse(ServerConfig.TP_SOUND.get());
         NarcissusUtils.playSound(player, sound, 1.0f, 1.0f);
         after.y(Math.floor(after.y()) + 0.1);
 
@@ -2300,7 +2247,7 @@ public class NarcissusUtils {
     }
 
     public static Block getBlockFromRegistryName(String location) {
-        return ForgeRegistries.BLOCKS.getValue(NarcissusFarewell.parseResource(location));
+        return ForgeRegistries.BLOCKS.getValue(Identifier.parse(location));
     }
 
     /**

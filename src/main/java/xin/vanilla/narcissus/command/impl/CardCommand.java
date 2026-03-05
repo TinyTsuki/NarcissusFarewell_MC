@@ -55,9 +55,10 @@ public final class CardCommand {
                 .then(Commands.argument("type", StringArgumentType.word())
                         .requires(source -> NarcissusUtils.hasCommandPermission(source, EnumCommandType.SET_CARD))
                         .suggests((context, builder) -> {
-                            builder.suggest("get");
-                            builder.suggest("add");
-                            builder.suggest("set");
+                            String lang = CommandUtils.getLanguage(context.getSource());
+                            builder.suggest("get", Component.trans(lang, EnumI18nType.FORMAT, "suggest_card_get").toTextComponent());
+                            builder.suggest("add", Component.trans(lang, EnumI18nType.FORMAT, "suggest_card_add").toTextComponent());
+                            builder.suggest("set", Component.trans(lang, EnumI18nType.FORMAT, "suggest_card_set").toTextComponent());
                             return builder.buildFuture();
                         })
                         .then(Commands.argument("player", EntityArgument.player())
