@@ -2,7 +2,9 @@ package xin.vanilla.narcissus.util;
 
 import com.mojang.blaze3d.platform.NativeImage;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.texture.AbstractTexture;
 import net.minecraft.client.renderer.texture.DynamicTexture;
+import net.minecraft.client.renderer.texture.MissingTextureAtlasSprite;
 import net.minecraft.client.renderer.texture.TextureManager;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.Resource;
@@ -84,9 +86,9 @@ public final class TextureUtils {
 
     public static boolean isTextureAvailable(ResourceLocation resourceLocation) {
         TextureManager textureManager = Minecraft.getInstance().getTextureManager();
-        net.minecraft.client.renderer.texture.AbstractTexture texture = textureManager.getTexture(resourceLocation);
-        // TODO
-        if (texture == null) {
+        DynamicTexture miss = MissingTextureAtlasSprite.getTexture();
+        AbstractTexture texture = textureManager.getTexture(resourceLocation, miss);
+        if (texture == miss) {
             return false;
         }
         // 确保纹理已经加载

@@ -9,6 +9,7 @@ import xaero.common.minimap.waypoints.Waypoint;
 import xaero.common.minimap.waypoints.WaypointSet;
 import xaero.common.minimap.waypoints.WaypointWorld;
 import xaero.common.minimap.waypoints.WaypointsManager;
+import xaero.common.settings.ModOptions;
 import xin.vanilla.narcissus.enums.EnumMCColor;
 import xin.vanilla.narcissus.util.DimensionUtils;
 import xin.vanilla.narcissus.util.StringUtils;
@@ -27,8 +28,9 @@ public final class XaeroMinimap {
 
             XaeroMinimapSession session = XaeroMinimapSession.getCurrentSession();
             WaypointsManager waypointsManager = session.getWaypointsManager();
-            String containerId = waypointsManager.getCurrentContainerID();
-            String worldId = waypointsManager.getNewAutoWorldID(dimKey, false);
+            String mainContainerId = waypointsManager.getAutoRootContainerID();
+            String containerId = mainContainerId + "/" + waypointsManager.getDimensionDirectoryName(dimKey);
+            String worldId = waypointsManager.getNewAutoWorldID(dimKey, ModOptions.modMain != null && ModOptions.modMain.getSupportMods().worldmap());
 
             WaypointWorld world = session.getWaypointsManager().getWorld(containerId, worldId);
 
@@ -46,8 +48,9 @@ public final class XaeroMinimap {
 
             XaeroMinimapSession session = XaeroMinimapSession.getCurrentSession();
             WaypointsManager waypointsManager = session.getWaypointsManager();
-            String containerId = waypointsManager.getCurrentContainerID();
-            String worldId = waypointsManager.getNewAutoWorldID(dimKey, false);
+            String mainContainerId = waypointsManager.getAutoRootContainerID();
+            String containerId = mainContainerId + "/" + waypointsManager.getDimensionDirectoryName(dimKey);
+            String worldId = waypointsManager.getNewAutoWorldID(dimKey, ModOptions.modMain != null && ModOptions.modMain.getSupportMods().worldmap());
 
             WaypointWorld world = session.getWaypointsManager().getWorld(containerId, worldId);
 
