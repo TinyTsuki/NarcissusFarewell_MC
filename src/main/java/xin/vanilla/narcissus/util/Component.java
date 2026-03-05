@@ -435,9 +435,9 @@ public class Component implements Cloneable, Serializable {
         Style style = Style.EMPTY;
         if (!this.color().isEmpty() && this.color().rgb() != 0xFFFFFF)
             style = style.withColor(TextColor.fromRgb(color().rgb()));
-        style = style.setUnderlined(this.underlined())
-                .setStrikethrough(this.strikethrough())
-                .setObfuscated(this.obfuscated())
+        style = style.withUnderlined(this.underlined())
+                .withStrikethrough(this.strikethrough())
+                .withObfuscated(this.obfuscated())
                 .withBold(this.bold())
                 .withItalic(this.italic())
                 .withClickEvent(this.clickEvent)
