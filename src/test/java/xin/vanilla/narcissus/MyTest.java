@@ -3,7 +3,7 @@ package xin.vanilla.narcissus;
 import org.junit.Test;
 import xin.vanilla.narcissus.data.Coordinate;
 import xin.vanilla.narcissus.enums.EnumMCColor;
-import xin.vanilla.narcissus.util.StringUtils;
+import xin.vanilla.narcissus.util.ColorUtils;
 
 public class MyTest {
 
@@ -11,7 +11,7 @@ public class MyTest {
     public void testColor() {
         for (EnumMCColor value : EnumMCColor.values()) {
             System.out.print(value.getCode());
-            System.out.println(StringUtils.argbToMinecraftColorString(value.getColor()));
+            System.out.println(ColorUtils.argbToMinecraftColorString(value.getColor()));
         }
     }
 
