@@ -9,16 +9,14 @@ import net.minecraft.command.CommandSource;
 import net.minecraft.command.Commands;
 import net.minecraft.command.arguments.EntityArgument;
 import net.minecraft.entity.player.ServerPlayerEntity;
+import xin.vanilla.banira.common.util.StringUtils;
 import xin.vanilla.narcissus.NarcissusFarewell;
 import xin.vanilla.narcissus.config.CommonConfig;
 import xin.vanilla.narcissus.data.TeleportRequest;
 import xin.vanilla.narcissus.enums.EnumCommandType;
-import xin.vanilla.narcissus.enums.EnumI18nType;
 import xin.vanilla.narcissus.enums.EnumTeleportType;
 import xin.vanilla.narcissus.util.CommandUtils;
-import xin.vanilla.narcissus.util.I18nUtils;
 import xin.vanilla.narcissus.util.NarcissusUtils;
-import xin.vanilla.narcissus.util.StringUtils;
 
 public final class TpAskCancelCommand {
     private TpAskCancelCommand() {
@@ -30,19 +28,19 @@ public final class TpAskCancelCommand {
         ServerPlayerEntity player = context.getSource().getPlayerOrException();
         String id = CommandUtils.getRequestId(context, EnumTeleportType.TP_ASK, false);
         if (StringUtils.isNullOrEmpty(id) || !NarcissusFarewell.getTeleportRequest().containsKey(id)) {
-            NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EnumI18nType.FORMAT, "tp_ask_not_found"));
+            NarcissusUtils.sendTranslatableMessage(player, "tp_ask_not_found");
             return 0;
         }
         TeleportRequest request = NarcissusFarewell.getTeleportRequest().remove(id);
-        NarcissusUtils.sendTranslatableMessage(request.getRequester(), I18nUtils.getKey(EnumI18nType.FORMAT, "tp_ask_cancelled"), request.getRequester().getDisplayName().getString());
+        NarcissusUtils.sendTranslatableMessage(request.getRequester(), "tp_ask_cancelled", request.getRequester().getDisplayName().getString());
         if (!request.isIgnore() && !request.getRequester().getUUID().equals(request.getTarget().getUUID())) {
-            NarcissusUtils.sendTranslatableMessage(request.getTarget(), I18nUtils.getKey(EnumI18nType.FORMAT, "tp_ask_cancelled"), request.getRequester().getDisplayName().getString());
+            NarcissusUtils.sendTranslatableMessage(request.getTarget(), "tp_ask_cancelled", request.getRequester().getDisplayName().getString());
         }
         return 1;
     }
 
     public static LiteralArgumentBuilder<CommandSource> create() {
-        return Commands.literal(CommonConfig.COMMAND_TP_ASK_CANCEL.get())
+        return Commands.literal(CommonConfig.get().commandNames().commandTpAskCancel())
                 .requires(source -> NarcissusUtils.hasCommandPermission(source, EnumCommandType.TP_ASK_CANCEL))
                 .executes(TpAskCancelCommand::execute)
                 .then(Commands.argument("requestIndex", IntegerArgumentType.integer(1))

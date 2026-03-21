@@ -9,15 +9,17 @@ import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.util.RegistryKey;
 import net.minecraft.util.text.event.HoverEvent;
 import net.minecraft.world.World;
+import xin.vanilla.banira.common.data.Component;
+import xin.vanilla.banira.common.data.KeyValue;
+import xin.vanilla.banira.common.util.DimensionUtils;
 import xin.vanilla.narcissus.config.CommonConfig;
-import xin.vanilla.narcissus.data.Coordinate;
-import xin.vanilla.narcissus.data.KeyValue;
+import xin.vanilla.narcissus.data.SafeWorldCoordinate;
 import xin.vanilla.narcissus.data.world.WorldStageData;
 import xin.vanilla.narcissus.enums.EnumCommandType;
-import xin.vanilla.narcissus.enums.EnumI18nType;
 import xin.vanilla.narcissus.network.packet.StageDataSyncToClient;
 import xin.vanilla.narcissus.network.packet.WaypointSyncToClient;
-import xin.vanilla.narcissus.util.*;
+import xin.vanilla.narcissus.util.CommandUtils;
+import xin.vanilla.narcissus.util.NarcissusUtils;
 
 
 public final class DelStageCommand {
@@ -41,30 +43,30 @@ public final class DelStageCommand {
             dimension = NarcissusUtils.getStageDimensionByName(player, name);
         }
         WorldStageData stageData = WorldStageData.get();
-        Coordinate remove = stageData.getStageCoordinate().remove(new KeyValue<>(dimension, name));
+        SafeWorldCoordinate remove = stageData.getStageCoordinate().remove(new KeyValue<>(dimension, name));
         stageData.setDirty();
         if (remove == null) {
             if (player != null) {
-                NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EnumI18nType.FORMAT, "stage_not_found_with_name_in_dimension"), dimension, name);
+                NarcissusUtils.sendTranslatableMessage(player, "stage_not_found_with_name_in_dimension", dimension, name);
             } else {
-                NarcissusUtils.sendTranslatableMessage(source, false, I18nUtils.getKey(EnumI18nType.FORMAT, "stage_not_found_with_name_in_dimension"), dimension, name);
+                NarcissusUtils.sendTranslatableMessage(source, false, "stage_not_found_with_name_in_dimension", dimension, name);
             }
             return 0;
         }
         NarcissusUtils.broadcastPacket(new WaypointSyncToClient(WaypointSyncToClient.Action.REMOVE, WaypointSyncToClient.Type.STAGE, name, remove));
         NarcissusUtils.broadcastPacket(new StageDataSyncToClient(stageData.getStageCoordinate()));
         Component dimensionComponent = Component.literal(dimension)
-                .hoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.literal(remove.toXyzString()).toTextComponent()));
+                .hoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.literal(remove.xyzString()).toVanilla()));
         if (player != null) {
-            NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EnumI18nType.FORMAT, "stage_del"), dimensionComponent, name);
+            NarcissusUtils.sendTranslatableMessage(player, "stage_del", dimensionComponent, name);
         } else {
-            NarcissusUtils.sendTranslatableMessage(source, true, I18nUtils.getKey(EnumI18nType.FORMAT, "stage_del"), dimensionComponent, name);
+            NarcissusUtils.sendTranslatableMessage(source, true, "stage_del", dimensionComponent, name);
         }
         return 1;
     }
 
     public static LiteralArgumentBuilder<CommandSource> create() {
-        return Commands.literal(CommonConfig.COMMAND_DEL_STAGE.get())
+        return Commands.literal(CommonConfig.get().commandNames().commandDelStage())
                 .requires(source -> NarcissusUtils.hasCommandPermission(source, EnumCommandType.DEL_STAGE))
                 .then(Commands.argument("name", StringArgumentType.string())
                         .suggests(CommandUtils::stageSuggestion)

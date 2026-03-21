@@ -10,12 +10,15 @@ import net.minecraft.command.CommandSource;
 import net.minecraft.command.Commands;
 import net.minecraft.command.arguments.EntityArgument;
 import net.minecraft.entity.player.ServerPlayerEntity;
+import xin.vanilla.banira.common.data.Component;
+import xin.vanilla.banira.common.enums.EnumI18nType;
+import xin.vanilla.banira.common.util.CollectionUtils;
+import xin.vanilla.banira.common.util.PlayerUtils;
+import xin.vanilla.narcissus.NarcissusFarewell;
+import xin.vanilla.narcissus.NarcissusLang;
 import xin.vanilla.narcissus.data.PlayerAccess;
 import xin.vanilla.narcissus.data.player.PlayerTeleportData;
-import xin.vanilla.narcissus.enums.EnumI18nType;
-import xin.vanilla.narcissus.util.CollectionUtils;
 import xin.vanilla.narcissus.util.CommandUtils;
-import xin.vanilla.narcissus.util.Component;
 import xin.vanilla.narcissus.util.NarcissusUtils;
 
 import java.util.Arrays;
@@ -46,7 +49,7 @@ public final class WhitelistCommand {
         ServerPlayerEntity player = context.getSource().getPlayerOrException();
         PlayerTeleportData data = PlayerTeleportData.getData(player);
         PlayerAccess access = data.getAccess();
-        String[] uuids = players.stream().map(NarcissusUtils::getPlayerUUIDString).toArray(String[]::new);
+        String[] uuids = players.stream().map(PlayerUtils::getPlayerUUIDString).toArray(String[]::new);
         Component msg;
         if (access.addWhiteList(uuids)) {
             switch (mode) {
@@ -64,12 +67,12 @@ public final class WhitelistCommand {
                     break;
             }
             data.setDirty();
-            msg = Component.trans(EnumI18nType.FORMAT, "list_add_success"
+            msg = Component.trans(NarcissusFarewell.MODID, EnumI18nType.FORMAT, "list_add_success"
                     , CommandUtils.getBlacklistOrWhitelistHelp(player, false)
-                    , players.stream().map(NarcissusUtils::getPlayerName).collect(Collectors.joining(","))
+                    , players.stream().map(PlayerUtils::getPlayerNameString).collect(Collectors.joining(","))
             );
         } else {
-            msg = Component.trans(EnumI18nType.FORMAT, "list_add_fail", CommandUtils.getBlacklistOrWhitelistHelp(player, false), CommandUtils.getBlacklistOrWhitelistHelp(player, true));
+            msg = Component.trans(NarcissusFarewell.MODID, EnumI18nType.FORMAT, "list_add_fail", CommandUtils.getBlacklistOrWhitelistHelp(player, false), CommandUtils.getBlacklistOrWhitelistHelp(player, true));
         }
         NarcissusUtils.sendMessage(player, msg);
         return 1;
@@ -85,7 +88,7 @@ public final class WhitelistCommand {
         ServerPlayerEntity player = context.getSource().getPlayerOrException();
         PlayerTeleportData data = PlayerTeleportData.getData(player);
         PlayerAccess access = data.getAccess();
-        String[] uuids = players.stream().map(NarcissusUtils::getPlayerUUIDString).toArray(String[]::new);
+        String[] uuids = players.stream().map(PlayerUtils::getPlayerUUIDString).toArray(String[]::new);
         switch (mode) {
             case "both":
                 access.removeAutoTpa(uuids);
@@ -102,7 +105,7 @@ public final class WhitelistCommand {
                 break;
         }
         data.setDirty();
-        Component msg = Component.trans(EnumI18nType.FORMAT, "remove_success")
+        Component msg = Component.trans(NarcissusFarewell.MODID, EnumI18nType.WORD, "remove_success")
                 .append(CommandUtils.getWhiteListMessage(player, access));
         NarcissusUtils.sendMessage(player, msg);
         return 1;
@@ -112,8 +115,8 @@ public final class WhitelistCommand {
         String lang = CommandUtils.getLanguage(context.getSource());
         String[] tooltipKeys = {"suggest_whitelist_none", "suggest_whitelist_both", "suggest_whitelist_auto_accept_tpa", "suggest_whitelist_auto_accept_tph"};
         for (int i = 0; i < CommandUtils.WHITE_LIST_MODES.length; i++) {
-            Component tooltip = Component.trans(lang, EnumI18nType.FORMAT, tooltipKeys[i]);
-            builder.suggest(CommandUtils.WHITE_LIST_MODES[i], tooltip.toTextComponent());
+            Component tooltip = NarcissusLang.transLangAuto(lang, tooltipKeys[i]);
+            builder.suggest(CommandUtils.WHITE_LIST_MODES[i], tooltip.toVanilla());
         }
         return builder.buildFuture();
     }

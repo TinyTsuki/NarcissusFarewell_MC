@@ -3,14 +3,15 @@ package xin.vanilla.narcissus.util;
 import net.minecraft.client.entity.player.ClientPlayerEntity;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
+import xin.vanilla.banira.common.enums.EnumI18nType;
+import xin.vanilla.banira.common.util.SafeExpressionEvaluator;
+import xin.vanilla.narcissus.NarcissusLang;
 import xin.vanilla.narcissus.config.CommonConfig;
-import xin.vanilla.narcissus.data.Coordinate;
+import xin.vanilla.narcissus.data.SafeWorldCoordinate;
 import xin.vanilla.narcissus.data.TeleportCost;
 import xin.vanilla.narcissus.data.client.ClientCostConfig;
 import xin.vanilla.narcissus.data.player.PlayerTeleportData;
-import xin.vanilla.narcissus.enums.EnumCardType;
 import xin.vanilla.narcissus.enums.EnumCostType;
-import xin.vanilla.narcissus.enums.EnumI18nType;
 import xin.vanilla.narcissus.enums.EnumTeleportType;
 
 import java.util.HashMap;
@@ -26,14 +27,14 @@ public final class ClientCostCalculator {
     /**
      * 计算并格式化传送代价显示
      */
-    public static String formatCostDisplay(ClientPlayerEntity player, Coordinate target, EnumTeleportType type) {
+    public static String formatCostDisplay(ClientPlayerEntity player, SafeWorldCoordinate target, EnumTeleportType type) {
         if (player == null || target == null) return "";
         TeleportCost cost = ClientCostConfig.getCost(type);
         if (cost == null || cost.getType() == EnumCostType.NONE) {
-            return I18nUtils.getTranslationClient(EnumI18nType.WORD, "cost_free");
+            return NarcissusLang.get().getTranslationClient(EnumI18nType.WORD, "cost_free");
         }
         PlayerTeleportData data = PlayerTeleportData.getData(player);
-        double distance = NarcissusUtils.calculateDistance(new Coordinate(player), target);
+        double distance = NarcissusUtils.calculateDistance(new SafeWorldCoordinate(player), target);
         double adjustedDistance;
         if (player.level.dimension() == target.dimension()) {
             int limit = ClientCostConfig.getDistanceLimit();
@@ -55,23 +56,23 @@ public final class ClientCostCalculator {
         need = Math.max(need, cost.getLower());
         int cardNeed = getTeleportCardNeed(need);
         int costNeed = getTeleportCostNeed(data, cardNeed, (int) Math.ceil(need));
-        String lang = NarcissusUtils.getClientLanguage();
+        String lang = NarcissusLang.getClientLanguage();
         if (costNeed < 0) {
-            return I18nUtils.getTranslation(EnumI18nType.WORD, "teleport_card", lang) + " x" + cardNeed;
+            return NarcissusLang.get().translate(EnumI18nType.WORD, "teleport_card", lang) + " x" + cardNeed;
         }
         switch (cost.getType()) {
             case EXP_POINT:
-                return costNeed + " " + I18nUtils.getTranslation(EnumI18nType.WORD, "exp_point", lang);
+                return costNeed + " " + NarcissusLang.get().translate(EnumI18nType.WORD, "exp_point", lang);
             case EXP_LEVEL:
-                return costNeed + " " + I18nUtils.getTranslation(EnumI18nType.WORD, "exp_level", lang);
+                return costNeed + " " + NarcissusLang.get().translate(EnumI18nType.WORD, "exp_level", lang);
             case HEALTH:
-                return costNeed + " " + I18nUtils.getTranslation(EnumI18nType.WORD, "health", lang);
+                return costNeed + " " + NarcissusLang.get().translate(EnumI18nType.WORD, "health", lang);
             case HUNGER:
-                return costNeed + " " + I18nUtils.getTranslation(EnumI18nType.WORD, "hunger", lang);
+                return costNeed + " " + NarcissusLang.get().translate(EnumI18nType.WORD, "hunger", lang);
             case ITEM:
-                return costNeed + " " + I18nUtils.getTranslation(EnumI18nType.WORD, "item", lang);
+                return costNeed + " " + NarcissusLang.get().translate(EnumI18nType.WORD, "item", lang);
             case COMMAND:
-                return I18nUtils.getTranslation(EnumI18nType.WORD, "cost_command", lang);
+                return NarcissusLang.get().translate(EnumI18nType.WORD, "cost_command", lang);
             default:
                 return String.valueOf(costNeed);
         }
@@ -79,8 +80,8 @@ public final class ClientCostCalculator {
 
     private static int getTeleportCardNeed(double need) {
         int ceil = (int) Math.ceil(need);
-        if (!CommonConfig.TELEPORT_CARD.get()) return 0;
-        switch (EnumCardType.valueOf(CommonConfig.TELEPORT_CARD_TYPE.get())) {
+        if (!CommonConfig.get().base().teleportCard()) return 0;
+        switch (CommonConfig.get().base().teleportCardType()) {
             case LIKE_COST:
             case REFUND_COST:
             case REFUND_COST_AND_COOLDOWN:
@@ -91,8 +92,8 @@ public final class ClientCostCalculator {
     }
 
     private static int getTeleportCostNeed(PlayerTeleportData data, int card, int need) {
-        if (!CommonConfig.TELEPORT_CARD.get()) return need;
-        switch (EnumCardType.valueOf(CommonConfig.TELEPORT_CARD_TYPE.get())) {
+        if (!CommonConfig.get().base().teleportCard()) return need;
+        switch (CommonConfig.get().base().teleportCardType()) {
             case NONE:
                 return data.getTeleportCard() >= card ? need : -1;
             case LIKE_COST:

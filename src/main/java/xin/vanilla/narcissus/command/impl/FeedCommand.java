@@ -9,9 +9,7 @@ import net.minecraft.command.arguments.EntityArgument;
 import net.minecraft.entity.player.ServerPlayerEntity;
 import xin.vanilla.narcissus.config.CommonConfig;
 import xin.vanilla.narcissus.enums.EnumCommandType;
-import xin.vanilla.narcissus.enums.EnumI18nType;
 import xin.vanilla.narcissus.util.CommandUtils;
-import xin.vanilla.narcissus.util.I18nUtils;
 import xin.vanilla.narcissus.util.NarcissusUtils;
 
 import java.util.ArrayList;
@@ -34,8 +32,8 @@ public final class FeedCommand {
             }
         } else if (source.getEntity() instanceof ServerPlayerEntity) {
             ServerPlayerEntity player = source.getPlayerOrException();
-            if (!CommonConfig.SWITCH_FEED.get()) {
-                NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EnumI18nType.FORMAT, "command_disabled"));
+            if (!CommonConfig.get().featureSwitch().switchFeed()) {
+                NarcissusUtils.sendTranslatableMessage(player, "command_disabled");
                 return 0;
             }
             List<ServerPlayerEntity> targetList = new ArrayList<>(CommandUtils.getPlayersOptional(context, "player", Collections.singletonList(player)));
@@ -47,7 +45,7 @@ public final class FeedCommand {
     }
 
     public static LiteralArgumentBuilder<CommandSource> create() {
-        return Commands.literal(CommonConfig.COMMAND_FEED.get())
+        return Commands.literal(CommonConfig.get().commandNames().commandFeed())
                 .executes(FeedCommand::execute)
                 .then(Commands.argument("player", EntityArgument.players())
                         .requires(source -> NarcissusUtils.hasCommandPermission(source, EnumCommandType.FEED_OTHER))

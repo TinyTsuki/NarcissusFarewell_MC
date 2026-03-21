@@ -11,17 +11,18 @@ import net.minecraft.command.Commands;
 import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.util.RegistryKey;
 import net.minecraft.world.World;
+import xin.vanilla.banira.common.util.DimensionUtils;
+import xin.vanilla.banira.common.util.StringUtils;
 import xin.vanilla.narcissus.config.CommonConfig;
-import xin.vanilla.narcissus.config.ServerConfig;
-import xin.vanilla.narcissus.data.Coordinate;
+import xin.vanilla.narcissus.data.SafeWorldCoordinate;
 import xin.vanilla.narcissus.data.TeleportRecord;
 import xin.vanilla.narcissus.data.player.PlayerTeleportData;
 import xin.vanilla.narcissus.enums.EnumCommandType;
-import xin.vanilla.narcissus.enums.EnumI18nType;
 import xin.vanilla.narcissus.enums.EnumSafeMode;
 import xin.vanilla.narcissus.enums.EnumTeleportType;
 import xin.vanilla.narcissus.integration.GraveHelper;
-import xin.vanilla.narcissus.util.*;
+import xin.vanilla.narcissus.util.CommandUtils;
+import xin.vanilla.narcissus.util.NarcissusUtils;
 
 import java.util.concurrent.CompletableFuture;
 
@@ -35,8 +36,8 @@ public final class TpGraveCommand {
         ServerPlayerEntity player = context.getSource().getPlayerOrException();
         if (CommandUtils.checkTeleportPre(context.getSource(), EnumCommandType.TP_GRAVE)) return 0;
 
-        Coordinate coord2 = GraveHelper.parseObituaryFromHeldItem(player);
-        Coordinate coord1 = null;
+        SafeWorldCoordinate coord2 = GraveHelper.parseObituaryFromHeldItem(player);
+        SafeWorldCoordinate coord1 = null;
         TeleportRecord record = null;
 
         if (coord2 == null) {
@@ -49,9 +50,9 @@ public final class TpGraveCommand {
             coord1 = coord2.clone();
         }
 
-        Coordinate target = resolveTeleportTarget(coord1, coord2);
+        SafeWorldCoordinate target = resolveTeleportTarget(coord1, coord2);
         if (target == null) {
-            NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EnumI18nType.FORMAT, "death_not_found"));
+            NarcissusUtils.sendTranslatableMessage(player, "death_not_found");
             return 0;
         }
 
@@ -68,19 +69,19 @@ public final class TpGraveCommand {
         ServerPlayerEntity player = context.getSource().getPlayerOrException();
         if (CommandUtils.checkTeleportPre(context.getSource(), EnumCommandType.TP_GRAVE)) return 0;
 
-        int limit = ServerConfig.GRAVE_SEARCH_RANGE_LIMIT.get();
+        int limit = CommonConfig.get().server().general().graveSearchRangeLimit();
         if (range > limit) {
-            NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EnumI18nType.FORMAT, "grave_range_too_large"), limit);
+            NarcissusUtils.sendTranslatableMessage(player, "grave_range_too_large", limit);
             return 0;
         }
 
-        Coordinate coord2 = GraveHelper.findCorpseGravestoneNearPlayer(player, range);
+        SafeWorldCoordinate coord2 = GraveHelper.findCorpseGravestoneNearPlayer(player, range);
         if (coord2 == null) {
-            NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EnumI18nType.FORMAT, "death_not_found"));
+            NarcissusUtils.sendTranslatableMessage(player, "death_not_found");
             return 0;
         }
 
-        Coordinate target = resolveTeleportTarget(null, coord2);
+        SafeWorldCoordinate target = resolveTeleportTarget(null, coord2);
         if (CommandUtils.checkTeleportPost(player, target, EnumTeleportType.TP_GRAVE, true)) return 0;
         NarcissusUtils.teleportTo(player, target, EnumTeleportType.TP_GRAVE);
         return 1;
@@ -93,13 +94,13 @@ public final class TpGraveCommand {
 
         TeleportRecord record = GraveHelper.findLastDeathRecord(player, dim);
         if (record == null) {
-            NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EnumI18nType.FORMAT, "death_not_found"));
+            NarcissusUtils.sendTranslatableMessage(player, "death_not_found");
             return 0;
         }
 
-        Coordinate coord1 = record.getBefore().clone();
-        Coordinate coord2 = GraveHelper.findCorpseGravestoneNearDeath(player, record);
-        Coordinate target = resolveTeleportTarget(coord1, coord2);
+        SafeWorldCoordinate coord1 = record.getBefore().clone();
+        SafeWorldCoordinate coord2 = GraveHelper.findCorpseGravestoneNearDeath(player, record);
+        SafeWorldCoordinate target = resolveTeleportTarget(coord1, coord2);
 
         if (CommandUtils.checkTeleportPost(player, target, EnumTeleportType.TP_GRAVE, true)) return 0;
         NarcissusUtils.removeBackTeleportRecord(player, record);
@@ -110,13 +111,13 @@ public final class TpGraveCommand {
     /**
      * 解析并执行传送目标
      */
-    private static Coordinate resolveTeleportTarget(Coordinate coord1, Coordinate coord2) {
-        Coordinate preferred = (coord2 != null) ? coord2 : coord1;
+    private static SafeWorldCoordinate resolveTeleportTarget(SafeWorldCoordinate coord1, SafeWorldCoordinate coord2) {
+        SafeWorldCoordinate preferred = (coord2 != null) ? coord2 : coord1;
         if (preferred == null) return null;
         if (GraveHelper.isCoordinateSafe(preferred)) {
             return preferred.clone().safe(false);
         }
-        Coordinate safe = NarcissusUtils.findSafeCoordinate(preferred.clone().safeMode(EnumSafeMode.Y_C_OFFSET_3), false);
+        SafeWorldCoordinate safe = NarcissusUtils.findSafeCoordinate(preferred.clone().safeMode(EnumSafeMode.Y_C_OFFSET_3), false);
         if (safe != null && GraveHelper.isCoordinateSafe(safe)) {
             return safe.safe(false);
         }
@@ -136,7 +137,7 @@ public final class TpGraveCommand {
     }
 
     public static LiteralArgumentBuilder<CommandSource> create() {
-        return Commands.literal(CommonConfig.COMMAND_TP_GRAVE.get())
+        return Commands.literal(CommonConfig.get().commandNames().commandTpGrave())
                 .requires(source -> NarcissusUtils.hasCommandPermission(source, EnumCommandType.TP_GRAVE))
                 .executes(TpGraveCommand::executeDefault)
                 .then(Commands.argument("rangeOrDim", StringArgumentType.greedyString())

@@ -6,9 +6,7 @@ import net.minecraftforge.fml.network.NetworkEvent;
 import xin.vanilla.narcissus.NarcissusFarewell;
 import xin.vanilla.narcissus.data.TeleportRequest;
 import xin.vanilla.narcissus.enums.EnumCommandType;
-import xin.vanilla.narcissus.enums.EnumI18nType;
 import xin.vanilla.narcissus.enums.EnumTeleportType;
-import xin.vanilla.narcissus.util.I18nUtils;
 import xin.vanilla.narcissus.util.NarcissusUtils;
 
 import java.util.Comparator;
@@ -41,7 +39,7 @@ public class TpNoToServer {
                     EnumCommandType type = EnumTeleportType.TP_HERE == teleportType ? EnumCommandType.TP_HERE_NO : EnumCommandType.TP_ASK_NO;
                     NarcissusUtils.executeCommand(player, NarcissusUtils.getCommand(type));
                 } else {
-                    NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EnumI18nType.FORMAT, "tp_ask_not_found"));
+                    NarcissusUtils.sendTranslatableMessage(player, "tp_ask_not_found");
                 }
             }
         });

@@ -6,15 +6,19 @@ import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.nbt.ListNBT;
 import net.minecraft.network.PacketBuffer;
-import xin.vanilla.narcissus.data.Coordinate;
-import xin.vanilla.narcissus.data.KeyValue;
+import xin.vanilla.banira.common.api.ICommandNotify;
+import xin.vanilla.banira.common.data.KeyValue;
+import xin.vanilla.banira.common.player.IPlayerData;
+import xin.vanilla.banira.common.util.CollectionUtils;
+import xin.vanilla.banira.common.util.DateUtils;
+import xin.vanilla.banira.common.util.PacketUtils;
+import xin.vanilla.narcissus.NarcissusFarewell;
 import xin.vanilla.narcissus.data.PlayerAccess;
+import xin.vanilla.narcissus.data.SafeWorldCoordinate;
 import xin.vanilla.narcissus.data.TeleportRecord;
 import xin.vanilla.narcissus.enums.EnumTeleportType;
+import xin.vanilla.narcissus.network.ModNetworkHandler;
 import xin.vanilla.narcissus.network.packet.PlayerDataSyncToClient;
-import xin.vanilla.narcissus.util.CollectionUtils;
-import xin.vanilla.narcissus.util.DateUtils;
-import xin.vanilla.narcissus.util.NarcissusUtils;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -23,7 +27,7 @@ import java.util.stream.Collectors;
 /**
  * 玩家传送数据
  */
-public final class PlayerTeleportData implements IPlayerData<PlayerTeleportData> {
+public final class PlayerTeleportData implements IPlayerData<PlayerTeleportData>, ICommandNotify {
 
     // region override
 
@@ -34,7 +38,7 @@ public final class PlayerTeleportData implements IPlayerData<PlayerTeleportData>
     private PlayerTeleportData(PlayerEntity player) {
         this.player = player;
         if (this.player instanceof ServerPlayerEntity) {
-            this.deserializeNBT(PlayerDataManager.instance().getOrCreate(player), false);
+            this.deserializeNBT(NarcissusFarewell.playerDataManager.getOrCreate(player.getUUID()), false);
         }
     }
 
@@ -74,10 +78,10 @@ public final class PlayerTeleportData implements IPlayerData<PlayerTeleportData>
         }
 
         buffer.writeInt(this.getHomeCoordinate().size());
-        for (Map.Entry<KeyValue<String, String>, Coordinate> entry : this.getHomeCoordinate().entrySet()) {
+        for (Map.Entry<KeyValue<String, String>, SafeWorldCoordinate> entry : this.getHomeCoordinate().entrySet()) {
             buffer.writeUtf(entry.getKey().key());
             buffer.writeUtf(entry.getKey().value());
-            buffer.writeNbt(entry.getValue().writeToNBT());
+            buffer.writeNbt(entry.getValue().toTag());
         }
 
         buffer.writeInt(this.getDefaultHome().size());
@@ -104,7 +108,7 @@ public final class PlayerTeleportData implements IPlayerData<PlayerTeleportData>
 
         this.homeCoordinate = new LinkedHashMap<>();
         for (int i = 0; i < buffer.readInt(); i++) {
-            this.homeCoordinate.put(new KeyValue<>(buffer.readUtf(), buffer.readUtf()), Coordinate.readFromNBT(Objects.requireNonNull(buffer.readNbt())));
+            this.homeCoordinate.put(new KeyValue<>(buffer.readUtf(), buffer.readUtf()), SafeWorldCoordinate.fromTag(Objects.requireNonNull(buffer.readNbt())));
         }
 
         this.defaultHome = new HashMap<>();
@@ -135,11 +139,11 @@ public final class PlayerTeleportData implements IPlayerData<PlayerTeleportData>
 
         // 序列化家坐标
         ListNBT homeCoordinateNBT = new ListNBT();
-        for (Map.Entry<KeyValue<String, String>, Coordinate> entry : this.getHomeCoordinate().entrySet()) {
+        for (Map.Entry<KeyValue<String, String>, SafeWorldCoordinate> entry : this.getHomeCoordinate().entrySet()) {
             CompoundNBT homeCoordinateTag = new CompoundNBT();
             homeCoordinateTag.putString("key", entry.getKey().key());
             homeCoordinateTag.putString("value", entry.getKey().value());
-            homeCoordinateTag.put("coordinate", entry.getValue().writeToNBT());
+            homeCoordinateTag.put("coordinate", entry.getValue().toTag());
             homeCoordinateNBT.add(homeCoordinateTag);
         }
         tag.put("homeCoordinate", homeCoordinateNBT);
@@ -178,11 +182,11 @@ public final class PlayerTeleportData implements IPlayerData<PlayerTeleportData>
 
         // 反序列化家坐标
         ListNBT homeCoordinateNBT = nbt.getList("homeCoordinate", 10);
-        Map<KeyValue<String, String>, Coordinate> homeCoordinateMap = new LinkedHashMap<>();
+        Map<KeyValue<String, String>, SafeWorldCoordinate> homeCoordinateMap = new LinkedHashMap<>();
         for (int i = 0; i < homeCoordinateNBT.size(); i++) {
             CompoundNBT homeCoordinateTag = homeCoordinateNBT.getCompound(i);
             homeCoordinateMap.put(new KeyValue<>(homeCoordinateTag.getString("key"), homeCoordinateTag.getString("value")),
-                    Coordinate.readFromNBT(homeCoordinateTag.getCompound("coordinate")));
+                    SafeWorldCoordinate.fromTag(homeCoordinateTag.getCompound("coordinate")));
         }
         this.homeCoordinate = homeCoordinateMap;
 
@@ -222,7 +226,7 @@ public final class PlayerTeleportData implements IPlayerData<PlayerTeleportData>
     @Override
     public void save() {
         if (this.player instanceof ServerPlayerEntity) {
-            PlayerDataManager.instance().put(player, serializeNBT());
+            NarcissusFarewell.playerDataManager.put(player.getUUID(), serializeNBT());
         }
     }
 
@@ -241,7 +245,7 @@ public final class PlayerTeleportData implements IPlayerData<PlayerTeleportData>
     /**
      * dimension:name coordinate
      */
-    private Map<KeyValue<String, String>, Coordinate> homeCoordinate;
+    private Map<KeyValue<String, String>, SafeWorldCoordinate> homeCoordinate;
     /**
      * dimension:name
      */
@@ -322,17 +326,17 @@ public final class PlayerTeleportData implements IPlayerData<PlayerTeleportData>
         this.save();
     }
 
-    public Map<KeyValue<String, String>, Coordinate> getHomeCoordinate() {
+    public Map<KeyValue<String, String>, SafeWorldCoordinate> getHomeCoordinate() {
         if (this.isDirty()) this.saveEx();
         return this.homeCoordinate = this.homeCoordinate == null ? new LinkedHashMap<>() : this.homeCoordinate;
     }
 
-    public void setHomeCoordinate(Map<KeyValue<String, String>, Coordinate> homeCoordinate) {
+    public void setHomeCoordinate(Map<KeyValue<String, String>, SafeWorldCoordinate> homeCoordinate) {
         this.homeCoordinate = homeCoordinate;
         this.save();
     }
 
-    public void addHomeCoordinate(KeyValue<String, String> key, Coordinate coordinate) {
+    public void addHomeCoordinate(KeyValue<String, String> key, SafeWorldCoordinate coordinate) {
         this.getHomeCoordinate().put(key, coordinate);
         this.save();
     }
@@ -374,11 +378,8 @@ public final class PlayerTeleportData implements IPlayerData<PlayerTeleportData>
      * 同步玩家数据到客户端
      */
     public static void syncPlayerData(ServerPlayerEntity player) {
-        // 创建自定义包并发送到客户端
         PlayerDataSyncToClient packet = new PlayerDataSyncToClient(player.getUUID(), getData(player));
-        for (PlayerDataSyncToClient syncPacket : packet.split()) {
-            NarcissusUtils.sendPacketToPlayer(syncPacket, player);
-        }
+        PacketUtils.sendSplitPacketToPlayer(() -> ModNetworkHandler.INSTANCE, packet, player);
     }
 
 }

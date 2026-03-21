@@ -1,31 +1,43 @@
 package xin.vanilla.narcissus.client.screen;
 
 import com.mojang.blaze3d.matrix.MatrixStack;
-import net.minecraft.client.gui.screen.Screen;
+import lombok.experimental.Accessors;
+import net.minecraft.client.Minecraft;
 import net.minecraft.util.math.MathHelper;
-import xin.vanilla.narcissus.client.component.Text;
-import xin.vanilla.narcissus.client.data.FontDrawArgs;
-import xin.vanilla.narcissus.client.enums.EnumAlignment;
-import xin.vanilla.narcissus.data.Color;
-import xin.vanilla.narcissus.data.Coordinate;
-import xin.vanilla.narcissus.data.KeyValue;
+import xin.vanilla.banira.client.data.BaniraColorConfig;
+import xin.vanilla.banira.client.data.FontDrawArgs;
+import xin.vanilla.banira.client.data.ScreenCoordinate;
+import xin.vanilla.banira.client.data.ShapeDrawArgs;
+import xin.vanilla.banira.client.enums.EnumAlignment;
+import xin.vanilla.banira.client.enums.EnumEllipsisPosition;
+import xin.vanilla.banira.client.enums.EnumOrientation;
+import xin.vanilla.banira.client.gui.BaniraScreen;
+import xin.vanilla.banira.client.gui.component.Text;
+import xin.vanilla.banira.client.gui.widget.*;
+import xin.vanilla.banira.common.data.Color;
+import xin.vanilla.banira.common.data.Component;
+import xin.vanilla.banira.common.data.KeyValue;
+import xin.vanilla.banira.common.enums.EnumI18nType;
+import xin.vanilla.banira.common.util.ColorUtils;
+import xin.vanilla.banira.common.util.NumberUtils;
+import xin.vanilla.narcissus.NarcissusFarewell;
+import xin.vanilla.narcissus.NarcissusLang;
+import xin.vanilla.narcissus.data.SafeWorldCoordinate;
 import xin.vanilla.narcissus.data.TeleportRecord;
 import xin.vanilla.narcissus.data.client.ClientStageData;
 import xin.vanilla.narcissus.data.player.PlayerTeleportData;
-import xin.vanilla.narcissus.enums.EnumI18nType;
 import xin.vanilla.narcissus.enums.EnumTeleportType;
 import xin.vanilla.narcissus.network.ModNetworkHandler;
 import xin.vanilla.narcissus.network.packet.WaypointDelToServer;
 import xin.vanilla.narcissus.network.packet.WaypointTeleportToServer;
-import xin.vanilla.narcissus.util.*;
+import xin.vanilla.narcissus.util.ClientCostCalculator;
 
 import javax.annotation.Nonnull;
 import java.util.*;
 import java.util.stream.Collectors;
 
-
-// AI真是太好用辣
-public class WaypointScreen extends Screen {
+@Accessors(chain = true, fluent = true)
+public class WaypointScreen extends BaniraScreen {
 
     // region Constants
 
@@ -35,44 +47,22 @@ public class WaypointScreen extends Screen {
     private static final int TITLE_HEIGHT = 14;
     private static final int ITEM_HEIGHT = 24;
     private static final int MAX_VISIBLE_ITEMS = 6;
-    private static final int SCROLLBAR_WIDTH = 4;
+    private static final int SCROLLBAR_WIDTH = 6;
     private static final int SCROLLBAR_GAP = 2;
-    private static final int LIST_PADDING_V = 1;       // 列表区域上下内边距
-    private static final int FOOTER_HEIGHT = 48;      // 底部详情区增高，容纳多行与按钮
+    private static final int LIST_PADDING_V = 1;
+    private static final int FOOTER_HEIGHT = 48;
     private static final int FOOTER_PAD_H = 10;
     private static final int FOOTER_PAD_V = 8;
-    private static final int GAP_V_FOOTER = 8;         // 面板与底部信息区的间距
+    private static final int GAP_V_FOOTER = 8;
     private static final int BUTTON_HEIGHT = 20;
-
-    // 浅色系清新风格
-    private static final int COLORS_BG_PANEL = 0xF2EEF2F6;           // 面板背景，略偏冷白
-    private static final int COLORS_BG_ITEM = 0xF0E4E8F0;           // 列表项默认
-    private static final int COLORS_BG_ITEM_SELECTED = 0xF0DCE8E8;  // 选中：极淡青绿底
-    private static final int COLORS_BG_ITEM_DISABLED = 0xF0D8DCE4;
-    private static final int COLORS_BG_ITEM_DISABLED_BACK = 0xF0D0D4DC;
-    private static final int COLORS_TEXT_DISABLED = 0xFF9098A8;
-    private static final int COLORS_BG_ITEM_HOVER = 0xF0E8ECF4;     // 悬停：略亮
-    private static final int COLORS_BORDER = 0xFFB0BCC8;            // 面板主边框
-    private static final int COLORS_BORDER_SOFT = 0xFFC0CCD8;        // 柔和边框
-    private static final int COLORS_ACCENT = 0xFF7BA89C;            // 点缀色，用于选中/主按钮
-    private static final int COLORS_ACCENT_SOFT = 0xFF9CC0B4;       // 点缀色浅版，悬停边框等
-    private static final int COLORS_SELECTED_DISABLED = 0xFF9098A4; // 不可传送项选中时的左边条/边框，灰调
-    private static final int COLORS_TEXT = 0xFF2C3848;
-    private static final int COLORS_TEXT_DIM = 0xFF586878;
-    private static final int COLORS_SCROLLBAR = 0xA0A0B8C8;
-    private static final int COLORS_DELETE_HOVER = 0xFFD84858;
-    private static final int COLORS_TOOLTIP_BG = 0xF8F4F8FC;
-    private static final int COLORS_BTN = 0xF0B8D0C8;               // 主按钮
-    private static final int COLORS_BTN_HOVER = 0xF0A0C4B8;         // 主按钮悬停
-    private static final int COLORS_BTN_BORDER = 0xFF8CA89C;        // 主按钮边框
-    private static final int COLORS_TEXT_ON_DARK = 0xFFF5FAFF;
-    private static final int COLORS_FOOTER_BORDER = 0xFFA0B4C4;     // 底部详情区上边框，与面板区分
+    private static final int DIALOG_W = 280;
+    private static final int DIALOG_H = 100;
 
     // endregion Constants
 
-    // region  Data
+    // region Data
 
-    private final Coordinate lastPlayerPos = new Coordinate();
+    private final SafeWorldCoordinate lastPlayerPos = new SafeWorldCoordinate();
     private long lastUpdateTime = 0;
 
     private final List<WaypointEntry> homeItems = new ArrayList<>();
@@ -86,52 +76,153 @@ public class WaypointScreen extends Screen {
     private int panelWidth;
     private int panelHeight;
     private int listHeight;
+    private int contentW;
+    private int startX;
+    private int startY;
+    private int footerY;
+    private int buttonX;
+    private int buttonY;
+    private int buttonW;
+    private int footerX;
+    private int footerW;
+    private int dlgX;
+    private int dlgY;
 
-    // 删除确认
     private WaypointEntry deleteConfirmItem;
 
-    // 滚动偏移
-    private int homeScroll, stageScroll, backScroll;
-
-    // Tooltip 用
     private WaypointEntry hoveredItem;
 
-    // 传送按钮区域
-    private int buttonX, buttonY, buttonW, buttonH;
+    private ScrollbarWidget homeScrollbar;
+    private ScrollbarWidget stageScrollbar;
+    private ScrollbarWidget backScrollbar;
+    private ButtonWidget teleportButton;
+    private ButtonWidget deleteCancelButton;
+    private ButtonWidget deleteConfirmButton;
 
     // endregion Data
 
-
     public WaypointScreen() {
-        super(Component.literal("WaypointScreen").toChatComponent());
+        super(Component.literal("WaypointScreen"));
+        previousScreen(Minecraft.getInstance().screen);
     }
 
     @Override
-    protected void init() {
-        if (minecraft == null || minecraft.player == null) return;
+    public boolean shouldCloseOnEsc() {
+        return true;
+    }
 
-        super.init();
+    @Override
+    protected void onInit() {
+        if (minecraft == null || minecraft.player == null) {
+            return;
+        }
+        loadData();
+    }
 
+    @Override
+    protected void initWidgets() {
         int availWidth = width - 2 * SCREEN_MARGIN - 2 * GAP_H;
         panelWidth = availWidth / 3;
         listHeight = ITEM_HEIGHT * MAX_VISIBLE_ITEMS;
         panelHeight = TITLE_HEIGHT + 2 * LIST_PADDING_V + listHeight;
+        contentW = panelWidth - 2 * PANEL_PADDING - SCROLLBAR_WIDTH - SCROLLBAR_GAP;
 
-        loadData();
+        startX = SCREEN_MARGIN;
+        startY = 20;
+        footerY = startY + panelHeight + GAP_V_FOOTER;
+        footerX = SCREEN_MARGIN;
+        footerW = width - 2 * SCREEN_MARGIN;
 
-        int footerY = 20 + panelHeight + GAP_V_FOOTER;
         buttonW = 100;
-        buttonH = BUTTON_HEIGHT;
-        buttonX = (width - 100) / 2;
-        buttonY = footerY + (FOOTER_HEIGHT - buttonH) / 2;
+        buttonX = (width - buttonW) / 2;
+        buttonY = footerY + (FOOTER_HEIGHT - BUTTON_HEIGHT) / 2;
 
-        homeScroll = 0;
-        stageScroll = 0;
-        backScroll = 0;
+        dlgX = (width - DIALOG_W) / 2;
+        dlgY = (height - DIALOG_H) / 2;
+
+        int cancelW = Math.max(72, font.width(Component.transClientAuto(NarcissusFarewell.MODID, "cancel").toString()) + 20);
+        int deleteW = Math.max(72, font.width(Component.transClientAuto(NarcissusFarewell.MODID, "delete").toString()) + 20);
+        int btnY = dlgY + DIALOG_H - 30;
+        int cancelX = dlgX + (DIALOG_W - cancelW - deleteW - 10) / 2;
+        int deleteX = cancelX + cancelW + 10;
+
+        homeScrollbar = buildColumnScrollbar(0, homeItems);
+        stageScrollbar = buildColumnScrollbar(1, stageItems);
+        backScrollbar = buildColumnScrollbar(2, backItems);
+
+        teleportButton = new ButtonWidget(this);
+        teleportButton.id("teleport");
+        teleportButton.bounds(new ScreenCoordinate(buttonX, buttonY, buttonW, BUTTON_HEIGHT));
+        teleportButton.text(Component.transClientAuto(NarcissusFarewell.MODID, "teleport_btn"));
+        teleportButton.radius(4);
+        teleportButton.onClick(b -> {
+            if (selectedItem != null && selectedItem.canTeleport) {
+                onTeleportClick();
+            }
+        });
+        addWidget(teleportButton);
+
+        deleteCancelButton = new ButtonWidget(this);
+        deleteCancelButton.id("delete_cancel");
+        deleteCancelButton.bounds(new ScreenCoordinate(cancelX, btnY, cancelW, 20));
+        deleteCancelButton.text(Component.transClientAuto(NarcissusFarewell.MODID, "cancel"));
+        deleteCancelButton.radius(4);
+        deleteCancelButton.visible(false);
+        deleteCancelButton.onClick(b -> deleteConfirmItem = null);
+        addWidget(deleteCancelButton);
+
+        deleteConfirmButton = new ButtonWidget(this);
+        deleteConfirmButton.id("delete_confirm");
+        deleteConfirmButton.bounds(new ScreenCoordinate(deleteX, btnY, deleteW, 20));
+        deleteConfirmButton.text(Component.transClientAuto(NarcissusFarewell.MODID, "delete"));
+        deleteConfirmButton.radius(4);
+        deleteConfirmButton.visible(false);
+        deleteConfirmButton.onClick(b -> {
+            if (deleteConfirmItem != null) {
+                doActualDelete(deleteConfirmItem);
+                deleteConfirmItem = null;
+            }
+        });
+        addWidget(deleteConfirmButton);
+    }
+
+    private ScrollbarWidget buildColumnScrollbar(int columnIndex, List<WaypointEntry> items) {
+        int px = startX + columnIndex * (panelWidth + GAP_H);
+        int listX = px + PANEL_PADDING;
+        int listY = startY + TITLE_HEIGHT + LIST_PADDING_V;
+        int maxScroll = Math.max(0, items.size() - MAX_VISIBLE_ITEMS);
+
+        ScrollbarWidget bar = new ScrollbarWidget(this);
+        bar.id("scrollbar_" + columnIndex);
+        bar.bounds(new ScreenCoordinate(listX + contentW + SCROLLBAR_GAP, listY, SCROLLBAR_WIDTH, listHeight));
+        bar.orientation(EnumOrientation.VERTICAL);
+        bar.minValue(0);
+        bar.maxValue(maxScroll);
+        bar.visibleSize(MAX_VISIBLE_ITEMS);
+        bar.scrollStep(1.0);
+        bar.addScrollHoverArea(new ScreenCoordinate(listX, listY, contentW, listHeight));
+        addWidget(bar);
+        return bar;
+    }
+
+    private void syncScrollbarLimits() {
+        syncOneScrollbar(homeScrollbar, homeItems);
+        syncOneScrollbar(stageScrollbar, stageItems);
+        syncOneScrollbar(backScrollbar, backItems);
+    }
+
+    private void syncOneScrollbar(ScrollbarWidget bar, List<WaypointEntry> items) {
+        if (bar == null) {
+            return;
+        }
+        double v = bar.value();
+        double maxScroll = Math.max(0, items.size() - MAX_VISIBLE_ITEMS);
+        bar.maxValue(maxScroll);
+        bar.value(Math.min(v, maxScroll));
     }
 
     @Override
-    public void render(@Nonnull MatrixStack stack, int mouseX, int mouseY, float tick) {
+    protected void onRender(@Nonnull MatrixStack stack, float partialTicks) {
         renderBackground(stack);
 
         if (minecraft != null && minecraft.player != null) {
@@ -139,7 +230,6 @@ public class WaypointScreen extends Screen {
             ticketCount = data.getTeleportCard();
         }
 
-        // 更新选中项详情
         if (selectedItem != null) {
             long now = System.currentTimeMillis();
             boolean needUpdate = (now - lastUpdateTime > 500 && selectedItem != lastSelectedItem) || isPlayerMoved();
@@ -149,8 +239,10 @@ public class WaypointScreen extends Screen {
             }
         }
 
-        int startX = SCREEN_MARGIN;
-        int startY = 20;
+        BaniraColorConfig theme = getEffectiveTheme();
+
+        int mouseX = (int) inputState.mouseX();
+        int mouseY = (int) inputState.mouseY();
 
         if (deleteConfirmItem == null) {
             updateHoveredItem(mouseX, mouseY);
@@ -158,118 +250,73 @@ public class WaypointScreen extends Screen {
             hoveredItem = null;
         }
 
-        // 绘制三个面板
-        drawPanel(stack, startX, startY, Component.transClient(EnumI18nType.WORD, "private").toString(), homeItems, homeScroll, mouseX, mouseY, false);
-        drawPanel(stack, startX + panelWidth + GAP_H, startY, Component.transClient(EnumI18nType.WORD, "public").toString(), stageItems, stageScroll, mouseX, mouseY, false);
-        drawPanel(stack, startX + (panelWidth + GAP_H) * 2, startY, Component.transClient(EnumI18nType.WORD, "footprints").toString(), backItems, backScroll, mouseX, mouseY, true);
+        boolean dialogOpen = deleteConfirmItem != null;
+        if (homeScrollbar != null) {
+            homeScrollbar.enabled(!dialogOpen);
+            stageScrollbar.enabled(!dialogOpen);
+            backScrollbar.enabled(!dialogOpen);
+        }
+        if (teleportButton != null) {
+            teleportButton.visible(!dialogOpen);
+            teleportButton.enabled(selectedItem != null && selectedItem.canTeleport);
+        }
+        if (deleteCancelButton != null) {
+            deleteCancelButton.visible(dialogOpen);
+            deleteConfirmButton.visible(dialogOpen);
+        }
 
-        // 底部详情区
-        int footerY = startY + panelHeight + GAP_V_FOOTER;
-        drawFooter(stack, footerY, mouseX, mouseY);
+        drawPanel(stack, theme, 0, Component.transClientAuto(NarcissusFarewell.MODID, "private").toString(), homeItems, homeScrollbar, false, mouseX, mouseY);
+        drawPanel(stack, theme, 1, Component.transClientAuto(NarcissusFarewell.MODID, "public").toString(), stageItems, stageScrollbar, false, mouseX, mouseY);
+        drawPanel(stack, theme, 2, Component.transClientAuto(NarcissusFarewell.MODID, "footprints").toString(), backItems, backScrollbar, true, mouseX, mouseY);
 
-        // 传送卡数量
-        String ticketStr = Component.transClient(EnumI18nType.WORD, "teleport_card").toString() + ": " + ticketCount;
+        drawFooter(stack, theme);
+
+        String ticketStr = Component.transClientAuto(NarcissusFarewell.MODID, "teleport_card").toString() + ": " + ticketCount;
         int tw = font.width(ticketStr);
-        font.draw(stack, ticketStr, width - tw - 10, 10, COLORS_TEXT_ON_DARK);
+        font.draw(stack, ticketStr, width - tw - 10, 10, theme.textPrimary());
 
-        // 删除确认遮罩
-        if (deleteConfirmItem != null) {
-            drawDeleteConfirmOverlay(stack, mouseX, mouseY);
+        if (dialogOpen) {
+            drawDeleteConfirmOverlay(stack, theme);
         }
 
-        // Tooltip
-        if (hoveredItem != null && deleteConfirmItem == null) {
-            drawCustomTooltip(stack, hoveredItem, mouseX, mouseY);
+        if (hoveredItem != null && !dialogOpen) {
+            addDeferredTooltipRender(s -> drawCustomTooltip(s, theme, hoveredItem, mouseX, mouseY));
         }
 
-        // 传送按钮
-        drawTeleportButton(stack, mouseX, mouseY);
-
-        super.render(stack, mouseX, mouseY, tick);
+        renderWidgets(stack, partialTicks);
     }
 
     @Override
-    public boolean mouseClicked(double mouseX, double mouseY, int button) {
-        if (button != 0) return super.mouseClicked(mouseX, mouseY, button);
-
-        // 传送按钮点击
-        if (deleteConfirmItem == null && mouseX >= buttonX && mouseX < buttonX + buttonW && mouseY >= buttonY && mouseY < buttonY + buttonH) {
-            if (selectedItem != null && selectedItem.canTeleport) {
-                onTeleportClick();
-                return true;
-            }
+    public void onMouseClicked(MouseClickedHandleArgs eventArgs) {
+        if (deleteConfirmItem != null && eventArgs.button() == 0 && !eventArgs.consumed()) {
+            eventArgs.consumed(true);
+            return;
         }
 
-        if (deleteConfirmItem != null) {
-            int dlgW = 280;
-            int dlgH = 100;
-            int dlgX = (width - dlgW) / 2;
-            int dlgY = (height - dlgH) / 2;
-            int cancelW = font.width(Component.transClient(EnumI18nType.WORD, "cancel").toString()) + 20;
-            int deleteW = font.width(Component.transClient(EnumI18nType.WORD, "delete").toString()) + 20;
-            int btnY = dlgY + dlgH - 30;
-            int cancelX = dlgX + (dlgW - cancelW - deleteW - 10) / 2;
-            int deleteX = cancelX + cancelW + 10;
-
-            if (mouseX >= cancelX && mouseX <= cancelX + cancelW && mouseY >= btnY && mouseY < btnY + 20) {
-                deleteConfirmItem = null;
-                return true;
-            }
-            if (mouseX >= deleteX && mouseX <= deleteX + deleteW && mouseY >= btnY && mouseY < btnY + 20) {
-                doActualDelete(deleteConfirmItem);
-                deleteConfirmItem = null;
-                return true;
-            }
-            return true;
+        if (eventArgs.button() != 0 || eventArgs.consumed()) {
+            super.onMouseClicked(eventArgs);
+            return;
         }
 
-        int startX = SCREEN_MARGIN;
-        int startY = 20;
+        double mouseX = eventArgs.mouseX();
+        double mouseY = eventArgs.mouseY();
         int listY = startY + TITLE_HEIGHT + LIST_PADDING_V;
-        int contentW = panelWidth - 2 * PANEL_PADDING - SCROLLBAR_WIDTH - SCROLLBAR_GAP;
 
-        // 检查三个面板的点击
-        if (checkPanelClick(mouseX, mouseY, startX + PANEL_PADDING, listY, contentW, homeItems, homeScroll))
-            return true;
-        if (checkPanelClick(mouseX, mouseY, startX + panelWidth + GAP_H + PANEL_PADDING, listY, contentW, stageItems, stageScroll))
-            return true;
-        if (checkPanelClick(mouseX, mouseY, startX + (panelWidth + GAP_H) * 2 + PANEL_PADDING, listY, contentW, backItems, backScroll))
-            return true;
-
-        return super.mouseClicked(mouseX, mouseY, button);
-    }
-
-    @Override
-    public boolean mouseScrolled(double mouseX, double mouseY, double delta) {
-        int startX = SCREEN_MARGIN;
-        int startY = 20;
-        int listY = startY + TITLE_HEIGHT + LIST_PADDING_V;
-        int contentW = panelWidth - 2 * PANEL_PADDING - SCROLLBAR_WIDTH - SCROLLBAR_GAP;
-
-        for (int p = 0; p < 3; p++) {
-            int px = startX + p * (panelWidth + GAP_H) + PANEL_PADDING;
-            if (mouseX >= px && mouseX < px + contentW && mouseY >= listY && mouseY < listY + listHeight) {
-                if (p == 0) {
-                    homeScroll = (int) MathHelper.clamp(homeScroll - delta, 0, Math.max(0, homeItems.size() - MAX_VISIBLE_ITEMS));
-                } else if (p == 1) {
-                    stageScroll = (int) MathHelper.clamp(stageScroll - delta, 0, Math.max(0, stageItems.size() - MAX_VISIBLE_ITEMS));
-                } else {
-                    backScroll = (int) MathHelper.clamp(backScroll - delta, 0, Math.max(0, backItems.size() - MAX_VISIBLE_ITEMS));
-                }
-                return true;
-            }
+        if (checkPanelClick(mouseX, mouseY, startX + PANEL_PADDING, listY, contentW, homeItems, homeScrollbar)) {
+            eventArgs.consumed(true);
+        } else if (checkPanelClick(mouseX, mouseY, startX + panelWidth + GAP_H + PANEL_PADDING, listY, contentW, stageItems, stageScrollbar)) {
+            eventArgs.consumed(true);
+        } else if (checkPanelClick(mouseX, mouseY, startX + (panelWidth + GAP_H) * 2 + PANEL_PADDING, listY, contentW, backItems, backScrollbar)) {
+            eventArgs.consumed(true);
         }
-        return super.mouseScrolled(mouseX, mouseY, delta);
-    }
 
-    @Override
-    public boolean isPauseScreen() {
-        return false;
+        super.onMouseClicked(eventArgs);
     }
-
 
     private void loadData() {
-        if (minecraft == null || minecraft.player == null) return;
+        if (minecraft == null || minecraft.player == null) {
+            return;
+        }
         PlayerTeleportData data = PlayerTeleportData.getData(minecraft.player);
 
         homeItems.clear();
@@ -279,7 +326,7 @@ public class WaypointScreen extends Screen {
         }
 
         stageItems.clear();
-        for (Map.Entry<KeyValue<String, String>, Coordinate> entry : ClientStageData.getStageCoordinate().entrySet()) {
+        for (Map.Entry<KeyValue<String, String>, SafeWorldCoordinate> entry : ClientStageData.getStageCoordinate().entrySet()) {
             stageItems.add(new WaypointEntry(WaypointEntry.Type.STAGE, entry.getKey().value(),
                     entry.getValue(), true, null));
         }
@@ -293,32 +340,43 @@ public class WaypointScreen extends Screen {
             TeleportRecord record = records.get(i);
             String recordTypeName = record.getTeleportType().name();
             boolean canTp = !seenRecordTypes.contains(recordTypeName);
-            if (canTp) seenRecordTypes.add(recordTypeName);
+            if (canTp) {
+                seenRecordTypes.add(recordTypeName);
+            }
             backItems.add(new WaypointEntry(WaypointEntry.Type.BACK, recordTypeName, record.getBefore(),
                     canTp, recordTypeName));
         }
 
         WaypointEntry first = null;
-        if (!homeItems.isEmpty()) first = homeItems.get(0);
-        else if (!stageItems.isEmpty()) first = stageItems.get(0);
-        else if (!backItems.isEmpty()) first = backItems.get(0);
-        if (first != null) selectedItem = first;
+        if (!homeItems.isEmpty()) {
+            first = homeItems.get(0);
+        } else if (!stageItems.isEmpty()) {
+            first = stageItems.get(0);
+        } else if (!backItems.isEmpty()) {
+            first = backItems.get(0);
+        }
+        if (first != null) {
+            selectedItem = first;
+        }
 
         ticketCount = data.getTeleportCard();
     }
 
-    private boolean checkPanelClick(double mouseX, double mouseY, int listX, int listY, int contentW, List<WaypointEntry> items, int scroll) {
+    private boolean checkPanelClick(double mouseX, double mouseY, int listX, int listY, int cw, List<WaypointEntry> items, ScrollbarWidget bar) {
+        int scroll = bar != null ? (int) Math.round(MathHelper.clamp(bar.value(), 0, Math.max(0, items.size() - MAX_VISIBLE_ITEMS))) : 0;
+
         for (int i = 0; i < MAX_VISIBLE_ITEMS; i++) {
             int idx = i + scroll;
-            if (idx >= items.size()) break;
+            if (idx >= items.size()) {
+                break;
+            }
 
             WaypointEntry item = items.get(idx);
             int itemY = listY + i * ITEM_HEIGHT;
 
-            if (mouseX >= listX && mouseX < listX + contentW && mouseY >= itemY && mouseY < itemY + ITEM_HEIGHT - 1) {
-                // 删除按钮区域
+            if (mouseX >= listX && mouseX < listX + cw && mouseY >= itemY && mouseY < itemY + ITEM_HEIGHT - 1) {
                 if ((item.type == WaypointEntry.Type.HOME || item.type == WaypointEntry.Type.STAGE) && item.canTeleport) {
-                    int delX = listX + contentW - 16;
+                    int delX = listX + cw - 16;
                     if (mouseX >= delX) {
                         deleteConfirmItem = item;
                         return true;
@@ -333,19 +391,19 @@ public class WaypointScreen extends Screen {
 
     private void updateHoveredItem(int mouseX, int mouseY) {
         hoveredItem = null;
-        int startX = SCREEN_MARGIN;
-        int startY = 20;
         int listY = startY + TITLE_HEIGHT + LIST_PADDING_V;
-        int contentW = panelWidth - 2 * PANEL_PADDING - SCROLLBAR_WIDTH - SCROLLBAR_GAP;
 
         for (int p = 0; p < 3; p++) {
             int listX = startX + p * (panelWidth + GAP_H) + PANEL_PADDING;
             List<WaypointEntry> items = p == 0 ? homeItems : (p == 1 ? stageItems : backItems);
-            int scroll = p == 0 ? homeScroll : (p == 1 ? stageScroll : backScroll);
+            ScrollbarWidget bar = p == 0 ? homeScrollbar : (p == 1 ? stageScrollbar : backScrollbar);
+            int scroll = bar != null ? (int) Math.round(MathHelper.clamp(bar.value(), 0, Math.max(0, items.size() - MAX_VISIBLE_ITEMS))) : 0;
 
             for (int i = 0; i < MAX_VISIBLE_ITEMS; i++) {
                 int idx = i + scroll;
-                if (idx >= items.size()) break;
+                if (idx >= items.size()) {
+                    break;
+                }
                 int itemY = listY + i * ITEM_HEIGHT;
                 if (mouseX >= listX && mouseX < listX + contentW && mouseY >= itemY && mouseY < itemY + ITEM_HEIGHT) {
                     hoveredItem = items.get(idx);
@@ -355,119 +413,112 @@ public class WaypointScreen extends Screen {
         }
     }
 
-    private void drawTeleportButton(MatrixStack stack, int mouseX, int mouseY) {
-        // 若有确认弹窗，按钮仍绘制但不响应悬浮高亮
-        boolean hover = deleteConfirmItem == null
-                && mouseX >= buttonX && mouseX < buttonX + buttonW
-                && mouseY >= buttonY && mouseY < buttonY + buttonH;
-        boolean canTp = selectedItem != null && selectedItem.canTeleport;
-        int bgColor = canTp ? (hover ? COLORS_BTN_HOVER : COLORS_BTN) : COLORS_BG_ITEM_DISABLED;
-        int textColor = canTp ? COLORS_TEXT : COLORS_TEXT_DISABLED;
-        int borderColor = canTp ? (hover ? COLORS_ACCENT : COLORS_BTN_BORDER) : COLORS_BORDER_SOFT;
-
-        AbstractGuiUtils.drawRoundedRect(stack, buttonX, buttonY, buttonW, buttonH, bgColor, 4);
-        AbstractGuiUtils.drawRoundedRectOutLineRough(stack, buttonX, buttonY, buttonW, buttonH, 1, borderColor, 4);
-        String btnText = Component.transClient(EnumI18nType.WORD, "teleport_btn").toString();
-        font.draw(stack, btnText, buttonX + (buttonW - font.width(btnText)) / 2f, buttonY + (buttonH - font.lineHeight) / 2f + 1, textColor);
-    }
-
-    private void drawCustomTooltip(MatrixStack stack, WaypointEntry item, int mouseX, int mouseY) {
+    private void drawCustomTooltip(MatrixStack stack, BaniraColorConfig theme, WaypointEntry item, int mouseX, int mouseY) {
         List<String> lines = new ArrayList<>();
         lines.add(item.name);
         lines.add(item.getDetailTypeName() + " | " + item.getDimensionName());
         lines.add(item.getCoordinateName());
         if (!item.canTeleport) {
-            lines.add(Component.transClient(EnumI18nType.WORD, "back_record_used").toString());
+            lines.add(Component.transClientAuto(NarcissusFarewell.MODID, "back_record_used").toString());
         }
         String content = String.join("\n", lines);
-        Text tooltipText = Text.literal(content).stack(stack).font(font).color(Color.argb(COLORS_TEXT));
+        Text tooltipText = Text.literal(content).stack(stack).font(font).color(Color.argb(theme.textPrimary()));
         FontDrawArgs args = FontDrawArgs.of(tooltipText)
                 .x(mouseX).y(mouseY)
                 .marginTop(2).marginBottom(2).marginLeft(2).marginRight(2)
-                .paddingTop(6).paddingBottom(6).paddingLeft(6).paddingRight(6)
-                .bgArgb(COLORS_TOOLTIP_BG).bgBorderRadius(4).bgBorderThickness(1)
+                .bgArgb(ColorUtils.applyAlphaToArgb(theme.bgSurface(), 0xF0))
+                .bgBorderRadius(4).bgBorderThickness(1)
                 .inScreen(true);
-        AbstractGuiUtils.drawPopupMessage(args);
+        TooltipWidget.drawPopupMessage(stack, args);
     }
 
-    private void drawPanel(MatrixStack stack, int x, int y, String title, List<WaypointEntry> items, int scroll, int mouseX, int mouseY, boolean isBackPanel) {
-        AbstractGuiUtils.drawRoundedRect(stack, x, y, panelWidth, panelHeight, COLORS_BG_PANEL, 3);
-        AbstractGuiUtils.drawRoundedRectOutLineRough(stack, x, y, panelWidth, panelHeight, 1, COLORS_BORDER, 3);
-        AbstractGuiUtils.fill(stack, x + 2, y + TITLE_HEIGHT - 1, panelWidth - 4, 1, COLORS_BORDER_SOFT);
+    private void drawPanel(MatrixStack stack, BaniraColorConfig theme, int columnIndex, String title, List<WaypointEntry> items,
+                           ScrollbarWidget scrollbar, boolean isBackPanel, int mouseX, int mouseY) {
+        int x = startX + columnIndex * (panelWidth + GAP_H);
+        int y = startY;
 
-        font.draw(stack, title, x + PANEL_PADDING, y + 3, COLORS_TEXT);
+        ShapeDrawArgs panelShape = ShapeDrawArgs.rect(stack, x, y, panelWidth, panelHeight, theme.panelBg());
+        panelShape.rect().radius(6);
+        BaseShapeWidget.drawShape(panelShape);
+
+        ShapeDrawArgs titleLine = ShapeDrawArgs.rect(stack, x + 2, y + TITLE_HEIGHT - 1, panelWidth - 4, 1, theme.border());
+        BaseShapeWidget.drawShape(titleLine);
+
+        font.draw(stack, title, x + PANEL_PADDING, y + 3, theme.textPrimary());
 
         int listY = y + TITLE_HEIGHT + LIST_PADDING_V;
         int listX = x + PANEL_PADDING;
-        int contentW = panelWidth - 2 * PANEL_PADDING - SCROLLBAR_WIDTH - SCROLLBAR_GAP;
-        int scrollbarX = listX + contentW + SCROLLBAR_GAP;
-
-        int maxScroll = Math.max(0, items.size() - MAX_VISIBLE_ITEMS);
-        scroll = MathHelper.clamp(scroll, 0, maxScroll);
+        int scroll = scrollbar != null
+                ? (int) Math.round(MathHelper.clamp(scrollbar.value(), 0, Math.max(0, items.size() - MAX_VISIBLE_ITEMS)))
+                : 0;
 
         for (int i = 0; i < MAX_VISIBLE_ITEMS; i++) {
             int idx = i + scroll;
-            if (idx >= items.size()) break;
+            if (idx >= items.size()) {
+                break;
+            }
 
             WaypointEntry item = items.get(idx);
             int itemY = listY + i * ITEM_HEIGHT;
             boolean hover = mouseX >= listX && mouseX < listX + contentW && mouseY >= itemY && mouseY < itemY + ITEM_HEIGHT;
             boolean selected = item == selectedItem;
 
-            int bgColor;
+            int rowBg;
             if (!item.canTeleport) {
-                bgColor = isBackPanel ? COLORS_BG_ITEM_DISABLED_BACK : COLORS_BG_ITEM_DISABLED;
+                rowBg = isBackPanel
+                        ? ColorUtils.applyAlphaToArgb(theme.bgDisabled(), 0x55)
+                        : ColorUtils.applyAlphaToArgb(theme.bgDisabled(), 0x40);
                 if (selected) {
-                    bgColor = 0xF0D4D8E0;
+                    rowBg = ColorUtils.applyAlphaToArgb(theme.bgTertiary(), 0x50);
                 }
             } else {
-                bgColor = selected ? COLORS_BG_ITEM_SELECTED : (hover ? COLORS_BG_ITEM_HOVER : COLORS_BG_ITEM);
+                rowBg = selected
+                        ? ColorUtils.applyAlphaToArgb(theme.accent(), 0x38)
+                        : hover
+                        ? ColorUtils.applyAlphaToArgb(theme.bgSecondary(), 0x45)
+                        : ColorUtils.applyAlphaToArgb(theme.bgSecondary(), 0x28);
             }
-            int textColor = !item.canTeleport && isBackPanel ? COLORS_TEXT_DISABLED : COLORS_TEXT;
-            int metaColor = !item.canTeleport && isBackPanel ? COLORS_TEXT_DISABLED : COLORS_TEXT_DIM;
 
-            AbstractGuiUtils.drawRoundedRect(stack, listX, itemY, contentW, ITEM_HEIGHT - 1, bgColor, 2);
+            int textColor = !item.canTeleport && isBackPanel ? theme.textDisabled() : theme.textPrimary();
+            int metaColor = !item.canTeleport && isBackPanel ? theme.textDisabled() : theme.textSecondary();
+
+            ShapeDrawArgs rowRect = ShapeDrawArgs.rect(stack, listX, itemY, contentW, ITEM_HEIGHT - 1, rowBg);
+            rowRect.rect().radius(4);
+            BaseShapeWidget.drawShape(rowRect);
+
             if (item.canTeleport) {
                 if (selected) {
-                    AbstractGuiUtils.fill(stack, listX, itemY, 3, ITEM_HEIGHT - 1, COLORS_ACCENT);
-                    AbstractGuiUtils.drawRoundedRectOutLineRough(stack, listX, itemY, contentW, ITEM_HEIGHT - 1, 1, COLORS_ACCENT_SOFT, 2);
+                    ShapeDrawArgs accentBar = ShapeDrawArgs.rect(stack, listX, itemY, 3, ITEM_HEIGHT - 1, theme.accent());
+                    BaseShapeWidget.drawShape(accentBar);
                 } else if (hover) {
-                    AbstractGuiUtils.fill(stack, listX, itemY, 2, ITEM_HEIGHT - 1, COLORS_ACCENT_SOFT);
+                    ShapeDrawArgs softBar = ShapeDrawArgs.rect(stack, listX, itemY, 2, ITEM_HEIGHT - 1, ColorUtils.applyAlphaToArgb(theme.accent(), 0x90));
+                    BaseShapeWidget.drawShape(softBar);
                 }
             } else if (selected) {
-                AbstractGuiUtils.fill(stack, listX, itemY, 3, ITEM_HEIGHT - 1, COLORS_SELECTED_DISABLED);
-                AbstractGuiUtils.drawRoundedRectOutLineRough(stack, listX, itemY, contentW, ITEM_HEIGHT - 1, 1, COLORS_SELECTED_DISABLED, 2);
+                ShapeDrawArgs disBar = ShapeDrawArgs.rect(stack, listX, itemY, 3, ITEM_HEIGHT - 1, theme.textDisabled());
+                BaseShapeWidget.drawShape(disBar);
             }
 
             font.draw(stack, font.plainSubstrByWidth(item.name, contentW - 18), listX + 3, itemY + 2, textColor);
             String meta = item.getDimensionName() + " " + item.getCoordinateName();
             font.draw(stack, font.plainSubstrByWidth(meta, contentW - 18), listX + 3, itemY + 12, metaColor);
 
-            // 删除按钮 (home/stage)
             if ((item.type == WaypointEntry.Type.HOME || item.type == WaypointEntry.Type.STAGE) && item.canTeleport) {
                 int delX = listX + contentW - 16;
                 int delY = itemY + (ITEM_HEIGHT - 10) / 2;
                 boolean delHover = mouseX >= delX && mouseX <= delX + 14 && mouseY >= delY && mouseY < delY + 10;
-                font.draw(stack, "×", delX + 2, delY, delHover ? COLORS_DELETE_HOVER : COLORS_TEXT_DIM);
+                font.draw(stack, "×", delX + 2, delY, delHover ? theme.error() : theme.textHint());
             }
-        }
-
-        // 滚动条
-        if (items.size() > MAX_VISIBLE_ITEMS && maxScroll > 0) {
-            int barH = listHeight;
-            int thumbH = Math.max(8, barH * MAX_VISIBLE_ITEMS / items.size());
-            int thumbY = listY + (int) ((barH - thumbH) * (double) scroll / maxScroll);
-            AbstractGuiUtils.fill(stack, scrollbarX, thumbY, SCROLLBAR_WIDTH, thumbH, COLORS_SCROLLBAR);
         }
     }
 
-    private void drawFooter(MatrixStack stack, int footerY, int mouseX, int mouseY) {
-        int footerX = SCREEN_MARGIN;
-        int footerW = width - 2 * SCREEN_MARGIN;
+    private void drawFooter(MatrixStack stack, BaniraColorConfig theme) {
+        ShapeDrawArgs footerBg = ShapeDrawArgs.rect(stack, footerX, footerY, footerW, FOOTER_HEIGHT, theme.panelBg());
+        footerBg.rect().radius(6);
+        BaseShapeWidget.drawShape(footerBg);
 
-        AbstractGuiUtils.drawRoundedRect(stack, footerX, footerY, footerW, FOOTER_HEIGHT, COLORS_BG_PANEL, 3);
-        AbstractGuiUtils.drawRoundedRectOutLineRough(stack, footerX, footerY, footerW, FOOTER_HEIGHT, 1, COLORS_FOOTER_BORDER, 3);
-        AbstractGuiUtils.fill(stack, footerX + 2, footerY, footerW - 4, 1, COLORS_ACCENT_SOFT);
+        ShapeDrawArgs footerTop = ShapeDrawArgs.rect(stack, footerX + 2, footerY, footerW - 4, 1, ColorUtils.applyAlphaToArgb(theme.accent(), 0x80));
+        BaseShapeWidget.drawShape(footerTop);
 
         int centerGap = 16;
         int leftZoneW = (footerW - 2 * FOOTER_PAD_H - buttonW - 2 * centerGap) / 2;
@@ -478,75 +529,64 @@ public class WaypointScreen extends Screen {
         int y0 = footerY + FOOTER_PAD_V;
 
         if (selectedItem != null) {
-            // 维度、坐标、距离
             String dimStr = selectedItem.getDimensionName();
             String coordStr = selectedItem.getCoordinateName();
             String distanceStr;
-            if (minecraft != null && minecraft.player != null && selectedItem.coordinate != null
-                    && selectedItem.coordinate.dimension() == minecraft.player.level.dimension()) {
-                distanceStr = NumberUtils.toFixedEx(selectedItem.coordinate.distanceFrom(new Coordinate(minecraft.player)), 1) + "m";
+            if (minecraft != null && minecraft.player != null && selectedItem.safeWorldCoordinate != null
+                    && selectedItem.safeWorldCoordinate.dimension() == minecraft.player.level.dimension()) {
+                distanceStr = NumberUtils.toFixedEx(selectedItem.safeWorldCoordinate.distanceFrom(new SafeWorldCoordinate(minecraft.player)), 1) + "m";
             } else {
                 distanceStr = "∞m";
             }
-            font.draw(stack, font.plainSubstrByWidth(dimStr, leftZoneW), leftX, y0, COLORS_TEXT_DIM);
-            font.draw(stack, font.plainSubstrByWidth(coordStr, leftZoneW), leftX, y0 + lineH, COLORS_TEXT_DIM);
-            font.draw(stack, font.plainSubstrByWidth(distanceStr, leftZoneW), leftX, y0 + lineH * 2, COLORS_TEXT);
+            font.draw(stack, font.plainSubstrByWidth(dimStr, leftZoneW), leftX, y0, theme.textHint());
+            font.draw(stack, font.plainSubstrByWidth(coordStr, leftZoneW), leftX, y0 + lineH, theme.textHint());
+            font.draw(stack, font.plainSubstrByWidth(distanceStr, leftZoneW), leftX, y0 + lineH * 2, theme.textPrimary());
 
-            // 传送消耗
             String costStr = calculateCostDisplay(selectedItem);
             if (costStr != null && !costStr.isEmpty()) {
-                Text costText = Text.literal(costStr).stack(stack).font(font).color(Color.argb(COLORS_TEXT_DIM));
-                AbstractGuiUtils.drawLimitedText(FontDrawArgs.of(costText)
+                Text costText = Text.literal(costStr).stack(stack).font(font).color(Color.argb(theme.textSecondary()));
+                LabelWidget.drawLimitedText(FontDrawArgs.of(costText)
                         .x(rightX).y(y0)
                         .maxWidth(rightZoneW)
                         .align(EnumAlignment.END)
                         .wrap(true)
                         .inScreen(false)
+                        .position(EnumEllipsisPosition.END)
+                        .bgArgb(0).bgBorderRadius(0).bgBorderThickness(0)
                         .paddingLeft(0).paddingRight(0).paddingTop(0).paddingBottom(0));
             }
         }
     }
 
-    private void drawDeleteConfirmOverlay(MatrixStack stack, int mouseX, int mouseY) {
-        AbstractGuiUtils.fill(stack, 0, 0, width, height, 0x60000000);
+    private void drawDeleteConfirmOverlay(MatrixStack stack, BaniraColorConfig theme) {
+        ShapeDrawArgs dim = ShapeDrawArgs.rect(stack, 0, 0, width, height, ColorUtils.applyAlphaToArgb(theme.bgQuaternary(), 0x78));
+        BaseShapeWidget.drawShape(dim);
 
-        int dlgW = 280;
-        int dlgH = 100;
-        int dlgX = (width - dlgW) / 2;
-        int dlgY = (height - dlgH) / 2;
+        ShapeDrawArgs dlg = ShapeDrawArgs.rect(stack, dlgX, dlgY, DIALOG_W, DIALOG_H, theme.panelBg());
+        dlg.rect().radius(6);
+        BaseShapeWidget.drawShape(dlg);
 
-        AbstractGuiUtils.drawRoundedRect(stack, dlgX, dlgY, dlgW, dlgH, COLORS_BG_PANEL, 6);
-        AbstractGuiUtils.drawRoundedRectOutLineRough(stack, dlgX, dlgY, dlgW, dlgH, 1, COLORS_BORDER, 6);
+        ShapeDrawArgs dlgBorder = ShapeDrawArgs.rect(stack, dlgX, dlgY, DIALOG_W, DIALOG_H, theme.border());
+        dlgBorder.rect().radius(6).border(1f);
+        BaseShapeWidget.drawShape(dlgBorder);
 
-        String title = Component.transClient(EnumI18nType.WORD, "del_confirm_title").toString();
-        String msg = Component.transClient(EnumI18nType.WORD, "del_confirm_msg").toString();
-        font.draw(stack, title, dlgX + (dlgW - font.width(title)) / 2f, dlgY + 15, COLORS_TEXT);
-        font.draw(stack, msg, dlgX + (dlgW - font.width(msg)) / 2f, dlgY + 35, COLORS_TEXT_DIM);
-
-        String cancelStr = Component.transClient(EnumI18nType.WORD, "cancel").toString();
-        String deleteStr = Component.transClient(EnumI18nType.WORD, "delete").toString();
-        int cancelW = font.width(cancelStr) + 20;
-        int deleteW = font.width(deleteStr) + 20;
-        int btnY = dlgY + dlgH - 30;
-        int cancelX = dlgX + (dlgW - cancelW - deleteW - 10) / 2;
-        int deleteX = cancelX + cancelW + 10;
-
-        boolean cancelHover = mouseX >= cancelX && mouseX <= cancelX + cancelW && mouseY >= btnY && mouseY < btnY + 20;
-        boolean deleteHover = mouseX >= deleteX && mouseX <= deleteX + deleteW && mouseY >= btnY && mouseY < btnY + 20;
-
-        AbstractGuiUtils.drawRoundedRect(stack, cancelX, btnY, cancelW, 20, cancelHover ? 0xE8D0D8E0 : 0xE8C0C8D0, 4);
-        AbstractGuiUtils.drawRoundedRect(stack, deleteX, btnY, deleteW, 20, deleteHover ? 0xE8F0A0A8 : 0xE8E09098, 4);
-        font.draw(stack, cancelStr, cancelX + (cancelW - font.width(cancelStr)) / 2f, btnY + 6, COLORS_TEXT);
-        font.draw(stack, deleteStr, deleteX + (deleteW - font.width(deleteStr)) / 2f, btnY + 6, COLORS_TEXT);
+        String title = Component.transClientAuto(NarcissusFarewell.MODID, "del_confirm_title").toString();
+        String msg = Component.transClientAuto(NarcissusFarewell.MODID, "del_confirm_msg").toString();
+        font.draw(stack, title, dlgX + (DIALOG_W - font.width(title)) / 2f, dlgY + 15, theme.textPrimary());
+        font.draw(stack, msg, dlgX + (DIALOG_W - font.width(msg)) / 2f, dlgY + 35, theme.textSecondary());
     }
 
     private void onTeleportClick() {
-        if (selectedItem == null || !selectedItem.canTeleport) return;
+        if (selectedItem == null || !selectedItem.canTeleport) {
+            return;
+        }
         EnumTeleportType type = itemTypeToEnum(selectedItem.type);
         String name = selectedItem.name;
         String dimension = "";
         if (type == EnumTeleportType.TP_HOME || type == EnumTeleportType.TP_STAGE) {
-            if (selectedItem.coordinate != null) dimension = selectedItem.coordinate.getDimensionResourceId();
+            if (selectedItem.safeWorldCoordinate != null) {
+                dimension = selectedItem.safeWorldCoordinate.getDimensionResourceId();
+            }
         } else if (type == EnumTeleportType.TP_BACK) {
             name = selectedItem.recordType != null ? selectedItem.recordType : "";
         }
@@ -555,30 +595,36 @@ public class WaypointScreen extends Screen {
     }
 
     private void doActualDelete(WaypointEntry item) {
-        if (item == null || item.coordinate == null || minecraft == null || minecraft.player == null) return;
-        int typeOrdinal = item.type == WaypointEntry.Type.HOME ? 0 : 1;
-        String dimension = item.coordinate.getDimensionResourceId();
-        ModNetworkHandler.INSTANCE.sendToServer(new WaypointDelToServer(typeOrdinal, item.name, dimension));
-        // 乐观更新
-        if (item.type == WaypointEntry.Type.HOME) {
-            homeItems.removeIf(e -> e.name.equals(item.name) && e.coordinate != null && dimension.equals(e.coordinate.getDimensionResourceId()));
-            homeScroll = Math.min(homeScroll, Math.max(0, homeItems.size() - MAX_VISIBLE_ITEMS));
-        } else if (item.type == WaypointEntry.Type.STAGE) {
-            stageItems.removeIf(e -> e.name.equals(item.name) && e.coordinate != null && dimension.equals(e.coordinate.getDimensionResourceId()));
-            stageScroll = Math.min(stageScroll, Math.max(0, stageItems.size() - MAX_VISIBLE_ITEMS));
+        if (item == null || item.safeWorldCoordinate == null || minecraft == null || minecraft.player == null) {
+            return;
         }
+        int typeOrdinal = item.type == WaypointEntry.Type.HOME ? 0 : 1;
+        String dimension = item.safeWorldCoordinate.getDimensionResourceId();
+        ModNetworkHandler.INSTANCE.sendToServer(new WaypointDelToServer(typeOrdinal, item.name, dimension));
+        if (item.type == WaypointEntry.Type.HOME) {
+            homeItems.removeIf(e -> e.name.equals(item.name) && e.safeWorldCoordinate != null && dimension.equals(e.safeWorldCoordinate.getDimensionResourceId()));
+        } else if (item.type == WaypointEntry.Type.STAGE) {
+            stageItems.removeIf(e -> e.name.equals(item.name) && e.safeWorldCoordinate != null && dimension.equals(e.safeWorldCoordinate.getDimensionResourceId()));
+        }
+        syncScrollbarLimits();
         if (selectedItem == item) {
             WaypointEntry first = null;
-            if (!homeItems.isEmpty()) first = homeItems.get(0);
-            else if (!stageItems.isEmpty()) first = stageItems.get(0);
-            else if (!backItems.isEmpty()) first = backItems.get(0);
+            if (!homeItems.isEmpty()) {
+                first = homeItems.get(0);
+            } else if (!stageItems.isEmpty()) {
+                first = stageItems.get(0);
+            } else if (!backItems.isEmpty()) {
+                first = backItems.get(0);
+            }
             selectedItem = first;
         }
     }
 
     private String calculateCostDisplay(WaypointEntry item) {
-        if (item == null || item.coordinate == null || minecraft == null || minecraft.player == null) return "";
-        return ClientCostCalculator.formatCostDisplay(minecraft.player, item.coordinate, itemTypeToEnum(item.type));
+        if (item == null || item.safeWorldCoordinate == null || minecraft == null || minecraft.player == null) {
+            return "";
+        }
+        return ClientCostCalculator.formatCostDisplay(minecraft.player, item.safeWorldCoordinate, itemTypeToEnum(item.type));
     }
 
     private static EnumTeleportType itemTypeToEnum(WaypointEntry.Type type) {
@@ -606,20 +652,20 @@ public class WaypointScreen extends Screen {
         return false;
     }
 
-
+    @Accessors(chain = true, fluent = true)
     public static class WaypointEntry {
         public enum Type {HOME, STAGE, BACK}
 
         public final Type type;
         public final String name;
-        public final Coordinate coordinate;
+        public final SafeWorldCoordinate safeWorldCoordinate;
         public final boolean canTeleport;
         public final String recordType;
 
-        public WaypointEntry(Type type, String name, Coordinate coordinate, boolean canTeleport, String recordType) {
+        public WaypointEntry(Type type, String name, SafeWorldCoordinate safeWorldCoordinate, boolean canTeleport, String recordType) {
             this.type = type;
             this.name = name;
-            this.coordinate = coordinate;
+            this.safeWorldCoordinate = safeWorldCoordinate;
             this.canTeleport = canTeleport;
             this.recordType = recordType;
         }
@@ -627,27 +673,29 @@ public class WaypointScreen extends Screen {
         public String getDetailTypeName() {
             switch (type) {
                 case HOME:
-                    return Component.transClient(EnumI18nType.WORD, "private").toString();
+                    return Component.transClientAuto(NarcissusFarewell.MODID, "private").toString();
                 case STAGE:
-                    return Component.transClient(EnumI18nType.WORD, "public").toString();
+                    return Component.transClientAuto(NarcissusFarewell.MODID, "public").toString();
                 case BACK:
-                    return Component.transClient(EnumI18nType.WORD, "footprints").toString();
+                    return Component.transClientAuto(NarcissusFarewell.MODID, "footprints").toString();
                 default:
                     return "";
             }
         }
 
         public String getDimensionName() {
-            if (coordinate == null) return "";
-            String key = "dim." + coordinate.dimension().location().toString().replaceAll(":", ".");
-            if (I18nUtils.hasTranslation(EnumI18nType.WORD, key)) {
-                return Component.transClient(EnumI18nType.WORD, key).toString();
+            if (safeWorldCoordinate == null) {
+                return "";
             }
-            return coordinate.dimension().location().toString();
+            String key = "dim." + safeWorldCoordinate.dimension().location().toString().replaceAll(":", ".");
+            if (NarcissusLang.hasTranslation(EnumI18nType.WORD, key)) {
+                return Component.transClientAuto(NarcissusFarewell.MODID, key).toString();
+            }
+            return safeWorldCoordinate.dimension().location().toString();
         }
 
         public String getCoordinateName() {
-            return coordinate != null ? String.format("(%s)", coordinate.toXyzIntString(",")) : "";
+            return safeWorldCoordinate != null ? String.format("(%s)", safeWorldCoordinate.toXyzIntString(",")) : "";
         }
     }
 }

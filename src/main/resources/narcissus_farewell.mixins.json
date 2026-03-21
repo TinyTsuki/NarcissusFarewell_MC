@@ -7,12 +7,9 @@
   "mixins": [
     "CombatTrackerMixin",
     "LivingEntityInvoker",
-    "ServerPlayerAccessor",
-    "ServerPlayerMixin",
     "TemptGoalAccessor"
   ],
   "client": [
-    "MinecraftClientMixin"
   ],
   "injectors": {
     "defaultRequire": 1

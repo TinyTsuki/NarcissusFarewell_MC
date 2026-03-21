@@ -8,6 +8,7 @@ import net.minecraftforge.fml.DistExecutor;
 import net.minecraftforge.fml.network.NetworkEvent;
 import xin.vanilla.narcissus.data.TeleportCost;
 import xin.vanilla.narcissus.data.client.ClientCostConfig;
+import xin.vanilla.narcissus.enums.EnumCostType;
 import xin.vanilla.narcissus.enums.EnumTeleportType;
 
 import java.util.HashMap;
@@ -46,7 +47,12 @@ public class CostConfigSyncToClient {
 
     private static TeleportCost readCost(PacketBuffer buf) {
         TeleportCost cost = new TeleportCost();
-        cost.setType(buf.readUtf(32));
+        String typeName = buf.readUtf(32);
+        try {
+            cost.setType(EnumCostType.valueOf(typeName));
+        } catch (IllegalArgumentException ignored) {
+            cost.setType(EnumCostType.NONE);
+        }
         cost.setNum(buf.readVarInt());
         cost.setRate(buf.readDouble());
         cost.setLower(buf.readVarInt());
