@@ -1,17 +1,18 @@
 package xin.vanilla.narcissus.enums;
 
-import java.util.Arrays;
-import java.util.List;
-import java.util.stream.Collectors;
+import xin.vanilla.banira.common.data.Component;
+import xin.vanilla.banira.common.enums.IEnumDescribable;
+import xin.vanilla.banira.common.util.EnumDescriptionHelper;
+import xin.vanilla.narcissus.NarcissusComponent;
 
-public enum EnumCoolDownType {
+public enum EnumCoolDownType implements IEnumDescribable {
     COMMON,
     INDIVIDUAL,
     MIXED,
     ;
 
-
-    public static List<String> names() {
-        return Arrays.stream(EnumCoolDownType.values()).map(Enum::name).collect(Collectors.toList());
+    @Override
+    public Component enumDescription() {
+        return EnumDescriptionHelper.describeEnum(NarcissusComponent.get(), this);
     }
 }

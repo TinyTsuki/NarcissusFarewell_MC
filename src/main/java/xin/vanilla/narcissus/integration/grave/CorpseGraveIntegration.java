@@ -3,7 +3,7 @@ package xin.vanilla.narcissus.integration.grave;
 // import de.maxhenkel.corpse.entities.CorpseEntity;
 
 import net.minecraft.server.level.ServerPlayer;
-import xin.vanilla.narcissus.data.Coordinate;
+import xin.vanilla.narcissus.data.SafeWorldCoordinate;
 
 import java.util.List;
 import java.util.UUID;
@@ -19,7 +19,7 @@ public final class CorpseGraveIntegration {
     /**
      * 在指定坐标附近搜索属于该玩家的遗体
      */
-    public static void findNear(Coordinate center, int radius, UUID playerUuid, List<Coordinate> out) {
+    public static void findNear(SafeWorldCoordinate center, int radius, UUID playerUuid, List<SafeWorldCoordinate> out) {
         // try {
         //
         //     ResourceKey<Level> dim = center.dimension();
@@ -34,7 +34,7 @@ public final class CorpseGraveIntegration {
         //             if (corpse.getCorpseUUID().filter(playerUuid::equals).isPresent()) {
         //                 double dx = entity.getX() - cx, dy = entity.getY() - cy, dz = entity.getZ() - cz;
         //                 if (dx * dx + dy * dy + dz * dz <= r2) {
-        //                     out.add(new Coordinate(entity.getX(), entity.getY(), entity.getZ(), world.dimension()));
+        //                     out.add(new SafeWorldCoordinate(entity.getX(), entity.getY(), entity.getZ(), world.dimension()));
         //                 }
         //             }
         //         }
@@ -43,7 +43,7 @@ public final class CorpseGraveIntegration {
         // }
     }
 
-    public static Coordinate parseObituary(ServerPlayer player) {
+    public static SafeWorldCoordinate parseObituary(ServerPlayer player) {
         return null;
     }
 }

@@ -3,15 +3,22 @@ package xin.vanilla.narcissus.enums;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import lombok.Getter;
 import net.minecraft.commands.CommandSourceStack;
+import xin.vanilla.banira.command.BaniraCommand;
+import xin.vanilla.banira.common.api.IVirtualPermissionType;
+import xin.vanilla.banira.common.data.Component;
+import xin.vanilla.banira.common.enums.IEnumDescribable;
+import xin.vanilla.banira.common.util.EnumDescriptionHelper;
+import xin.vanilla.narcissus.NarcissusComponent;
+import xin.vanilla.narcissus.NarcissusFarewell;
 import xin.vanilla.narcissus.command.impl.*;
 
 import javax.annotation.Nullable;
 import java.util.function.Supplier;
 
 @Getter
-public enum EnumCommandType {
+public enum EnumCommandType implements IVirtualPermissionType, IEnumDescribable {
     HELP(HelpCommand::create, false, false),
-    LANGUAGE(LanguageCommand::create, false, false),
+    LANGUAGE(() -> BaniraCommand.LANGUAGE, false, false),
     LANGUAGE_CONCISE(),
     UUID(UuidCommand::create),
     UUID_CONCISE(),
@@ -87,7 +94,7 @@ public enum EnumCommandType {
     TP_GRAVE_CONCISE(),
     FLY(FlyCommand::create),
     FLY_CONCISE(),
-    VIRTUAL_OP(VirtualOpCommand::create),
+    VIRTUAL_OP(() -> BaniraCommand.VIRTUAL_OP),
     VIRTUAL_OP_CONCISE(),
     CONFIG(ConfigCommand::create, true),
     BLACKLIST(false, false),
@@ -150,6 +157,28 @@ public enum EnumCommandType {
         return this.ordinal();
     }
 
+    // region IVirtualPermissionType
+    @Override
+    public String modId() {
+        return NarcissusFarewell.MODID;
+    }
+
+    @Override
+    public String id() {
+        return this.replaceConcise().name();
+    }
+
+    @Override
+    public boolean op() {
+        return this.op;
+    }
+
+    @Override
+    public int sort() {
+        return getSort();
+    }
+    // endregion
+
     public EnumCommandType replaceConcise() {
         if (this.name().endsWith("_CONCISE")) {
             return EnumCommandType.valueOf(this.name().replace("_CONCISE", ""));
@@ -205,5 +234,10 @@ public enum EnumCommandType {
             case TP_GRAVE, TP_GRAVE_CONCISE -> EnumTeleportType.TP_GRAVE;
             default -> null;
         };
+    }
+
+    @Override
+    public Component enumDescription() {
+        return EnumDescriptionHelper.describeEnum(NarcissusComponent.get(), this);
     }
 }

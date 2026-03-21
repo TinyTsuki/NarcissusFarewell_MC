@@ -3,12 +3,13 @@ package xin.vanilla.narcissus.network.packet;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraftforge.event.network.CustomPayloadEvent;
+import xin.vanilla.banira.common.util.CommandUtils;
+import xin.vanilla.banira.common.util.MessageUtils;
+import xin.vanilla.narcissus.NarcissusComponent;
 import xin.vanilla.narcissus.NarcissusFarewell;
 import xin.vanilla.narcissus.data.TeleportRequest;
 import xin.vanilla.narcissus.enums.EnumCommandType;
-import xin.vanilla.narcissus.enums.EnumI18nType;
 import xin.vanilla.narcissus.enums.EnumTeleportType;
-import xin.vanilla.narcissus.util.I18nUtils;
 import xin.vanilla.narcissus.util.NarcissusUtils;
 
 import java.util.Comparator;
@@ -36,9 +37,9 @@ public class TpNoToServer {
                         .getTeleportType();
                 if (EnumTeleportType.TP_ASK == teleportType || EnumTeleportType.TP_HERE == teleportType) {
                     EnumCommandType type = EnumTeleportType.TP_HERE == teleportType ? EnumCommandType.TP_HERE_NO : EnumCommandType.TP_ASK_NO;
-                    NarcissusUtils.executeCommand(player, NarcissusUtils.getCommand(type));
+                    CommandUtils.executeCommand(player, NarcissusUtils.getCommand(type));
                 } else {
-                    NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EnumI18nType.FORMAT, "tp_ask_not_found"));
+                    MessageUtils.sendNotification(player, NarcissusComponent.get().transAuto("tp_ask_not_found"));
                 }
             }
         });

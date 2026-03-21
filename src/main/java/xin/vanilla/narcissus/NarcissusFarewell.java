@@ -1,68 +1,60 @@
 package xin.vanilla.narcissus;
 
 import lombok.Getter;
-import net.minecraft.server.MinecraftServer;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraftforge.common.MinecraftForge;
-import net.minecraftforge.event.RegisterCommandsEvent;
-import net.minecraftforge.event.server.ServerStartedEvent;
-import net.minecraftforge.event.server.ServerStartingEvent;
-import net.minecraftforge.event.server.ServerStoppingEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.fml.config.ModConfig;
-import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
-import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import xin.vanilla.banira.client.event.BaniraClientEventHub;
+import xin.vanilla.banira.client.gui.ConfigEditorScreen;
+import xin.vanilla.banira.client.gui.quickaction.QuickActionContext;
+import xin.vanilla.banira.client.gui.quickaction.QuickActionContextMenuItem;
+import xin.vanilla.banira.client.gui.quickaction.QuickActionRegistry;
+import xin.vanilla.banira.common.config.ForgeConfigAdapter;
+import xin.vanilla.banira.common.data.Component;
+import xin.vanilla.banira.common.network.ModLoadedPresence;
+import xin.vanilla.banira.common.util.BaniraEventBus;
+import xin.vanilla.banira.common.util.CommandUtils;
+import xin.vanilla.banira.common.util.EnvironmentUtils;
+import xin.vanilla.banira.common.util.PacketUtils;
 import xin.vanilla.narcissus.command.NarcissusCommand;
 import xin.vanilla.narcissus.config.ClientConfig;
 import xin.vanilla.narcissus.config.CommonConfig;
-import xin.vanilla.narcissus.config.CustomConfig;
-import xin.vanilla.narcissus.config.ServerConfig;
 import xin.vanilla.narcissus.data.SafeBlock;
+import xin.vanilla.narcissus.data.TeleportCost;
 import xin.vanilla.narcissus.data.TeleportRequest;
 import xin.vanilla.narcissus.data.player.PlayerTeleportData;
-import xin.vanilla.narcissus.network.ModNetworkHandler;
-import xin.vanilla.narcissus.network.SplitPacket;
-import xin.vanilla.narcissus.util.LogoModifier;
+import xin.vanilla.narcissus.data.world.WorldStageData;
+import xin.vanilla.narcissus.enums.EnumTeleportType;
+import xin.vanilla.narcissus.event.ClientModEventHandler;
+import xin.vanilla.narcissus.event.EventHandlerProxy;
+import xin.vanilla.narcissus.integration.ScreenHelper;
+import xin.vanilla.narcissus.network.NetworkInit;
+import xin.vanilla.narcissus.network.packet.CostConfigSyncToClient;
+import xin.vanilla.narcissus.network.packet.StageDataSyncToClient;
+import xin.vanilla.narcissus.util.NarcissusUtils;
 
-import java.util.List;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Consumer;
 
 @Mod(NarcissusFarewell.MODID)
 public class NarcissusFarewell {
 
+    private static final Logger LOGGER = LogManager.getLogger();
+
     public final static String DEFAULT_COMMAND_PREFIX = "narcissus";
 
     public static final String MODID = "narcissus_farewell";
-    public static final String ARTIFACT_ID = "xin.vanilla";
 
-    private static final Logger LOGGER = LogManager.getLogger();
-
-    /**
-     * 服务端实例
-     */
-    @Getter
-    private static MinecraftServer serverInstance;
-
-    /**
-     * 分片网络包缓存
-     */
-    @Getter
-    private static final Map<String, List<? extends SplitPacket>> packetCache = new ConcurrentHashMap<>();
-
-    /**
-     * 最近一次传送请求
-     */
     @Getter
     private static final Map<ServerPlayer, ServerPlayer> lastTeleportRequest = new ConcurrentHashMap<>();
 
-    /**
-     * 待处理的传送请求列表
-     */
     @Getter
     private static final Map<String, TeleportRequest> teleportRequest = new ConcurrentHashMap<>();
 
@@ -70,68 +62,68 @@ public class NarcissusFarewell {
     private static final SafeBlock safeBlock = new SafeBlock();
 
     public NarcissusFarewell(FMLJavaModLoadingContext context) {
-
         // 注册网络通道
-        ModNetworkHandler.registerPackets();
-
-        // 注册服务器启动和关闭事件
-        MinecraftForge.EVENT_BUS.addListener(this::onServerStarting);
-        MinecraftForge.EVENT_BUS.addListener(this::onServerStarted);
-        MinecraftForge.EVENT_BUS.addListener(this::onServerStopping);
-
-        // 注册当前实例到事件总线
-        MinecraftForge.EVENT_BUS.register(this);
+        NetworkInit.registerPackets();
 
         // 注册配置
-        context.registerConfig(ModConfig.Type.COMMON, CommonConfig.COMMON_CONFIG);
-        context.registerConfig(ModConfig.Type.SERVER, ServerConfig.SERVER_CONFIG);
-        context.registerConfig(ModConfig.Type.CLIENT, ClientConfig.CLIENT_CONFIG);
+        ForgeConfigAdapter.register(CommonConfig.class, MODID);
+        ForgeConfigAdapter.register(ClientConfig.class, MODID);
 
-        // 注册客户端设置事件
-        context.getModEventBus().addListener(this::onClientSetup);
-        // 注册公共设置事件
-        context.getModEventBus().addListener(this::onCommonSetup);
+        BaniraEventBus.Server.onStopping(server -> PlayerTeleportData.clear());
+        BaniraEventBus.Server.onTick(EventHandlerProxy::onServerTick);
+        BaniraEventBus.Player.onClone(EventHandlerProxy::onPlayerCloned);
+        BaniraEventBus.EntityEvents.onJoinWorld(EventHandlerProxy::onEntityJoinWorld);
+        BaniraEventBus.EntityEvents.onTeleport(EventHandlerProxy::onEntityTeleport);
+        BaniraEventBus.Commands.onRegister(event -> NarcissusCommand.register(event.getDispatcher()));
+
+        BaniraEventBus.ModLifecycle.onCommonSetup(event -> {
+            ModLoadedPresence.register(MODID, player -> {
+                // 同步玩家传送数据到客户端
+                PlayerTeleportData.syncPlayerData(player);
+                // 同步驿站数据到客户端
+                PacketUtils.sendPacketToPlayer(NetworkInit.INSTANCE, new StageDataSyncToClient(WorldStageData.get().getStageCoordinate()), player);
+                // 同步传送代价配置到客户端
+                Map<EnumTeleportType, TeleportCost> costMap = new HashMap<>();
+                costMap.put(EnumTeleportType.TP_HOME, NarcissusUtils.getCommandCost(EnumTeleportType.TP_HOME));
+                costMap.put(EnumTeleportType.TP_STAGE, NarcissusUtils.getCommandCost(EnumTeleportType.TP_STAGE));
+                costMap.put(EnumTeleportType.TP_BACK, NarcissusUtils.getCommandCost(EnumTeleportType.TP_BACK));
+                PacketUtils.sendPacketToPlayer(NetworkInit.INSTANCE, new CostConfigSyncToClient(costMap,
+                        CommonConfig.get().general().teleportCostDistanceLimit(),
+                        CommonConfig.get().general().teleportCostDistanceAcrossDimension()), player);
+                // 刷新权限信息
+                CommandUtils.refreshPermission(player);
+            });
+        });
+
+        if (EnvironmentUtils.isClient()) {
+            ClientProxy.init();
+        }
     }
 
-    /**
-     * 客户端设置阶段事件
-     */
-    @SubscribeEvent
-    public void onClientSetup(final FMLClientSetupEvent event) {
-        // 修改logo为随机logo
-        LogoModifier.register(MODID, () -> Math.random() > 0.5 ? "logo_.png" : "logo.png");
-    }
+    @OnlyIn(Dist.CLIENT)
+    public static class ClientProxy {
+        public static void init() {
+            ClientModEventHandler.bootstrap();
 
-    /**
-     * 公共设置阶段事件
-     */
-    @SubscribeEvent
-    public void onCommonSetup(final FMLCommonSetupEvent event) {
-        CustomConfig.loadCustomConfig(false);
+            BaniraClientEventHub.ModLifecycle.onClientSetup(event -> {
+                ResourceLocation texture = Identifier.id().create("gui/quick_icon.png");
+                Component label = NarcissusComponent.get().transClient("key.narcissus_farewell.categories");
+                Consumer<QuickActionContext> action = ctx -> ScreenHelper.openScreen();
+                QuickActionContextMenuItem editClientConfig = new QuickActionContextMenuItem(NarcissusComponent.get().transClientAuto("edit_client_config"), ctx ->
+                        ConfigEditorScreen.open(ClientConfig.get().holder(), ctx.currentScreen())
+                );
+                QuickActionContextMenuItem editCommonConfig = new QuickActionContextMenuItem(NarcissusComponent.get().transClientAuto("edit_common_config"), ctx ->
+                        ConfigEditorScreen.open(CommonConfig.get().holder(), ctx.currentScreen())
+                );
+                QuickActionContextMenuItem editPlayerConfig = new QuickActionContextMenuItem(NarcissusComponent.get().transClientAuto("edit_player_config"), ctx ->
+                        ScreenHelper.openPlayerTeleportPrefsScreen()
+                );
+                QuickActionContextMenuItem editAccessConfig = new QuickActionContextMenuItem(NarcissusComponent.get().transClientAuto("edit_access_config"), ctx ->
+                        ScreenHelper.openAccessListScreen()
+                );
+                QuickActionRegistry.get().registerIcon(MODID + ":quick", texture, label, action, editAccessConfig, editPlayerConfig, editClientConfig, editCommonConfig);
+            });
+        }
     }
-
-    private void onServerStarting(ServerStartingEvent event) {
-        serverInstance = event.getServer();
-    }
-
-    private void onServerStarted(ServerStartedEvent event) {
-    }
-
-    private void onServerStopping(ServerStoppingEvent event) {
-        PlayerTeleportData.clear();
-    }
-
-    @SubscribeEvent
-    public void onRegisterCommands(RegisterCommandsEvent event) {
-        LOGGER.debug("Registering commands");
-        NarcissusCommand.register(event.getDispatcher());
-    }
-
-
-    // region 外部方法
-    public void reloadCustomConfig() {
-        CustomConfig.loadCustomConfig(false);
-    }
-    // endregion 外部方法
 
 }

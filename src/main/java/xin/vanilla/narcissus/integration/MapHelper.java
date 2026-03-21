@@ -14,10 +14,10 @@ public final class MapHelper {
     public static void handle(final WaypointSyncToClient packet) {
         switch (packet.type()) {
             case HOME:
-                if (!ClientConfig.SYNC_HOME_MAP_WAYPOINT.get()) return;
+                if (!ClientConfig.get().client().syncHomeMapWaypoint()) return;
                 break;
             case STAGE:
-                if (!ClientConfig.SYNC_STAGE_MAP_WAYPOINT.get()) return;
+                if (!ClientConfig.get().client().syncStageMapWaypoint()) return;
                 break;
             default:
                 return;

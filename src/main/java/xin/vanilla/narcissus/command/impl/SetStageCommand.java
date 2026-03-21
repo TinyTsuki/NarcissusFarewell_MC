@@ -13,17 +13,19 @@ import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.Level;
+import xin.vanilla.banira.common.data.KeyValue;
+import xin.vanilla.banira.common.util.DimensionUtils;
+import xin.vanilla.banira.common.util.MessageUtils;
+import xin.vanilla.banira.common.util.PacketUtils;
+import xin.vanilla.narcissus.NarcissusComponent;
 import xin.vanilla.narcissus.config.CommonConfig;
-import xin.vanilla.narcissus.data.Coordinate;
-import xin.vanilla.narcissus.data.KeyValue;
+import xin.vanilla.narcissus.data.SafeWorldCoordinate;
 import xin.vanilla.narcissus.data.world.WorldStageData;
 import xin.vanilla.narcissus.enums.EnumCommandType;
-import xin.vanilla.narcissus.enums.EnumI18nType;
+import xin.vanilla.narcissus.network.NetworkInit;
 import xin.vanilla.narcissus.network.packet.StageDataSyncToClient;
 import xin.vanilla.narcissus.network.packet.WaypointSyncToClient;
 import xin.vanilla.narcissus.util.CommandUtils;
-import xin.vanilla.narcissus.util.DimensionUtils;
-import xin.vanilla.narcissus.util.I18nUtils;
 import xin.vanilla.narcissus.util.NarcissusUtils;
 
 import java.util.concurrent.CompletableFuture;
@@ -53,18 +55,19 @@ public final class SetStageCommand {
         String dimension = targetLevel.location().toString();
         KeyValue<String, String> key = new KeyValue<>(dimension, name);
         if (stageData.getStageCoordinate().containsKey(key)) {
-            NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EnumI18nType.FORMAT, "stage_already_exists"), key.key(), key.value());
+            MessageUtils.sendNotification(player, NarcissusComponent.get().transAuto("stage_already_exists", key.key(), key.value()));
             return 0;
         }
-        Coordinate coordinate = new Coordinate(player).dimension(targetLevel);
+        SafeWorldCoordinate safeWorldCoordinate = new SafeWorldCoordinate(player);
+        safeWorldCoordinate.dimension(targetLevel);
         try {
-            coordinate.fromVec3(Vec3Argument.getCoordinates(context, "coordinate").getPosition(context.getSource()));
+            safeWorldCoordinate.fromVec3(Vec3Argument.getCoordinates(context, "coordinate").getPosition(context.getSource()));
         } catch (IllegalArgumentException ignored) {
         }
-        stageData.addCoordinate(key, coordinate);
-        NarcissusUtils.broadcastPacket(new WaypointSyncToClient(WaypointSyncToClient.Action.ADD, WaypointSyncToClient.Type.STAGE, name, coordinate));
-        NarcissusUtils.broadcastPacket(new StageDataSyncToClient(stageData.getStageCoordinate()));
-        NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EnumI18nType.FORMAT, "stage_set"), name, coordinate.toXyzString());
+        stageData.addCoordinate(key, safeWorldCoordinate);
+        PacketUtils.broadcastPacket(NetworkInit.INSTANCE, new WaypointSyncToClient(WaypointSyncToClient.Action.ADD, WaypointSyncToClient.Type.STAGE, name, safeWorldCoordinate));
+        PacketUtils.broadcastPacket(NetworkInit.INSTANCE, new StageDataSyncToClient(stageData.getStageCoordinate()));
+        MessageUtils.sendNotification(player, NarcissusComponent.get().transAuto("stage_set", name, safeWorldCoordinate.xyzString()));
         return 1;
     }
 
@@ -74,7 +77,7 @@ public final class SetStageCommand {
     }
 
     public static LiteralArgumentBuilder<CommandSourceStack> create() {
-        return Commands.literal(CommonConfig.COMMAND_SET_STAGE.get())
+        return Commands.literal(CommonConfig.get().commandNames().commandSetStage())
                 .requires(source -> NarcissusUtils.hasCommandPermission(source, EnumCommandType.SET_STAGE))
                 .then(Commands.argument("name", StringArgumentType.string())
                         .suggests(SetStageCommand::suggestion)
