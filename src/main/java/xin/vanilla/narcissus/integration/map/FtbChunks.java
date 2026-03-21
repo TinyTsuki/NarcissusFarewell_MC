@@ -8,8 +8,8 @@ package xin.vanilla.narcissus.integration.map;
 // import net.minecraft.world.level.Level;
 // import org.apache.logging.log4j.LogManager;
 // import org.apache.logging.log4j.Logger;
-// import xin.vanilla.narcissus.enums.EnumMCColor;
-// import xin.vanilla.narcissus.util.DimensionUtils;
+// import xin.vanilla.banira.common.enums.EnumMCColor;
+// import xin.vanilla.banira.common.util.DimensionUtils;
 
 
 public final class FtbChunks {
