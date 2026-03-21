@@ -13,14 +13,18 @@ import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.Level;
+import xin.vanilla.banira.common.data.Component;
+import xin.vanilla.banira.common.data.KeyValue;
+import xin.vanilla.banira.common.util.DimensionUtils;
+import xin.vanilla.banira.common.util.MessageUtils;
+import xin.vanilla.narcissus.NarcissusComponent;
 import xin.vanilla.narcissus.config.CommonConfig;
-import xin.vanilla.narcissus.data.Coordinate;
-import xin.vanilla.narcissus.data.KeyValue;
+import xin.vanilla.narcissus.data.SafeWorldCoordinate;
 import xin.vanilla.narcissus.data.player.PlayerTeleportData;
 import xin.vanilla.narcissus.enums.EnumCommandType;
-import xin.vanilla.narcissus.enums.EnumI18nType;
 import xin.vanilla.narcissus.enums.EnumTeleportType;
-import xin.vanilla.narcissus.util.*;
+import xin.vanilla.narcissus.util.CommandUtils;
+import xin.vanilla.narcissus.util.NarcissusUtils;
 
 import java.util.concurrent.CompletableFuture;
 
@@ -42,54 +46,54 @@ public final class TpHomeCommand {
         } catch (IllegalArgumentException ignored) {
         }
         String name = CommandUtils.getStringDefault(context, "name", null);
-        Coordinate coordinate = NarcissusUtils.getPlayerHome(player, targetLevel, name);
-        if (coordinate == null) {
+        SafeWorldCoordinate safeWorldCoordinate = NarcissusUtils.getPlayerHome(player, targetLevel, name);
+        if (safeWorldCoordinate == null) {
             if (targetLevel == null && name == null) {
-                NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EnumI18nType.FORMAT, "home_not_found"));
+                MessageUtils.sendMessage(player, NarcissusComponent.get().transAuto("home_not_found"));
             } else if (targetLevel != null && name == null) {
-                NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EnumI18nType.FORMAT, "home_not_found_in_dimension"), targetLevel.location().toString());
+                MessageUtils.sendMessage(player, NarcissusComponent.get().transAuto("home_not_found_in_dimension", targetLevel.location().toString()));
             } else if (targetLevel == null) {
-                NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EnumI18nType.FORMAT, "home_not_found_with_name"), name);
+                MessageUtils.sendMessage(player, NarcissusComponent.get().transAuto("home_not_found_with_name", name));
             } else {
-                NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EnumI18nType.FORMAT, "home_not_found_with_name_in_dimension"), targetLevel.location().toString(), name);
+                MessageUtils.sendMessage(player, NarcissusComponent.get().transAuto("home_not_found_with_name_in_dimension", targetLevel.location().toString(), name));
             }
             return 0;
         }
         try {
-            coordinate.safe(BoolArgumentType.getBool(context, "safe"));
+            safeWorldCoordinate.safe(BoolArgumentType.getBool(context, "safe"));
         } catch (IllegalArgumentException ignored) {
         }
-        if (CommandUtils.checkTeleportPost(player, coordinate, EnumTeleportType.TP_HOME, true)) return 0;
-        NarcissusUtils.teleportTo(player, coordinate, EnumTeleportType.TP_HOME);
+        if (CommandUtils.checkTeleportPost(player, safeWorldCoordinate, EnumTeleportType.TP_HOME, true)) return 0;
+        NarcissusUtils.teleportTo(player, safeWorldCoordinate, EnumTeleportType.TP_HOME);
         return 1;
     }
 
     public static CompletableFuture<Suggestions> safeSuggestion(CommandContext<CommandSourceStack> context, SuggestionsBuilder builder) throws CommandSyntaxException {
         String name = CommandUtils.getStringDefault(context, "name", null);
         String lang = CommandUtils.getLanguage(context.getSource());
-        Component trueTooltip = xin.vanilla.narcissus.util.Component.trans(lang, EnumI18nType.FORMAT, "suggest_safe_true");
-        Component falseTooltip = xin.vanilla.narcissus.util.Component.trans(lang, EnumI18nType.FORMAT, "suggest_safe_false");
-        Component dimTooltip = xin.vanilla.narcissus.util.Component.trans(lang, EnumI18nType.FORMAT, "suggest_dimension");
+        Component trueTooltip = NarcissusComponent.get().transAuto("suggest_safe_true").languageCode(lang);
+        Component falseTooltip = NarcissusComponent.get().transAuto("suggest_safe_false").languageCode(lang);
+        Component dimTooltip = NarcissusComponent.get().transAuto("suggest_dimension").languageCode(lang);
         if ("true".equals(name) || "false".equals(name)) {
             ServerPlayer player = context.getSource().getPlayerOrException();
             PlayerTeleportData data = PlayerTeleportData.getData(player);
             for (KeyValue<String, String> keyValue : data.getHomeCoordinate().keySet()) {
-                builder.suggest(keyValue.key(), dimTooltip.toTextComponent());
+                builder.suggest(keyValue.key(), dimTooltip.toVanilla());
             }
             if (data.getHomeCoordinate().keySet().stream()
                     .anyMatch(kv -> kv.value().equals("true") || kv.value().equals("false"))) {
-                builder.suggest("true", trueTooltip.toTextComponent());
-                builder.suggest("false", falseTooltip.toTextComponent());
+                builder.suggest("true", trueTooltip.toVanilla());
+                builder.suggest("false", falseTooltip.toVanilla());
             }
         } else {
-            builder.suggest("true", trueTooltip.toTextComponent());
-            builder.suggest("false", falseTooltip.toTextComponent());
+            builder.suggest("true", trueTooltip.toVanilla());
+            builder.suggest("false", falseTooltip.toVanilla());
         }
         return builder.buildFuture();
     }
 
     public static LiteralArgumentBuilder<CommandSourceStack> create() {
-        return Commands.literal(CommonConfig.COMMAND_TP_HOME.get())
+        return Commands.literal(CommonConfig.get().commandNames().commandTpHome())
                 .requires(source -> NarcissusUtils.hasCommandPermission(source, EnumCommandType.TP_HOME))
                 .executes(TpHomeCommand::execute)
                 .then(Commands.argument("name", StringArgumentType.string())

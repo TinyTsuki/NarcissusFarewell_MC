@@ -12,8 +12,7 @@ import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.Level;
 import xin.vanilla.narcissus.config.CommonConfig;
-import xin.vanilla.narcissus.config.ServerConfig;
-import xin.vanilla.narcissus.data.Coordinate;
+import xin.vanilla.narcissus.data.SafeWorldCoordinate;
 import xin.vanilla.narcissus.enums.EnumCommandType;
 import xin.vanilla.narcissus.enums.EnumTeleportType;
 import xin.vanilla.narcissus.util.CommandUtils;
@@ -27,17 +26,17 @@ public final class TpRandomCommand {
         CommandUtils.notifyHelp(context);
         if (CommandUtils.checkTeleportPre(context.getSource(), EnumCommandType.TP_RANDOM)) return 0;
         ServerPlayer player = context.getSource().getPlayerOrException();
-        int range = CommandUtils.getIntDefault(context, "range", ServerConfig.TELEPORT_RANDOM_DISTANCE_LIMIT.get());
+        int range = CommandUtils.getIntDefault(context, "range", CommonConfig.get().general().teleportRandomDistanceLimit());
         range = NarcissusUtils.checkRange(player, EnumTeleportType.TP_RANDOM, range);
         ResourceKey<Level> targetLevel = CommandUtils.getDimensionKeyDefault(context, "dimension", player.getLevel().dimension());
-        Coordinate coordinate = Coordinate.random(player, range, targetLevel).safe(true);
-        if (CommandUtils.checkTeleportPost(player, coordinate, EnumTeleportType.TP_RANDOM, true)) return 0;
-        NarcissusUtils.teleportTo(player, coordinate, EnumTeleportType.TP_RANDOM);
+        SafeWorldCoordinate safeWorldCoordinate = SafeWorldCoordinate.random(player, range, targetLevel).safe(true);
+        if (CommandUtils.checkTeleportPost(player, safeWorldCoordinate, EnumTeleportType.TP_RANDOM, true)) return 0;
+        NarcissusUtils.teleportTo(player, safeWorldCoordinate, EnumTeleportType.TP_RANDOM);
         return 1;
     }
 
     public static LiteralArgumentBuilder<CommandSourceStack> create() {
-        return Commands.literal(CommonConfig.COMMAND_TP_RANDOM.get())
+        return Commands.literal(CommonConfig.get().commandNames().commandTpRandom())
                 .requires(source -> NarcissusUtils.hasCommandPermission(source, EnumCommandType.TP_RANDOM))
                 .executes(TpRandomCommand::execute)
                 .then(Commands.argument("range", IntegerArgumentType.integer(1))

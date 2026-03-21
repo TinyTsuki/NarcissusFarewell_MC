@@ -232,7 +232,7 @@ please refer to the comments in the default config file.
 | Memory    | 14044MB            |
 | CPU       | AMD Ryzen 7 9700X  |
 
-The following are timings (by total time) for teleporting to a random safe coordinate (`/narcissus tpr 10000 safe`) in
+The following are timings (by total time) for teleporting to a random safe safeWorldCoordinate (`/narcissus tpr 10000 safe`) in
 the End with default config in development—versions 1.1.2 and earlier, for reference only.
 
 | #  | Gen (ms) | Sort (ms) | Find (ms) | Total (ms) | Safe |
