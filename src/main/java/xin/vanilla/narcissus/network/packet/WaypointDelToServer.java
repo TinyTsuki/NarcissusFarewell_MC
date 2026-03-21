@@ -4,9 +4,9 @@ import lombok.Getter;
 import lombok.experimental.Accessors;
 import net.minecraft.network.PacketBuffer;
 import net.minecraftforge.fml.network.NetworkEvent;
+import xin.vanilla.banira.common.util.StringUtils;
 import xin.vanilla.narcissus.config.CommonConfig;
 import xin.vanilla.narcissus.util.NarcissusUtils;
-import xin.vanilla.narcissus.util.StringUtils;
 
 import java.util.function.Supplier;
 
@@ -47,14 +47,14 @@ public class WaypointDelToServer {
                 if (sender == null) return;
                 // home
                 if (packet.type() == 0) {
-                    String cmd = NarcissusUtils.getCommandPrefix() + " " + CommonConfig.COMMAND_DEL_HOME.get();
+                    String cmd = NarcissusUtils.getCommandPrefix() + " " + CommonConfig.get().commandNames().commandDelHome();
                     if (!packet.name().isEmpty()) cmd += " " + StringUtils.formatString(packet.name());
                     if (!packet.dimension().isEmpty()) cmd += " " + packet.dimension();
                     NarcissusUtils.executeCommand(sender, cmd);
                 }
                 // stage
                 else if (packet.type() == 1) {
-                    String cmd = NarcissusUtils.getCommandPrefix() + " " + CommonConfig.COMMAND_DEL_STAGE.get();
+                    String cmd = NarcissusUtils.getCommandPrefix() + " " + CommonConfig.get().commandNames().commandDelStage();
                     if (!packet.name().isEmpty()) cmd += " " + StringUtils.formatString(packet.name());
                     if (!packet.dimension().isEmpty()) cmd += " " + packet.dimension();
                     NarcissusUtils.executeCommand(sender, cmd);

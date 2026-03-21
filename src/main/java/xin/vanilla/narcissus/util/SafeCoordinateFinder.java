@@ -7,8 +7,8 @@ import net.minecraft.util.math.vector.Vector3d;
 import net.minecraft.world.World;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import xin.vanilla.narcissus.config.ServerConfig;
-import xin.vanilla.narcissus.data.Coordinate;
+import xin.vanilla.narcissus.config.CommonConfig;
+import xin.vanilla.narcissus.data.SafeWorldCoordinate;
 import xin.vanilla.narcissus.enums.EnumSafeMode;
 
 import javax.annotation.Nullable;
@@ -40,14 +40,16 @@ public class SafeCoordinateFinder {
      * 从当前位置向上查找（从高到低）
      */
     @Nullable
-    public Coordinate findTopCandidate(Coordinate start) {
+    public SafeWorldCoordinate findTopCandidate(SafeWorldCoordinate start) {
         if (start.y() >= getWorldMaxY()) return null;
-        int x = start.getXInt();
-        int z = start.getZInt();
-        for (int y = getWorldMaxY(); y > start.getYInt(); y--) {
+        int x = start.xInt();
+        int z = start.zInt();
+        for (int y = getWorldMaxY(); y > start.yInt(); y--) {
             mutablePos.set(x, y, z);
             if (checker.isSafeBlock(mutablePos.immutable(), false)) {
-                return start.clone().y(y);
+                SafeWorldCoordinate clone = start.clone();
+                clone.y(y);
+                return clone;
             }
         }
         return null;
@@ -57,14 +59,16 @@ public class SafeCoordinateFinder {
      * 从底部到当前位置查找（从低到高）
      */
     @Nullable
-    public Coordinate findBottomCandidate(Coordinate start) {
+    public SafeWorldCoordinate findBottomCandidate(SafeWorldCoordinate start) {
         if (start.y() <= getWorldMinY()) return null;
-        int x = start.getXInt();
-        int z = start.getZInt();
-        for (int y = getWorldMinY(); y < start.getYInt(); y++) {
+        int x = start.xInt();
+        int z = start.zInt();
+        for (int y = getWorldMinY(); y < start.yInt(); y++) {
             mutablePos.set(x, y, z);
             if (checker.isSafeBlock(mutablePos.immutable(), false)) {
-                return start.clone().y(y);
+                SafeWorldCoordinate clone = start.clone();
+                clone.y(y);
+                return clone;
             }
         }
         return null;
@@ -74,14 +78,16 @@ public class SafeCoordinateFinder {
      * 从当前位置向上查找（从低到高）
      */
     @Nullable
-    public Coordinate findUpCandidate(Coordinate start) {
+    public SafeWorldCoordinate findUpCandidate(SafeWorldCoordinate start) {
         if (start.y() >= getWorldMaxY()) return null;
-        int x = start.getXInt();
-        int z = start.getZInt();
-        for (int y = start.getYInt() + 1; y <= getWorldMaxY(); y++) {
+        int x = start.xInt();
+        int z = start.zInt();
+        for (int y = start.yInt() + 1; y <= getWorldMaxY(); y++) {
             mutablePos.set(x, y, z);
             if (checker.isSafeBlock(mutablePos.immutable(), false)) {
-                return start.clone().y(y);
+                SafeWorldCoordinate clone = start.clone();
+                clone.y(y);
+                return clone;
             }
         }
         return null;
@@ -91,14 +97,16 @@ public class SafeCoordinateFinder {
      * 从当前位置向下查找（从高到低）
      */
     @Nullable
-    public Coordinate findDownCandidate(Coordinate start) {
+    public SafeWorldCoordinate findDownCandidate(SafeWorldCoordinate start) {
         if (start.y() <= getWorldMinY()) return null;
-        int x = start.getXInt();
-        int z = start.getZInt();
-        for (int y = start.getYInt() - 1; y >= getWorldMinY(); y--) {
+        int x = start.xInt();
+        int z = start.zInt();
+        for (int y = start.yInt() - 1; y >= getWorldMinY(); y--) {
             mutablePos.set(x, y, z);
             if (checker.isSafeBlock(mutablePos.immutable(), false)) {
-                return start.clone().y(y);
+                SafeWorldCoordinate clone = start.clone();
+                clone.y(y);
+                return clone;
             }
         }
         return null;
@@ -109,11 +117,11 @@ public class SafeCoordinateFinder {
      * 若 safe 则反向查找安全站立位置
      */
     @Nullable
-    public Coordinate findViewEndCandidate(ServerPlayerEntity player, boolean safe, int range) {
+    public SafeWorldCoordinate findViewEndCandidate(ServerPlayerEntity player, boolean safe, int range) {
         LOGGER.debug("TimeMillis before findViewEndCandidate: {}", System.currentTimeMillis());
         final double stepScale = 0.75;
-        final Coordinate start = new Coordinate(player);
-        Coordinate result;
+        final SafeWorldCoordinate start = new SafeWorldCoordinate(player);
+        SafeWorldCoordinate result;
 
         final Vector3d startPosition = player.getEyePosition(1.0F);
         final Vector3d stepVector = player.getViewVector(1.0F).normalize().scale(stepScale);
@@ -139,20 +147,22 @@ public class SafeCoordinateFinder {
         }
 
         // 确定碰撞点或射线终点
+        SafeWorldCoordinate clone = start.clone();
         if (collisionStep > 0) {
-            result = start.clone().x(startX + stepX * (collisionStep - 1))
+            clone.x(startX + stepX * (collisionStep - 1))
                     .y(startY + stepY * (collisionStep - 1))
                     .z(startZ + stepZ * (collisionStep - 1));
         } else if (collisionStep == 0) {
-            result = start.clone().fromVector3d(startPosition);
+            clone.fromVector3d(startPosition);
         } else {
-            result = start.clone().x(startX + stepX * range)
+            clone.x(startX + stepX * range)
                     .y(startY + stepY * range)
                     .z(startZ + stepZ * range);
         }
+        result = clone;
 
         // 若需寻找安全坐标，则从碰撞点反向查找安全位置
-        if (safe && result != null) {
+        if (safe) {
             final double dist = Math.sqrt(
                     Math.pow(result.x() - startX, 2) + Math.pow(result.y() - startY, 2) + Math.pow(result.z() - startZ, 2)
             );
@@ -166,14 +176,14 @@ public class SafeCoordinateFinder {
                 for (int yOffset : yOffsets) {
                     mutablePos.set(blockX, blockY + yOffset, blockZ);
                     if (checker.isSafeBlock(mutablePos.immutable(), false)) {
-                        result = start.clone().fromBlockPos(mutablePos).addX(0.5).addY(0.15).addZ(0.5);
+                        clone.fromBlockPos(mutablePos).addX(0.5).addY(0.15).addZ(0.5);
                         found = true;
                         break;
                     }
                 }
             }
         }
-        if (result != null && start.equalsOfRange(result, 1)) {
+        if (result != null && start.equalsInRange(result, 1)) {
             result = null;
         }
         LOGGER.debug("TimeMillis after findViewEndCandidate: {}", System.currentTimeMillis());
@@ -184,19 +194,19 @@ public class SafeCoordinateFinder {
      * 在区块范围内按安全模式搜索，使用螺旋迭代避免全量排序
      */
     @Nullable
-    public Coordinate searchInChunk(Coordinate coordinate, int chunkX, int chunkZ, boolean belowAllowAir) {
-        int offset = (ServerConfig.SAFE_CHUNK_RANGE.get() - 1) * 16;
+    public SafeWorldCoordinate searchInChunk(SafeWorldCoordinate safeWorldCoordinate, int chunkX, int chunkZ, boolean belowAllowAir) {
+        int offset = (CommonConfig.get().general().safeTeleport().safeChunkRange() - 1) * 16;
         int chunkMinX = (chunkX << 4) - offset;
         int chunkMinZ = (chunkZ << 4) - offset;
         int chunkMaxX = chunkMinX + 15 + offset;
         int chunkMaxZ = chunkMinZ + 15 + offset;
         int minY = getWorldMinY();
         int maxY = getWorldMaxY();
-        int cx = coordinate.getXInt();
-        int cy = coordinate.getYInt();
-        int cz = coordinate.getZInt();
+        int cx = safeWorldCoordinate.xInt();
+        int cy = safeWorldCoordinate.yInt();
+        int cz = safeWorldCoordinate.zInt();
 
-        EnumSafeMode mode = coordinate.safeMode();
+        EnumSafeMode mode = safeWorldCoordinate.safeMode();
 
         // Y 轴单列模式：直接迭代，无需列表与排序
         if (mode == EnumSafeMode.Y_C_TO_T) {
@@ -290,18 +300,22 @@ public class SafeCoordinateFinder {
         return null;
     }
 
-    private Coordinate toResult(BlockPos pos) {
-        return new Coordinate().fromBlockPos(pos).dimension(world.dimension()).addX(0.5).addY(0.15).addZ(0.5);
+    private SafeWorldCoordinate toResult(BlockPos pos) {
+        SafeWorldCoordinate result = new SafeWorldCoordinate();
+        result.fromBlockPos(pos).dimension(world.dimension()).addX(0.5).addY(0.15).addZ(0.5);
+        return result;
     }
 
     /**
      * 在 BlockPos 列表中查找第一个安全坐标
      */
     @Nullable
-    public Coordinate findFirstSafe(Iterable<BlockPos> positions, boolean belowAllowAir) {
+    public SafeWorldCoordinate findFirstSafe(Iterable<BlockPos> positions, boolean belowAllowAir) {
         for (BlockPos pos : positions) {
             if (checker.isSafeBlock(pos, belowAllowAir)) {
-                return new Coordinate().fromBlockPos(pos).dimension(world.dimension());
+                SafeWorldCoordinate result = new SafeWorldCoordinate();
+                result.fromBlockPos(pos).dimension(world.dimension());
+                return result;
             }
         }
         return null;
