@@ -1,8 +1,17 @@
-🌐 [中文](README.md) | [English](README_en.md) | [日本語](README_ja.md)
+<div align="center">
 
-# Narcissus Farewell (水仙辞)
+| [中文](README.md) | [English](README_en.md) | [日本語](README_ja.md) |
+|:---------------:|:-----------------------:|:-------------------:|
 
-A Minecraft Forge Teleport Command Mod.
+<img src="src/main/resources/logo_.png"  alt="Narcissus Farewell" />
+
+# Narcissus Farewell（水仙辞）
+
+**A Minecraft Forge Teleport Command Mod.**
+
+</div>
+
+---
 
 ## Table of Contents
 
@@ -14,6 +23,7 @@ A Minecraft Forge Teleport Command Mod.
     - [Configuration Instructions](#configuration-instructions)
     - [Command Instructions](#command-instructions)
     - [Notes](#notes)
+    - [Performance](#performance)
     - [License](#license)
 
 ## Definitions
@@ -44,6 +54,11 @@ This mod is required on the server side, and optional on the client side.
   view or the preset maximum distance is reached.
 - **Teleport to Server Preset Point**: Set a server default teleport point to allow players to teleport at will.
 - **Return to the Last Departed Location**: Return to the location you teleported from last time.
+- **Teleport to Gravestone/Corpse**: Teleport to your last death location or a nearby gravestone/corpse; supports
+  multiple gravestone mods; when holding an obituary-like item, teleport to the recorded location.
+- **Waypoint List Screen**: Client-side waypoint list for personal points and stations, with quick teleport.
+- **Mod Integrations**: Works with gravestone mods (Gravestone Mod, Simple Tomb, Corail Tombstone, Corpse), map mods (
+  Xaero's Minimap, JourneyMap, FTB Chunks), and ApricityUI for an extended teleport and map experience.
 - **Safe Teleportation**: Choose safe teleportation with every teleport to avoid landing in the void, inside blocks, or
   in lava.
 - **Hotkeys**: At any time and place, simply press the designated key to quickly execute home, back, accept, or decline
@@ -56,7 +71,11 @@ This mod is required on the server side, and optional on the client side.
 
 ## TODO
 
-- **MORE**: ...
+- **Add config**: Post-teleport cost
+- **Add config**: Pre- and post-teleport prompts
+- **Add config**: Disable teleport in the End when the Ender Dragon is not defeated
+- **Add config**: Disable specific teleport commands in specified dimensions
+- **Add config**: Particle effects on teleport
 
 ## Configuration Instructions
 
@@ -184,15 +203,100 @@ please refer to the comments in the default config file.
   **Parameter List**:
     1. `[<safe teleport flag>] [<teleport type>] [<dimension>]`
 
+- **grave**: Teleport to your last death location or a nearby gravestone/corpse. If holding an obituary-like item,
+  teleport to the location recorded by that item.  
+  **Parameter List**:
+    1. No arguments: teleport to the most recent death location (or a nearby gravestone/corpse)
+    2. `<search range>`: search for gravestone/corpse within the given block range and teleport there
+    3. `<dimension>`: teleport to your last death location in that dimension
+
+- **fly**: Enable or disable creative-style flight (optionally for a target player, with configurable speed).  
+  **Parameter List**:
+    1. `[<enable/disable>] [<player>] [<fly speed>]`
+
+---
+
 ## Notes
 
 - **Version Migration**: Upgrading a save file that used this mod from Minecraft 1.12.2 to a higher version may lead to
   various issues due to data incompatibility.
 
-## License
+---
 
-MIT License
+## Performance
+
+| Minecraft | 1.16.5             |
+|-----------|--------------------|
+| OS        | Windows 11 (amd64) |
+| Java      | 1.8.0_422, Temurin |
+| Memory    | 14044MB            |
+| CPU       | AMD Ryzen 7 9700X  |
+
+The following are timings (by total time) for teleporting to a random safe safeWorldCoordinate (`/narcissus tpr 10000 safe`) in
+the End with default config in development—versions 1.1.2 and earlier, for reference only.
+
+| #  | Gen (ms) | Sort (ms) | Find (ms) | Total (ms) | Safe |
+|----|----------|-----------|-----------|------------|------|
+| 1  | 10       | 127       | 223       | 360        | Yes  |
+| 2  | 8        | 124       | 433       | 565        | Yes  |
+| 3  | 12       | 146       | 513       | 671        | Yes  |
+| 4  | 8        | 132       | 944       | 1084       | Yes  |
+| 5  | 8        | 132       | 1228      | 1368       | Yes  |
+| 6  | 8        | 138       | 1718      | 1864       | Yes  |
+| 7  | 9        | 137       | 2659      | 2805       | Yes  |
+| 8  | 8        | 132       | 2882      | 3022       | Yes  |
+| 9  | 7        | 128       | 3044      | 3179       | Yes  |
+| 10 | 8        | 136       | 3595      | 3739       | Yes  |
+| 11 | 7        | 118       | 3904      | 4029       | Yes  |
+| 12 | 8        | 144       | 4234      | 4386       | Yes  |
+| 13 | 10       | 144       | 4493      | 4647       | Yes  |
+| 14 | 9        | 138       | 9745      | 9892       | Yes  |
+| 15 | 11       | 144       | 54968     | 55123      | No   |
+
+Version 1.1.3 (same test):
+
+| #  | Gen (ms) | Sort (ms) | Find (ms) | Total (ms) | Safe |
+|----|----------|-----------|-----------|------------|------|
+| 1  | 0        | 4         | 387       | 391        | Yes  |
+| 2  | 1        | 7         | 420       | 428        | Yes  |
+| 3  | 0        | 4         | 514       | 518        | Yes  |
+| 4  | 0        | 3         | 536       | 539        | Yes  |
+| 5  | 0        | 3         | 561       | 564        | Yes  |
+| 6  | 1        | 4         | 565       | 570        | Yes  |
+| 7  | 1        | 3         | 1053      | 1057       | Yes  |
+| 8  | 2        | 2         | 1336      | 1340       | No   |
+| 9  | 0        | 5         | 1382      | 1387       | No   |
+| 10 | 0        | 3         | 1392      | 1395       | No   |
+| 11 | 1        | 4         | 1442      | 1447       | No   |
+| 12 | 1        | 5         | 1443      | 1449       | No   |
+| 13 | 0        | 4         | 1494      | 1498       | No   |
+| 14 | 2        | 9         | 1499      | 1510       | No   |
+| 15 | 1        | 3         | 1618      | 1622       | No   |
+
+Version 1.1.6 (same test):
+
+| #  | Total (ms) | Safe |
+|----|------------|------|
+| 1  | 214        | Yes  |
+| 2  | 233        | Yes  |
+| 3  | 383        | Yes  |
+| 4  | 427        | Yes  |
+| 5  | 429        | Yes  |
+| 6  | 434        | Yes  |
+| 7  | 605        | Yes  |
+| 8  | 640        | Yes  |
+| 9  | 658        | Yes  |
+| 10 | 718        | Yes  |
+| 11 | 1098       | Yes  |
+| 12 | 1512       | No   |
+| 13 | 1578       | No   |
+| 14 | 1716       | No   |
+| 15 | 1863       | No   |
 
 ---
+
+## License
+
+**MIT License**
 
 If you have any questions or suggestions, feel free to submit Issues or Pull requests.

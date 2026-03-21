@@ -1,22 +1,21 @@
 package xin.vanilla.narcissus.event;
 
-import net.neoforged.api.distmarker.Dist;
+import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
-import net.neoforged.neoforge.event.entity.EntityJoinLevelEvent;
-import net.neoforged.neoforge.event.entity.EntityTeleportEvent;
+import net.neoforged.neoforge.event.entity.living.LivingHurtEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import net.neoforged.neoforge.event.tick.ServerTickEvent;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import xin.vanilla.narcissus.NarcissusFarewell;
+import xin.vanilla.narcissus.util.TeleportCountdownTracker;
 
 /**
- * 服务端 Game事件处理器
+ * 传送倒计时：受伤打断、登出清理。
  */
-@EventBusSubscriber(modid = NarcissusFarewell.MODID, value = Dist.DEDICATED_SERVER, bus = EventBusSubscriber.Bus.GAME)
-public class ServerGameEventHandler {
-    private static final Logger LOGGER = LogManager.getLogger();
+@EventBusSubscriber(modid = NarcissusFarewell.MODID, bus = EventBusSubscriber.Bus.GAME)
+public final class ServerGameEventHandler {
+    private ServerGameEventHandler() {
+    }
 
     /**
      * 服务端Tick事件
@@ -26,28 +25,22 @@ public class ServerGameEventHandler {
         EventHandlerProxy.onServerTick(event);
     }
 
-    /**
-     * 玩家死亡后重生或者从末地回主世界
-     */
+
     @SubscribeEvent
-    public static void onPlayerCloned(PlayerEvent.Clone event) {
-        EventHandlerProxy.onPlayerCloned(event);
+    public static void onLivingHurt(LivingHurtEvent event) {
+        if (!(event.getEntity() instanceof ServerPlayer player)) {
+            return;
+        }
+        if (event.getAmount() <= 0f) {
+            return;
+        }
+        TeleportCountdownTracker.onPlayerHurt(player);
     }
 
-    /**
-     * 实体进入世界事件
-     */
     @SubscribeEvent
-    public static void onEntityJoinWorld(EntityJoinLevelEvent event) {
-        EventHandlerProxy.onEntityJoinWorld(event);
+    public static void onPlayerLoggedOut(PlayerEvent.PlayerLoggedOutEvent event) {
+        if (event.getEntity() instanceof ServerPlayer) {
+            TeleportCountdownTracker.onPlayerLogout(event.getEntity().getUUID());
+        }
     }
-
-    /**
-     * 实体传送事件
-     */
-    @SubscribeEvent
-    public static void onEntityTeleport(EntityTeleportEvent event) {
-        EventHandlerProxy.onEntityTeleport(event);
-    }
-
 }

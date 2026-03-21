@@ -1,39 +1,91 @@
 package xin.vanilla.narcissus.event;
 
 import net.minecraft.client.KeyMapping;
-import net.neoforged.neoforge.client.event.RegisterKeyMappingsEvent;
+import net.minecraft.client.Minecraft;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
+import net.neoforged.neoforge.client.event.ClientTickEvent;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import xin.vanilla.banira.client.data.GLFWKey;
+import xin.vanilla.banira.client.event.BaniraClientEventHub;
+import xin.vanilla.banira.client.util.BaniraKeyBindings;
+import xin.vanilla.banira.common.util.LogoModifier;
+import xin.vanilla.banira.common.util.PacketUtils;
+import xin.vanilla.narcissus.NarcissusFarewell;
+import xin.vanilla.narcissus.integration.ScreenHelper;
+import xin.vanilla.narcissus.network.packet.*;
 
 /**
- * 客户端 Mod事件处理器
+ * 客户端：Banira 键位入队 + {@link BaniraClientEventHub} 回调注册（不在此类上使用 Forge {@code @SubscribeEvent}）
  */
-// @EventBusSubscriber(modid = NarcissusFarewell.MODID, value = Dist.CLIENT, bus = EventBusSubscriber.Bus.MOD)
-public class ClientModEventHandler {
+@OnlyIn(Dist.CLIENT)
+public final class ClientModEventHandler {
     private static final Logger LOGGER = LogManager.getLogger();
 
-    private static final String CATEGORIES = "key.narcissus_farewell.categories";
+    private static boolean keyDown;
 
-    // 定义按键绑定
-    public static KeyMapping TP_HOME_KEY = new KeyMapping("key.narcissus_farewell.tp_home",
-            -1, CATEGORIES);
-    public static KeyMapping TP_BACK_KEY = new KeyMapping("key.narcissus_farewell.tp_back",
-            -1, CATEGORIES);
-    public static KeyMapping TP_REQ_YES = new KeyMapping("key.narcissus_farewell.tp_req_yes",
-            -1, CATEGORIES);
-    public static KeyMapping TP_REQ_NO = new KeyMapping("key.narcissus_farewell.tp_req_no",
-            -1, CATEGORIES);
+    public static final KeyMapping TP_HOME_KEY = BaniraKeyBindings.register(NarcissusFarewell.MODID, "tp_home", GLFWKey.GLFW_KEY_UNKNOWN);
+    public static final KeyMapping TP_BACK_KEY = BaniraKeyBindings.register(NarcissusFarewell.MODID, "tp_back", GLFWKey.GLFW_KEY_UNKNOWN);
+    public static final KeyMapping TP_REQ_YES = BaniraKeyBindings.register(NarcissusFarewell.MODID, "tp_req_yes", GLFWKey.GLFW_KEY_UNKNOWN);
+    public static final KeyMapping TP_REQ_NO = BaniraKeyBindings.register(NarcissusFarewell.MODID, "tp_req_no", GLFWKey.GLFW_KEY_UNKNOWN);
+    public static final KeyMapping TP_GRAVE_KEY = BaniraKeyBindings.register(NarcissusFarewell.MODID, "tp_grave", GLFWKey.GLFW_KEY_UNKNOWN);
+    public static final KeyMapping OPEN_SCREEN_KEY = BaniraKeyBindings.register(NarcissusFarewell.MODID, "open_screen", GLFWKey.GLFW_KEY_UNKNOWN);
+    public static final KeyMapping OPEN_ACCESS_LIST_KEY = BaniraKeyBindings.register(NarcissusFarewell.MODID, "open_access_list", GLFWKey.GLFW_KEY_UNKNOWN);
 
-    /**
-     * 注册键绑定
-     */
-    public static void registerKeyBindings(RegisterKeyMappingsEvent event) {
-        // 注册键绑定
-        LOGGER.debug("Registering key bindings");
-        event.register(TP_HOME_KEY);
-        event.register(TP_BACK_KEY);
-        event.register(TP_REQ_YES);
-        event.register(TP_REQ_NO);
+    static {
+        BaniraClientEventHub.ModLifecycle.onClientSetup(event ->
+                LogoModifier.register(NarcissusFarewell.MODID, () -> Math.random() > 0.5 ? "logo_.png" : "logo.png"));
+        BaniraClientEventHub.Client.onClientTick(ClientModEventHandler::onClientTick);
+    }
+
+    private ClientModEventHandler() {
+    }
+
+    public static void bootstrap() {
+    }
+
+    private static void onClientTick(ClientTickEvent event) {
+        if (Minecraft.getInstance().screen == null && event instanceof ClientTickEvent.Post) {
+            if (TP_HOME_KEY.consumeClick()) {
+                if (!keyDown) {
+                    PacketUtils.sendPacketToServer(new TpHomeToServer());
+                    keyDown = true;
+                }
+            } else if (TP_GRAVE_KEY.consumeClick()) {
+                if (!keyDown) {
+                    PacketUtils.sendPacketToServer(new TpGraveToServer());
+                    keyDown = true;
+                }
+            } else if (TP_BACK_KEY.consumeClick()) {
+                if (!keyDown) {
+                    PacketUtils.sendPacketToServer(new TpBackToServer());
+                    keyDown = true;
+                }
+            } else if (TP_REQ_YES.consumeClick()) {
+                if (!keyDown) {
+                    PacketUtils.sendPacketToServer(new TpYesToServer());
+                    keyDown = true;
+                }
+            } else if (TP_REQ_NO.consumeClick()) {
+                if (!keyDown) {
+                    PacketUtils.sendPacketToServer(new TpNoToServer());
+                    keyDown = true;
+                }
+            } else if (OPEN_SCREEN_KEY.consumeClick()) {
+                if (!keyDown) {
+                    ScreenHelper.openScreen();
+                    keyDown = true;
+                }
+            } else if (OPEN_ACCESS_LIST_KEY.consumeClick()) {
+                if (!keyDown) {
+                    ScreenHelper.openAccessListScreen();
+                    keyDown = true;
+                }
+            } else {
+                keyDown = false;
+            }
+        }
     }
 
 }

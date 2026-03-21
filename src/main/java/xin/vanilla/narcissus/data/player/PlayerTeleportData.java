@@ -6,15 +6,20 @@ import net.minecraft.nbt.ListTag;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
-import xin.vanilla.narcissus.data.Coordinate;
-import xin.vanilla.narcissus.data.KeyValue;
+import xin.vanilla.banira.BaniraCodex;
+import xin.vanilla.banira.common.api.ICommandNotify;
+import xin.vanilla.banira.common.data.KeyValue;
+import xin.vanilla.banira.common.player.IPlayerData;
+import xin.vanilla.banira.common.util.CollectionUtils;
+import xin.vanilla.banira.common.util.DateUtils;
+import xin.vanilla.banira.common.util.PacketUtils;
+import xin.vanilla.narcissus.NarcissusFarewell;
+import xin.vanilla.narcissus.config.TeleportCountdownHelper;
 import xin.vanilla.narcissus.data.PlayerAccess;
+import xin.vanilla.narcissus.data.SafeWorldCoordinate;
 import xin.vanilla.narcissus.data.TeleportRecord;
 import xin.vanilla.narcissus.enums.EnumTeleportType;
 import xin.vanilla.narcissus.network.packet.PlayerDataSyncPacket;
-import xin.vanilla.narcissus.util.CollectionUtils;
-import xin.vanilla.narcissus.util.DateUtils;
-import xin.vanilla.narcissus.util.NarcissusUtils;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -23,7 +28,7 @@ import java.util.stream.Collectors;
 /**
  * 玩家传送数据
  */
-public final class PlayerTeleportData implements IPlayerData<PlayerTeleportData> {
+public final class PlayerTeleportData implements IPlayerData<PlayerTeleportData>, ICommandNotify {
 
     // region override
 
@@ -34,7 +39,7 @@ public final class PlayerTeleportData implements IPlayerData<PlayerTeleportData>
     private PlayerTeleportData(Player player) {
         this.player = player;
         if (this.player instanceof ServerPlayer) {
-            this.deserializeNBT(PlayerDataManager.instance().getOrCreate(player), false);
+            this.deserializeNBT(BaniraCodex.playerDataManager.getOrCreate(player.getUUID(), NarcissusFarewell.MODID), false);
         }
     }
 
@@ -72,10 +77,10 @@ public final class PlayerTeleportData implements IPlayerData<PlayerTeleportData>
         }
 
         buffer.writeInt(this.getHomeCoordinate().size());
-        for (Map.Entry<KeyValue<String, String>, Coordinate> entry : this.getHomeCoordinate().entrySet()) {
-            buffer.writeUtf(entry.getKey().getKey());
-            buffer.writeUtf(entry.getKey().getValue());
-            buffer.writeNbt(entry.getValue().writeToNBT());
+        for (Map.Entry<KeyValue<String, String>, SafeWorldCoordinate> entry : this.getHomeCoordinate().entrySet()) {
+            buffer.writeUtf(entry.getKey().key());
+            buffer.writeUtf(entry.getKey().value());
+            buffer.writeNbt(entry.getValue().toTag());
         }
 
         buffer.writeInt(this.getDefaultHome().size());
@@ -101,7 +106,7 @@ public final class PlayerTeleportData implements IPlayerData<PlayerTeleportData>
 
         this.homeCoordinate = new HashMap<>();
         for (int i = 0; i < buffer.readInt(); i++) {
-            this.homeCoordinate.put(new KeyValue<>(buffer.readUtf(), buffer.readUtf()), Coordinate.readFromNBT(Objects.requireNonNull(buffer.readNbt())));
+            this.homeCoordinate.put(new KeyValue<>(buffer.readUtf(), buffer.readUtf()), SafeWorldCoordinate.fromTag(Objects.requireNonNull(buffer.readNbt())));
         }
 
         this.defaultHome = new HashMap<>();
@@ -131,11 +136,11 @@ public final class PlayerTeleportData implements IPlayerData<PlayerTeleportData>
 
         // 序列化家坐标
         ListTag homeCoordinateNBT = new ListTag();
-        for (Map.Entry<KeyValue<String, String>, Coordinate> entry : this.getHomeCoordinate().entrySet()) {
+        for (Map.Entry<KeyValue<String, String>, SafeWorldCoordinate> entry : this.getHomeCoordinate().entrySet()) {
             CompoundTag homeCoordinateTag = new CompoundTag();
-            homeCoordinateTag.putString("key", entry.getKey().getKey());
-            homeCoordinateTag.putString("value", entry.getKey().getValue());
-            homeCoordinateTag.put("coordinate", entry.getValue().writeToNBT());
+            homeCoordinateTag.putString("key", entry.getKey().key());
+            homeCoordinateTag.putString("value", entry.getKey().value());
+            homeCoordinateTag.put("coordinate", entry.getValue().toTag());
             homeCoordinateNBT.add(homeCoordinateTag);
         }
         tag.put("homeCoordinate", homeCoordinateNBT);
@@ -152,6 +157,8 @@ public final class PlayerTeleportData implements IPlayerData<PlayerTeleportData>
 
         // 序列化黑白名单
         tag.put("access", this.getAccess().writeToNBT());
+
+        tag.put("tpCountdowns", writeTeleportCountdownToNbt());
 
         return tag;
     }
@@ -173,11 +180,11 @@ public final class PlayerTeleportData implements IPlayerData<PlayerTeleportData>
 
         // 反序列化家坐标
         ListTag homeCoordinateNBT = nbt.getList("homeCoordinate", 10);
-        Map<KeyValue<String, String>, Coordinate> homeCoordinateMap = new HashMap<>();
+        Map<KeyValue<String, String>, SafeWorldCoordinate> homeCoordinateMap = new HashMap<>();
         for (int i = 0; i < homeCoordinateNBT.size(); i++) {
             CompoundTag homeCoordinateTag = homeCoordinateNBT.getCompound(i);
             homeCoordinateMap.put(new KeyValue<>(homeCoordinateTag.getString("key"), homeCoordinateTag.getString("value")),
-                    Coordinate.readFromNBT(homeCoordinateTag.getCompound("coordinate")));
+                    SafeWorldCoordinate.fromTag(homeCoordinateTag.getCompound("coordinate")));
         }
         this.homeCoordinate = homeCoordinateMap;
 
@@ -192,6 +199,8 @@ public final class PlayerTeleportData implements IPlayerData<PlayerTeleportData>
 
         // 反序列化黑白名单
         this.access = PlayerAccess.readFromNBT(nbt.getCompound("access"));
+
+        readTeleportCountdownFromNbt(nbt.contains("tpCountdowns", 10) ? nbt.getCompound("tpCountdowns") : new CompoundTag());
 
         if (dirty) {
             this.save();
@@ -210,14 +219,30 @@ public final class PlayerTeleportData implements IPlayerData<PlayerTeleportData>
         this.homeCoordinate = playerData.getHomeCoordinate();
         this.defaultHome = playerData.getDefaultHome();
         this.access = playerData.getAccess();
+        this.teleportCountdownSeconds = playerData.teleportCountdownSeconds == null
+                ? null
+                : new EnumMap<>(playerData.teleportCountdownSeconds);
 
         this.save();
+    }
+
+    public void applyFromSyncPacket(PlayerDataSyncPacket packet) {
+        this.lastCardTime = packet.getLastCardTime();
+        this.lastTpTime = packet.getLastTpTime();
+        this.teleportCard.set(packet.getTeleportCard());
+        this.teleportRecords = new ArrayList<>(packet.getTeleportRecords());
+        this.homeCoordinate = new LinkedHashMap<>(packet.getHomeCoordinate());
+        this.defaultHome = new LinkedHashMap<>(packet.getDefaultHome());
+        if (packet.getAccessTag() != null) {
+            this.access = PlayerAccess.readFromNBT(packet.getAccessTag());
+        }
+        readTeleportCountdownFromNbt(packet.getTpCountdownTag() != null ? packet.getTpCountdownTag() : new CompoundTag());
     }
 
     @Override
     public void save() {
         if (this.player instanceof ServerPlayer) {
-            PlayerDataManager.instance().put(player, serializeNBT());
+            BaniraCodex.playerDataManager.put(player.getUUID(), NarcissusFarewell.MODID, serializeNBT());
         }
     }
 
@@ -236,7 +261,7 @@ public final class PlayerTeleportData implements IPlayerData<PlayerTeleportData>
     /**
      * dimension:name coordinate
      */
-    private Map<KeyValue<String, String>, Coordinate> homeCoordinate;
+    private Map<KeyValue<String, String>, SafeWorldCoordinate> homeCoordinate;
     /**
      * dimension:name
      */
@@ -245,7 +270,92 @@ public final class PlayerTeleportData implements IPlayerData<PlayerTeleportData>
      * 玩家自定义的黑白名单
      */
     private PlayerAccess access;
+    /**
+     * 各传送类型的传送前倒计时（秒）
+     */
+    private EnumMap<EnumTeleportType, Integer> teleportCountdownSeconds;
 
+    public CompoundTag writeTeleportCountdownToNbt() {
+        CompoundTag cd = new CompoundTag();
+        EnumMap<EnumTeleportType, Integer> map = this.teleportCountdownSeconds;
+        if (map != null) {
+            for (Map.Entry<EnumTeleportType, Integer> e : map.entrySet()) {
+                if (e.getValue() != null && e.getValue() > 0) {
+                    cd.putInt(e.getKey().name(), e.getValue());
+                }
+            }
+        }
+        return cd;
+    }
+
+    public void readTeleportCountdownFromNbt(CompoundTag cd) {
+        this.teleportCountdownSeconds = new EnumMap<>(EnumTeleportType.class);
+        if (cd == null || cd.isEmpty()) {
+            return;
+        }
+        for (EnumTeleportType t : EnumTeleportType.countdownConfigurableTypes()) {
+            if (!cd.contains(t.name())) {
+                continue;
+            }
+            int v = TeleportCountdownHelper.clampToPlayerAllowedRange(cd.getInt(t.name()));
+            if (v > 0) {
+                this.teleportCountdownSeconds.put(t, v);
+            }
+        }
+    }
+
+    /**
+     * 玩家为该类型存储的倒计时偏好（秒），未设置时为 0；读取时按当前 common 配置的「玩家允许范围」夹取。
+     */
+    public int getTeleportCountdownSeconds(EnumTeleportType type) {
+        if (type == null || !EnumTeleportType.countdownConfigurableTypes().contains(type)) {
+            return 0;
+        }
+        if (this.isDirty()) this.saveEx();
+        if (teleportCountdownSeconds == null) {
+            return 0;
+        }
+        Integer v = teleportCountdownSeconds.get(type);
+        if (v == null) {
+            return 0;
+        }
+        return TeleportCountdownHelper.clampToPlayerAllowedRange(v);
+    }
+
+    public void setTeleportCountdownSeconds(EnumTeleportType type, int seconds) {
+        if (type == null || !EnumTeleportType.countdownConfigurableTypes().contains(type)) {
+            return;
+        }
+        int v = TeleportCountdownHelper.clampToPlayerAllowedRange(seconds);
+        if (teleportCountdownSeconds == null) {
+            teleportCountdownSeconds = new EnumMap<>(EnumTeleportType.class);
+        }
+        if (v == 0) {
+            teleportCountdownSeconds.remove(type);
+        } else {
+            teleportCountdownSeconds.put(type, v);
+        }
+        this.save();
+    }
+
+    /**
+     * 用客户端提交的完整表替换各传送倒计时（秒），仅接受 {@link EnumTeleportType#countdownConfigurableTypes()} 中的键。
+     */
+    public void replaceAllTeleportCountdownsFromTag(CompoundTag tag) {
+        this.teleportCountdownSeconds = new EnumMap<>(EnumTeleportType.class);
+        if (tag != null) {
+            for (EnumTeleportType t : EnumTeleportType.countdownConfigurableTypes()) {
+                if (!tag.contains(t.name())) {
+                    continue;
+                }
+                int v = TeleportCountdownHelper.clampToPlayerAllowedRange(tag.getInt(t.name()));
+                if (v > 0) {
+                    this.teleportCountdownSeconds.put(t, v);
+                }
+            }
+        }
+        this.save();
+    }
 
     public boolean isNotified() {
         if (this.isDirty()) this.saveEx();
@@ -317,17 +427,17 @@ public final class PlayerTeleportData implements IPlayerData<PlayerTeleportData>
         this.save();
     }
 
-    public Map<KeyValue<String, String>, Coordinate> getHomeCoordinate() {
+    public Map<KeyValue<String, String>, SafeWorldCoordinate> getHomeCoordinate() {
         if (this.isDirty()) this.saveEx();
         return this.homeCoordinate = this.homeCoordinate == null ? new HashMap<>() : this.homeCoordinate;
     }
 
-    public void setHomeCoordinate(Map<KeyValue<String, String>, Coordinate> homeCoordinate) {
+    public void setHomeCoordinate(Map<KeyValue<String, String>, SafeWorldCoordinate> homeCoordinate) {
         this.homeCoordinate = homeCoordinate;
         this.save();
     }
 
-    public void addHomeCoordinate(KeyValue<String, String> key, Coordinate coordinate) {
+    public void addHomeCoordinate(KeyValue<String, String> key, SafeWorldCoordinate coordinate) {
         this.getHomeCoordinate().put(key, coordinate);
         this.save();
     }
@@ -369,11 +479,8 @@ public final class PlayerTeleportData implements IPlayerData<PlayerTeleportData>
      * 同步玩家数据到客户端
      */
     public static void syncPlayerData(ServerPlayer player) {
-        // 创建自定义包并发送到客户端
         PlayerDataSyncPacket packet = new PlayerDataSyncPacket(player.getUUID(), getData(player));
-        for (PlayerDataSyncPacket syncPacket : packet.split()) {
-            NarcissusUtils.sendPacketToPlayer(syncPacket, player);
-        }
+        PacketUtils.sendSplitPacketToPlayer(packet, player);
     }
 
 }

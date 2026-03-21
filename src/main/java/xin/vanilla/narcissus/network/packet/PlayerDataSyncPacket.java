@@ -1,44 +1,57 @@
 package xin.vanilla.narcissus.network.packet;
 
-import io.netty.buffer.ByteBuf;
 import lombok.Getter;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.network.protocol.PacketFlow;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
-import xin.vanilla.narcissus.NarcissusFarewell;
-import xin.vanilla.narcissus.data.Coordinate;
-import xin.vanilla.narcissus.data.KeyValue;
+import xin.vanilla.banira.common.data.KeyValue;
+import xin.vanilla.banira.common.network.packet.SplitPacket;
+import xin.vanilla.banira.common.util.DateUtils;
+import xin.vanilla.banira.internal.network.BaniraStreamCodecs;
+import xin.vanilla.narcissus.Identifier;
+import xin.vanilla.narcissus.data.PlayerAccess;
+import xin.vanilla.narcissus.data.SafeWorldCoordinate;
 import xin.vanilla.narcissus.data.TeleportRecord;
 import xin.vanilla.narcissus.data.player.PlayerTeleportData;
-import xin.vanilla.narcissus.network.ClientProxy;
-import xin.vanilla.narcissus.util.CollectionUtils;
-import xin.vanilla.narcissus.util.DateUtils;
 
 import java.util.*;
 import java.util.stream.Collectors;
 
 @Getter
-public class PlayerDataSyncPacket extends SplitPacket implements CustomPacketPayload {
-    public final static Type<PlayerDataSyncPacket> TYPE = new Type<>(NarcissusFarewell.createResource("player_data_sync"));
-    public final static StreamCodec<ByteBuf, PlayerDataSyncPacket> STREAM_CODEC = new StreamCodec<>() {
-        public @NotNull PlayerDataSyncPacket decode(@NotNull ByteBuf byteBuf) {
-            return new PlayerDataSyncPacket((new FriendlyByteBuf(byteBuf)));
-        }
+public class PlayerDataSyncPacket extends SplitPacket
+        implements CustomPacketPayload,
+        SplitPacket.MergeableSplitPacket<PlayerDataSyncPacket>,
+        SplitPacket.SplittableSplitPacket<PlayerDataSyncPacket> {
 
-        public void encode(@NotNull ByteBuf byteBuf, @NotNull PlayerDataSyncPacket packet) {
-            packet.toBytes(new FriendlyByteBuf(byteBuf));
-        }
-    };
+    public static final Type<PlayerDataSyncPacket> TYPE =
+            new Type<>(Identifier.id().create("player_data_sync"));
+    public static final StreamCodec<RegistryFriendlyByteBuf, PlayerDataSyncPacket> STREAM_CODEC =
+            BaniraStreamCodecs.registryBuf(PlayerDataSyncPacket::toBytes, PlayerDataSyncPacket::new);
 
     private final UUID playerUUID;
     private final Date lastCardTime;
     private final Date lastTpTime;
     private final int teleportCard;
     private final List<TeleportRecord> teleportRecords;
-    private final Map<KeyValue<String, String>, Coordinate> homeCoordinate;
+    private final Map<KeyValue<String, String>, SafeWorldCoordinate> homeCoordinate;
     private final Map<String, String> defaultHome;
+    /**
+     * 黑白名单等；分片时仅首片携带完整内容，合并时取首片。
+     */
+    private CompoundTag accessTag;
+    /**
+     * 各传送指令倒计时配置；分片规则同 {@link #accessTag}。
+     */
+    private CompoundTag tpCountdownTag;
 
     public PlayerDataSyncPacket(UUID playerUUID, PlayerTeleportData data) {
         super();
@@ -49,6 +62,8 @@ public class PlayerDataSyncPacket extends SplitPacket implements CustomPacketPay
         this.teleportRecords = data.getTeleportRecords();
         this.homeCoordinate = data.getHomeCoordinate();
         this.defaultHome = data.getDefaultHome();
+        this.accessTag = data.getAccess().writeToNBT();
+        this.tpCountdownTag = data.writeTeleportCountdownToNbt();
     }
 
     public PlayerDataSyncPacket(FriendlyByteBuf buffer) {
@@ -67,13 +82,21 @@ public class PlayerDataSyncPacket extends SplitPacket implements CustomPacketPay
         this.homeCoordinate = new HashMap<>();
         int homeSize = buffer.readInt();
         for (int i = 0; i < homeSize; i++) {
-            this.homeCoordinate.put(new KeyValue<>(buffer.readUtf(), buffer.readUtf()), Coordinate.readFromNBT(Objects.requireNonNull(buffer.readNbt())));
+            this.homeCoordinate.put(new KeyValue<>(buffer.readUtf(), buffer.readUtf()), SafeWorldCoordinate.fromTag(Objects.requireNonNull(buffer.readNbt())));
         }
 
         this.defaultHome = new HashMap<>();
         int defaultSize = buffer.readInt();
         for (int i = 0; i < defaultSize; i++) {
             this.defaultHome.put(buffer.readUtf(), buffer.readUtf());
+        }
+        this.accessTag = buffer.readNbt();
+        if (this.accessTag == null) {
+            this.accessTag = new CompoundTag();
+        }
+        this.tpCountdownTag = buffer.readNbt();
+        if (this.tpCountdownTag == null) {
+            this.tpCountdownTag = new CompoundTag();
         }
     }
 
@@ -93,6 +116,10 @@ public class PlayerDataSyncPacket extends SplitPacket implements CustomPacketPay
                 .flatMap(map -> map.entrySet().stream())
                 .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (v1, v2) -> v1));
         this.defaultHome = packets.getFirst().defaultHome;
+        CompoundTag mergedAccess = packets.get(0).accessTag;
+        this.accessTag = mergedAccess != null ? mergedAccess.copy() : new CompoundTag();
+        CompoundTag mergedCd = packets.get(0).tpCountdownTag;
+        this.tpCountdownTag = mergedCd != null ? mergedCd.copy() : new CompoundTag();
     }
 
     private PlayerDataSyncPacket(UUID playerUUID, Date lastCardTime, Date lastTpTime, int teleportCard) {
@@ -104,6 +131,8 @@ public class PlayerDataSyncPacket extends SplitPacket implements CustomPacketPay
         this.teleportRecords = new ArrayList<>();
         this.homeCoordinate = new HashMap<>();
         this.defaultHome = new HashMap<>();
+        this.accessTag = new CompoundTag();
+        this.tpCountdownTag = new CompoundTag();
     }
 
     @Override
@@ -122,28 +151,26 @@ public class PlayerDataSyncPacket extends SplitPacket implements CustomPacketPay
             buffer.writeNbt(record.writeToNBT());
         }
         buffer.writeInt(this.homeCoordinate.size());
-        for (Map.Entry<KeyValue<String, String>, Coordinate> entry : this.homeCoordinate.entrySet()) {
-            buffer.writeUtf(entry.getKey().getKey());
-            buffer.writeUtf(entry.getKey().getValue());
-            buffer.writeNbt(entry.getValue().writeToNBT());
+        for (Map.Entry<KeyValue<String, String>, SafeWorldCoordinate> entry : this.homeCoordinate.entrySet()) {
+            buffer.writeUtf(entry.getKey().key());
+            buffer.writeUtf(entry.getKey().value());
+            buffer.writeNbt(entry.getValue().toTag());
         }
         buffer.writeInt(this.defaultHome.size());
         for (Map.Entry<String, String> entry : this.defaultHome.entrySet()) {
             buffer.writeUtf(entry.getKey());
             buffer.writeUtf(entry.getValue());
         }
+        buffer.writeNbt(this.accessTag != null ? this.accessTag : new CompoundTag());
+        buffer.writeNbt(this.tpCountdownTag != null ? this.tpCountdownTag : new CompoundTag());
     }
 
     public static void handle(PlayerDataSyncPacket packet, IPayloadContext ctx) {
-        if (ctx.flow().isClientbound()) {
-            ctx.enqueueWork(() -> {
-                // 获取玩家并更新 Capability 数据
-                List<PlayerDataSyncPacket> packets = SplitPacket.handle(packet);
-                if (CollectionUtils.isNotNullOrEmpty(packets)) {
-                    ClientProxy.handleSynPlayerData(new PlayerDataSyncPacket(packets));
-                }
-            });
-        }
+        ctx.enqueueWork(() -> {
+            if (ctx.flow() == PacketFlow.CLIENTBOUND) {
+                ClientSide.handle(packet);
+            }
+        });
     }
 
     @Override
@@ -151,10 +178,14 @@ public class PlayerDataSyncPacket extends SplitPacket implements CustomPacketPay
         return 100;
     }
 
-    /**
-     * 将数据包拆分为多个小包
-     */
-    public List<PlayerDataSyncPacket> split() {
+    @Override
+    public PlayerDataSyncPacket mergePackets(List<PlayerDataSyncPacket> packets) {
+        return new PlayerDataSyncPacket(packets);
+    }
+
+    @SuppressWarnings("unchecked")
+    @Override
+    public List<PlayerDataSyncPacket> splitPacket() {
         List<PlayerDataSyncPacket> result = new ArrayList<>();
         KeyValue<String, String>[] keyArray = this.homeCoordinate.keySet().toArray(new KeyValue[0]);
         int teleportIndex = 0;
@@ -164,18 +195,20 @@ public class PlayerDataSyncPacket extends SplitPacket implements CustomPacketPay
 
         for (int i = 0; i < totalChunks; i++) {
             PlayerDataSyncPacket packet = new PlayerDataSyncPacket(this.playerUUID, this.lastCardTime, this.lastTpTime, this.teleportCard);
-            // teleportRecords
             for (int j = 0; j < getChunkSize() && teleportIndex < teleportRecords.size(); j++) {
                 packet.teleportRecords.add(this.teleportRecords.get(teleportIndex));
                 teleportIndex++;
             }
-            // home
             for (int j = 0; j < getChunkSize() && homeIndex < keyArray.length; j++) {
                 packet.homeCoordinate.put(keyArray[homeIndex], this.homeCoordinate.get(keyArray[homeIndex]));
                 homeIndex++;
             }
 
-            if (i == 0) packet.defaultHome.putAll(this.defaultHome);
+            if (i == 0) {
+                packet.defaultHome.putAll(this.defaultHome);
+                packet.accessTag = this.accessTag != null ? this.accessTag.copy() : new CompoundTag();
+                packet.tpCountdownTag = this.tpCountdownTag != null ? this.tpCountdownTag.copy() : new CompoundTag();
+            }
             packet.setSort(i);
             result.add(packet);
         }
@@ -190,19 +223,53 @@ public class PlayerDataSyncPacket extends SplitPacket implements CustomPacketPay
             packet.setSort(0);
             packet.setId(this.getId());
             packet.setTotal(1);
+            packet.defaultHome.putAll(this.defaultHome);
+            packet.accessTag = this.accessTag != null ? this.accessTag.copy() : new CompoundTag();
+            packet.tpCountdownTag = this.tpCountdownTag != null ? this.tpCountdownTag.copy() : new CompoundTag();
             result.add(packet);
         }
         return result;
     }
 
-    public PlayerTeleportData getData() {
-        PlayerTeleportData data = ClientProxy.createClientData();
-        if (data == null) return null;
-        data.setLastCardTime(this.lastCardTime);
-        data.setLastTpTime(this.lastTpTime);
-        data.setTeleportCard(this.teleportCard);
-        data.setTeleportRecords(this.teleportRecords);
-        data.setHomeCoordinate(this.homeCoordinate);
-        return data;
+    @OnlyIn(Dist.CLIENT)
+    private static final class ClientSide {
+        private static final Logger LOGGER = LogManager.getLogger();
+
+        private ClientSide() {
+        }
+
+        public static void handle(PlayerDataSyncPacket packet) {
+            net.minecraft.client.player.LocalPlayer player = net.minecraft.client.Minecraft.getInstance().player;
+            if (player != null) {
+                try {
+                    PlayerTeleportData clientData = PlayerTeleportData.getData(player);
+                    clientData.copyFrom(getData(packet));
+                    LOGGER.debug("Client: Player data received successfully.");
+                } catch (Exception ignored) {
+                    LOGGER.debug("Client: Player data received failed.");
+                }
+            }
+        }
+
+        public static PlayerTeleportData getData(PlayerDataSyncPacket packet) {
+            net.minecraft.client.player.LocalPlayer player = net.minecraft.client.Minecraft.getInstance().player;
+            if (player == null) {
+                return null;
+            }
+            PlayerTeleportData data = PlayerTeleportData.getData(player);
+            if (data == null) {
+                return null;
+            }
+
+            data.setLastCardTime(packet.lastCardTime);
+            data.setLastTpTime(packet.lastTpTime);
+            data.setTeleportCard(packet.teleportCard);
+            data.setTeleportRecords(packet.teleportRecords);
+            data.setHomeCoordinate(new LinkedHashMap<>(packet.homeCoordinate));
+            data.setDefaultHome(new HashMap<>(packet.defaultHome));
+            data.setAccess(PlayerAccess.readFromNBT(packet.accessTag != null ? packet.accessTag : new CompoundTag()));
+            data.readTeleportCountdownFromNbt(packet.tpCountdownTag != null ? packet.tpCountdownTag : new CompoundTag());
+            return data;
+        }
     }
 }

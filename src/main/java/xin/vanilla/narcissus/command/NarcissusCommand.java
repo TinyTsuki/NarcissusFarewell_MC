@@ -1,0 +1,64 @@
+package xin.vanilla.narcissus.command;
+
+
+import com.mojang.brigadier.CommandDispatcher;
+import com.mojang.brigadier.builder.LiteralArgumentBuilder;
+import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.commands.Commands;
+import xin.vanilla.banira.common.data.KeyValue;
+import xin.vanilla.banira.common.util.StringUtils;
+import xin.vanilla.narcissus.command.impl.HelpCommand;
+import xin.vanilla.narcissus.enums.EnumCommandType;
+import xin.vanilla.narcissus.util.NarcissusUtils;
+
+import java.util.*;
+import java.util.stream.Collectors;
+
+public class NarcissusCommand {
+
+    public static List<KeyValue<String, EnumCommandType>> HELP_MESSAGE = new ArrayList<>();
+
+    private static void refreshHelpMessage() {
+        HELP_MESSAGE = Arrays.stream(EnumCommandType.values())
+                .map(type -> {
+                    String command = NarcissusUtils.getCommand(type);
+                    if (StringUtils.isNotNullOrEmpty(command)) {
+                        return new KeyValue<>(command, type);
+                    }
+                    return null;
+                })
+                .filter(Objects::nonNull)
+                .filter(command -> !command.value().isIgnore())
+                .sorted(Comparator.comparing(command -> command.value().getSort()))
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * 注册命令到命令调度器
+     *
+     * @param dispatcher 命令调度器，用于管理服务器中的所有命令
+     */
+    public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
+        // 刷新帮助信息
+        refreshHelpMessage();
+
+        // 注册有前缀的指令
+        LiteralArgumentBuilder<CommandSourceStack> mainCommand = Commands.literal(NarcissusUtils.getCommandPrefix());
+
+        // 主指令直接执行显示帮助
+        mainCommand.executes(HelpCommand.create().getCommand());
+
+        for (EnumCommandType type : EnumCommandType.values()) {
+            if (type.getInstance() != null) {
+                // 注册简短的指令
+                if (NarcissusUtils.isConciseEnabled(type)) {
+                    dispatcher.register(type.getInstance().get());
+                }
+                // 注册完整的指令
+                mainCommand.then(type.getInstance().get());
+            }
+        }
+        dispatcher.register(mainCommand);
+    }
+
+}
