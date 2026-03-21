@@ -8,13 +8,14 @@ import net.minecraft.commands.Commands;
 import net.minecraft.network.chat.ClickEvent;
 import net.minecraft.network.chat.HoverEvent;
 import net.minecraft.server.level.ServerPlayer;
+import xin.vanilla.banira.common.data.Component;
+import xin.vanilla.banira.common.enums.EnumMCColor;
+import xin.vanilla.banira.common.util.MessageUtils;
+import xin.vanilla.narcissus.NarcissusComponent;
+import xin.vanilla.narcissus.NarcissusLang;
 import xin.vanilla.narcissus.config.CommonConfig;
 import xin.vanilla.narcissus.enums.EnumCommandType;
-import xin.vanilla.narcissus.enums.EnumI18nType;
-import xin.vanilla.narcissus.enums.EnumMCColor;
 import xin.vanilla.narcissus.util.CommandUtils;
-import xin.vanilla.narcissus.util.Component;
-import xin.vanilla.narcissus.util.NarcissusUtils;
 
 public final class DimensionCommand {
     private DimensionCommand() {
@@ -25,17 +26,17 @@ public final class DimensionCommand {
         if (CommandUtils.checkTeleportPre(context.getSource(), EnumCommandType.DIMENSION)) return 0;
         ServerPlayer player = context.getSource().getPlayerOrException();
         String dimString = player.level().dimension().location().toString();
-        Component dim = Component.literal(dimString);
+        Component dim = NarcissusComponent.get().literal(dimString);
         dim.color(EnumMCColor.GREEN.getColor())
                 .clickEvent(new ClickEvent(ClickEvent.Action.COPY_TO_CLIPBOARD, dimString))
-                .hoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.trans(NarcissusUtils.getPlayerLanguage(player), EnumI18nType.FORMAT, "chat_copy_click").toTextComponent()));
-        Component msg = Component.trans(NarcissusUtils.getPlayerLanguage(player), EnumI18nType.FORMAT, "dimension_info", dim);
-        NarcissusUtils.sendMessage(player, msg);
+                .hoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, NarcissusComponent.get().transAuto("chat_copy_click").toVanilla(NarcissusLang.getPlayerLanguage(player))));
+        Component msg = NarcissusComponent.get().transAuto("dimension_info", dim);
+        MessageUtils.sendMessage(player, msg);
         return 1;
     }
 
     public static LiteralArgumentBuilder<CommandSourceStack> create() {
-        return Commands.literal(CommonConfig.COMMAND_DIMENSION.get())
+        return Commands.literal(CommonConfig.get().commandNames().commandDimension())
                 .executes(DimensionCommand::execute);
     }
 }

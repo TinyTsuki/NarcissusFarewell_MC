@@ -7,18 +7,17 @@ import net.minecraftforge.event.entity.EntityTeleportEvent;
 import net.minecraftforge.event.entity.player.PlayerEvent;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import xin.vanilla.banira.BaniraCodex;
+import xin.vanilla.banira.common.util.DateUtils;
+import xin.vanilla.banira.common.util.MessageUtils;
+import xin.vanilla.narcissus.NarcissusComponent;
 import xin.vanilla.narcissus.NarcissusFarewell;
 import xin.vanilla.narcissus.config.CommonConfig;
-import xin.vanilla.narcissus.config.CustomConfig;
-import xin.vanilla.narcissus.data.Coordinate;
+import xin.vanilla.narcissus.data.SafeWorldCoordinate;
 import xin.vanilla.narcissus.data.TeleportRecord;
 import xin.vanilla.narcissus.data.TeleportRequest;
 import xin.vanilla.narcissus.data.player.PlayerTeleportData;
-import xin.vanilla.narcissus.enums.EnumI18nType;
 import xin.vanilla.narcissus.enums.EnumTeleportType;
-import xin.vanilla.narcissus.util.DateUtils;
-import xin.vanilla.narcissus.util.I18nUtils;
-import xin.vanilla.narcissus.util.NarcissusUtils;
 
 import java.util.Comparator;
 import java.util.Date;
@@ -26,12 +25,9 @@ import java.util.Date;
 public class EventHandlerProxy {
     private static final Logger LOGGER = LogManager.getLogger();
 
-    private static long lastSaveConfTime = System.currentTimeMillis();
-    private static long lastReadConfTime = System.currentTimeMillis();
-
     public static void onServerTick(TickEvent.ServerTickEvent event) {
         if (event.phase == TickEvent.Phase.END) {
-            if (NarcissusFarewell.getServerInstance().getTickCount() % 20 == 0) {
+            if (BaniraCodex.serverInstance().key().getTickCount() % 20 == 0) {
                 long currentTimeMillis = System.currentTimeMillis();
                 NarcissusFarewell.getTeleportRequest().entrySet().stream()
                         .filter(entry -> entry.getValue().getExpireTime() < currentTimeMillis)
@@ -39,23 +35,12 @@ public class EventHandlerProxy {
                             TeleportRequest request = NarcissusFarewell.getTeleportRequest().remove(entry.getKey());
                             if (request != null) {
                                 if (request.getTeleportType() == EnumTeleportType.TP_ASK) {
-                                    NarcissusUtils.sendTranslatableMessage(request.getRequester(), I18nUtils.getKey(EnumI18nType.FORMAT, "tp_ask_expired"), request.getTarget().getDisplayName().getString());
+                                    MessageUtils.sendMessage(request.getRequester(), NarcissusComponent.get().transAuto("tp_ask_expired", request.getTarget().getDisplayName().getString()));
                                 } else if (request.getTeleportType() == EnumTeleportType.TP_HERE) {
-                                    NarcissusUtils.sendTranslatableMessage(request.getRequester(), I18nUtils.getKey(EnumI18nType.FORMAT, "tp_here_expired"), request.getTarget().getDisplayName().getString());
+                                    MessageUtils.sendMessage(request.getRequester(), NarcissusComponent.get().transAuto("tp_here_expired", request.getTarget().getDisplayName().getString()));
                                 }
                             }
                         });
-            }
-
-            // 保存通用配置
-            if (System.currentTimeMillis() - lastSaveConfTime >= 10 * 1000) {
-                lastSaveConfTime = System.currentTimeMillis();
-                CustomConfig.saveCustomConfig();
-            }
-            // 读取通用配置
-            else if (System.currentTimeMillis() - lastReadConfTime >= 2 * 60 * 1000) {
-                lastReadConfTime = System.currentTimeMillis();
-                CustomConfig.loadCustomConfig(true);
             }
         }
     }
@@ -65,15 +50,18 @@ public class EventHandlerProxy {
             ServerPlayer original = (ServerPlayer) event.getOriginal();
             ServerPlayer newPlayer = (ServerPlayer) event.getEntity();
             original.revive();
-            NarcissusUtils.clonePlayerLanguage(original, newPlayer);
 
             // 如果是死亡，则记录死亡记录
             if (event.isWasDeath()) {
                 TeleportRecord record = new TeleportRecord();
                 record.setTeleportTime(new Date());
                 record.setTeleportType(EnumTeleportType.DEATH);
-                record.setBefore(new Coordinate().x(original.getX()).y(original.getY()).z(original.getZ()).dimension(original.level().dimension()));
-                record.setAfter(new Coordinate().x(newPlayer.getX()).y(newPlayer.getY()).z(newPlayer.getZ()).dimension(newPlayer.level().dimension()));
+                SafeWorldCoordinate before = new SafeWorldCoordinate();
+                before.x(original.getX()).y(original.getY()).z(original.getZ()).dimension(original.level().dimension());
+                record.setBefore(before);
+                SafeWorldCoordinate after = new SafeWorldCoordinate();
+                after.x(newPlayer.getX()).y(newPlayer.getY()).z(newPlayer.getZ()).dimension(newPlayer.level().dimension());
+                record.setAfter(after);
                 PlayerTeleportData.getData(newPlayer).addTeleportRecords(record);
             }
         }
@@ -82,12 +70,12 @@ public class EventHandlerProxy {
     public static void onEntityJoinWorld(EntityJoinLevelEvent event) {
         if (event.getEntity() instanceof ServerPlayer player) {
             // 给予传送卡
-            if (CommonConfig.TELEPORT_CARD.get()) {
+            if (CommonConfig.get().base().teleportCard()) {
                 PlayerTeleportData data = PlayerTeleportData.getData(player);
                 Date current = new Date();
                 if (DateUtils.toDateInt(data.getLastCardTime()) < DateUtils.toDateInt(current)) {
                     data.setLastCardTime(current);
-                    data.plusTeleportCard(CommonConfig.TELEPORT_CARD_DAILY.get());
+                    data.plusTeleportCard(CommonConfig.get().base().teleportCardDaily());
                 }
             }
         }
@@ -98,11 +86,15 @@ public class EventHandlerProxy {
             TeleportRecord record = new TeleportRecord();
             record.setTeleportTime(new Date());
             record.setTeleportType(EnumTeleportType.OTHER);
-            record.setBefore(new Coordinate(player).fromVec3(event.getPrev()));
-            record.setAfter(new Coordinate(player).fromVec3(event.getTarget()));
+            SafeWorldCoordinate before = new SafeWorldCoordinate(player);
+            before.fromVec3(event.getPrev());
+            record.setBefore(before);
+            SafeWorldCoordinate after = new SafeWorldCoordinate(player);
+            after.fromVec3(event.getTarget());
+            record.setAfter(after);
             PlayerTeleportData data = PlayerTeleportData.getData(player);
             TeleportRecord otherRecord = data.getTeleportRecords().stream().max(Comparator.comparing(o -> o.getTeleportTime().getTime())).orElse(null);
-            if (otherRecord != null && otherRecord.getTeleportType() == EnumTeleportType.OTHER && otherRecord.getBefore().toXyzString().equals(record.getBefore().toXyzString())) {
+            if (otherRecord != null && otherRecord.getTeleportType() == EnumTeleportType.OTHER && otherRecord.getBefore().xyzString().equals(record.getBefore().xyzString())) {
                 otherRecord.setAfter(record.getAfter());
             } else {
                 data.addTeleportRecords(record);

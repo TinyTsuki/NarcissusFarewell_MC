@@ -8,15 +8,17 @@ import net.minecraft.commands.Commands;
 import net.minecraft.network.chat.ClickEvent;
 import net.minecraft.network.chat.HoverEvent;
 import net.minecraft.server.level.ServerPlayer;
+import xin.vanilla.banira.common.data.Component;
+import xin.vanilla.banira.common.data.KeyValue;
+import xin.vanilla.banira.common.enums.EnumMCColor;
+import xin.vanilla.banira.common.util.MessageUtils;
+import xin.vanilla.narcissus.NarcissusComponent;
+import xin.vanilla.narcissus.NarcissusLang;
 import xin.vanilla.narcissus.config.CommonConfig;
-import xin.vanilla.narcissus.data.Coordinate;
-import xin.vanilla.narcissus.data.KeyValue;
+import xin.vanilla.narcissus.data.SafeWorldCoordinate;
 import xin.vanilla.narcissus.data.world.WorldStageData;
 import xin.vanilla.narcissus.enums.EnumCommandType;
-import xin.vanilla.narcissus.enums.EnumI18nType;
-import xin.vanilla.narcissus.enums.EnumMCColor;
 import xin.vanilla.narcissus.util.CommandUtils;
-import xin.vanilla.narcissus.util.Component;
 import xin.vanilla.narcissus.util.NarcissusUtils;
 
 import java.util.List;
@@ -33,12 +35,12 @@ public final class GetStageCommand {
         if (CommandUtils.checkTeleportPre(context.getSource(), EnumCommandType.GET_STAGE)) return 0;
         Component component;
         WorldStageData data = WorldStageData.get();
-        String language = NarcissusUtils.getPlayerLanguage(player);
+        String language = NarcissusLang.getPlayerLanguage(player);
         if (data.getStageCoordinate().isEmpty()) {
-            component = Component.trans(language, EnumI18nType.FORMAT, "stage_is_empty");
+            component = NarcissusComponent.get().transAuto("stage_is_empty");
         } else {
-            Component info = Component.empty();
-            Map<String, List<KeyValue<String, Coordinate>>> map = data.getStageCoordinate().entrySet().stream()
+            Component info = NarcissusComponent.get().empty();
+            Map<String, List<KeyValue<String, SafeWorldCoordinate>>> map = data.getStageCoordinate().entrySet().stream()
                     .collect(Collectors.groupingBy(
                             entry -> entry.getKey().key(),
                             Collectors.mapping(
@@ -46,38 +48,38 @@ public final class GetStageCommand {
                                     Collectors.toList()
                             )
                     ));
-            for (Map.Entry<String, List<KeyValue<String, Coordinate>>> entry : map.entrySet()) {
-                Component dimension = Component.literal(entry.getKey()).color(EnumMCColor.DARK_GREEN.getColor());
+            for (Map.Entry<String, List<KeyValue<String, SafeWorldCoordinate>>> entry : map.entrySet()) {
+                Component dimension = NarcissusComponent.get().literal(entry.getKey()).color(EnumMCColor.DARK_GREEN.getColor());
                 dimension.clickEvent(new ClickEvent(ClickEvent.Action.COPY_TO_CLIPBOARD, entry.getKey()));
-                dimension.hoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.literal(entry.getKey()).toTextComponent()));
-                dimension.append(Component.literal(": ").color(EnumMCColor.GRAY.getColor()));
-                for (KeyValue<String, Coordinate> coordinates : entry.getValue()) {
-                    Component name = Component.trans(language, EnumI18nType.FORMAT, "stage_info"
+                dimension.hoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, NarcissusComponent.get().literal(entry.getKey()).toVanilla()));
+                dimension.append(NarcissusComponent.get().literal(": ").color(EnumMCColor.GRAY.getColor()));
+                for (KeyValue<String, SafeWorldCoordinate> coordinates : entry.getValue()) {
+                    Component name = NarcissusComponent.get().transAuto("stage_info"
                             , coordinates.key()
-                            , coordinates.value().toXString()
-                            , coordinates.value().toYString()
-                            , coordinates.value().toZString());
-                    Component name_hover = Component.trans(language, EnumI18nType.FORMAT, "stage_info_hover"
+                            , coordinates.value().xString()
+                            , coordinates.value().yString()
+                            , coordinates.value().zString());
+                    Component name_hover = NarcissusComponent.get().transAuto("stage_info_hover"
                             , coordinates.key()
-                            , coordinates.value().toXString()
-                            , coordinates.value().toYString()
-                            , coordinates.value().toZString());
+                            , coordinates.value().xString()
+                            , coordinates.value().yString()
+                            , coordinates.value().zString());
                     name.color(EnumMCColor.GREEN.getColor());
-                    name.clickEvent(new ClickEvent(ClickEvent.Action.COPY_TO_CLIPBOARD, name_hover.toString(true)));
-                    name.hoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, name_hover.toChatComponent()));
+                    name.clickEvent(new ClickEvent(ClickEvent.Action.COPY_TO_CLIPBOARD, name_hover.getString(language, true, true)));
+                    name.hoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, name_hover.toChat(language)));
                     dimension.append(name);
-                    dimension.append(Component.literal(", ").color(EnumMCColor.GRAY.getColor()));
+                    dimension.append(NarcissusComponent.get().literal(", ").color(EnumMCColor.GRAY.getColor()));
                 }
                 info.append(dimension).append("\n");
             }
-            component = Component.trans(language, EnumI18nType.FORMAT, "stage_is", info);
+            component = NarcissusComponent.get().transAuto("stage_is", info);
         }
-        NarcissusUtils.sendMessage(player, component);
+        MessageUtils.sendMessage(player, component);
         return 1;
     }
 
     public static LiteralArgumentBuilder<CommandSourceStack> create() {
-        return Commands.literal(CommonConfig.COMMAND_GET_STAGE.get())
+        return Commands.literal(CommonConfig.get().commandNames().commandGetStage())
                 .requires(source -> NarcissusUtils.hasCommandPermission(source, EnumCommandType.GET_STAGE))
                 .executes(GetStageCommand::execute);
     }

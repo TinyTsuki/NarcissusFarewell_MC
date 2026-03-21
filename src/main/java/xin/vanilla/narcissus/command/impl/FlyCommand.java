@@ -35,8 +35,8 @@ public final class FlyCommand {
     }
 
     public static CompletableFuture<Suggestions> suggestion(CommandContext<CommandSourceStack> context, SuggestionsBuilder builder) {
-        Double min = CommonConfig.FLY_SPEED_MIN.get();
-        Double max = CommonConfig.FLY_SPEED_MAX.get();
+        Double min = CommonConfig.get().base().flySpeedMin();
+        Double max = CommonConfig.get().base().flySpeedMax();
         builder.suggest(String.valueOf(min));
         if (0.05F >= min && 0.05F <= max) {
             builder.suggest("0.05");
@@ -46,14 +46,14 @@ public final class FlyCommand {
     }
 
     public static LiteralArgumentBuilder<CommandSourceStack> create() {
-        return Commands.literal(CommonConfig.COMMAND_FLY.get())
+        return Commands.literal(CommonConfig.get().commandNames().commandFly())
                 .requires(source -> NarcissusUtils.hasCommandPermission(source, EnumCommandType.FLY))
                 .executes(FlyCommand::execute)
                 .then(Commands.argument("enable", BoolArgumentType.bool())
                         .executes(FlyCommand::execute)
                         .then(Commands.argument("player", EntityArgument.player())
                                 .executes(FlyCommand::execute)
-                                .then(Commands.argument("speed", DoubleArgumentType.doubleArg(CommonConfig.FLY_SPEED_MIN.get(), CommonConfig.FLY_SPEED_MAX.get()))
+                                .then(Commands.argument("speed", DoubleArgumentType.doubleArg(CommonConfig.get().base().flySpeedMin(), CommonConfig.get().base().flySpeedMax()))
                                         .suggests(FlyCommand::suggestion)
                                         .executes(FlyCommand::execute)
                                 )

@@ -6,7 +6,7 @@ import net.minecraft.network.FriendlyByteBuf;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.fml.DistExecutor;
 import net.minecraftforge.network.NetworkEvent;
-import xin.vanilla.narcissus.data.Coordinate;
+import xin.vanilla.narcissus.data.SafeWorldCoordinate;
 import xin.vanilla.narcissus.integration.MapHelper;
 
 import java.util.function.Supplier;
@@ -34,14 +34,14 @@ public class WaypointSyncToClient {
     private final double y;
     private final double z;
 
-    public WaypointSyncToClient(Action action, Type type, String name, Coordinate coordinate) {
+    public WaypointSyncToClient(Action action, Type type, String name, SafeWorldCoordinate safeWorldCoordinate) {
         this.action = action;
         this.type = type;
         this.name = name;
-        this.dimension = coordinate.getDimensionResourceId();
-        this.x = coordinate.x();
-        this.y = coordinate.y();
-        this.z = coordinate.z();
+        this.dimension = safeWorldCoordinate.dimensionId();
+        this.x = safeWorldCoordinate.x();
+        this.y = safeWorldCoordinate.y();
+        this.z = safeWorldCoordinate.z();
     }
 
     public WaypointSyncToClient(FriendlyByteBuf buf) {
