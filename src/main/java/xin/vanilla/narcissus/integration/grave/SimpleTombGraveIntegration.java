@@ -11,8 +11,8 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
-import xin.vanilla.narcissus.data.Coordinate;
-import xin.vanilla.narcissus.util.DimensionUtils;
+import xin.vanilla.banira.common.util.DimensionUtils;
+import xin.vanilla.narcissus.data.SafeWorldCoordinate;
 
 import java.util.List;
 import java.util.UUID;
@@ -28,7 +28,7 @@ public final class SimpleTombGraveIntegration {
     /**
      * 在指定坐标附近搜索属于该玩家的墓碑
      */
-    public static void findNear(Coordinate center, int radius, UUID playerUuid, List<Coordinate> out) {
+    public static void findNear(SafeWorldCoordinate center, int radius, UUID playerUuid, List<SafeWorldCoordinate> out) {
         try {
             ResourceKey<Level> dim = center.dimension();
             ServerLevel world = DimensionUtils.getLevel(dim);
@@ -44,7 +44,7 @@ public final class SimpleTombGraveIntegration {
                         ServerPlayer player = world.getServer() != null
                                 ? world.getServer().getPlayerList().getPlayer(playerUuid) : null;
                         if (player != null && tomb.isOwner(player)) {
-                            out.add(new Coordinate(pos.getX() + 0.5, pos.getY() + 1, pos.getZ() + 0.5, world.dimension()));
+                            out.add(new SafeWorldCoordinate(pos.getX() + 0.5, pos.getY() + 1, pos.getZ() + 0.5, world.dimension()));
                         }
                     }
                 }
@@ -53,13 +53,13 @@ public final class SimpleTombGraveIntegration {
         }
     }
 
-    public static Coordinate parseObituary(ServerPlayer player) {
+    public static SafeWorldCoordinate parseObituary(ServerPlayer player) {
         try {
             ItemStack selected = player.getInventory().getSelected();
             if (selected.getItem() instanceof GraveKeyItem item) {
                 LocationBlockPos pos = item.getTombPos(selected);
                 if (pos != null && !pos.isOrigin()) {
-                    return new Coordinate(pos.x, pos.y, pos.z, pos.dim);
+                    return new SafeWorldCoordinate(pos.x, pos.y, pos.z, pos.dim);
                 }
             }
         } catch (Throwable ignored) {

@@ -8,26 +8,28 @@ import net.minecraftforge.fml.DistExecutor;
 import net.minecraftforge.fmllegacy.network.NetworkEvent;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import xin.vanilla.narcissus.data.Coordinate;
-import xin.vanilla.narcissus.data.KeyValue;
+import xin.vanilla.banira.common.data.KeyValue;
+import xin.vanilla.banira.common.network.packet.SplitPacket;
+import xin.vanilla.banira.common.util.DateUtils;
+import xin.vanilla.narcissus.data.SafeWorldCoordinate;
 import xin.vanilla.narcissus.data.TeleportRecord;
 import xin.vanilla.narcissus.data.player.PlayerTeleportData;
-import xin.vanilla.narcissus.network.SplitPacket;
-import xin.vanilla.narcissus.util.CollectionUtils;
-import xin.vanilla.narcissus.util.DateUtils;
 
 import java.util.*;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 @Getter
-public class PlayerDataSyncToClient extends SplitPacket {
+public class PlayerDataSyncToClient extends SplitPacket
+        implements SplitPacket.MergeableSplitPacket<PlayerDataSyncToClient>,
+        SplitPacket.SplittableSplitPacket<PlayerDataSyncToClient> {
+
     private final UUID playerUUID;
     private final Date lastCardTime;
     private final Date lastTpTime;
     private final int teleportCard;
     private final List<TeleportRecord> teleportRecords;
-    private final Map<KeyValue<String, String>, Coordinate> homeCoordinate;
+    private final Map<KeyValue<String, String>, SafeWorldCoordinate> homeCoordinate;
     private final Map<String, String> defaultHome;
 
     public PlayerDataSyncToClient(UUID playerUUID, PlayerTeleportData data) {
@@ -57,7 +59,7 @@ public class PlayerDataSyncToClient extends SplitPacket {
         this.homeCoordinate = new HashMap<>();
         int homeSize = buffer.readInt();
         for (int i = 0; i < homeSize; i++) {
-            this.homeCoordinate.put(new KeyValue<>(buffer.readUtf(), buffer.readUtf()), Coordinate.readFromNBT(Objects.requireNonNull(buffer.readNbt())));
+            this.homeCoordinate.put(new KeyValue<>(buffer.readUtf(), buffer.readUtf()), SafeWorldCoordinate.fromTag(Objects.requireNonNull(buffer.readNbt())));
         }
 
         this.defaultHome = new HashMap<>();
@@ -107,10 +109,10 @@ public class PlayerDataSyncToClient extends SplitPacket {
             buffer.writeNbt(record.writeToNBT());
         }
         buffer.writeInt(this.homeCoordinate.size());
-        for (Map.Entry<KeyValue<String, String>, Coordinate> entry : this.homeCoordinate.entrySet()) {
+        for (Map.Entry<KeyValue<String, String>, SafeWorldCoordinate> entry : this.homeCoordinate.entrySet()) {
             buffer.writeUtf(entry.getKey().key());
             buffer.writeUtf(entry.getKey().value());
-            buffer.writeNbt(entry.getValue().writeToNBT());
+            buffer.writeNbt(entry.getValue().toTag());
         }
         buffer.writeInt(this.defaultHome.size());
         for (Map.Entry<String, String> entry : this.defaultHome.entrySet()) {
@@ -120,15 +122,9 @@ public class PlayerDataSyncToClient extends SplitPacket {
     }
 
     public static void handle(PlayerDataSyncToClient packet, Supplier<NetworkEvent.Context> ctx) {
-        ctx.get().enqueueWork(() -> {
-            if (ctx.get().getDirection().getReceptionSide().isClient()) {
-                // 获取玩家并更新 Capability 数据
-                List<PlayerDataSyncToClient> packets = SplitPacket.handle(packet);
-                if (CollectionUtils.isNotNullOrEmpty(packets)) {
-                    DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> ClientSide.handle(new PlayerDataSyncToClient(packets)));
-                }
-            }
-        });
+        if (ctx.get().getDirection().getReceptionSide().isClient()) {
+            DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> ClientSide.handle(packet));
+        }
         ctx.get().setPacketHandled(true);
     }
 
@@ -137,11 +133,13 @@ public class PlayerDataSyncToClient extends SplitPacket {
         return 100;
     }
 
-    /**
-     * 将数据包拆分为多个小包
-     */
-    @SuppressWarnings("unchecked")
-    public List<PlayerDataSyncToClient> split() {
+    @Override
+    public PlayerDataSyncToClient mergePackets(List<PlayerDataSyncToClient> packets) {
+        return new PlayerDataSyncToClient(packets);
+    }
+
+    @Override
+    public List<PlayerDataSyncToClient> splitPacket() {
         List<PlayerDataSyncToClient> result = new ArrayList<>();
         KeyValue<String, String>[] keyArray = this.homeCoordinate.keySet().toArray(new KeyValue[0]);
         int teleportIndex = 0;
@@ -151,18 +149,18 @@ public class PlayerDataSyncToClient extends SplitPacket {
 
         for (int i = 0; i < totalChunks; i++) {
             PlayerDataSyncToClient packet = new PlayerDataSyncToClient(this.playerUUID, this.lastCardTime, this.lastTpTime, this.teleportCard);
-            // teleportRecords
             for (int j = 0; j < getChunkSize() && teleportIndex < teleportRecords.size(); j++) {
                 packet.teleportRecords.add(this.teleportRecords.get(teleportIndex));
                 teleportIndex++;
             }
-            // home
             for (int j = 0; j < getChunkSize() && homeIndex < keyArray.length; j++) {
                 packet.homeCoordinate.put(keyArray[homeIndex], this.homeCoordinate.get(keyArray[homeIndex]));
                 homeIndex++;
             }
 
-            if (i == 0) packet.defaultHome.putAll(this.defaultHome);
+            if (i == 0) {
+                packet.defaultHome.putAll(this.defaultHome);
+            }
             packet.setSort(i);
             result.add(packet);
         }
@@ -201,9 +199,13 @@ public class PlayerDataSyncToClient extends SplitPacket {
 
         public static PlayerTeleportData getData(PlayerDataSyncToClient packet) {
             net.minecraft.client.player.LocalPlayer player = net.minecraft.client.Minecraft.getInstance().player;
-            if (player == null) return null;
+            if (player == null) {
+                return null;
+            }
             PlayerTeleportData data = PlayerTeleportData.getData(player);
-            if (data == null) return null;
+            if (data == null) {
+                return null;
+            }
 
             data.setLastCardTime(packet.lastCardTime);
             data.setLastTpTime(packet.lastTpTime);
