@@ -12,9 +12,7 @@ import xaero.hud.minimap.waypoint.WaypointColor;
 import xaero.hud.minimap.waypoint.set.WaypointSet;
 import xaero.hud.minimap.world.MinimapWorld;
 import xaero.hud.path.XaeroPath;
-import xin.vanilla.narcissus.util.DimensionUtils;
-import xin.vanilla.narcissus.util.StringUtils;
-
+import xin.vanilla.banira.common.util.DimensionUtils;
 
 public final class XaeroMinimap {
     private static final Logger LOGGER = LogManager.getLogger();
@@ -22,10 +20,18 @@ public final class XaeroMinimap {
     private XaeroMinimap() {
     }
 
+    private static String firstChar(String s) {
+        if (s == null || s.isEmpty()) {
+            return "";
+        }
+        int end = s.offsetByCodePoints(0, 1);
+        return s.substring(0, end);
+    }
+
     public static void addWaypoint(String name, String dimension, double x, double y, double z) {
         try {
             ResourceKey<Level> dimKey = DimensionUtils.parse(dimension);
-            Waypoint waypoint = new Waypoint((int) x, (int) y, (int) z, name, StringUtils.firstChar(name), WaypointColor.GREEN);
+            Waypoint waypoint = new Waypoint((int) x, (int) y, (int) z, name, firstChar(name), WaypointColor.GREEN);
 
             MinimapSession session = BuiltInHudModules.MINIMAP.getCurrentSession();
 
@@ -45,7 +51,7 @@ public final class XaeroMinimap {
     public static void removeWaypoint(String name, String dimension, double x, double y, double z) {
         try {
             ResourceKey<Level> dimKey = DimensionUtils.parse(dimension);
-            Waypoint waypoint = new Waypoint((int) x, (int) y, (int) z, name, StringUtils.firstChar(name), WaypointColor.GREEN);
+            Waypoint waypoint = new Waypoint((int) x, (int) y, (int) z, name, firstChar(name), WaypointColor.GREEN);
 
             MinimapSession session = BuiltInHudModules.MINIMAP.getCurrentSession();
 

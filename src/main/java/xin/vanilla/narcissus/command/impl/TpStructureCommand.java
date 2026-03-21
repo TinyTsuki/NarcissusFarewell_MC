@@ -17,14 +17,21 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.biome.Biome;
-import xin.vanilla.narcissus.NarcissusFarewell;
+import xin.vanilla.banira.BaniraCodex;
+import xin.vanilla.banira.common.data.Component;
+import xin.vanilla.banira.common.data.WorldCoordinate;
+import xin.vanilla.banira.common.util.BiomeUtils;
+import xin.vanilla.banira.common.util.MessageUtils;
+import xin.vanilla.banira.common.util.StringUtils;
+import xin.vanilla.banira.common.util.StructureUtils;
+import xin.vanilla.narcissus.NarcissusComponent;
+import xin.vanilla.narcissus.NarcissusLang;
 import xin.vanilla.narcissus.config.CommonConfig;
-import xin.vanilla.narcissus.config.ServerConfig;
-import xin.vanilla.narcissus.data.Coordinate;
+import xin.vanilla.narcissus.data.SafeWorldCoordinate;
 import xin.vanilla.narcissus.enums.EnumCommandType;
-import xin.vanilla.narcissus.enums.EnumI18nType;
 import xin.vanilla.narcissus.enums.EnumTeleportType;
-import xin.vanilla.narcissus.util.*;
+import xin.vanilla.narcissus.util.CommandUtils;
+import xin.vanilla.narcissus.util.NarcissusUtils;
 
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
@@ -41,35 +48,48 @@ public final class TpStructureCommand {
         boolean hasStructure = StructureUtils.hasStructure(structId);
         Biome biome = BiomeUtils.getBiome(structId);
         if (!hasStructure && biome == null) {
-            NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EnumI18nType.FORMAT, "structure_biome_not_found"), structId);
+            MessageUtils.sendMessage(player, NarcissusComponent.get().transAuto("structure_biome_not_found", structId));
             return 0;
         }
-        int range = CommandUtils.getIntDefault(context, "range", ServerConfig.TELEPORT_RANDOM_DISTANCE_LIMIT.get());
+        int range = CommandUtils.getIntDefault(context, "range", CommonConfig.get().general().teleportRandomDistanceLimit());
         range = NarcissusUtils.checkRange(player, EnumTeleportType.TP_STRUCTURE, range);
         ResourceKey<Level> targetLevel = CommandUtils.getDimensionKeyDefault(context, "dimension", player.getLevel().dimension());
         boolean safe = "safe".equalsIgnoreCase(CommandUtils.getStringDefault(context, "safe", "safe"));
         int finalRange = range;
         boolean isBiome = biome != null;
         String searchingKey = isBiome ? "tp_structure_searching_biome" : "tp_structure_searching_structure";
-        NarcissusUtils.sendActionBarMessage(player, Component.trans(NarcissusUtils.getPlayerLanguage(player), EnumI18nType.FORMAT, searchingKey, structId));
+        MessageUtils.sendActionBarMessage(player, NarcissusComponent.get().transAuto(searchingKey, structId));
         new Thread(() -> {
-            ServerLevel world = Objects.requireNonNull(NarcissusFarewell.getServerInstance().getLevel(targetLevel));
-            Coordinate coordinate;
+            ServerLevel world = Objects.requireNonNull(BaniraCodex.serverInstance().key().getLevel(targetLevel));
+            SafeWorldCoordinate safeWorldCoordinate;
             if (biome != null) {
                 Biome biomeFromWorld = BiomeUtils.getBiome(world, structId);
-                coordinate = biomeFromWorld != null ? BiomeUtils.findNearestBiome(world, new Coordinate(player).dimension(targetLevel), biomeFromWorld, finalRange, 8) : null;
+                if (biomeFromWorld != null) {
+                    WorldCoordinate start = new WorldCoordinate(player).dimension(targetLevel);
+                    WorldCoordinate found = BiomeUtils.findNearestBiome(world, start, biomeFromWorld, finalRange, 8);
+                    safeWorldCoordinate = found != null
+                            ? new SafeWorldCoordinate(found.x(), found.y(), found.z(), found.yaw(), found.pitch(), found.dimension()).safe(true)
+                            : null;
+                } else {
+                    safeWorldCoordinate = null;
+                }
             } else {
-                coordinate = StructureUtils.findNearestStructure(Objects.requireNonNull(NarcissusFarewell.getServerInstance().getLevel(targetLevel)), new Coordinate(player).dimension(targetLevel), structId, finalRange);
+                ServerLevel structureWorld = Objects.requireNonNull(BaniraCodex.serverInstance().key().getLevel(targetLevel));
+                WorldCoordinate structStart = new WorldCoordinate(player).dimension(targetLevel);
+                WorldCoordinate foundStruct = StructureUtils.findNearestStructure(structureWorld, structStart, structId, finalRange);
+                safeWorldCoordinate = foundStruct != null
+                        ? new SafeWorldCoordinate(foundStruct.x(), foundStruct.y(), foundStruct.z(), foundStruct.yaw(), foundStruct.pitch(), foundStruct.dimension()).safe(true)
+                        : null;
             }
-            if (coordinate == null) {
+            if (safeWorldCoordinate == null) {
                 String notFoundKey = isBiome ? "biome_not_found_in_range" : "structure_not_found_in_range";
-                NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EnumI18nType.FORMAT, notFoundKey), structId);
+                MessageUtils.sendMessage(player, NarcissusComponent.get().transAuto(notFoundKey, structId));
                 return;
             }
-            coordinate.safe(safe);
-            if (CommandUtils.checkTeleportPost(player, coordinate, EnumTeleportType.TP_STRUCTURE, true))
+            safeWorldCoordinate.safe(safe);
+            if (CommandUtils.checkTeleportPost(player, safeWorldCoordinate, EnumTeleportType.TP_STRUCTURE, true))
                 return;
-            player.server.submit(() -> NarcissusUtils.teleportTo(player, coordinate, EnumTeleportType.TP_STRUCTURE));
+            player.server.submit(() -> NarcissusUtils.teleportTo(player, safeWorldCoordinate, EnumTeleportType.TP_STRUCTURE));
         }).start();
         return 1;
     }
@@ -77,24 +97,24 @@ public final class TpStructureCommand {
     public static CompletableFuture<Suggestions> suggestion(CommandContext<CommandSourceStack> context, SuggestionsBuilder builder) {
         String input = CommandUtils.getStringEx(context, "struct", "");
         boolean isInputEmpty = StringUtils.isNullOrEmpty(input);
-        String language = ServerConfig.DEFAULT_LANGUAGE.get();
+        String language = CommonConfig.get().general().defaultLanguage();
         try {
-            language = NarcissusUtils.getPlayerLanguage(context.getSource().getPlayerOrException());
+            language = NarcissusLang.getPlayerLanguage(context.getSource().getPlayerOrException());
         } catch (CommandSyntaxException ignored) {
         }
-        Component structureTooltip = Component.trans(language, EnumI18nType.FORMAT, "tp_structure_type_structure");
-        Component biomeTooltip = Component.trans(language, EnumI18nType.FORMAT, "tp_structure_type_biome");
+        Component structureTooltip = NarcissusComponent.get().transAuto("tp_structure_type_structure");
+        Component biomeTooltip = NarcissusComponent.get().transAuto("tp_structure_type_biome");
         for (String id : StructureUtils.getAllIds()) {
-            if (isInputEmpty || id.contains(input)) builder.suggest(id, structureTooltip.toTextComponent());
+            if (isInputEmpty || id.contains(input)) builder.suggest(id, structureTooltip.toVanilla(language));
         }
         for (String id : BiomeUtils.getAllIds()) {
-            if (isInputEmpty || id.contains(input)) builder.suggest(id, biomeTooltip.toTextComponent());
+            if (isInputEmpty || id.contains(input)) builder.suggest(id, biomeTooltip.toVanilla(language));
         }
         return builder.buildFuture();
     }
 
     public static LiteralArgumentBuilder<CommandSourceStack> create() {
-        return Commands.literal(CommonConfig.COMMAND_TP_STRUCTURE.get())
+        return Commands.literal(CommonConfig.get().commandNames().commandTpStructure())
                 .requires(source -> NarcissusUtils.hasCommandPermission(source, EnumCommandType.TP_STRUCTURE))
                 .then(Commands.argument("struct", ResourceLocationArgument.id())
                         .suggests(TpStructureCommand::suggestion)

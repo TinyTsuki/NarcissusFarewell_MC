@@ -14,9 +14,4 @@ public class TeleportCost {
     private int upper;
     private int lower;
     private String exp;
-
-    public TeleportCost setType(String type) {
-        this.type = EnumCostType.valueOf(type);
-        return this;
-    }
 }
