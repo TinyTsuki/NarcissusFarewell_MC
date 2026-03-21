@@ -6,7 +6,7 @@ import journeymap.common.waypoint.WaypointStore;
 import net.minecraft.core.BlockPos;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import xin.vanilla.narcissus.enums.EnumMCColor;
+import xin.vanilla.banira.common.enums.EnumMCColor;
 
 
 public final class JourneyMap {

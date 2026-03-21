@@ -26,17 +26,17 @@ public final class FlyCommand {
         CommandUtils.notifyHelp(context);
         CommandSourceStack source = context.getSource();
         if (CommandUtils.checkTeleportPre(source, EnumCommandType.FLY)) return 0;
-        ServerPlayer target = CommandUtils.getPlayerOrSelf(context, "player");
-        Boolean enable = CommandUtils.getBooleanOptional(context, "enable");
-        Double speedDouble = CommandUtils.getDoubleOptional(context, "speed");
+        ServerPlayer target = xin.vanilla.banira.common.util.CommandUtils.getPlayerOrSelf(context, "player");
+        Boolean enable = xin.vanilla.banira.common.util.CommandUtils.getBooleanOptional(context, "enable");
+        Double speedDouble = xin.vanilla.banira.common.util.CommandUtils.getDoubleOptional(context, "speed");
         Float speed = speedDouble != null ? speedDouble.floatValue() : null;
         NarcissusUtils.setPlayerFlightMode(target, enable, speed);
         return 1;
     }
 
     public static CompletableFuture<Suggestions> suggestion(CommandContext<CommandSourceStack> context, SuggestionsBuilder builder) {
-        Double min = CommonConfig.FLY_SPEED_MIN.get();
-        Double max = CommonConfig.FLY_SPEED_MAX.get();
+        Double min = CommonConfig.get().base().flySpeedMin();
+        Double max = CommonConfig.get().base().flySpeedMax();
         builder.suggest(String.valueOf(min));
         if (0.05F >= min && 0.05F <= max) {
             builder.suggest("0.05");
@@ -46,14 +46,14 @@ public final class FlyCommand {
     }
 
     public static LiteralArgumentBuilder<CommandSourceStack> create() {
-        return Commands.literal(CommonConfig.COMMAND_FLY.get())
+        return Commands.literal(CommonConfig.get().commandNames().commandFly())
                 .requires(source -> NarcissusUtils.hasCommandPermission(source, EnumCommandType.FLY))
                 .executes(FlyCommand::execute)
                 .then(Commands.argument("enable", BoolArgumentType.bool())
                         .executes(FlyCommand::execute)
                         .then(Commands.argument("player", EntityArgument.player())
                                 .executes(FlyCommand::execute)
-                                .then(Commands.argument("speed", DoubleArgumentType.doubleArg(CommonConfig.FLY_SPEED_MIN.get(), CommonConfig.FLY_SPEED_MAX.get()))
+                                .then(Commands.argument("speed", DoubleArgumentType.doubleArg(CommonConfig.get().base().flySpeedMin(), CommonConfig.get().base().flySpeedMax()))
                                         .suggests(FlyCommand::suggestion)
                                         .executes(FlyCommand::execute)
                                 )

@@ -8,17 +8,22 @@ import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.level.Level;
+import xin.vanilla.banira.common.data.KeyValue;
+import xin.vanilla.banira.common.enums.EnumI18nType;
+import xin.vanilla.banira.common.util.NumberUtils;
+import xin.vanilla.banira.common.util.PacketUtils;
+import xin.vanilla.narcissus.NarcissusComponent;
 import xin.vanilla.narcissus.NarcissusFarewell;
-import xin.vanilla.narcissus.data.Coordinate;
-import xin.vanilla.narcissus.data.KeyValue;
+import xin.vanilla.narcissus.NarcissusLang;
+import xin.vanilla.narcissus.data.SafeWorldCoordinate;
 import xin.vanilla.narcissus.data.TeleportRecord;
 import xin.vanilla.narcissus.data.client.ClientStageData;
 import xin.vanilla.narcissus.data.player.PlayerTeleportData;
-import xin.vanilla.narcissus.enums.EnumI18nType;
 import xin.vanilla.narcissus.enums.EnumTeleportType;
+import xin.vanilla.narcissus.network.NetworkInit;
 import xin.vanilla.narcissus.network.packet.WaypointDelToServer;
 import xin.vanilla.narcissus.network.packet.WaypointTeleportToServer;
-import xin.vanilla.narcissus.util.*;
+import xin.vanilla.narcissus.util.ClientCostCalculator;
 
 import javax.annotation.Nonnull;
 import java.util.ArrayList;
@@ -32,7 +37,7 @@ public class ApricityUI extends Screen {
 
     private static final String path = NarcissusFarewell.MODID + "/index.html";
 
-    private final Coordinate lastPlayerPos = new Coordinate();
+    private final SafeWorldCoordinate lastPlayerPos = new SafeWorldCoordinate();
     private long lastUpdateTime = 0;
 
     private Document document;
@@ -41,7 +46,7 @@ public class ApricityUI extends Screen {
     private Element selectedElement;
 
     public ApricityUI() {
-        super(Component.literal("WaypointScreen").toChatComponent());
+        super(NarcissusComponent.get().literal("WaypointScreen").toChat());
     }
 
     @Override
@@ -58,13 +63,13 @@ public class ApricityUI extends Screen {
         // panel-private: home
         List<WaypointItem> homeItems = new ArrayList<>();
         for (KeyValue<String, String> key : data.getHomeCoordinate().keySet()) {
-            homeItems.add(new WaypointItem().type(WaypointItem.Type.HOME).name(key.value()).coordinate(data.getHomeCoordinate().get(key)).canTeleport(true));
+            homeItems.add(new WaypointItem().type(WaypointItem.Type.HOME).name(key.value()).safeWorldCoordinate(data.getHomeCoordinate().get(key)).canTeleport(true));
         }
 
         // panel-public: stage
         List<WaypointItem> stageItems = new ArrayList<>();
-        for (Map.Entry<KeyValue<String, String>, Coordinate> entry : ClientStageData.getStageCoordinate().entrySet()) {
-            stageItems.add(new WaypointItem().type(WaypointItem.Type.STAGE).name(entry.getKey().value()).coordinate(entry.getValue()).canTeleport(true));
+        for (Map.Entry<KeyValue<String, String>, SafeWorldCoordinate> entry : ClientStageData.getStageCoordinate().entrySet()) {
+            stageItems.add(new WaypointItem().type(WaypointItem.Type.STAGE).name(entry.getKey().value()).safeWorldCoordinate(entry.getValue()).canTeleport(true));
         }
 
         // panel-footprints: back
@@ -78,7 +83,7 @@ public class ApricityUI extends Screen {
             String recordTypeName = record.getTeleportType().name();
             boolean canTp = !seenRecordTypes.contains(recordTypeName);
             if (canTp) seenRecordTypes.add(recordTypeName);
-            backItems.add(new WaypointItem().type(WaypointItem.Type.BACK).name(recordTypeName).coordinate(record.getBefore())
+            backItems.add(new WaypointItem().type(WaypointItem.Type.BACK).name(recordTypeName).safeWorldCoordinate(record.getBefore())
                     .canTeleport(canTp).recordType(recordTypeName));
         }
 
@@ -137,9 +142,9 @@ public class ApricityUI extends Screen {
                 if (coordinate != null) coordinate.innerText = this.selectedItem.getCoordinateName();
                 Element distance = footer.querySelector(".detail-distance");
                 if (distance != null) {
-                    Coordinate pos = this.selectedItem.coordinate();
+                    SafeWorldCoordinate pos = this.selectedItem.safeWorldCoordinate();
                     if (super.minecraft != null && super.minecraft.player != null && pos != null && pos.dimension() == super.minecraft.player.level().dimension()) {
-                        distance.innerText = String.format("%sm", NumberUtils.toFixedEx(pos.distanceFrom(new Coordinate(super.minecraft.player)), 1));
+                        distance.innerText = String.format("%sm", NumberUtils.toFixedEx(pos.distanceFrom(new SafeWorldCoordinate(super.minecraft.player)), 1));
                     } else {
                         distance.innerText = "∞m";
                     }
@@ -206,10 +211,10 @@ public class ApricityUI extends Screen {
     }
 
     private void doActualDelete(WaypointItem item) {
-        if (item == null || item.coordinate() == null || minecraft == null || minecraft.player == null) return;
+        if (item == null || item.safeWorldCoordinate() == null || minecraft == null || minecraft.player == null) return;
         int typeOrdinal = item.type() == WaypointItem.Type.HOME ? 0 : 1;
-        String dimension = item.coordinate().getDimensionResourceId();
-        NarcissusUtils.sendPacketToServer(new WaypointDelToServer(typeOrdinal, item.name(), dimension));
+        String dimension = item.safeWorldCoordinate().dimensionId();
+        PacketUtils.sendPacketToServer(NetworkInit.INSTANCE, new WaypointDelToServer(typeOrdinal, item.name(), dimension));
         ApricityUI self = this;
         new Thread(() -> {
             if (minecraft != null) {
@@ -251,7 +256,7 @@ public class ApricityUI extends Screen {
         titleWrap.setAttribute("class", "del-confirm-title-wrap");
         Element title = this.document.createElement("span");
         title.setAttribute("class", "del-confirm-title");
-        title.innerText = Component.transClient(EnumI18nType.WORD, "del_confirm_title").toString();
+        title.innerText = NarcissusComponent.get().transClientAuto("del_confirm_title").toString();
         titleWrap.append(title);
         dialog.append(titleWrap);
 
@@ -259,7 +264,7 @@ public class ApricityUI extends Screen {
         msgWrap.setAttribute("class", "del-confirm-msg-wrap");
         Element msg = this.document.createElement("span");
         msg.setAttribute("class", "del-confirm-msg");
-        msg.innerText = Component.transClient(EnumI18nType.WORD, "del_confirm_msg").toString();
+        msg.innerText = NarcissusComponent.get().transClientAuto("del_confirm_msg").toString();
         msgWrap.append(msg);
         dialog.append(msgWrap);
 
@@ -268,7 +273,7 @@ public class ApricityUI extends Screen {
 
         Element cancelBtn = this.document.createElement("span");
         cancelBtn.setAttribute("class", "del-confirm-btn del-confirm-cancel");
-        cancelBtn.innerText = Component.transClient(EnumI18nType.WORD, "cancel").toString();
+        cancelBtn.innerText = NarcissusComponent.get().transClientAuto("cancel").toString();
         cancelBtn.addEventListener("mousedown", event -> {
             event.stopPropagation();
             removeDelConfirmOverlay();
@@ -276,7 +281,7 @@ public class ApricityUI extends Screen {
 
         Element okBtn = this.document.createElement("span");
         okBtn.setAttribute("class", "del-confirm-btn del-confirm-ok");
-        okBtn.innerText = Component.transClient(EnumI18nType.WORD, "delete").toString();
+        okBtn.innerText = NarcissusComponent.get().transClientAuto("delete").toString();
         okBtn.addEventListener("mousedown", event -> {
             event.stopPropagation();
             removeDelConfirmOverlay();
@@ -306,8 +311,9 @@ public class ApricityUI extends Screen {
     }
 
     private String calculateCostDisplay(WaypointItem item) {
-        if (item == null || item.coordinate() == null || minecraft == null || minecraft.player == null) return "";
-        return ClientCostCalculator.formatCostDisplay(minecraft.player, item.coordinate(), itemTypeToEnum(item.type()));
+        if (item == null || item.safeWorldCoordinate() == null || minecraft == null || minecraft.player == null)
+            return "";
+        return ClientCostCalculator.formatCostDisplay(minecraft.player, item.safeWorldCoordinate(), itemTypeToEnum(item.type()));
     }
 
     private static EnumTeleportType itemTypeToEnum(WaypointItem.Type type) {
@@ -329,13 +335,13 @@ public class ApricityUI extends Screen {
         String name = this.selectedItem.name();
         String dimension = "";
         if (type == EnumTeleportType.TP_HOME || type == EnumTeleportType.TP_STAGE) {
-            if (this.selectedItem.coordinate() != null) {
-                dimension = this.selectedItem.coordinate().getDimensionResourceId();
+            if (this.selectedItem.safeWorldCoordinate() != null) {
+                dimension = this.selectedItem.safeWorldCoordinate().dimensionId();
             }
         } else if (type == EnumTeleportType.TP_BACK) {
             name = this.selectedItem.recordType() != null ? this.selectedItem.recordType() : "";
         }
-        NarcissusUtils.sendPacketToServer(new WaypointTeleportToServer(type, name, dimension));
+        PacketUtils.sendPacketToServer(NetworkInit.INSTANCE, new WaypointTeleportToServer(type, name, dimension));
         this.onClose();
     }
 
@@ -372,7 +378,7 @@ public class ApricityUI extends Screen {
     public static class WaypointItem {
         private Type type;
         private String name;
-        private Coordinate coordinate;
+        private SafeWorldCoordinate safeWorldCoordinate;
         private boolean selected;
         private boolean canTeleport = true;
         private String recordType;
@@ -399,26 +405,26 @@ public class ApricityUI extends Screen {
         public String getDetailTypeName() {
             switch (this.type) {
                 case HOME:
-                    return Component.transClient(EnumI18nType.WORD, "private").toString();
+                    return NarcissusComponent.get().transClientAuto("private").toString();
                 case STAGE:
-                    return Component.transClient(EnumI18nType.WORD, "public").toString();
+                    return NarcissusComponent.get().transClientAuto("public").toString();
                 case BACK:
-                    return Component.transClient(EnumI18nType.WORD, "footprints").toString();
+                    return NarcissusComponent.get().transClientAuto("footprints").toString();
                 default:
                     return "";
             }
         }
 
         public String getDimensionName() {
-            if (I18nUtils.hasTranslation(EnumI18nType.WORD, getDimKey(coordinate.dimension()))) {
-                return Component.transClient(EnumI18nType.WORD, getDimKey(coordinate.dimension())).toString();
+            if (NarcissusLang.hasTranslation(EnumI18nType.WORD, getDimKey(safeWorldCoordinate.dimension()))) {
+                return NarcissusComponent.get().transClientAuto(getDimKey(safeWorldCoordinate.dimension())).toString();
             } else {
-                return coordinate.dimension().location().toString();
+                return safeWorldCoordinate.dimension().location().toString();
             }
         }
 
         public String getCoordinateName() {
-            return String.format("(%s)", this.coordinate.toXyzIntString(","));
+            return String.format("(%s,%s,%s)", this.safeWorldCoordinate.xInt(), this.safeWorldCoordinate.yInt(), this.safeWorldCoordinate.zInt());
         }
 
         public Element toElement(Document document) {
@@ -474,7 +480,7 @@ public class ApricityUI extends Screen {
 
                 Element delBtn = document.createElement("span");
                 delBtn.setAttribute("class", "item-del");
-                delBtn.setAttribute("title", Component.transClient(EnumI18nType.WORD, "delete").toString());
+                delBtn.setAttribute("title", NarcissusComponent.get().transClientAuto("delete").toString());
                 delBtn.innerText = "×";
                 delBtn.addEventListener("mousedown", event -> {
                     event.stopPropagation();

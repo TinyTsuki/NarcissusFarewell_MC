@@ -4,8 +4,8 @@ import lombok.Data;
 import lombok.NonNull;
 import lombok.experimental.Accessors;
 import net.minecraft.nbt.CompoundTag;
+import xin.vanilla.banira.common.util.DateUtils;
 import xin.vanilla.narcissus.enums.EnumTeleportType;
-import xin.vanilla.narcissus.util.DateUtils;
 
 import java.io.Serializable;
 import java.util.Date;
@@ -26,17 +26,17 @@ public class TeleportRecord implements Serializable, Cloneable {
     /**
      * 传送前的坐标
      */
-    private Coordinate before;
+    private SafeWorldCoordinate before;
     /**
      * 传送后的坐标
      */
-    private Coordinate after;
+    private SafeWorldCoordinate after;
 
     public TeleportRecord() {
         this.teleportTime = new Date();
         this.teleportType = EnumTeleportType.TP_ASK;
-        this.before = new Coordinate();
-        this.after = new Coordinate();
+        this.before = new SafeWorldCoordinate();
+        this.after = new SafeWorldCoordinate();
     }
 
     /**
@@ -46,8 +46,8 @@ public class TeleportRecord implements Serializable, Cloneable {
         CompoundTag tag = new CompoundTag();
         tag.putString("teleportTime", DateUtils.toDateTimeString(teleportTime));
         tag.putString("teleportType", teleportType.name());
-        tag.put("before", before.writeToNBT());
-        tag.put("after", after.writeToNBT());
+        tag.put("before", before.toTag());
+        tag.put("after", after.toTag());
         return tag;
     }
 
@@ -58,8 +58,8 @@ public class TeleportRecord implements Serializable, Cloneable {
         TeleportRecord record = new TeleportRecord();
         record.teleportTime = DateUtils.format(tag.getString("teleportTime"));
         record.teleportType = EnumTeleportType.valueOf(tag.getString("teleportType"));
-        record.before = Coordinate.readFromNBT(tag.getCompound("before"));
-        record.after = Coordinate.readFromNBT(tag.getCompound("after"));
+        record.before = SafeWorldCoordinate.fromTag(tag.getCompound("before"));
+        record.after = SafeWorldCoordinate.fromTag(tag.getCompound("after"));
         return record;
     }
 

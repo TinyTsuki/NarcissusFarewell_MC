@@ -7,14 +7,14 @@ import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.server.level.ServerPlayer;
+import xin.vanilla.banira.common.util.MessageUtils;
+import xin.vanilla.narcissus.NarcissusComponent;
 import xin.vanilla.narcissus.config.CommonConfig;
-import xin.vanilla.narcissus.data.Coordinate;
+import xin.vanilla.narcissus.data.SafeWorldCoordinate;
 import xin.vanilla.narcissus.enums.EnumCommandType;
-import xin.vanilla.narcissus.enums.EnumI18nType;
 import xin.vanilla.narcissus.enums.EnumSafeMode;
 import xin.vanilla.narcissus.enums.EnumTeleportType;
 import xin.vanilla.narcissus.util.CommandUtils;
-import xin.vanilla.narcissus.util.I18nUtils;
 import xin.vanilla.narcissus.util.NarcissusUtils;
 
 public final class TpUpCommand {
@@ -25,19 +25,19 @@ public final class TpUpCommand {
         CommandUtils.notifyHelp(context);
         if (CommandUtils.checkTeleportPre(context.getSource(), EnumCommandType.TP_UP)) return 0;
         ServerPlayer player = context.getSource().getPlayerOrException();
-        Coordinate coordinate = NarcissusUtils.findUpCandidate(player, new Coordinate(player));
-        if (coordinate == null) {
-            NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EnumI18nType.FORMAT, "tp_up_not_found"));
+        SafeWorldCoordinate safeWorldCoordinate = NarcissusUtils.findUpCandidate(player, new SafeWorldCoordinate(player));
+        if (safeWorldCoordinate == null) {
+            MessageUtils.sendNotification(player, NarcissusComponent.get().transAuto("tp_up_not_found"));
             return 0;
         }
-        coordinate.safe("safe".equalsIgnoreCase(CommandUtils.getStringDefault(context, "safe", "safe"))).safeMode(EnumSafeMode.Y_C_TO_T);
-        if (CommandUtils.checkTeleportPost(player, coordinate, EnumTeleportType.TP_UP, true)) return 0;
-        NarcissusUtils.teleportTo(player, coordinate, EnumTeleportType.TP_UP);
+        safeWorldCoordinate.safe("safe".equalsIgnoreCase(xin.vanilla.banira.common.util.CommandUtils.getStringDefault(context, "safe", "safe"))).safeMode(EnumSafeMode.Y_C_TO_T);
+        if (CommandUtils.checkTeleportPost(player, safeWorldCoordinate, EnumTeleportType.TP_UP, true)) return 0;
+        NarcissusUtils.teleportTo(player, safeWorldCoordinate, EnumTeleportType.TP_UP);
         return 1;
     }
 
     public static LiteralArgumentBuilder<CommandSourceStack> create() {
-        return Commands.literal(CommonConfig.COMMAND_TP_UP.get())
+        return Commands.literal(CommonConfig.get().commandNames().commandTpUp())
                 .requires(source -> NarcissusUtils.hasCommandPermission(source, EnumCommandType.TP_UP))
                 .executes(TpUpCommand::execute)
                 .then(Commands.argument("safe", StringArgumentType.word())
