@@ -1,46 +1,100 @@
 package xin.vanilla.narcissus.event;
 
 import net.minecraft.client.KeyMapping;
+import net.minecraft.client.Minecraft;
+import net.minecraft.world.entity.player.Player;
 import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.client.ClientRegistry;
-import net.minecraftforge.fml.common.Mod;
+import net.minecraftforge.api.distmarker.OnlyIn;
+import net.minecraftforge.event.TickEvent;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import xin.vanilla.banira.client.data.GLFWKey;
+import xin.vanilla.banira.client.event.BaniraClientEventHub;
+import xin.vanilla.banira.client.util.BaniraKeyBindings;
+import xin.vanilla.banira.common.util.LogoModifier;
+import xin.vanilla.banira.common.util.PacketUtils;
 import xin.vanilla.narcissus.NarcissusFarewell;
+import xin.vanilla.narcissus.integration.ScreenHelper;
+import xin.vanilla.narcissus.network.NetworkInit;
+import xin.vanilla.narcissus.network.packet.*;
 
 /**
- * 客户端 Mod事件处理器
+ * 客户端：Banira 键位入队 + {@link BaniraClientEventHub} 回调注册（不在此类上使用 Forge {@code @SubscribeEvent}）
  */
-@Mod.EventBusSubscriber(modid = NarcissusFarewell.MODID, value = Dist.CLIENT, bus = Mod.EventBusSubscriber.Bus.MOD)
-public class ClientModEventHandler {
+@OnlyIn(Dist.CLIENT)
+public final class ClientModEventHandler {
     private static final Logger LOGGER = LogManager.getLogger();
 
-    private static final String CATEGORIES = "word.narcissus_farewell.categories";
+    private static boolean keyDown;
 
-    // 定义按键绑定
-    public static KeyMapping TP_HOME_KEY = new KeyMapping("word.narcissus_farewell.tp_home",
-            -1, CATEGORIES);
-    public static KeyMapping TP_BACK_KEY = new KeyMapping("word.narcissus_farewell.tp_back",
-            -1, CATEGORIES);
-    public static KeyMapping TP_REQ_YES = new KeyMapping("word.narcissus_farewell.tp_req_yes",
-            -1, CATEGORIES);
-    public static KeyMapping TP_REQ_NO = new KeyMapping("word.narcissus_farewell.tp_req_no",
-            -1, CATEGORIES);
-    public static KeyMapping TP_GRAVE_KEY = new KeyMapping("word.narcissus_farewell.tp_grave",
-            -1, CATEGORIES);
-    public static KeyMapping OPEN_SCREEN_KEY = new KeyMapping("word.narcissus_farewell.open_screen",
-            -1, CATEGORIES);
+    public static final KeyMapping TP_HOME_KEY = BaniraKeyBindings.register(NarcissusFarewell.MODID, "tp_home", GLFWKey.GLFW_KEY_UNKNOWN);
+    public static final KeyMapping TP_BACK_KEY = BaniraKeyBindings.register(NarcissusFarewell.MODID, "tp_back", GLFWKey.GLFW_KEY_UNKNOWN);
+    public static final KeyMapping TP_REQ_YES = BaniraKeyBindings.register(NarcissusFarewell.MODID, "tp_req_yes", GLFWKey.GLFW_KEY_UNKNOWN);
+    public static final KeyMapping TP_REQ_NO = BaniraKeyBindings.register(NarcissusFarewell.MODID, "tp_req_no", GLFWKey.GLFW_KEY_UNKNOWN);
+    public static final KeyMapping TP_GRAVE_KEY = BaniraKeyBindings.register(NarcissusFarewell.MODID, "tp_grave", GLFWKey.GLFW_KEY_UNKNOWN);
+    public static final KeyMapping OPEN_SCREEN_KEY = BaniraKeyBindings.register(NarcissusFarewell.MODID, "open_screen", GLFWKey.GLFW_KEY_UNKNOWN);
 
-    /**
-     * 注册键绑定
-     */
-    public static void registerKeyBindings() {
-        ClientRegistry.registerKeyBinding(TP_HOME_KEY);
-        ClientRegistry.registerKeyBinding(TP_BACK_KEY);
-        ClientRegistry.registerKeyBinding(TP_REQ_YES);
-        ClientRegistry.registerKeyBinding(TP_REQ_NO);
-        ClientRegistry.registerKeyBinding(TP_GRAVE_KEY);
-        ClientRegistry.registerKeyBinding(OPEN_SCREEN_KEY);
+    static {
+        BaniraClientEventHub.ModLifecycle.onClientSetup(event ->
+                LogoModifier.register(NarcissusFarewell.MODID, () -> Math.random() > 0.5 ? "logo_.png" : "logo.png"));
+        BaniraClientEventHub.Client.onClientTick(ClientModEventHandler::onClientTick);
+        BaniraClientEventHub.Player.onClientLoggedIn(ClientModEventHandler::onClientLoggedIn);
+        BaniraClientEventHub.Player.onClientLoggedOut(ClientModEventHandler::onClientLoggedOut);
     }
 
+    private ClientModEventHandler() {
+    }
+
+    /**
+     * 由主模组构造函数经 {@link net.minecraftforge.fml.DistExecutor} 在客户端触发类初始化
+     */
+    public static void bootstrap() {
+    }
+
+    private static void onClientTick(TickEvent.ClientTickEvent event) {
+        if (Minecraft.getInstance().screen == null && event.phase == TickEvent.Phase.END) {
+            if (TP_HOME_KEY.consumeClick()) {
+                if (!keyDown) {
+                    PacketUtils.sendPacketToServer(NetworkInit.INSTANCE, new TpHomeToServer());
+                    keyDown = true;
+                }
+            } else if (TP_GRAVE_KEY.consumeClick()) {
+                if (!keyDown) {
+                    PacketUtils.sendPacketToServer(NetworkInit.INSTANCE, new TpGraveToServer());
+                    keyDown = true;
+                }
+            } else if (TP_BACK_KEY.consumeClick()) {
+                if (!keyDown) {
+                    PacketUtils.sendPacketToServer(NetworkInit.INSTANCE, new TpBackToServer());
+                    keyDown = true;
+                }
+            } else if (TP_REQ_YES.consumeClick()) {
+                if (!keyDown) {
+                    PacketUtils.sendPacketToServer(NetworkInit.INSTANCE, new TpYesToServer());
+                    keyDown = true;
+                }
+            } else if (TP_REQ_NO.consumeClick()) {
+                if (!keyDown) {
+                    PacketUtils.sendPacketToServer(NetworkInit.INSTANCE, new TpNoToServer());
+                    keyDown = true;
+                }
+            } else if (OPEN_SCREEN_KEY.consumeClick()) {
+                if (!keyDown) {
+                    ScreenHelper.openScreen();
+                    keyDown = true;
+                }
+            } else {
+                keyDown = false;
+            }
+        }
+    }
+
+    private static void onClientLoggedIn(Player player) {
+        LOGGER.debug("Client: Player logged in.");
+        PacketUtils.sendPacketToServer(NetworkInit.INSTANCE, new ModLoadedToBoth());
+    }
+
+    private static void onClientLoggedOut(Player player) {
+        LOGGER.debug("Client: Player logged out.");
+    }
 }

@@ -5,10 +5,10 @@ import lombok.experimental.Accessors;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraftforge.network.NetworkEvent;
+import xin.vanilla.banira.common.util.StringUtils;
 import xin.vanilla.narcissus.config.CommonConfig;
 import xin.vanilla.narcissus.enums.EnumTeleportType;
 import xin.vanilla.narcissus.util.NarcissusUtils;
-import xin.vanilla.narcissus.util.StringUtils;
 
 import java.util.function.Supplier;
 
@@ -57,17 +57,17 @@ public class WaypointTeleportToServer {
                 String cmd;
                 switch (type) {
                     case TP_HOME:
-                        cmd = prefix + " " + CommonConfig.COMMAND_TP_HOME.get();
+                        cmd = prefix + " " + CommonConfig.get().commandNames().commandTpHome();
                         if (!packet.name().isEmpty()) cmd += " " + StringUtils.formatString(packet.name());
                         if (!packet.dimension().isEmpty()) cmd += " true " + packet.dimension();
                         break;
                     case TP_STAGE:
-                        cmd = prefix + " " + CommonConfig.COMMAND_TP_STAGE.get();
+                        cmd = prefix + " " + CommonConfig.get().commandNames().commandTpStage();
                         if (!packet.name().isEmpty()) cmd += " " + StringUtils.formatString(packet.name());
                         if (!packet.dimension().isEmpty()) cmd += " safe " + packet.dimension();
                         break;
                     case TP_BACK:
-                        cmd = prefix + " " + CommonConfig.COMMAND_TP_BACK.get();
+                        cmd = prefix + " " + CommonConfig.get().commandNames().commandTpBack();
                         if (!packet.name().isEmpty()) cmd += " safe " + packet.name();
                         break;
                     default:
