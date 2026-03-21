@@ -8,7 +8,7 @@ import net.minecraft.util.RegistryKey;
 import net.minecraft.world.World;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import xin.vanilla.narcissus.util.DimensionUtils;
+import xin.vanilla.banira.common.util.DimensionUtils;
 
 import java.awt.*;
 

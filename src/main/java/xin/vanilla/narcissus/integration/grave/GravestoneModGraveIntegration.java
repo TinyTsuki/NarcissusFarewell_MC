@@ -11,8 +11,8 @@ import net.minecraft.util.RegistryKey;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 import net.minecraft.world.server.ServerWorld;
-import xin.vanilla.narcissus.data.Coordinate;
-import xin.vanilla.narcissus.util.DimensionUtils;
+import xin.vanilla.banira.common.util.DimensionUtils;
+import xin.vanilla.narcissus.data.SafeWorldCoordinate;
 
 import java.util.List;
 import java.util.UUID;
@@ -28,7 +28,7 @@ public final class GravestoneModGraveIntegration {
     /**
      * 在指定坐标附近搜索属于该玩家的墓碑
      */
-    public static void findNear(Coordinate center, int radius, UUID playerUuid, List<Coordinate> out) {
+    public static void findNear(SafeWorldCoordinate center, int radius, UUID playerUuid, List<SafeWorldCoordinate> out) {
         try {
             RegistryKey<World> dim = center.dimension();
             ServerWorld world = DimensionUtils.getLevel(dim);
@@ -43,7 +43,7 @@ public final class GravestoneModGraveIntegration {
                     if (te instanceof GraveStoneTileEntity) {
                         GraveStoneTileEntity grave = (GraveStoneTileEntity) te;
                         if (playerUuid.equals(grave.getDeath().getPlayerUUID())) {
-                            out.add(new Coordinate(pos.getX() + 0.5, pos.getY() + 1, pos.getZ() + 0.5, world.dimension()));
+                            out.add(new SafeWorldCoordinate(pos.getX() + 0.5, pos.getY() + 1, pos.getZ() + 0.5, world.dimension()));
                         }
                     }
                 }
@@ -52,14 +52,14 @@ public final class GravestoneModGraveIntegration {
         }
     }
 
-    public static Coordinate parseObituary(ServerPlayerEntity player) {
+    public static SafeWorldCoordinate parseObituary(ServerPlayerEntity player) {
         try {
             ItemStack selected = player.inventory.getSelected();
             if (selected.getItem() instanceof ObituaryItem) {
                 ObituaryItem item = (ObituaryItem) selected.getItem();
                 Death death = item.fromStack(player, selected);
                 if (death != null) {
-                    return new Coordinate(death.getPosX(), death.getPosY(), death.getPosZ(), death.getDimension());
+                    return new SafeWorldCoordinate(death.getPosX(), death.getPosY(), death.getPosZ(), death.getDimension());
                 }
             }
         } catch (Throwable ignored) {

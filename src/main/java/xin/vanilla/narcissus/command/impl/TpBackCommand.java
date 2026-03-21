@@ -12,14 +12,18 @@ import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.util.RegistryKey;
 import net.minecraft.world.World;
 import net.minecraft.world.server.ServerWorld;
+import xin.vanilla.banira.common.util.DimensionUtils;
+import xin.vanilla.banira.common.util.MessageUtils;
+import xin.vanilla.banira.common.util.StringUtils;
+import xin.vanilla.narcissus.NarcissusComponent;
 import xin.vanilla.narcissus.config.CommonConfig;
-import xin.vanilla.narcissus.data.Coordinate;
+import xin.vanilla.narcissus.data.SafeWorldCoordinate;
 import xin.vanilla.narcissus.data.TeleportRecord;
 import xin.vanilla.narcissus.data.player.PlayerTeleportData;
 import xin.vanilla.narcissus.enums.EnumCommandType;
-import xin.vanilla.narcissus.enums.EnumI18nType;
 import xin.vanilla.narcissus.enums.EnumTeleportType;
-import xin.vanilla.narcissus.util.*;
+import xin.vanilla.narcissus.util.CommandUtils;
+import xin.vanilla.narcissus.util.NarcissusUtils;
 
 import java.util.concurrent.CompletableFuture;
 
@@ -43,14 +47,14 @@ public final class TpBackCommand {
         }
         TeleportRecord record = NarcissusUtils.getBackTeleportRecord(player, type, targetLevel);
         if (record == null) {
-            NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EnumI18nType.FORMAT, "back_not_found"));
+            MessageUtils.sendMessage(player, NarcissusComponent.get().transAuto("back_not_found"));
             return 0;
         }
-        Coordinate coordinate = record.getBefore().clone();
-        coordinate.safe("safe".equalsIgnoreCase(CommandUtils.getStringEmpty(context, "safe")));
-        if (CommandUtils.checkTeleportPost(player, coordinate, EnumTeleportType.TP_BACK, true)) return 0;
+        SafeWorldCoordinate safeWorldCoordinate = record.getBefore().clone();
+        safeWorldCoordinate.safe("safe".equalsIgnoreCase(CommandUtils.getStringEmpty(context, "safe")));
+        if (CommandUtils.checkTeleportPost(player, safeWorldCoordinate, EnumTeleportType.TP_BACK, true)) return 0;
         NarcissusUtils.removeBackTeleportRecord(player, record);
-        NarcissusUtils.teleportTo(player, coordinate, EnumTeleportType.TP_BACK);
+        NarcissusUtils.teleportTo(player, safeWorldCoordinate, EnumTeleportType.TP_BACK);
         return 1;
     }
 
@@ -82,7 +86,7 @@ public final class TpBackCommand {
 
 
     public static LiteralArgumentBuilder<CommandSource> create() {
-        return Commands.literal(CommonConfig.COMMAND_TP_BACK.get())
+        return Commands.literal(CommonConfig.get().commandNames().commandTpBack())
                 .requires(source -> NarcissusUtils.hasCommandPermission(source, EnumCommandType.TP_BACK))
                 .executes(TpBackCommand::execute)
                 .then(Commands.argument("safe", StringArgumentType.word())

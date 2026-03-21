@@ -4,9 +4,9 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
 import net.minecraft.entity.player.ServerPlayerEntity;
-import xin.vanilla.narcissus.config.ServerConfig;
+import xin.vanilla.banira.common.util.DateUtils;
+import xin.vanilla.narcissus.config.CommonConfig;
 import xin.vanilla.narcissus.enums.EnumTeleportType;
-import xin.vanilla.narcissus.util.DateUtils;
 
 import java.util.Date;
 import java.util.Random;
@@ -36,7 +36,7 @@ public class TeleportRequest {
 
     public TeleportRequest setRequestTime(Date requestTime) {
         this.requestTime = requestTime;
-        this.expireTime = requestTime.getTime() + ServerConfig.TELEPORT_REQUEST_EXPIRE_TIME.get() * 1000;
+        this.expireTime = requestTime.getTime() + CommonConfig.get().general().teleportRequestExpireTime() * 1000L;
         return this;
     }
 

@@ -8,15 +8,17 @@ import net.minecraft.command.Commands;
 import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.util.text.event.ClickEvent;
 import net.minecraft.util.text.event.HoverEvent;
+import xin.vanilla.banira.common.data.Component;
+import xin.vanilla.banira.common.data.KeyValue;
+import xin.vanilla.banira.common.enums.EnumMCColor;
+import xin.vanilla.banira.common.util.MessageUtils;
+import xin.vanilla.narcissus.NarcissusComponent;
+import xin.vanilla.narcissus.NarcissusLang;
 import xin.vanilla.narcissus.config.CommonConfig;
-import xin.vanilla.narcissus.data.Coordinate;
-import xin.vanilla.narcissus.data.KeyValue;
+import xin.vanilla.narcissus.data.SafeWorldCoordinate;
 import xin.vanilla.narcissus.data.player.PlayerTeleportData;
 import xin.vanilla.narcissus.enums.EnumCommandType;
-import xin.vanilla.narcissus.enums.EnumI18nType;
-import xin.vanilla.narcissus.enums.EnumMCColor;
 import xin.vanilla.narcissus.util.CommandUtils;
-import xin.vanilla.narcissus.util.Component;
 import xin.vanilla.narcissus.util.NarcissusUtils;
 
 import java.util.List;
@@ -33,12 +35,12 @@ public final class GetHomeCommand {
         if (CommandUtils.checkTeleportPre(context.getSource(), EnumCommandType.GET_HOME)) return 0;
         Component component;
         PlayerTeleportData data = PlayerTeleportData.getData(player);
-        String language = NarcissusUtils.getPlayerLanguage(player);
+        String language = NarcissusLang.getPlayerLanguage(player);
         if (data.getHomeCoordinate().isEmpty()) {
-            component = Component.trans(language, EnumI18nType.FORMAT, "home_is_empty");
+            component = NarcissusComponent.get().transAuto("home_is_empty");
         } else {
-            Component info = Component.empty();
-            Map<String, List<KeyValue<String, Coordinate>>> map = data.getHomeCoordinate().entrySet().stream()
+            Component info = NarcissusComponent.get().empty();
+            Map<String, List<KeyValue<String, SafeWorldCoordinate>>> map = data.getHomeCoordinate().entrySet().stream()
                     .collect(Collectors.groupingBy(
                             entry -> entry.getKey().key(),
                             Collectors.mapping(
@@ -46,47 +48,46 @@ public final class GetHomeCommand {
                                     Collectors.toList()
                             )
                     ));
-            for (Map.Entry<String, List<KeyValue<String, Coordinate>>> entry : map.entrySet()) {
-                Component dimension = Component.literal(entry.getKey()).color(EnumMCColor.DARK_GREEN.getColor());
+            for (Map.Entry<String, List<KeyValue<String, SafeWorldCoordinate>>> entry : map.entrySet()) {
+                Component dimension = NarcissusComponent.get().literal(entry.getKey()).color(EnumMCColor.DARK_GREEN.getColor());
                 dimension.clickEvent(new ClickEvent(ClickEvent.Action.COPY_TO_CLIPBOARD, entry.getKey()));
-                dimension.hoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.literal(entry.getKey()).toTextComponent()));
-                dimension.append(Component.literal(": ").color(EnumMCColor.GRAY.getColor()));
-                for (KeyValue<String, Coordinate> coordinates : entry.getValue()) {
+                dimension.hoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, NarcissusComponent.get().literal(entry.getKey()).toVanilla()));
+                dimension.append(NarcissusComponent.get().literal(": ").color(EnumMCColor.GRAY.getColor()));
+                for (KeyValue<String, SafeWorldCoordinate> coordinates : entry.getValue()) {
                     Component defHome;
                     if (data.getDefaultHome().getOrDefault(entry.getKey(), "").equalsIgnoreCase(coordinates.key())) {
-                        defHome = Component.trans(language, EnumI18nType.WORD, "default").color(EnumMCColor.GRAY.getColor());
+                        defHome = NarcissusComponent.get().transAuto("default").color(EnumMCColor.GRAY.getColor());
                     } else {
-                        defHome = Component.empty();
+                        defHome = NarcissusComponent.get().empty();
                     }
-                    Component name = Component.trans(language, EnumI18nType.FORMAT, "home_info"
+                    Component name = NarcissusComponent.get().transAuto("home_info"
                             , coordinates.key()
-                            , coordinates.value().toXString()
-                            , coordinates.value().toYString()
-                            , coordinates.value().toZString()
+                            , coordinates.value().xString()
+                            , coordinates.value().yString()
+                            , coordinates.value().zString()
                             , defHome);
-                    name.toChatComponent();
-                    Component name_hover = Component.trans(language, EnumI18nType.FORMAT, "home_info_hover"
+                    Component name_hover = NarcissusComponent.get().transAuto("home_info_hover"
                             , coordinates.key()
-                            , coordinates.value().toXString()
-                            , coordinates.value().toYString()
-                            , coordinates.value().toZString()
+                            , coordinates.value().xString()
+                            , coordinates.value().yString()
+                            , coordinates.value().zString()
                             , defHome);
                     name.color(EnumMCColor.GREEN.getColor());
-                    name.clickEvent(new ClickEvent(ClickEvent.Action.COPY_TO_CLIPBOARD, name_hover.toString(true)));
-                    name.hoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, name_hover.toChatComponent()));
+                    name.clickEvent(new ClickEvent(ClickEvent.Action.COPY_TO_CLIPBOARD, name_hover.getString(language, true, true)));
+                    name.hoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, name_hover.toChat(language)));
                     dimension.append(name);
-                    dimension.append(Component.literal(", ").color(EnumMCColor.GRAY.getColor()));
+                    dimension.append(NarcissusComponent.get().literal(", ").color(EnumMCColor.GRAY.getColor()));
                 }
                 info.append(dimension).append("\n");
             }
-            component = Component.trans(language, EnumI18nType.FORMAT, "home_is", info);
+            component = NarcissusComponent.get().transAuto("home_is", info);
         }
-        NarcissusUtils.sendMessage(player, component);
+        MessageUtils.sendMessage(player, component);
         return 1;
     }
 
     public static LiteralArgumentBuilder<CommandSource> create() {
-        return Commands.literal(CommonConfig.COMMAND_GET_HOME.get())
+        return Commands.literal(CommonConfig.get().commandNames().commandGetHome())
                 .requires(source -> NarcissusUtils.hasCommandPermission(source, EnumCommandType.GET_HOME))
                 .executes(GetHomeCommand::execute);
     }
