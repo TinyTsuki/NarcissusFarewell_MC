@@ -10,17 +10,18 @@ import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 import net.minecraft.command.CommandSource;
 import net.minecraft.command.Commands;
 import net.minecraft.entity.player.ServerPlayerEntity;
+import xin.vanilla.banira.common.data.Component;
+import xin.vanilla.banira.common.data.KeyValue;
+import xin.vanilla.banira.common.util.MessageUtils;
+import xin.vanilla.banira.common.util.PacketUtils;
+import xin.vanilla.narcissus.NarcissusComponent;
 import xin.vanilla.narcissus.config.CommonConfig;
-import xin.vanilla.narcissus.config.ServerConfig;
-import xin.vanilla.narcissus.data.Coordinate;
-import xin.vanilla.narcissus.data.KeyValue;
+import xin.vanilla.narcissus.data.SafeWorldCoordinate;
 import xin.vanilla.narcissus.data.player.PlayerTeleportData;
 import xin.vanilla.narcissus.enums.EnumCommandType;
-import xin.vanilla.narcissus.enums.EnumI18nType;
+import xin.vanilla.narcissus.network.NetworkInit;
 import xin.vanilla.narcissus.network.packet.WaypointSyncToClient;
 import xin.vanilla.narcissus.util.CommandUtils;
-import xin.vanilla.narcissus.util.Component;
-import xin.vanilla.narcissus.util.I18nUtils;
 import xin.vanilla.narcissus.util.NarcissusUtils;
 
 import java.util.concurrent.CompletableFuture;
@@ -34,8 +35,8 @@ public final class SetHomeCommand {
         ServerPlayerEntity player = context.getSource().getPlayerOrException();
         if (CommandUtils.checkTeleportPre(context.getSource(), EnumCommandType.SET_HOME)) return 0;
         PlayerTeleportData data = PlayerTeleportData.getData(player);
-        if (data.getHomeCoordinate().size() >= ServerConfig.TELEPORT_HOME_LIMIT.get()) {
-            NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EnumI18nType.FORMAT, "home_limit"), ServerConfig.TELEPORT_HOME_LIMIT.get());
+        if (data.getHomeCoordinate().size() >= CommonConfig.get().general().teleportHomeLimit()) {
+            MessageUtils.sendMessage(player, NarcissusComponent.get().transAuto("home_limit", CommonConfig.get().general().teleportHomeLimit()));
             return 0;
         }
         String name = CommandUtils.getStringDefault(context, "name", "home");
@@ -44,46 +45,46 @@ public final class SetHomeCommand {
             defaultHome = BoolArgumentType.getBool(context, "default");
         } catch (IllegalArgumentException ignored) {
         }
-        Coordinate coordinate = new Coordinate(player);
+        SafeWorldCoordinate safeWorldCoordinate = new SafeWorldCoordinate(player);
         KeyValue<String, String> key = new KeyValue<>(player.getLevel().dimension().location().toString(), name);
         if (data.getHomeCoordinate().containsKey(key)) {
-            NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EnumI18nType.FORMAT, "home_already_exists"), key.key(), key.value());
+            MessageUtils.sendMessage(player, NarcissusComponent.get().transAuto("home_already_exists", key.key(), key.value()));
             return 0;
         }
-        data.addHomeCoordinate(key, coordinate);
-        NarcissusUtils.sendPacketToPlayer(new WaypointSyncToClient(WaypointSyncToClient.Action.ADD, WaypointSyncToClient.Type.HOME, name, coordinate), player);
+        data.addHomeCoordinate(key, safeWorldCoordinate);
+        PacketUtils.sendPacketToPlayer(NetworkInit.INSTANCE, new WaypointSyncToClient(WaypointSyncToClient.Action.ADD, WaypointSyncToClient.Type.HOME, name, safeWorldCoordinate), player);
         if (defaultHome) {
             if (data.getDefaultHome().containsKey(player.getLevel().dimension().location().toString())) {
-                NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EnumI18nType.FORMAT, "home_default_remove"), data.getDefaultHome(player.getLevel().dimension().location().toString()).value());
+                MessageUtils.sendMessage(player, NarcissusComponent.get().transAuto("home_default_remove", data.getDefaultHome(player.getLevel().dimension().location().toString()).value()));
             }
             data.addDefaultHome(player.getLevel().dimension().location().toString(), name);
-            NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EnumI18nType.FORMAT, "home_set_default"), name, coordinate.toXyzString());
+            MessageUtils.sendMessage(player, NarcissusComponent.get().transAuto("home_set_default", name, safeWorldCoordinate.xyzString()));
         } else {
-            NarcissusUtils.sendTranslatableMessage(player, I18nUtils.getKey(EnumI18nType.FORMAT, "home_set"), name, coordinate.toXyzString());
+            MessageUtils.sendMessage(player, NarcissusComponent.get().transAuto("home_set", name, safeWorldCoordinate.xyzString()));
         }
         return 1;
     }
 
     public static CompletableFuture<Suggestions> suggestion(CommandContext<CommandSource> context, SuggestionsBuilder builder) {
         String lang = CommandUtils.getLanguage(context.getSource());
-        Component homeTooltip = Component.trans(lang, EnumI18nType.FORMAT, "suggest_home_name");
-        Component nameTooltip = Component.trans(lang, EnumI18nType.FORMAT, "suggest_custom_name");
-        builder.suggest("home", homeTooltip.toTextComponent());
-        builder.suggest("name", nameTooltip.toTextComponent());
+        Component homeTooltip = NarcissusComponent.get().transAuto("suggest_home_name");
+        Component nameTooltip = NarcissusComponent.get().transAuto("suggest_custom_name");
+        builder.suggest("home", homeTooltip.toVanilla(lang));
+        builder.suggest("name", nameTooltip.toVanilla(lang));
         return builder.buildFuture();
     }
 
     public static CompletableFuture<Suggestions> defaultSuggestion(CommandContext<CommandSource> context, SuggestionsBuilder builder) {
         String lang = CommandUtils.getLanguage(context.getSource());
-        Component trueTooltip = Component.trans(lang, EnumI18nType.FORMAT, "suggest_default_home_true");
-        Component falseTooltip = Component.trans(lang, EnumI18nType.FORMAT, "suggest_default_home_false");
-        builder.suggest("true", trueTooltip.toTextComponent());
-        builder.suggest("false", falseTooltip.toTextComponent());
+        Component trueTooltip = NarcissusComponent.get().transAuto("suggest_default_home_true");
+        Component falseTooltip = NarcissusComponent.get().transAuto("suggest_default_home_false");
+        builder.suggest("true", trueTooltip.toVanilla(lang));
+        builder.suggest("false", falseTooltip.toVanilla(lang));
         return builder.buildFuture();
     }
 
     public static LiteralArgumentBuilder<CommandSource> create() {
-        return Commands.literal(CommonConfig.COMMAND_SET_HOME.get())
+        return Commands.literal(CommonConfig.get().commandNames().commandSetHome())
                 .requires(source -> NarcissusUtils.hasCommandPermission(source, EnumCommandType.TP_HOME))
                 .executes(SetHomeCommand::execute)
                 .then(Commands.argument("name", StringArgumentType.string())

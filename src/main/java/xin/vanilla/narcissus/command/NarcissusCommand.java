@@ -5,11 +5,11 @@ import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import net.minecraft.command.CommandSource;
 import net.minecraft.command.Commands;
+import xin.vanilla.banira.common.data.KeyValue;
+import xin.vanilla.banira.common.util.StringUtils;
 import xin.vanilla.narcissus.command.impl.HelpCommand;
-import xin.vanilla.narcissus.data.KeyValue;
 import xin.vanilla.narcissus.enums.EnumCommandType;
 import xin.vanilla.narcissus.util.NarcissusUtils;
-import xin.vanilla.narcissus.util.StringUtils;
 
 import java.util.*;
 import java.util.stream.Collectors;

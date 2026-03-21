@@ -8,15 +8,15 @@ import net.minecraft.world.server.ServerWorld;
 import net.minecraftforge.fml.ModList;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import xin.vanilla.narcissus.config.ServerConfig;
-import xin.vanilla.narcissus.data.Coordinate;
+import xin.vanilla.banira.common.util.DimensionUtils;
+import xin.vanilla.narcissus.config.CommonConfig;
+import xin.vanilla.narcissus.data.SafeWorldCoordinate;
 import xin.vanilla.narcissus.data.TeleportRecord;
 import xin.vanilla.narcissus.enums.EnumTeleportType;
 import xin.vanilla.narcissus.integration.grave.CorailTombstoneIntegration;
 import xin.vanilla.narcissus.integration.grave.CorpseGraveIntegration;
 import xin.vanilla.narcissus.integration.grave.GravestoneModGraveIntegration;
 import xin.vanilla.narcissus.integration.grave.SimpleTombGraveIntegration;
-import xin.vanilla.narcissus.util.DimensionUtils;
 import xin.vanilla.narcissus.util.NarcissusUtils;
 import xin.vanilla.narcissus.util.SafeBlockChecker;
 
@@ -43,8 +43,8 @@ public final class GraveHelper {
      * @return 讣告中的坐标
      */
     @Nullable
-    public static Coordinate parseObituaryFromHeldItem(ServerPlayerEntity player) {
-        Coordinate result = null;
+    public static SafeWorldCoordinate parseObituaryFromHeldItem(ServerPlayerEntity player) {
+        SafeWorldCoordinate result = null;
         if (ModList.get().isLoaded("corpse")) {
             result = CorpseGraveIntegration.parseObituary(player);
         }
@@ -72,8 +72,8 @@ public final class GraveHelper {
      * 在指定坐标附近搜索遗体/墓碑
      */
     @Nullable
-    public static Coordinate findCorpseGravestoneNear(Coordinate center, int radius, UUID playerUuid) {
-        List<Coordinate> candidates = new ArrayList<>();
+    public static SafeWorldCoordinate findCorpseGravestoneNear(SafeWorldCoordinate center, int radius, UUID playerUuid) {
+        List<SafeWorldCoordinate> candidates = new ArrayList<>();
         double cx = center.x(), cy = center.y(), cz = center.z();
 
         if (ModList.get().isLoaded("corpse")) {
@@ -99,10 +99,10 @@ public final class GraveHelper {
      * 在玩家附近搜索遗体/墓碑
      */
     @Nullable
-    public static Coordinate findCorpseGravestoneNearPlayer(ServerPlayerEntity player, int range) {
-        int limit = ServerConfig.GRAVE_SEARCH_RANGE_LIMIT.get();
+    public static SafeWorldCoordinate findCorpseGravestoneNearPlayer(ServerPlayerEntity player, int range) {
+        int limit = CommonConfig.get().general().graveSearchRangeLimit();
         int r = Math.min(Math.max(range, 1), limit);
-        Coordinate center = new Coordinate(player);
+        SafeWorldCoordinate center = new SafeWorldCoordinate(player);
         return findCorpseGravestoneNear(center, r, player.getUUID());
     }
 
@@ -110,15 +110,15 @@ public final class GraveHelper {
      * 在死亡记录附近搜索遗体/墓碑
      */
     @Nullable
-    public static Coordinate findCorpseGravestoneNearDeath(ServerPlayerEntity player, TeleportRecord deathRecord) {
-        Coordinate before = deathRecord.getBefore();
+    public static SafeWorldCoordinate findCorpseGravestoneNearDeath(ServerPlayerEntity player, TeleportRecord deathRecord) {
+        SafeWorldCoordinate before = deathRecord.getBefore();
         return findCorpseGravestoneNear(before, DEFAULT_SEARCH_RADIUS, player.getUUID());
     }
 
     /**
      * 检查坐标是否安全可站立
      */
-    public static boolean isCoordinateSafe(Coordinate coord) {
+    public static boolean isCoordinateSafe(SafeWorldCoordinate coord) {
         ServerWorld world = DimensionUtils.getLevel(coord.dimension());
         if (world == null) return false;
         SafeBlockChecker checker = new SafeBlockChecker(world);

@@ -9,12 +9,12 @@ import net.minecraft.command.CommandSource;
 import net.minecraft.command.Commands;
 import net.minecraft.command.arguments.EntityArgument;
 import net.minecraft.entity.player.ServerPlayerEntity;
+import xin.vanilla.banira.common.data.Component;
+import xin.vanilla.narcissus.NarcissusComponent;
 import xin.vanilla.narcissus.config.CommonConfig;
 import xin.vanilla.narcissus.data.player.PlayerTeleportData;
 import xin.vanilla.narcissus.enums.EnumCommandType;
-import xin.vanilla.narcissus.enums.EnumI18nType;
 import xin.vanilla.narcissus.util.CommandUtils;
-import xin.vanilla.narcissus.util.Component;
 import xin.vanilla.narcissus.util.NarcissusUtils;
 
 public final class CardCommand {
@@ -42,23 +42,23 @@ public final class CardCommand {
             default:
                 throw new IllegalArgumentException("Type " + type + " is not supported");
         }
-        Component component = Component.trans(language, EnumI18nType.FORMAT, "player_card"
+        Component component = NarcissusComponent.get().transAuto("player_card"
                 , target.getDisplayName().getString()
                 , data.getTeleportCard());
-        source.sendSuccess(component.toChatComponent(language), false);
+        source.sendSuccess(component.toChat(language), false);
         return 1;
     }
 
     public static LiteralArgumentBuilder<CommandSource> create() {
-        return Commands.literal(CommonConfig.COMMAND_CARD.get())
+        return Commands.literal(CommonConfig.get().commandNames().commandCard())
                 .executes(CardCommand::execute)
                 .then(Commands.argument("type", StringArgumentType.word())
                         .requires(source -> NarcissusUtils.hasCommandPermission(source, EnumCommandType.SET_CARD))
                         .suggests((context, builder) -> {
                             String lang = CommandUtils.getLanguage(context.getSource());
-                            builder.suggest("get", Component.trans(lang, EnumI18nType.FORMAT, "suggest_card_get").toTextComponent());
-                            builder.suggest("add", Component.trans(lang, EnumI18nType.FORMAT, "suggest_card_add").toTextComponent());
-                            builder.suggest("set", Component.trans(lang, EnumI18nType.FORMAT, "suggest_card_set").toTextComponent());
+                            builder.suggest("get", NarcissusComponent.get().transAuto("suggest_card_get").toVanilla(lang));
+                            builder.suggest("add", NarcissusComponent.get().transAuto("suggest_card_add").toVanilla(lang));
+                            builder.suggest("set", NarcissusComponent.get().transAuto("suggest_card_set").toVanilla(lang));
                             return builder.buildFuture();
                         })
                         .then(Commands.argument("player", EntityArgument.player())
