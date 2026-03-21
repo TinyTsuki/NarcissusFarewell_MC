@@ -15,7 +15,7 @@ public class ClientProxy {
         if (player != null) {
             try {
                 PlayerTeleportData clientData = PlayerTeleportData.getData(player);
-                clientData.copyFrom(packet.getData());
+                clientData.applyFromSyncPacket(packet);
                 LOGGER.debug("Client: Player data received successfully.");
             } catch (Exception ignored) {
                 LOGGER.debug("Client: Player data received failed.");

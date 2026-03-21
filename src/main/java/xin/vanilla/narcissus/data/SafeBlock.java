@@ -4,8 +4,8 @@ import lombok.Data;
 import lombok.experimental.Accessors;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
-import xin.vanilla.narcissus.config.ServerConfig;
-import xin.vanilla.narcissus.util.NarcissusUtils;
+import xin.vanilla.banira.common.util.BlockUtils;
+import xin.vanilla.narcissus.config.CommonConfig;
 
 import java.util.List;
 import java.util.Objects;
@@ -41,8 +41,8 @@ public class SafeBlock {
 
     public void init() {
         if (this.safeBlocksState == null) {
-            this.safeBlocksState = ServerConfig.SAFE_BLOCKS.get().stream()
-                    .map(NarcissusUtils::deserializeBlockState)
+            this.safeBlocksState = CommonConfig.get().general().safeTeleport().safeBlocks().stream()
+                    .map(BlockUtils::deserializeBlockState)
                     .filter(Objects::nonNull)
                     .distinct()
                     .collect(Collectors.toList());
@@ -55,8 +55,8 @@ public class SafeBlock {
                     .collect(Collectors.toList());
         }
         if (this.unsafeBlocksState == null) {
-            this.unsafeBlocksState = ServerConfig.UNSAFE_BLOCKS.get().stream()
-                    .map(NarcissusUtils::deserializeBlockState)
+            this.unsafeBlocksState = CommonConfig.get().general().safeTeleport().unsafeBlocks().stream()
+                    .map(BlockUtils::deserializeBlockState)
                     .filter(Objects::nonNull)
                     .distinct()
                     .collect(Collectors.toList());
@@ -69,8 +69,8 @@ public class SafeBlock {
                     .collect(Collectors.toList());
         }
         if (this.suffocatingBlocksState == null) {
-            this.suffocatingBlocksState = ServerConfig.SUFFOCATING_BLOCKS.get().stream()
-                    .map(NarcissusUtils::deserializeBlockState)
+            this.suffocatingBlocksState = CommonConfig.get().general().safeTeleport().suffocatingBlocks().stream()
+                    .map(BlockUtils::deserializeBlockState)
                     .filter(Objects::nonNull)
                     .distinct()
                     .collect(Collectors.toList());

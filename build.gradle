@@ -74,8 +74,29 @@ sourceSets.main.resources {
     srcDir 'src/generated/resources'
 }
 
+// region banira_codex：JarJar
+def baniraArtifactVersionRange = "${banira_version_range}"
+// endregion banira_codex
+
 configurations {
     runtimeClasspath.extendsFrom localRuntime
+}
+
+repositories {
+    mavenLocal()
+
+    maven {
+        name = "JourneyMap (Public)"
+        url = "https://jm.gserv.me/repository/maven-public/"
+    }
+    maven {
+        url "https://cursemaven.com/"
+        content { includeGroup "curse.maven" }
+    }
+
+    flatDir {
+        dir 'libs'
+    }
 }
 
 dependencies {
@@ -105,13 +126,31 @@ dependencies {
     // Example mod dependency using a mod jar from ./libs with a flat dir repository
     // This maps to ./libs/coolmod-${mc_version}-${coolmod_version}.jar
     // The group id is ignored when searching -- in this case, it is "blank"
-    // implementation "blank:coolmod-${mc_version}:${coolmod_version}"
 
-    // Example mod dependency using a file as dependency
-    // implementation files("libs/coolmod-${mc_version}-${coolmod_version}.jar")
+    implementation "xin.vanilla.banira:banira_codex:${loader_type}-${minecraft_version}-${banira_version}"
+    jarJar("xin.vanilla.banira:banira_codex:${loader_type}-${minecraft_version}-${banira_version}") {
+        jarJar.ranged(it, baniraArtifactVersionRange)
+    }
 
-    // Example project dependency using a sister or child project:
-    // implementation project(":myproject")
+    compileOnly "curse.maven:apricityui-1470115:${apricityui_id}"
+    // compileOnly "blank:apricityui:1.0.0"
+
+    compileOnly "curse.maven:gravestone-mod-238551:${gravestone_id}"
+    compileOnly "curse.maven:corpse-316582:${corpse_id}"
+    compileOnly "curse.maven:simple-tomb-399669:${simple_tomb_id}"
+    // compileOnly "curse.maven:corail-tombstone-243707:${corail_tomb_id}"
+    compileOnly "blank:tombstone-${loader_type}-${minecraft_version}:${corail_tomb_version}"
+
+    compileOnly "curse.maven:xaeros-minimap-263420:${xaeros_minimap_id}"
+    compileOnly "curse.maven:journeymap-32274:${journeymap_id}"
+
+    compileOnly "curse.maven:ftb-chunks-forge-314906:${ftb_chunk_id}"
+    compileOnly "curse.maven:architectury-api-419699:${architectury_api_id}"
+    compileOnly "curse.maven:ftb-library-forge-404465:${ftb_library_id}"
+    compileOnly "curse.maven:ftb-teams-forge-404468:${ftb_teams_id}"
+
+    compileOnly "curse.maven:jade-324717:${jade_id}"
+    compileOnly "info.journeymap:journeymap-api-${loader_type}:${journeymap_api_version}"
 
     // For more info:
     // http://www.gradle.org/docs/current/userguide/artifact_dependencies_tutorial.html
@@ -129,7 +168,8 @@ tasks.withType(ProcessResources).configureEach {
             neo_version            : neo_version,
             neo_version_range      : neo_version_range,
             loader_version_range   : loader_version_range,
-            mod_id                 : mod_id,
+            loader_type         : loader_type,
+                             banira_version_range: banira_version_range,mod_id                 : mod_id,
             mod_name               : mod_name,
             mod_license            : mod_license,
             mod_version            : mod_version,
@@ -147,9 +187,8 @@ tasks.withType(ProcessResources).configureEach {
 tasks.named('jar', Jar).configure {
     // 自定义打包路径与输出格式
     archiveBaseName.set(mod_id)
-    archiveVersion.set("neoforge-${mod_version}")
-    destinationDirectory.set(file("${projectDir}/builds/${mod_version.split('-')[1]}"))
-
+    archiveVersion.set("${loader_type}-${minecraft_version}-${mod_version}")
+    destinationDirectory.set(file("${projectDir}/builds/${mod_version}"))
     manifest {
         attributes([
                 "Implementation-Title"  : project.name,
@@ -157,6 +196,38 @@ tasks.named('jar', Jar).configure {
         ])
     }
 }
+
+// region 将含 Jar-in-Jar 的 reobf 合并包同步到 builds
+def narcissusCopyFatJar = { File fat, String destName ->
+    if (fat != null && fat.exists()) {
+        copy {
+            from fat
+            into file("${projectDir}/builds/${mod_version}")
+            rename { destName }
+        }
+    }
+}
+
+afterEvaluate {
+    def reobfJarJarTask = tasks.findByName('reobfJarJar')
+    if (reobfJarJarTask != null) {
+        reobfJarJarTask.doLast {
+            def reobfFat = layout.buildDirectory.file('reobfJarJar/output.jar').get().asFile
+            narcissusCopyFatJar(reobfFat, "${mod_id}-${loader_type}-${minecraft_version}-${mod_version}-all.jar")
+        }
+        tasks.named('assemble').configure { dependsOn reobfJarJarTask }
+    } else {
+        def jarJarTask = tasks.findByName('jarJar')
+        if (jarJarTask != null) {
+            jarJarTask.doLast {
+                def jar = jarJarTask.archiveFile.get().asFile
+                narcissusCopyFatJar(jar, "${mod_id}-${loader_type}-${minecraft_version}-${mod_version}-all.jar")
+            }
+            tasks.named('assemble').configure { dependsOn jarJarTask }
+        }
+    }
+}
+// endregion
 
 tasks.withType(JavaCompile).configureEach {
     options.encoding = 'UTF-8'

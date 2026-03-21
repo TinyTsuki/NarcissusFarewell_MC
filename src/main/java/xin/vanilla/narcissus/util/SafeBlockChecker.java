@@ -68,7 +68,7 @@ public class SafeBlockChecker {
             isBelowValid = !safeBlock.getUnsafeBlocksState().contains(blockBelow)
                     && !safeBlock.getUnsafeBlocks().contains(blockBelow.getBlock());
         } else {
-            isBelowValid = blockBelow.entityCanStandOn(level, below, entity)
+            isBelowValid = (entity == null || blockBelow.entityCanStandOn(level, below, entity))
                     && !safeBlock.getUnsafeBlocksState().contains(blockBelow)
                     && !safeBlock.getUnsafeBlocks().contains(blockBelow.getBlock())
 
