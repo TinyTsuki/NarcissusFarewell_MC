@@ -15,7 +15,6 @@ import xin.vanilla.banira.common.util.CollectionUtils;
 import xin.vanilla.banira.common.util.MessageUtils;
 import xin.vanilla.banira.common.util.PlayerUtils;
 import xin.vanilla.narcissus.NarcissusComponent;
-import xin.vanilla.narcissus.NarcissusLang;
 import xin.vanilla.narcissus.data.PlayerAccess;
 import xin.vanilla.narcissus.data.player.PlayerTeleportData;
 import xin.vanilla.narcissus.util.CommandUtils;
@@ -114,8 +113,8 @@ public final class WhitelistCommand {
         String lang = CommandUtils.getLanguage(context.getSource());
         String[] tooltipKeys = {"suggest_whitelist_none", "suggest_whitelist_both", "suggest_whitelist_auto_accept_tpa", "suggest_whitelist_auto_accept_tph"};
         for (int i = 0; i < CommandUtils.WHITE_LIST_MODES.length; i++) {
-            Component tooltip = NarcissusLang.transLangAuto(lang, tooltipKeys[i]);
-            builder.suggest(CommandUtils.WHITE_LIST_MODES[i], tooltip.toVanilla());
+            Component tooltip = NarcissusComponent.get().transAuto(tooltipKeys[i]);
+            builder.suggest(CommandUtils.WHITE_LIST_MODES[i], tooltip.toVanilla(lang));
         }
         return builder.buildFuture();
     }

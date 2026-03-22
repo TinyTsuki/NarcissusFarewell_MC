@@ -711,7 +711,6 @@ public final class CommonConfigAccess {
         h.set("commandNames.commandTpBack", "back");
         h.set("commandNames.commandTpGrave", "grave");
         h.set("commandNames.commandFly", "fly");
-        h.set("commandNames.commandVirtualOp", "opv");
         h.set("conciseCommands.conciseLanguage", false);
         h.set("conciseCommands.conciseUuid", false);
         h.set("conciseCommands.conciseDimension", false);

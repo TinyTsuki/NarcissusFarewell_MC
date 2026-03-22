@@ -335,20 +335,20 @@ public final class CommandUtils {
     public static CompletableFuture<Suggestions> dimSuggestion(CommandContext<CommandSource> context, SuggestionsBuilder builder) {
         String name = getStringEmpty(context, "dimension");
         String lang = getLanguage(context.getSource());
-        Component dimTooltip = NarcissusLang.transLangAuto(lang, "suggest_dimension");
+        Component dimTooltip = NarcissusComponent.get().transAuto("suggest_dimension");
         for (String dim : DimensionUtils.getAllIds()) {
             if (StringUtils.isNullOrEmpty(name) || dim.contains(name))
-                builder.suggest(dim, dimTooltip.toVanilla());
+                builder.suggest(dim, dimTooltip.toVanilla(lang));
         }
         return builder.buildFuture();
     }
 
     public static CompletableFuture<Suggestions> safeSuggestion(CommandContext<CommandSource> context, SuggestionsBuilder builder) {
         String lang = getLanguage(context.getSource());
-        Component safeTooltip = NarcissusLang.transLangAuto(lang, "suggest_safe");
-        Component unsafeTooltip = NarcissusLang.transLangAuto(lang, "suggest_unsafe");
-        builder.suggest("safe", safeTooltip.toVanilla());
-        builder.suggest("unsafe", unsafeTooltip.toVanilla());
+        Component safeTooltip = NarcissusComponent.get().transAuto("suggest_safe");
+        Component unsafeTooltip = NarcissusComponent.get().transAuto("suggest_unsafe");
+        builder.suggest("safe", safeTooltip.toVanilla(lang));
+        builder.suggest("unsafe", unsafeTooltip.toVanilla(lang));
         return builder.buildFuture();
     }
 
@@ -357,8 +357,8 @@ public final class CommandUtils {
         for (int i = 1; i <= 5; i++) {
             int index = (int) Math.pow(10, i);
             if (index <= CommonConfig.get().general().teleportRandomDistanceLimit()) {
-                Component tooltip = NarcissusLang.transLangAuto(lang, "suggest_range", index);
-                builder.suggest(index, tooltip.toVanilla());
+                Component tooltip = NarcissusComponent.get().transAuto("suggest_range", index);
+                builder.suggest(index, tooltip.toVanilla(lang));
             }
         }
         return builder.buildFuture();
@@ -368,18 +368,18 @@ public final class CommandUtils {
         ServerPlayerEntity player = context.getSource().getPlayerOrException();
         PlayerTeleportData data = PlayerTeleportData.getData(player);
         String lang = getLanguage(context.getSource());
-        Component tooltip = NarcissusLang.transLangAuto(lang, "suggest_home");
+        Component tooltip = NarcissusComponent.get().transAuto("suggest_home");
         for (KeyValue<String, String> key : data.getHomeCoordinate().keySet()) {
-            builder.suggest(StringUtils.formatString(key.value()), tooltip.toVanilla());
+            builder.suggest(StringUtils.formatString(key.value()), tooltip.toVanilla(lang));
         }
         return builder.buildFuture();
     }
 
     public static CompletableFuture<Suggestions> stageSuggestion(CommandContext<CommandSource> context, SuggestionsBuilder builder) {
         String lang = getLanguage(context.getSource());
-        Component tooltip = NarcissusLang.transLangAuto(lang, "suggest_stage");
+        Component tooltip = NarcissusComponent.get().transAuto("suggest_stage");
         for (KeyValue<String, String> key : WorldStageData.get().getStageCoordinate().keySet()) {
-            builder.suggest(StringUtils.formatString(key.value()), tooltip.toVanilla());
+            builder.suggest(StringUtils.formatString(key.value()), tooltip.toVanilla(lang));
         }
         return builder.buildFuture();
     }
@@ -389,10 +389,10 @@ public final class CommandUtils {
         PlayerTeleportData data = PlayerTeleportData.getData(player);
         String name = getStringEmpty(context, "name");
         String lang = getLanguage(context.getSource());
-        Component tooltip = NarcissusLang.transLangAuto(lang, "suggest_dimension");
+        Component tooltip = NarcissusComponent.get().transAuto("suggest_dimension");
         for (KeyValue<String, String> keyValue : data.getHomeCoordinate().keySet()) {
             if (keyValue.value().equals(name))
-                builder.suggest(keyValue.key(), tooltip.toVanilla());
+                builder.suggest(keyValue.key(), tooltip.toVanilla(lang));
         }
         return builder.buildFuture();
     }
@@ -401,10 +401,10 @@ public final class CommandUtils {
         WorldStageData data = WorldStageData.get();
         String name = getStringEmpty(context, "name");
         String lang = getLanguage(context.getSource());
-        Component tooltip = NarcissusLang.transLangAuto(lang, "suggest_dimension");
+        Component tooltip = NarcissusComponent.get().transAuto("suggest_dimension");
         for (KeyValue<String, String> keyValue : data.getStageCoordinate().keySet()) {
             if (name == null || keyValue.value().contains(name))
-                builder.suggest(keyValue.key(), tooltip.toVanilla());
+                builder.suggest(keyValue.key(), tooltip.toVanilla(lang));
         }
         return builder.buildFuture();
     }

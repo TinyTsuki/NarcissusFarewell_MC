@@ -30,7 +30,7 @@ public final class ConfigCommand {
         ServerPlayerEntity player = context.getSource().getPlayerOrException();
         Component msg = NarcissusComponent.get().transAuto("server_config_status"
                 , NarcissusLang.get().enabled(CommonConfig.get().base().teleportCard())
-                , NarcissusLang.transLangAuto(NarcissusLang.getPlayerLanguage(player), "teleport_card"));
+                , NarcissusComponent.get().transAuto("teleport_card"));
         MessageUtils.sendMessage(player, msg);
         return 1;
     }
@@ -41,7 +41,7 @@ public final class ConfigCommand {
         ServerPlayerEntity player = context.getSource().getPlayerOrException();
         Component msg = NarcissusComponent.get().transAuto("server_config_status"
                 , NarcissusLang.get().enabled(CommonConfig.get().base().teleportCard())
-                , NarcissusLang.transLangAuto(NarcissusLang.getPlayerLanguage(player), "teleport_card"));
+                , NarcissusComponent.get().transAuto("teleport_card"));
         MessageUtils.broadcastMessage(player, msg);
         return 1;
     }
@@ -66,7 +66,7 @@ public final class ConfigCommand {
             default:
                 throw new IllegalArgumentException("Mode " + mode + " does not exist");
         }
-        Component component = NarcissusLang.transLangAuto(lang, "server_config_mode", mode);
+        Component component = NarcissusComponent.get().transAuto("server_config_mode", mode);
         source.sendSuccess(component.toChat(lang), false);
         source.getServer().getPlayerList().getPlayers()
                 .forEach(player -> source.getServer().getPlayerList().sendPlayerPermissionLevel(player));

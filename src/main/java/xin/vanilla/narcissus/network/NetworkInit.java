@@ -20,6 +20,8 @@ public final class NetworkInit {
         HANDLER.register(ModLoadedToBoth.class, ModLoadedToBoth::toBytes, ModLoadedToBoth::new, ModLoadedToBoth::handle);
         HANDLER.register(WaypointTeleportToServer.class, WaypointTeleportToServer::toBytes, WaypointTeleportToServer::new, WaypointTeleportToServer::handle);
         HANDLER.register(WaypointDelToServer.class, WaypointDelToServer::toBytes, WaypointDelToServer::new, WaypointDelToServer::handle);
+        HANDLER.register(WaypointAddHomeToServer.class, WaypointAddHomeToServer::toBytes, WaypointAddHomeToServer::new, WaypointAddHomeToServer::handle);
+        HANDLER.register(WaypointAddStageToServer.class, WaypointAddStageToServer::toBytes, WaypointAddStageToServer::new, WaypointAddStageToServer::handle);
 
         HANDLER.register(TpBackToServer.class, TpBackToServer::toBytes, TpBackToServer::new, TpBackToServer::handle);
         HANDLER.register(TpGraveToServer.class, TpGraveToServer::toBytes, TpGraveToServer::new, TpGraveToServer::handle);

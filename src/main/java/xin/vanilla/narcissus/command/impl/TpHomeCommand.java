@@ -18,7 +18,6 @@ import xin.vanilla.banira.common.data.KeyValue;
 import xin.vanilla.banira.common.util.DimensionUtils;
 import xin.vanilla.banira.common.util.MessageUtils;
 import xin.vanilla.narcissus.NarcissusComponent;
-import xin.vanilla.narcissus.NarcissusLang;
 import xin.vanilla.narcissus.config.CommonConfig;
 import xin.vanilla.narcissus.data.SafeWorldCoordinate;
 import xin.vanilla.narcissus.data.player.PlayerTeleportData;
@@ -72,9 +71,9 @@ public final class TpHomeCommand {
     public static CompletableFuture<Suggestions> safeSuggestion(CommandContext<CommandSource> context, SuggestionsBuilder builder) throws CommandSyntaxException {
         String name = CommandUtils.getStringDefault(context, "name", null);
         String lang = CommandUtils.getLanguage(context.getSource());
-        Component trueTooltip = NarcissusLang.transLangAuto(lang, "suggest_safe_true");
-        Component falseTooltip = NarcissusLang.transLangAuto(lang, "suggest_safe_false");
-        Component dimTooltip = NarcissusLang.transLangAuto(lang, "suggest_dimension");
+        Component trueTooltip = NarcissusComponent.get().transAuto("suggest_safe_true").languageCode(lang);
+        Component falseTooltip = NarcissusComponent.get().transAuto("suggest_safe_false").languageCode(lang);
+        Component dimTooltip = NarcissusComponent.get().transAuto("suggest_dimension").languageCode(lang);
         if ("true".equals(name) || "false".equals(name)) {
             ServerPlayerEntity player = context.getSource().getPlayerOrException();
             PlayerTeleportData data = PlayerTeleportData.getData(player);

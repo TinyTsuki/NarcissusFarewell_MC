@@ -1383,10 +1383,6 @@ public class CommonConfig implements ConfigData {
 
         CommandNamesView commandFly(String value);
 
-        String commandVirtualOp();
-
-        CommandNamesView commandVirtualOp(String value);
-
         String commandTpAsk();
 
         CommandNamesView commandTpAsk(String value);

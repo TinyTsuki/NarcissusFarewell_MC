@@ -15,7 +15,6 @@ import xin.vanilla.banira.common.data.KeyValue;
 import xin.vanilla.banira.common.util.MessageUtils;
 import xin.vanilla.banira.common.util.PacketUtils;
 import xin.vanilla.narcissus.NarcissusComponent;
-import xin.vanilla.narcissus.NarcissusLang;
 import xin.vanilla.narcissus.config.CommonConfig;
 import xin.vanilla.narcissus.data.SafeWorldCoordinate;
 import xin.vanilla.narcissus.data.player.PlayerTeleportData;
@@ -68,19 +67,19 @@ public final class SetHomeCommand {
 
     public static CompletableFuture<Suggestions> suggestion(CommandContext<CommandSource> context, SuggestionsBuilder builder) {
         String lang = CommandUtils.getLanguage(context.getSource());
-        Component homeTooltip = NarcissusLang.transLangAuto(lang, "suggest_home_name");
-        Component nameTooltip = NarcissusLang.transLangAuto(lang, "suggest_custom_name");
-        builder.suggest("home", homeTooltip.toVanilla());
-        builder.suggest("name", nameTooltip.toVanilla());
+        Component homeTooltip = NarcissusComponent.get().transAuto("suggest_home_name");
+        Component nameTooltip = NarcissusComponent.get().transAuto("suggest_custom_name");
+        builder.suggest("home", homeTooltip.toVanilla(lang));
+        builder.suggest("name", nameTooltip.toVanilla(lang));
         return builder.buildFuture();
     }
 
     public static CompletableFuture<Suggestions> defaultSuggestion(CommandContext<CommandSource> context, SuggestionsBuilder builder) {
         String lang = CommandUtils.getLanguage(context.getSource());
-        Component trueTooltip = NarcissusLang.transLangAuto(lang, "suggest_default_home_true");
-        Component falseTooltip = NarcissusLang.transLangAuto(lang, "suggest_default_home_false");
-        builder.suggest("true", trueTooltip.toVanilla());
-        builder.suggest("false", falseTooltip.toVanilla());
+        Component trueTooltip = NarcissusComponent.get().transAuto("suggest_default_home_true");
+        Component falseTooltip = NarcissusComponent.get().transAuto("suggest_default_home_false");
+        builder.suggest("true", trueTooltip.toVanilla(lang));
+        builder.suggest("false", falseTooltip.toVanilla(lang));
         return builder.buildFuture();
     }
 

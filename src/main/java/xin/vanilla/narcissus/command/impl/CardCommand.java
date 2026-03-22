@@ -10,7 +10,7 @@ import net.minecraft.command.Commands;
 import net.minecraft.command.arguments.EntityArgument;
 import net.minecraft.entity.player.ServerPlayerEntity;
 import xin.vanilla.banira.common.data.Component;
-import xin.vanilla.narcissus.NarcissusLang;
+import xin.vanilla.narcissus.NarcissusComponent;
 import xin.vanilla.narcissus.config.CommonConfig;
 import xin.vanilla.narcissus.data.player.PlayerTeleportData;
 import xin.vanilla.narcissus.enums.EnumCommandType;
@@ -42,7 +42,7 @@ public final class CardCommand {
             default:
                 throw new IllegalArgumentException("Type " + type + " is not supported");
         }
-        Component component = NarcissusLang.transLangAuto(language, "player_card"
+        Component component = NarcissusComponent.get().transAuto("player_card"
                 , target.getDisplayName().getString()
                 , data.getTeleportCard());
         source.sendSuccess(component.toChat(language), false);
@@ -56,9 +56,9 @@ public final class CardCommand {
                         .requires(source -> NarcissusUtils.hasCommandPermission(source, EnumCommandType.SET_CARD))
                         .suggests((context, builder) -> {
                             String lang = CommandUtils.getLanguage(context.getSource());
-                            builder.suggest("get", NarcissusLang.transLangAuto(lang, "suggest_card_get").toVanilla());
-                            builder.suggest("add", NarcissusLang.transLangAuto(lang, "suggest_card_add").toVanilla());
-                            builder.suggest("set", NarcissusLang.transLangAuto(lang, "suggest_card_set").toVanilla());
+                            builder.suggest("get", NarcissusComponent.get().transAuto("suggest_card_get").toVanilla(lang));
+                            builder.suggest("add", NarcissusComponent.get().transAuto("suggest_card_add").toVanilla(lang));
+                            builder.suggest("set", NarcissusComponent.get().transAuto("suggest_card_set").toVanilla(lang));
                             return builder.buildFuture();
                         })
                         .then(Commands.argument("player", EntityArgument.player())

@@ -47,7 +47,6 @@ import xin.vanilla.banira.common.util.StringUtils;
 import xin.vanilla.narcissus.Identifier;
 import xin.vanilla.narcissus.NarcissusComponent;
 import xin.vanilla.narcissus.NarcissusFarewell;
-import xin.vanilla.narcissus.NarcissusLang;
 import xin.vanilla.narcissus.config.CommonConfig;
 import xin.vanilla.narcissus.data.SafeWorldCoordinate;
 import xin.vanilla.narcissus.data.TeleportCost;
@@ -234,10 +233,6 @@ public class NarcissusUtils {
         switch (type) {
             case HELP:
                 return prefix + " help";
-            case LANGUAGE:
-                return prefix + " " + CommonConfig.get().commandNames().commandLanguage();
-            case LANGUAGE_CONCISE:
-                return isConciseEnabled(type) ? CommonConfig.get().commandNames().commandLanguage() : "";
             case DIMENSION:
                 return prefix + " " + CommonConfig.get().commandNames().commandDimension();
             case DIMENSION_CONCISE:
@@ -380,10 +375,6 @@ public class NarcissusUtils {
                 return prefix + " " + CommonConfig.get().commandNames().commandFly();
             case FLY_CONCISE:
                 return isConciseEnabled(type) ? CommonConfig.get().commandNames().commandFly() : "";
-            case VIRTUAL_OP:
-                return prefix + " " + CommonConfig.get().commandNames().commandVirtualOp();
-            case VIRTUAL_OP_CONCISE:
-                return isConciseEnabled(type) ? CommonConfig.get().commandNames().commandVirtualOp() : "";
             case CONFIG:
                 return prefix + " config";
             case BLACKLIST:
@@ -1053,7 +1044,7 @@ public class NarcissusUtils {
             if (level != null) {
                 if (after.safe()) {
                     // 异步的代价就是粪吗
-                    MessageUtils.sendActionBarMessage(player, NarcissusLang.transLangAuto(NarcissusLang.getPlayerLanguage(player), "safe_searching"));
+                    MessageUtils.sendActionBarMessage(player, NarcissusComponent.get().transAuto("safe_searching"));
                     new Thread(() -> {
                         SafeWorldCoordinate finalAfter = after.clone();
                         finalAfter = findSafeCoordinate(finalAfter, false);
