@@ -10,11 +10,12 @@ import net.minecraft.util.text.event.ClickEvent;
 import net.minecraft.util.text.event.HoverEvent;
 import xin.vanilla.banira.common.data.Component;
 import xin.vanilla.banira.common.enums.EnumMCColor;
+import xin.vanilla.banira.common.util.MessageUtils;
+import xin.vanilla.narcissus.NarcissusComponent;
 import xin.vanilla.narcissus.NarcissusLang;
 import xin.vanilla.narcissus.config.CommonConfig;
 import xin.vanilla.narcissus.enums.EnumCommandType;
 import xin.vanilla.narcissus.util.CommandUtils;
-import xin.vanilla.narcissus.util.NarcissusUtils;
 
 public final class DimensionCommand {
     private DimensionCommand() {
@@ -25,12 +26,12 @@ public final class DimensionCommand {
         if (CommandUtils.checkTeleportPre(context.getSource(), EnumCommandType.DIMENSION)) return 0;
         ServerPlayerEntity player = context.getSource().getPlayerOrException();
         String dimString = player.getLevel().dimension().location().toString();
-        Component dim = Component.literal(dimString);
+        Component dim = NarcissusComponent.get().literal(dimString);
         dim.color(EnumMCColor.GREEN.getColor())
                 .clickEvent(new ClickEvent(ClickEvent.Action.COPY_TO_CLIPBOARD, dimString))
-                .hoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, NarcissusLang.transLangAuto(NarcissusLang.getPlayerLanguage(player), "chat_copy_click").toVanilla()));
-        Component msg = NarcissusLang.transLangAuto(NarcissusLang.getPlayerLanguage(player), "dimension_info", dim);
-        NarcissusUtils.sendMessage(player, msg);
+                .hoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, NarcissusComponent.get().transAuto("chat_copy_click").toVanilla(NarcissusLang.getPlayerLanguage(player))));
+        Component msg = NarcissusComponent.get().transAuto("dimension_info", dim);
+        MessageUtils.sendMessage(player, msg);
         return 1;
     }
 

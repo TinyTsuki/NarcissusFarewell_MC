@@ -3,11 +3,13 @@ package xin.vanilla.narcissus.network.packet;
 import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.network.PacketBuffer;
 import net.minecraftforge.fml.network.NetworkEvent;
+import xin.vanilla.banira.common.util.PacketUtils;
 import xin.vanilla.narcissus.config.CommonConfig;
 import xin.vanilla.narcissus.data.TeleportCost;
 import xin.vanilla.narcissus.data.player.PlayerTeleportData;
 import xin.vanilla.narcissus.data.world.WorldStageData;
 import xin.vanilla.narcissus.enums.EnumTeleportType;
+import xin.vanilla.narcissus.network.NetworkInit;
 import xin.vanilla.narcissus.util.NarcissusUtils;
 
 import java.util.HashMap;
@@ -32,15 +34,15 @@ public class ModLoadedToBoth {
                 // 同步玩家传送数据到客户端
                 PlayerTeleportData.syncPlayerData(player);
                 // 同步驿站数据到客户端
-                NarcissusUtils.sendPacketToPlayer(new StageDataSyncToClient(WorldStageData.get().getStageCoordinate()), player);
+                PacketUtils.sendPacketToPlayer(NetworkInit.INSTANCE, new StageDataSyncToClient(WorldStageData.get().getStageCoordinate()), player);
                 // 同步传送代价配置到客户端
                 Map<EnumTeleportType, TeleportCost> costMap = new HashMap<>();
                 costMap.put(EnumTeleportType.TP_HOME, NarcissusUtils.getCommandCost(EnumTeleportType.TP_HOME));
                 costMap.put(EnumTeleportType.TP_STAGE, NarcissusUtils.getCommandCost(EnumTeleportType.TP_STAGE));
                 costMap.put(EnumTeleportType.TP_BACK, NarcissusUtils.getCommandCost(EnumTeleportType.TP_BACK));
-                NarcissusUtils.sendPacketToPlayer(new CostConfigSyncToClient(costMap,
-                        CommonConfig.get().server().general().teleportCostDistanceLimit(),
-                        CommonConfig.get().server().general().teleportCostDistanceAcrossDimension()), player);
+                PacketUtils.sendPacketToPlayer(NetworkInit.INSTANCE, new CostConfigSyncToClient(costMap,
+                        CommonConfig.get().general().teleportCostDistanceLimit(),
+                        CommonConfig.get().general().teleportCostDistanceAcrossDimension()), player);
                 // 刷新权限信息
                 NarcissusUtils.refreshPermission(player);
             }

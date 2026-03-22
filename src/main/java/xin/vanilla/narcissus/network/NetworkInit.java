@@ -5,7 +5,7 @@ import xin.vanilla.banira.common.network.NetworkHandler;
 import xin.vanilla.narcissus.Identifier;
 import xin.vanilla.narcissus.network.packet.*;
 
-public final class ModNetworkHandler {
+public final class NetworkInit {
 
     private static final NetworkHandler HANDLER = NetworkHandler.create("main_network", Identifier.id());
 

@@ -11,6 +11,7 @@ import net.minecraft.util.text.event.ClickEvent;
 import net.minecraft.util.text.event.HoverEvent;
 import xin.vanilla.banira.common.data.Component;
 import xin.vanilla.banira.common.enums.EnumMCColor;
+import xin.vanilla.narcissus.NarcissusComponent;
 import xin.vanilla.narcissus.NarcissusLang;
 import xin.vanilla.narcissus.config.CommonConfig;
 import xin.vanilla.narcissus.enums.EnumCommandType;
@@ -26,7 +27,7 @@ public final class UuidCommand {
         CommandSource source = context.getSource();
         ServerPlayerEntity target = CommandUtils.getPlayerOrSelf(context, "player");
         String language = CommandUtils.getLanguage(source);
-        Component uuid = Component.literal(target.getStringUUID());
+        Component uuid = NarcissusComponent.get().literal(target.getStringUUID());
         uuid.color(EnumMCColor.GREEN.getColor())
                 .clickEvent(new ClickEvent(ClickEvent.Action.COPY_TO_CLIPBOARD, target.getStringUUID()))
                 .hoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, NarcissusLang.transLangAuto(language, "chat_copy_click").toVanilla()));

@@ -13,7 +13,9 @@ import net.minecraft.util.RegistryKey;
 import net.minecraft.world.World;
 import net.minecraft.world.server.ServerWorld;
 import xin.vanilla.banira.common.util.DimensionUtils;
+import xin.vanilla.banira.common.util.MessageUtils;
 import xin.vanilla.banira.common.util.StringUtils;
+import xin.vanilla.narcissus.NarcissusComponent;
 import xin.vanilla.narcissus.config.CommonConfig;
 import xin.vanilla.narcissus.data.SafeWorldCoordinate;
 import xin.vanilla.narcissus.data.TeleportRecord;
@@ -45,7 +47,7 @@ public final class TpBackCommand {
         }
         TeleportRecord record = NarcissusUtils.getBackTeleportRecord(player, type, targetLevel);
         if (record == null) {
-            NarcissusUtils.sendTranslatableMessage(player, "back_not_found");
+            MessageUtils.sendMessage(player, NarcissusComponent.get().transAuto("back_not_found"));
             return 0;
         }
         SafeWorldCoordinate safeWorldCoordinate = record.getBefore().clone();

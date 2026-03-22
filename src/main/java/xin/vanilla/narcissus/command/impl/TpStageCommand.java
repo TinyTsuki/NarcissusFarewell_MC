@@ -11,6 +11,8 @@ import net.minecraft.util.RegistryKey;
 import net.minecraft.world.World;
 import net.minecraft.world.server.ServerWorld;
 import xin.vanilla.banira.common.util.DimensionUtils;
+import xin.vanilla.banira.common.util.MessageUtils;
+import xin.vanilla.narcissus.NarcissusComponent;
 import xin.vanilla.narcissus.config.CommonConfig;
 import xin.vanilla.narcissus.data.SafeWorldCoordinate;
 import xin.vanilla.narcissus.enums.EnumCommandType;
@@ -39,13 +41,13 @@ public final class TpStageCommand {
         SafeWorldCoordinate safeWorldCoordinate = NarcissusUtils.getStageCoordinate(player, targetLevel, name);
         if (safeWorldCoordinate == null) {
             if (targetLevel == null && name == null) {
-                NarcissusUtils.sendTranslatableMessage(player, "stage_nearest_not_found");
+                MessageUtils.sendMessage(player, NarcissusComponent.get().transAuto("stage_nearest_not_found"));
             } else if (targetLevel != null && name == null) {
-                NarcissusUtils.sendTranslatableMessage(player, "stage_not_found_in_dimension", targetLevel.location().toString());
+                MessageUtils.sendMessage(player, NarcissusComponent.get().transAuto("stage_not_found_in_dimension", targetLevel.location().toString()));
             } else if (targetLevel == null) {
-                NarcissusUtils.sendTranslatableMessage(player, "stage_not_found", name);
+                MessageUtils.sendMessage(player, NarcissusComponent.get().transAuto("stage_not_found", name));
             } else {
-                NarcissusUtils.sendTranslatableMessage(player, "stage_not_found_with_name_in_dimension", targetLevel.location().toString(), name);
+                MessageUtils.sendMessage(player, NarcissusComponent.get().transAuto("stage_not_found_with_name_in_dimension", targetLevel.location().toString(), name));
             }
             return 0;
         }

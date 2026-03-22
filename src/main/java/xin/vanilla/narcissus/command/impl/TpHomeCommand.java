@@ -16,6 +16,8 @@ import net.minecraft.world.server.ServerWorld;
 import xin.vanilla.banira.common.data.Component;
 import xin.vanilla.banira.common.data.KeyValue;
 import xin.vanilla.banira.common.util.DimensionUtils;
+import xin.vanilla.banira.common.util.MessageUtils;
+import xin.vanilla.narcissus.NarcissusComponent;
 import xin.vanilla.narcissus.NarcissusLang;
 import xin.vanilla.narcissus.config.CommonConfig;
 import xin.vanilla.narcissus.data.SafeWorldCoordinate;
@@ -48,13 +50,13 @@ public final class TpHomeCommand {
         SafeWorldCoordinate safeWorldCoordinate = NarcissusUtils.getPlayerHome(player, targetLevel, name);
         if (safeWorldCoordinate == null) {
             if (targetLevel == null && name == null) {
-                NarcissusUtils.sendTranslatableMessage(player, "home_not_found");
+                MessageUtils.sendMessage(player, NarcissusComponent.get().transAuto("home_not_found"));
             } else if (targetLevel != null && name == null) {
-                NarcissusUtils.sendTranslatableMessage(player, "home_not_found_in_dimension", targetLevel.location().toString());
+                MessageUtils.sendMessage(player, NarcissusComponent.get().transAuto("home_not_found_in_dimension", targetLevel.location().toString()));
             } else if (targetLevel == null) {
-                NarcissusUtils.sendTranslatableMessage(player, "home_not_found_with_name", name);
+                MessageUtils.sendMessage(player, NarcissusComponent.get().transAuto("home_not_found_with_name", name));
             } else {
-                NarcissusUtils.sendTranslatableMessage(player, "home_not_found_with_name_in_dimension", targetLevel.location().toString(), name);
+                MessageUtils.sendMessage(player, NarcissusComponent.get().transAuto("home_not_found_with_name_in_dimension", targetLevel.location().toString(), name));
             }
             return 0;
         }

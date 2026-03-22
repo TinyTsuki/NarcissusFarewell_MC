@@ -6,6 +6,7 @@ import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.nbt.ListNBT;
 import net.minecraft.network.PacketBuffer;
+import xin.vanilla.banira.BaniraCodex;
 import xin.vanilla.banira.common.api.ICommandNotify;
 import xin.vanilla.banira.common.data.KeyValue;
 import xin.vanilla.banira.common.player.IPlayerData;
@@ -17,7 +18,7 @@ import xin.vanilla.narcissus.data.PlayerAccess;
 import xin.vanilla.narcissus.data.SafeWorldCoordinate;
 import xin.vanilla.narcissus.data.TeleportRecord;
 import xin.vanilla.narcissus.enums.EnumTeleportType;
-import xin.vanilla.narcissus.network.ModNetworkHandler;
+import xin.vanilla.narcissus.network.NetworkInit;
 import xin.vanilla.narcissus.network.packet.PlayerDataSyncToClient;
 
 import java.util.*;
@@ -38,7 +39,7 @@ public final class PlayerTeleportData implements IPlayerData<PlayerTeleportData>
     private PlayerTeleportData(PlayerEntity player) {
         this.player = player;
         if (this.player instanceof ServerPlayerEntity) {
-            this.deserializeNBT(NarcissusFarewell.playerDataManager.getOrCreate(player.getUUID()), false);
+            this.deserializeNBT(BaniraCodex.playerDataManager.getOrCreate(player.getUUID(), NarcissusFarewell.MODID), false);
         }
     }
 
@@ -226,7 +227,7 @@ public final class PlayerTeleportData implements IPlayerData<PlayerTeleportData>
     @Override
     public void save() {
         if (this.player instanceof ServerPlayerEntity) {
-            NarcissusFarewell.playerDataManager.put(player.getUUID(), serializeNBT());
+            BaniraCodex.playerDataManager.put(player.getUUID(), NarcissusFarewell.MODID, serializeNBT());
         }
     }
 
@@ -379,7 +380,7 @@ public final class PlayerTeleportData implements IPlayerData<PlayerTeleportData>
      */
     public static void syncPlayerData(ServerPlayerEntity player) {
         PlayerDataSyncToClient packet = new PlayerDataSyncToClient(player.getUUID(), getData(player));
-        PacketUtils.sendSplitPacketToPlayer(() -> ModNetworkHandler.INSTANCE, packet, player);
+        PacketUtils.sendSplitPacketToPlayer(() -> NetworkInit.INSTANCE, packet, player);
     }
 
 }

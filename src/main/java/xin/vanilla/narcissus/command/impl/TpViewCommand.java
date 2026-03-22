@@ -8,7 +8,8 @@ import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import net.minecraft.command.CommandSource;
 import net.minecraft.command.Commands;
 import net.minecraft.entity.player.ServerPlayerEntity;
-import xin.vanilla.narcissus.NarcissusLang;
+import xin.vanilla.banira.common.util.MessageUtils;
+import xin.vanilla.narcissus.NarcissusComponent;
 import xin.vanilla.narcissus.config.CommonConfig;
 import xin.vanilla.narcissus.data.SafeWorldCoordinate;
 import xin.vanilla.narcissus.enums.EnumCommandType;
@@ -26,14 +27,14 @@ public final class TpViewCommand {
         if (CommandUtils.checkTeleportPre(context.getSource(), EnumCommandType.TP_VIEW)) return 0;
         ServerPlayerEntity player = context.getSource().getPlayerOrException();
         boolean safe = "safe".equalsIgnoreCase(CommandUtils.getStringEmpty(context, "safe"));
-        int range = CommandUtils.getIntDefault(context, "range", CommonConfig.get().server().general().teleportViewDistanceLimit());
+        int range = CommandUtils.getIntDefault(context, "range", CommonConfig.get().general().teleportViewDistanceLimit());
         range = NarcissusUtils.checkRange(player, EnumTeleportType.TP_VIEW, range);
-        NarcissusUtils.sendActionBarMessage(player, NarcissusLang.transLangAuto(NarcissusLang.getPlayerLanguage(player), "tp_view_searching"));
+        MessageUtils.sendActionBarMessage(player, NarcissusComponent.get().transAuto("tp_view_searching"));
         int finalRange = range;
         new Thread(() -> {
             SafeWorldCoordinate safeWorldCoordinate = NarcissusUtils.findViewEndCandidate(player, safe, finalRange);
             if (safeWorldCoordinate == null) {
-                NarcissusUtils.sendTranslatableMessage(player, safe ? "tp_view_safe_not_found" : "tp_view_not_found");
+                MessageUtils.sendMessage(player, NarcissusComponent.get().transAuto(safe ? "tp_view_safe_not_found" : "tp_view_not_found"));
                 return;
             }
             safeWorldCoordinate.safeMode(EnumSafeMode.Y_C_OFFSET_3);

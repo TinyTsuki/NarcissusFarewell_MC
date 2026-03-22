@@ -20,11 +20,8 @@ import net.minecraft.world.World;
 import net.minecraft.world.server.ServerWorld;
 import xin.vanilla.banira.common.data.Component;
 import xin.vanilla.banira.common.data.KeyValue;
-import xin.vanilla.banira.common.enums.EnumI18nType;
-import xin.vanilla.banira.common.util.CollectionUtils;
-import xin.vanilla.banira.common.util.DimensionUtils;
-import xin.vanilla.banira.common.util.PlayerUtils;
-import xin.vanilla.banira.common.util.StringUtils;
+import xin.vanilla.banira.common.util.*;
+import xin.vanilla.narcissus.NarcissusComponent;
 import xin.vanilla.narcissus.NarcissusFarewell;
 import xin.vanilla.narcissus.NarcissusLang;
 import xin.vanilla.narcissus.config.CommonConfig;
@@ -184,13 +181,13 @@ public final class CommandUtils {
         ServerPlayerEntity player = (ServerPlayerEntity) entity;
         PlayerTeleportData data = PlayerTeleportData.getData(player);
         String cmd = "/" + NarcissusUtils.getCommandPrefix();
-        Component modName = Component.trans(NarcissusFarewell.MODID, EnumI18nType.WORD, "categories");
+        Component modName = NarcissusComponent.get().transAuto("categories");
         xin.vanilla.banira.common.util.CommandUtils.notifyHelp(context, data, modName, cmd);
     }
 
     public static boolean checkTeleportPre(CommandSource source, EnumCommandType teleportType) {
         if (!NarcissusUtils.isCommandEnabled(teleportType)) {
-            NarcissusUtils.sendTranslatableMessage(source, false, "command_disabled");
+            MessageUtils.sendMessage(source, false, NarcissusComponent.get().transAuto("command_disabled"));
             return true;
         }
         if (source.getEntity() != null && source.getEntity() instanceof ServerPlayerEntity) {
@@ -199,12 +196,12 @@ public final class CommandUtils {
             if (type != null) {
                 int teleportCoolDown = NarcissusUtils.getTeleportCoolDown(player, type);
                 if (teleportCoolDown > 0) {
-                    NarcissusUtils.sendTranslatableMessage(player, "command_cooldown", teleportCoolDown);
+                    MessageUtils.sendMessage(player, NarcissusComponent.get().transAuto("command_cooldown", teleportCoolDown));
                     return true;
                 }
             }
-            if (CommonConfig.get().server().general().tpWithEnemy() && NarcissusUtils.isTargetedByHostile(player)) {
-                NarcissusUtils.sendTranslatableMessage(player, "locked_by_mob");
+            if (CommonConfig.get().general().tpWithEnemy() && NarcissusUtils.isTargetedByHostile(player)) {
+                MessageUtils.sendMessage(player, NarcissusComponent.get().transAuto("locked_by_mob"));
                 return true;
             }
         }
@@ -218,8 +215,8 @@ public final class CommandUtils {
     public static boolean checkTeleportPost(TeleportRequest request, boolean submit) {
         boolean result = NarcissusUtils.isTeleportAcrossDimensionEnabled(request.getRequester(), request.getTarget().getLevel().dimension(), request.getTeleportType());
         result = result && NarcissusUtils.validTeleportCost(request, submit);
-        if (CommonConfig.get().server().general().tpWithEnemy() && NarcissusUtils.isTargetedByHostile(request.getRequester())) {
-            NarcissusUtils.sendTranslatableMessage(request.getRequester(), "locked_by_mob");
+        if (CommonConfig.get().general().tpWithEnemy() && NarcissusUtils.isTargetedByHostile(request.getRequester())) {
+            MessageUtils.sendMessage(request.getRequester(), NarcissusComponent.get().transAuto("locked_by_mob"));
             result = false;
         }
         return !result;
@@ -232,8 +229,8 @@ public final class CommandUtils {
     public static boolean checkTeleportPost(ServerPlayerEntity player, SafeWorldCoordinate target, EnumTeleportType type, boolean submit) {
         boolean result = NarcissusUtils.isTeleportAcrossDimensionEnabled(player, target.dimension(), type);
         result = result && NarcissusUtils.validTeleportCost(player, target, type, submit);
-        if (CommonConfig.get().server().general().tpWithEnemy() && NarcissusUtils.isTargetedByHostile(player)) {
-            NarcissusUtils.sendTranslatableMessage(player, "locked_by_mob");
+        if (CommonConfig.get().general().tpWithEnemy() && NarcissusUtils.isTargetedByHostile(player)) {
+            MessageUtils.sendMessage(player, NarcissusComponent.get().transAuto("locked_by_mob"));
             result = false;
         }
         return !result;
@@ -301,35 +298,35 @@ public final class CommandUtils {
 
     public static Component getWhiteListMessage(ServerPlayerEntity player, PlayerAccess access) {
         if (CollectionUtils.isNullOrEmpty(access.getWhiteList())) {
-            return Component.trans(NarcissusFarewell.MODID, EnumI18nType.FORMAT, "list_is_empty", getBlacklistOrWhitelistHelp(player, false));
+            return NarcissusComponent.get().transAuto("list_is_empty", getBlacklistOrWhitelistHelp(player, false));
         }
         String language = NarcissusLang.getPlayerLanguage(player);
-        Component playerList = Component.empty();
+        Component playerList = NarcissusComponent.get().empty();
         access.getWhiteList().stream()
                 .map(s -> {
-                    Component flag = Component.literal(PlayerUtils.getPlayerNameString(PlayerUtils.getPlayerByUUID(s)));
+                    Component flag = NarcissusComponent.get().literal(PlayerUtils.getPlayerNameString(PlayerUtils.getPlayerByUUID(s)));
                     if (access.getAutoTpaList().contains(s)) {
-                        flag.append(Component.literal("A")
+                        flag.append(NarcissusComponent.get().literal("A")
                                 .hoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT,
-                                        Component.trans(NarcissusFarewell.MODID, EnumI18nType.WORD, "auto_accept_tpa").toChat(language))));
+                                        NarcissusComponent.get().transAuto("auto_accept_tpa").toChat(language))));
                     }
                     if (access.getAutoTphList().contains(s)) {
-                        flag.append(Component.literal("H")
+                        flag.append(NarcissusComponent.get().literal("H")
                                 .hoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT,
-                                        Component.trans(NarcissusFarewell.MODID, EnumI18nType.WORD, "auto_accept_tph").toChat(language))));
+                                        NarcissusComponent.get().transAuto("auto_accept_tph").toChat(language))));
                     }
                     if (CollectionUtils.isNotNullOrEmpty(flag.getChildren())) {
                         flag.appendIndex(0, "[").append("]");
                     }
                     return flag;
                 }).forEach(playerList::append);
-        return Component.trans(NarcissusFarewell.MODID, EnumI18nType.FORMAT, "list_detail", getBlacklistOrWhitelistHelp(player, false), playerList);
+        return NarcissusComponent.get().transAuto("list_detail", getBlacklistOrWhitelistHelp(player, false), playerList);
     }
 
     public static Component getBlacklistOrWhitelistHelp(PlayerEntity player, boolean black) {
-        return Component.trans(NarcissusFarewell.MODID, EnumI18nType.WORD, black ? "blacklist_tag" : "whitelist_tag")
+        return NarcissusComponent.get().transAuto(black ? "blacklist_tag" : "whitelist_tag")
                 .hoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT,
-                        Component.trans(NarcissusFarewell.MODID, EnumI18nType.WORD, black ? "blacklist_help" : "whitelist_help")
+                        NarcissusComponent.get().transAuto(black ? "blacklist_help" : "whitelist_help")
                                 .toChat(NarcissusLang.getPlayerLanguage(player))));
     }
 
@@ -359,7 +356,7 @@ public final class CommandUtils {
         String lang = getLanguage(context.getSource());
         for (int i = 1; i <= 5; i++) {
             int index = (int) Math.pow(10, i);
-            if (index <= CommonConfig.get().server().general().teleportRandomDistanceLimit()) {
+            if (index <= CommonConfig.get().general().teleportRandomDistanceLimit()) {
                 Component tooltip = NarcissusLang.transLangAuto(lang, "suggest_range", index);
                 builder.suggest(index, tooltip.toVanilla());
             }

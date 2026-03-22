@@ -10,16 +10,17 @@ import xin.vanilla.banira.common.config.ConfigHolder;
 import xin.vanilla.banira.common.config.ForgeConfigAdapter;
 import xin.vanilla.banira.common.config.annotation.Config;
 import xin.vanilla.banira.common.config.annotation.ConfigEntry;
+import xin.vanilla.narcissus.config.access.ClientConfigAccess;
 
 /**
- * 客户端配置：注解结构用于 ForgeConfigSpec；运行时通过 {@link #get()} 分层读取。
+ * 客户端配置：注解结构用于 ForgeConfigSpec；运行时通过 {@link #get()} 返回的 {@link RootView} 分层读取。
  * GUI 说明与项目根目录 {@code narcissus_farewell-client.toml} 中的注释一致。
  */
-@Getter
-@Setter
-@Accessors(chain = true, fluent = true)
 @Config(name = "narcissus_farewell-client", type = ModConfig.Type.CLIENT)
 public class ClientConfig implements ConfigData {
+
+    public ClientConfig() {
+    }
 
     // region 配置结构
 
@@ -29,37 +30,20 @@ public class ClientConfig implements ConfigData {
     @ConfigEntry.Gui.Tooltip(zh_cn = "客户端设置", en_us = "Client settings")
     private ClientRootCategory client = new ClientRootCategory();
 
-    private final ConfigHolder holder;
-    private final ClientRoot clientApi;
-
     // endregion 配置结构
 
-    private ClientConfig() {
-        this(null);
+
+    public static RootView get() {
+        return ClientConfigAccess.root(ForgeConfigAdapter.getHolder(ClientConfig.class));
     }
 
-    ClientConfig(ConfigHolder holder) {
-        this.holder = holder;
-        this.clientApi = new ClientRoot(holder);
-    }
-
-    public static ClientConfig get() {
-        return new ClientConfig(ForgeConfigAdapter.getHolder(ClientConfig.class));
-    }
-
-    public ClientRoot client() {
-        return clientApi;
-    }
-
-    public ConfigHolder holder() {
-        return holder;
-    }
-
-    public void save() {
-        if (holder != null) {
-            holder.save();
+    public static void save() {
+        ConfigHolder h = ForgeConfigAdapter.getHolder(ClientConfig.class);
+        if (h != null) {
+            h.save();
         }
     }
+
 
     @Getter
     @Setter
@@ -72,49 +56,25 @@ public class ClientConfig implements ConfigData {
         private boolean syncStageMapWaypoint = true;
     }
 
-    public static final class Key {
-        private Key() {
-        }
+    // region 运行时视图接口
 
-        public static final String SYNC_HOME_MAP_WAYPOINT = "client.syncHomeMapWaypoint";
-        public static final String SYNC_STAGE_MAP_WAYPOINT = "client.syncStageMapWaypoint";
+    public interface RootView {
+        ClientView client();
+
+        ConfigHolder holder();
+
+        void save();
     }
 
-    public static final class ClientRoot {
-        private final ConfigHolder holder;
+    public interface ClientView {
+        boolean syncHomeMapWaypoint();
 
-        ClientRoot(ConfigHolder holder) {
-            this.holder = holder;
-        }
+        ClientView syncHomeMapWaypoint(boolean value);
 
-        public boolean syncHomeMapWaypoint() {
-            if (holder == null) {
-                return true;
-            }
-            Boolean v = holder.get(Key.SYNC_HOME_MAP_WAYPOINT);
-            return v != null ? v : true;
-        }
+        boolean syncStageMapWaypoint();
 
-        public ClientRoot syncHomeMapWaypoint(boolean value) {
-            if (holder != null) {
-                holder.set(Key.SYNC_HOME_MAP_WAYPOINT, value);
-            }
-            return this;
-        }
-
-        public boolean syncStageMapWaypoint() {
-            if (holder == null) {
-                return true;
-            }
-            Boolean v = holder.get(Key.SYNC_STAGE_MAP_WAYPOINT);
-            return v != null ? v : true;
-        }
-
-        public ClientRoot syncStageMapWaypoint(boolean value) {
-            if (holder != null) {
-                holder.set(Key.SYNC_STAGE_MAP_WAYPOINT, value);
-            }
-            return this;
-        }
+        ClientView syncStageMapWaypoint(boolean value);
     }
+
+    // endregion 运行时视图接口
 }

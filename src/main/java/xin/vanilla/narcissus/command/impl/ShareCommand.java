@@ -13,8 +13,9 @@ import net.minecraft.util.text.event.HoverEvent;
 import xin.vanilla.banira.common.data.Component;
 import xin.vanilla.banira.common.data.KeyValue;
 import xin.vanilla.banira.common.enums.EnumMCColor;
+import xin.vanilla.banira.common.util.MessageUtils;
 import xin.vanilla.banira.common.util.StringUtils;
-import xin.vanilla.narcissus.NarcissusFarewell;
+import xin.vanilla.narcissus.NarcissusComponent;
 import xin.vanilla.narcissus.NarcissusLang;
 import xin.vanilla.narcissus.config.CommonConfig;
 import xin.vanilla.narcissus.data.SafeWorldCoordinate;
@@ -43,8 +44,8 @@ public final class ShareCommand {
                 context.getSource().getServer().getPlayerList().getPlayers()));
 
         Component nameComponent;
-        Component tpButton = Component.transAuto(NarcissusFarewell.MODID, "tp_button");
-        Component copyButton = Component.transAuto(NarcissusFarewell.MODID, "copy_button");
+        Component tpButton = NarcissusComponent.get().transAuto("tp_button");
+        Component copyButton = NarcissusComponent.get().transAuto("copy_button");
 
         if (name.contains("->")) {
             PlayerTeleportData data = PlayerTeleportData.getData(player);
@@ -56,18 +57,18 @@ public final class ShareCommand {
             String[] split = keyValue.key().split("->");
             SafeWorldCoordinate safeWorldCoordinate = keyValue.value();
             if (safeWorldCoordinate == null) {
-                NarcissusUtils.sendTranslatableMessage(player, "home_not_found_with_name_in_dimension"
-                        , split[1], split[0]);
+                MessageUtils.sendMessage(player, NarcissusComponent.get().transAuto("home_not_found_with_name_in_dimension"
+                        , split[1], split[0]));
                 return 0;
             }
-            nameComponent = Component.literal(split[0]);
+            nameComponent = NarcissusComponent.get().literal(split[0]);
             String tpCommand = buildTpCommand(safeWorldCoordinate);
             tpButton.color(EnumMCColor.GREEN.getColor())
                     .clickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, tpCommand))
-                    .hoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.literal(tpCommand).toVanilla()));
+                    .hoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, NarcissusComponent.get().literal(tpCommand).toVanilla()));
             copyButton.color(EnumMCColor.GREEN.getColor())
                     .clickEvent(new ClickEvent(ClickEvent.Action.COPY_TO_CLIPBOARD, tpCommand))
-                    .hoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.literal(tpCommand).toVanilla()));
+                    .hoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, NarcissusComponent.get().literal(tpCommand).toVanilla()));
         } else if (name.contains(">>")) {
             KeyValue<String, SafeWorldCoordinate> keyValue = WorldStageData.get().getStageCoordinate().entrySet().stream()
                     .map(entry -> new KeyValue<>(entry.getKey().value() + ">>" + entry.getKey().key(), entry.getValue()))
@@ -77,45 +78,41 @@ public final class ShareCommand {
             String[] split = keyValue.key().split(">>");
             SafeWorldCoordinate safeWorldCoordinate = keyValue.value();
             if (safeWorldCoordinate == null) {
-                NarcissusUtils.sendTranslatableMessage(player, "stage_not_found_with_name_in_dimension"
-                        , split[1], split[0]);
+                MessageUtils.sendMessage(player, NarcissusComponent.get().transAuto("stage_not_found_with_name_in_dimension"
+                        , split[1], split[0]));
                 return 0;
             }
-            nameComponent = Component.literal(split[0]);
+            nameComponent = NarcissusComponent.get().literal(split[0]);
             String tpCommand = buildTpCommand(safeWorldCoordinate);
             tpButton.color(EnumMCColor.GREEN.getColor())
                     .clickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, tpCommand))
-                    .hoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.literal(tpCommand).toVanilla()));
+                    .hoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, NarcissusComponent.get().literal(tpCommand).toVanilla()));
             copyButton.color(EnumMCColor.GREEN.getColor())
                     .clickEvent(new ClickEvent(ClickEvent.Action.COPY_TO_CLIPBOARD, tpCommand))
-                    .hoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.literal(tpCommand).toVanilla()));
+                    .hoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, NarcissusComponent.get().literal(tpCommand).toVanilla()));
         } else {
-            nameComponent = Component.literal(name);
+            nameComponent = NarcissusComponent.get().literal(name);
             SafeWorldCoordinate safeWorldCoordinate = new SafeWorldCoordinate(player);
             String tpCommand = buildTpCommand(safeWorldCoordinate);
             tpButton.color(EnumMCColor.GREEN.getColor())
                     .clickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, tpCommand))
-                    .hoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.literal(tpCommand).toVanilla()));
+                    .hoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, NarcissusComponent.get().literal(tpCommand).toVanilla()));
             copyButton.color(EnumMCColor.GREEN.getColor())
                     .clickEvent(new ClickEvent(ClickEvent.Action.COPY_TO_CLIPBOARD, tpCommand))
-                    .hoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.literal(tpCommand).toVanilla()));
+                    .hoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, NarcissusComponent.get().literal(tpCommand).toVanilla()));
         }
 
-        String lang = CommonConfig.get().server().general().defaultLanguage();
-        if (source.getEntity() != null && source.getEntity() instanceof ServerPlayerEntity) {
-            lang = NarcissusLang.getPlayerLanguage(source.getPlayerOrException());
-        }
-        Component component = NarcissusLang.transLangAuto(lang, "shared_coordinates"
+        Component component = NarcissusComponent.get().transAuto("shared_coordinates"
                 , player.getDisplayName().getString()
                 , nameComponent
                 , tpButton
                 , copyButton);
         for (ServerPlayerEntity target : targetList) {
             if (!target.getUUID().equals(player.getUUID())) {
-                NarcissusUtils.sendMessage(target, component);
+                MessageUtils.sendMessage(target, component);
             }
         }
-        source.sendSuccess(component.toChat(lang), false);
+        source.sendSuccess(component.toChat(NarcissusLang.getPlayerLanguage(player)), false);
         return 1;
     }
 

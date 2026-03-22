@@ -15,19 +15,18 @@ import xin.vanilla.banira.client.gui.BaniraScreen;
 import xin.vanilla.banira.client.gui.component.Text;
 import xin.vanilla.banira.client.gui.widget.*;
 import xin.vanilla.banira.common.data.Color;
-import xin.vanilla.banira.common.data.Component;
 import xin.vanilla.banira.common.data.KeyValue;
 import xin.vanilla.banira.common.enums.EnumI18nType;
 import xin.vanilla.banira.common.util.ColorUtils;
 import xin.vanilla.banira.common.util.NumberUtils;
-import xin.vanilla.narcissus.NarcissusFarewell;
+import xin.vanilla.narcissus.NarcissusComponent;
 import xin.vanilla.narcissus.NarcissusLang;
 import xin.vanilla.narcissus.data.SafeWorldCoordinate;
 import xin.vanilla.narcissus.data.TeleportRecord;
 import xin.vanilla.narcissus.data.client.ClientStageData;
 import xin.vanilla.narcissus.data.player.PlayerTeleportData;
 import xin.vanilla.narcissus.enums.EnumTeleportType;
-import xin.vanilla.narcissus.network.ModNetworkHandler;
+import xin.vanilla.narcissus.network.NetworkInit;
 import xin.vanilla.narcissus.network.packet.WaypointDelToServer;
 import xin.vanilla.narcissus.network.packet.WaypointTeleportToServer;
 import xin.vanilla.narcissus.util.ClientCostCalculator;
@@ -102,7 +101,7 @@ public class WaypointScreen extends BaniraScreen {
     // endregion Data
 
     public WaypointScreen() {
-        super(Component.literal("WaypointScreen"));
+        super(NarcissusComponent.get().literal("WaypointScreen"));
         previousScreen(Minecraft.getInstance().screen);
     }
 
@@ -140,8 +139,8 @@ public class WaypointScreen extends BaniraScreen {
         dlgX = (width - DIALOG_W) / 2;
         dlgY = (height - DIALOG_H) / 2;
 
-        int cancelW = Math.max(72, font.width(Component.transClientAuto(NarcissusFarewell.MODID, "cancel").toString()) + 20);
-        int deleteW = Math.max(72, font.width(Component.transClientAuto(NarcissusFarewell.MODID, "delete").toString()) + 20);
+        int cancelW = Math.max(72, font.width(NarcissusComponent.get().transClientAuto( "cancel").toString()) + 20);
+        int deleteW = Math.max(72, font.width(NarcissusComponent.get().transClientAuto( "delete").toString()) + 20);
         int btnY = dlgY + DIALOG_H - 30;
         int cancelX = dlgX + (DIALOG_W - cancelW - deleteW - 10) / 2;
         int deleteX = cancelX + cancelW + 10;
@@ -153,7 +152,7 @@ public class WaypointScreen extends BaniraScreen {
         teleportButton = new ButtonWidget(this);
         teleportButton.id("teleport");
         teleportButton.bounds(new ScreenCoordinate(buttonX, buttonY, buttonW, BUTTON_HEIGHT));
-        teleportButton.text(Component.transClientAuto(NarcissusFarewell.MODID, "teleport_btn"));
+        teleportButton.text(NarcissusComponent.get().transClientAuto( "teleport_btn"));
         teleportButton.radius(4);
         teleportButton.onClick(b -> {
             if (selectedItem != null && selectedItem.canTeleport) {
@@ -165,7 +164,7 @@ public class WaypointScreen extends BaniraScreen {
         deleteCancelButton = new ButtonWidget(this);
         deleteCancelButton.id("delete_cancel");
         deleteCancelButton.bounds(new ScreenCoordinate(cancelX, btnY, cancelW, 20));
-        deleteCancelButton.text(Component.transClientAuto(NarcissusFarewell.MODID, "cancel"));
+        deleteCancelButton.text(NarcissusComponent.get().transClientAuto( "cancel"));
         deleteCancelButton.radius(4);
         deleteCancelButton.visible(false);
         deleteCancelButton.onClick(b -> deleteConfirmItem = null);
@@ -174,7 +173,7 @@ public class WaypointScreen extends BaniraScreen {
         deleteConfirmButton = new ButtonWidget(this);
         deleteConfirmButton.id("delete_confirm");
         deleteConfirmButton.bounds(new ScreenCoordinate(deleteX, btnY, deleteW, 20));
-        deleteConfirmButton.text(Component.transClientAuto(NarcissusFarewell.MODID, "delete"));
+        deleteConfirmButton.text(NarcissusComponent.get().transClientAuto( "delete"));
         deleteConfirmButton.radius(4);
         deleteConfirmButton.visible(false);
         deleteConfirmButton.onClick(b -> {
@@ -265,13 +264,13 @@ public class WaypointScreen extends BaniraScreen {
             deleteConfirmButton.visible(dialogOpen);
         }
 
-        drawPanel(stack, theme, 0, Component.transClientAuto(NarcissusFarewell.MODID, "private").toString(), homeItems, homeScrollbar, false, mouseX, mouseY);
-        drawPanel(stack, theme, 1, Component.transClientAuto(NarcissusFarewell.MODID, "public").toString(), stageItems, stageScrollbar, false, mouseX, mouseY);
-        drawPanel(stack, theme, 2, Component.transClientAuto(NarcissusFarewell.MODID, "footprints").toString(), backItems, backScrollbar, true, mouseX, mouseY);
+        drawPanel(stack, theme, 0, NarcissusComponent.get().transClientAuto( "private").toString(), homeItems, homeScrollbar, false, mouseX, mouseY);
+        drawPanel(stack, theme, 1, NarcissusComponent.get().transClientAuto( "public").toString(), stageItems, stageScrollbar, false, mouseX, mouseY);
+        drawPanel(stack, theme, 2, NarcissusComponent.get().transClientAuto( "footprints").toString(), backItems, backScrollbar, true, mouseX, mouseY);
 
         drawFooter(stack, theme);
 
-        String ticketStr = Component.transClientAuto(NarcissusFarewell.MODID, "teleport_card").toString() + ": " + ticketCount;
+        String ticketStr = NarcissusComponent.get().transClientAuto( "teleport_card").toString() + ": " + ticketCount;
         int tw = font.width(ticketStr);
         font.draw(stack, ticketStr, width - tw - 10, 10, theme.textPrimary());
 
@@ -419,7 +418,7 @@ public class WaypointScreen extends BaniraScreen {
         lines.add(item.getDetailTypeName() + " | " + item.getDimensionName());
         lines.add(item.getCoordinateName());
         if (!item.canTeleport) {
-            lines.add(Component.transClientAuto(NarcissusFarewell.MODID, "back_record_used").toString());
+            lines.add(NarcissusComponent.get().transClientAuto( "back_record_used").toString());
         }
         String content = String.join("\n", lines);
         Text tooltipText = Text.literal(content).stack(stack).font(font).color(Color.argb(theme.textPrimary()));
@@ -570,8 +569,8 @@ public class WaypointScreen extends BaniraScreen {
         dlgBorder.rect().radius(6).border(1f);
         BaseShapeWidget.drawShape(dlgBorder);
 
-        String title = Component.transClientAuto(NarcissusFarewell.MODID, "del_confirm_title").toString();
-        String msg = Component.transClientAuto(NarcissusFarewell.MODID, "del_confirm_msg").toString();
+        String title = NarcissusComponent.get().transClientAuto( "del_confirm_title").toString();
+        String msg = NarcissusComponent.get().transClientAuto( "del_confirm_msg").toString();
         font.draw(stack, title, dlgX + (DIALOG_W - font.width(title)) / 2f, dlgY + 15, theme.textPrimary());
         font.draw(stack, msg, dlgX + (DIALOG_W - font.width(msg)) / 2f, dlgY + 35, theme.textSecondary());
     }
@@ -590,7 +589,7 @@ public class WaypointScreen extends BaniraScreen {
         } else if (type == EnumTeleportType.TP_BACK) {
             name = selectedItem.recordType != null ? selectedItem.recordType : "";
         }
-        ModNetworkHandler.INSTANCE.sendToServer(new WaypointTeleportToServer(type, name, dimension));
+        NetworkInit.INSTANCE.sendToServer(new WaypointTeleportToServer(type, name, dimension));
         onClose();
     }
 
@@ -600,7 +599,7 @@ public class WaypointScreen extends BaniraScreen {
         }
         int typeOrdinal = item.type == WaypointEntry.Type.HOME ? 0 : 1;
         String dimension = item.safeWorldCoordinate.getDimensionResourceId();
-        ModNetworkHandler.INSTANCE.sendToServer(new WaypointDelToServer(typeOrdinal, item.name, dimension));
+        NetworkInit.INSTANCE.sendToServer(new WaypointDelToServer(typeOrdinal, item.name, dimension));
         if (item.type == WaypointEntry.Type.HOME) {
             homeItems.removeIf(e -> e.name.equals(item.name) && e.safeWorldCoordinate != null && dimension.equals(e.safeWorldCoordinate.getDimensionResourceId()));
         } else if (item.type == WaypointEntry.Type.STAGE) {
@@ -673,11 +672,11 @@ public class WaypointScreen extends BaniraScreen {
         public String getDetailTypeName() {
             switch (type) {
                 case HOME:
-                    return Component.transClientAuto(NarcissusFarewell.MODID, "private").toString();
+                    return NarcissusComponent.get().transClientAuto( "private").toString();
                 case STAGE:
-                    return Component.transClientAuto(NarcissusFarewell.MODID, "public").toString();
+                    return NarcissusComponent.get().transClientAuto( "public").toString();
                 case BACK:
-                    return Component.transClientAuto(NarcissusFarewell.MODID, "footprints").toString();
+                    return NarcissusComponent.get().transClientAuto( "footprints").toString();
                 default:
                     return "";
             }
@@ -689,7 +688,7 @@ public class WaypointScreen extends BaniraScreen {
             }
             String key = "dim." + safeWorldCoordinate.dimension().location().toString().replaceAll(":", ".");
             if (NarcissusLang.hasTranslation(EnumI18nType.WORD, key)) {
-                return Component.transClientAuto(NarcissusFarewell.MODID, key).toString();
+                return NarcissusComponent.get().transClientAuto( key).toString();
             }
             return safeWorldCoordinate.dimension().location().toString();
         }

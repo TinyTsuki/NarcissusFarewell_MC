@@ -26,7 +26,7 @@ public final class TpRandomCommand {
         CommandUtils.notifyHelp(context);
         if (CommandUtils.checkTeleportPre(context.getSource(), EnumCommandType.TP_RANDOM)) return 0;
         ServerPlayerEntity player = context.getSource().getPlayerOrException();
-        int range = CommandUtils.getIntDefault(context, "range", CommonConfig.get().server().general().teleportRandomDistanceLimit());
+        int range = CommandUtils.getIntDefault(context, "range", CommonConfig.get().general().teleportRandomDistanceLimit());
         range = NarcissusUtils.checkRange(player, EnumTeleportType.TP_RANDOM, range);
         RegistryKey<World> targetLevel = CommandUtils.getDimensionKeyDefault(context, "dimension", player.getLevel().dimension());
         SafeWorldCoordinate safeWorldCoordinate = SafeWorldCoordinate.random(player, range, targetLevel).safe(true);

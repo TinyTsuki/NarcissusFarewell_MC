@@ -12,7 +12,9 @@ import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.util.RegistryKey;
 import net.minecraft.world.World;
 import xin.vanilla.banira.common.util.DimensionUtils;
+import xin.vanilla.banira.common.util.MessageUtils;
 import xin.vanilla.banira.common.util.StringUtils;
+import xin.vanilla.narcissus.NarcissusComponent;
 import xin.vanilla.narcissus.config.CommonConfig;
 import xin.vanilla.narcissus.data.SafeWorldCoordinate;
 import xin.vanilla.narcissus.data.TeleportRecord;
@@ -52,7 +54,7 @@ public final class TpGraveCommand {
 
         SafeWorldCoordinate target = resolveTeleportTarget(coord1, coord2);
         if (target == null) {
-            NarcissusUtils.sendTranslatableMessage(player, "death_not_found");
+            MessageUtils.sendMessage(player, NarcissusComponent.get().transAuto("death_not_found"));
             return 0;
         }
 
@@ -69,15 +71,15 @@ public final class TpGraveCommand {
         ServerPlayerEntity player = context.getSource().getPlayerOrException();
         if (CommandUtils.checkTeleportPre(context.getSource(), EnumCommandType.TP_GRAVE)) return 0;
 
-        int limit = CommonConfig.get().server().general().graveSearchRangeLimit();
+        int limit = CommonConfig.get().general().graveSearchRangeLimit();
         if (range > limit) {
-            NarcissusUtils.sendTranslatableMessage(player, "grave_range_too_large", limit);
+            MessageUtils.sendMessage(player, NarcissusComponent.get().transAuto("grave_range_too_large", limit));
             return 0;
         }
 
         SafeWorldCoordinate coord2 = GraveHelper.findCorpseGravestoneNearPlayer(player, range);
         if (coord2 == null) {
-            NarcissusUtils.sendTranslatableMessage(player, "death_not_found");
+            MessageUtils.sendMessage(player, NarcissusComponent.get().transAuto("death_not_found"));
             return 0;
         }
 
@@ -94,7 +96,7 @@ public final class TpGraveCommand {
 
         TeleportRecord record = GraveHelper.findLastDeathRecord(player, dim);
         if (record == null) {
-            NarcissusUtils.sendTranslatableMessage(player, "death_not_found");
+            MessageUtils.sendMessage(player, NarcissusComponent.get().transAuto("death_not_found"));
             return 0;
         }
 

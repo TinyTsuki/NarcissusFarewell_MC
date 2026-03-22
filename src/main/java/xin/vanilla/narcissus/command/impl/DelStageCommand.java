@@ -12,10 +12,14 @@ import net.minecraft.world.World;
 import xin.vanilla.banira.common.data.Component;
 import xin.vanilla.banira.common.data.KeyValue;
 import xin.vanilla.banira.common.util.DimensionUtils;
+import xin.vanilla.banira.common.util.MessageUtils;
+import xin.vanilla.banira.common.util.PacketUtils;
+import xin.vanilla.narcissus.NarcissusComponent;
 import xin.vanilla.narcissus.config.CommonConfig;
 import xin.vanilla.narcissus.data.SafeWorldCoordinate;
 import xin.vanilla.narcissus.data.world.WorldStageData;
 import xin.vanilla.narcissus.enums.EnumCommandType;
+import xin.vanilla.narcissus.network.NetworkInit;
 import xin.vanilla.narcissus.network.packet.StageDataSyncToClient;
 import xin.vanilla.narcissus.network.packet.WaypointSyncToClient;
 import xin.vanilla.narcissus.util.CommandUtils;
@@ -47,20 +51,20 @@ public final class DelStageCommand {
         stageData.setDirty();
         if (remove == null) {
             if (player != null) {
-                NarcissusUtils.sendTranslatableMessage(player, "stage_not_found_with_name_in_dimension", dimension, name);
+                MessageUtils.sendMessage(player, NarcissusComponent.get().transAuto("stage_not_found_with_name_in_dimension", dimension, name));
             } else {
-                NarcissusUtils.sendTranslatableMessage(source, false, "stage_not_found_with_name_in_dimension", dimension, name);
+                MessageUtils.sendMessage(source, false, NarcissusComponent.get().transAuto("stage_not_found_with_name_in_dimension", dimension, name));
             }
             return 0;
         }
-        NarcissusUtils.broadcastPacket(new WaypointSyncToClient(WaypointSyncToClient.Action.REMOVE, WaypointSyncToClient.Type.STAGE, name, remove));
-        NarcissusUtils.broadcastPacket(new StageDataSyncToClient(stageData.getStageCoordinate()));
-        Component dimensionComponent = Component.literal(dimension)
-                .hoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.literal(remove.xyzString()).toVanilla()));
+        PacketUtils.broadcastPacket(NetworkInit.INSTANCE, new WaypointSyncToClient(WaypointSyncToClient.Action.REMOVE, WaypointSyncToClient.Type.STAGE, name, remove));
+        PacketUtils.broadcastPacket(NetworkInit.INSTANCE, new StageDataSyncToClient(stageData.getStageCoordinate()));
+        Component dimensionComponent = NarcissusComponent.get().literal(dimension)
+                .hoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, NarcissusComponent.get().literal(remove.xyzString()).toVanilla()));
         if (player != null) {
-            NarcissusUtils.sendTranslatableMessage(player, "stage_del", dimensionComponent, name);
+            MessageUtils.sendMessage(player, NarcissusComponent.get().transAuto("stage_del", dimensionComponent, name));
         } else {
-            NarcissusUtils.sendTranslatableMessage(source, true, "stage_del", dimensionComponent, name);
+            MessageUtils.sendMessage(source, true, NarcissusComponent.get().transAuto("stage_del", dimensionComponent, name));
         }
         return 1;
     }
