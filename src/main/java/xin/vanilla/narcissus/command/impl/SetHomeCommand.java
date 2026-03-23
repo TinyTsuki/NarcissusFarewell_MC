@@ -12,11 +12,14 @@ import net.minecraft.command.Commands;
 import net.minecraft.entity.player.ServerPlayerEntity;
 import xin.vanilla.banira.common.data.Component;
 import xin.vanilla.banira.common.data.KeyValue;
-import xin.vanilla.narcissus.NarcissusLang;
+import xin.vanilla.banira.common.util.MessageUtils;
+import xin.vanilla.banira.common.util.PacketUtils;
+import xin.vanilla.narcissus.NarcissusComponent;
 import xin.vanilla.narcissus.config.CommonConfig;
 import xin.vanilla.narcissus.data.SafeWorldCoordinate;
 import xin.vanilla.narcissus.data.player.PlayerTeleportData;
 import xin.vanilla.narcissus.enums.EnumCommandType;
+import xin.vanilla.narcissus.network.NetworkInit;
 import xin.vanilla.narcissus.network.packet.WaypointSyncToClient;
 import xin.vanilla.narcissus.util.CommandUtils;
 import xin.vanilla.narcissus.util.NarcissusUtils;
@@ -32,8 +35,8 @@ public final class SetHomeCommand {
         ServerPlayerEntity player = context.getSource().getPlayerOrException();
         if (CommandUtils.checkTeleportPre(context.getSource(), EnumCommandType.SET_HOME)) return 0;
         PlayerTeleportData data = PlayerTeleportData.getData(player);
-        if (data.getHomeCoordinate().size() >= CommonConfig.get().server().general().teleportHomeLimit()) {
-            NarcissusUtils.sendTranslatableMessage(player, "home_limit", CommonConfig.get().server().general().teleportHomeLimit());
+        if (data.getHomeCoordinate().size() >= CommonConfig.get().general().teleportHomeLimit()) {
+            MessageUtils.sendMessage(player, NarcissusComponent.get().transAuto("home_limit", CommonConfig.get().general().teleportHomeLimit()));
             return 0;
         }
         String name = CommandUtils.getStringDefault(context, "name", "home");
@@ -45,38 +48,38 @@ public final class SetHomeCommand {
         SafeWorldCoordinate safeWorldCoordinate = new SafeWorldCoordinate(player);
         KeyValue<String, String> key = new KeyValue<>(player.getLevel().dimension().location().toString(), name);
         if (data.getHomeCoordinate().containsKey(key)) {
-            NarcissusUtils.sendTranslatableMessage(player, "home_already_exists", key.key(), key.value());
+            MessageUtils.sendMessage(player, NarcissusComponent.get().transAuto("home_already_exists", key.key(), key.value()));
             return 0;
         }
         data.addHomeCoordinate(key, safeWorldCoordinate);
-        NarcissusUtils.sendPacketToPlayer(new WaypointSyncToClient(WaypointSyncToClient.Action.ADD, WaypointSyncToClient.Type.HOME, name, safeWorldCoordinate), player);
+        PacketUtils.sendPacketToPlayer(NetworkInit.INSTANCE, new WaypointSyncToClient(WaypointSyncToClient.Action.ADD, WaypointSyncToClient.Type.HOME, name, safeWorldCoordinate), player);
         if (defaultHome) {
             if (data.getDefaultHome().containsKey(player.getLevel().dimension().location().toString())) {
-                NarcissusUtils.sendTranslatableMessage(player, "home_default_remove", data.getDefaultHome(player.getLevel().dimension().location().toString()).value());
+                MessageUtils.sendMessage(player, NarcissusComponent.get().transAuto("home_default_remove", data.getDefaultHome(player.getLevel().dimension().location().toString()).value()));
             }
             data.addDefaultHome(player.getLevel().dimension().location().toString(), name);
-            NarcissusUtils.sendTranslatableMessage(player, "home_set_default", name, safeWorldCoordinate.xyzString());
+            MessageUtils.sendMessage(player, NarcissusComponent.get().transAuto("home_set_default", name, safeWorldCoordinate.xyzString()));
         } else {
-            NarcissusUtils.sendTranslatableMessage(player, "home_set", name, safeWorldCoordinate.xyzString());
+            MessageUtils.sendMessage(player, NarcissusComponent.get().transAuto("home_set", name, safeWorldCoordinate.xyzString()));
         }
         return 1;
     }
 
     public static CompletableFuture<Suggestions> suggestion(CommandContext<CommandSource> context, SuggestionsBuilder builder) {
         String lang = CommandUtils.getLanguage(context.getSource());
-        Component homeTooltip = NarcissusLang.transLangAuto(lang, "suggest_home_name");
-        Component nameTooltip = NarcissusLang.transLangAuto(lang, "suggest_custom_name");
-        builder.suggest("home", homeTooltip.toVanilla());
-        builder.suggest("name", nameTooltip.toVanilla());
+        Component homeTooltip = NarcissusComponent.get().transAuto("suggest_home_name");
+        Component nameTooltip = NarcissusComponent.get().transAuto("suggest_custom_name");
+        builder.suggest("home", homeTooltip.toVanilla(lang));
+        builder.suggest("name", nameTooltip.toVanilla(lang));
         return builder.buildFuture();
     }
 
     public static CompletableFuture<Suggestions> defaultSuggestion(CommandContext<CommandSource> context, SuggestionsBuilder builder) {
         String lang = CommandUtils.getLanguage(context.getSource());
-        Component trueTooltip = NarcissusLang.transLangAuto(lang, "suggest_default_home_true");
-        Component falseTooltip = NarcissusLang.transLangAuto(lang, "suggest_default_home_false");
-        builder.suggest("true", trueTooltip.toVanilla());
-        builder.suggest("false", falseTooltip.toVanilla());
+        Component trueTooltip = NarcissusComponent.get().transAuto("suggest_default_home_true");
+        Component falseTooltip = NarcissusComponent.get().transAuto("suggest_default_home_false");
+        builder.suggest("true", trueTooltip.toVanilla(lang));
+        builder.suggest("false", falseTooltip.toVanilla(lang));
         return builder.buildFuture();
     }
 

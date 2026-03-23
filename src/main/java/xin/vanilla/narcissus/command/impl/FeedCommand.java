@@ -7,6 +7,8 @@ import net.minecraft.command.CommandSource;
 import net.minecraft.command.Commands;
 import net.minecraft.command.arguments.EntityArgument;
 import net.minecraft.entity.player.ServerPlayerEntity;
+import xin.vanilla.banira.common.util.MessageUtils;
+import xin.vanilla.narcissus.NarcissusComponent;
 import xin.vanilla.narcissus.config.CommonConfig;
 import xin.vanilla.narcissus.enums.EnumCommandType;
 import xin.vanilla.narcissus.util.CommandUtils;
@@ -33,7 +35,7 @@ public final class FeedCommand {
         } else if (source.getEntity() instanceof ServerPlayerEntity) {
             ServerPlayerEntity player = source.getPlayerOrException();
             if (!CommonConfig.get().featureSwitch().switchFeed()) {
-                NarcissusUtils.sendTranslatableMessage(player, "command_disabled");
+                MessageUtils.sendMessage(player, NarcissusComponent.get().transAuto("command_disabled"));
                 return 0;
             }
             List<ServerPlayerEntity> targetList = new ArrayList<>(CommandUtils.getPlayersOptional(context, "player", Collections.singletonList(player)));

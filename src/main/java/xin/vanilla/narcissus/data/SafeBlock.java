@@ -41,7 +41,7 @@ public class SafeBlock {
 
     public void init() {
         if (this.safeBlocksState == null) {
-            this.safeBlocksState = CommonConfig.get().server().general().safeBlocks().stream()
+            this.safeBlocksState = CommonConfig.get().general().safeTeleport().safeBlocks().stream()
                     .map(NarcissusUtils::deserializeBlockState)
                     .filter(Objects::nonNull)
                     .distinct()
@@ -55,7 +55,7 @@ public class SafeBlock {
                     .collect(Collectors.toList());
         }
         if (this.unsafeBlocksState == null) {
-            this.unsafeBlocksState = CommonConfig.get().server().general().unsafeBlocks().stream()
+            this.unsafeBlocksState = CommonConfig.get().general().safeTeleport().unsafeBlocks().stream()
                     .map(NarcissusUtils::deserializeBlockState)
                     .filter(Objects::nonNull)
                     .distinct()
@@ -69,7 +69,7 @@ public class SafeBlock {
                     .collect(Collectors.toList());
         }
         if (this.suffocatingBlocksState == null) {
-            this.suffocatingBlocksState = CommonConfig.get().server().general().suffocatingBlocks().stream()
+            this.suffocatingBlocksState = CommonConfig.get().general().safeTeleport().suffocatingBlocks().stream()
                     .map(NarcissusUtils::deserializeBlockState)
                     .filter(Objects::nonNull)
                     .distinct()

@@ -9,7 +9,9 @@ import net.minecraft.command.CommandSource;
 import net.minecraft.command.Commands;
 import net.minecraft.command.arguments.EntityArgument;
 import net.minecraft.entity.player.ServerPlayerEntity;
+import xin.vanilla.banira.common.util.MessageUtils;
 import xin.vanilla.banira.common.util.StringUtils;
+import xin.vanilla.narcissus.NarcissusComponent;
 import xin.vanilla.narcissus.NarcissusFarewell;
 import xin.vanilla.narcissus.config.CommonConfig;
 import xin.vanilla.narcissus.data.TeleportRequest;
@@ -28,12 +30,12 @@ public final class TpHereYesCommand {
         ServerPlayerEntity player = context.getSource().getPlayerOrException();
         String id = CommandUtils.getRequestId(context, EnumTeleportType.TP_HERE, true);
         if (StringUtils.isNullOrEmpty(id) || !NarcissusFarewell.getTeleportRequest().containsKey(id)) {
-            NarcissusUtils.sendTranslatableMessage(player, "tp_here_not_found");
+            MessageUtils.sendMessage(player, NarcissusComponent.get().transAuto("tp_here_not_found"));
             return 0;
         }
         TeleportRequest request = NarcissusFarewell.getTeleportRequest().remove(id);
         if (CommandUtils.checkTeleportPost(request, true)) {
-            NarcissusUtils.sendTranslatableMessage(player, "tp_here_invalid");
+            MessageUtils.sendMessage(player, NarcissusComponent.get().transAuto("tp_here_invalid"));
             return 0;
         }
         NarcissusUtils.teleportTo(request);

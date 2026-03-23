@@ -14,8 +14,10 @@ import net.minecraft.util.text.event.HoverEvent;
 import xin.vanilla.banira.common.data.Component;
 import xin.vanilla.banira.common.data.KeyValue;
 import xin.vanilla.banira.common.enums.EnumMCColor;
+import xin.vanilla.banira.common.util.MessageUtils;
 import xin.vanilla.banira.common.util.NumberUtils;
 import xin.vanilla.banira.common.util.StringUtils;
+import xin.vanilla.narcissus.NarcissusComponent;
 import xin.vanilla.narcissus.NarcissusLang;
 import xin.vanilla.narcissus.command.NarcissusCommand;
 import xin.vanilla.narcissus.config.CommonConfig;
@@ -34,6 +36,7 @@ public final class HelpCommand {
 
     private static int execute(CommandContext<CommandSource> context) throws CommandSyntaxException {
         ServerPlayerEntity player = context.getSource().getPlayerOrException();
+        String lang = NarcissusLang.getPlayerLanguage(player);
         String command;
         int page;
         try {
@@ -45,24 +48,24 @@ public final class HelpCommand {
         }
         Component helpInfo;
         if (page > 0) {
-            int pages = (int) Math.ceil((double) NarcissusCommand.HELP_MESSAGE.size() / CommonConfig.get().server().general().helpInfoNumPerPage());
-            helpInfo = Component.literal(StringUtils.format(CommonConfig.get().server().general().helpHeader() + "\n", page, pages));
-            for (int i = 0; (page - 1) * CommonConfig.get().server().general().helpInfoNumPerPage() + i < NarcissusCommand.HELP_MESSAGE.size() && i < CommonConfig.get().server().general().helpInfoNumPerPage(); i++) {
-                KeyValue<String, EnumCommandType> keyValue = NarcissusCommand.HELP_MESSAGE.get((page - 1) * CommonConfig.get().server().general().helpInfoNumPerPage() + i);
+            int pages = (int) Math.ceil((double) NarcissusCommand.HELP_MESSAGE.size() / CommonConfig.get().general().helpInfoNumPerPage());
+            helpInfo = NarcissusComponent.get().literal(StringUtils.format(CommonConfig.get().general().helpHeader() + "\n", page, pages));
+            for (int i = 0; (page - 1) * CommonConfig.get().general().helpInfoNumPerPage() + i < NarcissusCommand.HELP_MESSAGE.size() && i < CommonConfig.get().general().helpInfoNumPerPage(); i++) {
+                KeyValue<String, EnumCommandType> keyValue = NarcissusCommand.HELP_MESSAGE.get((page - 1) * CommonConfig.get().general().helpInfoNumPerPage() + i);
                 Component commandTips;
                 if (keyValue.value().name().toLowerCase().contains("concise")) {
-                    commandTips = NarcissusLang.transLangAuto(NarcissusLang.getPlayerLanguage(player), "concise", NarcissusUtils.getCommand(keyValue.value().replaceConcise()));
+                    commandTips = NarcissusComponent.get().transAuto("concise", NarcissusUtils.getCommand(keyValue.value().replaceConcise()));
                 } else {
-                    commandTips = NarcissusLang.transLangAuto(NarcissusLang.getPlayerLanguage(player), keyValue.value().name().toLowerCase());
+                    commandTips = NarcissusComponent.get().transAuto(keyValue.value().name().toLowerCase());
                 }
                 commandTips.color(EnumMCColor.GRAY.getColor());
                 String com = "/" + keyValue.key();
-                helpInfo.append(Component.literal(com)
+                helpInfo.append(NarcissusComponent.get().literal(com)
                                 .clickEvent(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, com))
                                 .hoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT
-                                        , NarcissusLang.transLangAuto(NarcissusLang.getPlayerLanguage(player), "click_to_suggest").toVanilla()))
+                                        , NarcissusComponent.get().transAuto("click_to_suggest").toVanilla(lang)))
                         )
-                        .append(new Component(" -> ").color(EnumMCColor.YELLOW.getColor()))
+                        .append(NarcissusComponent.get().literal(" -> ").color(EnumMCColor.YELLOW.getColor()))
                         .append(commandTips);
                 if (i != NarcissusCommand.HELP_MESSAGE.size() - 1) {
                     helpInfo.append("\n");
@@ -71,30 +74,30 @@ public final class HelpCommand {
             // 添加翻页按钮
             if (pages > 1) {
                 helpInfo.append("\n");
-                Component prevButton = Component.literal("<<< ");
+                Component prevButton = NarcissusComponent.get().literal("<<< ");
                 if (page > 1) {
                     prevButton.color(EnumMCColor.AQUA.getColor())
                             .clickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND,
                                     String.format("/%s %s %d", NarcissusUtils.getCommandPrefix(), "help", page - 1)))
                             .hoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT,
-                                    NarcissusLang.transLangAuto(NarcissusLang.getPlayerLanguage(player), "previous_page").toVanilla()));
+                                    NarcissusComponent.get().transAuto("previous_page").toVanilla(lang)));
                 } else {
                     prevButton.color(EnumMCColor.DARK_AQUA.getColor());
                 }
                 helpInfo.append(prevButton);
 
-                helpInfo.append(Component.literal(String.format(" %s/%s "
+                helpInfo.append(NarcissusComponent.get().literal(String.format(" %s/%s "
                                 , StringUtils.padOptimizedLeft(page, String.valueOf(pages).length(), " ")
                                 , pages))
                         .color(EnumMCColor.WHITE.getColor()));
 
-                Component nextButton = Component.literal(" >>>");
+                Component nextButton = NarcissusComponent.get().literal(" >>>");
                 if (page < pages) {
                     nextButton.color(EnumMCColor.AQUA.getColor())
                             .clickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND,
                                     String.format("/%s %s %d", NarcissusUtils.getCommandPrefix(), "help", page + 1)))
                             .hoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT,
-                                    NarcissusLang.transLangAuto(NarcissusLang.getPlayerLanguage(player), "next_page").toVanilla()));
+                                    NarcissusComponent.get().transAuto("next_page").toVanilla(lang)));
                 } else {
                     nextButton.color(EnumMCColor.DARK_AQUA.getColor());
                 }
@@ -102,24 +105,24 @@ public final class HelpCommand {
             }
         } else {
             EnumCommandType type = EnumCommandType.valueOf(command);
-            helpInfo = Component.empty();
+            helpInfo = NarcissusComponent.get().empty();
             String com = "/" + NarcissusUtils.getCommand(type);
-            helpInfo.append(Component.literal(com)
+            helpInfo.append(NarcissusComponent.get().literal(com)
                             .clickEvent(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, com))
                             .hoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT
-                                    , NarcissusLang.transLangAuto(NarcissusLang.getPlayerLanguage(player), "click_to_suggest").toVanilla()))
+                                    , NarcissusComponent.get().transAuto("click_to_suggest").toVanilla(lang)))
                     )
                     .append("\n")
-                    .append(NarcissusLang.transLangAuto(NarcissusLang.getPlayerLanguage(player), command.toLowerCase() + "_detail").color(EnumMCColor.GRAY.getColor()));
+                    .append(NarcissusComponent.get().transAuto(command.toLowerCase() + "_detail").color(EnumMCColor.GRAY.getColor()));
         }
-        NarcissusUtils.sendMessage(player, helpInfo);
+        MessageUtils.sendMessage(player, helpInfo);
         return 1;
     }
 
     private static CompletableFuture<Suggestions> suggestion(CommandContext<CommandSource> context, SuggestionsBuilder builder) {
         String input = CommandUtils.getStringEmpty(context, "command");
         boolean isInputEmpty = StringUtils.isNullOrEmpty(input);
-        int totalPages = (int) Math.ceil((double) NarcissusCommand.HELP_MESSAGE.size() / CommonConfig.get().server().general().helpInfoNumPerPage());
+        int totalPages = (int) Math.ceil((double) NarcissusCommand.HELP_MESSAGE.size() / CommonConfig.get().general().helpInfoNumPerPage());
         for (int i = 0; i < totalPages && isInputEmpty; i++) {
             builder.suggest(i + 1);
         }

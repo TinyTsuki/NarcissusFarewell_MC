@@ -3,6 +3,7 @@ package xin.vanilla.narcissus;
 import lombok.NonNull;
 import net.minecraft.entity.player.ServerPlayerEntity;
 import xin.vanilla.banira.common.data.Component;
+import xin.vanilla.banira.common.data.ScopedComponent;
 import xin.vanilla.banira.common.enums.EnumI18nType;
 import xin.vanilla.banira.common.util.Translator;
 import xin.vanilla.narcissus.config.CommonConfig;
@@ -32,24 +33,21 @@ public final class NarcissusLang extends Translator {
     }
 
     public static String getServerLanguage() {
-        return CommonConfig.get().server().general().defaultLanguage();
+        return CommonConfig.get().general().defaultLanguage();
     }
 
     public static String getServerPlayerLanguage(ServerPlayerEntity player) {
         return Translator.getServerPlayerLanguage(player);
     }
 
-    /**
-     * 与 {@link Component#transAuto(String, String, Object...)} 一致：无参走 WORD，有参走 FORMAT。
-     */
     public static Component transLangAuto(String languageCode, String key, Object... args) {
         return transLangAuto(NarcissusFarewell.MODID, languageCode, key, args);
     }
 
     public static Component transLangAuto(String modId, String languageCode, String key, Object... args) {
         if (args == null || args.length == 0) {
-            return Component.transLang(modId, languageCode, EnumI18nType.WORD, key);
+            return new ScopedComponent(modId).transLang(modId, languageCode, EnumI18nType.WORD, key);
         }
-        return Component.transLang(modId, languageCode, EnumI18nType.FORMAT, key, args);
+        return new ScopedComponent(modId).transLang(modId, languageCode, EnumI18nType.FORMAT, key, args);
     }
 }

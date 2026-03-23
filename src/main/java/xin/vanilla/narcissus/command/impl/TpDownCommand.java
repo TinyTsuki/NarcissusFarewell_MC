@@ -7,6 +7,8 @@ import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import net.minecraft.command.CommandSource;
 import net.minecraft.command.Commands;
 import net.minecraft.entity.player.ServerPlayerEntity;
+import xin.vanilla.banira.common.util.MessageUtils;
+import xin.vanilla.narcissus.NarcissusComponent;
 import xin.vanilla.narcissus.config.CommonConfig;
 import xin.vanilla.narcissus.data.SafeWorldCoordinate;
 import xin.vanilla.narcissus.enums.EnumCommandType;
@@ -25,7 +27,7 @@ public final class TpDownCommand {
         ServerPlayerEntity player = context.getSource().getPlayerOrException();
         SafeWorldCoordinate safeWorldCoordinate = NarcissusUtils.findDownCandidate(player.getLevel(), new SafeWorldCoordinate(player));
         if (safeWorldCoordinate == null) {
-            NarcissusUtils.sendTranslatableMessage(player, "tp_down_not_found");
+            MessageUtils.sendMessage(player, NarcissusComponent.get().transAuto("tp_down_not_found"));
             return 0;
         }
         safeWorldCoordinate.safe("safe".equalsIgnoreCase(CommandUtils.getStringDefault(context, "safe", "safe"))).safeMode(EnumSafeMode.Y_C_TO_B);

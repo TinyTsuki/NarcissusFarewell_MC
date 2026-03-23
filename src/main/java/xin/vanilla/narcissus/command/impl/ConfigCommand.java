@@ -12,7 +12,8 @@ import net.minecraft.command.CommandSource;
 import net.minecraft.command.Commands;
 import net.minecraft.entity.player.ServerPlayerEntity;
 import xin.vanilla.banira.common.data.Component;
-import xin.vanilla.narcissus.NarcissusFarewell;
+import xin.vanilla.banira.common.util.MessageUtils;
+import xin.vanilla.narcissus.NarcissusComponent;
 import xin.vanilla.narcissus.NarcissusLang;
 import xin.vanilla.narcissus.config.CommonConfig;
 import xin.vanilla.narcissus.enums.EnumCommandType;
@@ -27,10 +28,10 @@ public final class ConfigCommand {
 
     private static int executeTeleportCard(CommandContext<CommandSource> context) throws CommandSyntaxException {
         ServerPlayerEntity player = context.getSource().getPlayerOrException();
-        Component msg = Component.transAuto(NarcissusFarewell.MODID, "server_config_status"
+        Component msg = NarcissusComponent.get().transAuto("server_config_status"
                 , NarcissusLang.get().enabled(CommonConfig.get().base().teleportCard())
-                , NarcissusLang.transLangAuto(NarcissusLang.getPlayerLanguage(player), "teleport_card"));
-        NarcissusUtils.sendMessage(player, msg);
+                , NarcissusComponent.get().transAuto("teleport_card"));
+        MessageUtils.sendMessage(player, msg);
         return 1;
     }
 
@@ -38,10 +39,10 @@ public final class ConfigCommand {
         boolean bool = BoolArgumentType.getBool(context, "bool");
         CommonConfig.get().base().teleportCard(bool);
         ServerPlayerEntity player = context.getSource().getPlayerOrException();
-        Component msg = Component.transAuto(NarcissusFarewell.MODID, "server_config_status"
+        Component msg = NarcissusComponent.get().transAuto("server_config_status"
                 , NarcissusLang.get().enabled(CommonConfig.get().base().teleportCard())
-                , NarcissusLang.transLangAuto(NarcissusLang.getPlayerLanguage(player), "teleport_card"));
-        NarcissusUtils.broadcastMessage(player, msg);
+                , NarcissusComponent.get().transAuto("teleport_card"));
+        MessageUtils.broadcastMessage(player, msg);
         return 1;
     }
 
@@ -51,25 +52,21 @@ public final class ConfigCommand {
         String lang = CommandUtils.getLanguage(source);
         switch (mode) {
             case 0:
-                CommonConfig.Server.resetConfig();
                 CommonConfig.resetConfig();
                 break;
             case 1:
-                CommonConfig.Server.resetConfigWithMode1();
                 CommonConfig.resetConfigWithMode1();
                 break;
             case 2:
-                CommonConfig.Server.resetConfigWithMode2();
                 CommonConfig.resetConfigWithMode2();
                 break;
             case 3:
-                CommonConfig.Server.resetConfigWithMode3();
                 CommonConfig.resetConfigWithMode3();
                 break;
             default:
                 throw new IllegalArgumentException("Mode " + mode + " does not exist");
         }
-        Component component = NarcissusLang.transLangAuto(lang, "server_config_mode", mode);
+        Component component = NarcissusComponent.get().transAuto("server_config_mode", mode);
         source.sendSuccess(component.toChat(lang), false);
         source.getServer().getPlayerList().getPlayers()
                 .forEach(player -> source.getServer().getPlayerList().sendPlayerPermissionLevel(player));
@@ -78,9 +75,9 @@ public final class ConfigCommand {
 
     private static int executeLanguage(CommandContext<CommandSource> context) throws CommandSyntaxException {
         String code = StringArgumentType.getString(context, "language");
-        CommonConfig.get().server().general().defaultLanguage(code);
+        CommonConfig.get().general().defaultLanguage(code);
         ServerPlayerEntity player = context.getSource().getPlayerOrException();
-        NarcissusUtils.broadcastMessage(player, Component.transAuto(NarcissusFarewell.MODID, "server_default_language", CommonConfig.get().server().general().defaultLanguage()));
+        MessageUtils.broadcastMessage(player, NarcissusComponent.get().transAuto("server_default_language", CommonConfig.get().general().defaultLanguage()));
         return 1;
     }
 

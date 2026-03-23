@@ -45,7 +45,7 @@ public class SafeWorldCoordinate extends WorldCoordinate implements Serializable
     }
 
     public static SafeWorldCoordinate random(ServerPlayerEntity player) {
-        return random(player, CommonConfig.get().server().general().teleportRandomDistanceLimit());
+        return random(player, CommonConfig.get().general().teleportRandomDistanceLimit());
     }
 
     public static SafeWorldCoordinate random(ServerPlayerEntity player, int range) {
@@ -54,7 +54,7 @@ public class SafeWorldCoordinate extends WorldCoordinate implements Serializable
 
     public static SafeWorldCoordinate random(ServerPlayerEntity player, int range, RegistryKey<World> dimension) {
         ServerWorld world = DimensionUtils.getLevel(dimension);
-        range = Math.min(Math.max(range, 1), CommonConfig.get().server().general().teleportRandomDistanceLimit());
+        range = Math.min(Math.max(range, 1), CommonConfig.get().general().teleportRandomDistanceLimit());
         double x = player.getX() + (Math.random() * 2 - 1) * range;
         double y = randomWithWeight(NarcissusUtils.getWorldMinY(world), NarcissusUtils.getWorldMaxY(world), (int) player.getY(), 0.75);
         double z = player.getZ() + (Math.random() * 2 - 1) * range;

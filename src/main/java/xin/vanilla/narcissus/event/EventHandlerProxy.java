@@ -9,6 +9,8 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import xin.vanilla.banira.BaniraCodex;
 import xin.vanilla.banira.common.util.DateUtils;
+import xin.vanilla.banira.common.util.MessageUtils;
+import xin.vanilla.narcissus.NarcissusComponent;
 import xin.vanilla.narcissus.NarcissusFarewell;
 import xin.vanilla.narcissus.config.CommonConfig;
 import xin.vanilla.narcissus.data.SafeWorldCoordinate;
@@ -16,7 +18,6 @@ import xin.vanilla.narcissus.data.TeleportRecord;
 import xin.vanilla.narcissus.data.TeleportRequest;
 import xin.vanilla.narcissus.data.player.PlayerTeleportData;
 import xin.vanilla.narcissus.enums.EnumTeleportType;
-import xin.vanilla.narcissus.util.NarcissusUtils;
 
 import java.util.Comparator;
 import java.util.Date;
@@ -34,9 +35,9 @@ public class EventHandlerProxy {
                             TeleportRequest request = NarcissusFarewell.getTeleportRequest().remove(entry.getKey());
                             if (request != null) {
                                 if (request.getTeleportType() == EnumTeleportType.TP_ASK) {
-                                    NarcissusUtils.sendTranslatableMessage(request.getRequester(), "tp_ask_expired", request.getTarget().getDisplayName().getString());
+                                    MessageUtils.sendMessage(request.getRequester(), NarcissusComponent.get().transAuto("tp_ask_expired", request.getTarget().getDisplayName().getString()));
                                 } else if (request.getTeleportType() == EnumTeleportType.TP_HERE) {
-                                    NarcissusUtils.sendTranslatableMessage(request.getRequester(), "tp_here_expired", request.getTarget().getDisplayName().getString());
+                                    MessageUtils.sendMessage(request.getRequester(), NarcissusComponent.get().transAuto("tp_here_expired", request.getTarget().getDisplayName().getString()));
                                 }
                             }
                         });

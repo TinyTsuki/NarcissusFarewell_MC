@@ -11,9 +11,10 @@ import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.util.text.event.ClickEvent;
 import xin.vanilla.banira.common.data.Component;
+import xin.vanilla.banira.common.util.MessageUtils;
 import xin.vanilla.banira.common.util.PlayerUtils;
+import xin.vanilla.narcissus.NarcissusComponent;
 import xin.vanilla.narcissus.NarcissusFarewell;
-import xin.vanilla.narcissus.NarcissusLang;
 import xin.vanilla.narcissus.config.CommonConfig;
 import xin.vanilla.narcissus.data.PlayerAccess;
 import xin.vanilla.narcissus.data.TeleportRequest;
@@ -51,7 +52,7 @@ public final class TpAskCommand {
                     .getTarget();
         }
         if (target == null) {
-            NarcissusUtils.sendTranslatableMessage(player, "player_not_found");
+            MessageUtils.sendMessage(player, NarcissusComponent.get().transAuto("player_not_found"));
             return 0;
         }
         TeleportRequest request = new TeleportRequest()
@@ -68,15 +69,15 @@ public final class TpAskCommand {
         boolean autoAccept = !ignore && targetAccess.getAutoTpaList().contains(playerUUIDString);
         NarcissusFarewell.getTeleportRequest().put(request.getRequestId(), request.setIgnore(ignore));
         if (!ignore) {
-            Component yesButton = NarcissusLang.transLangAuto(NarcissusLang.getPlayerLanguage(target), "yes_button")
+            Component yesButton = NarcissusComponent.get().transAuto("yes_button")
                     .clickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, String.format("/%s %s %s", NarcissusUtils.getCommandPrefix(), CommonConfig.get().commandNames().commandTpAskYes(), request.getRequestId())));
-            Component noButton = NarcissusLang.transLangAuto(NarcissusLang.getPlayerLanguage(target), "no_button")
+            Component noButton = NarcissusComponent.get().transAuto("no_button")
                     .clickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, String.format("/%s %s %s", NarcissusUtils.getCommandPrefix(), CommonConfig.get().commandNames().commandTpAskNo(), request.getRequestId())));
-            NarcissusUtils.sendMessage(target, NarcissusLang.transLangAuto(NarcissusLang.getPlayerLanguage(target), "tp_ask_request_received", player.getDisplayName().getString(), yesButton, noButton));
+            MessageUtils.sendMessage(target, NarcissusComponent.get().transAuto("tp_ask_request_received", player.getDisplayName().getString(), yesButton, noButton));
         }
-        Component cancelButton = NarcissusLang.transLangAuto(NarcissusLang.getPlayerLanguage(target), "cancel_button")
+        Component cancelButton = NarcissusComponent.get().transAuto("cancel_button")
                 .clickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, String.format("/%s %s %s", NarcissusUtils.getCommandPrefix(), CommonConfig.get().commandNames().commandTpAskCancel(), request.getRequestId())));
-        NarcissusUtils.sendMessage(player, NarcissusLang.transLangAuto(NarcissusLang.getPlayerLanguage(player), "tp_ask_request_sent", target.getDisplayName().getString(), cancelButton));
+        MessageUtils.sendMessage(player, NarcissusComponent.get().transAuto("tp_ask_request_sent", target.getDisplayName().getString(), cancelButton));
         if (autoAccept) {
             ServerPlayerEntity finalTarget = target;
             new Thread(() -> NarcissusUtils.executeCommand(finalTarget, NarcissusUtils.getCommand(EnumCommandType.TP_ASK_YES) + " " + request.getRequestId())).start();

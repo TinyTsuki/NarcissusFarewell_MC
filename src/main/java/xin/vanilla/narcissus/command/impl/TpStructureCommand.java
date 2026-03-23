@@ -22,8 +22,10 @@ import xin.vanilla.banira.BaniraCodex;
 import xin.vanilla.banira.common.data.Component;
 import xin.vanilla.banira.common.data.WorldCoordinate;
 import xin.vanilla.banira.common.util.BiomeUtils;
+import xin.vanilla.banira.common.util.MessageUtils;
 import xin.vanilla.banira.common.util.StringUtils;
 import xin.vanilla.banira.common.util.StructureUtils;
+import xin.vanilla.narcissus.NarcissusComponent;
 import xin.vanilla.narcissus.NarcissusLang;
 import xin.vanilla.narcissus.config.CommonConfig;
 import xin.vanilla.narcissus.data.SafeWorldCoordinate;
@@ -47,17 +49,17 @@ public final class TpStructureCommand {
         Structure<?> structure = StructureUtils.getStructure(structId);
         Biome biome = BiomeUtils.getBiome(structId);
         if (structure == null && biome == null) {
-            NarcissusUtils.sendTranslatableMessage(player, "structure_biome_not_found", structId);
+            MessageUtils.sendMessage(player, NarcissusComponent.get().transAuto("structure_biome_not_found", structId));
             return 0;
         }
-        int range = CommandUtils.getIntDefault(context, "range", CommonConfig.get().server().general().teleportRandomDistanceLimit());
+        int range = CommandUtils.getIntDefault(context, "range", CommonConfig.get().general().teleportRandomDistanceLimit());
         range = NarcissusUtils.checkRange(player, EnumTeleportType.TP_STRUCTURE, range);
         RegistryKey<World> targetLevel = CommandUtils.getDimensionKeyDefault(context, "dimension", player.getLevel().dimension());
         boolean safe = "safe".equalsIgnoreCase(CommandUtils.getStringDefault(context, "safe", "safe"));
         int finalRange = range;
         boolean isBiome = biome != null;
         String searchingKey = isBiome ? "tp_structure_searching_biome" : "tp_structure_searching_structure";
-        NarcissusUtils.sendActionBarMessage(player, NarcissusLang.transLangAuto(NarcissusLang.getPlayerLanguage(player), searchingKey, structId));
+        MessageUtils.sendActionBarMessage(player, NarcissusComponent.get().transAuto(searchingKey, structId));
         new Thread(() -> {
             ServerWorld world = Objects.requireNonNull(BaniraCodex.serverInstance().key().getLevel(targetLevel));
             SafeWorldCoordinate safeWorldCoordinate;
@@ -82,7 +84,7 @@ public final class TpStructureCommand {
             }
             if (safeWorldCoordinate == null) {
                 String notFoundKey = isBiome ? "biome_not_found_in_range" : "structure_not_found_in_range";
-                NarcissusUtils.sendTranslatableMessage(player, notFoundKey, structId);
+                MessageUtils.sendMessage(player, NarcissusComponent.get().transAuto(notFoundKey, structId));
                 return;
             }
             safeWorldCoordinate.safe(safe);
@@ -96,18 +98,18 @@ public final class TpStructureCommand {
     public static CompletableFuture<Suggestions> suggestion(CommandContext<CommandSource> context, SuggestionsBuilder builder) {
         String input = CommandUtils.getStringEx(context, "struct", "");
         boolean isInputEmpty = StringUtils.isNullOrEmpty(input);
-        String language = CommonConfig.get().server().general().defaultLanguage();
+        String language = CommonConfig.get().general().defaultLanguage();
         try {
             language = NarcissusLang.getPlayerLanguage(context.getSource().getPlayerOrException());
         } catch (CommandSyntaxException ignored) {
         }
-        Component structureTooltip = NarcissusLang.transLangAuto(language, "tp_structure_type_structure");
-        Component biomeTooltip = NarcissusLang.transLangAuto(language, "tp_structure_type_biome");
+        Component structureTooltip = NarcissusComponent.get().transAuto("tp_structure_type_structure");
+        Component biomeTooltip = NarcissusComponent.get().transAuto("tp_structure_type_biome");
         for (String id : StructureUtils.getAllIds()) {
-            if (isInputEmpty || id.contains(input)) builder.suggest(id, structureTooltip.toVanilla());
+            if (isInputEmpty || id.contains(input)) builder.suggest(id, structureTooltip.toVanilla(language));
         }
         for (String id : BiomeUtils.getAllIds()) {
-            if (isInputEmpty || id.contains(input)) builder.suggest(id, biomeTooltip.toVanilla());
+            if (isInputEmpty || id.contains(input)) builder.suggest(id, biomeTooltip.toVanilla(language));
         }
         return builder.buildFuture();
     }

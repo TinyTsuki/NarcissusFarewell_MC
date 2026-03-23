@@ -16,7 +16,8 @@ import net.minecraft.world.server.ServerWorld;
 import xin.vanilla.banira.common.data.Component;
 import xin.vanilla.banira.common.data.KeyValue;
 import xin.vanilla.banira.common.util.DimensionUtils;
-import xin.vanilla.narcissus.NarcissusLang;
+import xin.vanilla.banira.common.util.MessageUtils;
+import xin.vanilla.narcissus.NarcissusComponent;
 import xin.vanilla.narcissus.config.CommonConfig;
 import xin.vanilla.narcissus.data.SafeWorldCoordinate;
 import xin.vanilla.narcissus.data.player.PlayerTeleportData;
@@ -48,13 +49,13 @@ public final class TpHomeCommand {
         SafeWorldCoordinate safeWorldCoordinate = NarcissusUtils.getPlayerHome(player, targetLevel, name);
         if (safeWorldCoordinate == null) {
             if (targetLevel == null && name == null) {
-                NarcissusUtils.sendTranslatableMessage(player, "home_not_found");
+                MessageUtils.sendMessage(player, NarcissusComponent.get().transAuto("home_not_found"));
             } else if (targetLevel != null && name == null) {
-                NarcissusUtils.sendTranslatableMessage(player, "home_not_found_in_dimension", targetLevel.location().toString());
+                MessageUtils.sendMessage(player, NarcissusComponent.get().transAuto("home_not_found_in_dimension", targetLevel.location().toString()));
             } else if (targetLevel == null) {
-                NarcissusUtils.sendTranslatableMessage(player, "home_not_found_with_name", name);
+                MessageUtils.sendMessage(player, NarcissusComponent.get().transAuto("home_not_found_with_name", name));
             } else {
-                NarcissusUtils.sendTranslatableMessage(player, "home_not_found_with_name_in_dimension", targetLevel.location().toString(), name);
+                MessageUtils.sendMessage(player, NarcissusComponent.get().transAuto("home_not_found_with_name_in_dimension", targetLevel.location().toString(), name));
             }
             return 0;
         }
@@ -70,9 +71,9 @@ public final class TpHomeCommand {
     public static CompletableFuture<Suggestions> safeSuggestion(CommandContext<CommandSource> context, SuggestionsBuilder builder) throws CommandSyntaxException {
         String name = CommandUtils.getStringDefault(context, "name", null);
         String lang = CommandUtils.getLanguage(context.getSource());
-        Component trueTooltip = NarcissusLang.transLangAuto(lang, "suggest_safe_true");
-        Component falseTooltip = NarcissusLang.transLangAuto(lang, "suggest_safe_false");
-        Component dimTooltip = NarcissusLang.transLangAuto(lang, "suggest_dimension");
+        Component trueTooltip = NarcissusComponent.get().transAuto("suggest_safe_true").languageCode(lang);
+        Component falseTooltip = NarcissusComponent.get().transAuto("suggest_safe_false").languageCode(lang);
+        Component dimTooltip = NarcissusComponent.get().transAuto("suggest_dimension").languageCode(lang);
         if ("true".equals(name) || "false".equals(name)) {
             ServerPlayerEntity player = context.getSource().getPlayerOrException();
             PlayerTeleportData data = PlayerTeleportData.getData(player);

@@ -8,10 +8,10 @@ import lombok.experimental.Accessors;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.util.RegistryKey;
 import net.minecraft.world.World;
-import xin.vanilla.banira.common.data.Component;
 import xin.vanilla.banira.common.data.KeyValue;
 import xin.vanilla.banira.common.enums.EnumI18nType;
 import xin.vanilla.banira.common.util.NumberUtils;
+import xin.vanilla.narcissus.NarcissusComponent;
 import xin.vanilla.narcissus.NarcissusFarewell;
 import xin.vanilla.narcissus.NarcissusLang;
 import xin.vanilla.narcissus.data.SafeWorldCoordinate;
@@ -19,7 +19,7 @@ import xin.vanilla.narcissus.data.TeleportRecord;
 import xin.vanilla.narcissus.data.client.ClientStageData;
 import xin.vanilla.narcissus.data.player.PlayerTeleportData;
 import xin.vanilla.narcissus.enums.EnumTeleportType;
-import xin.vanilla.narcissus.network.ModNetworkHandler;
+import xin.vanilla.narcissus.network.NetworkInit;
 import xin.vanilla.narcissus.network.packet.WaypointDelToServer;
 import xin.vanilla.narcissus.network.packet.WaypointTeleportToServer;
 import xin.vanilla.narcissus.util.ClientCostCalculator;
@@ -45,7 +45,7 @@ public class ApricityUI extends Screen {
     private Element selectedElement;
 
     public ApricityUI() {
-        super(Component.literal("WaypointScreen").toChat());
+        super(NarcissusComponent.get().literal("WaypointScreen").toChat());
     }
 
     @Override
@@ -213,7 +213,7 @@ public class ApricityUI extends Screen {
         if (item == null || item.safeWorldCoordinate() == null || minecraft == null || minecraft.player == null) return;
         int typeOrdinal = item.type() == WaypointItem.Type.HOME ? 0 : 1;
         String dimension = item.safeWorldCoordinate().dimensionId();
-        ModNetworkHandler.INSTANCE.sendToServer(new WaypointDelToServer(typeOrdinal, item.name(), dimension));
+        NetworkInit.INSTANCE.sendToServer(new WaypointDelToServer(typeOrdinal, item.name(), dimension));
         ApricityUI self = this;
         new Thread(() -> {
             if (minecraft != null) {
@@ -255,7 +255,7 @@ public class ApricityUI extends Screen {
         titleWrap.setAttribute("class", "del-confirm-title-wrap");
         Element title = this.document.createElement("span");
         title.setAttribute("class", "del-confirm-title");
-        title.innerText = Component.transClientAuto(NarcissusFarewell.MODID, "del_confirm_title").toString();
+        title.innerText = NarcissusComponent.get().transClientAuto( "del_confirm_title").toString();
         titleWrap.append(title);
         dialog.append(titleWrap);
 
@@ -263,7 +263,7 @@ public class ApricityUI extends Screen {
         msgWrap.setAttribute("class", "del-confirm-msg-wrap");
         Element msg = this.document.createElement("span");
         msg.setAttribute("class", "del-confirm-msg");
-        msg.innerText = Component.transClientAuto(NarcissusFarewell.MODID, "del_confirm_msg").toString();
+        msg.innerText = NarcissusComponent.get().transClientAuto( "del_confirm_msg").toString();
         msgWrap.append(msg);
         dialog.append(msgWrap);
 
@@ -272,7 +272,7 @@ public class ApricityUI extends Screen {
 
         Element cancelBtn = this.document.createElement("span");
         cancelBtn.setAttribute("class", "del-confirm-btn del-confirm-cancel");
-        cancelBtn.innerText = Component.transClientAuto(NarcissusFarewell.MODID, "cancel").toString();
+        cancelBtn.innerText = NarcissusComponent.get().transClientAuto( "cancel").toString();
         cancelBtn.addEventListener("mousedown", event -> {
             event.stopPropagation();
             removeDelConfirmOverlay();
@@ -280,7 +280,7 @@ public class ApricityUI extends Screen {
 
         Element okBtn = this.document.createElement("span");
         okBtn.setAttribute("class", "del-confirm-btn del-confirm-ok");
-        okBtn.innerText = Component.transClientAuto(NarcissusFarewell.MODID, "delete").toString();
+        okBtn.innerText = NarcissusComponent.get().transClientAuto( "delete").toString();
         okBtn.addEventListener("mousedown", event -> {
             event.stopPropagation();
             removeDelConfirmOverlay();
@@ -340,7 +340,7 @@ public class ApricityUI extends Screen {
         } else if (type == EnumTeleportType.TP_BACK) {
             name = this.selectedItem.recordType() != null ? this.selectedItem.recordType() : "";
         }
-        ModNetworkHandler.INSTANCE.sendToServer(new WaypointTeleportToServer(type, name, dimension));
+        NetworkInit.INSTANCE.sendToServer(new WaypointTeleportToServer(type, name, dimension));
         this.onClose();
     }
 
@@ -404,11 +404,11 @@ public class ApricityUI extends Screen {
         public String getDetailTypeName() {
             switch (this.type) {
                 case HOME:
-                    return Component.transClientAuto(NarcissusFarewell.MODID, "private").toString();
+                    return NarcissusComponent.get().transClientAuto( "private").toString();
                 case STAGE:
-                    return Component.transClientAuto(NarcissusFarewell.MODID, "public").toString();
+                    return NarcissusComponent.get().transClientAuto( "public").toString();
                 case BACK:
-                    return Component.transClientAuto(NarcissusFarewell.MODID, "footprints").toString();
+                    return NarcissusComponent.get().transClientAuto( "footprints").toString();
                 default:
                     return "";
             }
@@ -416,7 +416,7 @@ public class ApricityUI extends Screen {
 
         public String getDimensionName() {
             if (NarcissusLang.hasTranslation(EnumI18nType.WORD, getDimKey(safeWorldCoordinate.dimension()))) {
-                return Component.transClientAuto(NarcissusFarewell.MODID, getDimKey(safeWorldCoordinate.dimension())).toString();
+                return NarcissusComponent.get().transClientAuto( getDimKey(safeWorldCoordinate.dimension())).toString();
             } else {
                 return safeWorldCoordinate.dimension().location().toString();
             }
@@ -479,7 +479,7 @@ public class ApricityUI extends Screen {
 
                 Element delBtn = document.createElement("span");
                 delBtn.setAttribute("class", "item-del");
-                delBtn.setAttribute("title", Component.transClientAuto(NarcissusFarewell.MODID, "delete").toString());
+                delBtn.setAttribute("title", NarcissusComponent.get().transClientAuto( "delete").toString());
                 delBtn.innerText = "×";
                 delBtn.addEventListener("mousedown", event -> {
                     event.stopPropagation();

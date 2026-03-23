@@ -12,10 +12,11 @@ import xin.vanilla.banira.client.data.GLFWKey;
 import xin.vanilla.banira.client.event.BaniraClientEventHub;
 import xin.vanilla.banira.client.util.BaniraKeyBindings;
 import xin.vanilla.banira.common.util.LogoModifier;
+import xin.vanilla.banira.common.util.PacketUtils;
 import xin.vanilla.narcissus.NarcissusFarewell;
 import xin.vanilla.narcissus.integration.ScreenHelper;
+import xin.vanilla.narcissus.network.NetworkInit;
 import xin.vanilla.narcissus.network.packet.*;
-import xin.vanilla.narcissus.util.NarcissusUtils;
 
 /**
  * 客户端：Banira 键位入队 + {@link BaniraClientEventHub} 回调注册（不在此类上使用 Forge {@code @SubscribeEvent}）
@@ -54,27 +55,27 @@ public final class ClientModEventHandler {
         if (Minecraft.getInstance().screen == null && event.phase == TickEvent.Phase.END) {
             if (TP_HOME_KEY.consumeClick()) {
                 if (!keyDown) {
-                    NarcissusUtils.sendPacketToServer(new TpHomeToServer());
+                    PacketUtils.sendPacketToServer(NetworkInit.INSTANCE, new TpHomeToServer());
                     keyDown = true;
                 }
             } else if (TP_GRAVE_KEY.consumeClick()) {
                 if (!keyDown) {
-                    NarcissusUtils.sendPacketToServer(new TpGraveToServer());
+                    PacketUtils.sendPacketToServer(NetworkInit.INSTANCE, new TpGraveToServer());
                     keyDown = true;
                 }
             } else if (TP_BACK_KEY.consumeClick()) {
                 if (!keyDown) {
-                    NarcissusUtils.sendPacketToServer(new TpBackToServer());
+                    PacketUtils.sendPacketToServer(NetworkInit.INSTANCE, new TpBackToServer());
                     keyDown = true;
                 }
             } else if (TP_REQ_YES.consumeClick()) {
                 if (!keyDown) {
-                    NarcissusUtils.sendPacketToServer(new TpYesToServer());
+                    PacketUtils.sendPacketToServer(NetworkInit.INSTANCE, new TpYesToServer());
                     keyDown = true;
                 }
             } else if (TP_REQ_NO.consumeClick()) {
                 if (!keyDown) {
-                    NarcissusUtils.sendPacketToServer(new TpNoToServer());
+                    PacketUtils.sendPacketToServer(NetworkInit.INSTANCE, new TpNoToServer());
                     keyDown = true;
                 }
             } else if (OPEN_SCREEN_KEY.consumeClick()) {
@@ -90,7 +91,7 @@ public final class ClientModEventHandler {
 
     private static void onClientLoggedIn(PlayerEntity player) {
         LOGGER.debug("Client: Player logged in.");
-        NarcissusUtils.sendPacketToServer(new ModLoadedToBoth());
+        PacketUtils.sendPacketToServer(NetworkInit.INSTANCE, new ModLoadedToBoth());
     }
 
     private static void onClientLoggedOut(PlayerEntity player) {

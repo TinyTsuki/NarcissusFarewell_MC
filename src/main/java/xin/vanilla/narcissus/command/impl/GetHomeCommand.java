@@ -11,6 +11,8 @@ import net.minecraft.util.text.event.HoverEvent;
 import xin.vanilla.banira.common.data.Component;
 import xin.vanilla.banira.common.data.KeyValue;
 import xin.vanilla.banira.common.enums.EnumMCColor;
+import xin.vanilla.banira.common.util.MessageUtils;
+import xin.vanilla.narcissus.NarcissusComponent;
 import xin.vanilla.narcissus.NarcissusLang;
 import xin.vanilla.narcissus.config.CommonConfig;
 import xin.vanilla.narcissus.data.SafeWorldCoordinate;
@@ -35,9 +37,9 @@ public final class GetHomeCommand {
         PlayerTeleportData data = PlayerTeleportData.getData(player);
         String language = NarcissusLang.getPlayerLanguage(player);
         if (data.getHomeCoordinate().isEmpty()) {
-            component = NarcissusLang.transLangAuto(language, "home_is_empty");
+            component = NarcissusComponent.get().transAuto("home_is_empty");
         } else {
-            Component info = Component.empty();
+            Component info = NarcissusComponent.get().empty();
             Map<String, List<KeyValue<String, SafeWorldCoordinate>>> map = data.getHomeCoordinate().entrySet().stream()
                     .collect(Collectors.groupingBy(
                             entry -> entry.getKey().key(),
@@ -47,41 +49,40 @@ public final class GetHomeCommand {
                             )
                     ));
             for (Map.Entry<String, List<KeyValue<String, SafeWorldCoordinate>>> entry : map.entrySet()) {
-                Component dimension = Component.literal(entry.getKey()).color(EnumMCColor.DARK_GREEN.getColor());
+                Component dimension = NarcissusComponent.get().literal(entry.getKey()).color(EnumMCColor.DARK_GREEN.getColor());
                 dimension.clickEvent(new ClickEvent(ClickEvent.Action.COPY_TO_CLIPBOARD, entry.getKey()));
-                dimension.hoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.literal(entry.getKey()).toVanilla()));
-                dimension.append(Component.literal(": ").color(EnumMCColor.GRAY.getColor()));
+                dimension.hoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, NarcissusComponent.get().literal(entry.getKey()).toVanilla()));
+                dimension.append(NarcissusComponent.get().literal(": ").color(EnumMCColor.GRAY.getColor()));
                 for (KeyValue<String, SafeWorldCoordinate> coordinates : entry.getValue()) {
                     Component defHome;
                     if (data.getDefaultHome().getOrDefault(entry.getKey(), "").equalsIgnoreCase(coordinates.key())) {
-                        defHome = NarcissusLang.transLangAuto(language, "default").color(EnumMCColor.GRAY.getColor());
+                        defHome = NarcissusComponent.get().transAuto("default").color(EnumMCColor.GRAY.getColor());
                     } else {
-                        defHome = Component.empty();
+                        defHome = NarcissusComponent.get().empty();
                     }
-                    Component name = NarcissusLang.transLangAuto(language, "home_info"
+                    Component name = NarcissusComponent.get().transAuto("home_info"
                             , coordinates.key()
                             , coordinates.value().xString()
                             , coordinates.value().yString()
                             , coordinates.value().zString()
                             , defHome);
-                    name.toChat();
-                    Component name_hover = NarcissusLang.transLangAuto(language, "home_info_hover"
+                    Component name_hover = NarcissusComponent.get().transAuto("home_info_hover"
                             , coordinates.key()
                             , coordinates.value().xString()
                             , coordinates.value().yString()
                             , coordinates.value().zString()
                             , defHome);
                     name.color(EnumMCColor.GREEN.getColor());
-                    name.clickEvent(new ClickEvent(ClickEvent.Action.COPY_TO_CLIPBOARD, name_hover.toString(true)));
-                    name.hoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, name_hover.toChat()));
+                    name.clickEvent(new ClickEvent(ClickEvent.Action.COPY_TO_CLIPBOARD, name_hover.getString(language, true, true)));
+                    name.hoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, name_hover.toChat(language)));
                     dimension.append(name);
-                    dimension.append(Component.literal(", ").color(EnumMCColor.GRAY.getColor()));
+                    dimension.append(NarcissusComponent.get().literal(", ").color(EnumMCColor.GRAY.getColor()));
                 }
                 info.append(dimension).append("\n");
             }
-            component = NarcissusLang.transLangAuto(language, "home_is", info);
+            component = NarcissusComponent.get().transAuto("home_is", info);
         }
-        NarcissusUtils.sendMessage(player, component);
+        MessageUtils.sendMessage(player, component);
         return 1;
     }
 

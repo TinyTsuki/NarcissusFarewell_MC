@@ -8,14 +8,13 @@ import net.minecraft.command.Commands;
 import net.minecraft.command.arguments.EntityArgument;
 import net.minecraft.entity.player.ServerPlayerEntity;
 import xin.vanilla.banira.common.data.Component;
-import xin.vanilla.banira.common.enums.EnumI18nType;
 import xin.vanilla.banira.common.util.CollectionUtils;
+import xin.vanilla.banira.common.util.MessageUtils;
 import xin.vanilla.banira.common.util.PlayerUtils;
-import xin.vanilla.narcissus.NarcissusFarewell;
+import xin.vanilla.narcissus.NarcissusComponent;
 import xin.vanilla.narcissus.data.PlayerAccess;
 import xin.vanilla.narcissus.data.player.PlayerTeleportData;
 import xin.vanilla.narcissus.util.CommandUtils;
-import xin.vanilla.narcissus.util.NarcissusUtils;
 
 import java.util.Collection;
 import java.util.stream.Collectors;
@@ -30,16 +29,16 @@ public final class BlacklistCommand {
         PlayerAccess access = data.getAccess();
         Component msg;
         if (CollectionUtils.isNullOrEmpty(access.getBlackList())) {
-            msg = Component.trans(NarcissusFarewell.MODID, EnumI18nType.FORMAT, "list_is_empty", CommandUtils.getBlacklistOrWhitelistHelp(player, true));
+            msg = NarcissusComponent.get().transAuto("list_is_empty", CommandUtils.getBlacklistOrWhitelistHelp(player, true));
         } else {
-            msg = Component.trans(NarcissusFarewell.MODID, EnumI18nType.FORMAT, "list_detail"
+            msg = NarcissusComponent.get().transAuto("list_detail"
                     , CommandUtils.getBlacklistOrWhitelistHelp(player, true)
                     , access.getBlackList().stream()
                             .map(uuid -> PlayerUtils.getPlayerNameString(PlayerUtils.getPlayerByUUID(uuid)))
                             .collect(Collectors.joining(","))
             );
         }
-        NarcissusUtils.sendMessage(player, msg);
+        MessageUtils.sendMessage(player, msg);
         return 1;
     }
 
@@ -53,14 +52,14 @@ public final class BlacklistCommand {
         Component msg;
         if (access.addBlackList(uuids)) {
             data.setDirty();
-            msg = Component.trans(NarcissusFarewell.MODID, EnumI18nType.FORMAT, "list_add_success"
+            msg = NarcissusComponent.get().transAuto("list_add_success"
                     , CommandUtils.getBlacklistOrWhitelistHelp(player, true)
                     , players.stream().map(PlayerUtils::getPlayerNameString).collect(Collectors.joining(","))
             );
         } else {
-            msg = Component.trans(NarcissusFarewell.MODID, EnumI18nType.FORMAT, "list_add_fail", CommandUtils.getBlacklistOrWhitelistHelp(player, true), CommandUtils.getBlacklistOrWhitelistHelp(player, false));
+            msg = NarcissusComponent.get().transAuto("list_add_fail", CommandUtils.getBlacklistOrWhitelistHelp(player, true), CommandUtils.getBlacklistOrWhitelistHelp(player, false));
         }
-        NarcissusUtils.sendMessage(player, msg);
+        MessageUtils.sendMessage(player, msg);
         return 1;
     }
 
@@ -73,16 +72,16 @@ public final class BlacklistCommand {
         String[] uuids = players.stream().map(PlayerUtils::getPlayerUUIDString).toArray(String[]::new);
         access.removeBlackList(uuids);
         data.setDirty();
-        Component msg = Component.trans(NarcissusFarewell.MODID, EnumI18nType.WORD, "remove_success");
+        Component msg = NarcissusComponent.get().transAuto("remove_success");
         if (CollectionUtils.isNullOrEmpty(access.getBlackList())) {
-            msg.append(Component.trans(NarcissusFarewell.MODID, EnumI18nType.FORMAT, "list_is_empty", CommandUtils.getBlacklistOrWhitelistHelp(player, true)));
+            msg.append(NarcissusComponent.get().transAuto("list_is_empty", CommandUtils.getBlacklistOrWhitelistHelp(player, true)));
         } else {
-            msg.append(Component.trans(NarcissusFarewell.MODID, EnumI18nType.FORMAT, "list_detail"
+            msg.append(NarcissusComponent.get().transAuto("list_detail"
                     , CommandUtils.getBlacklistOrWhitelistHelp(player, true)
                     , access.getBlackList().stream().map(uuid -> PlayerUtils.getPlayerNameString(PlayerUtils.getPlayerByUUID(uuid))).collect(Collectors.joining(","))
             ));
         }
-        NarcissusUtils.sendMessage(player, msg);
+        MessageUtils.sendMessage(player, msg);
         return 1;
     }
 
