@@ -11,6 +11,7 @@ import xin.vanilla.banira.common.config.ForgeConfigAdapter;
 import xin.vanilla.banira.common.config.annotation.Config;
 import xin.vanilla.banira.common.config.annotation.ConfigEntry;
 import xin.vanilla.narcissus.config.access.ClientConfigAccess;
+import xin.vanilla.narcissus.enums.EnumWaypointPanelMode;
 
 /**
  * 客户端配置：注解结构用于 ForgeConfigSpec；运行时通过 {@link #get()} 返回的 {@link RootView} 分层读取。
@@ -54,6 +55,9 @@ public class ClientConfig implements ConfigData {
 
         @ConfigEntry.Gui.Tooltip(zh_cn = "创建驿站时同步地图路标", en_us = "Sync map waypoint when setting stage")
         private boolean syncStageMapWaypoint = true;
+
+        @ConfigEntry.Gui.Tooltip(zh_cn = "传送路标界面布局：三列或 Tab 单栏；在界面内切换布局时会写入此选项。", en_us = "Waypoint screen layout: three columns or tabbed panel; toggling layout in the GUI updates this option.")
+        private EnumWaypointPanelMode waypointScreenPanelMode = EnumWaypointPanelMode.THREE_COLUMNS;
     }
 
     // region 运行时视图接口
@@ -74,6 +78,10 @@ public class ClientConfig implements ConfigData {
         boolean syncStageMapWaypoint();
 
         ClientView syncStageMapWaypoint(boolean value);
+
+        EnumWaypointPanelMode waypointScreenPanelMode();
+
+        ClientView waypointScreenPanelMode(EnumWaypointPanelMode value);
     }
 
     // endregion 运行时视图接口
