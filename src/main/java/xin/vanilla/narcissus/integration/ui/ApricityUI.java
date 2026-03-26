@@ -11,6 +11,7 @@ import net.minecraft.world.level.Level;
 import xin.vanilla.banira.common.data.KeyValue;
 import xin.vanilla.banira.common.enums.EnumI18nType;
 import xin.vanilla.banira.common.util.NumberUtils;
+import xin.vanilla.banira.common.util.PacketUtils;
 import xin.vanilla.narcissus.NarcissusComponent;
 import xin.vanilla.narcissus.NarcissusFarewell;
 import xin.vanilla.narcissus.NarcissusLang;
@@ -213,7 +214,7 @@ public class ApricityUI extends Screen {
         if (item == null || item.safeWorldCoordinate() == null || minecraft == null || minecraft.player == null) return;
         int typeOrdinal = item.type() == WaypointItem.Type.HOME ? 0 : 1;
         String dimension = item.safeWorldCoordinate().dimensionId();
-        NetworkInit.INSTANCE.sendToServer(new WaypointDelToServer(typeOrdinal, item.name(), dimension));
+        PacketUtils.sendPacketToServer(NetworkInit.INSTANCE, new WaypointDelToServer(typeOrdinal, item.name(), dimension));
         ApricityUI self = this;
         new Thread(() -> {
             if (minecraft != null) {
@@ -340,7 +341,7 @@ public class ApricityUI extends Screen {
         } else if (type == EnumTeleportType.TP_BACK) {
             name = this.selectedItem.recordType() != null ? this.selectedItem.recordType() : "";
         }
-        NetworkInit.INSTANCE.sendToServer(new WaypointTeleportToServer(type, name, dimension));
+        PacketUtils.sendPacketToServer(NetworkInit.INSTANCE, new WaypointTeleportToServer(type, name, dimension));
         this.onClose();
     }
 
