@@ -1313,6 +1313,7 @@ public class WaypointScreen extends BaniraScreen {
             name = selectedItem.recordType != null ? selectedItem.recordType : "";
         }
         NetworkInit.INSTANCE.sendToServer(new WaypointTeleportToServer(type, name, dimension));
+        super.previousScreen(null);
         onClose();
     }
 
