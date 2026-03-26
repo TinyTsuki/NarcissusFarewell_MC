@@ -181,7 +181,7 @@ public final class CommandUtils {
         ServerPlayerEntity player = (ServerPlayerEntity) entity;
         PlayerTeleportData data = PlayerTeleportData.getData(player);
         String cmd = "/" + NarcissusUtils.getCommandPrefix();
-        Component modName = NarcissusComponent.get().transAuto("categories");
+        Component modName = NarcissusComponent.get().trans("key.narcissus_farewell.categories");
         xin.vanilla.banira.common.util.CommandUtils.notifyHelp(context, data, modName, cmd);
     }
 
