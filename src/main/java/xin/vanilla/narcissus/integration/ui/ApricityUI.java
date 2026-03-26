@@ -11,6 +11,7 @@ import net.minecraft.world.World;
 import xin.vanilla.banira.common.data.KeyValue;
 import xin.vanilla.banira.common.enums.EnumI18nType;
 import xin.vanilla.banira.common.util.NumberUtils;
+import xin.vanilla.banira.common.util.PacketUtils;
 import xin.vanilla.narcissus.NarcissusComponent;
 import xin.vanilla.narcissus.NarcissusFarewell;
 import xin.vanilla.narcissus.NarcissusLang;
@@ -213,7 +214,7 @@ public class ApricityUI extends Screen {
         if (item == null || item.safeWorldCoordinate() == null || minecraft == null || minecraft.player == null) return;
         int typeOrdinal = item.type() == WaypointItem.Type.HOME ? 0 : 1;
         String dimension = item.safeWorldCoordinate().dimensionId();
-        NetworkInit.INSTANCE.sendToServer(new WaypointDelToServer(typeOrdinal, item.name(), dimension));
+        PacketUtils.sendPacketToServer(NetworkInit.INSTANCE, new WaypointDelToServer(typeOrdinal, item.name(), dimension));
         ApricityUI self = this;
         new Thread(() -> {
             if (minecraft != null) {
@@ -255,7 +256,7 @@ public class ApricityUI extends Screen {
         titleWrap.setAttribute("class", "del-confirm-title-wrap");
         Element title = this.document.createElement("span");
         title.setAttribute("class", "del-confirm-title");
-        title.innerText = NarcissusComponent.get().transClientAuto( "del_confirm_title").toString();
+        title.innerText = NarcissusComponent.get().transClientAuto("del_confirm_title").toString();
         titleWrap.append(title);
         dialog.append(titleWrap);
 
@@ -263,7 +264,7 @@ public class ApricityUI extends Screen {
         msgWrap.setAttribute("class", "del-confirm-msg-wrap");
         Element msg = this.document.createElement("span");
         msg.setAttribute("class", "del-confirm-msg");
-        msg.innerText = NarcissusComponent.get().transClientAuto( "del_confirm_msg").toString();
+        msg.innerText = NarcissusComponent.get().transClientAuto("del_confirm_msg").toString();
         msgWrap.append(msg);
         dialog.append(msgWrap);
 
@@ -272,7 +273,7 @@ public class ApricityUI extends Screen {
 
         Element cancelBtn = this.document.createElement("span");
         cancelBtn.setAttribute("class", "del-confirm-btn del-confirm-cancel");
-        cancelBtn.innerText = NarcissusComponent.get().transClientAuto( "cancel").toString();
+        cancelBtn.innerText = NarcissusComponent.get().transClientAuto("cancel").toString();
         cancelBtn.addEventListener("mousedown", event -> {
             event.stopPropagation();
             removeDelConfirmOverlay();
@@ -280,7 +281,7 @@ public class ApricityUI extends Screen {
 
         Element okBtn = this.document.createElement("span");
         okBtn.setAttribute("class", "del-confirm-btn del-confirm-ok");
-        okBtn.innerText = NarcissusComponent.get().transClientAuto( "delete").toString();
+        okBtn.innerText = NarcissusComponent.get().transClientAuto("delete").toString();
         okBtn.addEventListener("mousedown", event -> {
             event.stopPropagation();
             removeDelConfirmOverlay();
@@ -340,7 +341,7 @@ public class ApricityUI extends Screen {
         } else if (type == EnumTeleportType.TP_BACK) {
             name = this.selectedItem.recordType() != null ? this.selectedItem.recordType() : "";
         }
-        NetworkInit.INSTANCE.sendToServer(new WaypointTeleportToServer(type, name, dimension));
+        PacketUtils.sendPacketToServer(NetworkInit.INSTANCE, new WaypointTeleportToServer(type, name, dimension));
         this.onClose();
     }
 
@@ -404,11 +405,11 @@ public class ApricityUI extends Screen {
         public String getDetailTypeName() {
             switch (this.type) {
                 case HOME:
-                    return NarcissusComponent.get().transClientAuto( "private").toString();
+                    return NarcissusComponent.get().transClientAuto("private").toString();
                 case STAGE:
-                    return NarcissusComponent.get().transClientAuto( "public").toString();
+                    return NarcissusComponent.get().transClientAuto("public").toString();
                 case BACK:
-                    return NarcissusComponent.get().transClientAuto( "footprints").toString();
+                    return NarcissusComponent.get().transClientAuto("footprints").toString();
                 default:
                     return "";
             }
@@ -416,7 +417,7 @@ public class ApricityUI extends Screen {
 
         public String getDimensionName() {
             if (NarcissusLang.hasTranslation(EnumI18nType.WORD, getDimKey(safeWorldCoordinate.dimension()))) {
-                return NarcissusComponent.get().transClientAuto( getDimKey(safeWorldCoordinate.dimension())).toString();
+                return NarcissusComponent.get().transClientAuto(getDimKey(safeWorldCoordinate.dimension())).toString();
             } else {
                 return safeWorldCoordinate.dimension().location().toString();
             }
@@ -479,7 +480,7 @@ public class ApricityUI extends Screen {
 
                 Element delBtn = document.createElement("span");
                 delBtn.setAttribute("class", "item-del");
-                delBtn.setAttribute("title", NarcissusComponent.get().transClientAuto( "delete").toString());
+                delBtn.setAttribute("title", NarcissusComponent.get().transClientAuto("delete").toString());
                 delBtn.innerText = "×";
                 delBtn.addEventListener("mousedown", event -> {
                     event.stopPropagation();
