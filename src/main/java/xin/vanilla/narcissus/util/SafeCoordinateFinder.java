@@ -6,6 +6,7 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import xin.vanilla.banira.common.util.DimensionUtils;
 import xin.vanilla.narcissus.config.CommonConfig;
 import xin.vanilla.narcissus.data.SafeWorldCoordinate;
 import xin.vanilla.narcissus.enums.EnumSafeMode;
@@ -28,11 +29,11 @@ public class SafeCoordinateFinder {
     }
 
     public int getWorldMinY() {
-        return 0;
+        return DimensionUtils.getWorldMinY(world);
     }
 
     public int getWorldMaxY() {
-        return world.getMaxBuildHeight();
+        return DimensionUtils.getWorldMaxY(world);
     }
 
     /**

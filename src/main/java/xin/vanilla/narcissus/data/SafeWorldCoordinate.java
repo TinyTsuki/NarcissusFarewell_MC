@@ -15,7 +15,6 @@ import xin.vanilla.banira.common.data.WorldCoordinate;
 import xin.vanilla.banira.common.util.DimensionUtils;
 import xin.vanilla.narcissus.config.CommonConfig;
 import xin.vanilla.narcissus.enums.EnumSafeMode;
-import xin.vanilla.narcissus.util.NarcissusUtils;
 
 import java.io.Serializable;
 
@@ -56,7 +55,7 @@ public class SafeWorldCoordinate extends WorldCoordinate implements Serializable
         ServerLevel world = DimensionUtils.getLevel(dimension);
         range = Math.min(Math.max(range, 1), CommonConfig.get().general().teleportRandomDistanceLimit());
         double x = player.getX() + (Math.random() * 2 - 1) * range;
-        double y = randomWithWeight(NarcissusUtils.getWorldMinY(world), NarcissusUtils.getWorldMaxY(world), (int) player.getY(), 0.75);
+        double y = randomWithWeight(DimensionUtils.getWorldMinY(world), DimensionUtils.getWorldMaxY(world), (int) player.getY(), 0.75);
         double z = player.getZ() + (Math.random() * 2 - 1) * range;
         return new SafeWorldCoordinate(x, y, z, player.getYRot(), player.getXRot(), dimension);
     }

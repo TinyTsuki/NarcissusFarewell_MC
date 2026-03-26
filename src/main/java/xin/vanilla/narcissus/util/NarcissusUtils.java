@@ -550,14 +550,6 @@ public class NarcissusUtils {
 
     // region 安全坐标
 
-    public static int getWorldMinY(Level world) {
-        return 0;
-    }
-
-    public static int getWorldMaxY(Level world) {
-        return world.getMaxBuildHeight();
-    }
-
     public static SafeWorldCoordinate findTopCandidate(ServerLevel world, SafeWorldCoordinate start) {
         return new SafeCoordinateFinder(world).findTopCandidate(start);
     }
