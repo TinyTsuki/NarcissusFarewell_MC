@@ -16,7 +16,7 @@ public final class NarcissusLang extends Translator {
     public static final NarcissusLang INSTANCE = new NarcissusLang();
 
     private NarcissusLang() {
-        super(NarcissusFarewell.MODID);
+        super(NarcissusFarewell.class);
         registerInCache();
     }
 
