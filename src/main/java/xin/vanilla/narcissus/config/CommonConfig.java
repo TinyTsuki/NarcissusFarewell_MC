@@ -84,6 +84,12 @@ public class CommonConfig implements ConfigData {
     @Getter(AccessLevel.NONE)
     @Setter(AccessLevel.NONE)
     @ConfigEntry.Gui.CollapsibleObject
+    @ConfigEntry.Gui.Tooltip(zh_cn = "传送倒计时", en_us = "Teleport Countdown")
+    private TeleportCountdownCategory teleportCountdown = new TeleportCountdownCategory();
+
+    @Getter(AccessLevel.NONE)
+    @Setter(AccessLevel.NONE)
+    @ConfigEntry.Gui.CollapsibleObject
     @ConfigEntry.Gui.Tooltip(zh_cn = "传送代价", en_us = "Teleport Cost")
     private CostCategory cost = new CostCategory();
 
@@ -304,6 +310,8 @@ public class CommonConfig implements ConfigData {
         private String defaultLanguage = "en_us";
         @ConfigEntry.Gui.Tooltip(zh_cn = "是否在被敌对生物锁定（仇恨）时限制玩家进行传送操作。", en_us = "Whether to restrict teleportation when the player is targeted (agroed) by hostile mobs.")
         private boolean tpWithEnemy = false;
+        @ConfigEntry.Gui.Tooltip(zh_cn = "当玩家没有个人重生点（床/重生锚等）时，tpsp 取世界出生点的维度。填 CURRENT 或 AUTO（不区分大小写）表示使用玩家当前维度；否则填维度 ID（如 minecraft:overworld）。维度 ID 解析失败或世界未加载时亦使用玩家当前维度。", en_us = "When the player has no personal respawn (bed/anchor, etc.), which dimension's world spawn tpsp uses. Use CURRENT or AUTO (case-insensitive) for the player's current dimension; otherwise a dimension ID (e.g. minecraft:overworld). On parse failure or if the world is not loaded, uses the current dimension.")
+        private String tpSpawnNoBedWorldDimension = "minecraft:overworld";
         @Getter(AccessLevel.NONE)
         @Setter(AccessLevel.NONE)
         @ConfigEntry.Gui.CollapsibleObject
@@ -524,6 +532,83 @@ public class CommonConfig implements ConfigData {
         @ConfigEntry.Gui.Tooltip(zh_cn = "坟墓传送的冷却时间，单位为秒。", en_us = "The cooldown time for 'Teleport to the grave', in seconds.")
         @ConfigEntry.BoundedDiscrete(max = 86400)
         private int cooldownTpGrave = 10;
+    }
+
+    @Getter
+    @Setter
+    @Accessors(chain = true, fluent = true)
+    public static class TeleportCountdownCategory {
+        @Getter(AccessLevel.NONE)
+        @Setter(AccessLevel.NONE)
+        @ConfigEntry.Gui.CollapsibleObject
+        @ConfigEntry.Gui.Tooltip(zh_cn = "各传送类型服务端倒计时（秒）", en_us = "Server countdown seconds per teleport type.")
+        private ServerPerTypeTeleportCountdownGroup server = new ServerPerTypeTeleportCountdownGroup();
+        @ConfigEntry.Gui.Tooltip(zh_cn = "为 true 时仅使用「各传送类型服务端倒计时」中的值，忽略玩家个人设置。", en_us = "If true, only server per-type countdowns apply; player preferences are ignored.")
+        private boolean forceServerCountdown = false;
+        @ConfigEntry.Gui.Tooltip(zh_cn = "玩家可在指令/GUI 中配置的倒计时下限（秒）。", en_us = "Minimum seconds players may set for their teleport countdown preference.")
+        @ConfigEntry.BoundedDiscrete(max = 86400)
+        private int playerCountdownRangeMin = 0;
+        @ConfigEntry.Gui.Tooltip(zh_cn = "玩家可在指令/GUI 中配置的倒计时上限（秒）。", en_us = "Maximum seconds players may set for their teleport countdown preference.")
+        @ConfigEntry.BoundedDiscrete(max = 86400)
+        private int playerCountdownRangeMax = 300;
+        @ConfigEntry.Gui.Tooltip(zh_cn = "为 true 时玩家移动将打断传送倒计时并取消传送。", en_us = "If true, player movement cancels the teleport countdown and the teleport.")
+        private boolean cancelCountdownOnPlayerMove = false;
+        @ConfigEntry.Gui.Tooltip(zh_cn = "为 true 时玩家受伤将打断传送倒计时并取消传送。", en_us = "If true, taking damage cancels the teleport countdown and the teleport.")
+        private boolean cancelCountdownOnPlayerDamage = false;
+    }
+
+    @Getter
+    @Setter
+    @Accessors(chain = true, fluent = true)
+    public static class ServerPerTypeTeleportCountdownGroup {
+        @ConfigEntry.Gui.Tooltip(zh_cn = "传送到指定坐标。", en_us = "Teleport to coordinates.")
+        @ConfigEntry.BoundedDiscrete(max = 86400)
+        private int serverCountdownTpCoordinate = 0;
+        @ConfigEntry.Gui.Tooltip(zh_cn = "传送到指定结构。", en_us = "Teleport to structure.")
+        @ConfigEntry.BoundedDiscrete(max = 86400)
+        private int serverCountdownTpStructure = 0;
+        @ConfigEntry.Gui.Tooltip(zh_cn = "请求传送至玩家。", en_us = "TPA.")
+        @ConfigEntry.BoundedDiscrete(max = 86400)
+        private int serverCountdownTpAsk = 0;
+        @ConfigEntry.Gui.Tooltip(zh_cn = "请求将玩家传至身边。", en_us = "TPHere.")
+        @ConfigEntry.BoundedDiscrete(max = 86400)
+        private int serverCountdownTpHere = 0;
+        @ConfigEntry.Gui.Tooltip(zh_cn = "随机传送。", en_us = "Random TP.")
+        @ConfigEntry.BoundedDiscrete(max = 86400)
+        private int serverCountdownTpRandom = 0;
+        @ConfigEntry.Gui.Tooltip(zh_cn = "传送到玩家重生点。", en_us = "TP player spawn.")
+        @ConfigEntry.BoundedDiscrete(max = 86400)
+        private int serverCountdownTpSpawn = 0;
+        @ConfigEntry.Gui.Tooltip(zh_cn = "传送到世界重生点。", en_us = "TP world spawn.")
+        @ConfigEntry.BoundedDiscrete(max = 86400)
+        private int serverCountdownTpWorldSpawn = 0;
+        @ConfigEntry.Gui.Tooltip(zh_cn = "传送到顶部。", en_us = "TP top.")
+        @ConfigEntry.BoundedDiscrete(max = 86400)
+        private int serverCountdownTpTop = 0;
+        @ConfigEntry.Gui.Tooltip(zh_cn = "传送到底部。", en_us = "TP bottom.")
+        @ConfigEntry.BoundedDiscrete(max = 86400)
+        private int serverCountdownTpBottom = 0;
+        @ConfigEntry.Gui.Tooltip(zh_cn = "传送到上方。", en_us = "TP up.")
+        @ConfigEntry.BoundedDiscrete(max = 86400)
+        private int serverCountdownTpUp = 0;
+        @ConfigEntry.Gui.Tooltip(zh_cn = "传送到下方。", en_us = "TP down.")
+        @ConfigEntry.BoundedDiscrete(max = 86400)
+        private int serverCountdownTpDown = 0;
+        @ConfigEntry.Gui.Tooltip(zh_cn = "视线传送。", en_us = "TP view.")
+        @ConfigEntry.BoundedDiscrete(max = 86400)
+        private int serverCountdownTpView = 0;
+        @ConfigEntry.Gui.Tooltip(zh_cn = "传送到家。", en_us = "TP home.")
+        @ConfigEntry.BoundedDiscrete(max = 86400)
+        private int serverCountdownTpHome = 0;
+        @ConfigEntry.Gui.Tooltip(zh_cn = "传送到驿站。", en_us = "TP stage.")
+        @ConfigEntry.BoundedDiscrete(max = 86400)
+        private int serverCountdownTpStage = 0;
+        @ConfigEntry.Gui.Tooltip(zh_cn = "传送到上次传送点。", en_us = "TP back.")
+        @ConfigEntry.BoundedDiscrete(max = 86400)
+        private int serverCountdownTpBack = 0;
+        @ConfigEntry.Gui.Tooltip(zh_cn = "坟墓传送。", en_us = "TP grave.")
+        @ConfigEntry.BoundedDiscrete(max = 86400)
+        private int serverCountdownTpGrave = 0;
     }
 
     @Getter
@@ -1194,6 +1279,8 @@ public class CommonConfig implements ConfigData {
 
         CooldownView cooldown();
 
+        TeleportCountdownView teleportCountdown();
+
         CostView cost();
 
         ConfigHolder holder();
@@ -1834,6 +1921,10 @@ public class CommonConfig implements ConfigData {
 
         GeneralView tpWithEnemy(boolean value);
 
+        String tpSpawnNoBedWorldDimension();
+
+        GeneralView tpSpawnNoBedWorldDimension(String value);
+
         SafeTeleportView safeTeleport();
     }
 
@@ -2069,6 +2160,96 @@ public class CommonConfig implements ConfigData {
         int cooldownTpGrave();
 
         CooldownView cooldownTpGrave(int value);
+    }
+
+    public interface TeleportCountdownView {
+        ServerPerTypeTeleportCountdownView server();
+
+        boolean forceServerCountdown();
+
+        TeleportCountdownView forceServerCountdown(boolean value);
+
+        int playerCountdownRangeMin();
+
+        TeleportCountdownView playerCountdownRangeMin(int value);
+
+        int playerCountdownRangeMax();
+
+        TeleportCountdownView playerCountdownRangeMax(int value);
+
+        boolean cancelCountdownOnPlayerMove();
+
+        TeleportCountdownView cancelCountdownOnPlayerMove(boolean value);
+
+        boolean cancelCountdownOnPlayerDamage();
+
+        TeleportCountdownView cancelCountdownOnPlayerDamage(boolean value);
+    }
+
+    public interface ServerPerTypeTeleportCountdownView {
+        int serverCountdownTpCoordinate();
+
+        ServerPerTypeTeleportCountdownView serverCountdownTpCoordinate(int value);
+
+        int serverCountdownTpStructure();
+
+        ServerPerTypeTeleportCountdownView serverCountdownTpStructure(int value);
+
+        int serverCountdownTpAsk();
+
+        ServerPerTypeTeleportCountdownView serverCountdownTpAsk(int value);
+
+        int serverCountdownTpHere();
+
+        ServerPerTypeTeleportCountdownView serverCountdownTpHere(int value);
+
+        int serverCountdownTpRandom();
+
+        ServerPerTypeTeleportCountdownView serverCountdownTpRandom(int value);
+
+        int serverCountdownTpSpawn();
+
+        ServerPerTypeTeleportCountdownView serverCountdownTpSpawn(int value);
+
+        int serverCountdownTpWorldSpawn();
+
+        ServerPerTypeTeleportCountdownView serverCountdownTpWorldSpawn(int value);
+
+        int serverCountdownTpTop();
+
+        ServerPerTypeTeleportCountdownView serverCountdownTpTop(int value);
+
+        int serverCountdownTpBottom();
+
+        ServerPerTypeTeleportCountdownView serverCountdownTpBottom(int value);
+
+        int serverCountdownTpUp();
+
+        ServerPerTypeTeleportCountdownView serverCountdownTpUp(int value);
+
+        int serverCountdownTpDown();
+
+        ServerPerTypeTeleportCountdownView serverCountdownTpDown(int value);
+
+        int serverCountdownTpView();
+
+        ServerPerTypeTeleportCountdownView serverCountdownTpView(int value);
+
+        int serverCountdownTpHome();
+
+        ServerPerTypeTeleportCountdownView serverCountdownTpHome(int value);
+
+        int serverCountdownTpStage();
+
+        ServerPerTypeTeleportCountdownView serverCountdownTpStage(int value);
+
+        int serverCountdownTpBack();
+
+        ServerPerTypeTeleportCountdownView serverCountdownTpBack(int value);
+
+        int serverCountdownTpGrave();
+
+        ServerPerTypeTeleportCountdownView serverCountdownTpGrave(int value);
     }
 
     public interface CostView {

@@ -30,12 +30,12 @@ public final class TpHereYesCommand {
         ServerPlayer player = context.getSource().getPlayerOrException();
         String id = CommandUtils.getRequestId(context, EnumTeleportType.TP_HERE, true);
         if (StringUtils.isNullOrEmpty(id) || !NarcissusFarewell.getTeleportRequest().containsKey(id)) {
-            MessageUtils.sendMessage(player, NarcissusComponent.get().transAuto("tp_here_not_found"));
+            MessageUtils.sendNotification(player, NarcissusComponent.get().transAuto("tp_here_not_found"));
             return 0;
         }
         TeleportRequest request = NarcissusFarewell.getTeleportRequest().remove(id);
         if (CommandUtils.checkTeleportPost(request, true)) {
-            MessageUtils.sendMessage(player, NarcissusComponent.get().transAuto("tp_here_invalid"));
+            MessageUtils.sendNotification(player, NarcissusComponent.get().transAuto("tp_here_invalid"));
             return 0;
         }
         NarcissusUtils.teleportTo(request);

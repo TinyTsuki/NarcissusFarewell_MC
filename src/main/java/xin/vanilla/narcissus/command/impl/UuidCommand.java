@@ -11,6 +11,7 @@ import net.minecraft.network.chat.HoverEvent;
 import net.minecraft.server.level.ServerPlayer;
 import xin.vanilla.banira.common.data.Component;
 import xin.vanilla.banira.common.enums.EnumMCColor;
+import xin.vanilla.banira.common.util.MessageUtils;
 import xin.vanilla.narcissus.NarcissusComponent;
 import xin.vanilla.narcissus.config.CommonConfig;
 import xin.vanilla.narcissus.enums.EnumCommandType;
@@ -24,14 +25,14 @@ public final class UuidCommand {
         CommandUtils.notifyHelp(context);
         if (CommandUtils.checkTeleportPre(context.getSource(), EnumCommandType.UUID)) return 0;
         CommandSourceStack source = context.getSource();
-        ServerPlayer target = CommandUtils.getPlayerOrSelf(context, "player");
-        String language = CommandUtils.getLanguage(source);
+        ServerPlayer target = xin.vanilla.banira.common.util.CommandUtils.getPlayerOrSelf(context, "player");
+        String language = xin.vanilla.banira.common.util.CommandUtils.getLanguage(source);
         Component uuid = NarcissusComponent.get().literal(target.getStringUUID());
         uuid.color(EnumMCColor.GREEN.getColor())
                 .clickEvent(new ClickEvent(ClickEvent.Action.COPY_TO_CLIPBOARD, target.getStringUUID()))
                 .hoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, NarcissusComponent.get().transAuto("chat_copy_click").toVanilla(language)));
         Component component = NarcissusComponent.get().transAuto("player_uuid", target.getDisplayName().getString(), uuid);
-        source.sendSuccess(component.toChat(language), false);
+        MessageUtils.sendMessage(source, true, component);
         return 1;
     }
 

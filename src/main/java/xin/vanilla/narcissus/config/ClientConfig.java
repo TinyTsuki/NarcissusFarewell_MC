@@ -11,7 +11,7 @@ import xin.vanilla.banira.common.config.ForgeConfigAdapter;
 import xin.vanilla.banira.common.config.annotation.Config;
 import xin.vanilla.banira.common.config.annotation.ConfigEntry;
 import xin.vanilla.narcissus.config.access.ClientConfigAccess;
-import xin.vanilla.narcissus.enums.EnumWaypointPanelMode;
+import xin.vanilla.narcissus.enums.EnumPanelMode;
 
 /**
  * 客户端配置：注解结构用于 ForgeConfigSpec；运行时通过 {@link #get()} 返回的 {@link RootView} 分层读取。
@@ -57,7 +57,10 @@ public class ClientConfig implements ConfigData {
         private boolean syncStageMapWaypoint = true;
 
         @ConfigEntry.Gui.Tooltip(zh_cn = "传送路标界面布局：三列或 Tab 单栏；在界面内切换布局时会写入此选项。", en_us = "Waypoint screen layout: three columns or tabbed panel; toggling layout in the GUI updates this option.")
-        private EnumWaypointPanelMode waypointScreenPanelMode = EnumWaypointPanelMode.THREE_COLUMNS;
+        private EnumPanelMode waypointScreenPanelMode = EnumPanelMode.COLUMNS;
+
+        @ConfigEntry.Gui.Tooltip(zh_cn = "黑白名单界面布局：双列或 Tab 单栏；在界面内长按标题切换时会写入此选项。", en_us = "Access list screen layout: two columns or tabbed panel; long-press the title in the GUI to toggle and persist.")
+        private EnumPanelMode accessListScreenPanelMode = EnumPanelMode.COLUMNS;
     }
 
     // region 运行时视图接口
@@ -79,9 +82,13 @@ public class ClientConfig implements ConfigData {
 
         ClientView syncStageMapWaypoint(boolean value);
 
-        EnumWaypointPanelMode waypointScreenPanelMode();
+        EnumPanelMode waypointScreenPanelMode();
 
-        ClientView waypointScreenPanelMode(EnumWaypointPanelMode value);
+        ClientView waypointScreenPanelMode(EnumPanelMode value);
+
+        EnumPanelMode accessListScreenPanelMode();
+
+        ClientView accessListScreenPanelMode(EnumPanelMode value);
     }
 
     // endregion 运行时视图接口

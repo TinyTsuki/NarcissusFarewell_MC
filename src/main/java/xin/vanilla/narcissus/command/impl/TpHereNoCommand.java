@@ -30,11 +30,11 @@ public final class TpHereNoCommand {
         ServerPlayer player = context.getSource().getPlayerOrException();
         String id = CommandUtils.getRequestId(context, EnumTeleportType.TP_HERE, true);
         if (StringUtils.isNullOrEmpty(id) || !NarcissusFarewell.getTeleportRequest().containsKey(id)) {
-            MessageUtils.sendMessage(player, NarcissusComponent.get().transAuto("tp_here_not_found"));
+            MessageUtils.sendNotification(player, NarcissusComponent.get().transAuto("tp_here_not_found"));
             return 0;
         }
         TeleportRequest request = NarcissusFarewell.getTeleportRequest().remove(id);
-        MessageUtils.sendMessage(request.getRequester(), NarcissusComponent.get().transAuto("tp_here_rejected", request.getTarget().getDisplayName().getString()));
+        MessageUtils.sendNotification(request.getRequester(), NarcissusComponent.get().transAuto("tp_here_rejected", request.getTarget().getDisplayName().getString()));
         return 1;
     }
 

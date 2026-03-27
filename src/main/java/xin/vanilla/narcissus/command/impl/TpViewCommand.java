@@ -26,15 +26,15 @@ public final class TpViewCommand {
         CommandUtils.notifyHelp(context);
         if (CommandUtils.checkTeleportPre(context.getSource(), EnumCommandType.TP_VIEW)) return 0;
         ServerPlayer player = context.getSource().getPlayerOrException();
-        boolean safe = "safe".equalsIgnoreCase(CommandUtils.getStringEmpty(context, "safe"));
-        int range = CommandUtils.getIntDefault(context, "range", CommonConfig.get().general().teleportViewDistanceLimit());
+        boolean safe = "safe".equalsIgnoreCase(xin.vanilla.banira.common.util.CommandUtils.getStringEmpty(context, "safe"));
+        int range = xin.vanilla.banira.common.util.CommandUtils.getIntDefault(context, "range", CommonConfig.get().general().teleportViewDistanceLimit());
         range = NarcissusUtils.checkRange(player, EnumTeleportType.TP_VIEW, range);
-        MessageUtils.sendActionBarMessage(player, NarcissusComponent.get().transAuto("tp_view_searching"));
+        MessageUtils.sendNotification(player, NarcissusComponent.get().transAuto("tp_view_searching"));
         int finalRange = range;
         new Thread(() -> {
             SafeWorldCoordinate safeWorldCoordinate = NarcissusUtils.findViewEndCandidate(player, safe, finalRange);
             if (safeWorldCoordinate == null) {
-                MessageUtils.sendMessage(player, NarcissusComponent.get().transAuto(safe ? "tp_view_safe_not_found" : "tp_view_not_found"));
+                MessageUtils.sendNotification(player, NarcissusComponent.get().transAuto(safe ? "tp_view_safe_not_found" : "tp_view_not_found"));
                 return;
             }
             safeWorldCoordinate.safeMode(EnumSafeMode.Y_C_OFFSET_3);

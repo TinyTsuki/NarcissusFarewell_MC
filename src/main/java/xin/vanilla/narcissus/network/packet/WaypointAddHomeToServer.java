@@ -4,6 +4,7 @@ import lombok.Getter;
 import lombok.experimental.Accessors;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraftforge.fmllegacy.network.NetworkEvent;
+import xin.vanilla.banira.common.util.CommandUtils;
 import xin.vanilla.banira.common.util.StringUtils;
 import xin.vanilla.narcissus.config.CommonConfig;
 import xin.vanilla.narcissus.util.NarcissusUtils;
@@ -44,7 +45,7 @@ public class WaypointAddHomeToServer {
             if (!packet.name().isEmpty()) {
                 cmd += " " + StringUtils.formatString(packet.name());
             }
-            NarcissusUtils.executeCommand(sender, cmd);
+            CommandUtils.executeCommand(sender, cmd);
         });
         ctx.get().setPacketHandled(true);
     }
