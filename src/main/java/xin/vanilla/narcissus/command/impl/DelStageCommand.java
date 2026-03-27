@@ -51,7 +51,7 @@ public final class DelStageCommand {
         stageData.setDirty();
         if (remove == null) {
             if (player != null) {
-                MessageUtils.sendMessage(player, NarcissusComponent.get().transAuto("stage_not_found_with_name_in_dimension", dimension, name));
+                MessageUtils.sendNotification(player, NarcissusComponent.get().transAuto("stage_not_found_with_name_in_dimension", dimension, name));
             } else {
                 MessageUtils.sendMessage(source, false, NarcissusComponent.get().transAuto("stage_not_found_with_name_in_dimension", dimension, name));
             }

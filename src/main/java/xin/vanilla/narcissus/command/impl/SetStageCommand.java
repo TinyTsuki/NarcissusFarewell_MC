@@ -55,7 +55,7 @@ public final class SetStageCommand {
         String dimension = targetLevel.location().toString();
         KeyValue<String, String> key = new KeyValue<>(dimension, name);
         if (stageData.getStageCoordinate().containsKey(key)) {
-            MessageUtils.sendMessage(player, NarcissusComponent.get().transAuto("stage_already_exists", key.key(), key.value()));
+            MessageUtils.sendNotification(player, NarcissusComponent.get().transAuto("stage_already_exists", key.key(), key.value()));
             return 0;
         }
         SafeWorldCoordinate safeWorldCoordinate = new SafeWorldCoordinate(player);
@@ -67,7 +67,7 @@ public final class SetStageCommand {
         stageData.addCoordinate(key, safeWorldCoordinate);
         PacketUtils.broadcastPacket(NetworkInit.INSTANCE, new WaypointSyncToClient(WaypointSyncToClient.Action.ADD, WaypointSyncToClient.Type.STAGE, name, safeWorldCoordinate));
         PacketUtils.broadcastPacket(NetworkInit.INSTANCE, new StageDataSyncToClient(stageData.getStageCoordinate()));
-        MessageUtils.sendMessage(player, NarcissusComponent.get().transAuto("stage_set", name, safeWorldCoordinate.xyzString()));
+        MessageUtils.sendNotification(player, NarcissusComponent.get().transAuto("stage_set", name, safeWorldCoordinate.xyzString()));
         return 1;
     }
 

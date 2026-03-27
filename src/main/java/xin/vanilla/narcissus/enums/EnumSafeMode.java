@@ -1,6 +1,11 @@
 package xin.vanilla.narcissus.enums;
 
-public enum EnumSafeMode {
+import xin.vanilla.banira.common.data.Component;
+import xin.vanilla.banira.common.enums.IEnumDescribable;
+import xin.vanilla.banira.common.util.EnumDescriptionHelper;
+import xin.vanilla.narcissus.NarcissusComponent;
+
+public enum EnumSafeMode implements IEnumDescribable {
     NONE,
     /**
      * 当前位置到顶部
@@ -22,4 +27,10 @@ public enum EnumSafeMode {
      * 当前位置+-3
      */
     Y_C_OFFSET_3,
+    ;
+
+    @Override
+    public Component enumDescription() {
+        return EnumDescriptionHelper.describeEnum(NarcissusComponent.get(), this);
+    }
 }

@@ -52,6 +52,7 @@ public final class BlacklistCommand {
         Component msg;
         if (access.addBlackList(uuids)) {
             data.setDirty();
+            PlayerTeleportData.syncPlayerData(player);
             msg = NarcissusComponent.get().transAuto("list_add_success"
                     , CommandUtils.getBlacklistOrWhitelistHelp(player, true)
                     , players.stream().map(PlayerUtils::getPlayerNameString).collect(Collectors.joining(","))
@@ -72,6 +73,7 @@ public final class BlacklistCommand {
         String[] uuids = players.stream().map(PlayerUtils::getPlayerUUIDString).toArray(String[]::new);
         access.removeBlackList(uuids);
         data.setDirty();
+        PlayerTeleportData.syncPlayerData(player);
         Component msg = NarcissusComponent.get().transAuto("remove_success");
         if (CollectionUtils.isNullOrEmpty(access.getBlackList())) {
             msg.append(NarcissusComponent.get().transAuto("list_is_empty", CommandUtils.getBlacklistOrWhitelistHelp(player, true)));
