@@ -45,17 +45,17 @@ public final class TpHomeCommand {
             }
         } catch (IllegalArgumentException ignored) {
         }
-        String name = CommandUtils.getStringDefault(context, "name", null);
+        String name = xin.vanilla.banira.common.util.CommandUtils.getStringDefault(context, "name", null);
         SafeWorldCoordinate safeWorldCoordinate = NarcissusUtils.getPlayerHome(player, targetLevel, name);
         if (safeWorldCoordinate == null) {
             if (targetLevel == null && name == null) {
-                MessageUtils.sendMessage(player, NarcissusComponent.get().transAuto("home_not_found"));
+                MessageUtils.sendNotification(player, NarcissusComponent.get().transAuto("home_not_found"));
             } else if (targetLevel != null && name == null) {
-                MessageUtils.sendMessage(player, NarcissusComponent.get().transAuto("home_not_found_in_dimension", targetLevel.location().toString()));
+                MessageUtils.sendNotification(player, NarcissusComponent.get().transAuto("home_not_found_in_dimension", targetLevel.location().toString()));
             } else if (targetLevel == null) {
-                MessageUtils.sendMessage(player, NarcissusComponent.get().transAuto("home_not_found_with_name", name));
+                MessageUtils.sendNotification(player, NarcissusComponent.get().transAuto("home_not_found_with_name", name));
             } else {
-                MessageUtils.sendMessage(player, NarcissusComponent.get().transAuto("home_not_found_with_name_in_dimension", targetLevel.location().toString(), name));
+                MessageUtils.sendNotification(player, NarcissusComponent.get().transAuto("home_not_found_with_name_in_dimension", targetLevel.location().toString(), name));
             }
             return 0;
         }
@@ -69,8 +69,8 @@ public final class TpHomeCommand {
     }
 
     public static CompletableFuture<Suggestions> safeSuggestion(CommandContext<CommandSourceStack> context, SuggestionsBuilder builder) throws CommandSyntaxException {
-        String name = CommandUtils.getStringDefault(context, "name", null);
-        String lang = CommandUtils.getLanguage(context.getSource());
+        String name = xin.vanilla.banira.common.util.CommandUtils.getStringDefault(context, "name", null);
+        String lang = xin.vanilla.banira.common.util.CommandUtils.getLanguage(context.getSource());
         Component trueTooltip = NarcissusComponent.get().transAuto("suggest_safe_true").languageCode(lang);
         Component falseTooltip = NarcissusComponent.get().transAuto("suggest_safe_false").languageCode(lang);
         Component dimTooltip = NarcissusComponent.get().transAuto("suggest_dimension").languageCode(lang);

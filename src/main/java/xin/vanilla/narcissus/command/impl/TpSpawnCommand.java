@@ -8,8 +8,9 @@ import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.commands.arguments.EntityArgument;
 import net.minecraft.core.BlockPos;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.level.Level;
+import xin.vanilla.banira.common.util.DimensionUtils;
 import xin.vanilla.narcissus.config.CommonConfig;
 import xin.vanilla.narcissus.data.SafeWorldCoordinate;
 import xin.vanilla.narcissus.enums.EnumCommandType;
@@ -25,21 +26,28 @@ public final class TpSpawnCommand {
         CommandUtils.notifyHelp(context);
         if (CommandUtils.checkTeleportPre(context.getSource(), EnumCommandType.TP_SPAWN)) return 0;
         ServerPlayer player = context.getSource().getPlayerOrException();
-        ServerPlayer target = CommandUtils.getPlayerOptional(context, "player");
+        ServerPlayer target = xin.vanilla.banira.common.util.CommandUtils.getPlayerOptional(context, "player");
         if (target == null) target = player;
         SafeWorldCoordinate safeWorldCoordinate = new SafeWorldCoordinate(target);
         BlockPos respawnPosition = target.getRespawnPosition();
         safeWorldCoordinate.dimension(target.getRespawnDimension());
         if (respawnPosition == null) {
-            respawnPosition = target.getLevel().getSharedSpawnPos();
-            safeWorldCoordinate.dimension(target.getLevel().dimension());
-        }
-        if (respawnPosition == null) {
-            respawnPosition = target.getServer().getLevel(Level.OVERWORLD).getSharedSpawnPos();
-            safeWorldCoordinate.dimension(Level.OVERWORLD);
+            String raw = CommonConfig.get().general().tpSpawnNoBedWorldDimension();
+            String s = raw == null ? "" : raw.trim();
+            ServerLevel level;
+            if (s.isEmpty() || "CURRENT".equalsIgnoreCase(s) || "AUTO".equalsIgnoreCase(s)) {
+                level = target.getLevel();
+            } else {
+                level = DimensionUtils.getLevel(s);
+            }
+            if (level == null) {
+                level = target.getLevel();
+            }
+            respawnPosition = level.getSharedSpawnPos();
+            safeWorldCoordinate.dimension(level.dimension());
         }
         safeWorldCoordinate.fromBlockPos(respawnPosition);
-        safeWorldCoordinate.safe("safe".equalsIgnoreCase(CommandUtils.getStringDefault(context, "safe", "safe")));
+        safeWorldCoordinate.safe("safe".equalsIgnoreCase(xin.vanilla.banira.common.util.CommandUtils.getStringDefault(context, "safe", "safe")));
         if (CommandUtils.checkTeleportPost(player, safeWorldCoordinate, EnumTeleportType.TP_SPAWN, true)) return 0;
         NarcissusUtils.teleportTo(player, safeWorldCoordinate, EnumTeleportType.TP_SPAWN);
         return 1;

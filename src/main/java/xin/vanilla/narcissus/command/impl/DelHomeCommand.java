@@ -45,14 +45,14 @@ public final class DelHomeCommand {
         SafeWorldCoordinate remove = data.getHomeCoordinate().remove(new KeyValue<>(dimension, name));
         data.setDirty();
         if (remove == null) {
-            MessageUtils.sendMessage(player, NarcissusComponent.get().transAuto("home_not_found_with_name_in_dimension", dimension, name));
+            MessageUtils.sendNotification(player, NarcissusComponent.get().transAuto("home_not_found_with_name_in_dimension", dimension, name));
             return 0;
         }
         if (data.getDefaultHome().containsKey(dimension)) {
             if (data.getDefaultHome().get(dimension).equals(name)) {
                 data.getDefaultHome().remove(dimension);
                 data.setDirty();
-                MessageUtils.sendMessage(player, NarcissusComponent.get().transAuto("home_default_remove", name));
+                MessageUtils.sendNotification(player, NarcissusComponent.get().transAuto("home_default_remove", name));
             }
         }
         PacketUtils.sendPacketToPlayer(NetworkInit.INSTANCE, new WaypointSyncToClient(WaypointSyncToClient.Action.REMOVE, WaypointSyncToClient.Type.HOME, name, remove), player);

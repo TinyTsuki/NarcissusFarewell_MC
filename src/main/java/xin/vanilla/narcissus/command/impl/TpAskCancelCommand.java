@@ -30,13 +30,13 @@ public final class TpAskCancelCommand {
         ServerPlayer player = context.getSource().getPlayerOrException();
         String id = CommandUtils.getRequestId(context, EnumTeleportType.TP_ASK, false);
         if (StringUtils.isNullOrEmpty(id) || !NarcissusFarewell.getTeleportRequest().containsKey(id)) {
-            MessageUtils.sendMessage(player, NarcissusComponent.get().transAuto("tp_ask_not_found"));
+            MessageUtils.sendNotification(player, NarcissusComponent.get().transAuto("tp_ask_not_found"));
             return 0;
         }
         TeleportRequest request = NarcissusFarewell.getTeleportRequest().remove(id);
-        MessageUtils.sendMessage(request.getRequester(), NarcissusComponent.get().transAuto("tp_ask_cancelled", request.getRequester().getDisplayName().getString()));
+        MessageUtils.sendNotification(request.getRequester(), NarcissusComponent.get().transAuto("tp_ask_cancelled", request.getRequester().getDisplayName().getString()));
         if (!request.isIgnore() && !request.getRequester().getUUID().equals(request.getTarget().getUUID())) {
-            MessageUtils.sendMessage(request.getTarget(), NarcissusComponent.get().transAuto("tp_ask_cancelled", request.getRequester().getDisplayName().getString()));
+            MessageUtils.sendNotification(request.getTarget(), NarcissusComponent.get().transAuto("tp_ask_cancelled", request.getRequester().getDisplayName().getString()));
         }
         return 1;
     }

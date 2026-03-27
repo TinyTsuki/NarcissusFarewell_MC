@@ -54,7 +54,7 @@ public final class TpGraveCommand {
 
         SafeWorldCoordinate target = resolveTeleportTarget(coord1, coord2);
         if (target == null) {
-            MessageUtils.sendMessage(player, NarcissusComponent.get().transAuto("death_not_found"));
+            MessageUtils.sendNotification(player, NarcissusComponent.get().transAuto("death_not_found"));
             return 0;
         }
 
@@ -73,13 +73,13 @@ public final class TpGraveCommand {
 
         int limit = CommonConfig.get().general().graveSearchRangeLimit();
         if (range > limit) {
-            MessageUtils.sendMessage(player, NarcissusComponent.get().transAuto("grave_range_too_large", limit));
+            MessageUtils.sendNotification(player, NarcissusComponent.get().transAuto("grave_range_too_large", limit));
             return 0;
         }
 
         SafeWorldCoordinate coord2 = GraveHelper.findCorpseGravestoneNearPlayer(player, range);
         if (coord2 == null) {
-            MessageUtils.sendMessage(player, NarcissusComponent.get().transAuto("death_not_found"));
+            MessageUtils.sendNotification(player, NarcissusComponent.get().transAuto("death_not_found"));
             return 0;
         }
 
@@ -96,7 +96,7 @@ public final class TpGraveCommand {
 
         TeleportRecord record = GraveHelper.findLastDeathRecord(player, dim);
         if (record == null) {
-            MessageUtils.sendMessage(player, NarcissusComponent.get().transAuto("death_not_found"));
+            MessageUtils.sendNotification(player, NarcissusComponent.get().transAuto("death_not_found"));
             return 0;
         }
 
