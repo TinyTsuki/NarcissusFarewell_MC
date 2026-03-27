@@ -30,11 +30,11 @@ public final class TpAskNoCommand {
         ServerPlayerEntity player = context.getSource().getPlayerOrException();
         String id = CommandUtils.getRequestId(context, EnumTeleportType.TP_ASK, true);
         if (StringUtils.isNullOrEmpty(id) || !NarcissusFarewell.getTeleportRequest().containsKey(id)) {
-            MessageUtils.sendMessage(player, NarcissusComponent.get().transAuto("tp_ask_not_found"));
+            MessageUtils.sendNotification(player, NarcissusComponent.get().transAuto("tp_ask_not_found"));
             return 0;
         }
         TeleportRequest request = NarcissusFarewell.getTeleportRequest().remove(id);
-        MessageUtils.sendMessage(request.getRequester(), NarcissusComponent.get().transAuto("tp_ask_rejected", request.getTarget().getDisplayName().getString()));
+        MessageUtils.sendNotification(request.getRequester(), NarcissusComponent.get().transAuto("tp_ask_rejected", request.getTarget().getDisplayName().getString()));
         return 1;
     }
 

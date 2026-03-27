@@ -26,9 +26,9 @@ public final class FlyCommand {
         CommandUtils.notifyHelp(context);
         CommandSource source = context.getSource();
         if (CommandUtils.checkTeleportPre(source, EnumCommandType.FLY)) return 0;
-        ServerPlayerEntity target = CommandUtils.getPlayerOrSelf(context, "player");
-        Boolean enable = CommandUtils.getBooleanOptional(context, "enable");
-        Double speedDouble = CommandUtils.getDoubleOptional(context, "speed");
+        ServerPlayerEntity target = xin.vanilla.banira.common.util.CommandUtils.getPlayerOrSelf(context, "player");
+        Boolean enable = xin.vanilla.banira.common.util.CommandUtils.getBooleanOptional(context, "enable");
+        Double speedDouble = xin.vanilla.banira.common.util.CommandUtils.getDoubleOptional(context, "speed");
         Float speed = speedDouble != null ? speedDouble.floatValue() : null;
         NarcissusUtils.setPlayerFlightMode(target, enable, speed);
         return 1;

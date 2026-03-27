@@ -42,7 +42,7 @@ public final class TpCoordinateCommand {
             ServerPlayerEntity target = EntityArgument.getPlayer(context, "player");
             safeWorldCoordinate = new SafeWorldCoordinate(target.getX(), target.getY(), target.getZ(), target.yRot, target.xRot, target.getLevel().dimension());
         }
-        safeWorldCoordinate.safe("safe".equalsIgnoreCase(CommandUtils.getStringEmpty(context, "safe")));
+        safeWorldCoordinate.safe("safe".equalsIgnoreCase(xin.vanilla.banira.common.util.CommandUtils.getStringEmpty(context, "safe")));
         if (CommandUtils.checkTeleportPost(player, safeWorldCoordinate, EnumTeleportType.TP_COORDINATE, true))
             return 0;
         NarcissusUtils.teleportTo(player, safeWorldCoordinate, EnumTeleportType.TP_COORDINATE);
