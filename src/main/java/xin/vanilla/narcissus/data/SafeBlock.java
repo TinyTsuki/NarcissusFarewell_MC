@@ -4,8 +4,8 @@ import lombok.Data;
 import lombok.experimental.Accessors;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
+import xin.vanilla.banira.common.util.BlockUtils;
 import xin.vanilla.narcissus.config.CommonConfig;
-import xin.vanilla.narcissus.util.NarcissusUtils;
 
 import java.util.List;
 import java.util.Objects;
@@ -42,7 +42,7 @@ public class SafeBlock {
     public void init() {
         if (this.safeBlocksState == null) {
             this.safeBlocksState = CommonConfig.get().general().safeTeleport().safeBlocks().stream()
-                    .map(NarcissusUtils::deserializeBlockState)
+                    .map(BlockUtils::deserializeBlockState)
                     .filter(Objects::nonNull)
                     .distinct()
                     .collect(Collectors.toList());
@@ -56,7 +56,7 @@ public class SafeBlock {
         }
         if (this.unsafeBlocksState == null) {
             this.unsafeBlocksState = CommonConfig.get().general().safeTeleport().unsafeBlocks().stream()
-                    .map(NarcissusUtils::deserializeBlockState)
+                    .map(BlockUtils::deserializeBlockState)
                     .filter(Objects::nonNull)
                     .distinct()
                     .collect(Collectors.toList());
@@ -70,7 +70,7 @@ public class SafeBlock {
         }
         if (this.suffocatingBlocksState == null) {
             this.suffocatingBlocksState = CommonConfig.get().general().safeTeleport().suffocatingBlocks().stream()
-                    .map(NarcissusUtils::deserializeBlockState)
+                    .map(BlockUtils::deserializeBlockState)
                     .filter(Objects::nonNull)
                     .distinct()
                     .collect(Collectors.toList());

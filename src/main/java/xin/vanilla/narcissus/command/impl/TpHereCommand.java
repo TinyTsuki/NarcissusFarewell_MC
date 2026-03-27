@@ -48,11 +48,11 @@ public final class TpHereCommand {
                     })
                     .max(Comparator.comparing(TeleportRequest::getRequestTime))
                     .orElse(new TeleportRequest().setTarget(NarcissusFarewell.getLastTeleportRequest()
-                            .getOrDefault(player, NarcissusUtils.getRandomPlayer())))
+                            .getOrDefault(player, PlayerUtils.getRandomPlayer())))
                     .getTarget();
         }
         if (target == null) {
-            MessageUtils.sendMessage(player, NarcissusComponent.get().transAuto("player_not_found"));
+            MessageUtils.sendNotification(player, NarcissusComponent.get().transAuto("player_not_found"));
             return 0;
         }
         TeleportRequest request = new TeleportRequest()
@@ -60,7 +60,7 @@ public final class TpHereCommand {
                 .setTarget(target)
                 .setTeleportType(EnumTeleportType.TP_HERE)
                 .setRequestTime(new Date());
-        request.setSafe("safe".equalsIgnoreCase(CommandUtils.getStringEmpty(context, "safe")));
+        request.setSafe("safe".equalsIgnoreCase(xin.vanilla.banira.common.util.CommandUtils.getStringEmpty(context, "safe")));
         if (CommandUtils.checkTeleportPost(request)) return 0;
         PlayerAccess targetAccess = PlayerTeleportData.getData(target).getAccess();
         String playerUUIDString = PlayerUtils.getPlayerUUIDString(player);
@@ -81,7 +81,7 @@ public final class TpHereCommand {
         MessageUtils.sendMessage(player, NarcissusComponent.get().transAuto("tp_here_request_sent", target.getDisplayName().getString(), cancelButton));
         if (autoAccept) {
             ServerPlayerEntity finalTarget = target;
-            new Thread(() -> NarcissusUtils.executeCommand(finalTarget, NarcissusUtils.getCommand(EnumCommandType.TP_HERE_YES) + " " + request.getRequestId())).start();
+            new Thread(() -> xin.vanilla.banira.common.util.CommandUtils.executeCommand(finalTarget, NarcissusUtils.getCommand(EnumCommandType.TP_HERE_YES) + " " + request.getRequestId())).start();
         }
         return 1;
     }

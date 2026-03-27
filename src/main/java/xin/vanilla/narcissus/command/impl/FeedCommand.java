@@ -27,7 +27,7 @@ public final class FeedCommand {
         CommandSource source = context.getSource();
         if (CommandUtils.checkTeleportPre(source, EnumCommandType.FEED)) return 0;
         if (source.getEntity() == null) {
-            List<ServerPlayerEntity> targetList = new ArrayList<>(CommandUtils.getPlayersOptional(context, "player", new ArrayList<>()));
+            List<ServerPlayerEntity> targetList = new ArrayList<>(xin.vanilla.banira.common.util.CommandUtils.getPlayersOptional(context, "player", new ArrayList<>()));
             if (targetList.isEmpty()) throw CommandSource.ERROR_NOT_PLAYER.create();
             for (ServerPlayerEntity target : targetList) {
                 NarcissusUtils.killPlayer(null, target);
@@ -35,10 +35,10 @@ public final class FeedCommand {
         } else if (source.getEntity() instanceof ServerPlayerEntity) {
             ServerPlayerEntity player = source.getPlayerOrException();
             if (!CommonConfig.get().featureSwitch().switchFeed()) {
-                MessageUtils.sendMessage(player, NarcissusComponent.get().transAuto("command_disabled"));
+                MessageUtils.sendNotification(player, NarcissusComponent.get().transAuto("command_disabled"));
                 return 0;
             }
-            List<ServerPlayerEntity> targetList = new ArrayList<>(CommandUtils.getPlayersOptional(context, "player", Collections.singletonList(player)));
+            List<ServerPlayerEntity> targetList = new ArrayList<>(xin.vanilla.banira.common.util.CommandUtils.getPlayersOptional(context, "player", Collections.singletonList(player)));
             for (ServerPlayerEntity target : targetList) {
                 NarcissusUtils.killPlayer(player, target);
             }

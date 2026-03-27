@@ -41,6 +41,8 @@ public final class CommonConfigAccess {
     private static final CommonConfig.PermissionCommandCategory DEFAULT_PERM_CMD = new CommonConfig.PermissionCommandCategory();
     private static final CommonConfig.PermissionAcrossCategory DEFAULT_PERM_ACROSS = new CommonConfig.PermissionAcrossCategory();
     private static final CommonConfig.CooldownCategory DEFAULT_CD = new CommonConfig.CooldownCategory();
+    private static final CommonConfig.TeleportCountdownCategory DEFAULT_TELEPORT_COUNTDOWN = new CommonConfig.TeleportCountdownCategory();
+    private static final CommonConfig.ServerPerTypeTeleportCountdownGroup DEFAULT_SERVER_PER_TYPE_TPCD = new CommonConfig.ServerPerTypeTeleportCountdownGroup();
     private static final CommonConfig.TpCoordinateCostGroup DEFAULT_COST_TP_COORDINATE = new CommonConfig.TpCoordinateCostGroup();
     private static final CommonConfig.TpStructureCostGroup DEFAULT_COST_TP_STRUCTURE = new CommonConfig.TpStructureCostGroup();
     private static final CommonConfig.TpAskCostGroup DEFAULT_COST_TP_ASK = new CommonConfig.TpAskCostGroup();
@@ -91,6 +93,8 @@ public final class CommonConfigAccess {
             case "cooldown":
                 return ConfigCategoryViewProxy.create(CommonConfig.CooldownView.class, holder, "cooldown", DEFAULT_CD,
                         CommonConfigAccess::readCooldownInt);
+            case "teleportCountdown":
+                return teleportCountdown(holder);
             case "cost":
                 return cost(holder);
             case "holder":
@@ -575,12 +579,63 @@ public final class CommonConfigAccess {
         return raw;
     }
 
+    private static CommonConfig.TeleportCountdownView teleportCountdown(ConfigHolder holder) {
+        return (CommonConfig.TeleportCountdownView) Proxy.newProxyInstance(
+                CommonConfig.class.getClassLoader(),
+                new Class<?>[]{CommonConfig.TeleportCountdownView.class},
+                (proxy, method, args) -> {
+                    if (method.getDeclaringClass() == Object.class) {
+                        return objectMethod(proxy, method, args, "TeleportCountdownView");
+                    }
+                    if ("server".equals(method.getName()) && method.getParameterCount() == 0) {
+                        return ConfigCategoryViewProxy.create(CommonConfig.ServerPerTypeTeleportCountdownView.class, holder,
+                                "teleportCountdown.server", DEFAULT_SERVER_PER_TYPE_TPCD, CommonConfigAccess::readCooldownInt);
+                    }
+                    return teleportCountdownLeaf(holder, proxy, method, args);
+                });
+    }
+
+    private static Object teleportCountdownLeaf(ConfigHolder holder, Object proxy, Method method, Object[] args) {
+        String leaf = method.getName();
+        int pc = method.getParameterCount();
+        String fullPath = "teleportCountdown." + leaf;
+        if (pc == 0) {
+            Object raw = holder != null ? holder.get(fullPath) : null;
+            try {
+                return readTeleportCountdownTopLevel(leaf, raw, DEFAULT_TELEPORT_COUNTDOWN);
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        }
+        if (pc == 1) {
+            if (holder != null) {
+                holder.set(fullPath, args[0]);
+            }
+            return proxy;
+        }
+        throw new UnsupportedOperationException(method.toString());
+    }
+
+    private static Object readTeleportCountdownTopLevel(String leaf, Object raw, Object bean) throws Exception {
+        if (raw == null) {
+            return field(bean, leaf);
+        }
+        return raw;
+    }
+
     private static Object readGeneralLeaf(String leaf, Object raw, Object bean) throws Exception {
         if ("teleportRequestCooldownType".equals(leaf)) {
             if (raw == null) {
                 return field(bean, leaf);
             }
             return parseCoolDownType(raw, (EnumCoolDownType) field(bean, leaf));
+        }
+        if ("tpSpawnNoBedWorldDimension".equals(leaf)) {
+            if (raw == null) {
+                return field(bean, leaf);
+            }
+            String s = (String) raw;
+            return s.isEmpty() ? field(bean, leaf) : s;
         }
         if ("teleportBackSkipType".equals(leaf)) {
             if (raw == null) {
@@ -772,6 +827,7 @@ public final class CommonConfigAccess {
         h.set("general.helpInfoNumPerPage", 5);
         h.set("general.defaultLanguage", "en_us");
         h.set("general.tpWithEnemy", false);
+        h.set("general.tpSpawnNoBedWorldDimension", "minecraft:overworld");
         h.set("general.safeTeleport.unsafeBlocks", Stream.of(Blocks.LAVA, Blocks.FIRE, Blocks.CAMPFIRE, Blocks.SOUL_FIRE, Blocks.SOUL_CAMPFIRE, Blocks.CACTUS, Blocks.MAGMA_BLOCK, Blocks.SWEET_BERRY_BUSH).map(b -> {
             ResourceLocation rl = b.getRegistryName();
             return rl == null ? "" : rl.toString();
@@ -838,7 +894,33 @@ public final class CommonConfigAccess {
         h.set("cooldown.cooldownTpStage", 10);
         h.set("cooldown.cooldownTpBack", 10);
         h.set("cooldown.cooldownTpGrave", 10);
+        applyTeleportCountdownDefaults(h);
         applyCostGroupDefaults(h);
+    }
+
+    private static void applyTeleportCountdownDefaults(ConfigHolder h) {
+        String p = "teleportCountdown.server.";
+        h.set(p + "serverCountdownTpCoordinate", 0);
+        h.set(p + "serverCountdownTpStructure", 0);
+        h.set(p + "serverCountdownTpAsk", 0);
+        h.set(p + "serverCountdownTpHere", 0);
+        h.set(p + "serverCountdownTpRandom", 0);
+        h.set(p + "serverCountdownTpSpawn", 0);
+        h.set(p + "serverCountdownTpWorldSpawn", 0);
+        h.set(p + "serverCountdownTpTop", 0);
+        h.set(p + "serverCountdownTpBottom", 0);
+        h.set(p + "serverCountdownTpUp", 0);
+        h.set(p + "serverCountdownTpDown", 0);
+        h.set(p + "serverCountdownTpView", 0);
+        h.set(p + "serverCountdownTpHome", 0);
+        h.set(p + "serverCountdownTpStage", 0);
+        h.set(p + "serverCountdownTpBack", 0);
+        h.set(p + "serverCountdownTpGrave", 0);
+        h.set("teleportCountdown.forceServerCountdown", false);
+        h.set("teleportCountdown.playerCountdownRangeMin", 0);
+        h.set("teleportCountdown.playerCountdownRangeMax", 300);
+        h.set("teleportCountdown.cancelCountdownOnPlayerMove", false);
+        h.set("teleportCountdown.cancelCountdownOnPlayerDamage", false);
     }
 
     public static void resetConfig(ConfigHolder h) {

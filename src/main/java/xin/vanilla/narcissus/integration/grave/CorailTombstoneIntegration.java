@@ -12,8 +12,8 @@ import ovh.corail.tombstone.helper.Location;
 import ovh.corail.tombstone.item.ItemGraveKey;
 import ovh.corail.tombstone.tileentity.TileEntityGrave;
 import xin.vanilla.banira.common.util.DimensionUtils;
+import xin.vanilla.banira.common.util.PlayerUtils;
 import xin.vanilla.narcissus.data.SafeWorldCoordinate;
-import xin.vanilla.narcissus.util.NarcissusUtils;
 
 import java.util.List;
 import java.util.UUID;
@@ -40,7 +40,7 @@ public final class CorailTombstoneIntegration {
                     TileEntity te = world.getBlockEntity(pos);
                     if (te instanceof TileEntityGrave) {
                         TileEntityGrave grave = (TileEntityGrave) te;
-                        ServerPlayerEntity player = NarcissusUtils.getPlayer(playerUuid);
+                        ServerPlayerEntity player = PlayerUtils.getServerPlayerByUUID(playerUuid);
                         if (player != null && grave.isOwner(player)) {
                             out.add(new SafeWorldCoordinate(pos.getX() + 0.5, pos.getY() + 1, pos.getZ() + 0.5, world.dimension()));
                         }

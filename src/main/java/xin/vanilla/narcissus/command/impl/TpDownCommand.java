@@ -27,10 +27,10 @@ public final class TpDownCommand {
         ServerPlayerEntity player = context.getSource().getPlayerOrException();
         SafeWorldCoordinate safeWorldCoordinate = NarcissusUtils.findDownCandidate(player.getLevel(), new SafeWorldCoordinate(player));
         if (safeWorldCoordinate == null) {
-            MessageUtils.sendMessage(player, NarcissusComponent.get().transAuto("tp_down_not_found"));
+            MessageUtils.sendNotification(player, NarcissusComponent.get().transAuto("tp_down_not_found"));
             return 0;
         }
-        safeWorldCoordinate.safe("safe".equalsIgnoreCase(CommandUtils.getStringDefault(context, "safe", "safe"))).safeMode(EnumSafeMode.Y_C_TO_B);
+        safeWorldCoordinate.safe("safe".equalsIgnoreCase(xin.vanilla.banira.common.util.CommandUtils.getStringDefault(context, "safe", "safe"))).safeMode(EnumSafeMode.Y_C_TO_B);
         if (CommandUtils.checkTeleportPost(player, safeWorldCoordinate, EnumTeleportType.TP_DOWN, true)) return 0;
         NarcissusUtils.teleportTo(player, safeWorldCoordinate, EnumTeleportType.TP_DOWN);
         return 1;

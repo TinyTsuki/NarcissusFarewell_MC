@@ -1,13 +1,14 @@
 package xin.vanilla.narcissus.enums;
 
-import java.util.Arrays;
-import java.util.List;
-import java.util.stream.Collectors;
+import xin.vanilla.banira.common.data.Component;
+import xin.vanilla.banira.common.enums.IEnumDescribable;
+import xin.vanilla.banira.common.util.EnumDescriptionHelper;
+import xin.vanilla.narcissus.NarcissusComponent;
 
 /**
  * 代价类型
  */
-public enum EnumCostType {
+public enum EnumCostType implements IEnumDescribable {
     NONE,
     EXP_POINT,
     EXP_LEVEL,
@@ -17,8 +18,8 @@ public enum EnumCostType {
     COMMAND,
     ;
 
-
-    public static List<String> names() {
-        return Arrays.stream(EnumCostType.values()).map(Enum::name).collect(Collectors.toList());
+    @Override
+    public Component enumDescription() {
+        return EnumDescriptionHelper.describeEnum(NarcissusComponent.get(), this);
     }
 }
