@@ -36,10 +36,10 @@ public final class SetHomeCommand {
         if (CommandUtils.checkTeleportPre(context.getSource(), EnumCommandType.SET_HOME)) return 0;
         PlayerTeleportData data = PlayerTeleportData.getData(player);
         if (data.getHomeCoordinate().size() >= CommonConfig.get().general().teleportHomeLimit()) {
-            MessageUtils.sendMessage(player, NarcissusComponent.get().transAuto("home_limit", CommonConfig.get().general().teleportHomeLimit()));
+            MessageUtils.sendNotification(player, NarcissusComponent.get().transAuto("home_limit", CommonConfig.get().general().teleportHomeLimit()));
             return 0;
         }
-        String name = CommandUtils.getStringDefault(context, "name", "home");
+        String name = xin.vanilla.banira.common.util.CommandUtils.getStringDefault(context, "name", "home");
         boolean defaultHome = false;
         try {
             defaultHome = BoolArgumentType.getBool(context, "default");
@@ -48,25 +48,26 @@ public final class SetHomeCommand {
         SafeWorldCoordinate safeWorldCoordinate = new SafeWorldCoordinate(player);
         KeyValue<String, String> key = new KeyValue<>(player.level().dimension().location().toString(), name);
         if (data.getHomeCoordinate().containsKey(key)) {
-            MessageUtils.sendMessage(player, NarcissusComponent.get().transAuto("home_already_exists", key.key(), key.value()));
+            MessageUtils.sendNotification(player, NarcissusComponent.get().transAuto("home_already_exists", key.key(), key.value()));
             return 0;
         }
         data.addHomeCoordinate(key, safeWorldCoordinate);
         PacketUtils.sendPacketToPlayer(NetworkInit.INSTANCE, new WaypointSyncToClient(WaypointSyncToClient.Action.ADD, WaypointSyncToClient.Type.HOME, name, safeWorldCoordinate), player);
         if (defaultHome) {
             if (data.getDefaultHome().containsKey(player.level().dimension().location().toString())) {
-                MessageUtils.sendMessage(player, NarcissusComponent.get().transAuto("home_default_remove", data.getDefaultHome(player.level().dimension().location().toString()).value()));
+                MessageUtils.sendNotification(player, NarcissusComponent.get().transAuto("home_default_remove", data.getDefaultHome(player.level().dimension().location().toString()).value()));
             }
             data.addDefaultHome(player.level().dimension().location().toString(), name);
-            MessageUtils.sendMessage(player, NarcissusComponent.get().transAuto("home_set_default", name, safeWorldCoordinate.xyzString()));
+            MessageUtils.sendNotification(player, NarcissusComponent.get().transAuto("home_set_default", name, safeWorldCoordinate.xyzString()));
         } else {
-            MessageUtils.sendMessage(player, NarcissusComponent.get().transAuto("home_set", name, safeWorldCoordinate.xyzString()));
+            MessageUtils.sendNotification(player, NarcissusComponent.get().transAuto("home_set", name, safeWorldCoordinate.xyzString()));
         }
+        PlayerTeleportData.syncPlayerData(player);
         return 1;
     }
 
     public static CompletableFuture<Suggestions> suggestion(CommandContext<CommandSourceStack> context, SuggestionsBuilder builder) {
-        String lang = CommandUtils.getLanguage(context.getSource());
+        String lang = xin.vanilla.banira.common.util.CommandUtils.getLanguage(context.getSource());
         Component homeTooltip = NarcissusComponent.get().transAuto("suggest_home_name");
         Component nameTooltip = NarcissusComponent.get().transAuto("suggest_custom_name");
         builder.suggest("home", homeTooltip.toVanilla(lang));
@@ -75,7 +76,7 @@ public final class SetHomeCommand {
     }
 
     public static CompletableFuture<Suggestions> defaultSuggestion(CommandContext<CommandSourceStack> context, SuggestionsBuilder builder) {
-        String lang = CommandUtils.getLanguage(context.getSource());
+        String lang = xin.vanilla.banira.common.util.CommandUtils.getLanguage(context.getSource());
         Component trueTooltip = NarcissusComponent.get().transAuto("suggest_default_home_true");
         Component falseTooltip = NarcissusComponent.get().transAuto("suggest_default_home_false");
         builder.suggest("true", trueTooltip.toVanilla(lang));

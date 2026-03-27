@@ -3,6 +3,7 @@ package xin.vanilla.narcissus.network.packet;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraftforge.network.NetworkEvent;
+import xin.vanilla.banira.common.util.CommandUtils;
 import xin.vanilla.narcissus.enums.EnumCommandType;
 import xin.vanilla.narcissus.util.NarcissusUtils;
 
@@ -23,7 +24,7 @@ public class TpHomeToServer {
         ctx.get().enqueueWork(() -> {
             ServerPlayer player = ctx.get().getSender();
             if (player != null) {
-                NarcissusUtils.executeCommand(player, NarcissusUtils.getCommand(EnumCommandType.TP_HOME));
+                CommandUtils.executeCommand(player, NarcissusUtils.getCommand(EnumCommandType.TP_HOME));
             }
         });
         ctx.get().setPacketHandled(true);

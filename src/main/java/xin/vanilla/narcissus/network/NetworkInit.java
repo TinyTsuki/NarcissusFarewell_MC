@@ -17,7 +17,6 @@ public final class NetworkInit {
         HANDLER.register(StageDataSyncToClient.class, StageDataSyncToClient::toBytes, StageDataSyncToClient::new, StageDataSyncToClient::handle);
         HANDLER.register(CostConfigSyncToClient.class, CostConfigSyncToClient::toBytes, CostConfigSyncToClient::new, CostConfigSyncToClient::handle);
 
-        HANDLER.register(ModLoadedToBoth.class, ModLoadedToBoth::toBytes, ModLoadedToBoth::new, ModLoadedToBoth::handle);
         HANDLER.register(WaypointTeleportToServer.class, WaypointTeleportToServer::toBytes, WaypointTeleportToServer::new, WaypointTeleportToServer::handle);
         HANDLER.register(WaypointDelToServer.class, WaypointDelToServer::toBytes, WaypointDelToServer::new, WaypointDelToServer::handle);
         HANDLER.register(WaypointAddHomeToServer.class, WaypointAddHomeToServer::toBytes, WaypointAddHomeToServer::new, WaypointAddHomeToServer::handle);
@@ -28,5 +27,8 @@ public final class NetworkInit {
         HANDLER.register(TpHomeToServer.class, TpHomeToServer::toBytes, TpHomeToServer::new, TpHomeToServer::handle);
         HANDLER.register(TpNoToServer.class, TpNoToServer::toBytes, TpNoToServer::new, TpNoToServer::handle);
         HANDLER.register(TpYesToServer.class, TpYesToServer::toBytes, TpYesToServer::new, TpYesToServer::handle);
+
+        HANDLER.register(AccessListEditToServer.class, AccessListEditToServer::toBytes, AccessListEditToServer::new, AccessListEditToServer::handle);
+        HANDLER.register(PlayerConfigSyncToServer.class, PlayerConfigSyncToServer::toBytes, PlayerConfigSyncToServer::new, PlayerConfigSyncToServer::handle);
     }
 }

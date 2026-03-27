@@ -37,9 +37,9 @@ public final class ShareCommand {
         CommandSourceStack source = context.getSource();
         ServerPlayer player = source.getPlayerOrException();
 
-        String name = CommandUtils.getStringDefault(context, "name", "Shared");
+        String name = xin.vanilla.banira.common.util.CommandUtils.getStringDefault(context, "name", "Shared");
 
-        List<ServerPlayer> targetList = new ArrayList<>(CommandUtils.getPlayersOptional(context, "players",
+        List<ServerPlayer> targetList = new ArrayList<>(xin.vanilla.banira.common.util.CommandUtils.getPlayersOptional(context, "players",
                 context.getSource().getServer().getPlayerList().getPlayers()));
 
         Component nameComponent;
@@ -56,7 +56,7 @@ public final class ShareCommand {
             String[] split = keyValue.key().split("->");
             SafeWorldCoordinate safeWorldCoordinate = keyValue.value();
             if (safeWorldCoordinate == null) {
-                MessageUtils.sendMessage(player, NarcissusComponent.get().transAuto("home_not_found_with_name_in_dimension"
+                MessageUtils.sendNotification(player, NarcissusComponent.get().transAuto("home_not_found_with_name_in_dimension"
                         , split[1], split[0]));
                 return 0;
             }
@@ -77,7 +77,7 @@ public final class ShareCommand {
             String[] split = keyValue.key().split(">>");
             SafeWorldCoordinate safeWorldCoordinate = keyValue.value();
             if (safeWorldCoordinate == null) {
-                MessageUtils.sendMessage(player, NarcissusComponent.get().transAuto("stage_not_found_with_name_in_dimension"
+                MessageUtils.sendNotification(player, NarcissusComponent.get().transAuto("stage_not_found_with_name_in_dimension"
                         , split[1], split[0]));
                 return 0;
             }
@@ -130,7 +130,7 @@ public final class ShareCommand {
                 .executes(ShareCommand::execute)
                 .then(Commands.argument("name", StringArgumentType.string())
                         .suggests((context, builder) -> {
-                            String name = CommandUtils.getStringEmpty(context, "name");
+                            String name = xin.vanilla.banira.common.util.CommandUtils.getStringEmpty(context, "name");
                             CommandSourceStack source = context.getSource();
                             ServerPlayer player = source.getPlayerOrException();
                             PlayerTeleportData data = PlayerTeleportData.getData(player);

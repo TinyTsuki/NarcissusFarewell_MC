@@ -1,10 +1,15 @@
 package xin.vanilla.narcissus.enums;
 
-import java.util.Arrays;
-import java.util.List;
-import java.util.stream.Collectors;
+import xin.vanilla.banira.common.data.Component;
+import xin.vanilla.banira.common.enums.IEnumDescribable;
+import xin.vanilla.banira.common.util.EnumDescriptionHelper;
+import xin.vanilla.narcissus.NarcissusComponent;
 
-public enum EnumTeleportType {
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+
+public enum EnumTeleportType implements IEnumDescribable {
     TP_COORDINATE,
     TP_STRUCTURE,
     TP_ASK,
@@ -22,7 +27,20 @@ public enum EnumTeleportType {
     TP_BACK,
     TP_GRAVE,
     DEATH,
-    OTHER;
+    OTHER,
+    ;
+
+    private static final List<EnumTeleportType> COUNTDOWN_CONFIGURABLE = Collections.unmodifiableList(Arrays.asList(
+            TP_COORDINATE, TP_STRUCTURE, TP_ASK, TP_HERE, TP_RANDOM, TP_SPAWN, TP_WORLD_SPAWN,
+            TP_TOP, TP_BOTTOM, TP_UP, TP_DOWN, TP_VIEW, TP_HOME, TP_STAGE, TP_BACK, TP_GRAVE
+    ));
+
+    /**
+     * 与传送指令对应、可在玩家数据中配置传送倒计时（秒）的类型。
+     */
+    public static List<EnumTeleportType> countdownConfigurableTypes() {
+        return COUNTDOWN_CONFIGURABLE;
+    }
 
     public EnumCommandType toCommandType() {
         return switch (this) {
@@ -46,14 +64,25 @@ public enum EnumTeleportType {
         };
     }
 
-    public static EnumTeleportType nullableValueOf(String name) {
-        for (EnumTeleportType value : EnumTeleportType.values()) {
-            if (value.name().equalsIgnoreCase(name)) return value;
+    public static EnumTeleportType valueOfEx(Object obj) {
+        if (obj instanceof EnumTeleportType) return (EnumTeleportType) obj;
+        if (obj instanceof String) {
+            for (EnumTeleportType value : values()) {
+                if (value.name().equalsIgnoreCase((String) obj)) {
+                    return value;
+                }
+            }
         }
         return null;
     }
 
-    public static List<String> names() {
-        return Arrays.stream(EnumTeleportType.values()).map(Enum::name).collect(Collectors.toList());
+    public static EnumTeleportType valueOfDefault(Object obj) {
+        EnumTeleportType value = valueOfEx(obj);
+        return value == null ? OTHER : value;
+    }
+
+    @Override
+    public Component enumDescription() {
+        return EnumDescriptionHelper.describeEnum(NarcissusComponent.get(), this);
     }
 }
