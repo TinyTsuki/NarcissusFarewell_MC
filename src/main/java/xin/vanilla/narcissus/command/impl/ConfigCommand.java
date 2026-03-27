@@ -12,12 +12,12 @@ import net.minecraft.command.CommandSource;
 import net.minecraft.command.Commands;
 import net.minecraft.entity.player.ServerPlayerEntity;
 import xin.vanilla.banira.common.data.Component;
+import xin.vanilla.banira.common.util.CommandUtils;
 import xin.vanilla.banira.common.util.MessageUtils;
 import xin.vanilla.narcissus.NarcissusComponent;
 import xin.vanilla.narcissus.NarcissusLang;
 import xin.vanilla.narcissus.config.CommonConfig;
 import xin.vanilla.narcissus.enums.EnumCommandType;
-import xin.vanilla.narcissus.util.CommandUtils;
 import xin.vanilla.narcissus.util.NarcissusUtils;
 
 import java.util.concurrent.CompletableFuture;
@@ -67,7 +67,7 @@ public final class ConfigCommand {
                 throw new IllegalArgumentException("Mode " + mode + " does not exist");
         }
         Component component = NarcissusComponent.get().transAuto("server_config_mode", mode);
-        source.sendSuccess(component.toChat(lang), false);
+        MessageUtils.sendMessage(source, true, component);
         source.getServer().getPlayerList().getPlayers()
                 .forEach(player -> source.getServer().getPlayerList().sendPlayerPermissionLevel(player));
         return 1;

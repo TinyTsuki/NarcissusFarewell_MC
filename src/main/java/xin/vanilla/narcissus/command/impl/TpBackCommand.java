@@ -35,7 +35,7 @@ public final class TpBackCommand {
         CommandUtils.notifyHelp(context);
         ServerPlayerEntity player = context.getSource().getPlayerOrException();
         if (CommandUtils.checkTeleportPre(context.getSource(), EnumCommandType.TP_BACK)) return 0;
-        EnumTeleportType type = EnumTeleportType.nullableValueOf(CommandUtils.getStringEmpty(context, "type"));
+        EnumTeleportType type = EnumTeleportType.nullableValueOf(xin.vanilla.banira.common.util.CommandUtils.getStringEmpty(context, "type"));
         RegistryKey<World> targetLevel = null;
         try {
             RegistryKey<World> targetDimension = DimensionUtils.parse(StringArgumentType.getString(context, "dimension"));
@@ -47,11 +47,11 @@ public final class TpBackCommand {
         }
         TeleportRecord record = NarcissusUtils.getBackTeleportRecord(player, type, targetLevel);
         if (record == null) {
-            MessageUtils.sendMessage(player, NarcissusComponent.get().transAuto("back_not_found"));
+            MessageUtils.sendNotification(player, NarcissusComponent.get().transAuto("back_not_found"));
             return 0;
         }
         SafeWorldCoordinate safeWorldCoordinate = record.getBefore().clone();
-        safeWorldCoordinate.safe("safe".equalsIgnoreCase(CommandUtils.getStringEmpty(context, "safe")));
+        safeWorldCoordinate.safe("safe".equalsIgnoreCase(xin.vanilla.banira.common.util.CommandUtils.getStringEmpty(context, "safe")));
         if (CommandUtils.checkTeleportPost(player, safeWorldCoordinate, EnumTeleportType.TP_BACK, true)) return 0;
         NarcissusUtils.removeBackTeleportRecord(player, record);
         NarcissusUtils.teleportTo(player, safeWorldCoordinate, EnumTeleportType.TP_BACK);
@@ -59,7 +59,7 @@ public final class TpBackCommand {
     }
 
     public static CompletableFuture<Suggestions> typeSuggestion(CommandContext<CommandSource> context, SuggestionsBuilder builder) {
-        String type = CommandUtils.getStringEmpty(context, "type");
+        String type = xin.vanilla.banira.common.util.CommandUtils.getStringEmpty(context, "type");
         if (StringUtils.isNullOrEmptyEx(type)) {
             builder.suggest("ALL");
         }
@@ -74,7 +74,7 @@ public final class TpBackCommand {
     public static CompletableFuture<Suggestions> dimSuggestion(CommandContext<CommandSource> context, SuggestionsBuilder builder) throws CommandSyntaxException {
         ServerPlayerEntity player = context.getSource().getPlayerOrException();
         PlayerTeleportData data = PlayerTeleportData.getData(player);
-        EnumTeleportType type = EnumTeleportType.nullableValueOf(CommandUtils.getStringEmpty(context, "type"));
+        EnumTeleportType type = EnumTeleportType.nullableValueOf(xin.vanilla.banira.common.util.CommandUtils.getStringEmpty(context, "type"));
         data.getTeleportRecords().stream()
                 .filter(record -> type == null || record.getTeleportType().equals(type))
                 .filter(java.util.Objects::nonNull)

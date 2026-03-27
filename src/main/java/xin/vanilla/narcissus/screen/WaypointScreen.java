@@ -1,4 +1,4 @@
-package xin.vanilla.narcissus.client.screen;
+package xin.vanilla.narcissus.screen;
 
 import com.mojang.blaze3d.matrix.MatrixStack;
 import lombok.experimental.Accessors;
@@ -588,7 +588,7 @@ public class WaypointScreen extends BaniraScreen {
         }
         PlayerEntity p = minecraft.player;
         int need = NarcissusUtils.getCommandPermissionLevel(EnumCommandType.TP_HOME);
-        if (!p.hasPermissions(need) && !NarcissusUtils.hasVirtualPermission(p, EnumCommandType.TP_HOME)) {
+        if (!p.hasPermissions(need) && !CommandUtils.hasVirtualPermission(p, EnumCommandType.TP_HOME)) {
             return false;
         }
         return homeItemsAll.size() < CommonConfig.get().general().teleportHomeLimit();
@@ -603,7 +603,7 @@ public class WaypointScreen extends BaniraScreen {
         }
         PlayerEntity p = minecraft.player;
         int need = NarcissusUtils.getCommandPermissionLevel(EnumCommandType.SET_STAGE);
-        return p.hasPermissions(need) || NarcissusUtils.hasVirtualPermission(p, EnumCommandType.SET_STAGE);
+        return p.hasPermissions(need) || CommandUtils.hasVirtualPermission(p, EnumCommandType.SET_STAGE);
     }
 
     private void openAddHomeDialog() {

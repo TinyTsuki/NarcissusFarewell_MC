@@ -40,7 +40,7 @@ public final class WhitelistCommand {
     private static int executeAdd(CommandContext<CommandSource> context) throws CommandSyntaxException {
         Collection<ServerPlayerEntity> players = EntityArgument.getPlayers(context, "players");
         if (CollectionUtils.isNullOrEmpty(players)) return 0;
-        String mode = CommandUtils.getStringDefault(context, "mode", "none");
+        String mode = xin.vanilla.banira.common.util.CommandUtils.getStringDefault(context, "mode", "none");
         if (!Arrays.asList(CommandUtils.WHITE_LIST_MODES).contains(mode)) {
             throw CommandSyntaxException.BUILT_IN_EXCEPTIONS.dispatcherUnknownArgument().create();
         }
@@ -65,6 +65,7 @@ public final class WhitelistCommand {
                     break;
             }
             data.setDirty();
+            PlayerTeleportData.syncPlayerData(player);
             msg = NarcissusComponent.get().transAuto("list_add_success"
                     , CommandUtils.getBlacklistOrWhitelistHelp(player, false)
                     , players.stream().map(PlayerUtils::getPlayerNameString).collect(Collectors.joining(","))
@@ -79,7 +80,7 @@ public final class WhitelistCommand {
     private static int executeDel(CommandContext<CommandSource> context) throws CommandSyntaxException {
         Collection<ServerPlayerEntity> players = EntityArgument.getPlayers(context, "players");
         if (CollectionUtils.isNullOrEmpty(players)) return 0;
-        String mode = CommandUtils.getStringDefault(context, "mode", "none");
+        String mode = xin.vanilla.banira.common.util.CommandUtils.getStringDefault(context, "mode", "none");
         if (!Arrays.asList(CommandUtils.WHITE_LIST_MODES).contains(mode)) {
             throw CommandSyntaxException.BUILT_IN_EXCEPTIONS.dispatcherUnknownArgument().create();
         }
@@ -103,6 +104,7 @@ public final class WhitelistCommand {
                 break;
         }
         data.setDirty();
+        PlayerTeleportData.syncPlayerData(player);
         Component msg = NarcissusComponent.get().transAuto("remove_success")
                 .append(CommandUtils.getWhiteListMessage(player, access));
         MessageUtils.sendMessage(player, msg);
@@ -110,7 +112,7 @@ public final class WhitelistCommand {
     }
 
     private static CompletableFuture<Suggestions> suggestion(CommandContext<CommandSource> context, SuggestionsBuilder builder) {
-        String lang = CommandUtils.getLanguage(context.getSource());
+        String lang = xin.vanilla.banira.common.util.CommandUtils.getLanguage(context.getSource());
         String[] tooltipKeys = {"suggest_whitelist_none", "suggest_whitelist_both", "suggest_whitelist_auto_accept_tpa", "suggest_whitelist_auto_accept_tph"};
         for (int i = 0; i < CommandUtils.WHITE_LIST_MODES.length; i++) {
             Component tooltip = NarcissusComponent.get().transAuto(tooltipKeys[i]);

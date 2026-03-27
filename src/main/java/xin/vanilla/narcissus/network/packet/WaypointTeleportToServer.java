@@ -4,6 +4,7 @@ import lombok.Getter;
 import lombok.experimental.Accessors;
 import net.minecraft.network.PacketBuffer;
 import net.minecraftforge.fml.network.NetworkEvent;
+import xin.vanilla.banira.common.util.CommandUtils;
 import xin.vanilla.banira.common.util.StringUtils;
 import xin.vanilla.narcissus.config.CommonConfig;
 import xin.vanilla.narcissus.enums.EnumTeleportType;
@@ -72,7 +73,7 @@ public class WaypointTeleportToServer {
                     default:
                         return;
                 }
-                NarcissusUtils.executeCommand(sender, cmd);
+                CommandUtils.executeCommand(sender, cmd);
             }
         });
         ctx.get().setPacketHandled(true);

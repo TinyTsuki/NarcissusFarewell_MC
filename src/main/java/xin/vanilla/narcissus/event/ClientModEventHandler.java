@@ -2,7 +2,6 @@ package xin.vanilla.narcissus.event;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.settings.KeyBinding;
-import net.minecraft.entity.player.PlayerEntity;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.event.TickEvent;
@@ -38,8 +37,6 @@ public final class ClientModEventHandler {
         BaniraClientEventHub.ModLifecycle.onClientSetup(event ->
                 LogoModifier.register(NarcissusFarewell.MODID, () -> Math.random() > 0.5 ? "logo_.png" : "logo.png"));
         BaniraClientEventHub.Client.onClientTick(ClientModEventHandler::onClientTick);
-        BaniraClientEventHub.Player.onClientLoggedIn(ClientModEventHandler::onClientLoggedIn);
-        BaniraClientEventHub.Player.onClientLoggedOut(ClientModEventHandler::onClientLoggedOut);
     }
 
     private ClientModEventHandler() {
@@ -89,12 +86,4 @@ public final class ClientModEventHandler {
         }
     }
 
-    private static void onClientLoggedIn(PlayerEntity player) {
-        LOGGER.debug("Client: Player logged in.");
-        PacketUtils.sendPacketToServer(NetworkInit.INSTANCE, new ModLoadedToBoth());
-    }
-
-    private static void onClientLoggedOut(PlayerEntity player) {
-        LOGGER.debug("Client: Player logged out.");
-    }
 }

@@ -27,10 +27,10 @@ public final class TpTopCommand {
         ServerPlayerEntity player = context.getSource().getPlayerOrException();
         SafeWorldCoordinate safeWorldCoordinate = NarcissusUtils.findTopCandidate(player.getLevel(), new SafeWorldCoordinate(player));
         if (safeWorldCoordinate == null) {
-            MessageUtils.sendMessage(player, NarcissusComponent.get().transAuto("tp_top_not_found"));
+            MessageUtils.sendNotification(player, NarcissusComponent.get().transAuto("tp_top_not_found"));
             return 0;
         }
-        safeWorldCoordinate.safe("safe".equalsIgnoreCase(CommandUtils.getStringDefault(context, "safe", "safe"))).safeMode(EnumSafeMode.Y_T_TO_C);
+        safeWorldCoordinate.safe("safe".equalsIgnoreCase(xin.vanilla.banira.common.util.CommandUtils.getStringDefault(context, "safe", "safe"))).safeMode(EnumSafeMode.Y_T_TO_C);
         if (CommandUtils.checkTeleportPost(player, safeWorldCoordinate, EnumTeleportType.TP_TOP, true)) return 0;
         NarcissusUtils.teleportTo(player, safeWorldCoordinate, EnumTeleportType.TP_TOP);
         return 1;

@@ -25,7 +25,7 @@ public final class TpSpawnCommand {
         CommandUtils.notifyHelp(context);
         if (CommandUtils.checkTeleportPre(context.getSource(), EnumCommandType.TP_SPAWN)) return 0;
         ServerPlayerEntity player = context.getSource().getPlayerOrException();
-        ServerPlayerEntity target = CommandUtils.getPlayerOptional(context, "player");
+        ServerPlayerEntity target = xin.vanilla.banira.common.util.CommandUtils.getPlayerOptional(context, "player");
         if (target == null) target = player;
         SafeWorldCoordinate safeWorldCoordinate = new SafeWorldCoordinate(target);
         BlockPos respawnPosition = target.getRespawnPosition();
@@ -39,7 +39,7 @@ public final class TpSpawnCommand {
             safeWorldCoordinate.dimension(World.OVERWORLD);
         }
         safeWorldCoordinate.fromBlockPos(respawnPosition);
-        safeWorldCoordinate.safe("safe".equalsIgnoreCase(CommandUtils.getStringDefault(context, "safe", "safe")));
+        safeWorldCoordinate.safe("safe".equalsIgnoreCase(xin.vanilla.banira.common.util.CommandUtils.getStringDefault(context, "safe", "safe")));
         if (CommandUtils.checkTeleportPost(player, safeWorldCoordinate, EnumTeleportType.TP_SPAWN, true)) return 0;
         NarcissusUtils.teleportTo(player, safeWorldCoordinate, EnumTeleportType.TP_SPAWN);
         return 1;

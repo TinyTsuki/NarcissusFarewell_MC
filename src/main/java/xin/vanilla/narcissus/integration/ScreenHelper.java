@@ -2,8 +2,8 @@ package xin.vanilla.narcissus.integration;
 
 import net.minecraft.client.Minecraft;
 import net.minecraftforge.fml.ModList;
-import xin.vanilla.narcissus.client.screen.WaypointScreen;
 import xin.vanilla.narcissus.integration.ui.ApricityUI;
+import xin.vanilla.narcissus.screen.WaypointScreen;
 
 
 public final class ScreenHelper {
