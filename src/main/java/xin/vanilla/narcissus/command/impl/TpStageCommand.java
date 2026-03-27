@@ -37,21 +37,21 @@ public final class TpStageCommand {
             }
         } catch (IllegalArgumentException ignored) {
         }
-        String name = CommandUtils.getStringDefault(context, "name", null);
+        String name = xin.vanilla.banira.common.util.CommandUtils.getStringDefault(context, "name", null);
         SafeWorldCoordinate safeWorldCoordinate = NarcissusUtils.getStageCoordinate(player, targetLevel, name);
         if (safeWorldCoordinate == null) {
             if (targetLevel == null && name == null) {
-                MessageUtils.sendMessage(player, NarcissusComponent.get().transAuto("stage_nearest_not_found"));
+                MessageUtils.sendNotification(player, NarcissusComponent.get().transAuto("stage_nearest_not_found"));
             } else if (targetLevel != null && name == null) {
-                MessageUtils.sendMessage(player, NarcissusComponent.get().transAuto("stage_not_found_in_dimension", targetLevel.location().toString()));
+                MessageUtils.sendNotification(player, NarcissusComponent.get().transAuto("stage_not_found_in_dimension", targetLevel.location().toString()));
             } else if (targetLevel == null) {
-                MessageUtils.sendMessage(player, NarcissusComponent.get().transAuto("stage_not_found", name));
+                MessageUtils.sendNotification(player, NarcissusComponent.get().transAuto("stage_not_found", name));
             } else {
-                MessageUtils.sendMessage(player, NarcissusComponent.get().transAuto("stage_not_found_with_name_in_dimension", targetLevel.location().toString(), name));
+                MessageUtils.sendNotification(player, NarcissusComponent.get().transAuto("stage_not_found_with_name_in_dimension", targetLevel.location().toString(), name));
             }
             return 0;
         }
-        safeWorldCoordinate.safe("safe".equalsIgnoreCase(CommandUtils.getStringEmpty(context, "safe")));
+        safeWorldCoordinate.safe("safe".equalsIgnoreCase(xin.vanilla.banira.common.util.CommandUtils.getStringEmpty(context, "safe")));
         if (CommandUtils.checkTeleportPost(player, safeWorldCoordinate, EnumTeleportType.TP_STAGE, true)) return 0;
         NarcissusUtils.teleportTo(player, safeWorldCoordinate, EnumTeleportType.TP_STAGE);
         return 1;
