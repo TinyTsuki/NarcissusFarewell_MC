@@ -30,12 +30,12 @@ public final class TpAskYesCommand {
         ServerPlayer player = context.getSource().getPlayerOrException();
         String id = CommandUtils.getRequestId(context, EnumTeleportType.TP_ASK, true);
         if (StringUtils.isNullOrEmpty(id) || !NarcissusFarewell.getTeleportRequest().containsKey(id)) {
-            MessageUtils.sendMessage(player, NarcissusComponent.get().transAuto("tp_ask_not_found"));
+            MessageUtils.sendNotification(player, NarcissusComponent.get().transAuto("tp_ask_not_found"));
             return 0;
         }
         TeleportRequest request = NarcissusFarewell.getTeleportRequest().remove(id);
         if (CommandUtils.checkTeleportPost(request, true)) {
-            MessageUtils.sendMessage(player, NarcissusComponent.get().transAuto("tp_ask_invalid"));
+            MessageUtils.sendNotification(player, NarcissusComponent.get().transAuto("tp_ask_invalid"));
             return 0;
         }
         NarcissusUtils.teleportTo(request);

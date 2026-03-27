@@ -49,17 +49,17 @@ public final class TpStructureCommand {
         StructureFeature<?> structure = StructureUtils.getStructure(structId);
         Biome biome = BiomeUtils.getBiome(structId);
         if (structure == null && biome == null) {
-            MessageUtils.sendMessage(player, NarcissusComponent.get().transAuto("structure_biome_not_found", structId));
+            MessageUtils.sendNotification(player, NarcissusComponent.get().transAuto("structure_biome_not_found", structId));
             return 0;
         }
-        int range = CommandUtils.getIntDefault(context, "range", CommonConfig.get().general().teleportRandomDistanceLimit());
+        int range = xin.vanilla.banira.common.util.CommandUtils.getIntDefault(context, "range", CommonConfig.get().general().teleportRandomDistanceLimit());
         range = NarcissusUtils.checkRange(player, EnumTeleportType.TP_STRUCTURE, range);
-        ResourceKey<Level> targetLevel = CommandUtils.getDimensionKeyDefault(context, "dimension", player.getLevel().dimension());
-        boolean safe = "safe".equalsIgnoreCase(CommandUtils.getStringDefault(context, "safe", "safe"));
+        ResourceKey<Level> targetLevel = xin.vanilla.banira.common.util.CommandUtils.getDimensionKeyDefault(context, "dimension", player.getLevel().dimension());
+        boolean safe = "safe".equalsIgnoreCase(xin.vanilla.banira.common.util.CommandUtils.getStringDefault(context, "safe", "safe"));
         int finalRange = range;
         boolean isBiome = biome != null;
         String searchingKey = isBiome ? "tp_structure_searching_biome" : "tp_structure_searching_structure";
-        MessageUtils.sendActionBarMessage(player, NarcissusComponent.get().transAuto(searchingKey, structId));
+        MessageUtils.sendNotification(player, NarcissusComponent.get().transAuto(searchingKey, structId));
         new Thread(() -> {
             ServerLevel world = Objects.requireNonNull(BaniraCodex.serverInstance().key().getLevel(targetLevel));
             SafeWorldCoordinate safeWorldCoordinate;
@@ -84,7 +84,7 @@ public final class TpStructureCommand {
             }
             if (safeWorldCoordinate == null) {
                 String notFoundKey = isBiome ? "biome_not_found_in_range" : "structure_not_found_in_range";
-                MessageUtils.sendMessage(player, NarcissusComponent.get().transAuto(notFoundKey, structId));
+                MessageUtils.sendNotification(player, NarcissusComponent.get().transAuto(notFoundKey, structId));
                 return;
             }
             safeWorldCoordinate.safe(safe);
@@ -96,7 +96,7 @@ public final class TpStructureCommand {
     }
 
     public static CompletableFuture<Suggestions> suggestion(CommandContext<CommandSourceStack> context, SuggestionsBuilder builder) {
-        String input = CommandUtils.getStringEx(context, "struct", "");
+        String input = xin.vanilla.banira.common.util.CommandUtils.getStringEx(context, "struct", "");
         boolean isInputEmpty = StringUtils.isNullOrEmpty(input);
         String language = CommonConfig.get().general().defaultLanguage();
         try {

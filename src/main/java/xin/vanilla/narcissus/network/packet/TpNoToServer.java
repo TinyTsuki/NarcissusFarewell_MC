@@ -3,6 +3,7 @@ package xin.vanilla.narcissus.network.packet;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraftforge.network.NetworkEvent;
+import xin.vanilla.banira.common.util.CommandUtils;
 import xin.vanilla.banira.common.util.MessageUtils;
 import xin.vanilla.narcissus.NarcissusComponent;
 import xin.vanilla.narcissus.NarcissusFarewell;
@@ -39,9 +40,9 @@ public class TpNoToServer {
                         .getTeleportType();
                 if (EnumTeleportType.TP_ASK == teleportType || EnumTeleportType.TP_HERE == teleportType) {
                     EnumCommandType type = EnumTeleportType.TP_HERE == teleportType ? EnumCommandType.TP_HERE_NO : EnumCommandType.TP_ASK_NO;
-                    NarcissusUtils.executeCommand(player, NarcissusUtils.getCommand(type));
+                    CommandUtils.executeCommand(player, NarcissusUtils.getCommand(type));
                 } else {
-                    MessageUtils.sendMessage(player, NarcissusComponent.get().transAuto("tp_ask_not_found"));
+                    MessageUtils.sendNotification(player, NarcissusComponent.get().transAuto("tp_ask_not_found"));
                 }
             }
         });

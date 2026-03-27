@@ -1,5 +1,6 @@
 package xin.vanilla.narcissus.event;
 
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.entity.EntityJoinWorldEvent;
@@ -18,6 +19,7 @@ import xin.vanilla.narcissus.data.TeleportRecord;
 import xin.vanilla.narcissus.data.TeleportRequest;
 import xin.vanilla.narcissus.data.player.PlayerTeleportData;
 import xin.vanilla.narcissus.enums.EnumTeleportType;
+import xin.vanilla.narcissus.util.TeleportCountdownTracker;
 
 import java.util.Comparator;
 import java.util.Date;
@@ -27,6 +29,10 @@ public class EventHandlerProxy {
 
     public static void onServerTick(TickEvent.ServerTickEvent event) {
         if (event.phase == TickEvent.Phase.END) {
+            MinecraftServer srv = BaniraCodex.serverInstance().key();
+            if (srv != null) {
+                TeleportCountdownTracker.tickMovementCheck(srv);
+            }
             if (BaniraCodex.serverInstance().key().getTickCount() % 20 == 0) {
                 long currentTimeMillis = System.currentTimeMillis();
                 NarcissusFarewell.getTeleportRequest().entrySet().stream()
@@ -35,9 +41,9 @@ public class EventHandlerProxy {
                             TeleportRequest request = NarcissusFarewell.getTeleportRequest().remove(entry.getKey());
                             if (request != null) {
                                 if (request.getTeleportType() == EnumTeleportType.TP_ASK) {
-                                    MessageUtils.sendMessage(request.getRequester(), NarcissusComponent.get().transAuto("tp_ask_expired", request.getTarget().getDisplayName().getString()));
+                                    MessageUtils.sendNotification(request.getRequester(), NarcissusComponent.get().transAuto("tp_ask_expired", request.getTarget().getDisplayName().getString()));
                                 } else if (request.getTeleportType() == EnumTeleportType.TP_HERE) {
-                                    MessageUtils.sendMessage(request.getRequester(), NarcissusComponent.get().transAuto("tp_here_expired", request.getTarget().getDisplayName().getString()));
+                                    MessageUtils.sendNotification(request.getRequester(), NarcissusComponent.get().transAuto("tp_here_expired", request.getTarget().getDisplayName().getString()));
                                 }
                             }
                         });
@@ -63,6 +69,7 @@ public class EventHandlerProxy {
                 after.x(newPlayer.getX()).y(newPlayer.getY()).z(newPlayer.getZ()).dimension(newPlayer.level.dimension());
                 record.setAfter(after);
                 PlayerTeleportData.getData(newPlayer).addTeleportRecords(record);
+                PlayerTeleportData.syncPlayerData(newPlayer);
             }
         }
     }
@@ -76,6 +83,7 @@ public class EventHandlerProxy {
                 if (DateUtils.toDateInt(data.getLastCardTime()) < DateUtils.toDateInt(current)) {
                     data.setLastCardTime(current);
                     data.plusTeleportCard(CommonConfig.get().base().teleportCardDaily());
+                    PlayerTeleportData.syncPlayerData(player);
                 }
             }
         }
@@ -96,8 +104,11 @@ public class EventHandlerProxy {
             TeleportRecord otherRecord = data.getTeleportRecords().stream().max(Comparator.comparing(o -> o.getTeleportTime().getTime())).orElse(null);
             if (otherRecord != null && otherRecord.getTeleportType() == EnumTeleportType.OTHER && otherRecord.getBefore().xyzString().equals(record.getBefore().xyzString())) {
                 otherRecord.setAfter(record.getAfter());
+                data.save();
+                PlayerTeleportData.syncPlayerData(player);
             } else {
                 data.addTeleportRecords(record);
+                PlayerTeleportData.syncPlayerData(player);
             }
         }
     }
