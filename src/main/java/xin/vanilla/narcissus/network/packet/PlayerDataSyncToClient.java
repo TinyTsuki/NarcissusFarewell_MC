@@ -1,6 +1,7 @@
 package xin.vanilla.narcissus.network.packet;
 
 import lombok.Getter;
+import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.network.PacketBuffer;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
@@ -11,6 +12,7 @@ import org.apache.logging.log4j.Logger;
 import xin.vanilla.banira.common.data.KeyValue;
 import xin.vanilla.banira.common.network.packet.SplitPacket;
 import xin.vanilla.banira.common.util.DateUtils;
+import xin.vanilla.narcissus.data.PlayerAccess;
 import xin.vanilla.narcissus.data.SafeWorldCoordinate;
 import xin.vanilla.narcissus.data.TeleportRecord;
 import xin.vanilla.narcissus.data.player.PlayerTeleportData;
@@ -31,6 +33,14 @@ public class PlayerDataSyncToClient extends SplitPacket
     private final List<TeleportRecord> teleportRecords;
     private final Map<KeyValue<String, String>, SafeWorldCoordinate> homeCoordinate;
     private final Map<String, String> defaultHome;
+    /**
+     * 黑白名单等；分片时仅首片携带完整内容，合并时取首片。
+     */
+    private CompoundNBT accessTag;
+    /**
+     * 各传送指令倒计时配置；分片规则同 {@link #accessTag}。
+     */
+    private CompoundNBT tpCountdownTag;
 
     public PlayerDataSyncToClient(UUID playerUUID, PlayerTeleportData data) {
         super();
@@ -41,6 +51,8 @@ public class PlayerDataSyncToClient extends SplitPacket
         this.teleportRecords = data.getTeleportRecords();
         this.homeCoordinate = data.getHomeCoordinate();
         this.defaultHome = data.getDefaultHome();
+        this.accessTag = data.getAccess().writeToNBT();
+        this.tpCountdownTag = data.writeTeleportCountdownToNbt();
     }
 
     public PlayerDataSyncToClient(PacketBuffer buffer) {
@@ -67,6 +79,14 @@ public class PlayerDataSyncToClient extends SplitPacket
         for (int i = 0; i < defaultSize; i++) {
             this.defaultHome.put(buffer.readUtf(), buffer.readUtf());
         }
+        this.accessTag = buffer.readNbt();
+        if (this.accessTag == null) {
+            this.accessTag = new CompoundNBT();
+        }
+        this.tpCountdownTag = buffer.readNbt();
+        if (this.tpCountdownTag == null) {
+            this.tpCountdownTag = new CompoundNBT();
+        }
     }
 
     public PlayerDataSyncToClient(List<PlayerDataSyncToClient> packets) {
@@ -85,6 +105,10 @@ public class PlayerDataSyncToClient extends SplitPacket
                 .flatMap(map -> map.entrySet().stream())
                 .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (v1, v2) -> v1));
         this.defaultHome = packets.get(0).defaultHome;
+        CompoundNBT mergedAccess = packets.get(0).accessTag;
+        this.accessTag = mergedAccess != null ? mergedAccess.copy() : new CompoundNBT();
+        CompoundNBT mergedCd = packets.get(0).tpCountdownTag;
+        this.tpCountdownTag = mergedCd != null ? mergedCd.copy() : new CompoundNBT();
     }
 
     private PlayerDataSyncToClient(UUID playerUUID, Date lastCardTime, Date lastTpTime, int teleportCard) {
@@ -96,6 +120,8 @@ public class PlayerDataSyncToClient extends SplitPacket
         this.teleportRecords = new ArrayList<>();
         this.homeCoordinate = new HashMap<>();
         this.defaultHome = new HashMap<>();
+        this.accessTag = new CompoundNBT();
+        this.tpCountdownTag = new CompoundNBT();
     }
 
     public void toBytes(PacketBuffer buffer) {
@@ -119,6 +145,8 @@ public class PlayerDataSyncToClient extends SplitPacket
             buffer.writeUtf(entry.getKey());
             buffer.writeUtf(entry.getValue());
         }
+        buffer.writeNbt(this.accessTag != null ? this.accessTag : new CompoundNBT());
+        buffer.writeNbt(this.tpCountdownTag != null ? this.tpCountdownTag : new CompoundNBT());
     }
 
     public static void handle(PlayerDataSyncToClient packet, Supplier<NetworkEvent.Context> ctx) {
@@ -138,6 +166,7 @@ public class PlayerDataSyncToClient extends SplitPacket
         return new PlayerDataSyncToClient(packets);
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public List<PlayerDataSyncToClient> splitPacket() {
         List<PlayerDataSyncToClient> result = new ArrayList<>();
@@ -160,6 +189,8 @@ public class PlayerDataSyncToClient extends SplitPacket
 
             if (i == 0) {
                 packet.defaultHome.putAll(this.defaultHome);
+                packet.accessTag = this.accessTag != null ? this.accessTag.copy() : new CompoundNBT();
+                packet.tpCountdownTag = this.tpCountdownTag != null ? this.tpCountdownTag.copy() : new CompoundNBT();
             }
             packet.setSort(i);
             result.add(packet);
@@ -175,6 +206,9 @@ public class PlayerDataSyncToClient extends SplitPacket
             packet.setSort(0);
             packet.setId(this.getId());
             packet.setTotal(1);
+            packet.defaultHome.putAll(this.defaultHome);
+            packet.accessTag = this.accessTag != null ? this.accessTag.copy() : new CompoundNBT();
+            packet.tpCountdownTag = this.tpCountdownTag != null ? this.tpCountdownTag.copy() : new CompoundNBT();
             result.add(packet);
         }
         return result;
@@ -211,7 +245,10 @@ public class PlayerDataSyncToClient extends SplitPacket
             data.setLastTpTime(packet.lastTpTime);
             data.setTeleportCard(packet.teleportCard);
             data.setTeleportRecords(packet.teleportRecords);
-            data.setHomeCoordinate(packet.homeCoordinate);
+            data.setHomeCoordinate(new LinkedHashMap<>(packet.homeCoordinate));
+            data.setDefaultHome(new HashMap<>(packet.defaultHome));
+            data.setAccess(PlayerAccess.readFromNBT(packet.accessTag != null ? packet.accessTag : new CompoundNBT()));
+            data.readTeleportCountdownFromNbt(packet.tpCountdownTag != null ? packet.tpCountdownTag : new CompoundNBT());
             return data;
         }
     }

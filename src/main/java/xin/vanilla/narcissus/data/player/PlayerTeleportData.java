@@ -14,6 +14,7 @@ import xin.vanilla.banira.common.util.CollectionUtils;
 import xin.vanilla.banira.common.util.DateUtils;
 import xin.vanilla.banira.common.util.PacketUtils;
 import xin.vanilla.narcissus.NarcissusFarewell;
+import xin.vanilla.narcissus.config.TeleportCountdownHelper;
 import xin.vanilla.narcissus.data.PlayerAccess;
 import xin.vanilla.narcissus.data.SafeWorldCoordinate;
 import xin.vanilla.narcissus.data.TeleportRecord;
@@ -162,6 +163,8 @@ public final class PlayerTeleportData implements IPlayerData<PlayerTeleportData>
         // 序列化黑白名单
         tag.put("access", this.getAccess().writeToNBT());
 
+        tag.put("tpCountdowns", writeTeleportCountdownToNbt());
+
         return tag;
     }
 
@@ -203,6 +206,8 @@ public final class PlayerTeleportData implements IPlayerData<PlayerTeleportData>
         // 反序列化黑白名单
         this.access = PlayerAccess.readFromNBT(nbt.getCompound("access"));
 
+        readTeleportCountdownFromNbt(nbt.contains("tpCountdowns", 10) ? nbt.getCompound("tpCountdowns") : new CompoundNBT());
+
         if (dirty) {
             this.save();
         }
@@ -220,6 +225,9 @@ public final class PlayerTeleportData implements IPlayerData<PlayerTeleportData>
         this.homeCoordinate = playerData.getHomeCoordinate();
         this.defaultHome = playerData.getDefaultHome();
         this.access = playerData.getAccess();
+        this.teleportCountdownSeconds = playerData.teleportCountdownSeconds == null
+                ? null
+                : new EnumMap<>(playerData.teleportCountdownSeconds);
 
         this.save();
     }
@@ -255,7 +263,92 @@ public final class PlayerTeleportData implements IPlayerData<PlayerTeleportData>
      * 玩家自定义的黑白名单
      */
     private PlayerAccess access;
+    /**
+     * 各传送类型的传送前倒计时（秒）
+     */
+    private EnumMap<EnumTeleportType, Integer> teleportCountdownSeconds;
 
+    public CompoundNBT writeTeleportCountdownToNbt() {
+        CompoundNBT cd = new CompoundNBT();
+        EnumMap<EnumTeleportType, Integer> map = this.teleportCountdownSeconds;
+        if (map != null) {
+            for (Map.Entry<EnumTeleportType, Integer> e : map.entrySet()) {
+                if (e.getValue() != null && e.getValue() > 0) {
+                    cd.putInt(e.getKey().name(), e.getValue());
+                }
+            }
+        }
+        return cd;
+    }
+
+    public void readTeleportCountdownFromNbt(CompoundNBT cd) {
+        this.teleportCountdownSeconds = new EnumMap<>(EnumTeleportType.class);
+        if (cd == null || cd.isEmpty()) {
+            return;
+        }
+        for (EnumTeleportType t : EnumTeleportType.countdownConfigurableTypes()) {
+            if (!cd.contains(t.name())) {
+                continue;
+            }
+            int v = TeleportCountdownHelper.clampToPlayerAllowedRange(cd.getInt(t.name()));
+            if (v > 0) {
+                this.teleportCountdownSeconds.put(t, v);
+            }
+        }
+    }
+
+    /**
+     * 玩家为该类型存储的倒计时偏好（秒），未设置时为 0；读取时按当前 common 配置的「玩家允许范围」夹取。
+     */
+    public int getTeleportCountdownSeconds(EnumTeleportType type) {
+        if (type == null || !EnumTeleportType.countdownConfigurableTypes().contains(type)) {
+            return 0;
+        }
+        if (this.isDirty()) this.saveEx();
+        if (teleportCountdownSeconds == null) {
+            return 0;
+        }
+        Integer v = teleportCountdownSeconds.get(type);
+        if (v == null) {
+            return 0;
+        }
+        return TeleportCountdownHelper.clampToPlayerAllowedRange(v);
+    }
+
+    public void setTeleportCountdownSeconds(EnumTeleportType type, int seconds) {
+        if (type == null || !EnumTeleportType.countdownConfigurableTypes().contains(type)) {
+            return;
+        }
+        int v = TeleportCountdownHelper.clampToPlayerAllowedRange(seconds);
+        if (teleportCountdownSeconds == null) {
+            teleportCountdownSeconds = new EnumMap<>(EnumTeleportType.class);
+        }
+        if (v == 0) {
+            teleportCountdownSeconds.remove(type);
+        } else {
+            teleportCountdownSeconds.put(type, v);
+        }
+        this.save();
+    }
+
+    /**
+     * 用客户端提交的完整表替换各传送倒计时（秒），仅接受 {@link EnumTeleportType#countdownConfigurableTypes()} 中的键。
+     */
+    public void replaceAllTeleportCountdownsFromTag(CompoundNBT tag) {
+        this.teleportCountdownSeconds = new EnumMap<>(EnumTeleportType.class);
+        if (tag != null) {
+            for (EnumTeleportType t : EnumTeleportType.countdownConfigurableTypes()) {
+                if (!tag.contains(t.name())) {
+                    continue;
+                }
+                int v = TeleportCountdownHelper.clampToPlayerAllowedRange(tag.getInt(t.name()));
+                if (v > 0) {
+                    this.teleportCountdownSeconds.put(t, v);
+                }
+            }
+        }
+        this.save();
+    }
 
     public boolean isNotified() {
         if (this.isDirty()) this.saveEx();

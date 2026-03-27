@@ -1,4 +1,4 @@
-package xin.vanilla.narcissus.client.screen;
+package xin.vanilla.narcissus.screen;
 
 import com.mojang.blaze3d.matrix.MatrixStack;
 import lombok.experimental.Accessors;
@@ -26,8 +26,8 @@ import xin.vanilla.narcissus.data.TeleportRecord;
 import xin.vanilla.narcissus.data.client.ClientStageData;
 import xin.vanilla.narcissus.data.player.PlayerTeleportData;
 import xin.vanilla.narcissus.enums.EnumCommandType;
+import xin.vanilla.narcissus.enums.EnumPanelMode;
 import xin.vanilla.narcissus.enums.EnumTeleportType;
-import xin.vanilla.narcissus.enums.EnumWaypointPanelMode;
 import xin.vanilla.narcissus.network.NetworkInit;
 import xin.vanilla.narcissus.network.packet.WaypointAddHomeToServer;
 import xin.vanilla.narcissus.network.packet.WaypointAddStageToServer;
@@ -69,7 +69,7 @@ public class WaypointScreen extends BaniraScreen {
     private static final int FOOTER_PAD_V = 6;
     private static final int DIVIDER = 1;
     private static final int DIALOG_W = 280;
-    private static final int DIALOG_H = 100;
+    private static final int DIALOG_H = 118;
     private static final int DOUBLE_CLICK_MS = 450;
     private static final int ADD_BTN_SIZE = 14;
     /**
@@ -109,7 +109,7 @@ public class WaypointScreen extends BaniraScreen {
     private WaypointEntry lastSelectedItem;
 
     private int ticketCount;
-    private EnumWaypointPanelMode panelMode = EnumWaypointPanelMode.THREE_COLUMNS;
+    private EnumPanelMode panelMode = EnumPanelMode.COLUMNS;
     private WaypointListTab activeTab = WaypointListTab.PRIVATE;
     private int panelWidth;
     /**
@@ -195,12 +195,12 @@ public class WaypointScreen extends BaniraScreen {
         tabAddButton = null;
         ticketLayoutToggleButton = null;
 
-        footerPanelHeight = panelMode == EnumWaypointPanelMode.TAB_SINGLE ? FOOTER_HEIGHT_TAB : FOOTER_HEIGHT;
+        footerPanelHeight = panelMode == EnumPanelMode.TAB_SINGLE ? FOOTER_HEIGHT_TAB : FOOTER_HEIGHT;
 
         int usableOuter = width - 2 * SCREEN_MARGIN;
         panelWidth = (usableOuter - 2 * GAP_H) / 3;
         int columnsTotalWidth = 3 * panelWidth + 2 * GAP_H;
-        if (panelMode == EnumWaypointPanelMode.TAB_SINGLE) {
+        if (panelMode == EnumPanelMode.TAB_SINGLE) {
             footerW = 2 * panelWidth + GAP_H;
             listBodyW = footerW - 2 * PANEL_PADDING;
         } else {
@@ -266,7 +266,7 @@ public class WaypointScreen extends BaniraScreen {
         addWidget(ticketLayoutToggleButton);
 
         int addY = headerRowY + (HEADER_ROW_H - ADD_BTN_SIZE) / 2;
-        if (panelMode == EnumWaypointPanelMode.THREE_COLUMNS) {
+        if (panelMode == EnumPanelMode.COLUMNS) {
             addHomeButton = new ButtonWidget(this);
             addHomeButton.id("add_home");
             addHomeButton.bounds(new ScreenCoordinate(startX + panelWidth - PANEL_PADDING - ADD_BTN_SIZE, addY, ADD_BTN_SIZE, ADD_BTN_SIZE));
@@ -333,7 +333,7 @@ public class WaypointScreen extends BaniraScreen {
 
         int footerCenterGap = 16;
         int teleportBtnX;
-        if (panelMode == EnumWaypointPanelMode.TAB_SINGLE) {
+        if (panelMode == EnumPanelMode.TAB_SINGLE) {
             teleportBtnX = footerX + (footerW - TELEPORT_BTN_W) / 2;
         } else {
             int footerSideW = (footerW - 2 * FOOTER_PAD_H - TELEPORT_BTN_W - 2 * footerCenterGap) / 2;
@@ -429,11 +429,11 @@ public class WaypointScreen extends BaniraScreen {
     }
 
     private void togglePanelMode() {
-        if (panelMode == EnumWaypointPanelMode.THREE_COLUMNS) {
-            panelMode = EnumWaypointPanelMode.TAB_SINGLE;
+        if (panelMode == EnumPanelMode.COLUMNS) {
+            panelMode = EnumPanelMode.TAB_SINGLE;
             inferActiveTabFromSelection();
         } else {
-            panelMode = EnumWaypointPanelMode.THREE_COLUMNS;
+            panelMode = EnumPanelMode.COLUMNS;
         }
         ClientConfig.RootView cfg = ClientConfig.get();
         cfg.client().waypointScreenPanelMode(panelMode);
@@ -469,7 +469,7 @@ public class WaypointScreen extends BaniraScreen {
     }
 
     private void syncScrollbarLimits() {
-        if (panelMode == EnumWaypointPanelMode.THREE_COLUMNS) {
+        if (panelMode == EnumPanelMode.COLUMNS) {
             syncOneScrollbar(homeScrollbar, homeItems);
             syncOneScrollbar(stageScrollbar, stageItems);
             syncOneScrollbar(backScrollbar, backItems);
@@ -538,7 +538,7 @@ public class WaypointScreen extends BaniraScreen {
             pickFirstSelection();
             return;
         }
-        if (panelMode == EnumWaypointPanelMode.TAB_SINGLE) {
+        if (panelMode == EnumPanelMode.TAB_SINGLE) {
             if (indexInList(activeTabItems(), selectedItem) >= 0) {
                 return;
             }
@@ -554,7 +554,7 @@ public class WaypointScreen extends BaniraScreen {
     }
 
     private void pickFirstSelection() {
-        if (panelMode == EnumWaypointPanelMode.TAB_SINGLE) {
+        if (panelMode == EnumPanelMode.TAB_SINGLE) {
             List<WaypointEntry> cur = activeTabItems();
             selectedItem = cur.isEmpty() ? null : cur.get(0);
             return;
@@ -588,7 +588,7 @@ public class WaypointScreen extends BaniraScreen {
         }
         PlayerEntity p = minecraft.player;
         int need = NarcissusUtils.getCommandPermissionLevel(EnumCommandType.TP_HOME);
-        if (!p.hasPermissions(need) && !NarcissusUtils.hasVirtualPermission(p, EnumCommandType.TP_HOME)) {
+        if (!p.hasPermissions(need) && !CommandUtils.hasVirtualPermission(p, EnumCommandType.TP_HOME)) {
             return false;
         }
         return homeItemsAll.size() < CommonConfig.get().general().teleportHomeLimit();
@@ -603,7 +603,7 @@ public class WaypointScreen extends BaniraScreen {
         }
         PlayerEntity p = minecraft.player;
         int need = NarcissusUtils.getCommandPermissionLevel(EnumCommandType.SET_STAGE);
-        return p.hasPermissions(need) || NarcissusUtils.hasVirtualPermission(p, EnumCommandType.SET_STAGE);
+        return p.hasPermissions(need) || CommandUtils.hasVirtualPermission(p, EnumCommandType.SET_STAGE);
     }
 
     private void openAddHomeDialog() {
@@ -732,18 +732,18 @@ public class WaypointScreen extends BaniraScreen {
 
         boolean dialogOpen = deleteConfirmItem != null;
         if (homeScrollbar != null) {
-            boolean homeScroll = !dialogOpen && panelMode == EnumWaypointPanelMode.THREE_COLUMNS && homeItems.size() > visibleRowCount;
+            boolean homeScroll = !dialogOpen && panelMode == EnumPanelMode.COLUMNS && homeItems.size() > visibleRowCount;
             homeScrollbar.visible(homeScroll);
             homeScrollbar.enabled(homeScroll);
-            boolean stageScroll = !dialogOpen && panelMode == EnumWaypointPanelMode.THREE_COLUMNS && stageItems.size() > visibleRowCount;
+            boolean stageScroll = !dialogOpen && panelMode == EnumPanelMode.COLUMNS && stageItems.size() > visibleRowCount;
             stageScrollbar.visible(stageScroll);
             stageScrollbar.enabled(stageScroll);
-            boolean backScroll = !dialogOpen && panelMode == EnumWaypointPanelMode.THREE_COLUMNS && backItems.size() > visibleRowCount;
+            boolean backScroll = !dialogOpen && panelMode == EnumPanelMode.COLUMNS && backItems.size() > visibleRowCount;
             backScrollbar.visible(backScroll);
             backScrollbar.enabled(backScroll);
         }
         if (tabListScrollbar != null) {
-            boolean tabScroll = !dialogOpen && panelMode == EnumWaypointPanelMode.TAB_SINGLE && activeTabItems().size() > visibleRowCount;
+            boolean tabScroll = !dialogOpen && panelMode == EnumPanelMode.TAB_SINGLE && activeTabItems().size() > visibleRowCount;
             tabListScrollbar.visible(tabScroll);
             tabListScrollbar.enabled(tabScroll);
         }
@@ -752,29 +752,29 @@ public class WaypointScreen extends BaniraScreen {
         }
         if (addHomeButton != null) {
             addHomeButton.enabled(!dialogOpen && canAddHomeClient());
-            addHomeButton.visible(!dialogOpen && panelMode == EnumWaypointPanelMode.THREE_COLUMNS);
+            addHomeButton.visible(!dialogOpen && panelMode == EnumPanelMode.COLUMNS);
         }
         if (addStageButton != null) {
             addStageButton.enabled(!dialogOpen && canAddStageClient());
-            addStageButton.visible(!dialogOpen && panelMode == EnumWaypointPanelMode.THREE_COLUMNS);
+            addStageButton.visible(!dialogOpen && panelMode == EnumPanelMode.COLUMNS);
         }
         if (tabPrivateButton != null) {
-            tabPrivateButton.visible(!dialogOpen && panelMode == EnumWaypointPanelMode.TAB_SINGLE);
+            tabPrivateButton.visible(!dialogOpen && panelMode == EnumPanelMode.TAB_SINGLE);
             tabPrivateButton.enabled(!dialogOpen);
             applyTabButtonStyle(tabPrivateButton, activeTab == WaypointListTab.PRIVATE, theme);
         }
         if (tabPublicButton != null) {
-            tabPublicButton.visible(!dialogOpen && panelMode == EnumWaypointPanelMode.TAB_SINGLE);
+            tabPublicButton.visible(!dialogOpen && panelMode == EnumPanelMode.TAB_SINGLE);
             tabPublicButton.enabled(!dialogOpen);
             applyTabButtonStyle(tabPublicButton, activeTab == WaypointListTab.PUBLIC, theme);
         }
         if (tabFootprintsButton != null) {
-            tabFootprintsButton.visible(!dialogOpen && panelMode == EnumWaypointPanelMode.TAB_SINGLE);
+            tabFootprintsButton.visible(!dialogOpen && panelMode == EnumPanelMode.TAB_SINGLE);
             tabFootprintsButton.enabled(!dialogOpen);
             applyTabButtonStyle(tabFootprintsButton, activeTab == WaypointListTab.FOOTPRINTS, theme);
         }
         if (tabAddButton != null) {
-            tabAddButton.visible(!dialogOpen && panelMode == EnumWaypointPanelMode.TAB_SINGLE);
+            tabAddButton.visible(!dialogOpen && panelMode == EnumPanelMode.TAB_SINGLE);
             boolean addOk = activeTab == WaypointListTab.PRIVATE && canAddHomeClient()
                     || activeTab == WaypointListTab.PUBLIC && canAddStageClient();
             tabAddButton.enabled(addOk);
@@ -819,6 +819,24 @@ public class WaypointScreen extends BaniraScreen {
         renderWidgets(stack, partialTicks);
     }
 
+    private void drawLimitedTextLine(MatrixStack stack, String text, double x, double y, int maxWidth, int colorArgb) {
+        LabelWidget.drawLimitedText(FontDrawArgs.of(Text.literal(text).stack(stack).font(font).color(Color.argb(colorArgb)))
+                .x(x).y(y)
+                .maxWidth(maxWidth)
+                .align(EnumAlignment.START)
+                .wrap(false)
+                .inScreen(false));
+    }
+
+    private void drawLimitedTextCentered(MatrixStack stack, String text, double x, double y, int maxWidth, int colorArgb) {
+        LabelWidget.drawLimitedText(FontDrawArgs.of(Text.literal(text).stack(stack).font(font).color(Color.argb(colorArgb)))
+                .x(x).y(y)
+                .maxWidth(maxWidth)
+                .align(EnumAlignment.CENTER)
+                .wrap(false)
+                .inScreen(false));
+    }
+
     private void drawTopBarAndDividers(MatrixStack stack, BaniraColorConfig theme) {
         ShapeDrawArgs topBg = ShapeDrawArgs.rect(stack, startX, topBarY, footerW, TOP_BAR_H, theme.panelBg());
         topBg.rect().radius(6f, 6f, 0f, 0f);
@@ -835,7 +853,7 @@ public class WaypointScreen extends BaniraScreen {
     }
 
     private void drawColumnHeaders(MatrixStack stack, BaniraColorConfig theme) {
-        if (panelMode == EnumWaypointPanelMode.THREE_COLUMNS) {
+        if (panelMode == EnumPanelMode.COLUMNS) {
             for (int c = 0; c < 3; c++) {
                 int x = startX + c * (panelWidth + GAP_H);
                 ShapeDrawArgs h = ShapeDrawArgs.rect(stack, x, headerRowY, panelWidth, HEADER_ROW_H, theme.bgSecondary());
@@ -847,7 +865,7 @@ public class WaypointScreen extends BaniraScreen {
                         ? NarcissusComponent.get().transClientAuto("public").toString()
                         : NarcissusComponent.get().transClientAuto("footprints").toString();
                 int titleY = headerRowY + (HEADER_ROW_H - font.lineHeight) / 2;
-                font.draw(stack, title, x + PANEL_PADDING, titleY, theme.textPrimary());
+                drawLimitedTextLine(stack, title, x + PANEL_PADDING, titleY, Math.max(8, panelWidth - 2 * PANEL_PADDING), theme.textPrimary());
             }
         } else {
             ShapeDrawArgs h = ShapeDrawArgs.rect(stack, startX, headerRowY, footerW, HEADER_ROW_H, theme.bgSecondary());
@@ -857,7 +875,7 @@ public class WaypointScreen extends BaniraScreen {
     }
 
     private void drawListColumns(MatrixStack stack, BaniraColorConfig theme, int mouseX, int mouseY) {
-        if (panelMode == EnumWaypointPanelMode.THREE_COLUMNS) {
+        if (panelMode == EnumPanelMode.COLUMNS) {
             drawColumnList(stack, theme, startX, panelWidth, homeItems, homeScrollbar, false, false, mouseX, mouseY);
             drawColumnList(stack, theme, startX + panelWidth + GAP_H, panelWidth, stageItems, stageScrollbar, false, false, mouseX, mouseY);
             drawColumnList(stack, theme, startX + 2 * (panelWidth + GAP_H), panelWidth, backItems, backScrollbar, true, false, mouseX, mouseY);
@@ -937,18 +955,19 @@ public class WaypointScreen extends BaniraScreen {
             if (appendDistanceAfterCoords && item.recordTime != null) {
                 titleLine = item.name + "  " + DateUtils.toString(item.recordTime, "yy-MM-dd HH:mm:ss");
             }
-            font.draw(stack, font.plainSubstrByWidth(titleLine, cw - 18), listX + 3, itemY + 2, textColor);
+            int rowTextMaxW = Math.max(8, cw - 18);
+            drawLimitedTextLine(stack, titleLine, listX + 3, itemY + 2, rowTextMaxW, textColor);
             String meta = item.getDimensionName() + " " + item.getCoordinateName();
             if (appendDistanceAfterCoords) {
                 meta = meta + "  " + formatItemDistanceMeters(item);
             }
-            font.draw(stack, font.plainSubstrByWidth(meta, cw - 18), listX + 3, itemY + 12, metaColor);
+            drawLimitedTextLine(stack, meta, listX + 3, itemY + 12, rowTextMaxW, metaColor);
 
             if ((item.type == WaypointEntry.Type.HOME || item.type == WaypointEntry.Type.STAGE) && item.canTeleport) {
                 int delX = listX + cw - 16;
                 int delY = itemY + (rowH - 10) / 2;
                 boolean delHover = mouseX >= delX && mouseX <= delX + 14 && mouseY >= delY && mouseY < delY + 10;
-                font.draw(stack, "×", delX + 2, delY, delHover ? theme.error() : theme.textHint());
+                drawLimitedTextLine(stack, "×", delX + 2, delY, 14, delHover ? theme.error() : theme.textHint());
             }
         }
     }
@@ -968,7 +987,7 @@ public class WaypointScreen extends BaniraScreen {
         double mouseX = eventArgs.mouseX();
         double mouseY = eventArgs.mouseY();
 
-        if (panelMode == EnumWaypointPanelMode.THREE_COLUMNS) {
+        if (panelMode == EnumPanelMode.COLUMNS) {
             if (checkPanelClick(mouseX, mouseY, startX + PANEL_PADDING, listAreaY + LIST_PADDING_V, homeItems, homeScrollbar)) {
                 eventArgs.consumed(true);
             } else if (checkPanelClick(mouseX, mouseY, startX + panelWidth + GAP_H + PANEL_PADDING, listAreaY + LIST_PADDING_V, stageItems, stageScrollbar)) {
@@ -1084,7 +1103,7 @@ public class WaypointScreen extends BaniraScreen {
         hoveredItem = null;
         int listY = listAreaY + LIST_PADDING_V;
 
-        if (panelMode == EnumWaypointPanelMode.TAB_SINGLE) {
+        if (panelMode == EnumPanelMode.TAB_SINGLE) {
             int listX = startX + PANEL_PADDING;
             List<WaypointEntry> items = activeTabItems();
             ScrollbarWidget bar = tabListScrollbar;
@@ -1162,7 +1181,7 @@ public class WaypointScreen extends BaniraScreen {
         }
         String costFull = NarcissusComponent.get().transClientAuto("waypoint_detail_cost").toString() + costStr;
 
-        if (panelMode == EnumWaypointPanelMode.TAB_SINGLE) {
+        if (panelMode == EnumPanelMode.TAB_SINGLE) {
             drawTabFooterCostAroundTeleport(stack, theme.textSecondary(), costFull);
             return;
         }
@@ -1183,16 +1202,16 @@ public class WaypointScreen extends BaniraScreen {
 
         String sep = "  ";
         String line1 = selectedItem.getDetailTypeName() + sep + selectedItem.name;
-        font.draw(stack, font.plainSubstrByWidth(line1, leftZoneW), leftX, y0, theme.textPrimary());
+        drawLimitedTextLine(stack, line1, leftX, y0, Math.max(8, leftZoneW), theme.textPrimary());
         y0 += lineH;
 
         String line2 = dimStr + sep + coordStr;
-        font.draw(stack, font.plainSubstrByWidth(line2, leftZoneW), leftX, y0, theme.textHint());
+        drawLimitedTextLine(stack, line2, leftX, y0, Math.max(8, leftZoneW), theme.textHint());
         y0 += lineH;
 
         String timeStr = selectedItem.recordTime != null ? DateUtils.toString(selectedItem.recordTime, "yy-MM-dd HH:mm:ss") : "-";
         String line3 = distanceStr + sep + timeStr;
-        font.draw(stack, font.plainSubstrByWidth(line3, leftZoneW), leftX, y0, theme.textHint());
+        drawLimitedTextLine(stack, line3, leftX, y0, Math.max(8, leftZoneW), theme.textHint());
 
         LabelWidget.drawLimitedText(FontDrawArgs.of(costText)
                 .x(rightX).y(footerY + FOOTER_PAD_V)
@@ -1248,10 +1267,10 @@ public class WaypointScreen extends BaniraScreen {
                 rem = "";
             }
             if (!l.isEmpty()) {
-                font.draw(stack, l, xL, y0 + i * lh, textArgb);
+                drawLimitedTextLine(stack, l, xL, y0 + i * lh, wL, textArgb);
             }
             if (!r.isEmpty()) {
-                font.draw(stack, r, xR, y0 + i * lh, textArgb);
+                drawLimitedTextLine(stack, r, xR, y0 + i * lh, wR, textArgb);
             }
         }
     }
@@ -1291,8 +1310,19 @@ public class WaypointScreen extends BaniraScreen {
 
         String title = NarcissusComponent.get().transClientAuto("del_confirm_title").toString();
         String msg = NarcissusComponent.get().transClientAuto("del_confirm_msg").toString();
-        font.draw(stack, title, dlgX + (DIALOG_W - font.width(title)) / 2f, dlgY + 15, theme.textPrimary());
-        font.draw(stack, msg, dlgX + (DIALOG_W - font.width(msg)) / 2f, dlgY + 35, theme.textSecondary());
+
+        int y = dlgY + 10;
+        drawLimitedTextCentered(stack, title, dlgX, y, DIALOG_W, theme.textPrimary());
+        y += font.lineHeight + 4;
+        drawLimitedTextCentered(stack, msg, dlgX, y, DIALOG_W, theme.textSecondary());
+        y += font.lineHeight + 6;
+
+        if (deleteConfirmItem != null) {
+            drawLimitedTextCentered(stack, deleteConfirmItem.name, dlgX, y, DIALOG_W, theme.textPrimary());
+            y += font.lineHeight + 2;
+            String meta = deleteConfirmItem.getDimensionName() + " " + deleteConfirmItem.getCoordinateName();
+            drawLimitedTextCentered(stack, meta, dlgX, y, DIALOG_W, theme.textHint());
+        }
     }
 
     private void onTeleportClick() {

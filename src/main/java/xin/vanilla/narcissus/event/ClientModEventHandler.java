@@ -2,7 +2,6 @@ package xin.vanilla.narcissus.event;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.settings.KeyBinding;
-import net.minecraft.entity.player.PlayerEntity;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.event.TickEvent;
@@ -33,13 +32,12 @@ public final class ClientModEventHandler {
     public static final KeyBinding TP_REQ_NO = BaniraKeyBindings.register(NarcissusFarewell.MODID, "tp_req_no", GLFWKey.GLFW_KEY_UNKNOWN);
     public static final KeyBinding TP_GRAVE_KEY = BaniraKeyBindings.register(NarcissusFarewell.MODID, "tp_grave", GLFWKey.GLFW_KEY_UNKNOWN);
     public static final KeyBinding OPEN_SCREEN_KEY = BaniraKeyBindings.register(NarcissusFarewell.MODID, "open_screen", GLFWKey.GLFW_KEY_UNKNOWN);
+    public static final KeyBinding OPEN_ACCESS_LIST_KEY = BaniraKeyBindings.register(NarcissusFarewell.MODID, "open_access_list", GLFWKey.GLFW_KEY_UNKNOWN);
 
     static {
         BaniraClientEventHub.ModLifecycle.onClientSetup(event ->
                 LogoModifier.register(NarcissusFarewell.MODID, () -> Math.random() > 0.5 ? "logo_.png" : "logo.png"));
         BaniraClientEventHub.Client.onClientTick(ClientModEventHandler::onClientTick);
-        BaniraClientEventHub.Player.onClientLoggedIn(ClientModEventHandler::onClientLoggedIn);
-        BaniraClientEventHub.Player.onClientLoggedOut(ClientModEventHandler::onClientLoggedOut);
     }
 
     private ClientModEventHandler() {
@@ -83,18 +81,15 @@ public final class ClientModEventHandler {
                     ScreenHelper.openScreen();
                     keyDown = true;
                 }
+            } else if (OPEN_ACCESS_LIST_KEY.consumeClick()) {
+                if (!keyDown) {
+                    ScreenHelper.openAccessListScreen();
+                    keyDown = true;
+                }
             } else {
                 keyDown = false;
             }
         }
     }
 
-    private static void onClientLoggedIn(PlayerEntity player) {
-        LOGGER.debug("Client: Player logged in.");
-        PacketUtils.sendPacketToServer(NetworkInit.INSTANCE, new ModLoadedToBoth());
-    }
-
-    private static void onClientLoggedOut(PlayerEntity player) {
-        LOGGER.debug("Client: Player logged out.");
-    }
 }

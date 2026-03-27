@@ -5,6 +5,10 @@ import lombok.Getter;
 import net.minecraft.command.CommandSource;
 import xin.vanilla.banira.command.BaniraCommand;
 import xin.vanilla.banira.common.api.IVirtualPermissionType;
+import xin.vanilla.banira.common.data.Component;
+import xin.vanilla.banira.common.enums.IEnumDescribable;
+import xin.vanilla.banira.common.util.EnumDescriptionHelper;
+import xin.vanilla.narcissus.NarcissusComponent;
 import xin.vanilla.narcissus.NarcissusFarewell;
 import xin.vanilla.narcissus.command.impl.*;
 
@@ -12,7 +16,7 @@ import javax.annotation.Nullable;
 import java.util.function.Supplier;
 
 @Getter
-public enum EnumCommandType implements IVirtualPermissionType {
+public enum EnumCommandType implements IVirtualPermissionType, IEnumDescribable {
     HELP(HelpCommand::create, false, false),
     LANGUAGE(() -> BaniraCommand.LANGUAGE, false, false),
     LANGUAGE_CONCISE(),
@@ -261,5 +265,10 @@ public enum EnumCommandType implements IVirtualPermissionType {
             default:
                 return null;
         }
+    }
+
+    @Override
+    public Component enumDescription() {
+        return EnumDescriptionHelper.describeEnum(NarcissusComponent.get(), this);
     }
 }
