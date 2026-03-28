@@ -1,9 +1,5 @@
 package xin.vanilla.narcissus.enums;
 
-import java.util.Arrays;
-import java.util.List;
-import java.util.stream.Collectors;
-
 public enum EnumTeleportType {
     TP_COORDINATE,
     TP_STRUCTURE,
@@ -22,7 +18,8 @@ public enum EnumTeleportType {
     TP_BACK,
     TP_GRAVE,
     DEATH,
-    OTHER;
+    OTHER,
+    ;
 
     public EnumCommandType toCommandType() {
         switch (this) {
@@ -63,14 +60,20 @@ public enum EnumTeleportType {
         }
     }
 
-    public static EnumTeleportType nullableValueOf(String name) {
-        for (EnumTeleportType value : EnumTeleportType.values()) {
-            if (value.name().equalsIgnoreCase(name)) return value;
+    public static EnumTeleportType valueOfEx(Object obj) {
+        if (obj instanceof EnumTeleportType) return (EnumTeleportType) obj;
+        if (obj instanceof String) {
+            for (EnumTeleportType value : values()) {
+                if (value.name().equalsIgnoreCase((String) obj)) {
+                    return value;
+                }
+            }
         }
         return null;
     }
 
-    public static List<String> names() {
-        return Arrays.stream(EnumTeleportType.values()).map(Enum::name).collect(Collectors.toList());
+    public static EnumTeleportType valueOfDefault(Object obj) {
+        EnumTeleportType value = valueOfEx(obj);
+        return value == null ? OTHER : value;
     }
 }

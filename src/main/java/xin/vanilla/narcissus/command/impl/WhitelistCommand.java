@@ -17,9 +17,9 @@ import xin.vanilla.banira.common.util.PlayerUtils;
 import xin.vanilla.narcissus.NarcissusComponent;
 import xin.vanilla.narcissus.data.PlayerAccess;
 import xin.vanilla.narcissus.data.player.PlayerTeleportData;
+import xin.vanilla.narcissus.enums.EnumWhiteListMode;
 import xin.vanilla.narcissus.util.CommandUtils;
 
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
@@ -40,8 +40,9 @@ public final class WhitelistCommand {
     private static int executeAdd(CommandContext<CommandSource> context) throws CommandSyntaxException {
         Collection<ServerPlayerEntity> players = EntityArgument.getPlayers(context, "players");
         if (CollectionUtils.isNullOrEmpty(players)) return 0;
-        String mode = xin.vanilla.banira.common.util.CommandUtils.getStringDefault(context, "mode", "none");
-        if (!Arrays.asList(CommandUtils.WHITE_LIST_MODES).contains(mode)) {
+        String modeStr = xin.vanilla.banira.common.util.CommandUtils.getStringDefault(context, "mode", EnumWhiteListMode.NONE.name());
+        EnumWhiteListMode mode = EnumWhiteListMode.valueOfEx(modeStr);
+        if (mode == null) {
             throw CommandSyntaxException.BUILT_IN_EXCEPTIONS.dispatcherUnknownArgument().create();
         }
         ServerPlayerEntity player = context.getSource().getPlayerOrException();
@@ -51,14 +52,14 @@ public final class WhitelistCommand {
         Component msg;
         if (access.addWhiteList(uuids)) {
             switch (mode) {
-                case "both":
+                case BOTH:
                     access.addTpaList(uuids);
                     access.addTphList(uuids);
                     break;
-                case "auto_accept_tpa":
+                case AUTO_ACCEPT_TPA:
                     access.addTpaList(uuids);
                     break;
-                case "auto_accept_tph":
+                case AUTO_ACCEPT_TPH:
                     access.addTphList(uuids);
                     break;
                 default:
@@ -80,8 +81,9 @@ public final class WhitelistCommand {
     private static int executeDel(CommandContext<CommandSource> context) throws CommandSyntaxException {
         Collection<ServerPlayerEntity> players = EntityArgument.getPlayers(context, "players");
         if (CollectionUtils.isNullOrEmpty(players)) return 0;
-        String mode = xin.vanilla.banira.common.util.CommandUtils.getStringDefault(context, "mode", "none");
-        if (!Arrays.asList(CommandUtils.WHITE_LIST_MODES).contains(mode)) {
+        String modeStr = xin.vanilla.banira.common.util.CommandUtils.getStringDefault(context, "mode", EnumWhiteListMode.NONE.name());
+        EnumWhiteListMode mode = EnumWhiteListMode.valueOfEx(modeStr);
+        if (mode == null) {
             throw CommandSyntaxException.BUILT_IN_EXCEPTIONS.dispatcherUnknownArgument().create();
         }
         ServerPlayerEntity player = context.getSource().getPlayerOrException();
@@ -89,14 +91,14 @@ public final class WhitelistCommand {
         PlayerAccess access = data.getAccess();
         String[] uuids = players.stream().map(PlayerUtils::getPlayerUUIDString).toArray(String[]::new);
         switch (mode) {
-            case "both":
+            case BOTH:
                 access.removeAutoTpa(uuids);
                 access.removeAutoTph(uuids);
                 break;
-            case "auto_accept_tpa":
+            case AUTO_ACCEPT_TPA:
                 access.removeAutoTpa(uuids);
                 break;
-            case "auto_accept_tph":
+            case AUTO_ACCEPT_TPH:
                 access.removeAutoTph(uuids);
                 break;
             default:
@@ -114,9 +116,9 @@ public final class WhitelistCommand {
     private static CompletableFuture<Suggestions> suggestion(CommandContext<CommandSource> context, SuggestionsBuilder builder) {
         String lang = xin.vanilla.banira.common.util.CommandUtils.getLanguage(context.getSource());
         String[] tooltipKeys = {"suggest_whitelist_none", "suggest_whitelist_both", "suggest_whitelist_auto_accept_tpa", "suggest_whitelist_auto_accept_tph"};
-        for (int i = 0; i < CommandUtils.WHITE_LIST_MODES.length; i++) {
-            Component tooltip = NarcissusComponent.get().transAuto(tooltipKeys[i]);
-            builder.suggest(CommandUtils.WHITE_LIST_MODES[i], tooltip.toVanilla(lang));
+        for (EnumWhiteListMode m : EnumWhiteListMode.values()) {
+            Component tooltip = NarcissusComponent.get().transAuto(tooltipKeys[m.ordinal()]);
+            builder.suggest(m.name(), tooltip.toVanilla(lang));
         }
         return builder.buildFuture();
     }

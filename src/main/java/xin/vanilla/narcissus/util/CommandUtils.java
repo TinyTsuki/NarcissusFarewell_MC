@@ -40,8 +40,6 @@ public final class CommandUtils {
     private CommandUtils() {
     }
 
-    public static final String[] WHITE_LIST_MODES = {"none", "both", "auto_accept_tpa", "auto_accept_tph"};
-
     /**
      * 若为第一次使用指令则进行提示
      */

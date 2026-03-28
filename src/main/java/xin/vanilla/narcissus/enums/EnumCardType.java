@@ -20,4 +20,23 @@ public enum EnumCardType {
     EnumCardType(String desc) {
         this.desc = desc;
     }
+
+    public static EnumCardType valueOfEx(Object obj) {
+        if (obj instanceof EnumCardType) return (EnumCardType) obj;
+        if (obj instanceof String) {
+            for (EnumCardType value : values()) {
+                if (value.name().equalsIgnoreCase((String) obj)
+                        || value.desc.equalsIgnoreCase((String) obj)
+                ) {
+                    return value;
+                }
+            }
+        }
+        return null;
+    }
+
+    public static EnumCardType valueOfDefault(Object obj) {
+        EnumCardType value = valueOfEx(obj);
+        return value == null ? NONE : value;
+    }
 }

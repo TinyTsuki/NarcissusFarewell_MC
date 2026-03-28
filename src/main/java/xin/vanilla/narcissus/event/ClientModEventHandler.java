@@ -32,6 +32,7 @@ public final class ClientModEventHandler {
     public static final KeyBinding TP_REQ_NO = BaniraKeyBindings.register(NarcissusFarewell.MODID, "tp_req_no", GLFWKey.GLFW_KEY_UNKNOWN);
     public static final KeyBinding TP_GRAVE_KEY = BaniraKeyBindings.register(NarcissusFarewell.MODID, "tp_grave", GLFWKey.GLFW_KEY_UNKNOWN);
     public static final KeyBinding OPEN_SCREEN_KEY = BaniraKeyBindings.register(NarcissusFarewell.MODID, "open_screen", GLFWKey.GLFW_KEY_UNKNOWN);
+    public static final KeyBinding OPEN_ACCESS_LIST_KEY = BaniraKeyBindings.register(NarcissusFarewell.MODID, "open_access_list", GLFWKey.GLFW_KEY_UNKNOWN);
 
     static {
         BaniraClientEventHub.ModLifecycle.onClientSetup(event ->
@@ -78,6 +79,11 @@ public final class ClientModEventHandler {
             } else if (OPEN_SCREEN_KEY.consumeClick()) {
                 if (!keyDown) {
                     ScreenHelper.openScreen();
+                    keyDown = true;
+                }
+            } else if (OPEN_ACCESS_LIST_KEY.consumeClick()) {
+                if (!keyDown) {
+                    ScreenHelper.openAccessListScreen();
                     keyDown = true;
                 }
             } else {

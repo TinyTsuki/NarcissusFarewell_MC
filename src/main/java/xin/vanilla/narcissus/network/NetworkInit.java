@@ -27,5 +27,7 @@ public final class NetworkInit {
         HANDLER.register(TpHomeToServer.class, TpHomeToServer::toBytes, TpHomeToServer::new, TpHomeToServer::handle);
         HANDLER.register(TpNoToServer.class, TpNoToServer::toBytes, TpNoToServer::new, TpNoToServer::handle);
         HANDLER.register(TpYesToServer.class, TpYesToServer::toBytes, TpYesToServer::new, TpYesToServer::handle);
+
+        HANDLER.register(AccessListEditToServer.class, AccessListEditToServer::toBytes, AccessListEditToServer::new, AccessListEditToServer::handle);
     }
 }
