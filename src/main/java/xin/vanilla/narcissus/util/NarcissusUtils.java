@@ -885,7 +885,7 @@ public class NarcissusUtils {
         Stream<TeleportRecord> stream = records.stream()
                 .filter(record -> type == null || record.getTeleportType() == type);
         for (String s : CommonConfig.get().general().teleportBackSkipType()) {
-            EnumTeleportType value = EnumTeleportType.nullableValueOf(s);
+            EnumTeleportType value = EnumTeleportType.valueOfEx(s);
             stream = stream
                     .filter(record -> type == value || record.getTeleportType() != value);
         }
