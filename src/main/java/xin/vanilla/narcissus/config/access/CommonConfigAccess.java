@@ -582,6 +582,13 @@ public final class CommonConfigAccess {
             }
             return parseCoolDownType(raw, (EnumCoolDownType) field(bean, leaf));
         }
+        if ("tpSpawnNoBedWorldDimension".equals(leaf)) {
+            if (raw == null) {
+                return field(bean, leaf);
+            }
+            String s = (String) raw;
+            return s.isEmpty() ? field(bean, leaf) : s;
+        }
         if ("teleportBackSkipType".equals(leaf)) {
             if (raw == null) {
                 return field(bean, leaf);
@@ -772,6 +779,7 @@ public final class CommonConfigAccess {
         h.set("general.helpInfoNumPerPage", 5);
         h.set("general.defaultLanguage", "en_us");
         h.set("general.tpWithEnemy", false);
+        h.set("general.tpSpawnNoBedWorldDimension", "minecraft:overworld");
         h.set("general.safeTeleport.unsafeBlocks", Stream.of(Blocks.LAVA, Blocks.FIRE, Blocks.CAMPFIRE, Blocks.SOUL_FIRE, Blocks.SOUL_CAMPFIRE, Blocks.CACTUS, Blocks.MAGMA_BLOCK, Blocks.SWEET_BERRY_BUSH).map(b -> {
             ResourceLocation rl = b.getRegistryName();
             return rl == null ? "" : rl.toString();

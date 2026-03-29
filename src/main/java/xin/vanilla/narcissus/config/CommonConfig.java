@@ -305,6 +305,8 @@ public class CommonConfig implements ConfigData {
         private String defaultLanguage = "en_us";
         @ConfigEntry.Gui.Tooltip(zh_cn = "是否在被敌对生物锁定（仇恨）时限制玩家进行传送操作。", en_us = "Whether to restrict teleportation when the player is targeted (agroed) by hostile mobs.")
         private boolean tpWithEnemy = false;
+        @ConfigEntry.Gui.Tooltip(zh_cn = "当玩家没有个人重生点（床/重生锚等）时，tpsp 取世界出生点的维度。填 CURRENT 或 AUTO（不区分大小写）表示使用玩家当前维度；否则填维度 ID（如 minecraft:overworld）。维度 ID 解析失败或世界未加载时亦使用玩家当前维度。", en_us = "When the player has no personal respawn (bed/anchor, etc.), which dimension's world spawn tpsp uses. Use CURRENT or AUTO (case-insensitive) for the player's current dimension; otherwise a dimension ID (e.g. minecraft:overworld). On parse failure or if the world is not loaded, uses the current dimension.")
+        private String tpSpawnNoBedWorldDimension = "minecraft:overworld";
         @Getter(AccessLevel.NONE)
         @Setter(AccessLevel.NONE)
         @ConfigEntry.Gui.CollapsibleObject
@@ -1834,6 +1836,10 @@ public class CommonConfig implements ConfigData {
         boolean tpWithEnemy();
 
         GeneralView tpWithEnemy(boolean value);
+
+        String tpSpawnNoBedWorldDimension();
+
+        GeneralView tpSpawnNoBedWorldDimension(String value);
 
         SafeTeleportView safeTeleport();
     }

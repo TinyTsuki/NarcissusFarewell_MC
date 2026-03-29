@@ -9,7 +9,8 @@ import net.minecraft.command.Commands;
 import net.minecraft.command.arguments.EntityArgument;
 import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.World;
+import net.minecraft.world.server.ServerWorld;
+import xin.vanilla.banira.common.util.DimensionUtils;
 import xin.vanilla.narcissus.config.CommonConfig;
 import xin.vanilla.narcissus.data.SafeWorldCoordinate;
 import xin.vanilla.narcissus.enums.EnumCommandType;
@@ -31,12 +32,19 @@ public final class TpSpawnCommand {
         BlockPos respawnPosition = target.getRespawnPosition();
         safeWorldCoordinate.dimension(target.getRespawnDimension());
         if (respawnPosition == null) {
-            respawnPosition = target.getLevel().getSharedSpawnPos();
-            safeWorldCoordinate.dimension(target.getLevel().dimension());
-        }
-        if (respawnPosition == null) {
-            respawnPosition = target.getServer().getLevel(World.OVERWORLD).getSharedSpawnPos();
-            safeWorldCoordinate.dimension(World.OVERWORLD);
+            String raw = CommonConfig.get().general().tpSpawnNoBedWorldDimension();
+            String s = raw == null ? "" : raw.trim();
+            ServerWorld level;
+            if (s.isEmpty() || "CURRENT".equalsIgnoreCase(s) || "AUTO".equalsIgnoreCase(s)) {
+                level = target.getLevel();
+            } else {
+                level = DimensionUtils.getLevel(s);
+            }
+            if (level == null) {
+                level = target.getLevel();
+            }
+            respawnPosition = level.getSharedSpawnPos();
+            safeWorldCoordinate.dimension(level.dimension());
         }
         safeWorldCoordinate.fromBlockPos(respawnPosition);
         safeWorldCoordinate.safe("safe".equalsIgnoreCase(xin.vanilla.banira.common.util.CommandUtils.getStringDefault(context, "safe", "safe")));
