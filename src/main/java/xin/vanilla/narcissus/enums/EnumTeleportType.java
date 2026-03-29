@@ -5,6 +5,10 @@ import xin.vanilla.banira.common.enums.IEnumDescribable;
 import xin.vanilla.banira.common.util.EnumDescriptionHelper;
 import xin.vanilla.narcissus.NarcissusComponent;
 
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+
 public enum EnumTeleportType implements IEnumDescribable {
     TP_COORDINATE,
     TP_STRUCTURE,
@@ -25,6 +29,18 @@ public enum EnumTeleportType implements IEnumDescribable {
     DEATH,
     OTHER,
     ;
+
+    private static final List<EnumTeleportType> COUNTDOWN_CONFIGURABLE = Collections.unmodifiableList(Arrays.asList(
+            TP_COORDINATE, TP_STRUCTURE, TP_ASK, TP_HERE, TP_RANDOM, TP_SPAWN, TP_WORLD_SPAWN,
+            TP_TOP, TP_BOTTOM, TP_UP, TP_DOWN, TP_VIEW, TP_HOME, TP_STAGE, TP_BACK, TP_GRAVE
+    ));
+
+    /**
+     * 与传送指令对应、可在玩家数据中配置传送倒计时（秒）的类型。
+     */
+    public static List<EnumTeleportType> countdownConfigurableTypes() {
+        return COUNTDOWN_CONFIGURABLE;
+    }
 
     public EnumCommandType toCommandType() {
         switch (this) {

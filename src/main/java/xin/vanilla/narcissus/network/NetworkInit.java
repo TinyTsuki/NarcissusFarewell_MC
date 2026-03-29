@@ -29,5 +29,6 @@ public final class NetworkInit {
         HANDLER.register(TpYesToServer.class, TpYesToServer::toBytes, TpYesToServer::new, TpYesToServer::handle);
 
         HANDLER.register(AccessListEditToServer.class, AccessListEditToServer::toBytes, AccessListEditToServer::new, AccessListEditToServer::handle);
+        HANDLER.register(PlayerConfigSyncToServer.class, PlayerConfigSyncToServer::toBytes, PlayerConfigSyncToServer::new, PlayerConfigSyncToServer::handle);
     }
 }

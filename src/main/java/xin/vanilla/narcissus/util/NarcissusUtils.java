@@ -20,6 +20,7 @@ import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.network.datasync.DataParameter;
 import net.minecraft.network.play.server.SPlayerAbilitiesPacket;
 import net.minecraft.network.play.server.SSetPassengersPacket;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.*;
 import net.minecraft.util.math.ChunkPos;
 import net.minecraft.util.text.ITextComponent;
@@ -40,6 +41,7 @@ import xin.vanilla.narcissus.Identifier;
 import xin.vanilla.narcissus.NarcissusComponent;
 import xin.vanilla.narcissus.NarcissusFarewell;
 import xin.vanilla.narcissus.config.CommonConfig;
+import xin.vanilla.narcissus.config.TeleportCountdownHelper;
 import xin.vanilla.narcissus.data.SafeWorldCoordinate;
 import xin.vanilla.narcissus.data.TeleportCost;
 import xin.vanilla.narcissus.data.TeleportRecord;
@@ -910,6 +912,41 @@ public class NarcissusUtils {
     // region 传送相关
 
     /**
+     * 在真正执行传送前按玩家配置进行倒计时；{@code teleportAction} 在倒计时结束时于服务端主线程执行（调用方应自行解析在线玩家等）。
+     */
+    private static void executeTeleportWithCountdown(ServerPlayerEntity player, EnumTeleportType type, Runnable teleportAction) {
+        MinecraftServer server = player.getServer();
+        int sec = TeleportCountdownHelper.getEffectiveCountdownSeconds(player, type);
+        if (sec <= 0 || server == null) {
+            teleportAction.run();
+            return;
+        }
+        TeleportCountdownTracker.Session countdownSession = TeleportCountdownTracker.begin(player,
+                CommonConfig.get().teleportCountdown().cancelCountdownOnPlayerMove(),
+                CommonConfig.get().teleportCountdown().cancelCountdownOnPlayerDamage());
+        UUID uuid = player.getUUID();
+        for (int i = 0; i < sec; i++) {
+            final int display = sec - i;
+            BaniraScheduler.scheduleAfterMillis(server, i * 1000.0, () -> {
+                if (countdownSession.isCancelled()) {
+                    return;
+                }
+                ServerPlayerEntity p = server.getPlayerList().getPlayer(uuid);
+                if (p == null) {
+                    return;
+                }
+                MessageUtils.sendActionBarMessage(p, NarcissusComponent.get().transAuto("tp_countdown_actionbar", String.valueOf(display)));
+            });
+        }
+        BaniraScheduler.scheduleAfterMillis(server, sec * 1000.0, () -> {
+            if (!countdownSession.tryMarkCompleteAndRemove()) {
+                return;
+            }
+            teleportAction.run();
+        });
+    }
+
+    /**
      * 检查传送范围
      */
     public static int checkRange(ServerPlayerEntity player, EnumTeleportType type, int range) {
@@ -1011,13 +1048,31 @@ public class NarcissusUtils {
                             runnable = null;
                         }
                         SafeWorldCoordinate finalAfter1 = finalAfter;
+                        MinecraftServer srv = player.server;
+                        UUID pid = player.getUUID();
                         player.server.submit(() -> {
                             if (runnable != null) runnable.run();
-                            teleportPlayer(player, finalAfter1, type, before, level);
+                            ServerPlayerEntity online = srv.getPlayerList().getPlayer(pid);
+                            if (online == null) {
+                                return;
+                            }
+                            executeTeleportWithCountdown(online, type, () -> {
+                                ServerPlayerEntity pl = srv.getPlayerList().getPlayer(pid);
+                                if (pl != null) {
+                                    teleportPlayer(pl, finalAfter1, type, before, level);
+                                }
+                            });
                         });
                     }).start();
                 } else {
-                    teleportPlayer(player, after, type, before, level);
+                    MinecraftServer srv = player.getServer();
+                    UUID pid = player.getUUID();
+                    executeTeleportWithCountdown(player, type, () -> {
+                        ServerPlayerEntity pl = srv != null ? srv.getPlayerList().getPlayer(pid) : null;
+                        if (pl != null) {
+                            teleportPlayer(pl, after, type, before, level);
+                        }
+                    });
                 }
             }
         }

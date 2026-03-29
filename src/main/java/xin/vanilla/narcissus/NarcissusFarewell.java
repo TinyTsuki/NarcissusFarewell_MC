@@ -114,10 +114,13 @@ public class NarcissusFarewell {
                 QuickActionContextMenuItem editCommonConfig = new QuickActionContextMenuItem(NarcissusComponent.get().transClientAuto("edit_common_config"), ctx ->
                         ConfigEditorScreen.open(CommonConfig.get().holder(), ctx.currentScreen())
                 );
-                QuickActionContextMenuItem openAccessList = new QuickActionContextMenuItem(NarcissusComponent.get().transClientAuto("quick_action_access_list"), ctx ->
+                QuickActionContextMenuItem editPlayerConfig = new QuickActionContextMenuItem(NarcissusComponent.get().transClientAuto("edit_player_config"), ctx ->
+                        ScreenHelper.openPlayerTeleportPrefsScreen()
+                );
+                QuickActionContextMenuItem editAccessConfig = new QuickActionContextMenuItem(NarcissusComponent.get().transClientAuto("edit_access_config"), ctx ->
                         ScreenHelper.openAccessListScreen()
                 );
-                QuickActionRegistry.get().registerIcon(MODID + ":quick", texture, label, action, editClientConfig, editCommonConfig, openAccessList);
+                QuickActionRegistry.get().registerIcon(MODID + ":quick", texture, label, action, editAccessConfig, editPlayerConfig, editClientConfig, editCommonConfig);
             });
         }
     }

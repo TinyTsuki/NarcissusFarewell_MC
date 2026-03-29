@@ -6,21 +6,20 @@ import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
-import com.mojang.brigadier.suggestion.Suggestions;
-import com.mojang.brigadier.suggestion.SuggestionsBuilder;
+import com.mojang.brigadier.suggestion.SuggestionProvider;
 import net.minecraft.command.CommandSource;
 import net.minecraft.command.Commands;
 import net.minecraft.entity.player.ServerPlayerEntity;
 import xin.vanilla.banira.common.data.Component;
-import xin.vanilla.banira.common.util.CommandUtils;
 import xin.vanilla.banira.common.util.MessageUtils;
 import xin.vanilla.narcissus.NarcissusComponent;
 import xin.vanilla.narcissus.NarcissusLang;
 import xin.vanilla.narcissus.config.CommonConfig;
+import xin.vanilla.narcissus.config.TeleportCountdownHelper;
+import xin.vanilla.narcissus.data.player.PlayerTeleportData;
 import xin.vanilla.narcissus.enums.EnumCommandType;
+import xin.vanilla.narcissus.enums.EnumTeleportType;
 import xin.vanilla.narcissus.util.NarcissusUtils;
-
-import java.util.concurrent.CompletableFuture;
 
 public final class ConfigCommand {
     private ConfigCommand() {
@@ -49,7 +48,6 @@ public final class ConfigCommand {
     private static int executeMode(CommandContext<CommandSource> context) {
         int mode = IntegerArgumentType.getInteger(context, "mode");
         CommandSource source = context.getSource();
-        String lang = CommandUtils.getLanguage(source);
         switch (mode) {
             case 0:
                 CommonConfig.resetConfig();
@@ -81,17 +79,62 @@ public final class ConfigCommand {
         return 1;
     }
 
-    private static CompletableFuture<Suggestions> modeSuggestion(CommandContext<CommandSource> context, SuggestionsBuilder builder) {
+    private static final SuggestionProvider<CommandSource> MODE_SUGGESTION = (context, builder) -> {
         builder.suggest(0);
         builder.suggest(1);
         builder.suggest(2);
         builder.suggest(3);
         return builder.buildFuture();
-    }
+    };
 
-    private static CompletableFuture<Suggestions> languageSuggestion(CommandContext<CommandSource> context, SuggestionsBuilder builder) {
+    private static final SuggestionProvider<CommandSource> LANGUAGE_SUGGESTION = (context, builder) -> {
         NarcissusLang.get().getI18nFiles().forEach(builder::suggest);
         return builder.buildFuture();
+    };
+
+    private static final SuggestionProvider<CommandSource> TYPE_SUGGESTIONS = (context, builder) -> {
+        String remaining = builder.getRemaining().toLowerCase();
+        for (EnumTeleportType t : EnumTeleportType.countdownConfigurableTypes()) {
+            String name = t.name().toLowerCase();
+            if (name.startsWith(remaining)) {
+                builder.suggest(t.name());
+            }
+        }
+        return builder.buildFuture();
+    };
+
+    private static int executeTpCountdownQuery(CommandContext<CommandSource> context) throws CommandSyntaxException {
+        xin.vanilla.narcissus.util.CommandUtils.notifyHelp(context);
+        ServerPlayerEntity player = context.getSource().getPlayerOrException();
+        if (xin.vanilla.narcissus.util.CommandUtils.checkTeleportPre(context.getSource(), EnumCommandType.CONFIG)) {
+            return 0;
+        }
+        PlayerTeleportData data = PlayerTeleportData.getData(player);
+        for (EnumTeleportType t : EnumTeleportType.countdownConfigurableTypes()) {
+            Component line = NarcissusComponent.get().transAuto("tp_countdown_query_line", t.name(), String.valueOf(data.getTeleportCountdownSeconds(t)));
+            MessageUtils.sendMessage(context.getSource(), true, line);
+        }
+        return 1;
+    }
+
+    private static int executeTpCountdownSet(CommandContext<CommandSource> context) throws CommandSyntaxException {
+        ServerPlayerEntity player = context.getSource().getPlayerOrException();
+        if (xin.vanilla.narcissus.util.CommandUtils.checkTeleportPre(context.getSource(), EnumCommandType.CONFIG)) {
+            return 0;
+        }
+        String typeName = StringArgumentType.getString(context, "type");
+        EnumTeleportType type = EnumTeleportType.valueOfEx(typeName);
+        if (type == null || !EnumTeleportType.countdownConfigurableTypes().contains(type)) {
+            MessageUtils.sendMessage(context.getSource(), false, NarcissusComponent.get().transAuto("tp_countdown_invalid_type", typeName));
+            return 0;
+        }
+        int sec = IntegerArgumentType.getInteger(context, "seconds");
+        sec = TeleportCountdownHelper.clampToPlayerAllowedRange(sec);
+        PlayerTeleportData data = PlayerTeleportData.getData(player);
+        data.setTeleportCountdownSeconds(type, sec);
+        PlayerTeleportData.syncPlayerData(player);
+        MessageUtils.sendMessage(context.getSource(), true, NarcissusComponent.get().transAuto("tp_countdown_set_ok", type.name(), String.valueOf(data.getTeleportCountdownSeconds(type))));
+        return 1;
     }
 
     public static LiteralArgumentBuilder<CommandSource> create() {
@@ -106,17 +149,26 @@ public final class ConfigCommand {
                 .then(Commands.literal("mode")
                         .then(Commands.argument("mode", IntegerArgumentType.integer(0))
                                 .requires(source -> NarcissusUtils.hasCommandPermission(source, EnumCommandType.VIRTUAL_OP))
-                                .suggests(ConfigCommand::modeSuggestion)
+                                .suggests(MODE_SUGGESTION)
                                 .executes(ConfigCommand::executeMode)
                         )
                 )
                 .then(Commands.literal("language")
                         .then(Commands.argument("language", StringArgumentType.word())
                                 .requires(source -> NarcissusUtils.hasCommandPermission(source, EnumCommandType.VIRTUAL_OP))
-                                .suggests(ConfigCommand::languageSuggestion)
+                                .suggests(LANGUAGE_SUGGESTION)
                                 .executes(ConfigCommand::executeLanguage)
                         )
                 )
+                .then(Commands.literal("countdown")
+                        .executes(ConfigCommand::executeTpCountdownQuery)
+                        .then(Commands.literal("query")
+                                .executes(ConfigCommand::executeTpCountdownQuery))
+                        .then(Commands.literal("set")
+                                .then(Commands.argument("type", StringArgumentType.word())
+                                        .suggests(TYPE_SUGGESTIONS)
+                                        .then(Commands.argument("seconds", IntegerArgumentType.integer(0, TeleportCountdownHelper.ABSOLUTE_MAX_SEC))
+                                                .executes(ConfigCommand::executeTpCountdownSet)))))
                 .then(WhitelistCommand.create())
                 .then(BlacklistCommand.create());
     }

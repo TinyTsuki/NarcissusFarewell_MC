@@ -1,6 +1,7 @@
 package xin.vanilla.narcissus.event;
 
 import net.minecraft.entity.player.ServerPlayerEntity;
+import net.minecraft.server.MinecraftServer;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.entity.EntityJoinWorldEvent;
 import net.minecraftforge.event.entity.living.EntityTeleportEvent;
@@ -18,6 +19,7 @@ import xin.vanilla.narcissus.data.TeleportRecord;
 import xin.vanilla.narcissus.data.TeleportRequest;
 import xin.vanilla.narcissus.data.player.PlayerTeleportData;
 import xin.vanilla.narcissus.enums.EnumTeleportType;
+import xin.vanilla.narcissus.util.TeleportCountdownTracker;
 
 import java.util.Comparator;
 import java.util.Date;
@@ -27,6 +29,10 @@ public class EventHandlerProxy {
 
     public static void onServerTick(TickEvent.ServerTickEvent event) {
         if (event.phase == TickEvent.Phase.END) {
+            MinecraftServer srv = BaniraCodex.serverInstance().key();
+            if (srv != null) {
+                TeleportCountdownTracker.tickMovementCheck(srv);
+            }
             if (BaniraCodex.serverInstance().key().getTickCount() % 20 == 0) {
                 long currentTimeMillis = System.currentTimeMillis();
                 NarcissusFarewell.getTeleportRequest().entrySet().stream()
