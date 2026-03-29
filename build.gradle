@@ -264,6 +264,7 @@ afterEvaluate {
             def reobfFat = layout.buildDirectory.file('reobfJarJar/output.jar').get().asFile
             narcissusCopyFatJar(reobfFat, "${mod_id}-${loader_type}-${minecraft_version}-${mod_version}-all.jar")
         }
+        tasks.named('assemble').configure { dependsOn reobfJarJarTask }
     } else {
         def jarJarTask = tasks.findByName('jarJar')
         if (jarJarTask != null) {
@@ -271,6 +272,7 @@ afterEvaluate {
                 def jar = jarJarTask.archiveFile.get().asFile
                 narcissusCopyFatJar(jar, "${mod_id}-${loader_type}-${minecraft_version}-${mod_version}-all.jar")
             }
+            tasks.named('assemble').configure { dependsOn jarJarTask }
         }
     }
 }
