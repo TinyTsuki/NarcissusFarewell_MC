@@ -804,7 +804,7 @@ public class AccessListScreen extends BaniraScreen {
                 }
                 meta = sb.toString().trim();
                 if (meta.isEmpty()) {
-                    meta = uuidStr;
+                    meta = "NONE";
                 }
             } else {
                 meta = uuidStr;

@@ -1,9 +1,14 @@
 package xin.vanilla.narcissus.enums;
 
+import xin.vanilla.banira.common.data.Component;
+import xin.vanilla.banira.common.enums.IEnumDescribable;
+import xin.vanilla.banira.common.util.EnumDescriptionHelper;
+import xin.vanilla.narcissus.NarcissusComponent;
+
 /**
  * 白名单子命令模式，与指令参数字符串一致（{@link #name()}）
  */
-public enum EnumWhiteListMode {
+public enum EnumWhiteListMode implements IEnumDescribable {
     NONE,
     BOTH,
     AUTO_ACCEPT_TPA,
@@ -33,5 +38,10 @@ public enum EnumWhiteListMode {
     public static EnumWhiteListMode valueOfDefault(Object obj) {
         EnumWhiteListMode v = valueOfEx(obj);
         return v == null ? NONE : v;
+    }
+
+    @Override
+    public Component enumDescription() {
+        return EnumDescriptionHelper.describeEnum(NarcissusComponent.get(), this);
     }
 }

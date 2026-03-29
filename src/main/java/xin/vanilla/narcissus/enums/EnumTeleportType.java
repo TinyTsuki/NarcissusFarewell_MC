@@ -1,6 +1,11 @@
 package xin.vanilla.narcissus.enums;
 
-public enum EnumTeleportType {
+import xin.vanilla.banira.common.data.Component;
+import xin.vanilla.banira.common.enums.IEnumDescribable;
+import xin.vanilla.banira.common.util.EnumDescriptionHelper;
+import xin.vanilla.narcissus.NarcissusComponent;
+
+public enum EnumTeleportType implements IEnumDescribable {
     TP_COORDINATE,
     TP_STRUCTURE,
     TP_ASK,
@@ -75,5 +80,10 @@ public enum EnumTeleportType {
     public static EnumTeleportType valueOfDefault(Object obj) {
         EnumTeleportType value = valueOfEx(obj);
         return value == null ? OTHER : value;
+    }
+
+    @Override
+    public Component enumDescription() {
+        return EnumDescriptionHelper.describeEnum(NarcissusComponent.get(), this);
     }
 }
