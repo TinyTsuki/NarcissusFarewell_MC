@@ -126,8 +126,9 @@ sourceSets.main.resources { srcDir 'src/generated/resources' }
 def baniraArtifactVersionRange = "${banira_version_range}"
 def baniraCodexCoords = "xin.vanilla.banira:banira_codex:${loader_type}-${minecraft_version}-${banira_version}"
 
+// 仓库中的 banira_codex（与 Banira 工程 publish + reobfJar 产物一致，SRG），用于胖包 zip 合并；勿用 fg.deobf
 configurations {
-    baniraCodexMerge {
+    baniraCodexObf {
         canBeConsumed = false
         canBeResolved = true
         transitive = false
@@ -179,7 +180,7 @@ dependencies {
     // implementation fg.deobf("blank:coolmod-${mc_version}:${coolmod_version}")
 
     implementation fg.deobf(baniraCodexCoords)
-    baniraCodexMerge fg.deobf(baniraCodexCoords)
+    baniraCodexObf baniraCodexCoords
     // jarJar("xin.vanilla.banira:banira_codex:${loader_type}-${minecraft_version}-${banira_version}") {
     //     jarJar.ranged(it, baniraArtifactVersionRange)
     // }
@@ -225,17 +226,26 @@ tasks.named('processResources', ProcessResources).configure {
                              mod_authors         : mod_authors, mod_description: mod_description,]
 
     inputs.properties replaceProperties
-    // 胖 JAR 内嵌 banira_codex 的 mods 声明仅写入构建产物，避免 src 中双 [[mods]] 影响开发期/IDE
-    inputs.property('banira_embed_mods_toml', "${banira_version}|${minecraft_version}|${forge_version_range}|${minecraft_version_range}")
 
     filesMatching(['META-INF/mods.toml', 'pack.mcmeta']) {
         expand replaceProperties + [project: project]
     }
+}
 
+// 仅用于 jarAll：从瘦资源复制并追加 banira_codex 的 [[mods]]（瘦 jar 的 mods.toml 不追加）
+tasks.register('prepareFatResources') {
+    dependsOn 'processResources'
+    inputs.dir(layout.buildDirectory.dir('resources/main'))
+    inputs.property('banira_embed_mods_toml', "${banira_version}|${minecraft_version}|${forge_version_range}|${minecraft_version_range}")
+    outputs.dir(layout.buildDirectory.dir('fatResources/main'))
     doLast {
-        def modsToml = layout.buildDirectory.file('resources/main/META-INF/mods.toml').get().asFile
+        copy {
+            from layout.buildDirectory.dir('resources/main')
+            into layout.buildDirectory.dir('fatResources/main')
+        }
+        def modsToml = layout.buildDirectory.file('fatResources/main/META-INF/mods.toml').get().asFile
         if (!modsToml.isFile()) {
-            throw new GradleException('META-INF/mods.toml missing after processResources; cannot append banira_codex [[mods]]')
+            throw new GradleException('fatResources: META-INF/mods.toml missing')
         }
         modsToml.append("""
 [[mods]]
@@ -275,25 +285,15 @@ tasks.named('processResources', ProcessResources).configure {
     }
 }
 
+def modsJarVersion = "${loader_type}-${minecraft_version}-${mod_version}"
+def modsDestinationDir = file("${projectDir}/builds/${mod_version}")
+
 // Example for how to get properties into the manifest for reading at runtime.
 tasks.named('jar', Jar).configure {
-    // 自定义打包路径与输出格式
+    // 瘦 JAR：不含 banira_codex 字节与资源
     archiveBaseName.set(mod_id)
-    archiveVersion.set("${loader_type}-${minecraft_version}-${mod_version}")
-    destinationDirectory.set(file("${projectDir}/builds/${mod_version}"))
-
-    dependsOn configurations.named('baniraCodexMerge')
-    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
-
-    from {
-        zipTree(configurations.baniraCodexMerge.singleFile)
-    } {
-        exclude 'META-INF/mods.toml'
-        exclude 'META-INF/MANIFEST.MF'
-        exclude 'META-INF/*.SF'
-        exclude 'META-INF/*.RSA'
-        exclude 'META-INF/*.DSA'
-    }
+    archiveVersion.set(modsJarVersion)
+    destinationDirectory.set(modsDestinationDir)
 
     manifest {
         attributes(["Specification-Title"     : mod_id,
@@ -308,8 +308,60 @@ tasks.named('jar', Jar).configure {
     finalizedBy 'reobfJar'
 }
 
+// 胖 JAR：reobf 后的瘦包（SRG）+ 仓库中已 reobf 的 banira_codex（SRG）+ 追加 mods.toml；不再对合并结果跑第二次 reobf（MCP 混包会导致 remapper NPE）
+tasks.register('jarAll', Jar) {
+    archiveBaseName.set(mod_id)
+    archiveVersion.set(modsJarVersion)
+    archiveClassifier.set('all')
+    destinationDirectory.set(modsDestinationDir)
+
+    dependsOn 'reobfJar', 'prepareFatResources', configurations.named('baniraCodexObf')
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+
+    def slimJar = tasks.named('jar', Jar)
+
+    from {
+        zipTree(slimJar.get().archiveFile.get().asFile)
+    } {
+        exclude 'META-INF/mods.toml'
+        exclude 'META-INF/MANIFEST.MF'
+        exclude 'META-INF/*.SF'
+        exclude 'META-INF/*.RSA'
+        exclude 'META-INF/*.DSA'
+    }
+    from(layout.buildDirectory.file('fatResources/main/META-INF/mods.toml')) {
+        into 'META-INF'
+    }
+    from {
+        zipTree(configurations.baniraCodexObf.singleFile)
+    } {
+        exclude 'META-INF/mods.toml'
+        exclude 'META-INF/MANIFEST.MF'
+        exclude 'META-INF/*.SF'
+        exclude 'META-INF/*.RSA'
+        exclude 'META-INF/*.DSA'
+    }
+
+    manifest {
+        attributes(["Specification-Title"     : mod_id,
+                    "Specification-Vendor"    : mod_authors,
+                    "Specification-Version"   : "1",
+                    "Implementation-Title"    : project.name,
+                    "Implementation-Version"  : "${modsJarVersion}-all",
+                    "Implementation-Vendor"   : mod_authors,
+                    "Implementation-Timestamp": new Date().format("yyyy-MM-dd'T'HH:mm:ssZ")])
+    }
+}
+
+tasks.named('assemble').configure {
+    dependsOn 'jarAll'
+}
+
 afterEvaluate {
     tasks.named('jar', Jar).configure {
+        manifest.attributes('MixinConfigs': "${mod_id}.mixins.json")
+    }
+    tasks.named('jarAll', Jar).configure {
         manifest.attributes(
                 'MixinConfigs': "${mod_id}.mixins.json, banira_codex.mixins.json"
         )
