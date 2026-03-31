@@ -2,29 +2,54 @@
 chcp 65001 > nul
 setlocal enabledelayedexpansion
 
-:: 配置常量
-set EXCLUDED_BRANCHES=main forge_1.7.10 forge_1.12.2
-set INCLUDED_BRANCHES=:: neoforge_1.21.5 neoforge_1.21.4 neoforge_1.21.3 neoforge_1.21.1 neoforge_1.21.0
+:: 切换到脚本所在目录（仓库根）
+pushd "%~dp0" > nul 2>&1
+
+:: ---------------------------------------------------------------------------
+:: 分支过滤（.NET 正则，见 https://learn.microsoft.com/dotnet/standard/base-types/regular-expression-language-quick-reference）
+:: - WHITELIST_REGEX 非空：仅构建本地短分支名匹配该正则的分支（黑名单忽略）
+:: - WHITELIST_REGEX 为空：构建所有远程分支，但排除匹配 BLACKLIST_REGEX 的
+:: - 多项排除/包含可用正则 alternation，例如 ^(main|maintenance/) 或 ^maintenance/
+:: ---------------------------------------------------------------------------
+set "BLACKLIST_REGEX=^(dev|maintenance)/"
+set "WHITELIST_REGEX="
+
 set JDK_PROPERTIES_FILE=jdks.properties
 set GRADLE_USER_HOME=F:\Data\Gradle
 
-:: 如果白名单不为空，优先使用白名单
-if not "%INCLUDED_BRANCHES%" == "" (
-    for %%b in (%INCLUDED_BRANCHES%) do (
-        call :build_branch %%b
-    )
-) else (
-    :: 获取所有远程分支并排除指定的分支
-    for /f "tokens=*" %%b in ('git branch -r ^| findstr /v "%EXCLUDED_BRANCHES%"') do (
-        set "branch=%%b"
-        set "branch=!branch:origin/=!"
-        call :build_branch !branch!
-    )
+set "BRANCH_LIST_FILE=%TEMP%\nf_build_branches_%RANDOM%.txt"
+powershell -NoProfile -ExecutionPolicy Bypass -Command ^
+  "try { ^
+    $bl = $env:BLACKLIST_REGEX; ^
+    $wl = $env:WHITELIST_REGEX; ^
+    $out = $env:BRANCH_LIST_FILE; ^
+    if ($bl) { [void][regex]::new($bl) }; ^
+    if ($wl) { [void][regex]::new($wl) }; ^
+    $names = @(git branch -r 2>$null | Where-Object { $PSItem -notmatch '->' } | ForEach-Object { ($PSItem.Trim() -replace '^origin/', '') } | Sort-Object -Unique); ^
+    $names | Where-Object { ^
+      if ($wl) { $PSItem -match $wl } ^
+      elseif ($bl) { $PSItem -notmatch $bl } ^
+      else { $true } ^
+    } | Set-Content -LiteralPath $out -Encoding utf8 ^
+  } catch { ^
+    Write-Host ('Regex or git error: ' + $_.Exception.Message); ^
+    exit 1 ^
+  }"
+if errorlevel 1 (
+  echo Error: Failed to resolve branch list. Check BLACKLIST_REGEX / WHITELIST_REGEX.
+  popd
+  exit /b 1
 )
+
+for /f "usebackq delims=" %%b in ("%BRANCH_LIST_FILE%") do (
+  call :build_branch %%b
+)
+
+del /q "%BRANCH_LIST_FILE%" > nul 2>&1
 
 git checkout main > nul 2>&1
 
-
+popd > nul 2>&1
 goto :eof
 
 :: 构建指定分支
