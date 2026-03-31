@@ -496,9 +496,10 @@ public class NarcissusUtils {
     }
 
     public static SafeWorldCoordinate findSafeCoordinate(SafeWorldCoordinate safeWorldCoordinate, ServerPlayer player, boolean belowAllowAir) {
+        Level world = DimensionUtils.getLevel(safeWorldCoordinate.dimension());
         int chunkX = safeWorldCoordinate.chunkX();
         int chunkZ = safeWorldCoordinate.chunkZ();
-        SafeWorldCoordinate result = new SafeCoordinateFinder(player.level(), player).searchInChunk(safeWorldCoordinate, chunkX, chunkZ, belowAllowAir);
+        SafeWorldCoordinate result = new SafeCoordinateFinder(world, player).searchInChunk(safeWorldCoordinate, chunkX, chunkZ, belowAllowAir);
         LOGGER.debug("Target:{}, {}, {} | Safe:{}, {}, {}", safeWorldCoordinate.xInt(), safeWorldCoordinate.yInt(), safeWorldCoordinate.zInt(), result == null ? "null" : result.xInt(), result == null ? "null" : result.yInt(), result == null ? "null" : result.zInt());
         return result == null ? safeWorldCoordinate : result;
     }
