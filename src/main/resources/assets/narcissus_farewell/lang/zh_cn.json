@@ -273,6 +273,8 @@
   "format.narcissus_farewell.stage_not_found_in_dimension": "§e在维度『%s§e』未找到驿站",
   "format.narcissus_farewell.stage_not_found_with_name_in_dimension": "§e在维度『%s§e』未找到名为『%s§e』的驿站",
   "format.narcissus_farewell.stage_set": "添加了新的驿站『%s』在坐标%s",
+  "format.narcissus_farewell.set_stage_console_requires_pos_dim": "§e控制台执行时必须同时指定坐标与维度。",
+  "format.narcissus_farewell.set_stage_dimension_invalid": "§e维度无效或该维度未加载。",
   "format.narcissus_farewell.structure_biome_not_found": "§e结构或群系『§c%s§e』不存在！",
   "format.narcissus_farewell.structure_biome_not_found_in_range": "§e在附近未找到结构或群系『§c%s§e』！",
   "format.narcissus_farewell.structure_not_found_in_range": "§e在附近未找到结构『§c%s§e』！",
