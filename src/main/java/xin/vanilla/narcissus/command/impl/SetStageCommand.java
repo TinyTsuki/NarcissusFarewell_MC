@@ -3,7 +3,6 @@ package xin.vanilla.narcissus.command.impl;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
-import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 import net.minecraft.commands.CommandSourceStack;
@@ -13,6 +12,8 @@ import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.Vec3;
+import xin.vanilla.banira.common.data.Component;
 import xin.vanilla.banira.common.data.KeyValue;
 import xin.vanilla.banira.common.util.DimensionUtils;
 import xin.vanilla.banira.common.util.MessageUtils;
@@ -30,45 +31,97 @@ import xin.vanilla.narcissus.util.NarcissusUtils;
 
 import java.util.concurrent.CompletableFuture;
 
+import static xin.vanilla.banira.common.util.CommandUtils.getStringDefault;
+
 public final class SetStageCommand {
     private SetStageCommand() {
     }
 
-    private static int execute(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
-        CommandUtils.notifyHelp(context);
-        ServerPlayer player = context.getSource().getPlayerOrException();
-        if (CommandUtils.checkTeleportPre(context.getSource(), EnumCommandType.SET_STAGE)) return 0;
-        WorldStageData stageData = WorldStageData.get();
-        String name = StringArgumentType.getString(context, "name");
-        ResourceKey<Level> targetLevel;
-        try {
-            ResourceKey<Level> targetDimension = DimensionUtils.parse(StringArgumentType.getString(context, "dimension"));
-            ServerLevel level = context.getSource().getServer().getLevel(targetDimension);
-            if (level != null) {
-                targetLevel = targetDimension;
-            } else {
-                targetLevel = player.getLevel().dimension();
-            }
-        } catch (IllegalArgumentException ignored) {
-            targetLevel = player.getLevel().dimension();
+    private static void sendStageMessage(CommandSourceStack source, Component message, boolean success) {
+        if (source.getEntity() instanceof ServerPlayer player) {
+            MessageUtils.sendNotification(player, message);
+        } else {
+            MessageUtils.sendMessage(source, success, message);
         }
+    }
+
+    private static int addStage(CommandSourceStack source, String name, ResourceKey<Level> targetLevel, SafeWorldCoordinate safeWorldCoordinate) {
+        WorldStageData stageData = WorldStageData.get();
         String dimension = targetLevel.location().toString();
         KeyValue<String, String> key = new KeyValue<>(dimension, name);
         if (stageData.getStageCoordinate().containsKey(key)) {
-            MessageUtils.sendNotification(player, NarcissusComponent.get().transAuto("stage_already_exists", key.key(), key.value()));
+            sendStageMessage(source, NarcissusComponent.get().transAuto("stage_already_exists", key.key(), key.value()), false);
             return 0;
-        }
-        SafeWorldCoordinate safeWorldCoordinate = new SafeWorldCoordinate(player);
-        safeWorldCoordinate.dimension(targetLevel);
-        try {
-            safeWorldCoordinate.fromVec3(Vec3Argument.getCoordinates(context, "coordinate").getPosition(context.getSource()));
-        } catch (IllegalArgumentException ignored) {
         }
         stageData.addCoordinate(key, safeWorldCoordinate);
         PacketUtils.broadcastPacket(NetworkInit.INSTANCE, new WaypointSyncToClient(WaypointSyncToClient.Action.ADD, WaypointSyncToClient.Type.STAGE, name, safeWorldCoordinate));
         PacketUtils.broadcastPacket(NetworkInit.INSTANCE, new StageDataSyncToClient(stageData.getStageCoordinate()));
-        MessageUtils.sendNotification(player, NarcissusComponent.get().transAuto("stage_set", name, safeWorldCoordinate.xyzString()));
+        sendStageMessage(source, NarcissusComponent.get().transAuto("stage_set", name, safeWorldCoordinate.xyzString()), true);
         return 1;
+    }
+
+    private static int execute(CommandContext<CommandSourceStack> context) {
+        CommandUtils.notifyHelp(context);
+        CommandSourceStack source = context.getSource();
+        ServerPlayer player = source.getEntity() instanceof ServerPlayer ? (ServerPlayer) source.getEntity() : null;
+
+        Vec3 pos = null;
+        try {
+            pos = Vec3Argument.getCoordinates(context, "coordinate").getPosition(source);
+        } catch (IllegalArgumentException ignored) {
+        }
+        boolean hasCoord = pos != null;
+        String dimArg = getStringDefault(context, "dimension", null);
+        boolean hasDim = dimArg != null;
+
+        if ((!hasCoord || !hasDim) && player == null) {
+            sendStageMessage(source, NarcissusComponent.get().transAuto("set_stage_console_requires_pos_dim"), false);
+            return 0;
+        }
+        if (CommandUtils.checkTeleportPre(source, EnumCommandType.SET_STAGE)) return 0;
+
+        String name = StringArgumentType.getString(context, "name");
+        ResourceKey<Level> targetLevel;
+        SafeWorldCoordinate coord;
+
+        if (!hasCoord) {
+            targetLevel = player.getLevel().dimension();
+            coord = new SafeWorldCoordinate(player);
+        } else if (!hasDim) {
+            targetLevel = player.getLevel().dimension();
+            coord = new SafeWorldCoordinate(player);
+            coord.dimension(targetLevel);
+            coord.fromVec3(pos);
+        } else {
+            boolean fromPlayer = player != null;
+            try {
+                ResourceKey<Level> parsed = DimensionUtils.parse(dimArg);
+                ServerLevel level = source.getServer().getLevel(parsed);
+                if (level != null) {
+                    targetLevel = parsed;
+                } else if (fromPlayer) {
+                    targetLevel = player.getLevel().dimension();
+                } else {
+                    sendStageMessage(source, NarcissusComponent.get().transAuto("set_stage_dimension_invalid"), false);
+                    return 0;
+                }
+            } catch (IllegalArgumentException e) {
+                if (fromPlayer) {
+                    targetLevel = player.getLevel().dimension();
+                } else {
+                    sendStageMessage(source, NarcissusComponent.get().transAuto("set_stage_dimension_invalid"), false);
+                    return 0;
+                }
+            }
+            if (fromPlayer) {
+                coord = new SafeWorldCoordinate(player);
+                coord.dimension(targetLevel);
+                coord.fromVec3(pos);
+            } else {
+                coord = new SafeWorldCoordinate(pos.x, pos.y, pos.z, targetLevel);
+            }
+        }
+        return addStage(source, name, targetLevel, coord);
     }
 
     public static CompletableFuture<Suggestions> suggestion(CommandContext<CommandSourceStack> context, SuggestionsBuilder builder) {
@@ -83,6 +136,7 @@ public final class SetStageCommand {
                         .suggests(SetStageCommand::suggestion)
                         .executes(SetStageCommand::execute)
                         .then(Commands.argument("coordinate", Vec3Argument.vec3())
+                                .executes(SetStageCommand::execute)
                                 .then(Commands.argument("dimension", StringArgumentType.greedyString())
                                         .suggests(CommandUtils::dimSuggestion)
                                         .executes(SetStageCommand::execute)
