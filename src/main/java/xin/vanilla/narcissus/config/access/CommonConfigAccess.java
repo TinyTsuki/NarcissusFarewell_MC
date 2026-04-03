@@ -819,6 +819,7 @@ public final class CommonConfigAccess {
         h.set("general.teleportRequestCooldownType", EnumCoolDownType.INDIVIDUAL);
         h.set("general.teleportRequestCooldown", 10);
         h.set("general.teleportRandomDistanceLimit", 10000);
+        h.set("general.tpRandomSafeNotFoundRetries", 0);
         h.set("general.graveSearchRangeLimit", 32);
         h.set("general.teleportHomeLimit", 5);
         h.set("general.helpHeader", "-----==== Narcissus Farewell Help (%d/%d) ====-----");
