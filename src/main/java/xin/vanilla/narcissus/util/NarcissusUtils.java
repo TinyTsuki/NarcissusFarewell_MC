@@ -837,20 +837,45 @@ public class NarcissusUtils {
      * @param after  坐标
      */
     public static void teleportTo(@NonNull ServerPlayer player, @NonNull SafeWorldCoordinate after, EnumTeleportType type) {
+        teleportTo(player, after, type, -1);
+    }
+
+    /**
+     * @param tprHorizontalRange 仅用于随机传送安全搜索失败时的重试
+     */
+    public static void teleportTo(@NonNull ServerPlayer player, @NonNull SafeWorldCoordinate after, EnumTeleportType type, int tprHorizontalRange) {
         SafeWorldCoordinate before = new SafeWorldCoordinate(player);
         Level world = player.level();
         if (world != null) {
             ServerLevel level = DimensionUtils.getLevel(after.dimension());
             if (level != null) {
                 if (after.safe()) {
-                    // 异步的代价就是粪吗
                     MessageUtils.sendNotification(player, NarcissusComponent.get().transAuto("safe_searching"));
+                    final int tpRandomRangeArg = tprHorizontalRange;
                     new Thread(() -> {
-                        SafeWorldCoordinate finalAfter = after.clone();
-                        finalAfter = findSafeCoordinate(finalAfter, player, false);
+                        SafeBlockChecker checker = new SafeBlockChecker(level, player);
+                        SafeWorldCoordinate finalAfter;
+                        if (type == EnumTeleportType.TP_RANDOM) {
+                            int extra = CommonConfig.get().general().tpRandomSafeNotFoundRetries();
+                            int totalAttempts = 1 + Math.max(0, extra);
+                            int useRange = tpRandomRangeArg > 0 ? tpRandomRangeArg : CommonConfig.get().general().teleportRandomDistanceLimit();
+                            SafeWorldCoordinate working = after.clone();
+                            finalAfter = working;
+                            for (int attempt = 0; attempt < totalAttempts; attempt++) {
+                                SafeWorldCoordinate resolved = findSafeCoordinate(working.clone(), player, false);
+                                finalAfter = resolved;
+                                if (checker.isSafeBlock(resolved.toBlockPos(), false)) {
+                                    break;
+                                }
+                                if (attempt < totalAttempts - 1) {
+                                    working = SafeWorldCoordinate.random(player, useRange, after.dimension()).safe(true);
+                                }
+                            }
+                        } else {
+                            finalAfter = findSafeCoordinate(after.clone(), player, false);
+                        }
                         Runnable runnable;
                         // 判断是否需要在脚下放置方块
-                        SafeBlockChecker checker = new SafeBlockChecker(level, player);
                         if (CommonConfig.get().general().safeTeleport().setBlockWhenSafeNotFound() && !checker.isSafeBlock(finalAfter.toBlockPos(), false)) {
                             BlockState blockState;
                             List<ItemStack> playerItemList = ItemUtils.getAllPlayerItems(player);
