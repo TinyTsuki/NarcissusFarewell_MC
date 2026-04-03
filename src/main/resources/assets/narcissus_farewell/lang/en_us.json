@@ -273,6 +273,8 @@
   "format.narcissus_farewell.stage_not_found_in_dimension": "§eNo station was found in the dimension '§c%s§e'.",
   "format.narcissus_farewell.stage_not_found_with_name_in_dimension": "§eNo station named '§c%2$s§e' was found in the dimension '§c%1$s§e'.",
   "format.narcissus_farewell.stage_set": "A new station named '§c%s§e' has been added at coordinates %s.",
+  "format.narcissus_farewell.set_stage_console_requires_pos_dim": "§eWhen run from the console, you must specify both coordinates and a dimension.",
+  "format.narcissus_farewell.set_stage_dimension_invalid": "§eInvalid dimension or dimension is not loaded.",
   "format.narcissus_farewell.structure_biome_not_found": "§eThe structure or biome '§c%s§e' does not exist!",
   "format.narcissus_farewell.structure_biome_not_found_in_range": "§eNo nearby structure or biome '§c%s§e' was found!",
   "format.narcissus_farewell.structure_not_found_in_range": "§eNo nearby structure '§c%s§e' was found!",
