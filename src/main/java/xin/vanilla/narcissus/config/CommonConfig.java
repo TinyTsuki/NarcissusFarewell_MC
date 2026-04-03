@@ -290,6 +290,9 @@ public class CommonConfig implements ConfigData {
         @ConfigEntry.Gui.Tooltip(zh_cn = "随机传送与传送至指定结构的最大距离限制。", en_us = "The maximum distance limit for random teleportation or teleportation to a specified structure.")
         @ConfigEntry.BoundedDiscrete(min = 5)
         private int teleportRandomDistanceLimit = 10000;
+        @ConfigEntry.Gui.Tooltip(zh_cn = "随机传送开启安全传送时，若当前随机目标未找到安全落脚点，重新随机目标坐标的次数。", en_us = "When random teleport uses safe teleport, how many times to pick a new random target if no safe spot is found.")
+        @ConfigEntry.BoundedDiscrete(max = 64)
+        private int tpRandomSafeNotFoundRetries = 0;
         @ConfigEntry.Gui.Tooltip(zh_cn = "坟墓传送时搜索死亡点/坟墓位置的范围上限。", en_us = "The search range limit for grave teleport, in blocks (chunk-related logic uses this as radius cap).")
         @ConfigEntry.BoundedDiscrete(min = 1, max = 256)
         private int graveSearchRangeLimit = 32;
@@ -1883,6 +1886,10 @@ public class CommonConfig implements ConfigData {
         int teleportRandomDistanceLimit();
 
         GeneralView teleportRandomDistanceLimit(int value);
+
+        int tpRandomSafeNotFoundRetries();
+
+        GeneralView tpRandomSafeNotFoundRetries(int value);
 
         int graveSearchRangeLimit();
 
