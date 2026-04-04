@@ -37,6 +37,7 @@ import xin.vanilla.narcissus.integration.ScreenHelper;
 import xin.vanilla.narcissus.network.NetworkInit;
 import xin.vanilla.narcissus.network.packet.CostConfigSyncToClient;
 import xin.vanilla.narcissus.network.packet.StageDataSyncToClient;
+import xin.vanilla.narcissus.notification.NarcissusNotificationTypes;
 import xin.vanilla.narcissus.util.NarcissusUtils;
 
 import java.util.HashMap;
@@ -78,6 +79,7 @@ public class NarcissusFarewell {
         BaniraEventBus.Commands.onRegister(event -> NarcissusCommand.register(event.getDispatcher()));
 
         BaniraEventBus.ModLifecycle.onCommonSetup(event -> {
+            NarcissusNotificationTypes.registerAllOnServer();
             ModLoadedPresence.register(MODID, player -> {
                 // 同步玩家传送数据到客户端
                 PlayerTeleportData.syncPlayerData(player);

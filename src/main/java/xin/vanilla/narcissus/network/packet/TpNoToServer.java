@@ -16,6 +16,7 @@ import xin.vanilla.narcissus.NarcissusFarewell;
 import xin.vanilla.narcissus.data.TeleportRequest;
 import xin.vanilla.narcissus.enums.EnumCommandType;
 import xin.vanilla.narcissus.enums.EnumTeleportType;
+import xin.vanilla.narcissus.notification.NarcissusNotificationTypes;
 import xin.vanilla.narcissus.util.NarcissusUtils;
 
 import java.util.Comparator;
@@ -56,7 +57,7 @@ public class TpNoToServer implements CustomPacketPayload {
                 EnumCommandType type = EnumTeleportType.TP_HERE == teleportType ? EnumCommandType.TP_HERE_NO : EnumCommandType.TP_ASK_NO;
                 CommandUtils.executeCommand(player, NarcissusUtils.getCommand(type));
             } else {
-                MessageUtils.sendNotification(player, NarcissusComponent.get().transAuto("tp_ask_not_found"));
+                MessageUtils.sendNotification(player, NarcissusComponent.get().transAuto("tp_ask_not_found"), NarcissusNotificationTypes.TELEPORT_REQUEST);
             }
         });
     }

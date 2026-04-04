@@ -21,6 +21,7 @@ import xin.vanilla.narcissus.data.SafeWorldCoordinate;
 import xin.vanilla.narcissus.data.player.PlayerTeleportData;
 import xin.vanilla.narcissus.data.world.WorldStageData;
 import xin.vanilla.narcissus.enums.EnumCommandType;
+import xin.vanilla.narcissus.notification.NarcissusNotificationTypes;
 import xin.vanilla.narcissus.util.CommandUtils;
 import xin.vanilla.narcissus.util.NarcissusUtils;
 
@@ -57,7 +58,7 @@ public final class ShareCommand {
             SafeWorldCoordinate safeWorldCoordinate = keyValue.value();
             if (safeWorldCoordinate == null) {
                 MessageUtils.sendNotification(player, NarcissusComponent.get().transAuto("home_not_found_with_name_in_dimension"
-                        , split[1], split[0]));
+                        , split[1], split[0]), NarcissusNotificationTypes.WAYPOINT);
                 return 0;
             }
             nameComponent = NarcissusComponent.get().literal(split[0]);
@@ -78,7 +79,7 @@ public final class ShareCommand {
             SafeWorldCoordinate safeWorldCoordinate = keyValue.value();
             if (safeWorldCoordinate == null) {
                 MessageUtils.sendNotification(player, NarcissusComponent.get().transAuto("stage_not_found_with_name_in_dimension"
-                        , split[1], split[0]));
+                        , split[1], split[0]), NarcissusNotificationTypes.WAYPOINT);
                 return 0;
             }
             nameComponent = NarcissusComponent.get().literal(split[0]);
@@ -108,10 +109,10 @@ public final class ShareCommand {
                 , copyButton);
         for (ServerPlayer target : targetList) {
             if (!target.getUUID().equals(player.getUUID())) {
-                MessageUtils.sendMessage(target, component);
+                MessageUtils.sendNotification(target, component, NarcissusNotificationTypes.INTERACTIVE_SHARE);
             }
         }
-        MessageUtils.sendMessage(source, true, component);
+        MessageUtils.sendNotification(player, component, NarcissusNotificationTypes.INTERACTIVE_SHARE);
         return 1;
     }
 
