@@ -11,6 +11,8 @@ import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.server.level.ServerPlayer;
 import xin.vanilla.banira.common.data.Component;
+import xin.vanilla.banira.common.enums.EnumMoveType;
+import xin.vanilla.banira.common.enums.EnumPosition;
 import xin.vanilla.banira.common.util.MessageUtils;
 import xin.vanilla.narcissus.NarcissusComponent;
 import xin.vanilla.narcissus.NarcissusLang;
@@ -30,7 +32,7 @@ public final class ConfigCommand {
         Component msg = NarcissusComponent.get().transAuto("server_config_status"
                 , NarcissusLang.get().enabled(CommonConfig.get().base().teleportCard())
                 , NarcissusComponent.get().transAuto("teleport_card"));
-        MessageUtils.sendMessage(player, msg);
+        MessageUtils.sendDefaultNotification(player, msg, EnumPosition.TOP_RIGHT, EnumMoveType.AUTO);
         return 1;
     }
 
@@ -125,7 +127,7 @@ public final class ConfigCommand {
         String typeName = StringArgumentType.getString(context, "type");
         EnumTeleportType type = EnumTeleportType.valueOfEx(typeName);
         if (type == null || !EnumTeleportType.countdownConfigurableTypes().contains(type)) {
-            MessageUtils.sendMessage(context.getSource(), false, NarcissusComponent.get().transAuto("tp_countdown_invalid_type", typeName));
+            MessageUtils.sendDefaultNotification(player, NarcissusComponent.get().transAuto("tp_countdown_invalid_type", typeName), EnumPosition.TOP_CENTER, EnumMoveType.AUTO);
             return 0;
         }
         int sec = IntegerArgumentType.getInteger(context, "seconds");
@@ -133,7 +135,7 @@ public final class ConfigCommand {
         PlayerTeleportData data = PlayerTeleportData.getData(player);
         data.setTeleportCountdownSeconds(type, sec);
         PlayerTeleportData.syncPlayerData(player);
-        MessageUtils.sendMessage(context.getSource(), true, NarcissusComponent.get().transAuto("tp_countdown_set_ok", type.name(), String.valueOf(data.getTeleportCountdownSeconds(type))));
+        MessageUtils.sendDefaultNotification(player, NarcissusComponent.get().transAuto("tp_countdown_set_ok", type.name(), String.valueOf(data.getTeleportCountdownSeconds(type))), EnumPosition.TOP_RIGHT, EnumMoveType.AUTO);
         return 1;
     }
 

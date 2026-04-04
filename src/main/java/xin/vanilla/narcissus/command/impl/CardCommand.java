@@ -10,6 +10,8 @@ import net.minecraft.commands.Commands;
 import net.minecraft.commands.arguments.EntityArgument;
 import net.minecraft.server.level.ServerPlayer;
 import xin.vanilla.banira.common.data.Component;
+import xin.vanilla.banira.common.enums.EnumMoveType;
+import xin.vanilla.banira.common.enums.EnumPosition;
 import xin.vanilla.banira.common.util.MessageUtils;
 import xin.vanilla.narcissus.NarcissusComponent;
 import xin.vanilla.narcissus.config.CommonConfig;
@@ -47,7 +49,11 @@ public final class CardCommand {
         Component component = NarcissusComponent.get().transAuto("player_card"
                 , target.getDisplayName().getString()
                 , data.getTeleportCard());
-        MessageUtils.sendMessage(source, true, component);
+        if (source.getEntity() instanceof ServerPlayer player) {
+            MessageUtils.sendDefaultNotification(player, component, EnumPosition.TOP_RIGHT, EnumMoveType.AUTO);
+        } else {
+            MessageUtils.sendMessage(source, true, component);
+        }
         return 1;
     }
 

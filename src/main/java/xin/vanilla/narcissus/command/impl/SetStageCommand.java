@@ -26,6 +26,7 @@ import xin.vanilla.narcissus.enums.EnumCommandType;
 import xin.vanilla.narcissus.network.NetworkInit;
 import xin.vanilla.narcissus.network.packet.StageDataSyncToClient;
 import xin.vanilla.narcissus.network.packet.WaypointSyncToClient;
+import xin.vanilla.narcissus.notification.NarcissusNotificationTypes;
 import xin.vanilla.narcissus.util.CommandUtils;
 import xin.vanilla.narcissus.util.NarcissusUtils;
 
@@ -37,9 +38,9 @@ public final class SetStageCommand {
     private SetStageCommand() {
     }
 
-    private static void sendStageMessage(CommandSourceStack source, Component message, boolean success) {
+    private static void sendStageMessage(CommandSourceStack source, Component message, boolean success, String notificationType) {
         if (source.getEntity() instanceof ServerPlayer player) {
-            MessageUtils.sendNotification(player, message);
+            MessageUtils.sendNotification(player, message, notificationType);
         } else {
             MessageUtils.sendMessage(source, success, message);
         }
@@ -50,13 +51,13 @@ public final class SetStageCommand {
         String dimension = targetLevel.location().toString();
         KeyValue<String, String> key = new KeyValue<>(dimension, name);
         if (stageData.getStageCoordinate().containsKey(key)) {
-            sendStageMessage(source, NarcissusComponent.get().transAuto("stage_already_exists", key.key(), key.value()), false);
+            sendStageMessage(source, NarcissusComponent.get().transAuto("stage_already_exists", key.key(), key.value()), false, NarcissusNotificationTypes.WAYPOINT);
             return 0;
         }
         stageData.addCoordinate(key, safeWorldCoordinate);
         PacketUtils.broadcastPacket(NetworkInit.INSTANCE, new WaypointSyncToClient(WaypointSyncToClient.Action.ADD, WaypointSyncToClient.Type.STAGE, name, safeWorldCoordinate));
         PacketUtils.broadcastPacket(NetworkInit.INSTANCE, new StageDataSyncToClient(stageData.getStageCoordinate()));
-        sendStageMessage(source, NarcissusComponent.get().transAuto("stage_set", name, safeWorldCoordinate.xyzString()), true);
+        sendStageMessage(source, NarcissusComponent.get().transAuto("stage_set", name, safeWorldCoordinate.xyzString()), true, NarcissusNotificationTypes.WAYPOINT);
         return 1;
     }
 
@@ -75,7 +76,7 @@ public final class SetStageCommand {
         boolean hasDim = dimArg != null;
 
         if ((!hasCoord || !hasDim) && player == null) {
-            sendStageMessage(source, NarcissusComponent.get().transAuto("set_stage_console_requires_pos_dim"), false);
+            sendStageMessage(source, NarcissusComponent.get().transAuto("set_stage_console_requires_pos_dim"), false, NarcissusNotificationTypes.TELEPORT_ERROR);
             return 0;
         }
         if (CommandUtils.checkTeleportPre(source, EnumCommandType.SET_STAGE)) return 0;
@@ -102,14 +103,14 @@ public final class SetStageCommand {
                 } else if (fromPlayer) {
                     targetLevel = player.getLevel().dimension();
                 } else {
-                    sendStageMessage(source, NarcissusComponent.get().transAuto("set_stage_dimension_invalid"), false);
+                    sendStageMessage(source, NarcissusComponent.get().transAuto("set_stage_dimension_invalid"), false, NarcissusNotificationTypes.TELEPORT_ERROR);
                     return 0;
                 }
             } catch (IllegalArgumentException e) {
                 if (fromPlayer) {
                     targetLevel = player.getLevel().dimension();
                 } else {
-                    sendStageMessage(source, NarcissusComponent.get().transAuto("set_stage_dimension_invalid"), false);
+                    sendStageMessage(source, NarcissusComponent.get().transAuto("set_stage_dimension_invalid"), false, NarcissusNotificationTypes.TELEPORT_ERROR);
                     return 0;
                 }
             }
