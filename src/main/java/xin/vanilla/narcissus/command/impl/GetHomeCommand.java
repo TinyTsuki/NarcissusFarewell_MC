@@ -18,6 +18,7 @@ import xin.vanilla.narcissus.config.CommonConfig;
 import xin.vanilla.narcissus.data.SafeWorldCoordinate;
 import xin.vanilla.narcissus.data.player.PlayerTeleportData;
 import xin.vanilla.narcissus.enums.EnumCommandType;
+import xin.vanilla.narcissus.notification.NarcissusNotificationTypes;
 import xin.vanilla.narcissus.util.CommandUtils;
 import xin.vanilla.narcissus.util.NarcissusUtils;
 
@@ -82,7 +83,7 @@ public final class GetHomeCommand {
             }
             component = NarcissusComponent.get().transAuto("home_is", info);
         }
-        MessageUtils.sendMessage(player, component);
+        MessageUtils.sendNotification(player, component, NarcissusNotificationTypes.INTERACTIVE_COORDINATE_LIST);
         return 1;
     }
 
