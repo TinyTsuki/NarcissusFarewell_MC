@@ -14,6 +14,7 @@ import xin.vanilla.narcissus.data.SafeWorldCoordinate;
 import xin.vanilla.narcissus.enums.EnumCommandType;
 import xin.vanilla.narcissus.enums.EnumSafeMode;
 import xin.vanilla.narcissus.enums.EnumTeleportType;
+import xin.vanilla.narcissus.notification.NarcissusNotificationTypes;
 import xin.vanilla.narcissus.util.CommandUtils;
 import xin.vanilla.narcissus.util.NarcissusUtils;
 
@@ -27,7 +28,7 @@ public final class TpBottomCommand {
         ServerPlayer player = context.getSource().getPlayerOrException();
         SafeWorldCoordinate safeWorldCoordinate = NarcissusUtils.findBottomCandidate(player, new SafeWorldCoordinate(player));
         if (safeWorldCoordinate == null) {
-            MessageUtils.sendNotification(player, NarcissusComponent.get().transAuto("tp_bottom_not_found"));
+            MessageUtils.sendNotification(player, NarcissusComponent.get().transAuto("tp_bottom_not_found"), NarcissusNotificationTypes.TELEPORT_ERROR);
             return 0;
         }
         safeWorldCoordinate.safe("safe".equalsIgnoreCase(xin.vanilla.banira.common.util.CommandUtils.getStringDefault(context, "safe", "safe"))).safeMode(EnumSafeMode.Y_B_TO_C);

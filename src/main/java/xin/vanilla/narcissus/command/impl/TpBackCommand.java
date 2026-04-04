@@ -22,6 +22,7 @@ import xin.vanilla.narcissus.data.TeleportRecord;
 import xin.vanilla.narcissus.data.player.PlayerTeleportData;
 import xin.vanilla.narcissus.enums.EnumCommandType;
 import xin.vanilla.narcissus.enums.EnumTeleportType;
+import xin.vanilla.narcissus.notification.NarcissusNotificationTypes;
 import xin.vanilla.narcissus.util.CommandUtils;
 import xin.vanilla.narcissus.util.NarcissusUtils;
 
@@ -47,7 +48,7 @@ public final class TpBackCommand {
         }
         TeleportRecord record = NarcissusUtils.getBackTeleportRecord(player, type, targetLevel);
         if (record == null) {
-            MessageUtils.sendNotification(player, NarcissusComponent.get().transAuto("back_not_found"));
+            MessageUtils.sendNotification(player, NarcissusComponent.get().transAuto("back_not_found"), NarcissusNotificationTypes.TELEPORT_ERROR);
             return 0;
         }
         SafeWorldCoordinate safeWorldCoordinate = record.getBefore().clone();
