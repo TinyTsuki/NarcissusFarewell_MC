@@ -10,10 +10,11 @@ import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.arguments.EntityArgument;
 import net.minecraft.network.chat.HoverEvent;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
 import xin.vanilla.banira.common.data.Component;
 import xin.vanilla.banira.common.data.KeyValue;
+import xin.vanilla.banira.common.enums.EnumMoveType;
+import xin.vanilla.banira.common.enums.EnumPosition;
 import xin.vanilla.banira.common.util.*;
 import xin.vanilla.narcissus.NarcissusComponent;
 import xin.vanilla.narcissus.NarcissusFarewell;
@@ -26,6 +27,7 @@ import xin.vanilla.narcissus.data.player.PlayerTeleportData;
 import xin.vanilla.narcissus.data.world.WorldStageData;
 import xin.vanilla.narcissus.enums.EnumCommandType;
 import xin.vanilla.narcissus.enums.EnumTeleportType;
+import xin.vanilla.narcissus.notification.NarcissusNotificationTypes;
 
 import java.util.Comparator;
 import java.util.List;
@@ -43,33 +45,33 @@ public final class CommandUtils {
      * 若为第一次使用指令则进行提示
      */
     public static void notifyHelp(CommandContext<CommandSourceStack> context) {
-        CommandSourceStack source = context.getSource();
-        Entity entity = source.getEntity();
-        if (!(entity instanceof ServerPlayer player)) return;
-        PlayerTeleportData data = PlayerTeleportData.getData(player);
-        String cmd = "/" + NarcissusUtils.getCommandPrefix();
-        Component modName = NarcissusComponent.get().trans("key.narcissus_farewell.categories");
-        xin.vanilla.banira.common.util.CommandUtils.notifyHelp(context, data, modName, cmd);
+        if (context.getSource().getEntity() instanceof ServerPlayer player) {
+            Component modName = NarcissusComponent.get().trans("key.narcissus_farewell.categories").languageCode(NarcissusLang.getPlayerLanguage(player));
+            xin.vanilla.banira.common.util.CommandUtils.notifyHelp(context, PlayerTeleportData.getData(player), modName, "/" + NarcissusUtils.getCommandPrefix());
+        }
     }
 
     public static boolean checkTeleportPre(CommandSourceStack source, EnumCommandType teleportType) {
-        if (!NarcissusUtils.isCommandEnabled(teleportType)) {
-            MessageUtils.sendMessage(source, false, NarcissusComponent.get().transAuto("command_disabled"));
-            return true;
-        }
         if (source.getEntity() != null && source.getEntity() instanceof ServerPlayer player) {
+            if (!NarcissusUtils.isCommandEnabled(teleportType)) {
+                MessageUtils.sendDefaultNotification(player, NarcissusComponent.get().transAuto("command_disabled"), EnumPosition.TOP_CENTER, EnumMoveType.AUTO);
+                return true;
+            }
             EnumTeleportType type = teleportType.toTeleportType();
             if (type != null) {
                 int teleportCoolDown = NarcissusUtils.getTeleportCoolDown(player, type);
                 if (teleportCoolDown > 0) {
-                    MessageUtils.sendNotification(player, NarcissusComponent.get().transAuto("command_cooldown", teleportCoolDown));
+                    MessageUtils.sendNotification(player, NarcissusComponent.get().transAuto("command_cooldown", teleportCoolDown), NarcissusNotificationTypes.TELEPORT_GUARD);
                     return true;
                 }
             }
             if (CommonConfig.get().general().tpWithEnemy() && NarcissusUtils.isTargetedByHostile(player)) {
-                MessageUtils.sendNotification(player, NarcissusComponent.get().transAuto("locked_by_mob"));
+                MessageUtils.sendNotification(player, NarcissusComponent.get().transAuto("locked_by_mob"), NarcissusNotificationTypes.TELEPORT_GUARD);
                 return true;
             }
+        } else if (!NarcissusUtils.isCommandEnabled(teleportType)) {
+            MessageUtils.sendMessage(source, false, NarcissusComponent.get().transAuto("command_disabled"));
+            return true;
         }
         return false;
     }
@@ -82,7 +84,7 @@ public final class CommandUtils {
         boolean result = NarcissusUtils.isTeleportAcrossDimensionEnabled(request.getRequester(), request.getTarget().getLevel().dimension(), request.getTeleportType());
         result = result && NarcissusUtils.validTeleportCost(request, submit);
         if (CommonConfig.get().general().tpWithEnemy() && NarcissusUtils.isTargetedByHostile(request.getRequester())) {
-            MessageUtils.sendNotification(request.getRequester(), NarcissusComponent.get().transAuto("locked_by_mob"));
+            MessageUtils.sendNotification(request.getRequester(), NarcissusComponent.get().transAuto("locked_by_mob"), NarcissusNotificationTypes.TELEPORT_GUARD);
             result = false;
         }
         return !result;
@@ -96,7 +98,7 @@ public final class CommandUtils {
         boolean result = NarcissusUtils.isTeleportAcrossDimensionEnabled(player, target.dimension(), type);
         result = result && NarcissusUtils.validTeleportCost(player, target, type, submit);
         if (CommonConfig.get().general().tpWithEnemy() && NarcissusUtils.isTargetedByHostile(player)) {
-            MessageUtils.sendNotification(player, NarcissusComponent.get().transAuto("locked_by_mob"));
+            MessageUtils.sendNotification(player, NarcissusComponent.get().transAuto("locked_by_mob"), NarcissusNotificationTypes.TELEPORT_GUARD);
             result = false;
         }
         return !result;

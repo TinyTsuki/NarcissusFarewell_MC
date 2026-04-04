@@ -11,6 +11,8 @@ import net.minecraft.commands.Commands;
 import net.minecraft.commands.arguments.EntityArgument;
 import net.minecraft.server.level.ServerPlayer;
 import xin.vanilla.banira.common.data.Component;
+import xin.vanilla.banira.common.enums.EnumMoveType;
+import xin.vanilla.banira.common.enums.EnumPosition;
 import xin.vanilla.banira.common.util.CollectionUtils;
 import xin.vanilla.banira.common.util.MessageUtils;
 import xin.vanilla.banira.common.util.PlayerUtils;
@@ -33,7 +35,7 @@ public final class WhitelistCommand {
         PlayerTeleportData data = PlayerTeleportData.getData(player);
         PlayerAccess access = data.getAccess();
         Component msg = CommandUtils.getWhiteListMessage(player, access);
-        MessageUtils.sendMessage(player, msg);
+        MessageUtils.sendDefaultNotification(player, msg, EnumPosition.TOP_RIGHT, EnumMoveType.AUTO);
         return 1;
     }
 
@@ -74,7 +76,7 @@ public final class WhitelistCommand {
         } else {
             msg = NarcissusComponent.get().transAuto("list_add_fail", CommandUtils.getBlacklistOrWhitelistHelp(player, false), CommandUtils.getBlacklistOrWhitelistHelp(player, true));
         }
-        MessageUtils.sendMessage(player, msg);
+        MessageUtils.sendDefaultNotification(player, msg, EnumPosition.TOP_RIGHT, EnumMoveType.AUTO);
         return 1;
     }
 
@@ -109,7 +111,7 @@ public final class WhitelistCommand {
         PlayerTeleportData.syncPlayerData(player);
         Component msg = NarcissusComponent.get().transAuto("remove_success")
                 .append(CommandUtils.getWhiteListMessage(player, access));
-        MessageUtils.sendMessage(player, msg);
+        MessageUtils.sendDefaultNotification(player, msg, EnumPosition.TOP_RIGHT, EnumMoveType.AUTO);
         return 1;
     }
 
