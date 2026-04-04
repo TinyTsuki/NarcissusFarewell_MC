@@ -15,6 +15,7 @@ import xin.vanilla.banira.common.util.MessageUtils;
 import xin.vanilla.narcissus.NarcissusComponent;
 import xin.vanilla.narcissus.config.CommonConfig;
 import xin.vanilla.narcissus.enums.EnumCommandType;
+import xin.vanilla.narcissus.notification.NarcissusNotificationTypes;
 import xin.vanilla.narcissus.util.CommandUtils;
 
 public final class UuidCommand {
@@ -32,7 +33,11 @@ public final class UuidCommand {
                 .clickEvent(new ClickEvent(ClickEvent.Action.COPY_TO_CLIPBOARD, target.getStringUUID()))
                 .hoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, NarcissusComponent.get().transAuto("chat_copy_click").toVanilla(language)));
         Component component = NarcissusComponent.get().transAuto("player_uuid", target.getDisplayName().getString(), uuid);
-        MessageUtils.sendMessage(source, true, component);
+        if (source.getEntity() instanceof ServerPlayerEntity) {
+            MessageUtils.sendNotification((ServerPlayerEntity) source.getEntity(), component, NarcissusNotificationTypes.INTERACTIVE_QUERY);
+        } else {
+            MessageUtils.sendMessage(source, true, component);
+        }
         return 1;
     }
 

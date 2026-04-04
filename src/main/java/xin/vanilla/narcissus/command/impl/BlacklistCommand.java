@@ -8,6 +8,8 @@ import net.minecraft.command.Commands;
 import net.minecraft.command.arguments.EntityArgument;
 import net.minecraft.entity.player.ServerPlayerEntity;
 import xin.vanilla.banira.common.data.Component;
+import xin.vanilla.banira.common.enums.EnumMoveType;
+import xin.vanilla.banira.common.enums.EnumPosition;
 import xin.vanilla.banira.common.util.CollectionUtils;
 import xin.vanilla.banira.common.util.MessageUtils;
 import xin.vanilla.banira.common.util.PlayerUtils;
@@ -38,7 +40,7 @@ public final class BlacklistCommand {
                             .collect(Collectors.joining(","))
             );
         }
-        MessageUtils.sendMessage(player, msg);
+        MessageUtils.sendDefaultNotification(player, msg, EnumPosition.TOP_RIGHT, EnumMoveType.AUTO);
         return 1;
     }
 
@@ -60,7 +62,7 @@ public final class BlacklistCommand {
         } else {
             msg = NarcissusComponent.get().transAuto("list_add_fail", CommandUtils.getBlacklistOrWhitelistHelp(player, true), CommandUtils.getBlacklistOrWhitelistHelp(player, false));
         }
-        MessageUtils.sendMessage(player, msg);
+        MessageUtils.sendDefaultNotification(player, msg, EnumPosition.TOP_RIGHT, EnumMoveType.AUTO);
         return 1;
     }
 
@@ -83,7 +85,7 @@ public final class BlacklistCommand {
                     , access.getBlackList().stream().map(uuid -> PlayerUtils.getPlayerNameString(PlayerUtils.getPlayerByUUID(uuid))).collect(Collectors.joining(","))
             ));
         }
-        MessageUtils.sendMessage(player, msg);
+        MessageUtils.sendDefaultNotification(player, msg, EnumPosition.TOP_RIGHT, EnumMoveType.AUTO);
         return 1;
     }
 

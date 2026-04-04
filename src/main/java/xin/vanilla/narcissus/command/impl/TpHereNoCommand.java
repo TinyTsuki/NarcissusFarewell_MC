@@ -17,6 +17,7 @@ import xin.vanilla.narcissus.config.CommonConfig;
 import xin.vanilla.narcissus.data.TeleportRequest;
 import xin.vanilla.narcissus.enums.EnumCommandType;
 import xin.vanilla.narcissus.enums.EnumTeleportType;
+import xin.vanilla.narcissus.notification.NarcissusNotificationTypes;
 import xin.vanilla.narcissus.util.CommandUtils;
 import xin.vanilla.narcissus.util.NarcissusUtils;
 
@@ -30,11 +31,11 @@ public final class TpHereNoCommand {
         ServerPlayerEntity player = context.getSource().getPlayerOrException();
         String id = CommandUtils.getRequestId(context, EnumTeleportType.TP_HERE, true);
         if (StringUtils.isNullOrEmpty(id) || !NarcissusFarewell.getTeleportRequest().containsKey(id)) {
-            MessageUtils.sendNotification(player, NarcissusComponent.get().transAuto("tp_here_not_found"));
+            MessageUtils.sendNotification(player, NarcissusComponent.get().transAuto("tp_here_not_found"), NarcissusNotificationTypes.TELEPORT_REQUEST);
             return 0;
         }
         TeleportRequest request = NarcissusFarewell.getTeleportRequest().remove(id);
-        MessageUtils.sendNotification(request.getRequester(), NarcissusComponent.get().transAuto("tp_here_rejected", request.getTarget().getDisplayName().getString()));
+        MessageUtils.sendNotification(request.getRequester(), NarcissusComponent.get().transAuto("tp_here_rejected", request.getTarget().getDisplayName().getString()), NarcissusNotificationTypes.TELEPORT_REQUEST);
         return 1;
     }
 
