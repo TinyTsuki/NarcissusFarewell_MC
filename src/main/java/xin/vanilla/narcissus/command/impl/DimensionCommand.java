@@ -15,6 +15,7 @@ import xin.vanilla.narcissus.NarcissusComponent;
 import xin.vanilla.narcissus.NarcissusLang;
 import xin.vanilla.narcissus.config.CommonConfig;
 import xin.vanilla.narcissus.enums.EnumCommandType;
+import xin.vanilla.narcissus.notification.NarcissusNotificationTypes;
 import xin.vanilla.narcissus.util.CommandUtils;
 
 public final class DimensionCommand {
@@ -31,7 +32,7 @@ public final class DimensionCommand {
                 .clickEvent(new ClickEvent(ClickEvent.Action.COPY_TO_CLIPBOARD, dimString))
                 .hoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, NarcissusComponent.get().transAuto("chat_copy_click").toVanilla(NarcissusLang.getPlayerLanguage(player))));
         Component msg = NarcissusComponent.get().transAuto("dimension_info", dim);
-        MessageUtils.sendMessage(player, msg);
+        MessageUtils.sendNotification(player, msg, NarcissusNotificationTypes.INTERACTIVE_QUERY);
         return 1;
     }
 

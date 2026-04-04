@@ -6,6 +6,8 @@ import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraftforge.fmllegacy.network.NetworkEvent;
 import xin.vanilla.banira.common.data.Component;
+import xin.vanilla.banira.common.enums.EnumMoveType;
+import xin.vanilla.banira.common.enums.EnumPosition;
 import xin.vanilla.banira.common.util.CollectionUtils;
 import xin.vanilla.banira.common.util.MessageUtils;
 import xin.vanilla.banira.common.util.PlayerUtils;
@@ -84,7 +86,7 @@ public class AccessListEditToServer {
                 }
                 EnumWhiteListMode parsed = EnumWhiteListMode.valueOfEx(modeStr);
                 if (parsed == null) {
-                    MessageUtils.sendMessage(player, NarcissusComponent.get().transAuto("access_list_err_mode"));
+                    MessageUtils.sendDefaultNotification(player, NarcissusComponent.get().transAuto("access_list_err_mode"), EnumPosition.TOP_CENTER, EnumMoveType.AUTO);
                     return;
                 }
                 whiteMode = parsed;
@@ -114,7 +116,7 @@ public class AccessListEditToServer {
     private static void handleBlackAdd(ServerPlayer player, PlayerTeleportData data, PlayerAccess access, String rawPayload) {
         String uuidStr = resolveTargetUuid(player, rawPayload);
         if (uuidStr == null) {
-            MessageUtils.sendMessage(player, NarcissusComponent.get().transAuto("access_list_err_target"));
+            MessageUtils.sendDefaultNotification(player, NarcissusComponent.get().transAuto("access_list_err_target"), EnumPosition.TOP_CENTER, EnumMoveType.AUTO);
             return;
         }
         String[] uuids = new String[]{uuidStr};
@@ -125,20 +127,20 @@ public class AccessListEditToServer {
             if (StringUtils.isNullOrEmptyEx(display)) {
                 display = uuidStr;
             }
-            MessageUtils.sendMessage(player, NarcissusComponent.get().transAuto("list_add_success"
+            MessageUtils.sendDefaultNotification(player, NarcissusComponent.get().transAuto("list_add_success"
                     , CommandUtils.getBlacklistOrWhitelistHelp(player, true)
-                    , display));
+                    , display), EnumPosition.TOP_RIGHT, EnumMoveType.AUTO);
         } else {
-            MessageUtils.sendMessage(player, NarcissusComponent.get().transAuto("list_add_fail"
+            MessageUtils.sendDefaultNotification(player, NarcissusComponent.get().transAuto("list_add_fail"
                     , CommandUtils.getBlacklistOrWhitelistHelp(player, true)
-                    , CommandUtils.getBlacklistOrWhitelistHelp(player, false)));
+                    , CommandUtils.getBlacklistOrWhitelistHelp(player, false)), EnumPosition.TOP_CENTER, EnumMoveType.AUTO);
         }
     }
 
     private static void handleBlackDel(ServerPlayer player, PlayerTeleportData data, PlayerAccess access, String rawPayload) {
         String uuidStr = resolveTargetUuid(player, rawPayload);
         if (uuidStr == null) {
-            MessageUtils.sendMessage(player, NarcissusComponent.get().transAuto("access_list_err_target"));
+            MessageUtils.sendDefaultNotification(player, NarcissusComponent.get().transAuto("access_list_err_target"), EnumPosition.TOP_CENTER, EnumMoveType.AUTO);
             return;
         }
         access.removeBlackList(uuidStr);
@@ -155,13 +157,13 @@ public class AccessListEditToServer {
                             .map(uuid -> PlayerUtils.getPlayerNameString(PlayerUtils.getPlayerByUUID(uuid)))
                             .collect(Collectors.joining(","))));
         }
-        MessageUtils.sendMessage(player, msg);
+        MessageUtils.sendDefaultNotification(player, msg, EnumPosition.TOP_RIGHT, EnumMoveType.AUTO);
     }
 
     private static void handleWhiteAdd(ServerPlayer player, PlayerTeleportData data, PlayerAccess access, String rawPayload, EnumWhiteListMode mode) {
         String uuidStr = resolveTargetUuid(player, rawPayload);
         if (uuidStr == null) {
-            MessageUtils.sendMessage(player, NarcissusComponent.get().transAuto("access_list_err_target"));
+            MessageUtils.sendDefaultNotification(player, NarcissusComponent.get().transAuto("access_list_err_target"), EnumPosition.TOP_CENTER, EnumMoveType.AUTO);
             return;
         }
         String[] uuids = new String[]{uuidStr};
@@ -186,20 +188,20 @@ public class AccessListEditToServer {
             if (StringUtils.isNullOrEmptyEx(display)) {
                 display = uuidStr;
             }
-            MessageUtils.sendMessage(player, NarcissusComponent.get().transAuto("list_add_success"
+            MessageUtils.sendDefaultNotification(player, NarcissusComponent.get().transAuto("list_add_success"
                     , CommandUtils.getBlacklistOrWhitelistHelp(player, false)
-                    , display));
+                    , display), EnumPosition.TOP_RIGHT, EnumMoveType.AUTO);
         } else {
-            MessageUtils.sendMessage(player, NarcissusComponent.get().transAuto("list_add_fail"
+            MessageUtils.sendDefaultNotification(player, NarcissusComponent.get().transAuto("list_add_fail"
                     , CommandUtils.getBlacklistOrWhitelistHelp(player, false)
-                    , CommandUtils.getBlacklistOrWhitelistHelp(player, true)));
+                    , CommandUtils.getBlacklistOrWhitelistHelp(player, true)), EnumPosition.TOP_CENTER, EnumMoveType.AUTO);
         }
     }
 
     private static void handleWhiteDel(ServerPlayer player, PlayerTeleportData data, PlayerAccess access, String rawPayload, EnumWhiteListMode mode) {
         String uuidStr = resolveTargetUuid(player, rawPayload);
         if (uuidStr == null) {
-            MessageUtils.sendMessage(player, NarcissusComponent.get().transAuto("access_list_err_target"));
+            MessageUtils.sendDefaultNotification(player, NarcissusComponent.get().transAuto("access_list_err_target"), EnumPosition.TOP_CENTER, EnumMoveType.AUTO);
             return;
         }
         String[] uuids = new String[]{uuidStr};
@@ -220,8 +222,8 @@ public class AccessListEditToServer {
         }
         data.setDirty();
         PlayerTeleportData.syncPlayerData(player);
-        MessageUtils.sendMessage(player, NarcissusComponent.get().transAuto("remove_success")
-                .append(CommandUtils.getWhiteListMessage(player, access)));
+        MessageUtils.sendDefaultNotification(player, NarcissusComponent.get().transAuto("remove_success")
+                .append(CommandUtils.getWhiteListMessage(player, access)), EnumPosition.TOP_RIGHT, EnumMoveType.AUTO);
     }
 
     private static boolean isValidUuidString(String s) {

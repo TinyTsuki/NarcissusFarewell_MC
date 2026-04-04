@@ -31,6 +31,7 @@ import xin.vanilla.narcissus.config.CommonConfig;
 import xin.vanilla.narcissus.data.SafeWorldCoordinate;
 import xin.vanilla.narcissus.enums.EnumCommandType;
 import xin.vanilla.narcissus.enums.EnumTeleportType;
+import xin.vanilla.narcissus.notification.NarcissusNotificationTypes;
 import xin.vanilla.narcissus.util.CommandUtils;
 import xin.vanilla.narcissus.util.NarcissusUtils;
 
@@ -49,7 +50,7 @@ public final class TpStructureCommand {
         StructureFeature<?> structure = StructureUtils.getStructure(structId);
         Biome biome = BiomeUtils.getBiome(structId);
         if (structure == null && biome == null) {
-            MessageUtils.sendNotification(player, NarcissusComponent.get().transAuto("structure_biome_not_found", structId));
+            MessageUtils.sendNotification(player, NarcissusComponent.get().transAuto("structure_biome_not_found", structId), NarcissusNotificationTypes.TELEPORT_ERROR);
             return 0;
         }
         int range = xin.vanilla.banira.common.util.CommandUtils.getIntDefault(context, "range", CommonConfig.get().general().teleportRandomDistanceLimit());
@@ -59,7 +60,7 @@ public final class TpStructureCommand {
         int finalRange = range;
         boolean isBiome = biome != null;
         String searchingKey = isBiome ? "tp_structure_searching_biome" : "tp_structure_searching_structure";
-        MessageUtils.sendNotification(player, NarcissusComponent.get().transAuto(searchingKey, structId));
+        MessageUtils.sendNotification(player, NarcissusComponent.get().transAuto(searchingKey, structId), NarcissusNotificationTypes.TELEPORT_SEARCH);
         new Thread(() -> {
             ServerLevel world = Objects.requireNonNull(BaniraCodex.serverInstance().key().getLevel(targetLevel));
             SafeWorldCoordinate safeWorldCoordinate;
@@ -84,7 +85,7 @@ public final class TpStructureCommand {
             }
             if (safeWorldCoordinate == null) {
                 String notFoundKey = isBiome ? "biome_not_found_in_range" : "structure_not_found_in_range";
-                MessageUtils.sendNotification(player, NarcissusComponent.get().transAuto(notFoundKey, structId));
+                MessageUtils.sendNotification(player, NarcissusComponent.get().transAuto(notFoundKey, structId), NarcissusNotificationTypes.TELEPORT_ERROR);
                 return;
             }
             safeWorldCoordinate.safe(safe);
