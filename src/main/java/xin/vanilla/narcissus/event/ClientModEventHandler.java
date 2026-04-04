@@ -10,7 +10,7 @@ import org.apache.logging.log4j.Logger;
 import xin.vanilla.banira.client.data.GLFWKey;
 import xin.vanilla.banira.client.event.BaniraClientEventHub;
 import xin.vanilla.banira.client.util.BaniraKeyBindings;
-import xin.vanilla.banira.common.util.LogoModifier;
+import xin.vanilla.banira.client.util.LogoModifier;
 import xin.vanilla.banira.common.util.PacketUtils;
 import xin.vanilla.narcissus.NarcissusFarewell;
 import xin.vanilla.narcissus.integration.ScreenHelper;

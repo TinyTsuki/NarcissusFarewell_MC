@@ -8,7 +8,6 @@ import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 import net.minecraft.command.CommandSource;
 import net.minecraft.command.arguments.EntityArgument;
-import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.util.text.event.HoverEvent;
@@ -44,14 +43,11 @@ public final class CommandUtils {
      * 若为第一次使用指令则进行提示
      */
     public static void notifyHelp(CommandContext<CommandSource> context) {
-        CommandSource source = context.getSource();
-        Entity entity = source.getEntity();
-        if (!(entity instanceof ServerPlayerEntity)) return;
-        ServerPlayerEntity player = (ServerPlayerEntity) entity;
-        PlayerTeleportData data = PlayerTeleportData.getData(player);
-        String cmd = "/" + NarcissusUtils.getCommandPrefix();
-        Component modName = NarcissusComponent.get().trans("key.narcissus_farewell.categories");
-        xin.vanilla.banira.common.util.CommandUtils.notifyHelp(context, data, modName, cmd);
+        if (context.getSource().getEntity() instanceof ServerPlayerEntity) {
+            ServerPlayerEntity player = (ServerPlayerEntity) context.getSource().getEntity();
+            Component modName = NarcissusComponent.get().trans("key.narcissus_farewell.categories").languageCode(NarcissusLang.getPlayerLanguage(player));
+            xin.vanilla.banira.common.util.CommandUtils.notifyHelp(context, PlayerTeleportData.getData(player), modName, "/" + NarcissusUtils.getCommandPrefix());
+        }
     }
 
     public static boolean checkTeleportPre(CommandSource source, EnumCommandType teleportType) {
