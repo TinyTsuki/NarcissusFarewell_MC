@@ -13,6 +13,8 @@ import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.util.text.event.HoverEvent;
 import xin.vanilla.banira.common.data.Component;
 import xin.vanilla.banira.common.data.KeyValue;
+import xin.vanilla.banira.common.enums.EnumMoveType;
+import xin.vanilla.banira.common.enums.EnumPosition;
 import xin.vanilla.banira.common.util.*;
 import xin.vanilla.narcissus.NarcissusComponent;
 import xin.vanilla.narcissus.NarcissusFarewell;
@@ -25,7 +27,6 @@ import xin.vanilla.narcissus.data.player.PlayerTeleportData;
 import xin.vanilla.narcissus.data.world.WorldStageData;
 import xin.vanilla.narcissus.enums.EnumCommandType;
 import xin.vanilla.narcissus.enums.EnumTeleportType;
-import xin.vanilla.narcissus.notification.NarcissusNotificationSend;
 import xin.vanilla.narcissus.notification.NarcissusNotificationTypes;
 
 import java.util.Comparator;
@@ -56,19 +57,19 @@ public final class CommandUtils {
         if (source.getEntity() != null && source.getEntity() instanceof ServerPlayerEntity) {
             ServerPlayerEntity player = (ServerPlayerEntity) source.getEntity();
             if (!NarcissusUtils.isCommandEnabled(teleportType)) {
-                NarcissusNotificationSend.sendDefault(player, NarcissusComponent.get().transAuto("command_disabled"), true);
+                MessageUtils.sendDefaultNotification(player, NarcissusComponent.get().transAuto("command_disabled"), EnumPosition.TOP_CENTER, EnumMoveType.AUTO);
                 return true;
             }
             EnumTeleportType type = teleportType.toTeleportType();
             if (type != null) {
                 int teleportCoolDown = NarcissusUtils.getTeleportCoolDown(player, type);
                 if (teleportCoolDown > 0) {
-                    NarcissusNotificationSend.send(player, NarcissusComponent.get().transAuto("command_cooldown", teleportCoolDown), NarcissusNotificationTypes.TELEPORT_GUARD);
+                    MessageUtils.sendNotification(player, NarcissusComponent.get().transAuto("command_cooldown", teleportCoolDown), NarcissusNotificationTypes.TELEPORT_GUARD);
                     return true;
                 }
             }
             if (CommonConfig.get().general().tpWithEnemy() && NarcissusUtils.isTargetedByHostile(player)) {
-                NarcissusNotificationSend.send(player, NarcissusComponent.get().transAuto("locked_by_mob"), NarcissusNotificationTypes.TELEPORT_GUARD);
+                MessageUtils.sendNotification(player, NarcissusComponent.get().transAuto("locked_by_mob"), NarcissusNotificationTypes.TELEPORT_GUARD);
                 return true;
             }
         } else if (!NarcissusUtils.isCommandEnabled(teleportType)) {
@@ -86,7 +87,7 @@ public final class CommandUtils {
         boolean result = NarcissusUtils.isTeleportAcrossDimensionEnabled(request.getRequester(), request.getTarget().getLevel().dimension(), request.getTeleportType());
         result = result && NarcissusUtils.validTeleportCost(request, submit);
         if (CommonConfig.get().general().tpWithEnemy() && NarcissusUtils.isTargetedByHostile(request.getRequester())) {
-            NarcissusNotificationSend.send(request.getRequester(), NarcissusComponent.get().transAuto("locked_by_mob"), NarcissusNotificationTypes.TELEPORT_GUARD);
+            MessageUtils.sendNotification(request.getRequester(), NarcissusComponent.get().transAuto("locked_by_mob"), NarcissusNotificationTypes.TELEPORT_GUARD);
             result = false;
         }
         return !result;
@@ -100,7 +101,7 @@ public final class CommandUtils {
         boolean result = NarcissusUtils.isTeleportAcrossDimensionEnabled(player, target.dimension(), type);
         result = result && NarcissusUtils.validTeleportCost(player, target, type, submit);
         if (CommonConfig.get().general().tpWithEnemy() && NarcissusUtils.isTargetedByHostile(player)) {
-            NarcissusNotificationSend.send(player, NarcissusComponent.get().transAuto("locked_by_mob"), NarcissusNotificationTypes.TELEPORT_GUARD);
+            MessageUtils.sendNotification(player, NarcissusComponent.get().transAuto("locked_by_mob"), NarcissusNotificationTypes.TELEPORT_GUARD);
             result = false;
         }
         return !result;

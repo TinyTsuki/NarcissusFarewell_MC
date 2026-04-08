@@ -22,7 +22,6 @@ import xin.vanilla.narcissus.enums.EnumCommandType;
 import xin.vanilla.narcissus.network.NetworkInit;
 import xin.vanilla.narcissus.network.packet.StageDataSyncToClient;
 import xin.vanilla.narcissus.network.packet.WaypointSyncToClient;
-import xin.vanilla.narcissus.notification.NarcissusNotificationSend;
 import xin.vanilla.narcissus.notification.NarcissusNotificationTypes;
 import xin.vanilla.narcissus.util.CommandUtils;
 import xin.vanilla.narcissus.util.NarcissusUtils;
@@ -53,7 +52,7 @@ public final class DelStageCommand {
         stageData.setDirty();
         if (remove == null) {
             if (player != null) {
-                NarcissusNotificationSend.send(player, NarcissusComponent.get().transAuto("stage_not_found_with_name_in_dimension", dimension, name), NarcissusNotificationTypes.WAYPOINT);
+                MessageUtils.sendNotification(player, NarcissusComponent.get().transAuto("stage_not_found_with_name_in_dimension", dimension, name), NarcissusNotificationTypes.WAYPOINT);
             } else {
                 MessageUtils.sendMessage(source, false, NarcissusComponent.get().transAuto("stage_not_found_with_name_in_dimension", dimension, name));
             }
@@ -64,7 +63,7 @@ public final class DelStageCommand {
         Component dimensionComponent = NarcissusComponent.get().literal(dimension)
                 .hoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, NarcissusComponent.get().literal(remove.xyzString()).toVanilla()));
         if (player != null) {
-            NarcissusNotificationSend.send(player, NarcissusComponent.get().transAuto("stage_del", dimensionComponent, name), NarcissusNotificationTypes.WAYPOINT);
+            MessageUtils.sendNotification(player, NarcissusComponent.get().transAuto("stage_del", dimensionComponent, name), NarcissusNotificationTypes.INTERACTIVE_QUERY);
         } else {
             MessageUtils.sendMessage(source, true, NarcissusComponent.get().transAuto("stage_del", dimensionComponent, name));
         }

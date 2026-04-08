@@ -9,6 +9,7 @@ import net.minecraft.command.CommandSource;
 import net.minecraft.command.Commands;
 import net.minecraft.command.arguments.EntityArgument;
 import net.minecraft.entity.player.ServerPlayerEntity;
+import xin.vanilla.banira.common.util.MessageUtils;
 import xin.vanilla.banira.common.util.StringUtils;
 import xin.vanilla.narcissus.NarcissusComponent;
 import xin.vanilla.narcissus.NarcissusFarewell;
@@ -16,7 +17,6 @@ import xin.vanilla.narcissus.config.CommonConfig;
 import xin.vanilla.narcissus.data.TeleportRequest;
 import xin.vanilla.narcissus.enums.EnumCommandType;
 import xin.vanilla.narcissus.enums.EnumTeleportType;
-import xin.vanilla.narcissus.notification.NarcissusNotificationSend;
 import xin.vanilla.narcissus.notification.NarcissusNotificationTypes;
 import xin.vanilla.narcissus.util.CommandUtils;
 import xin.vanilla.narcissus.util.NarcissusUtils;
@@ -31,12 +31,12 @@ public final class TpHereYesCommand {
         ServerPlayerEntity player = context.getSource().getPlayerOrException();
         String id = CommandUtils.getRequestId(context, EnumTeleportType.TP_HERE, true);
         if (StringUtils.isNullOrEmpty(id) || !NarcissusFarewell.getTeleportRequest().containsKey(id)) {
-            NarcissusNotificationSend.send(player, NarcissusComponent.get().transAuto("tp_here_not_found"), NarcissusNotificationTypes.TELEPORT_REQUEST);
+            MessageUtils.sendNotification(player, NarcissusComponent.get().transAuto("tp_here_not_found"), NarcissusNotificationTypes.TELEPORT_REQUEST);
             return 0;
         }
         TeleportRequest request = NarcissusFarewell.getTeleportRequest().remove(id);
         if (CommandUtils.checkTeleportPost(request, true)) {
-            NarcissusNotificationSend.send(player, NarcissusComponent.get().transAuto("tp_here_invalid"), NarcissusNotificationTypes.TELEPORT_ERROR);
+            MessageUtils.sendNotification(player, NarcissusComponent.get().transAuto("tp_here_invalid"), NarcissusNotificationTypes.TELEPORT_ERROR);
             return 0;
         }
         NarcissusUtils.teleportTo(request);

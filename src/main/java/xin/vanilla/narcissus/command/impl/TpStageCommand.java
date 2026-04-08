@@ -11,12 +11,12 @@ import net.minecraft.util.RegistryKey;
 import net.minecraft.world.World;
 import net.minecraft.world.server.ServerWorld;
 import xin.vanilla.banira.common.util.DimensionUtils;
+import xin.vanilla.banira.common.util.MessageUtils;
 import xin.vanilla.narcissus.NarcissusComponent;
 import xin.vanilla.narcissus.config.CommonConfig;
 import xin.vanilla.narcissus.data.SafeWorldCoordinate;
 import xin.vanilla.narcissus.enums.EnumCommandType;
 import xin.vanilla.narcissus.enums.EnumTeleportType;
-import xin.vanilla.narcissus.notification.NarcissusNotificationSend;
 import xin.vanilla.narcissus.notification.NarcissusNotificationTypes;
 import xin.vanilla.narcissus.util.CommandUtils;
 import xin.vanilla.narcissus.util.NarcissusUtils;
@@ -42,13 +42,13 @@ public final class TpStageCommand {
         SafeWorldCoordinate safeWorldCoordinate = NarcissusUtils.getStageCoordinate(player, targetLevel, name);
         if (safeWorldCoordinate == null) {
             if (targetLevel == null && name == null) {
-                NarcissusNotificationSend.send(player, NarcissusComponent.get().transAuto("stage_nearest_not_found"), NarcissusNotificationTypes.TELEPORT_ERROR);
+                MessageUtils.sendNotification(player, NarcissusComponent.get().transAuto("stage_nearest_not_found"), NarcissusNotificationTypes.TELEPORT_ERROR);
             } else if (targetLevel != null && name == null) {
-                NarcissusNotificationSend.send(player, NarcissusComponent.get().transAuto("stage_not_found_in_dimension", targetLevel.location().toString()), NarcissusNotificationTypes.TELEPORT_ERROR);
+                MessageUtils.sendNotification(player, NarcissusComponent.get().transAuto("stage_not_found_in_dimension", targetLevel.location().toString()), NarcissusNotificationTypes.TELEPORT_ERROR);
             } else if (targetLevel == null) {
-                NarcissusNotificationSend.send(player, NarcissusComponent.get().transAuto("stage_not_found", name), NarcissusNotificationTypes.TELEPORT_ERROR);
+                MessageUtils.sendNotification(player, NarcissusComponent.get().transAuto("stage_not_found", name), NarcissusNotificationTypes.TELEPORT_ERROR);
             } else {
-                NarcissusNotificationSend.send(player, NarcissusComponent.get().transAuto("stage_not_found_with_name_in_dimension", targetLevel.location().toString(), name), NarcissusNotificationTypes.TELEPORT_ERROR);
+                MessageUtils.sendNotification(player, NarcissusComponent.get().transAuto("stage_not_found_with_name_in_dimension", targetLevel.location().toString(), name), NarcissusNotificationTypes.TELEPORT_ERROR);
             }
             return 0;
         }

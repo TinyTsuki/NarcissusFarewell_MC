@@ -21,7 +21,6 @@ import xin.vanilla.narcissus.data.TeleportRequest;
 import xin.vanilla.narcissus.data.player.PlayerTeleportData;
 import xin.vanilla.narcissus.enums.EnumCommandType;
 import xin.vanilla.narcissus.enums.EnumTeleportType;
-import xin.vanilla.narcissus.notification.NarcissusNotificationSend;
 import xin.vanilla.narcissus.notification.NarcissusNotificationTypes;
 import xin.vanilla.narcissus.util.CommandUtils;
 import xin.vanilla.narcissus.util.NarcissusUtils;
@@ -54,7 +53,7 @@ public final class TpAskCommand {
                     .getTarget();
         }
         if (target == null) {
-            NarcissusNotificationSend.send(player, NarcissusComponent.get().transAuto("player_not_found"), NarcissusNotificationTypes.TELEPORT_ERROR);
+            MessageUtils.sendNotification(player, NarcissusComponent.get().transAuto("player_not_found"), NarcissusNotificationTypes.TELEPORT_ERROR);
             return 0;
         }
         TeleportRequest request = new TeleportRequest()
@@ -75,11 +74,11 @@ public final class TpAskCommand {
                     .clickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, String.format("/%s %s %s", NarcissusUtils.getCommandPrefix(), CommonConfig.get().commandNames().commandTpAskYes(), request.getRequestId())));
             Component noButton = NarcissusComponent.get().transAuto("no_button")
                     .clickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, String.format("/%s %s %s", NarcissusUtils.getCommandPrefix(), CommonConfig.get().commandNames().commandTpAskNo(), request.getRequestId())));
-            MessageUtils.sendMessage(target, NarcissusComponent.get().transAuto("tp_ask_request_received", player.getDisplayName().getString(), yesButton, noButton));
+            MessageUtils.sendNotification(target, NarcissusComponent.get().transAuto("tp_ask_request_received", player.getDisplayName().getString(), yesButton, noButton), NarcissusNotificationTypes.INTERACTIVE_TP_FLOW);
         }
         Component cancelButton = NarcissusComponent.get().transAuto("cancel_button")
                 .clickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, String.format("/%s %s %s", NarcissusUtils.getCommandPrefix(), CommonConfig.get().commandNames().commandTpAskCancel(), request.getRequestId())));
-        MessageUtils.sendMessage(player, NarcissusComponent.get().transAuto("tp_ask_request_sent", target.getDisplayName().getString(), cancelButton));
+        MessageUtils.sendNotification(player, NarcissusComponent.get().transAuto("tp_ask_request_sent", target.getDisplayName().getString(), cancelButton), NarcissusNotificationTypes.INTERACTIVE_TP_FLOW);
         if (autoAccept) {
             ServerPlayerEntity finalTarget = target;
             new Thread(() -> xin.vanilla.banira.common.util.CommandUtils.executeCommand(finalTarget, NarcissusUtils.getCommand(EnumCommandType.TP_ASK_YES) + " " + request.getRequestId())).start();

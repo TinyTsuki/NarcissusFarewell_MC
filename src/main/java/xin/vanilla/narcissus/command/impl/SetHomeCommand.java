@@ -12,6 +12,7 @@ import net.minecraft.command.Commands;
 import net.minecraft.entity.player.ServerPlayerEntity;
 import xin.vanilla.banira.common.data.Component;
 import xin.vanilla.banira.common.data.KeyValue;
+import xin.vanilla.banira.common.util.MessageUtils;
 import xin.vanilla.banira.common.util.PacketUtils;
 import xin.vanilla.narcissus.NarcissusComponent;
 import xin.vanilla.narcissus.config.CommonConfig;
@@ -20,7 +21,6 @@ import xin.vanilla.narcissus.data.player.PlayerTeleportData;
 import xin.vanilla.narcissus.enums.EnumCommandType;
 import xin.vanilla.narcissus.network.NetworkInit;
 import xin.vanilla.narcissus.network.packet.WaypointSyncToClient;
-import xin.vanilla.narcissus.notification.NarcissusNotificationSend;
 import xin.vanilla.narcissus.notification.NarcissusNotificationTypes;
 import xin.vanilla.narcissus.util.CommandUtils;
 import xin.vanilla.narcissus.util.NarcissusUtils;
@@ -37,7 +37,7 @@ public final class SetHomeCommand {
         if (CommandUtils.checkTeleportPre(context.getSource(), EnumCommandType.SET_HOME)) return 0;
         PlayerTeleportData data = PlayerTeleportData.getData(player);
         if (data.getHomeCoordinate().size() >= CommonConfig.get().general().teleportHomeLimit()) {
-            NarcissusNotificationSend.send(player, NarcissusComponent.get().transAuto("home_limit", CommonConfig.get().general().teleportHomeLimit()), NarcissusNotificationTypes.WAYPOINT);
+            MessageUtils.sendNotification(player, NarcissusComponent.get().transAuto("home_limit", CommonConfig.get().general().teleportHomeLimit()), NarcissusNotificationTypes.WAYPOINT);
             return 0;
         }
         String name = xin.vanilla.banira.common.util.CommandUtils.getStringDefault(context, "name", "home");
@@ -49,19 +49,19 @@ public final class SetHomeCommand {
         SafeWorldCoordinate safeWorldCoordinate = new SafeWorldCoordinate(player);
         KeyValue<String, String> key = new KeyValue<>(player.getLevel().dimension().location().toString(), name);
         if (data.getHomeCoordinate().containsKey(key)) {
-            NarcissusNotificationSend.send(player, NarcissusComponent.get().transAuto("home_already_exists", key.key(), key.value()), NarcissusNotificationTypes.WAYPOINT);
+            MessageUtils.sendNotification(player, NarcissusComponent.get().transAuto("home_already_exists", key.key(), key.value()), NarcissusNotificationTypes.WAYPOINT);
             return 0;
         }
         data.addHomeCoordinate(key, safeWorldCoordinate);
         PacketUtils.sendPacketToPlayer(NetworkInit.INSTANCE, new WaypointSyncToClient(WaypointSyncToClient.Action.ADD, WaypointSyncToClient.Type.HOME, name, safeWorldCoordinate), player);
         if (defaultHome) {
             if (data.getDefaultHome().containsKey(player.getLevel().dimension().location().toString())) {
-                NarcissusNotificationSend.send(player, NarcissusComponent.get().transAuto("home_default_remove", data.getDefaultHome(player.getLevel().dimension().location().toString()).value()), NarcissusNotificationTypes.WAYPOINT);
+                MessageUtils.sendNotification(player, NarcissusComponent.get().transAuto("home_default_remove", data.getDefaultHome(player.getLevel().dimension().location().toString()).value()), NarcissusNotificationTypes.WAYPOINT);
             }
             data.addDefaultHome(player.getLevel().dimension().location().toString(), name);
-            NarcissusNotificationSend.send(player, NarcissusComponent.get().transAuto("home_set_default", name, safeWorldCoordinate.xyzString()), NarcissusNotificationTypes.WAYPOINT);
+            MessageUtils.sendNotification(player, NarcissusComponent.get().transAuto("home_set_default", name, safeWorldCoordinate.xyzString()), NarcissusNotificationTypes.WAYPOINT);
         } else {
-            NarcissusNotificationSend.send(player, NarcissusComponent.get().transAuto("home_set", name, safeWorldCoordinate.xyzString()), NarcissusNotificationTypes.WAYPOINT);
+            MessageUtils.sendNotification(player, NarcissusComponent.get().transAuto("home_set", name, safeWorldCoordinate.xyzString()), NarcissusNotificationTypes.WAYPOINT);
         }
         PlayerTeleportData.syncPlayerData(player);
         return 1;

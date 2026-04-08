@@ -26,7 +26,6 @@ import xin.vanilla.narcissus.enums.EnumCommandType;
 import xin.vanilla.narcissus.network.NetworkInit;
 import xin.vanilla.narcissus.network.packet.StageDataSyncToClient;
 import xin.vanilla.narcissus.network.packet.WaypointSyncToClient;
-import xin.vanilla.narcissus.notification.NarcissusNotificationSend;
 import xin.vanilla.narcissus.notification.NarcissusNotificationTypes;
 import xin.vanilla.narcissus.util.CommandUtils;
 import xin.vanilla.narcissus.util.NarcissusUtils;
@@ -41,7 +40,7 @@ public final class SetStageCommand {
 
     private static void sendStageMessage(CommandSource source, Component message, boolean success, String notificationType) {
         if (source.getEntity() instanceof ServerPlayerEntity) {
-            NarcissusNotificationSend.send((ServerPlayerEntity) source.getEntity(), message, notificationType);
+            MessageUtils.sendNotification((ServerPlayerEntity) source.getEntity(), message, notificationType);
         } else {
             MessageUtils.sendMessage(source, success, message);
         }
