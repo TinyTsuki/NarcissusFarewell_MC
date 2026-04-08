@@ -25,6 +25,8 @@ import xin.vanilla.narcissus.data.player.PlayerTeleportData;
 import xin.vanilla.narcissus.data.world.WorldStageData;
 import xin.vanilla.narcissus.enums.EnumCommandType;
 import xin.vanilla.narcissus.enums.EnumTeleportType;
+import xin.vanilla.narcissus.notification.NarcissusNotificationSend;
+import xin.vanilla.narcissus.notification.NarcissusNotificationTypes;
 
 import java.util.Comparator;
 import java.util.List;
@@ -51,24 +53,27 @@ public final class CommandUtils {
     }
 
     public static boolean checkTeleportPre(CommandSource source, EnumCommandType teleportType) {
-        if (!NarcissusUtils.isCommandEnabled(teleportType)) {
-            MessageUtils.sendMessage(source, false, NarcissusComponent.get().transAuto("command_disabled"));
-            return true;
-        }
         if (source.getEntity() != null && source.getEntity() instanceof ServerPlayerEntity) {
             ServerPlayerEntity player = (ServerPlayerEntity) source.getEntity();
+            if (!NarcissusUtils.isCommandEnabled(teleportType)) {
+                NarcissusNotificationSend.sendDefault(player, NarcissusComponent.get().transAuto("command_disabled"), true);
+                return true;
+            }
             EnumTeleportType type = teleportType.toTeleportType();
             if (type != null) {
                 int teleportCoolDown = NarcissusUtils.getTeleportCoolDown(player, type);
                 if (teleportCoolDown > 0) {
-                    MessageUtils.sendNotification(player, NarcissusComponent.get().transAuto("command_cooldown", teleportCoolDown));
+                    NarcissusNotificationSend.send(player, NarcissusComponent.get().transAuto("command_cooldown", teleportCoolDown), NarcissusNotificationTypes.TELEPORT_GUARD);
                     return true;
                 }
             }
             if (CommonConfig.get().general().tpWithEnemy() && NarcissusUtils.isTargetedByHostile(player)) {
-                MessageUtils.sendNotification(player, NarcissusComponent.get().transAuto("locked_by_mob"));
+                NarcissusNotificationSend.send(player, NarcissusComponent.get().transAuto("locked_by_mob"), NarcissusNotificationTypes.TELEPORT_GUARD);
                 return true;
             }
+        } else if (!NarcissusUtils.isCommandEnabled(teleportType)) {
+            MessageUtils.sendMessage(source, false, NarcissusComponent.get().transAuto("command_disabled"));
+            return true;
         }
         return false;
     }
@@ -81,7 +86,7 @@ public final class CommandUtils {
         boolean result = NarcissusUtils.isTeleportAcrossDimensionEnabled(request.getRequester(), request.getTarget().getLevel().dimension(), request.getTeleportType());
         result = result && NarcissusUtils.validTeleportCost(request, submit);
         if (CommonConfig.get().general().tpWithEnemy() && NarcissusUtils.isTargetedByHostile(request.getRequester())) {
-            MessageUtils.sendNotification(request.getRequester(), NarcissusComponent.get().transAuto("locked_by_mob"));
+            NarcissusNotificationSend.send(request.getRequester(), NarcissusComponent.get().transAuto("locked_by_mob"), NarcissusNotificationTypes.TELEPORT_GUARD);
             result = false;
         }
         return !result;
@@ -95,7 +100,7 @@ public final class CommandUtils {
         boolean result = NarcissusUtils.isTeleportAcrossDimensionEnabled(player, target.dimension(), type);
         result = result && NarcissusUtils.validTeleportCost(player, target, type, submit);
         if (CommonConfig.get().general().tpWithEnemy() && NarcissusUtils.isTargetedByHostile(player)) {
-            MessageUtils.sendNotification(player, NarcissusComponent.get().transAuto("locked_by_mob"));
+            NarcissusNotificationSend.send(player, NarcissusComponent.get().transAuto("locked_by_mob"), NarcissusNotificationTypes.TELEPORT_GUARD);
             result = false;
         }
         return !result;

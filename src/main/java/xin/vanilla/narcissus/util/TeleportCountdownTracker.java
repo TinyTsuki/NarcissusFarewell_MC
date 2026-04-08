@@ -3,8 +3,9 @@ package xin.vanilla.narcissus.util;
 import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.server.MinecraftServer;
 import xin.vanilla.banira.common.data.Component;
-import xin.vanilla.banira.common.util.MessageUtils;
 import xin.vanilla.narcissus.NarcissusComponent;
+import xin.vanilla.narcissus.notification.NarcissusNotificationSend;
+import xin.vanilla.narcissus.notification.NarcissusNotificationTypes;
 
 import java.util.ArrayList;
 import java.util.Map;
@@ -74,7 +75,7 @@ public final class TeleportCountdownTracker {
             Component msg = damageReason
                     ? NarcissusComponent.get().transAuto("tp_countdown_cancelled_damage")
                     : NarcissusComponent.get().transAuto("tp_countdown_cancelled_move");
-            MessageUtils.sendNotification(player, msg);
+            NarcissusNotificationSend.send(player, msg, NarcissusNotificationTypes.TELEPORT_GUARD);
         }
     }
 

@@ -21,6 +21,8 @@ import xin.vanilla.narcissus.data.TeleportRequest;
 import xin.vanilla.narcissus.data.player.PlayerTeleportData;
 import xin.vanilla.narcissus.enums.EnumCommandType;
 import xin.vanilla.narcissus.enums.EnumTeleportType;
+import xin.vanilla.narcissus.notification.NarcissusNotificationSend;
+import xin.vanilla.narcissus.notification.NarcissusNotificationTypes;
 import xin.vanilla.narcissus.util.CommandUtils;
 import xin.vanilla.narcissus.util.NarcissusUtils;
 
@@ -52,7 +54,7 @@ public final class TpHereCommand {
                     .getTarget();
         }
         if (target == null) {
-            MessageUtils.sendNotification(player, NarcissusComponent.get().transAuto("player_not_found"));
+            NarcissusNotificationSend.send(player, NarcissusComponent.get().transAuto("player_not_found"), NarcissusNotificationTypes.TELEPORT_ERROR);
             return 0;
         }
         TeleportRequest request = new TeleportRequest()

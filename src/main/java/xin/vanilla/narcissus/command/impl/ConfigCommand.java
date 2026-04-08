@@ -19,6 +19,7 @@ import xin.vanilla.narcissus.config.TeleportCountdownHelper;
 import xin.vanilla.narcissus.data.player.PlayerTeleportData;
 import xin.vanilla.narcissus.enums.EnumCommandType;
 import xin.vanilla.narcissus.enums.EnumTeleportType;
+import xin.vanilla.narcissus.notification.NarcissusNotificationSend;
 import xin.vanilla.narcissus.util.NarcissusUtils;
 
 public final class ConfigCommand {
@@ -30,7 +31,7 @@ public final class ConfigCommand {
         Component msg = NarcissusComponent.get().transAuto("server_config_status"
                 , NarcissusLang.get().enabled(CommonConfig.get().base().teleportCard())
                 , NarcissusComponent.get().transAuto("teleport_card"));
-        MessageUtils.sendMessage(player, msg);
+        NarcissusNotificationSend.sendDefault(player, msg, false);
         return 1;
     }
 
@@ -125,7 +126,7 @@ public final class ConfigCommand {
         String typeName = StringArgumentType.getString(context, "type");
         EnumTeleportType type = EnumTeleportType.valueOfEx(typeName);
         if (type == null || !EnumTeleportType.countdownConfigurableTypes().contains(type)) {
-            MessageUtils.sendMessage(context.getSource(), false, NarcissusComponent.get().transAuto("tp_countdown_invalid_type", typeName));
+            NarcissusNotificationSend.sendDefault(player, NarcissusComponent.get().transAuto("tp_countdown_invalid_type", typeName), true);
             return 0;
         }
         int sec = IntegerArgumentType.getInteger(context, "seconds");
@@ -133,7 +134,7 @@ public final class ConfigCommand {
         PlayerTeleportData data = PlayerTeleportData.getData(player);
         data.setTeleportCountdownSeconds(type, sec);
         PlayerTeleportData.syncPlayerData(player);
-        MessageUtils.sendMessage(context.getSource(), true, NarcissusComponent.get().transAuto("tp_countdown_set_ok", type.name(), String.valueOf(data.getTeleportCountdownSeconds(type))));
+        NarcissusNotificationSend.sendDefault(player, NarcissusComponent.get().transAuto("tp_countdown_set_ok", type.name(), String.valueOf(data.getTeleportCountdownSeconds(type))), false);
         return 1;
     }
 

@@ -9,11 +9,11 @@ import net.minecraft.command.arguments.EntityArgument;
 import net.minecraft.entity.player.ServerPlayerEntity;
 import xin.vanilla.banira.common.data.Component;
 import xin.vanilla.banira.common.util.CollectionUtils;
-import xin.vanilla.banira.common.util.MessageUtils;
 import xin.vanilla.banira.common.util.PlayerUtils;
 import xin.vanilla.narcissus.NarcissusComponent;
 import xin.vanilla.narcissus.data.PlayerAccess;
 import xin.vanilla.narcissus.data.player.PlayerTeleportData;
+import xin.vanilla.narcissus.notification.NarcissusNotificationSend;
 import xin.vanilla.narcissus.util.CommandUtils;
 
 import java.util.Collection;
@@ -38,7 +38,7 @@ public final class BlacklistCommand {
                             .collect(Collectors.joining(","))
             );
         }
-        MessageUtils.sendMessage(player, msg);
+        NarcissusNotificationSend.sendDefault(player, msg, false);
         return 1;
     }
 
@@ -60,7 +60,7 @@ public final class BlacklistCommand {
         } else {
             msg = NarcissusComponent.get().transAuto("list_add_fail", CommandUtils.getBlacklistOrWhitelistHelp(player, true), CommandUtils.getBlacklistOrWhitelistHelp(player, false));
         }
-        MessageUtils.sendMessage(player, msg);
+        NarcissusNotificationSend.sendDefault(player, msg, false);
         return 1;
     }
 
@@ -83,7 +83,7 @@ public final class BlacklistCommand {
                     , access.getBlackList().stream().map(uuid -> PlayerUtils.getPlayerNameString(PlayerUtils.getPlayerByUUID(uuid))).collect(Collectors.joining(","))
             ));
         }
-        MessageUtils.sendMessage(player, msg);
+        NarcissusNotificationSend.sendDefault(player, msg, false);
         return 1;
     }
 

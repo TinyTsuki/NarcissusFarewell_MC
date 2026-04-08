@@ -15,6 +15,7 @@ import xin.vanilla.narcissus.NarcissusComponent;
 import xin.vanilla.narcissus.config.CommonConfig;
 import xin.vanilla.narcissus.data.player.PlayerTeleportData;
 import xin.vanilla.narcissus.enums.EnumCommandType;
+import xin.vanilla.narcissus.notification.NarcissusNotificationSend;
 import xin.vanilla.narcissus.util.CommandUtils;
 import xin.vanilla.narcissus.util.NarcissusUtils;
 
@@ -47,7 +48,11 @@ public final class CardCommand {
         Component component = NarcissusComponent.get().transAuto("player_card"
                 , target.getDisplayName().getString()
                 , data.getTeleportCard());
-        MessageUtils.sendMessage(source, true, component);
+        if (source.getEntity() instanceof ServerPlayerEntity) {
+            NarcissusNotificationSend.sendDefault((ServerPlayerEntity) source.getEntity(), component, false);
+        } else {
+            MessageUtils.sendMessage(source, true, component);
+        }
         return 1;
     }
 

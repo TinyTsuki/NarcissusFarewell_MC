@@ -54,6 +54,8 @@ import xin.vanilla.narcissus.enums.EnumCostType;
 import xin.vanilla.narcissus.enums.EnumTeleportType;
 import xin.vanilla.narcissus.mixin.LivingEntityInvoker;
 import xin.vanilla.narcissus.mixin.TemptGoalAccessor;
+import xin.vanilla.narcissus.notification.NarcissusNotificationSend;
+import xin.vanilla.narcissus.notification.NarcissusNotificationTypes;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -960,9 +962,9 @@ public class NarcissusUtils {
                 break;
         }
         if (range > maxRange) {
-            MessageUtils.sendNotification(player, NarcissusComponent.get().transAuto("range_too_large", maxRange));
+            NarcissusNotificationSend.send(player, NarcissusComponent.get().transAuto("range_too_large", maxRange), NarcissusNotificationTypes.TELEPORT_ERROR);
         } else if (range <= 0) {
-            MessageUtils.sendNotification(player, NarcissusComponent.get().transAuto("range_too_small", 1));
+            NarcissusNotificationSend.send(player, NarcissusComponent.get().transAuto("range_too_small", 1), NarcissusNotificationTypes.TELEPORT_ERROR);
         }
         return Math.min(Math.max(range, 1), maxRange);
     }
@@ -1008,7 +1010,7 @@ public class NarcissusUtils {
             ServerWorld level = DimensionUtils.getLevel(after.dimension());
             if (level != null) {
                 if (after.safe()) {
-                    MessageUtils.sendNotification(player, NarcissusComponent.get().transAuto("safe_searching"));
+                    NarcissusNotificationSend.send(player, NarcissusComponent.get().transAuto("safe_searching"), NarcissusNotificationTypes.TELEPORT_SEARCH);
                     final int tpRandomRangeArg = tprHorizontalRange;
                     new Thread(() -> {
                         SafeBlockChecker checker = new SafeBlockChecker(level);
@@ -1263,11 +1265,11 @@ public class NarcissusUtils {
             if (CommonConfig.get().general().teleportAcrossDimension()) {
                 if (!NarcissusUtils.isTeleportTypeAcrossDimensionEnabled(player, type)) {
                     result = false;
-                    MessageUtils.sendNotification(player, NarcissusComponent.get().transAuto("across_dimension_not_enable_for", getCommand(type)));
+                    NarcissusNotificationSend.send(player, NarcissusComponent.get().transAuto("across_dimension_not_enable_for", getCommand(type)), NarcissusNotificationTypes.TELEPORT_ERROR);
                 }
             } else {
                 result = false;
-                MessageUtils.sendNotification(player, NarcissusComponent.get().transAuto("across_dimension_not_enable"));
+                NarcissusNotificationSend.send(player, NarcissusComponent.get().transAuto("across_dimension_not_enable"), NarcissusNotificationTypes.TELEPORT_ERROR);
             }
         }
         return result;
@@ -1486,22 +1488,22 @@ public class NarcissusUtils {
         boolean result = false;
 
         if (costNeed < 0) {
-            MessageUtils.sendMessage(player
+            NarcissusNotificationSend.send(player
                     , NarcissusComponent.get().transAuto("cost_not_enough"
                             , NarcissusComponent.get().transAuto("teleport_card")
                             , cardNeed
-                    ));
+                    ), NarcissusNotificationTypes.TELEPORT_ERROR);
         }
 
         switch (teleportCost.getType()) {
             case EXP_POINT:
                 result = player.totalExperience >= costNeed;
                 if (!result) {
-                    MessageUtils.sendMessage(player
+                    NarcissusNotificationSend.send(player
                             , NarcissusComponent.get().transAuto("cost_not_enough"
                                     , NarcissusComponent.get().transAuto("exp_point")
                                     , costNeed
-                            ));
+                            ), NarcissusNotificationTypes.TELEPORT_ERROR);
                 } else if (submit) {
                     player.giveExperiencePoints(-costNeed);
                     data.subTeleportCard(Math.min(data.getTeleportCard(), cardNeed));
@@ -1510,11 +1512,11 @@ public class NarcissusUtils {
             case EXP_LEVEL:
                 result = player.experienceLevel >= costNeed;
                 if (!result) {
-                    MessageUtils.sendMessage(player
+                    NarcissusNotificationSend.send(player
                             , NarcissusComponent.get().transAuto("cost_not_enough"
                                     , NarcissusComponent.get().transAuto("exp_level")
                                     , costNeed
-                            ));
+                            ), NarcissusNotificationTypes.TELEPORT_ERROR);
                 } else if (submit) {
                     player.giveExperienceLevels(-costNeed);
                     data.subTeleportCard(Math.min(data.getTeleportCard(), cardNeed));
@@ -1523,11 +1525,11 @@ public class NarcissusUtils {
             case HEALTH:
                 result = player.getHealth() > costNeed;
                 if (!result) {
-                    MessageUtils.sendMessage(player
+                    NarcissusNotificationSend.send(player
                             , NarcissusComponent.get().transAuto("cost_not_enough"
                                     , NarcissusComponent.get().transAuto("health")
                                     , costNeed
-                            ));
+                            ), NarcissusNotificationTypes.TELEPORT_ERROR);
                 } else if (submit) {
                     try {
                         DataParameter<? super Float> DATA_HEALTH_ID = ((LivingEntityInvoker) player).narcissus$dataHealthId();
@@ -1542,11 +1544,11 @@ public class NarcissusUtils {
             case HUNGER:
                 result = player.getFoodData().getFoodLevel() >= costNeed;
                 if (!result) {
-                    MessageUtils.sendMessage(player
+                    NarcissusNotificationSend.send(player
                             , NarcissusComponent.get().transAuto("cost_not_enough"
                                     , NarcissusComponent.get().transAuto("hunger")
                                     , costNeed
-                            ));
+                            ), NarcissusNotificationTypes.TELEPORT_ERROR);
                 } else if (submit) {
                     player.getFoodData().setFoodLevel(player.getFoodData().getFoodLevel() - costNeed);
                     data.subTeleportCard(Math.min(data.getTeleportCard(), cardNeed));
@@ -1559,26 +1561,24 @@ public class NarcissusUtils {
                     result = getItemCount(player.inventory.items, itemStack) >= costNeed;
                     itemStack.setCount(costNeed);
                     if (!result) {
-                        MessageUtils.sendMessage(player
+                        NarcissusNotificationSend.send(player
                                 , NarcissusComponent.get().transAuto("cost_not_enough"
                                         , NarcissusComponent.get().literal(ItemUtils.getItemHoverNameString(itemStack))
                                                 .hoverEvent(new HoverEvent(HoverEvent.Action.SHOW_ITEM, new HoverEvent.ItemHover(itemStack)))
                                         , costNeed
-                                )
-                        );
+                                ), NarcissusNotificationTypes.TELEPORT_ERROR);
                     } else if (submit) {
                         result = ItemUtils.removePlayerItem(player, itemStack);
                         // 代价不足
                         if (result) {
                             data.subTeleportCard(Math.min(data.getTeleportCard(), cardNeed));
                         } else {
-                            MessageUtils.sendMessage(player
+                            NarcissusNotificationSend.send(player
                                     , NarcissusComponent.get().transAuto("cost_not_enough"
                                             , NarcissusComponent.get().literal(ItemUtils.getItemHoverNameString(itemStack))
                                                     .hoverEvent(new HoverEvent(HoverEvent.Action.SHOW_ITEM, new HoverEvent.ItemHover(itemStack)))
                                             , costNeed
-                                    )
-                            );
+                                    ), NarcissusNotificationTypes.TELEPORT_ERROR);
                         }
                     }
                 } catch (Exception e) {

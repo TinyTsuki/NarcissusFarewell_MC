@@ -13,7 +13,6 @@ import net.minecraft.world.World;
 import xin.vanilla.banira.common.data.Component;
 import xin.vanilla.banira.common.data.KeyValue;
 import xin.vanilla.banira.common.util.DimensionUtils;
-import xin.vanilla.banira.common.util.MessageUtils;
 import xin.vanilla.banira.common.util.PacketUtils;
 import xin.vanilla.narcissus.NarcissusComponent;
 import xin.vanilla.narcissus.config.CommonConfig;
@@ -22,6 +21,8 @@ import xin.vanilla.narcissus.data.player.PlayerTeleportData;
 import xin.vanilla.narcissus.enums.EnumCommandType;
 import xin.vanilla.narcissus.network.NetworkInit;
 import xin.vanilla.narcissus.network.packet.WaypointSyncToClient;
+import xin.vanilla.narcissus.notification.NarcissusNotificationSend;
+import xin.vanilla.narcissus.notification.NarcissusNotificationTypes;
 import xin.vanilla.narcissus.util.CommandUtils;
 import xin.vanilla.narcissus.util.NarcissusUtils;
 
@@ -45,21 +46,21 @@ public final class DelHomeCommand {
         SafeWorldCoordinate remove = data.getHomeCoordinate().remove(new KeyValue<>(dimension, name));
         data.setDirty();
         if (remove == null) {
-            MessageUtils.sendNotification(player, NarcissusComponent.get().transAuto("home_not_found_with_name_in_dimension", dimension, name));
+            NarcissusNotificationSend.send(player, NarcissusComponent.get().transAuto("home_not_found_with_name_in_dimension", dimension, name), NarcissusNotificationTypes.WAYPOINT);
             return 0;
         }
         if (data.getDefaultHome().containsKey(dimension)) {
             if (data.getDefaultHome().get(dimension).equals(name)) {
                 data.getDefaultHome().remove(dimension);
                 data.setDirty();
-                MessageUtils.sendNotification(player, NarcissusComponent.get().transAuto("home_default_remove", name));
+                NarcissusNotificationSend.send(player, NarcissusComponent.get().transAuto("home_default_remove", name), NarcissusNotificationTypes.WAYPOINT);
             }
         }
         PacketUtils.sendPacketToPlayer(NetworkInit.INSTANCE, new WaypointSyncToClient(WaypointSyncToClient.Action.REMOVE, WaypointSyncToClient.Type.HOME, name, remove), player);
         PlayerTeleportData.syncPlayerData(player);
         Component dimensionComponent = NarcissusComponent.get().literal(dimension)
                 .hoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, NarcissusComponent.get().literal(remove.xyzString()).toVanilla()));
-        MessageUtils.sendMessage(player, NarcissusComponent.get().transAuto("home_del", dimensionComponent, name));
+        NarcissusNotificationSend.send(player, NarcissusComponent.get().transAuto("home_del", dimensionComponent, name), NarcissusNotificationTypes.WAYPOINT);
         return 1;
     }
 
