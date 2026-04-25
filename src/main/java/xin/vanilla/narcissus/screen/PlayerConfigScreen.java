@@ -29,7 +29,6 @@ import xin.vanilla.narcissus.NarcissusComponent;
 import xin.vanilla.narcissus.config.TeleportCountdownHelper;
 import xin.vanilla.narcissus.data.player.PlayerTeleportData;
 import xin.vanilla.narcissus.enums.EnumTeleportType;
-import xin.vanilla.narcissus.network.NetworkInit;
 import xin.vanilla.narcissus.network.packet.PlayerConfigSyncToServer;
 
 import javax.annotation.Nullable;
@@ -356,7 +355,7 @@ public class PlayerConfigScreen extends BaniraScreen {
         }
         try {
             CompoundTag payload = buildFullCountdownTag();
-            PacketUtils.sendPacketToServer(NetworkInit.INSTANCE, new PlayerConfigSyncToServer(payload));
+            PacketUtils.sendPacketToServer(new PlayerConfigSyncToServer(payload));
             PlayerTeleportData.getData(player).replaceAllTeleportCountdownsFromTag(payload);
             Notification ok = Notification.ofComponent(NarcissusComponent.get().transClientAuto("tp_prefs_sync_ok"));
             ok.position(EnumPosition.TOP_RIGHT).durationTime(2500);
