@@ -19,7 +19,6 @@ import xin.vanilla.narcissus.config.CommonConfig;
 import xin.vanilla.narcissus.data.SafeWorldCoordinate;
 import xin.vanilla.narcissus.data.world.WorldStageData;
 import xin.vanilla.narcissus.enums.EnumCommandType;
-import xin.vanilla.narcissus.network.NetworkInit;
 import xin.vanilla.narcissus.network.packet.StageDataSyncToClient;
 import xin.vanilla.narcissus.network.packet.WaypointSyncToClient;
 import xin.vanilla.narcissus.notification.NarcissusNotificationTypes;
@@ -58,8 +57,8 @@ public final class DelStageCommand {
             }
             return 0;
         }
-        PacketUtils.broadcastPacket(NetworkInit.INSTANCE, new WaypointSyncToClient(WaypointSyncToClient.Action.REMOVE, WaypointSyncToClient.Type.STAGE, name, remove));
-        PacketUtils.broadcastPacket(NetworkInit.INSTANCE, new StageDataSyncToClient(stageData.getStageCoordinate()));
+        PacketUtils.broadcastPacket(new WaypointSyncToClient(WaypointSyncToClient.Action.REMOVE, WaypointSyncToClient.Type.STAGE, name, remove));
+        PacketUtils.broadcastPacket(new StageDataSyncToClient(stageData.getStageCoordinate()));
         Component dimensionComponent = NarcissusComponent.get().literal(dimension)
                 .hoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, NarcissusComponent.get().literal(remove.xyzString()).toVanilla()));
         if (player != null) {

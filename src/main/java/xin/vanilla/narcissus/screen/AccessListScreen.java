@@ -24,7 +24,6 @@ import xin.vanilla.narcissus.data.PlayerAccess;
 import xin.vanilla.narcissus.data.player.PlayerTeleportData;
 import xin.vanilla.narcissus.enums.EnumPanelMode;
 import xin.vanilla.narcissus.enums.EnumWhiteListMode;
-import xin.vanilla.narcissus.network.NetworkInit;
 import xin.vanilla.narcissus.network.packet.AccessListEditToServer;
 
 import javax.annotation.Nonnull;
@@ -297,9 +296,9 @@ public class AccessListScreen extends BaniraScreen {
         deleteConfirmButton.onClick(b -> {
             if (deleteConfirmUuid != null && deleteConfirmColumn != null) {
                 if (deleteConfirmColumn == Column.BLACK) {
-                    PacketUtils.sendPacketToServer(NetworkInit.INSTANCE, new AccessListEditToServer(1, "", deleteConfirmUuid));
+                    PacketUtils.sendPacketToServer(new AccessListEditToServer(1, "", deleteConfirmUuid));
                 } else {
-                    PacketUtils.sendPacketToServer(NetworkInit.INSTANCE, new AccessListEditToServer(3, EnumWhiteListMode.NONE.name(), deleteConfirmUuid));
+                    PacketUtils.sendPacketToServer(new AccessListEditToServer(3, EnumWhiteListMode.NONE.name(), deleteConfirmUuid));
                 }
                 deleteConfirmUuid = null;
                 deleteConfirmColumn = null;
@@ -487,7 +486,7 @@ public class AccessListScreen extends BaniraScreen {
                     String label = results.value("player_name").trim();
                     String uuid = nameToUuid.get(label);
                     if (uuid != null) {
-                        PacketUtils.sendPacketToServer(NetworkInit.INSTANCE, new AccessListEditToServer(0, "", uuid));
+                        PacketUtils.sendPacketToServer(new AccessListEditToServer(0, "", uuid));
                     }
                 });
         minecraft.setScreen(new InputFormScreen(args));
@@ -532,7 +531,7 @@ public class AccessListScreen extends BaniraScreen {
                     String uuid = nameToUuid.get(label);
                     String mode = results.value("white_mode").trim();
                     if (uuid != null) {
-                        PacketUtils.sendPacketToServer(NetworkInit.INSTANCE, new AccessListEditToServer(2, mode, uuid));
+                        PacketUtils.sendPacketToServer(new AccessListEditToServer(2, mode, uuid));
                     }
                 });
         minecraft.setScreen(new InputFormScreen(args));
