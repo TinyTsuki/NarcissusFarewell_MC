@@ -12,6 +12,7 @@ import net.neoforged.neoforge.network.handling.IPayloadContext;
 import org.jetbrains.annotations.NotNull;
 import xin.vanilla.banira.Identifier;
 import xin.vanilla.banira.common.data.KeyValue;
+import xin.vanilla.banira.common.network.NetworkPacket;
 import xin.vanilla.banira.internal.network.BaniraStreamCodecs;
 import xin.vanilla.narcissus.data.SafeWorldCoordinate;
 import xin.vanilla.narcissus.data.client.ClientStageData;
@@ -22,7 +23,7 @@ import java.util.Map;
 
 @Getter
 @Accessors(fluent = true)
-public class StageDataSyncToClient implements CustomPacketPayload {
+public class StageDataSyncToClient implements NetworkPacket {
     public static final CustomPacketPayload.Type<StageDataSyncToClient> TYPE =
             new CustomPacketPayload.Type<>(Identifier.id().create("stage_sync"));
     public static final StreamCodec<RegistryFriendlyByteBuf, StageDataSyncToClient> STREAM_CODEC =

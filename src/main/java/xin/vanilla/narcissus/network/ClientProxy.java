@@ -5,12 +5,12 @@ import net.minecraft.client.player.LocalPlayer;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import xin.vanilla.narcissus.data.player.PlayerTeleportData;
-import xin.vanilla.narcissus.network.packet.PlayerDataSyncPacket;
+import xin.vanilla.narcissus.network.packet.PlayerDataSyncToClient;
 
 public class ClientProxy {
     public static final Logger LOGGER = LogManager.getLogger();
 
-    public static void handleSynPlayerData(PlayerDataSyncPacket packet) {
+    public static void handleSynPlayerData(PlayerDataSyncToClient packet) {
         LocalPlayer player = Minecraft.getInstance().player;
         if (player != null) {
             try {

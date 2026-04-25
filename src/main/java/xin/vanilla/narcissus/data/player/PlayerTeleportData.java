@@ -19,7 +19,7 @@ import xin.vanilla.narcissus.data.PlayerAccess;
 import xin.vanilla.narcissus.data.SafeWorldCoordinate;
 import xin.vanilla.narcissus.data.TeleportRecord;
 import xin.vanilla.narcissus.enums.EnumTeleportType;
-import xin.vanilla.narcissus.network.packet.PlayerDataSyncPacket;
+import xin.vanilla.narcissus.network.packet.PlayerDataSyncToClient;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -226,7 +226,7 @@ public final class PlayerTeleportData implements IPlayerData<PlayerTeleportData>
         this.save();
     }
 
-    public void applyFromSyncPacket(PlayerDataSyncPacket packet) {
+    public void applyFromSyncPacket(PlayerDataSyncToClient packet) {
         this.lastCardTime = packet.getLastCardTime();
         this.lastTpTime = packet.getLastTpTime();
         this.teleportCard.set(packet.getTeleportCard());
@@ -479,7 +479,7 @@ public final class PlayerTeleportData implements IPlayerData<PlayerTeleportData>
      * 同步玩家数据到客户端
      */
     public static void syncPlayerData(ServerPlayer player) {
-        PlayerDataSyncPacket packet = new PlayerDataSyncPacket(player.getUUID(), getData(player));
+        PlayerDataSyncToClient packet = new PlayerDataSyncToClient(player.getUUID(), getData(player));
         PacketUtils.sendSplitPacketToPlayer(packet, player);
     }
 
