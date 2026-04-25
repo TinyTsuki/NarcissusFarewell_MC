@@ -23,7 +23,6 @@ import xin.vanilla.narcissus.config.CommonConfig;
 import xin.vanilla.narcissus.data.SafeWorldCoordinate;
 import xin.vanilla.narcissus.data.world.WorldStageData;
 import xin.vanilla.narcissus.enums.EnumCommandType;
-import xin.vanilla.narcissus.network.NetworkInit;
 import xin.vanilla.narcissus.network.packet.StageDataSyncToClient;
 import xin.vanilla.narcissus.network.packet.WaypointSyncToClient;
 import xin.vanilla.narcissus.notification.NarcissusNotificationTypes;
@@ -55,8 +54,8 @@ public final class SetStageCommand {
             return 0;
         }
         stageData.addCoordinate(key, safeWorldCoordinate);
-        PacketUtils.broadcastPacket(NetworkInit.INSTANCE, new WaypointSyncToClient(WaypointSyncToClient.Action.ADD, WaypointSyncToClient.Type.STAGE, name, safeWorldCoordinate));
-        PacketUtils.broadcastPacket(NetworkInit.INSTANCE, new StageDataSyncToClient(stageData.getStageCoordinate()));
+        PacketUtils.broadcastPacket(new WaypointSyncToClient(WaypointSyncToClient.Action.ADD, WaypointSyncToClient.Type.STAGE, name, safeWorldCoordinate));
+        PacketUtils.broadcastPacket(new StageDataSyncToClient(stageData.getStageCoordinate()));
         sendStageMessage(source, NarcissusComponent.get().transAuto("stage_set", name, safeWorldCoordinate.xyzString()), true, NarcissusNotificationTypes.WAYPOINT);
         return 1;
     }
