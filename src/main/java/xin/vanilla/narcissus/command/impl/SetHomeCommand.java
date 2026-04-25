@@ -19,7 +19,6 @@ import xin.vanilla.narcissus.config.CommonConfig;
 import xin.vanilla.narcissus.data.SafeWorldCoordinate;
 import xin.vanilla.narcissus.data.player.PlayerTeleportData;
 import xin.vanilla.narcissus.enums.EnumCommandType;
-import xin.vanilla.narcissus.network.NetworkInit;
 import xin.vanilla.narcissus.network.packet.WaypointSyncToClient;
 import xin.vanilla.narcissus.notification.NarcissusNotificationTypes;
 import xin.vanilla.narcissus.util.CommandUtils;
@@ -53,7 +52,7 @@ public final class SetHomeCommand {
             return 0;
         }
         data.addHomeCoordinate(key, safeWorldCoordinate);
-        PacketUtils.sendPacketToPlayer(NetworkInit.INSTANCE, new WaypointSyncToClient(WaypointSyncToClient.Action.ADD, WaypointSyncToClient.Type.HOME, name, safeWorldCoordinate), player);
+        PacketUtils.sendPacketToPlayer(new WaypointSyncToClient(WaypointSyncToClient.Action.ADD, WaypointSyncToClient.Type.HOME, name, safeWorldCoordinate), player);
         if (defaultHome) {
             if (data.getDefaultHome().containsKey(player.level().dimension().location().toString())) {
                 MessageUtils.sendNotification(player, NarcissusComponent.get().transAuto("home_default_remove", data.getDefaultHome(player.level().dimension().location().toString()).value()), NarcissusNotificationTypes.WAYPOINT);

@@ -83,13 +83,13 @@ public class NarcissusFarewell {
                 // 同步玩家传送数据到客户端
                 PlayerTeleportData.syncPlayerData(player);
                 // 同步驿站数据到客户端
-                PacketUtils.sendPacketToPlayer(NetworkInit.INSTANCE, new StageDataSyncToClient(WorldStageData.get().getStageCoordinate()), player);
+                PacketUtils.sendPacketToPlayer(new StageDataSyncToClient(WorldStageData.get().getStageCoordinate()), player);
                 // 同步传送代价配置到客户端
                 Map<EnumTeleportType, TeleportCost> costMap = new HashMap<>();
                 costMap.put(EnumTeleportType.TP_HOME, NarcissusUtils.getCommandCost(EnumTeleportType.TP_HOME));
                 costMap.put(EnumTeleportType.TP_STAGE, NarcissusUtils.getCommandCost(EnumTeleportType.TP_STAGE));
                 costMap.put(EnumTeleportType.TP_BACK, NarcissusUtils.getCommandCost(EnumTeleportType.TP_BACK));
-                PacketUtils.sendPacketToPlayer(NetworkInit.INSTANCE, new CostConfigSyncToClient(costMap,
+                PacketUtils.sendPacketToPlayer(new CostConfigSyncToClient(costMap,
                         CommonConfig.get().general().teleportCostDistanceLimit(),
                         CommonConfig.get().general().teleportCostDistanceAcrossDimension()), player);
                 // 刷新权限信息
