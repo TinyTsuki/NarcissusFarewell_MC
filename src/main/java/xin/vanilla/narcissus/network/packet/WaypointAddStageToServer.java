@@ -9,6 +9,7 @@ import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
 import org.jetbrains.annotations.NotNull;
+import xin.vanilla.banira.common.network.NetworkPacket;
 import xin.vanilla.banira.common.util.CommandUtils;
 import xin.vanilla.banira.common.util.StringUtils;
 import xin.vanilla.banira.internal.network.BaniraStreamCodecs;
@@ -18,7 +19,7 @@ import xin.vanilla.narcissus.util.NarcissusUtils;
 
 @Getter
 @Accessors(fluent = true)
-public class WaypointAddStageToServer implements CustomPacketPayload {
+public class WaypointAddStageToServer implements NetworkPacket {
 
     public static final Type<WaypointAddStageToServer> TYPE =
             new Type<>(Identifier.id().create("waypoint_add_stage"));

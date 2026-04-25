@@ -13,6 +13,7 @@ import xin.vanilla.banira.Identifier;
 import xin.vanilla.banira.common.data.Component;
 import xin.vanilla.banira.common.enums.EnumMoveType;
 import xin.vanilla.banira.common.enums.EnumPosition;
+import xin.vanilla.banira.common.network.NetworkPacket;
 import xin.vanilla.banira.common.util.CollectionUtils;
 import xin.vanilla.banira.common.util.MessageUtils;
 import xin.vanilla.banira.common.util.PlayerUtils;
@@ -34,7 +35,7 @@ import java.util.stream.Collectors;
  */
 @Getter
 @Accessors(fluent = true)
-public class AccessListEditToServer implements CustomPacketPayload {
+public class AccessListEditToServer implements NetworkPacket {
     public static final CustomPacketPayload.Type<AccessListEditToServer> TYPE =
             new CustomPacketPayload.Type<>(Identifier.id().create("access_list"));
     public static final StreamCodec<RegistryFriendlyByteBuf, AccessListEditToServer> STREAM_CODEC =

@@ -14,7 +14,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
 import xin.vanilla.banira.common.data.KeyValue;
-import xin.vanilla.banira.common.network.packet.SplitPacket;
+import xin.vanilla.banira.common.network.SplitPacket;
 import xin.vanilla.banira.common.util.DateUtils;
 import xin.vanilla.banira.internal.network.BaniraStreamCodecs;
 import xin.vanilla.narcissus.Identifier;
@@ -27,15 +27,15 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 @Getter
-public class PlayerDataSyncPacket extends SplitPacket
+public class PlayerDataSyncToClient extends SplitPacket
         implements CustomPacketPayload,
-        SplitPacket.MergeableSplitPacket<PlayerDataSyncPacket>,
-        SplitPacket.SplittableSplitPacket<PlayerDataSyncPacket> {
+        SplitPacket.MergeableSplitPacket<PlayerDataSyncToClient>,
+        SplitPacket.SplittableSplitPacket<PlayerDataSyncToClient> {
 
-    public static final Type<PlayerDataSyncPacket> TYPE =
+    public static final Type<PlayerDataSyncToClient> TYPE =
             new Type<>(Identifier.id().create("player_data_sync"));
-    public static final StreamCodec<RegistryFriendlyByteBuf, PlayerDataSyncPacket> STREAM_CODEC =
-            BaniraStreamCodecs.registryBuf(PlayerDataSyncPacket::toBytes, PlayerDataSyncPacket::new);
+    public static final StreamCodec<RegistryFriendlyByteBuf, PlayerDataSyncToClient> STREAM_CODEC =
+            BaniraStreamCodecs.registryBuf(PlayerDataSyncToClient::toBytes, PlayerDataSyncToClient::new);
 
     private final UUID playerUUID;
     private final Date lastCardTime;
@@ -53,7 +53,7 @@ public class PlayerDataSyncPacket extends SplitPacket
      */
     private CompoundTag tpCountdownTag;
 
-    public PlayerDataSyncPacket(UUID playerUUID, PlayerTeleportData data) {
+    public PlayerDataSyncToClient(UUID playerUUID, PlayerTeleportData data) {
         super();
         this.playerUUID = playerUUID;
         this.lastCardTime = data.getLastCardTime();
@@ -66,7 +66,7 @@ public class PlayerDataSyncPacket extends SplitPacket
         this.tpCountdownTag = data.writeTeleportCountdownToNbt();
     }
 
-    public PlayerDataSyncPacket(FriendlyByteBuf buffer) {
+    public PlayerDataSyncToClient(FriendlyByteBuf buffer) {
         super(buffer);
         this.playerUUID = buffer.readUUID();
         this.lastCardTime = DateUtils.format(buffer.readUtf());
@@ -100,19 +100,19 @@ public class PlayerDataSyncPacket extends SplitPacket
         }
     }
 
-    public PlayerDataSyncPacket(List<PlayerDataSyncPacket> packets) {
+    public PlayerDataSyncToClient(List<PlayerDataSyncToClient> packets) {
         super();
         this.playerUUID = packets.getFirst().playerUUID;
         this.lastCardTime = packets.getFirst().lastCardTime;
         this.lastTpTime = packets.getFirst().lastTpTime;
         this.teleportCard = packets.getFirst().teleportCard;
         this.teleportRecords = packets.stream()
-                .map(PlayerDataSyncPacket::getTeleportRecords)
+                .map(PlayerDataSyncToClient::getTeleportRecords)
                 .flatMap(Collection::stream)
                 .sorted(Comparator.comparing(TeleportRecord::getTeleportTime))
                 .collect(Collectors.toList());
         this.homeCoordinate = packets.stream()
-                .map(PlayerDataSyncPacket::getHomeCoordinate)
+                .map(PlayerDataSyncToClient::getHomeCoordinate)
                 .flatMap(map -> map.entrySet().stream())
                 .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (v1, v2) -> v1));
         this.defaultHome = packets.getFirst().defaultHome;
@@ -122,7 +122,7 @@ public class PlayerDataSyncPacket extends SplitPacket
         this.tpCountdownTag = mergedCd != null ? mergedCd.copy() : new CompoundTag();
     }
 
-    private PlayerDataSyncPacket(UUID playerUUID, Date lastCardTime, Date lastTpTime, int teleportCard) {
+    private PlayerDataSyncToClient(UUID playerUUID, Date lastCardTime, Date lastTpTime, int teleportCard) {
         super();
         this.playerUUID = playerUUID;
         this.lastCardTime = lastCardTime;
@@ -165,7 +165,7 @@ public class PlayerDataSyncPacket extends SplitPacket
         buffer.writeNbt(this.tpCountdownTag != null ? this.tpCountdownTag : new CompoundTag());
     }
 
-    public static void handle(PlayerDataSyncPacket packet, IPayloadContext ctx) {
+    public static void handle(PlayerDataSyncToClient packet, IPayloadContext ctx) {
         ctx.enqueueWork(() -> {
             if (ctx.flow() == PacketFlow.CLIENTBOUND) {
                 ClientSide.handle(packet);
@@ -179,14 +179,14 @@ public class PlayerDataSyncPacket extends SplitPacket
     }
 
     @Override
-    public PlayerDataSyncPacket mergePackets(List<PlayerDataSyncPacket> packets) {
-        return new PlayerDataSyncPacket(packets);
+    public PlayerDataSyncToClient mergePackets(List<PlayerDataSyncToClient> packets) {
+        return new PlayerDataSyncToClient(packets);
     }
 
     @SuppressWarnings("unchecked")
     @Override
-    public List<PlayerDataSyncPacket> splitPacket() {
-        List<PlayerDataSyncPacket> result = new ArrayList<>();
+    public List<PlayerDataSyncToClient> splitPacket() {
+        List<PlayerDataSyncToClient> result = new ArrayList<>();
         KeyValue<String, String>[] keyArray = this.homeCoordinate.keySet().toArray(new KeyValue[0]);
         int teleportIndex = 0;
         int homeIndex = 0;
@@ -194,7 +194,7 @@ public class PlayerDataSyncPacket extends SplitPacket
         int totalChunks = (int) Math.ceil((double) (teleportRecords.size() + homeCoordinate.size()) / getChunkSize());
 
         for (int i = 0; i < totalChunks; i++) {
-            PlayerDataSyncPacket packet = new PlayerDataSyncPacket(this.playerUUID, this.lastCardTime, this.lastTpTime, this.teleportCard);
+            PlayerDataSyncToClient packet = new PlayerDataSyncToClient(this.playerUUID, this.lastCardTime, this.lastTpTime, this.teleportCard);
             for (int j = 0; j < getChunkSize() && teleportIndex < teleportRecords.size(); j++) {
                 packet.teleportRecords.add(this.teleportRecords.get(teleportIndex));
                 teleportIndex++;
@@ -214,12 +214,12 @@ public class PlayerDataSyncPacket extends SplitPacket
         }
 
         int totalPackets = result.size();
-        for (PlayerDataSyncPacket packet : result) {
+        for (PlayerDataSyncToClient packet : result) {
             packet.setId(this.getId());
             packet.setTotal(totalPackets);
         }
         if (result.isEmpty()) {
-            PlayerDataSyncPacket packet = new PlayerDataSyncPacket(this.playerUUID, this.lastCardTime, this.lastTpTime, this.teleportCard);
+            PlayerDataSyncToClient packet = new PlayerDataSyncToClient(this.playerUUID, this.lastCardTime, this.lastTpTime, this.teleportCard);
             packet.setSort(0);
             packet.setId(this.getId());
             packet.setTotal(1);
@@ -238,7 +238,7 @@ public class PlayerDataSyncPacket extends SplitPacket
         private ClientSide() {
         }
 
-        public static void handle(PlayerDataSyncPacket packet) {
+        public static void handle(PlayerDataSyncToClient packet) {
             net.minecraft.client.player.LocalPlayer player = net.minecraft.client.Minecraft.getInstance().player;
             if (player != null) {
                 try {
@@ -251,7 +251,7 @@ public class PlayerDataSyncPacket extends SplitPacket
             }
         }
 
-        public static PlayerTeleportData getData(PlayerDataSyncPacket packet) {
+        public static PlayerTeleportData getData(PlayerDataSyncToClient packet) {
             net.minecraft.client.player.LocalPlayer player = net.minecraft.client.Minecraft.getInstance().player;
             if (player == null) {
                 return null;

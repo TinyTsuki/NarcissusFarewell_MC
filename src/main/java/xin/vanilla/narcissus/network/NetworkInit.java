@@ -1,12 +1,11 @@
 package xin.vanilla.narcissus.network;
 
-import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
 import net.neoforged.neoforge.network.registration.PayloadRegistrar;
-import xin.vanilla.banira.common.network.packet.SplitPacket;
+import xin.vanilla.banira.common.network.SplitPacket;
 import xin.vanilla.narcissus.NarcissusFarewell;
 import xin.vanilla.narcissus.network.packet.*;
 
@@ -29,7 +28,7 @@ public final class NetworkInit {
     public static void registerPayloadHandlers(RegisterPayloadHandlersEvent event) {
         PayloadRegistrar reg = event.registrar("1").optional();
 
-        reg.playToClient(PlayerDataSyncPacket.TYPE, PlayerDataSyncPacket.STREAM_CODEC, NetworkInit::onPlayerDataSplitFragment);
+        reg.playToClient(PlayerDataSyncToClient.TYPE, PlayerDataSyncToClient.STREAM_CODEC, NetworkInit::onPlayerDataSplitFragment);
         reg.playToClient(WaypointSyncToClient.TYPE, WaypointSyncToClient.STREAM_CODEC, WaypointSyncToClient::handle);
         reg.playToClient(StageDataSyncToClient.TYPE, StageDataSyncToClient.STREAM_CODEC, StageDataSyncToClient::handle);
         reg.playToClient(CostConfigSyncToClient.TYPE, CostConfigSyncToClient.STREAM_CODEC, CostConfigSyncToClient::handle);
@@ -49,11 +48,11 @@ public final class NetworkInit {
         reg.playToServer(PlayerConfigSyncToServer.TYPE, PlayerConfigSyncToServer.STREAM_CODEC, PlayerConfigSyncToServer::handle);
     }
 
-    private static void onPlayerDataSplitFragment(PlayerDataSyncPacket payload, IPayloadContext ctx) {
-        dispatchSplitClientPayload(payload, ctx, PlayerDataSyncPacket::handle);
+    private static void onPlayerDataSplitFragment(PlayerDataSyncToClient payload, IPayloadContext ctx) {
+        dispatchSplitClientPayload(payload, ctx, PlayerDataSyncToClient::handle);
     }
 
-    private static <T extends SplitPacket & CustomPacketPayload> void dispatchSplitClientPayload(
+    private static <T extends SplitPacket> void dispatchSplitClientPayload(
             T payload,
             IPayloadContext ctx,
             BiConsumer<T, IPayloadContext> onMerged) {
