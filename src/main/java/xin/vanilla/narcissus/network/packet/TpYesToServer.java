@@ -3,6 +3,8 @@ package xin.vanilla.narcissus.network.packet;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraftforge.fmllegacy.network.NetworkEvent;
+import net.minecraftforge.fmllegacy.network.simple.SimpleChannel;
+import xin.vanilla.banira.common.network.NetworkPacket;
 import xin.vanilla.banira.common.util.CommandUtils;
 import xin.vanilla.banira.common.util.MessageUtils;
 import xin.vanilla.narcissus.NarcissusComponent;
@@ -10,13 +12,19 @@ import xin.vanilla.narcissus.NarcissusFarewell;
 import xin.vanilla.narcissus.data.TeleportRequest;
 import xin.vanilla.narcissus.enums.EnumCommandType;
 import xin.vanilla.narcissus.enums.EnumTeleportType;
+import xin.vanilla.narcissus.network.NetworkInit;
 import xin.vanilla.narcissus.notification.NarcissusNotificationTypes;
 import xin.vanilla.narcissus.util.NarcissusUtils;
 
 import java.util.Comparator;
 import java.util.function.Supplier;
 
-public class TpYesToServer {
+public class TpYesToServer implements NetworkPacket {
+
+    @Override
+    public Supplier<SimpleChannel> channel() {
+        return () -> NetworkInit.INSTANCE;
+    }
 
     public TpYesToServer() {
     }

@@ -5,13 +5,21 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraftforge.fmllegacy.network.NetworkEvent;
+import net.minecraftforge.fmllegacy.network.simple.SimpleChannel;
+import xin.vanilla.banira.common.network.NetworkPacket;
 import xin.vanilla.narcissus.data.player.PlayerTeleportData;
+import xin.vanilla.narcissus.network.NetworkInit;
 
 import java.util.function.Supplier;
 
 
 @Getter
-public class PlayerConfigSyncToServer {
+public class PlayerConfigSyncToServer implements NetworkPacket {
+
+    @Override
+    public Supplier<SimpleChannel> channel() {
+        return () -> NetworkInit.INSTANCE;
+    }
 
     private final CompoundTag countdownTag;
 
