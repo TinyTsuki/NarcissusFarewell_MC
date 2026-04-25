@@ -6,10 +6,13 @@ import net.minecraft.network.FriendlyByteBuf;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.fml.DistExecutor;
 import net.minecraftforge.network.NetworkEvent;
+import net.minecraftforge.network.simple.SimpleChannel;
+import xin.vanilla.banira.common.network.NetworkPacket;
 import xin.vanilla.narcissus.data.TeleportCost;
 import xin.vanilla.narcissus.data.client.ClientCostConfig;
 import xin.vanilla.narcissus.enums.EnumCostType;
 import xin.vanilla.narcissus.enums.EnumTeleportType;
+import xin.vanilla.narcissus.network.NetworkInit;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -18,7 +21,12 @@ import java.util.function.Supplier;
 
 @Getter
 @Accessors(fluent = true)
-public class CostConfigSyncToClient {
+public class CostConfigSyncToClient implements NetworkPacket {
+
+    @Override
+    public Supplier<SimpleChannel> channel() {
+        return () -> NetworkInit.INSTANCE;
+    }
 
     private static final int MAX_EXP_LEN = 256;
 
