@@ -27,7 +27,6 @@ import xin.vanilla.narcissus.data.player.PlayerTeleportData;
 import xin.vanilla.narcissus.enums.EnumCommandType;
 import xin.vanilla.narcissus.enums.EnumPanelMode;
 import xin.vanilla.narcissus.enums.EnumTeleportType;
-import xin.vanilla.narcissus.network.NetworkInit;
 import xin.vanilla.narcissus.network.packet.WaypointAddHomeToServer;
 import xin.vanilla.narcissus.network.packet.WaypointAddStageToServer;
 import xin.vanilla.narcissus.network.packet.WaypointDelToServer;
@@ -629,7 +628,7 @@ public class WaypointScreen extends BaniraScreen {
                     if (n != null) {
                         n = n.trim();
                     }
-                    PacketUtils.sendPacketToServer(NetworkInit.INSTANCE, new WaypointAddHomeToServer(n == null ? "" : n));
+                    PacketUtils.sendPacketToServer(new WaypointAddHomeToServer(n == null ? "" : n));
                 });
         minecraft.setScreen(new InputFormScreen(args));
     }
@@ -683,7 +682,7 @@ public class WaypointScreen extends BaniraScreen {
                     double x = Double.parseDouble(results.value("st_x").trim().replace(',', '.'));
                     double y = Double.parseDouble(results.value("st_y").trim().replace(',', '.'));
                     double z = Double.parseDouble(results.value("st_z").trim().replace(',', '.'));
-                    PacketUtils.sendPacketToServer(NetworkInit.INSTANCE, new WaypointAddStageToServer(name, dimension, x, y, z));
+                    PacketUtils.sendPacketToServer(new WaypointAddStageToServer(name, dimension, x, y, z));
                 });
         minecraft.setScreen(new InputFormScreen(args));
     }
@@ -1337,7 +1336,7 @@ public class WaypointScreen extends BaniraScreen {
         } else if (type == EnumTeleportType.TP_BACK) {
             name = selectedItem.recordType != null ? selectedItem.recordType : "";
         }
-        PacketUtils.sendPacketToServer(NetworkInit.INSTANCE, new WaypointTeleportToServer(type, name, dimension));
+        PacketUtils.sendPacketToServer(new WaypointTeleportToServer(type, name, dimension));
         super.previousScreen(null);
         onClose();
     }
@@ -1348,7 +1347,7 @@ public class WaypointScreen extends BaniraScreen {
         }
         int typeOrdinal = item.type == WaypointEntry.Type.HOME ? 0 : 1;
         String dimension = item.safeWorldCoordinate.getDimensionResourceId();
-        PacketUtils.sendPacketToServer(NetworkInit.INSTANCE, new WaypointDelToServer(typeOrdinal, item.name, dimension));
+        PacketUtils.sendPacketToServer(new WaypointDelToServer(typeOrdinal, item.name, dimension));
         if (item.type == WaypointEntry.Type.HOME) {
             homeItemsAll.removeIf(e -> e.name.equals(item.name) && e.safeWorldCoordinate != null && dimension.equals(e.safeWorldCoordinate.getDimensionResourceId()));
         } else if (item.type == WaypointEntry.Type.STAGE) {
