@@ -1,6 +1,7 @@
 package xin.vanilla.narcissus.util;
 
 import com.mojang.brigadier.arguments.IntegerArgumentType;
+import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.suggestion.SuggestionProvider;
@@ -122,7 +123,7 @@ public final class CommandUtils {
                 if (entry1 != null) result = entry1.getKey();
             } catch (IllegalArgumentException ignored) {
                 try {
-                    result = xin.vanilla.banira.common.util.CommandUtils.getStringEmpty(context, "requestId");
+                    result = StringArgumentType.getString(context, "requestId");
                     if (!NarcissusFarewell.getTeleportRequest().containsKey(result))
                         result = null;
                 } catch (IllegalArgumentException ignored1) {

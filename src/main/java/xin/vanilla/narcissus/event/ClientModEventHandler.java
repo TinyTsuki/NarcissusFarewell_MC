@@ -15,7 +15,6 @@ import xin.vanilla.banira.client.util.LogoModifier;
 import xin.vanilla.banira.common.util.PacketUtils;
 import xin.vanilla.narcissus.NarcissusFarewell;
 import xin.vanilla.narcissus.integration.ScreenHelper;
-import xin.vanilla.narcissus.network.NetworkInit;
 import xin.vanilla.narcissus.network.packet.*;
 import xin.vanilla.narcissus.notification.NarcissusNotificationTypes;
 
@@ -60,27 +59,27 @@ public final class ClientModEventHandler {
         if (Minecraft.getInstance().screen == null && event.phase == TickEvent.Phase.END) {
             if (TP_HOME_KEY.consumeClick()) {
                 if (!keyDown) {
-                    PacketUtils.sendPacketToServer(NetworkInit.INSTANCE, new TpHomeToServer());
+                    PacketUtils.sendPacketToServer(new TpHomeToServer());
                     keyDown = true;
                 }
             } else if (TP_GRAVE_KEY.consumeClick()) {
                 if (!keyDown) {
-                    PacketUtils.sendPacketToServer(NetworkInit.INSTANCE, new TpGraveToServer());
+                    PacketUtils.sendPacketToServer(new TpGraveToServer());
                     keyDown = true;
                 }
             } else if (TP_BACK_KEY.consumeClick()) {
                 if (!keyDown) {
-                    PacketUtils.sendPacketToServer(NetworkInit.INSTANCE, new TpBackToServer());
+                    PacketUtils.sendPacketToServer(new TpBackToServer());
                     keyDown = true;
                 }
             } else if (TP_REQ_YES.consumeClick()) {
                 if (!keyDown) {
-                    PacketUtils.sendPacketToServer(NetworkInit.INSTANCE, new TpYesToServer());
+                    PacketUtils.sendPacketToServer(new TpYesToServer());
                     keyDown = true;
                 }
             } else if (TP_REQ_NO.consumeClick()) {
                 if (!keyDown) {
-                    PacketUtils.sendPacketToServer(NetworkInit.INSTANCE, new TpNoToServer());
+                    PacketUtils.sendPacketToServer(new TpNoToServer());
                     keyDown = true;
                 }
             } else if (OPEN_SCREEN_KEY.consumeClick()) {

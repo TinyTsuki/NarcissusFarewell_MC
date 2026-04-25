@@ -19,7 +19,6 @@ import xin.vanilla.narcissus.data.PlayerAccess;
 import xin.vanilla.narcissus.data.SafeWorldCoordinate;
 import xin.vanilla.narcissus.data.TeleportRecord;
 import xin.vanilla.narcissus.enums.EnumTeleportType;
-import xin.vanilla.narcissus.network.NetworkInit;
 import xin.vanilla.narcissus.network.packet.PlayerDataSyncToClient;
 
 import java.util.*;
@@ -473,7 +472,7 @@ public final class PlayerTeleportData implements IPlayerData<PlayerTeleportData>
      */
     public static void syncPlayerData(ServerPlayerEntity player) {
         PlayerDataSyncToClient packet = new PlayerDataSyncToClient(player.getUUID(), getData(player));
-        PacketUtils.sendSplitPacketToPlayer(() -> NetworkInit.INSTANCE, packet, player);
+        PacketUtils.sendSplitPacketToPlayer(packet, player);
     }
 
 }
