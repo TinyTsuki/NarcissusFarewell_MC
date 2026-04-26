@@ -5,11 +5,9 @@ import lombok.experimental.Accessors;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraftforge.network.NetworkEvent;
-import net.minecraftforge.network.simple.SimpleChannel;
 import xin.vanilla.banira.common.data.Component;
 import xin.vanilla.banira.common.enums.EnumMoveType;
 import xin.vanilla.banira.common.enums.EnumPosition;
-import xin.vanilla.banira.common.network.NetworkPacket;
 import xin.vanilla.banira.common.util.CollectionUtils;
 import xin.vanilla.banira.common.util.MessageUtils;
 import xin.vanilla.banira.common.util.PlayerUtils;
@@ -18,7 +16,7 @@ import xin.vanilla.narcissus.NarcissusComponent;
 import xin.vanilla.narcissus.data.PlayerAccess;
 import xin.vanilla.narcissus.data.player.PlayerTeleportData;
 import xin.vanilla.narcissus.enums.EnumWhiteListMode;
-import xin.vanilla.narcissus.network.NetworkInit;
+import xin.vanilla.narcissus.network.NetworkPacket;
 import xin.vanilla.narcissus.util.CommandUtils;
 
 import javax.annotation.Nullable;
@@ -33,11 +31,6 @@ import java.util.stream.Collectors;
 @Getter
 @Accessors(fluent = true)
 public class AccessListEditToServer implements NetworkPacket {
-
-    @Override
-    public Supplier<SimpleChannel> channel() {
-        return () -> NetworkInit.INSTANCE;
-    }
 
     private static final int MAX_PAYLOAD_LEN = 64;
     private static final int MAX_MODE_LEN = 32;
