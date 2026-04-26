@@ -6,23 +6,14 @@ import net.minecraft.network.FriendlyByteBuf;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.event.network.CustomPayloadEvent;
 import net.minecraftforge.fml.DistExecutor;
-import net.minecraftforge.network.SimpleChannel;
-import xin.vanilla.banira.common.network.NetworkPacket;
 import xin.vanilla.narcissus.data.SafeWorldCoordinate;
 import xin.vanilla.narcissus.integration.MapHelper;
-import xin.vanilla.narcissus.network.NetworkInit;
-
-import java.util.function.Supplier;
+import xin.vanilla.narcissus.network.NetworkPacket;
 
 
 @Getter
 @Accessors(fluent = true)
 public class WaypointSyncToClient implements NetworkPacket {
-
-    @Override
-    public Supplier<SimpleChannel> channel() {
-        return () -> NetworkInit.INSTANCE;
-    }
 
     public enum Action {
         ADD,
