@@ -7,7 +7,6 @@ import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.fml.DistExecutor;
 import net.minecraftforge.network.NetworkEvent;
-import net.minecraftforge.network.simple.SimpleChannel;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import xin.vanilla.banira.common.data.KeyValue;
@@ -17,7 +16,7 @@ import xin.vanilla.narcissus.data.PlayerAccess;
 import xin.vanilla.narcissus.data.SafeWorldCoordinate;
 import xin.vanilla.narcissus.data.TeleportRecord;
 import xin.vanilla.narcissus.data.player.PlayerTeleportData;
-import xin.vanilla.narcissus.network.NetworkInit;
+import xin.vanilla.narcissus.network.NetworkPacket;
 
 import java.util.*;
 import java.util.function.Supplier;
@@ -26,11 +25,8 @@ import java.util.stream.Collectors;
 @Getter
 public class PlayerDataSyncToClient extends SplitPacket
         implements SplitPacket.MergeableSplitPacket<PlayerDataSyncToClient>,
-        SplitPacket.SplittableSplitPacket<PlayerDataSyncToClient> {
-    @Override
-    public Supplier<SimpleChannel> channel() {
-        return () -> NetworkInit.INSTANCE;
-    }
+        SplitPacket.SplittableSplitPacket<PlayerDataSyncToClient>,
+        NetworkPacket {
 
     private final UUID playerUUID;
     private final Date lastCardTime;
