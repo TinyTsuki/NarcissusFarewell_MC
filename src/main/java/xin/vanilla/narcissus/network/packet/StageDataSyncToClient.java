@@ -6,26 +6,18 @@ import net.minecraft.network.FriendlyByteBuf;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.event.network.CustomPayloadEvent;
 import net.minecraftforge.fml.DistExecutor;
-import net.minecraftforge.network.SimpleChannel;
 import xin.vanilla.banira.common.data.KeyValue;
-import xin.vanilla.banira.common.network.NetworkPacket;
 import xin.vanilla.narcissus.data.SafeWorldCoordinate;
 import xin.vanilla.narcissus.data.client.ClientStageData;
-import xin.vanilla.narcissus.network.NetworkInit;
+import xin.vanilla.narcissus.network.NetworkPacket;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.function.Supplier;
 
 
 @Getter
 @Accessors(fluent = true)
 public class StageDataSyncToClient implements NetworkPacket {
-
-    @Override
-    public Supplier<SimpleChannel> channel() {
-        return () -> NetworkInit.INSTANCE;
-    }
 
     private static final int MAX_NAME_LEN = 64;
     private static final int MAX_DIMENSION_LEN = 256;
