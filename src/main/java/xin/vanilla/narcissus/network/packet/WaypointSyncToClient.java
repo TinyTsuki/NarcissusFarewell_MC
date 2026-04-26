@@ -9,11 +9,11 @@ import net.minecraft.network.protocol.PacketFlow;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
 import org.jetbrains.annotations.NotNull;
-import xin.vanilla.banira.common.network.NetworkPacket;
 import xin.vanilla.banira.internal.network.BaniraStreamCodecs;
 import xin.vanilla.narcissus.Identifier;
 import xin.vanilla.narcissus.data.SafeWorldCoordinate;
 import xin.vanilla.narcissus.integration.MapHelper;
+import xin.vanilla.narcissus.network.NetworkPacket;
 
 @Getter
 @Accessors(fluent = true)
