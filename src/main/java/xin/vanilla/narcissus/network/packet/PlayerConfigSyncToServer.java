@@ -9,10 +9,10 @@ import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
 import org.jetbrains.annotations.NotNull;
-import xin.vanilla.banira.common.network.NetworkPacket;
 import xin.vanilla.banira.internal.network.BaniraStreamCodecs;
 import xin.vanilla.narcissus.Identifier;
 import xin.vanilla.narcissus.data.player.PlayerTeleportData;
+import xin.vanilla.narcissus.network.NetworkPacket;
 
 @Getter
 public class PlayerConfigSyncToServer implements NetworkPacket {

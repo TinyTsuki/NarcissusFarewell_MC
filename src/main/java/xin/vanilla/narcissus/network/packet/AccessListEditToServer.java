@@ -13,7 +13,6 @@ import xin.vanilla.banira.Identifier;
 import xin.vanilla.banira.common.data.Component;
 import xin.vanilla.banira.common.enums.EnumMoveType;
 import xin.vanilla.banira.common.enums.EnumPosition;
-import xin.vanilla.banira.common.network.NetworkPacket;
 import xin.vanilla.banira.common.util.CollectionUtils;
 import xin.vanilla.banira.common.util.MessageUtils;
 import xin.vanilla.banira.common.util.PlayerUtils;
@@ -23,6 +22,7 @@ import xin.vanilla.narcissus.NarcissusComponent;
 import xin.vanilla.narcissus.data.PlayerAccess;
 import xin.vanilla.narcissus.data.player.PlayerTeleportData;
 import xin.vanilla.narcissus.enums.EnumWhiteListMode;
+import xin.vanilla.narcissus.network.NetworkPacket;
 import xin.vanilla.narcissus.util.CommandUtils;
 
 import javax.annotation.Nullable;
@@ -36,6 +36,7 @@ import java.util.stream.Collectors;
 @Getter
 @Accessors(fluent = true)
 public class AccessListEditToServer implements NetworkPacket {
+
     public static final CustomPacketPayload.Type<AccessListEditToServer> TYPE =
             new CustomPacketPayload.Type<>(Identifier.id().create("access_list"));
     public static final StreamCodec<RegistryFriendlyByteBuf, AccessListEditToServer> STREAM_CODEC =
