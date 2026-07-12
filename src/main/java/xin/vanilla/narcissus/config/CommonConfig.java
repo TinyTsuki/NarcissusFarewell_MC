@@ -7,7 +7,7 @@ import lombok.experimental.Accessors;
 import net.minecraft.block.Blocks;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.SoundEvents;
-import xin.vanilla.banira.common.config.BaniraConfig;
+import xin.vanilla.banira.api.BaniraConfigs;
 import xin.vanilla.banira.common.config.ConfigData;
 import xin.vanilla.banira.common.config.ConfigHolder;
 import xin.vanilla.banira.common.config.ConfigScope;
@@ -98,30 +98,30 @@ public class CommonConfig implements ConfigData {
 
 
     public static RootView get() {
-        return CommonConfigAccess.root(BaniraConfig.holder(CommonConfig.class));
+        return CommonConfigAccess.root(BaniraConfigs.holder(CommonConfig.class));
     }
 
     public static void save() {
-        ConfigHolder h = BaniraConfig.holder(CommonConfig.class);
+        ConfigHolder h = BaniraConfigs.holder(CommonConfig.class);
         if (h != null) {
             h.save();
         }
     }
 
     public static void resetConfig() {
-        CommonConfigAccess.resetConfig(BaniraConfig.holder(CommonConfig.class));
+        CommonConfigAccess.resetConfig(BaniraConfigs.holder(CommonConfig.class));
     }
 
     public static void resetConfigWithMode1() {
-        CommonConfigAccess.resetConfigWithMode1(BaniraConfig.holder(CommonConfig.class));
+        CommonConfigAccess.resetConfigWithMode1(BaniraConfigs.holder(CommonConfig.class));
     }
 
     public static void resetConfigWithMode2() {
-        CommonConfigAccess.resetConfigWithMode2(BaniraConfig.holder(CommonConfig.class));
+        CommonConfigAccess.resetConfigWithMode2(BaniraConfigs.holder(CommonConfig.class));
     }
 
     public static void resetConfigWithMode3() {
-        CommonConfigAccess.resetConfigWithMode3(BaniraConfig.holder(CommonConfig.class));
+        CommonConfigAccess.resetConfigWithMode3(BaniraConfigs.holder(CommonConfig.class));
     }
 
 

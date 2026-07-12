@@ -4,7 +4,7 @@ import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import lombok.Getter;
 import net.minecraft.command.CommandSource;
 import xin.vanilla.banira.command.BaniraCommand;
-import xin.vanilla.banira.common.api.IVirtualPermissionType;
+import xin.vanilla.banira.api.permission.BaniraVirtualPermission;
 import xin.vanilla.banira.common.data.Component;
 import xin.vanilla.banira.common.enums.IEnumDescribable;
 import xin.vanilla.banira.common.util.EnumDescriptionHelper;
@@ -16,7 +16,7 @@ import javax.annotation.Nullable;
 import java.util.function.Supplier;
 
 @Getter
-public enum EnumCommandType implements IVirtualPermissionType, IEnumDescribable {
+public enum EnumCommandType implements BaniraVirtualPermission, IEnumDescribable {
     HELP(HelpCommand::create, false, false),
     LANGUAGE(() -> baniraNode(BaniraCommand.LANGUAGE), false, false),
     LANGUAGE_CONCISE(),
@@ -165,7 +165,7 @@ public enum EnumCommandType implements IVirtualPermissionType, IEnumDescribable 
         return this.ordinal();
     }
 
-    // region IVirtualPermissionType
+    // region BaniraVirtualPermission
     @Override
     public String modId() {
         return NarcissusFarewell.MODID;
