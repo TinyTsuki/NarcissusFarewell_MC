@@ -7,13 +7,14 @@ import net.minecraft.nbt.ListTag;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.saveddata.SavedData;
-import xin.vanilla.banira.BaniraCodex;
+import xin.vanilla.banira.common.util.BaniraServerUtils;
 import xin.vanilla.banira.common.data.KeyValue;
 import xin.vanilla.narcissus.data.SafeWorldCoordinate;
 
 import javax.annotation.ParametersAreNonnullByDefault;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * 世界驿站数据
@@ -90,7 +91,7 @@ public class WorldStageData extends SavedData {
     }
 
     public static WorldStageData get() {
-        return get(BaniraCodex.serverInstance().key().getAllLevels().iterator().next());
+        return get(Objects.requireNonNull(BaniraServerUtils.currentServer()).getAllLevels().iterator().next());
     }
 
     public static WorldStageData get(ServerPlayer player) {

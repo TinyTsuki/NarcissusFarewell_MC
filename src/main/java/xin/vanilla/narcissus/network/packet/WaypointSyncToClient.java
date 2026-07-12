@@ -2,15 +2,14 @@ package xin.vanilla.narcissus.network.packet;
 
 import lombok.Getter;
 import lombok.experimental.Accessors;
-import net.minecraft.network.FriendlyByteBuf;
+import xin.vanilla.banira.common.network.BaniraPacketBuffer;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.fml.DistExecutor;
-import net.minecraftforge.network.NetworkEvent;
+import xin.vanilla.banira.common.network.BaniraNetworkContext;
 import xin.vanilla.narcissus.data.SafeWorldCoordinate;
 import xin.vanilla.narcissus.integration.MapHelper;
 import xin.vanilla.narcissus.network.NetworkPacket;
 
-import java.util.function.Supplier;
 
 
 @Getter
@@ -45,7 +44,7 @@ public class WaypointSyncToClient implements NetworkPacket {
         this.z = safeWorldCoordinate.z();
     }
 
-    public WaypointSyncToClient(FriendlyByteBuf buf) {
+    public WaypointSyncToClient(BaniraPacketBuffer buf) {
         this.action = buf.readEnum(Action.class);
         this.type = buf.readEnum(Type.class);
         this.name = buf.readUtf(32);
@@ -55,7 +54,7 @@ public class WaypointSyncToClient implements NetworkPacket {
         this.z = buf.readDouble();
     }
 
-    public void toBytes(FriendlyByteBuf buf) {
+    public void toBytes(BaniraPacketBuffer buf) {
         buf.writeEnum(action);
         buf.writeEnum(type);
         buf.writeUtf(name, 32);
@@ -65,12 +64,12 @@ public class WaypointSyncToClient implements NetworkPacket {
         buf.writeDouble(z);
     }
 
-    public static void handle(WaypointSyncToClient packet, Supplier<NetworkEvent.Context> ctx) {
-        ctx.get().enqueueWork(() -> {
-            if (ctx.get().getDirection().getReceptionSide().isClient()) {
+    public static void handle(WaypointSyncToClient packet, BaniraNetworkContext ctx) {
+        ctx.enqueueWork(() -> {
+            if (ctx.isClientSide()) {
                 DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> MapHelper.handle(packet));
             }
         });
-        ctx.get().setPacketHandled(true);
+        ctx.markHandled();
     }
 }

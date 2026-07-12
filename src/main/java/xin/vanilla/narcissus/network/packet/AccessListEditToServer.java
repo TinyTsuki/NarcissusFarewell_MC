@@ -2,9 +2,9 @@ package xin.vanilla.narcissus.network.packet;
 
 import lombok.Getter;
 import lombok.experimental.Accessors;
-import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraftforge.network.NetworkEvent;
+import xin.vanilla.banira.common.network.BaniraPacketBuffer;
+import xin.vanilla.banira.common.network.BaniraNetworkContext;
 import xin.vanilla.banira.common.data.Component;
 import xin.vanilla.banira.common.enums.EnumMoveType;
 import xin.vanilla.banira.common.enums.EnumPosition;
@@ -21,7 +21,6 @@ import xin.vanilla.narcissus.util.CommandUtils;
 
 import javax.annotation.Nullable;
 import java.util.UUID;
-import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 /**
@@ -57,24 +56,24 @@ public class AccessListEditToServer implements NetworkPacket {
         this.payload = payload != null ? payload : "";
     }
 
-    public AccessListEditToServer(FriendlyByteBuf buf) {
+    public AccessListEditToServer(BaniraPacketBuffer buf) {
         this.op = buf.readByte();
         this.mode = buf.readUtf(MAX_MODE_LEN);
         this.payload = buf.readUtf(MAX_PAYLOAD_LEN);
     }
 
-    public void toBytes(FriendlyByteBuf buf) {
+    public void toBytes(BaniraPacketBuffer buf) {
         buf.writeByte(op);
         buf.writeUtf(mode, MAX_MODE_LEN);
         buf.writeUtf(payload, MAX_PAYLOAD_LEN);
     }
 
-    public static void handle(AccessListEditToServer packet, Supplier<NetworkEvent.Context> ctx) {
-        ctx.get().enqueueWork(() -> {
-            if (!ctx.get().getDirection().getReceptionSide().isServer()) {
+    public static void handle(AccessListEditToServer packet, BaniraNetworkContext ctx) {
+        ctx.enqueueWork(() -> {
+            if (!ctx.isServerSide()) {
                 return;
             }
-            ServerPlayer player = ctx.get().getSender();
+            ServerPlayer player = ctx.senderAs(net.minecraft.server.level.ServerPlayer.class);
             if (player == null) {
                 return;
             }
@@ -111,7 +110,7 @@ public class AccessListEditToServer implements NetworkPacket {
                     break;
             }
         });
-        ctx.get().setPacketHandled(true);
+        ctx.markHandled();
     }
 
     private static void handleBlackAdd(ServerPlayer player, PlayerTeleportData data, PlayerAccess access, String rawPayload) {

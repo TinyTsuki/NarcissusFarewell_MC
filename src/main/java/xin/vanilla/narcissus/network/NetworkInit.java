@@ -1,15 +1,14 @@
 package xin.vanilla.narcissus.network;
 
-import net.minecraftforge.network.simple.SimpleChannel;
+import xin.vanilla.banira.api.BaniraIdentifier;
 import xin.vanilla.banira.common.network.NetworkHandler;
 import xin.vanilla.narcissus.Identifier;
 import xin.vanilla.narcissus.network.packet.*;
 
 public final class NetworkInit {
 
-    private static final NetworkHandler HANDLER = NetworkHandler.create("main_network", Identifier.id());
-
-    public static final SimpleChannel INSTANCE = HANDLER.getChannel();
+    private static final NetworkHandler HANDLER = NetworkHandler.create("main_network",
+            BaniraIdentifier.of(Identifier.id().modId(), "main_network"));
 
     public static void registerPackets() {
         HANDLER.registerSplit(PlayerDataSyncToClient.class, PlayerDataSyncToClient::toBytes, PlayerDataSyncToClient::new, PlayerDataSyncToClient::handle);

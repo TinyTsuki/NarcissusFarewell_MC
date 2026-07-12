@@ -2,11 +2,11 @@ package xin.vanilla.narcissus.network.packet;
 
 import lombok.Getter;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.network.FriendlyByteBuf;
+import xin.vanilla.banira.common.network.BaniraPacketBuffer;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.fml.DistExecutor;
-import net.minecraftforge.network.NetworkEvent;
+import xin.vanilla.banira.common.network.BaniraNetworkContext;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import xin.vanilla.banira.common.data.KeyValue;
@@ -16,10 +16,10 @@ import xin.vanilla.narcissus.data.PlayerAccess;
 import xin.vanilla.narcissus.data.SafeWorldCoordinate;
 import xin.vanilla.narcissus.data.TeleportRecord;
 import xin.vanilla.narcissus.data.player.PlayerTeleportData;
+import xin.vanilla.narcissus.internal.network.NarcissusNbtPacketCodec;
 import xin.vanilla.narcissus.network.NetworkPacket;
 
 import java.util.*;
-import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 @Getter
@@ -57,9 +57,9 @@ public class PlayerDataSyncToClient extends SplitPacket
         this.tpCountdownTag = data.writeTeleportCountdownToNbt();
     }
 
-    public PlayerDataSyncToClient(FriendlyByteBuf buffer) {
+    public PlayerDataSyncToClient(BaniraPacketBuffer buffer) {
         super(buffer);
-        this.playerUUID = buffer.readUUID();
+        this.playerUUID = buffer.readUuid();
         this.lastCardTime = DateUtils.format(buffer.readUtf());
         this.lastTpTime = DateUtils.format(buffer.readUtf());
         this.teleportCard = buffer.readInt();
@@ -67,13 +67,14 @@ public class PlayerDataSyncToClient extends SplitPacket
         this.teleportRecords = new ArrayList<>();
         int size = buffer.readInt();
         for (int i = 0; i < size; i++) {
-            this.teleportRecords.add(TeleportRecord.readFromNBT(Objects.requireNonNull(buffer.readNbt())));
+            this.teleportRecords.add(TeleportRecord.readFromNBT(NarcissusNbtPacketCodec.read(buffer)));
         }
 
         this.homeCoordinate = new HashMap<>();
         int homeSize = buffer.readInt();
         for (int i = 0; i < homeSize; i++) {
-            this.homeCoordinate.put(new KeyValue<>(buffer.readUtf(), buffer.readUtf()), SafeWorldCoordinate.fromTag(Objects.requireNonNull(buffer.readNbt())));
+            this.homeCoordinate.put(new KeyValue<>(buffer.readUtf(), buffer.readUtf()),
+                    SafeWorldCoordinate.fromTag(NarcissusNbtPacketCodec.read(buffer)));
         }
 
         this.defaultHome = new HashMap<>();
@@ -81,11 +82,11 @@ public class PlayerDataSyncToClient extends SplitPacket
         for (int i = 0; i < defaultSize; i++) {
             this.defaultHome.put(buffer.readUtf(), buffer.readUtf());
         }
-        this.accessTag = buffer.readNbt();
+        this.accessTag = NarcissusNbtPacketCodec.read(buffer);
         if (this.accessTag == null) {
             this.accessTag = new CompoundTag();
         }
-        this.tpCountdownTag = buffer.readNbt();
+        this.tpCountdownTag = NarcissusNbtPacketCodec.read(buffer);
         if (this.tpCountdownTag == null) {
             this.tpCountdownTag = new CompoundTag();
         }
@@ -126,36 +127,36 @@ public class PlayerDataSyncToClient extends SplitPacket
         this.tpCountdownTag = new CompoundTag();
     }
 
-    public void toBytes(FriendlyByteBuf buffer) {
+    public void toBytes(BaniraPacketBuffer buffer) {
         super.toBytes(buffer);
-        buffer.writeUUID(playerUUID);
+        buffer.writeUuid(playerUUID);
         buffer.writeUtf(DateUtils.toDateTimeString(this.lastCardTime));
         buffer.writeUtf(DateUtils.toDateTimeString(this.lastTpTime));
         buffer.writeInt(this.teleportCard);
         buffer.writeInt(this.teleportRecords.size());
         for (TeleportRecord record : this.teleportRecords) {
-            buffer.writeNbt(record.writeToNBT());
+            NarcissusNbtPacketCodec.write(buffer, record.writeToNBT());
         }
         buffer.writeInt(this.homeCoordinate.size());
         for (Map.Entry<KeyValue<String, String>, SafeWorldCoordinate> entry : this.homeCoordinate.entrySet()) {
             buffer.writeUtf(entry.getKey().key());
             buffer.writeUtf(entry.getKey().value());
-            buffer.writeNbt(entry.getValue().toTag());
+            NarcissusNbtPacketCodec.write(buffer, entry.getValue().toTag());
         }
         buffer.writeInt(this.defaultHome.size());
         for (Map.Entry<String, String> entry : this.defaultHome.entrySet()) {
             buffer.writeUtf(entry.getKey());
             buffer.writeUtf(entry.getValue());
         }
-        buffer.writeNbt(this.accessTag != null ? this.accessTag : new CompoundTag());
-        buffer.writeNbt(this.tpCountdownTag != null ? this.tpCountdownTag : new CompoundTag());
+        NarcissusNbtPacketCodec.write(buffer, this.accessTag != null ? this.accessTag : new CompoundTag());
+        NarcissusNbtPacketCodec.write(buffer, this.tpCountdownTag != null ? this.tpCountdownTag : new CompoundTag());
     }
 
-    public static void handle(PlayerDataSyncToClient packet, Supplier<NetworkEvent.Context> ctx) {
-        if (ctx.get().getDirection().getReceptionSide().isClient()) {
+    public static void handle(PlayerDataSyncToClient packet, BaniraNetworkContext ctx) {
+        if (ctx.isClientSide()) {
             DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> ClientSide.handle(packet));
         }
-        ctx.get().setPacketHandled(true);
+        ctx.markHandled();
     }
 
     @Override
