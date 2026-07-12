@@ -100,6 +100,14 @@ minecraft {
         client {
             // Comma-separated list of namespaces to load gametests from. Empty = all namespaces.
             property 'forge.enabledGameTestNamespaces', mod_id
+            def uiSmoke = (project.findProperty('narcissus.uiSmoke') ?: System.getProperty('narcissus.uiSmoke') ?: 'false').toString()
+            def uiSmokeExit = (project.findProperty('narcissus.uiSmoke.exitOnFinish') ?: System.getProperty('narcissus.uiSmoke.exitOnFinish') ?: 'false').toString()
+            def uiSmokeWorld = (project.findProperty('narcissus.uiSmoke.world') ?: System.getProperty('narcissus.uiSmoke.world') ?: '').toString()
+            def uiSmokeTeleport = (project.findProperty('narcissus.uiSmoke.teleport') ?: System.getProperty('narcissus.uiSmoke.teleport') ?: 'false').toString()
+            property 'narcissus.uiSmoke', uiSmoke
+            property 'narcissus.uiSmoke.exitOnFinish', uiSmokeExit
+            property 'narcissus.uiSmoke.world', uiSmokeWorld
+            property 'narcissus.uiSmoke.teleport', uiSmokeTeleport
         }
 
         server {
