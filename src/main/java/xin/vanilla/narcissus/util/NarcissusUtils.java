@@ -50,6 +50,7 @@ import xin.vanilla.narcissus.enums.EnumCardType;
 import xin.vanilla.narcissus.enums.EnumCommandType;
 import xin.vanilla.narcissus.enums.EnumCostType;
 import xin.vanilla.narcissus.enums.EnumTeleportType;
+import xin.vanilla.narcissus.internal.forge.network.ForgeNativePacketSender;
 import xin.vanilla.narcissus.mixin.LivingEntityInvoker;
 import xin.vanilla.narcissus.mixin.TemptGoalAccessor;
 import xin.vanilla.narcissus.notification.NarcissusNotificationTypes;
@@ -955,7 +956,7 @@ public class NarcissusUtils {
         if (vehicle != null) {
             player.startRiding(vehicle, true);
             // 同步客户端状态
-            PacketUtils.broadcastPacket(new ClientboundSetPassengersPacket(vehicle));
+            ForgeNativePacketSender.broadcast(new ClientboundSetPassengersPacket(vehicle));
         }
 
         NarcissusUtils.playSound(player, sound, 1.0f, 1.0f);
@@ -1014,7 +1015,7 @@ public class NarcissusUtils {
             }
         }
         // 同步客户端状态
-        PacketUtils.broadcastPacket(new ClientboundSetPassengersPacket(passenger));
+        ForgeNativePacketSender.broadcast(new ClientboundSetPassengersPacket(passenger));
         return playerVehicle;
     }
 
