@@ -1,8 +1,8 @@
 package xin.vanilla.narcissus.network.packet;
 
 import net.minecraft.entity.player.ServerPlayerEntity;
-import net.minecraft.network.PacketBuffer;
-import net.minecraftforge.fml.network.NetworkEvent;
+import xin.vanilla.banira.common.network.BaniraPacketBuffer;
+import xin.vanilla.banira.common.network.BaniraNetworkContext;
 import xin.vanilla.banira.common.util.CommandUtils;
 import xin.vanilla.banira.common.util.MessageUtils;
 import xin.vanilla.narcissus.NarcissusComponent;
@@ -15,24 +15,23 @@ import xin.vanilla.narcissus.notification.NarcissusNotificationTypes;
 import xin.vanilla.narcissus.util.NarcissusUtils;
 
 import java.util.Comparator;
-import java.util.function.Supplier;
 
 public class TpNoToServer implements NetworkPacket {
 
     public TpNoToServer() {
     }
 
-    public TpNoToServer(PacketBuffer buf) {
+    public TpNoToServer(BaniraPacketBuffer buf) {
     }
 
-    public void toBytes(PacketBuffer buf) {
+    public void toBytes(BaniraPacketBuffer buf) {
     }
 
-    public static void handle(TpNoToServer packet, Supplier<NetworkEvent.Context> ctx) {
+    public static void handle(TpNoToServer packet, BaniraNetworkContext ctx) {
         // 获取网络事件上下文并排队执行工作
-        ctx.get().enqueueWork(() -> {
+        ctx.enqueueWork(() -> {
             // 获取发送数据包的玩家实体
-            ServerPlayerEntity player = ctx.get().getSender();
+            ServerPlayerEntity player = ctx.senderAs(net.minecraft.entity.player.ServerPlayerEntity.class);
             if (player != null) {
                 EnumTeleportType teleportType = NarcissusFarewell.getTeleportRequest().values().stream()
                         .filter(request -> !request.isIgnore())
@@ -49,6 +48,6 @@ public class TpNoToServer implements NetworkPacket {
             }
         });
         // 设置数据包已处理状态，防止重复处理
-        ctx.get().setPacketHandled(true);
+        ctx.markHandled();
     }
 }

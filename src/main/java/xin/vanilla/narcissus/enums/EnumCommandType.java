@@ -18,7 +18,7 @@ import java.util.function.Supplier;
 @Getter
 public enum EnumCommandType implements IVirtualPermissionType, IEnumDescribable {
     HELP(HelpCommand::create, false, false),
-    LANGUAGE(() -> BaniraCommand.LANGUAGE, false, false),
+    LANGUAGE(() -> baniraNode(BaniraCommand.LANGUAGE), false, false),
     LANGUAGE_CONCISE(),
     UUID(UuidCommand::create),
     UUID_CONCISE(),
@@ -94,7 +94,7 @@ public enum EnumCommandType implements IVirtualPermissionType, IEnumDescribable 
     TP_GRAVE_CONCISE(),
     FLY(FlyCommand::create),
     FLY_CONCISE(),
-    VIRTUAL_OP(() -> BaniraCommand.VIRTUAL_OP),
+    VIRTUAL_OP(() -> baniraNode(BaniraCommand.VIRTUAL_OP)),
     VIRTUAL_OP_CONCISE(),
     CONFIG(ConfigCommand::create, true),
     BLACKLIST(false, false),
@@ -116,6 +116,14 @@ public enum EnumCommandType implements IVirtualPermissionType, IEnumDescribable 
 
     @Nullable
     private final Supplier<LiteralArgumentBuilder<CommandSource>> instance;
+
+    /**
+     * Banira 对外以 Object 暴露版本相关命令节点，这里在 1.16.5 分支恢复 Brigadier 类型。
+     */
+    @SuppressWarnings("unchecked")
+    private static LiteralArgumentBuilder<CommandSource> baniraNode(Object node) {
+        return (LiteralArgumentBuilder<CommandSource>) node;
+    }
 
     EnumCommandType() {
         this.instance = null;

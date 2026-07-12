@@ -13,6 +13,7 @@ import xin.vanilla.banira.client.gui.BaniraScreen;
 import xin.vanilla.banira.client.gui.InputFormScreen;
 import xin.vanilla.banira.client.gui.component.Text;
 import xin.vanilla.banira.client.gui.widget.*;
+import xin.vanilla.banira.client.util.PlayerSkinTextureUtils;
 import xin.vanilla.banira.common.data.Color;
 import xin.vanilla.banira.common.util.ColorUtils;
 import xin.vanilla.banira.common.util.PacketUtils;
@@ -467,7 +468,7 @@ public class AccessListScreen extends BaniraScreen {
         List<String> labels = new ArrayList<>(nameToUuid.keySet());
         List<DropdownOption> options = new ArrayList<>();
         nameToUuid.forEach((label, uuid) -> {
-            Texture[] textures = PlayerUtils.getPlayerSkinHeadFaceTextures(UUID.fromString(uuid));
+            Texture[] textures = PlayerSkinTextureUtils.headFaceTextures(UUID.fromString(uuid));
             DropdownOption option = new DropdownOption(label, textures, NarcissusComponent.get().literal(uuid));
             options.add(option);
         });
@@ -504,7 +505,7 @@ public class AccessListScreen extends BaniraScreen {
         List<String> labels = new ArrayList<>(nameToUuid.keySet());
         List<DropdownOption> options = new ArrayList<>();
         nameToUuid.forEach((label, uuid) -> {
-            Texture[] textures = PlayerUtils.getPlayerSkinHeadFaceTextures(UUID.fromString(uuid));
+            Texture[] textures = PlayerSkinTextureUtils.headFaceTextures(UUID.fromString(uuid));
             DropdownOption option = new DropdownOption(label, textures, NarcissusComponent.get().literal(uuid));
             options.add(option);
         });
@@ -843,7 +844,7 @@ public class AccessListScreen extends BaniraScreen {
         } catch (IllegalArgumentException e) {
             return;
         }
-        Texture[] tex = PlayerUtils.getPlayerSkinHeadFaceTextures(uuid);
+        Texture[] tex = PlayerSkinTextureUtils.headFaceTextures(uuid);
         if (tex == null || tex.length < 2 || tex[0] == null) {
             return;
         }

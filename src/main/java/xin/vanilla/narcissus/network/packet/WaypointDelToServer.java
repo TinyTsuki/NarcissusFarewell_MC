@@ -2,15 +2,14 @@ package xin.vanilla.narcissus.network.packet;
 
 import lombok.Getter;
 import lombok.experimental.Accessors;
-import net.minecraft.network.PacketBuffer;
-import net.minecraftforge.fml.network.NetworkEvent;
+import xin.vanilla.banira.common.network.BaniraPacketBuffer;
+import xin.vanilla.banira.common.network.BaniraNetworkContext;
 import xin.vanilla.banira.common.util.CommandUtils;
 import xin.vanilla.banira.common.util.StringUtils;
 import xin.vanilla.narcissus.config.CommonConfig;
 import xin.vanilla.narcissus.network.NetworkPacket;
 import xin.vanilla.narcissus.util.NarcissusUtils;
 
-import java.util.function.Supplier;
 
 
 @Getter
@@ -30,22 +29,22 @@ public class WaypointDelToServer implements NetworkPacket {
         this.dimension = dimension != null ? dimension : "";
     }
 
-    public WaypointDelToServer(PacketBuffer buf) {
+    public WaypointDelToServer(BaniraPacketBuffer buf) {
         this.type = buf.readVarInt();
         this.name = buf.readUtf(MAX_NAME_LEN);
         this.dimension = buf.readUtf(MAX_DIMENSION_LEN);
     }
 
-    public void toBytes(PacketBuffer buf) {
+    public void toBytes(BaniraPacketBuffer buf) {
         buf.writeVarInt(type);
         buf.writeUtf(name, MAX_NAME_LEN);
         buf.writeUtf(dimension, MAX_DIMENSION_LEN);
     }
 
-    public static void handle(WaypointDelToServer packet, Supplier<NetworkEvent.Context> ctx) {
-        ctx.get().enqueueWork(() -> {
-            if (ctx.get().getDirection().getReceptionSide().isServer()) {
-                net.minecraft.entity.player.ServerPlayerEntity sender = ctx.get().getSender();
+    public static void handle(WaypointDelToServer packet, BaniraNetworkContext ctx) {
+        ctx.enqueueWork(() -> {
+            if (ctx.isServerSide()) {
+                net.minecraft.entity.player.ServerPlayerEntity sender = ctx.senderAs(net.minecraft.entity.player.ServerPlayerEntity.class);
                 if (sender == null) return;
                 // home
                 if (packet.type() == 0) {
@@ -63,6 +62,6 @@ public class WaypointDelToServer implements NetworkPacket {
                 }
             }
         });
-        ctx.get().setPacketHandled(true);
+        ctx.markHandled();
     }
 }

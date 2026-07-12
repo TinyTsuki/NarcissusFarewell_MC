@@ -212,6 +212,10 @@ dependencies {
 
 }
 
+// 纯单元测试不需要解析仅供游戏运行的可选联动 mod。
+configurations.testRuntimeOnly.setExtendsFrom(
+        configurations.testRuntimeOnly.extendsFrom.findAll { it != configurations.runtimeOnly })
+
 // This block of code expands all declared replace properties in the specified resource targets.
 // A missing property will result in an error. Properties are expanded using ${} Groovy notation.
 // When "copyIdeResources" is enabled, this will also run before the game launches in IDE environments.

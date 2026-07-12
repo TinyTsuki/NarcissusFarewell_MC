@@ -2,10 +2,10 @@ package xin.vanilla.narcissus.network.packet;
 
 import lombok.Getter;
 import lombok.experimental.Accessors;
-import net.minecraft.network.PacketBuffer;
+import xin.vanilla.banira.common.network.BaniraPacketBuffer;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.fml.DistExecutor;
-import net.minecraftforge.fml.network.NetworkEvent;
+import xin.vanilla.banira.common.network.BaniraNetworkContext;
 import xin.vanilla.narcissus.data.TeleportCost;
 import xin.vanilla.narcissus.data.client.ClientCostConfig;
 import xin.vanilla.narcissus.enums.EnumCostType;
@@ -14,7 +14,6 @@ import xin.vanilla.narcissus.network.NetworkPacket;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.function.Supplier;
 
 
 @Getter
@@ -33,7 +32,7 @@ public class CostConfigSyncToClient implements NetworkPacket {
         this.distanceAcrossDimension = distanceAcrossDimension;
     }
 
-    public CostConfigSyncToClient(PacketBuffer buf) {
+    public CostConfigSyncToClient(BaniraPacketBuffer buf) {
         int count = buf.readVarInt();
         Map<EnumTeleportType, TeleportCost> map = new HashMap<>();
         for (int i = 0; i < count; i++) {
@@ -46,7 +45,7 @@ public class CostConfigSyncToClient implements NetworkPacket {
         this.distanceAcrossDimension = buf.readVarInt();
     }
 
-    private static TeleportCost readCost(PacketBuffer buf) {
+    private static TeleportCost readCost(BaniraPacketBuffer buf) {
         TeleportCost cost = new TeleportCost();
         String typeName = buf.readUtf(32);
         try {
@@ -62,7 +61,7 @@ public class CostConfigSyncToClient implements NetworkPacket {
         return cost;
     }
 
-    public void toBytes(PacketBuffer buf) {
+    public void toBytes(BaniraPacketBuffer buf) {
         buf.writeVarInt(costMap.size());
         for (Map.Entry<EnumTeleportType, TeleportCost> entry : costMap.entrySet()) {
             buf.writeEnum(entry.getKey());
@@ -72,7 +71,7 @@ public class CostConfigSyncToClient implements NetworkPacket {
         buf.writeVarInt(distanceAcrossDimension);
     }
 
-    private static void writeCost(PacketBuffer buf, TeleportCost cost) {
+    private static void writeCost(BaniraPacketBuffer buf, TeleportCost cost) {
         buf.writeUtf(cost.getType() != null ? cost.getType().name() : "NONE", 32);
         buf.writeVarInt(cost.getNum());
         buf.writeDouble(cost.getRate());
@@ -81,9 +80,9 @@ public class CostConfigSyncToClient implements NetworkPacket {
         buf.writeUtf(cost.getExp() != null ? cost.getExp() : "", MAX_EXP_LEN);
     }
 
-    public static void handle(CostConfigSyncToClient packet, Supplier<NetworkEvent.Context> ctx) {
-        ctx.get().enqueueWork(() -> {
-            if (ctx.get().getDirection().getReceptionSide().isClient()) {
+    public static void handle(CostConfigSyncToClient packet, BaniraNetworkContext ctx) {
+        ctx.enqueueWork(() -> {
+            if (ctx.isClientSide()) {
                 DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> {
                     ClientCostConfig.clear();
                     for (Map.Entry<EnumTeleportType, TeleportCost> entry : packet.costMap().entrySet()) {
@@ -94,6 +93,6 @@ public class CostConfigSyncToClient implements NetworkPacket {
                 });
             }
         });
-        ctx.get().setPacketHandled(true);
+        ctx.markHandled();
     }
 }
