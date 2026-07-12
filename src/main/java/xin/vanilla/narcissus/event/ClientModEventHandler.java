@@ -1,16 +1,14 @@
 package xin.vanilla.narcissus.event;
 
-import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
-import net.minecraftforge.event.TickEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import xin.vanilla.banira.client.data.GLFWKey;
 import xin.vanilla.banira.client.event.BaniraClientEventHub;
 import xin.vanilla.banira.client.notification.NotificationTypeRegistry;
+import xin.vanilla.banira.api.client.BaniraKeyHandle;
 import xin.vanilla.banira.client.util.BaniraKeyBindings;
 import xin.vanilla.banira.common.util.PacketUtils;
 import xin.vanilla.narcissus.NarcissusFarewell;
@@ -27,13 +25,13 @@ public final class ClientModEventHandler {
 
     private static boolean keyDown;
 
-    public static final KeyMapping TP_HOME_KEY = BaniraKeyBindings.register(NarcissusFarewell.MODID, "tp_home", GLFWKey.GLFW_KEY_UNKNOWN);
-    public static final KeyMapping TP_BACK_KEY = BaniraKeyBindings.register(NarcissusFarewell.MODID, "tp_back", GLFWKey.GLFW_KEY_UNKNOWN);
-    public static final KeyMapping TP_REQ_YES = BaniraKeyBindings.register(NarcissusFarewell.MODID, "tp_req_yes", GLFWKey.GLFW_KEY_UNKNOWN);
-    public static final KeyMapping TP_REQ_NO = BaniraKeyBindings.register(NarcissusFarewell.MODID, "tp_req_no", GLFWKey.GLFW_KEY_UNKNOWN);
-    public static final KeyMapping TP_GRAVE_KEY = BaniraKeyBindings.register(NarcissusFarewell.MODID, "tp_grave", GLFWKey.GLFW_KEY_UNKNOWN);
-    public static final KeyMapping OPEN_SCREEN_KEY = BaniraKeyBindings.register(NarcissusFarewell.MODID, "open_screen", GLFWKey.GLFW_KEY_UNKNOWN);
-    public static final KeyMapping OPEN_ACCESS_LIST_KEY = BaniraKeyBindings.register(NarcissusFarewell.MODID, "open_access_list", GLFWKey.GLFW_KEY_UNKNOWN);
+    public static final BaniraKeyHandle TP_HOME_KEY = BaniraKeyBindings.register(NarcissusFarewell.MODID, "tp_home", GLFWKey.GLFW_KEY_UNKNOWN);
+    public static final BaniraKeyHandle TP_BACK_KEY = BaniraKeyBindings.register(NarcissusFarewell.MODID, "tp_back", GLFWKey.GLFW_KEY_UNKNOWN);
+    public static final BaniraKeyHandle TP_REQ_YES = BaniraKeyBindings.register(NarcissusFarewell.MODID, "tp_req_yes", GLFWKey.GLFW_KEY_UNKNOWN);
+    public static final BaniraKeyHandle TP_REQ_NO = BaniraKeyBindings.register(NarcissusFarewell.MODID, "tp_req_no", GLFWKey.GLFW_KEY_UNKNOWN);
+    public static final BaniraKeyHandle TP_GRAVE_KEY = BaniraKeyBindings.register(NarcissusFarewell.MODID, "tp_grave", GLFWKey.GLFW_KEY_UNKNOWN);
+    public static final BaniraKeyHandle OPEN_SCREEN_KEY = BaniraKeyBindings.register(NarcissusFarewell.MODID, "open_screen", GLFWKey.GLFW_KEY_UNKNOWN);
+    public static final BaniraKeyHandle OPEN_ACCESS_LIST_KEY = BaniraKeyBindings.register(NarcissusFarewell.MODID, "open_access_list", GLFWKey.GLFW_KEY_UNKNOWN);
 
     static {
         // BaniraClientEventHub.ModLifecycle.onClientSetup(event ->
@@ -56,8 +54,8 @@ public final class ClientModEventHandler {
     public static void bootstrap() {
     }
 
-    private static void onClientTick(TickEvent.ClientTickEvent event) {
-        if (Minecraft.getInstance().screen == null && event instanceof TickEvent.ClientTickEvent.Post) {
+    private static void onClientTick(xin.vanilla.banira.api.client.event.BaniraClientTickEvent event) {
+        if (Minecraft.getInstance().screen == null) {
             if (TP_HOME_KEY.consumeClick()) {
                 if (!keyDown) {
                     PacketUtils.sendPacketToServer(new TpHomeToServer());

@@ -1,8 +1,8 @@
 package xin.vanilla.narcissus.network.packet;
 
-import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraftforge.event.network.CustomPayloadEvent;
+import xin.vanilla.banira.common.network.BaniraPacketBuffer;
+import xin.vanilla.banira.common.network.BaniraNetworkContext;
 import xin.vanilla.banira.common.util.CommandUtils;
 import xin.vanilla.banira.common.util.MessageUtils;
 import xin.vanilla.narcissus.NarcissusComponent;
@@ -21,15 +21,15 @@ public class TpYesToServer implements NetworkPacket {
     public TpYesToServer() {
     }
 
-    public TpYesToServer(FriendlyByteBuf buf) {
+    public TpYesToServer(BaniraPacketBuffer buf) {
     }
 
-    public void toBytes(FriendlyByteBuf buf) {
+    public void toBytes(BaniraPacketBuffer buf) {
     }
 
-    public static void handle(TpYesToServer packet, CustomPayloadEvent.Context ctx) {
+    public static void handle(TpYesToServer packet, BaniraNetworkContext ctx) {
         ctx.enqueueWork(() -> {
-            ServerPlayer player = ctx.getSender();
+            ServerPlayer player = ctx.senderAs(net.minecraft.server.level.ServerPlayer.class);
             if (player != null) {
                 EnumTeleportType teleportType = NarcissusFarewell.getTeleportRequest().values().stream()
                         .filter(request -> !request.isIgnore())
@@ -45,6 +45,6 @@ public class TpYesToServer implements NetworkPacket {
                 }
             }
         });
-        ctx.setPacketHandled(true);
+        ctx.markHandled();
     }
 }

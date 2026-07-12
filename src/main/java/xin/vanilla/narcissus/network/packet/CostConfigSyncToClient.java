@@ -2,10 +2,11 @@ package xin.vanilla.narcissus.network.packet;
 
 import lombok.Getter;
 import lombok.experimental.Accessors;
-import net.minecraft.network.FriendlyByteBuf;
+import xin.vanilla.banira.common.network.BaniraPacketBuffer;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.event.network.CustomPayloadEvent;
 import net.minecraftforge.fml.DistExecutor;
+import xin.vanilla.banira.common.network.BaniraNetworkContext;
 import xin.vanilla.narcissus.data.TeleportCost;
 import xin.vanilla.narcissus.data.client.ClientCostConfig;
 import xin.vanilla.narcissus.enums.EnumCostType;
@@ -32,7 +33,7 @@ public class CostConfigSyncToClient implements NetworkPacket {
         this.distanceAcrossDimension = distanceAcrossDimension;
     }
 
-    public CostConfigSyncToClient(FriendlyByteBuf buf) {
+    public CostConfigSyncToClient(BaniraPacketBuffer buf) {
         int count = buf.readVarInt();
         Map<EnumTeleportType, TeleportCost> map = new HashMap<>();
         for (int i = 0; i < count; i++) {
@@ -45,7 +46,7 @@ public class CostConfigSyncToClient implements NetworkPacket {
         this.distanceAcrossDimension = buf.readVarInt();
     }
 
-    private static TeleportCost readCost(FriendlyByteBuf buf) {
+    private static TeleportCost readCost(BaniraPacketBuffer buf) {
         TeleportCost cost = new TeleportCost();
         String typeName = buf.readUtf(32);
         try {
@@ -61,7 +62,7 @@ public class CostConfigSyncToClient implements NetworkPacket {
         return cost;
     }
 
-    public void toBytes(FriendlyByteBuf buf) {
+    public void toBytes(BaniraPacketBuffer buf) {
         buf.writeVarInt(costMap.size());
         for (Map.Entry<EnumTeleportType, TeleportCost> entry : costMap.entrySet()) {
             buf.writeEnum(entry.getKey());
@@ -71,7 +72,7 @@ public class CostConfigSyncToClient implements NetworkPacket {
         buf.writeVarInt(distanceAcrossDimension);
     }
 
-    private static void writeCost(FriendlyByteBuf buf, TeleportCost cost) {
+    private static void writeCost(BaniraPacketBuffer buf, TeleportCost cost) {
         buf.writeUtf(cost.getType() != null ? cost.getType().name() : "NONE", 32);
         buf.writeVarInt(cost.getNum());
         buf.writeDouble(cost.getRate());
@@ -80,7 +81,7 @@ public class CostConfigSyncToClient implements NetworkPacket {
         buf.writeUtf(cost.getExp() != null ? cost.getExp() : "", MAX_EXP_LEN);
     }
 
-    public static void handle(CostConfigSyncToClient packet, CustomPayloadEvent.Context ctx) {
+    public static void handle(CostConfigSyncToClient packet, BaniraNetworkContext ctx) {
         ctx.enqueueWork(() -> {
             if (ctx.isClientSide()) {
                 DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> {
@@ -93,6 +94,6 @@ public class CostConfigSyncToClient implements NetworkPacket {
                 });
             }
         });
-        ctx.setPacketHandled(true);
+        ctx.markHandled();
     }
 }

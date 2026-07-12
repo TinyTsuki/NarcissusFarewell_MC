@@ -2,10 +2,11 @@ package xin.vanilla.narcissus.network.packet;
 
 import lombok.Getter;
 import lombok.experimental.Accessors;
-import net.minecraft.network.FriendlyByteBuf;
+import xin.vanilla.banira.common.network.BaniraPacketBuffer;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.event.network.CustomPayloadEvent;
 import net.minecraftforge.fml.DistExecutor;
+import xin.vanilla.banira.common.network.BaniraNetworkContext;
 import xin.vanilla.banira.common.data.KeyValue;
 import xin.vanilla.narcissus.data.SafeWorldCoordinate;
 import xin.vanilla.narcissus.data.client.ClientStageData;
@@ -28,7 +29,7 @@ public class StageDataSyncToClient implements NetworkPacket {
         this.stageCoordinate = stageCoordinate != null ? new LinkedHashMap<>(stageCoordinate) : new LinkedHashMap<>();
     }
 
-    public StageDataSyncToClient(FriendlyByteBuf buf) {
+    public StageDataSyncToClient(BaniraPacketBuffer buf) {
         int count = buf.readVarInt();
         Map<KeyValue<String, String>, SafeWorldCoordinate> map = new LinkedHashMap<>();
         for (int i = 0; i < count; i++) {
@@ -43,7 +44,7 @@ public class StageDataSyncToClient implements NetworkPacket {
         this.stageCoordinate = map;
     }
 
-    public void toBytes(FriendlyByteBuf buf) {
+    public void toBytes(BaniraPacketBuffer buf) {
         buf.writeVarInt(stageCoordinate.size());
         for (Map.Entry<KeyValue<String, String>, SafeWorldCoordinate> entry : stageCoordinate.entrySet()) {
             buf.writeUtf(entry.getKey().key(), MAX_DIMENSION_LEN);
@@ -54,7 +55,7 @@ public class StageDataSyncToClient implements NetworkPacket {
         }
     }
 
-    public static void handle(StageDataSyncToClient packet, CustomPayloadEvent.Context ctx) {
+    public static void handle(StageDataSyncToClient packet, BaniraNetworkContext ctx) {
         ctx.enqueueWork(() -> {
             if (ctx.isClientSide()) {
                 DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> {
@@ -62,6 +63,6 @@ public class StageDataSyncToClient implements NetworkPacket {
                 });
             }
         });
-        ctx.setPacketHandled(true);
+        ctx.markHandled();
     }
 }

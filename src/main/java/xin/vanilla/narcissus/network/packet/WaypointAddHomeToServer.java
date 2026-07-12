@@ -2,13 +2,14 @@ package xin.vanilla.narcissus.network.packet;
 
 import lombok.Getter;
 import lombok.experimental.Accessors;
-import net.minecraft.network.FriendlyByteBuf;
-import net.minecraftforge.event.network.CustomPayloadEvent;
+import xin.vanilla.banira.common.network.BaniraPacketBuffer;
+import xin.vanilla.banira.common.network.BaniraNetworkContext;
 import xin.vanilla.banira.common.util.CommandUtils;
 import xin.vanilla.banira.common.util.StringUtils;
 import xin.vanilla.narcissus.config.CommonConfig;
 import xin.vanilla.narcissus.network.NetworkPacket;
 import xin.vanilla.narcissus.util.NarcissusUtils;
+
 
 @Getter
 @Accessors(fluent = true)
@@ -22,20 +23,20 @@ public class WaypointAddHomeToServer implements NetworkPacket {
         this.name = name != null ? name : "";
     }
 
-    public WaypointAddHomeToServer(FriendlyByteBuf buf) {
+    public WaypointAddHomeToServer(BaniraPacketBuffer buf) {
         this.name = buf.readUtf(MAX_NAME_LEN);
     }
 
-    public void toBytes(FriendlyByteBuf buf) {
+    public void toBytes(BaniraPacketBuffer buf) {
         buf.writeUtf(name, MAX_NAME_LEN);
     }
 
-    public static void handle(WaypointAddHomeToServer packet, CustomPayloadEvent.Context ctx) {
+    public static void handle(WaypointAddHomeToServer packet, BaniraNetworkContext ctx) {
         ctx.enqueueWork(() -> {
             if (!ctx.isServerSide()) {
                 return;
             }
-            var sender = ctx.getSender();
+            net.minecraft.server.level.ServerPlayer sender = ctx.senderAs(net.minecraft.server.level.ServerPlayer.class);
             if (sender == null) {
                 return;
             }
@@ -46,6 +47,6 @@ public class WaypointAddHomeToServer implements NetworkPacket {
             }
             CommandUtils.executeCommand(sender, cmd);
         });
-        ctx.setPacketHandled(true);
+        ctx.markHandled();
     }
 }
