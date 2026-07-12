@@ -9,7 +9,8 @@ import xin.vanilla.banira.client.data.GLFWKey;
 import xin.vanilla.banira.client.event.BaniraClientEventHub;
 import xin.vanilla.banira.client.notification.NotificationTypeRegistry;
 import xin.vanilla.banira.api.client.BaniraKeyHandle;
-import xin.vanilla.banira.client.util.BaniraKeyBindings;
+import xin.vanilla.banira.api.client.BaniraInput;
+import xin.vanilla.banira.client.util.LogoModifier;
 import xin.vanilla.banira.common.util.PacketUtils;
 import xin.vanilla.narcissus.NarcissusFarewell;
 import xin.vanilla.narcissus.integration.ScreenHelper;
@@ -26,13 +27,13 @@ public final class ClientModEventHandler {
 
     private static boolean keyDown;
 
-    public static final BaniraKeyHandle TP_HOME_KEY = BaniraKeyBindings.register(NarcissusFarewell.MODID, "tp_home", GLFWKey.GLFW_KEY_UNKNOWN);
-    public static final BaniraKeyHandle TP_BACK_KEY = BaniraKeyBindings.register(NarcissusFarewell.MODID, "tp_back", GLFWKey.GLFW_KEY_UNKNOWN);
-    public static final BaniraKeyHandle TP_REQ_YES = BaniraKeyBindings.register(NarcissusFarewell.MODID, "tp_req_yes", GLFWKey.GLFW_KEY_UNKNOWN);
-    public static final BaniraKeyHandle TP_REQ_NO = BaniraKeyBindings.register(NarcissusFarewell.MODID, "tp_req_no", GLFWKey.GLFW_KEY_UNKNOWN);
-    public static final BaniraKeyHandle TP_GRAVE_KEY = BaniraKeyBindings.register(NarcissusFarewell.MODID, "tp_grave", GLFWKey.GLFW_KEY_UNKNOWN);
-    public static final BaniraKeyHandle OPEN_SCREEN_KEY = BaniraKeyBindings.register(NarcissusFarewell.MODID, "open_screen", GLFWKey.GLFW_KEY_UNKNOWN);
-    public static final BaniraKeyHandle OPEN_ACCESS_LIST_KEY = BaniraKeyBindings.register(NarcissusFarewell.MODID, "open_access_list", GLFWKey.GLFW_KEY_UNKNOWN);
+    public static final BaniraKeyHandle TP_HOME_KEY = BaniraInput.registerKey(NarcissusFarewell.MODID, "tp_home", GLFWKey.GLFW_KEY_UNKNOWN);
+    public static final BaniraKeyHandle TP_BACK_KEY = BaniraInput.registerKey(NarcissusFarewell.MODID, "tp_back", GLFWKey.GLFW_KEY_UNKNOWN);
+    public static final BaniraKeyHandle TP_REQ_YES = BaniraInput.registerKey(NarcissusFarewell.MODID, "tp_req_yes", GLFWKey.GLFW_KEY_UNKNOWN);
+    public static final BaniraKeyHandle TP_REQ_NO = BaniraInput.registerKey(NarcissusFarewell.MODID, "tp_req_no", GLFWKey.GLFW_KEY_UNKNOWN);
+    public static final BaniraKeyHandle TP_GRAVE_KEY = BaniraInput.registerKey(NarcissusFarewell.MODID, "tp_grave", GLFWKey.GLFW_KEY_UNKNOWN);
+    public static final BaniraKeyHandle OPEN_SCREEN_KEY = BaniraInput.registerKey(NarcissusFarewell.MODID, "open_screen", GLFWKey.GLFW_KEY_UNKNOWN);
+    public static final BaniraKeyHandle OPEN_ACCESS_LIST_KEY = BaniraInput.registerKey(NarcissusFarewell.MODID, "open_access_list", GLFWKey.GLFW_KEY_UNKNOWN);
 
     static {
         // BaniraClientEventHub.ModLifecycle.onClientSetup(event ->
