@@ -7,12 +7,13 @@ import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.nbt.ListNBT;
 import net.minecraft.world.server.ServerWorld;
 import net.minecraftforge.common.util.WorldCapabilityData;
-import xin.vanilla.banira.BaniraCodex;
+import xin.vanilla.banira.common.util.BaniraServerUtils;
 import xin.vanilla.banira.common.data.KeyValue;
 import xin.vanilla.narcissus.data.SafeWorldCoordinate;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * 世界驿站数据
@@ -87,7 +88,7 @@ public class WorldStageData extends WorldCapabilityData {
     }
 
     public static WorldStageData get() {
-        return get(BaniraCodex.serverInstance().key().getAllLevels().iterator().next());
+        return get(Objects.requireNonNull(BaniraServerUtils.currentServer()).getAllLevels().iterator().next());
     }
 
     public static WorldStageData get(ServerPlayerEntity player) {

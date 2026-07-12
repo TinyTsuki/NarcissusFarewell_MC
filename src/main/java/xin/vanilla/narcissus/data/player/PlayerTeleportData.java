@@ -6,7 +6,7 @@ import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.nbt.ListNBT;
 import xin.vanilla.banira.common.network.BaniraPacketBuffer;
-import xin.vanilla.banira.BaniraCodex;
+import xin.vanilla.banira.common.util.BaniraServerUtils;
 import xin.vanilla.banira.common.api.ICommandNotify;
 import xin.vanilla.banira.common.data.KeyValue;
 import xin.vanilla.banira.common.player.IPlayerData;
@@ -40,7 +40,7 @@ public final class PlayerTeleportData implements IPlayerData<PlayerTeleportData>
     private PlayerTeleportData(PlayerEntity player) {
         this.player = player;
         if (this.player instanceof ServerPlayerEntity) {
-            this.deserializeNBT(BaniraCodex.playerDataManager.getOrCreate(player.getUUID(), NarcissusFarewell.MODID), false);
+            this.deserializeNBT(BaniraServerUtils.playerDataManager().getOrCreate(player.getUUID(), NarcissusFarewell.MODID), false);
         }
     }
 
@@ -236,7 +236,7 @@ public final class PlayerTeleportData implements IPlayerData<PlayerTeleportData>
     @Override
     public void save() {
         if (this.player instanceof ServerPlayerEntity) {
-            BaniraCodex.playerDataManager.put(player.getUUID(), NarcissusFarewell.MODID, serializeNBT());
+            BaniraServerUtils.playerDataManager().put(player.getUUID(), NarcissusFarewell.MODID, serializeNBT());
         }
     }
 

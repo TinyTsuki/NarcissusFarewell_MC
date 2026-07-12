@@ -5,7 +5,7 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.math.vector.Vector3d;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import xin.vanilla.banira.BaniraCodex;
+import xin.vanilla.banira.common.util.BaniraServerUtils;
 import xin.vanilla.banira.common.util.DateUtils;
 import xin.vanilla.banira.common.util.MessageUtils;
 import xin.vanilla.narcissus.NarcissusComponent;
@@ -26,7 +26,7 @@ public class EventHandlerProxy {
     private static final Logger LOGGER = LogManager.getLogger();
 
     public static void onServerTick() {
-        MinecraftServer srv = BaniraCodex.serverInstance().key();
+        MinecraftServer srv = BaniraServerUtils.currentServer();
         if (srv != null) {
             TeleportCountdownTracker.tickMovementCheck(srv);
         }
