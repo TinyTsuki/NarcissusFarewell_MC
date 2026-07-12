@@ -1,14 +1,14 @@
 package xin.vanilla.narcissus.network.packet;
 
 import lombok.Getter;
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraftforge.network.NetworkEvent;
+import net.minecraft.nbt.CompoundTag;
+import xin.vanilla.banira.common.network.BaniraPacketBuffer;
+import xin.vanilla.banira.common.network.BaniraNetworkContext;
 import xin.vanilla.narcissus.data.player.PlayerTeleportData;
+import xin.vanilla.narcissus.internal.network.NarcissusNbtPacketCodec;
 import xin.vanilla.narcissus.network.NetworkPacket;
 
-import java.util.function.Supplier;
 
 
 @Getter
@@ -20,27 +20,27 @@ public class PlayerConfigSyncToServer implements NetworkPacket {
         this.countdownTag = countdownTag != null ? countdownTag : new CompoundTag();
     }
 
-    public PlayerConfigSyncToServer(FriendlyByteBuf buf) {
-        CompoundTag n = buf.readNbt();
+    public PlayerConfigSyncToServer(BaniraPacketBuffer buf) {
+        CompoundTag n = NarcissusNbtPacketCodec.read(buf);
         this.countdownTag = n != null ? n : new CompoundTag();
     }
 
-    public void toBytes(FriendlyByteBuf buf) {
-        buf.writeNbt(countdownTag);
+    public void toBytes(BaniraPacketBuffer buf) {
+        NarcissusNbtPacketCodec.write(buf, countdownTag);
     }
 
-    public static void handle(PlayerConfigSyncToServer packet, Supplier<NetworkEvent.Context> ctx) {
-        ctx.get().enqueueWork(() -> {
-            if (!ctx.get().getDirection().getReceptionSide().isServer()) {
+    public static void handle(PlayerConfigSyncToServer packet, BaniraNetworkContext ctx) {
+        ctx.enqueueWork(() -> {
+            if (!ctx.isServerSide()) {
                 return;
             }
-            ServerPlayer player = ctx.get().getSender();
+            ServerPlayer player = ctx.senderAs(net.minecraft.server.level.ServerPlayer.class);
             if (player == null) {
                 return;
             }
             PlayerTeleportData.getData(player).replaceAllTeleportCountdownsFromTag(packet.countdownTag);
             PlayerTeleportData.syncPlayerData(player);
         });
-        ctx.get().setPacketHandled(true);
+        ctx.markHandled();
     }
 }

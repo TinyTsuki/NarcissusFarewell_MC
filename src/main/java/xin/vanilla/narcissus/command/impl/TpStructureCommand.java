@@ -17,7 +17,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.biome.Biome;
-import xin.vanilla.banira.BaniraCodex;
+import xin.vanilla.banira.common.util.BaniraServerUtils;
 import xin.vanilla.banira.common.data.Component;
 import xin.vanilla.banira.common.data.WorldCoordinate;
 import xin.vanilla.banira.common.util.BiomeUtils;
@@ -61,7 +61,7 @@ public final class TpStructureCommand {
         String searchingKey = isBiome ? "tp_structure_searching_biome" : "tp_structure_searching_structure";
         MessageUtils.sendNotification(player, NarcissusComponent.get().transAuto(searchingKey, structId), NarcissusNotificationTypes.TELEPORT_SEARCH);
         new Thread(() -> {
-            ServerLevel world = Objects.requireNonNull(BaniraCodex.serverInstance().key().getLevel(targetLevel));
+            ServerLevel world = Objects.requireNonNull(BaniraServerUtils.currentServer()).getLevel(targetLevel);
             SafeWorldCoordinate safeWorldCoordinate;
             if (biome != null) {
                 Biome biomeFromWorld = BiomeUtils.getBiome(world, structId);
@@ -75,7 +75,7 @@ public final class TpStructureCommand {
                     safeWorldCoordinate = null;
                 }
             } else {
-                ServerLevel structureWorld = Objects.requireNonNull(BaniraCodex.serverInstance().key().getLevel(targetLevel));
+                ServerLevel structureWorld = Objects.requireNonNull(BaniraServerUtils.currentServer()).getLevel(targetLevel);
                 WorldCoordinate structStart = new WorldCoordinate(player).dimension(targetLevel);
                 WorldCoordinate foundStruct = StructureUtils.findNearestStructure(structureWorld, structStart, structId, finalRange);
                 safeWorldCoordinate = foundStruct != null

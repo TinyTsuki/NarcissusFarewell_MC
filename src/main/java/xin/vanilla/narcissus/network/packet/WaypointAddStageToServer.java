@@ -2,15 +2,14 @@ package xin.vanilla.narcissus.network.packet;
 
 import lombok.Getter;
 import lombok.experimental.Accessors;
-import net.minecraft.network.FriendlyByteBuf;
-import net.minecraftforge.network.NetworkEvent;
+import xin.vanilla.banira.common.network.BaniraPacketBuffer;
+import xin.vanilla.banira.common.network.BaniraNetworkContext;
 import xin.vanilla.banira.common.util.CommandUtils;
 import xin.vanilla.banira.common.util.StringUtils;
 import xin.vanilla.narcissus.config.CommonConfig;
 import xin.vanilla.narcissus.network.NetworkPacket;
 import xin.vanilla.narcissus.util.NarcissusUtils;
 
-import java.util.function.Supplier;
 
 @Getter
 @Accessors(fluent = true)
@@ -33,7 +32,7 @@ public class WaypointAddStageToServer implements NetworkPacket {
         this.z = z;
     }
 
-    public WaypointAddStageToServer(FriendlyByteBuf buf) {
+    public WaypointAddStageToServer(BaniraPacketBuffer buf) {
         this.name = buf.readUtf(MAX_NAME_LEN);
         this.dimension = buf.readUtf(MAX_DIMENSION_LEN);
         this.x = buf.readDouble();
@@ -41,7 +40,7 @@ public class WaypointAddStageToServer implements NetworkPacket {
         this.z = buf.readDouble();
     }
 
-    public void toBytes(FriendlyByteBuf buf) {
+    public void toBytes(BaniraPacketBuffer buf) {
         buf.writeUtf(name, MAX_NAME_LEN);
         buf.writeUtf(dimension, MAX_DIMENSION_LEN);
         buf.writeDouble(x);
@@ -49,12 +48,12 @@ public class WaypointAddStageToServer implements NetworkPacket {
         buf.writeDouble(z);
     }
 
-    public static void handle(WaypointAddStageToServer packet, Supplier<NetworkEvent.Context> ctx) {
-        ctx.get().enqueueWork(() -> {
-            if (!ctx.get().getDirection().getReceptionSide().isServer()) {
+    public static void handle(WaypointAddStageToServer packet, BaniraNetworkContext ctx) {
+        ctx.enqueueWork(() -> {
+            if (!ctx.isServerSide()) {
                 return;
             }
-            var sender = ctx.get().getSender();
+            net.minecraft.server.level.ServerPlayer sender = ctx.senderAs(net.minecraft.server.level.ServerPlayer.class);
             if (sender == null) {
                 return;
             }
@@ -65,6 +64,6 @@ public class WaypointAddStageToServer implements NetworkPacket {
                     + " " + StringUtils.formatString(packet.dimension());
             CommandUtils.executeCommand(sender, cmd);
         });
-        ctx.get().setPacketHandled(true);
+        ctx.markHandled();
     }
 }

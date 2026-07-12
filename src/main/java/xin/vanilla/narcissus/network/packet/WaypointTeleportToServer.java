@@ -2,9 +2,8 @@ package xin.vanilla.narcissus.network.packet;
 
 import lombok.Getter;
 import lombok.experimental.Accessors;
-import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.server.level.ServerPlayer;
-import net.minecraftforge.network.NetworkEvent;
+import xin.vanilla.banira.common.network.BaniraPacketBuffer;
+import xin.vanilla.banira.common.network.BaniraNetworkContext;
 import xin.vanilla.banira.common.util.CommandUtils;
 import xin.vanilla.banira.common.util.StringUtils;
 import xin.vanilla.narcissus.config.CommonConfig;
@@ -12,7 +11,6 @@ import xin.vanilla.narcissus.enums.EnumTeleportType;
 import xin.vanilla.narcissus.network.NetworkPacket;
 import xin.vanilla.narcissus.util.NarcissusUtils;
 
-import java.util.function.Supplier;
 
 
 @Getter
@@ -32,22 +30,22 @@ public class WaypointTeleportToServer implements NetworkPacket {
         this.dimension = dimension != null ? dimension : "";
     }
 
-    public WaypointTeleportToServer(FriendlyByteBuf buf) {
+    public WaypointTeleportToServer(BaniraPacketBuffer buf) {
         this.typeOrdinal = buf.readVarInt();
         this.name = buf.readUtf(MAX_NAME_LEN);
         this.dimension = buf.readUtf(MAX_DIMENSION_LEN);
     }
 
-    public void toBytes(FriendlyByteBuf buf) {
+    public void toBytes(BaniraPacketBuffer buf) {
         buf.writeVarInt(typeOrdinal);
         buf.writeUtf(name, MAX_NAME_LEN);
         buf.writeUtf(dimension, MAX_DIMENSION_LEN);
     }
 
-    public static void handle(WaypointTeleportToServer packet, Supplier<NetworkEvent.Context> ctx) {
-        ctx.get().enqueueWork(() -> {
-            if (ctx.get().getDirection().getReceptionSide().isServer()) {
-                ServerPlayer sender = ctx.get().getSender();
+    public static void handle(WaypointTeleportToServer packet, BaniraNetworkContext ctx) {
+        ctx.enqueueWork(() -> {
+            if (ctx.isServerSide()) {
+                net.minecraft.server.level.ServerPlayer sender = ctx.senderAs(net.minecraft.server.level.ServerPlayer.class);
                 if (sender == null) return;
                 EnumTeleportType type;
                 try {
@@ -78,6 +76,6 @@ public class WaypointTeleportToServer implements NetworkPacket {
                 CommandUtils.executeCommand(sender, cmd);
             }
         });
-        ctx.get().setPacketHandled(true);
+        ctx.markHandled();
     }
 }
