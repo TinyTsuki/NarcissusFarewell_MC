@@ -5,12 +5,12 @@ import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import xin.vanilla.banira.client.data.GLFWKey;
-import xin.vanilla.banira.client.event.BaniraClientEventHub;
-import xin.vanilla.banira.client.notification.NotificationTypeRegistry;
-import xin.vanilla.banira.api.client.BaniraKeyHandle;
 import xin.vanilla.banira.api.client.BaniraInput;
-import xin.vanilla.banira.client.util.LogoModifier;
+import xin.vanilla.banira.api.client.BaniraKeyHandle;
+import xin.vanilla.banira.api.client.BaniraLogos;
+import xin.vanilla.banira.api.client.event.BaniraClientEvents;
+import xin.vanilla.banira.client.data.GLFWKey;
+import xin.vanilla.banira.client.notification.NotificationTypeRegistry;
 import xin.vanilla.banira.common.util.PacketUtils;
 import xin.vanilla.narcissus.NarcissusFarewell;
 import xin.vanilla.narcissus.integration.ScreenHelper;
@@ -19,7 +19,7 @@ import xin.vanilla.narcissus.network.packet.*;
 import xin.vanilla.narcissus.notification.NarcissusNotificationTypes;
 
 /**
- * 客户端：Banira 键位入队 + {@link BaniraClientEventHub} 回调注册（不在此类上使用 Forge {@code @SubscribeEvent}）
+ * 客户端：Banira 键位入队与稳定事件回调注册（不在此类上使用 Forge {@code @SubscribeEvent}）。
  */
 @OnlyIn(Dist.CLIENT)
 public final class ClientModEventHandler {
@@ -36,14 +36,14 @@ public final class ClientModEventHandler {
     public static final BaniraKeyHandle OPEN_ACCESS_LIST_KEY = BaniraInput.registerKey(NarcissusFarewell.MODID, "open_access_list", GLFWKey.GLFW_KEY_UNKNOWN);
 
     static {
-        // BaniraClientEventHub.ModLifecycle.onClientSetup(event ->
-        //         LogoModifier.register(NarcissusFarewell.MODID, () -> Math.random() > 0.5 ? "logo_.png" : "logo.png"));
-        BaniraClientEventHub.ModLifecycle.onClientSetup(event -> {
+        BaniraClientEvents.ModLifecycle.onClientSetup(event -> {
             for (String id : NarcissusNotificationTypes.ALL_TYPE_IDS) {
                 NotificationTypeRegistry.register(id);
             }
         });
-        BaniraClientEventHub.Client.onClientTick(ClientModEventHandler::onClientTick);
+        BaniraClientEvents.ModLifecycle.onClientSetup(event ->
+                BaniraLogos.register(NarcissusFarewell.MODID, () -> Math.random() > 0.5 ? "logo_.png" : "logo.png"));
+        BaniraClientEvents.Client.onClientTick(ClientModEventHandler::onClientTick);
     }
 
     private ClientModEventHandler() {
@@ -52,7 +52,6 @@ public final class ClientModEventHandler {
     /**
      * 由主模组构造函数经 {@link net.minecraftforge.fml.DistExecutor} 在客户端触发类初始化
      */
-    @SubscribeEvent
     public static void bootstrap() {
         NarcissusUiSmokeRunner.register();
     }

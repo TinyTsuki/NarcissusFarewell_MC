@@ -31,7 +31,7 @@ public final class ClientCostCalculator {
         if (player == null || target == null) return "";
         TeleportCost cost = ClientCostConfig.getCost(type);
         if (cost == null || cost.getType() == EnumCostType.NONE) {
-            return NarcissusLang.get().getTranslationClient(EnumI18nType.WORD, "cost_free");
+            return NarcissusLang.get().translate(EnumI18nType.WORD, "cost_free");
         }
         PlayerTeleportData data = PlayerTeleportData.getData(player);
         double distance = NarcissusUtils.calculateDistance(new SafeWorldCoordinate(player), target);
