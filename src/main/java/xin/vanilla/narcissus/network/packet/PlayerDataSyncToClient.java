@@ -18,6 +18,7 @@ import xin.vanilla.narcissus.data.SafeWorldCoordinate;
 import xin.vanilla.narcissus.data.TeleportRecord;
 import xin.vanilla.narcissus.data.player.PlayerTeleportData;
 import xin.vanilla.narcissus.internal.network.NarcissusNbtPacketCodec;
+import xin.vanilla.narcissus.internal.client.NarcissusClientSyncState;
 import xin.vanilla.narcissus.network.NetworkPacket;
 
 import java.util.*;
@@ -228,6 +229,7 @@ public class PlayerDataSyncToClient extends SplitPacket
                 try {
                     PlayerTeleportData clientData = PlayerTeleportData.getData(player);
                     clientData.copyFrom(getData(packet));
+                    NarcissusClientSyncState.markPlayerDataReceived();
                     LOGGER.debug("Client: Player data received successfully.");
                 } catch (Exception ignored) {
                     LOGGER.debug("Client: Player data received failed.");
