@@ -8,14 +8,14 @@ import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.fml.common.Mod;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import xin.vanilla.banira.client.event.BaniraClientEventHub;
+import xin.vanilla.banira.api.BaniraConfigs;
+import xin.vanilla.banira.api.BaniraModPresence;
+import xin.vanilla.banira.api.client.event.BaniraClientEvents;
 import xin.vanilla.banira.client.gui.ConfigEditorScreen;
 import xin.vanilla.banira.client.gui.quickaction.QuickActionContext;
 import xin.vanilla.banira.client.gui.quickaction.QuickActionContextMenuItem;
 import xin.vanilla.banira.client.gui.quickaction.QuickActionRegistry;
-import xin.vanilla.banira.common.config.BaniraConfig;
 import xin.vanilla.banira.common.data.Component;
-import xin.vanilla.banira.common.network.ModLoadedPresence;
 import xin.vanilla.banira.common.util.BaniraEventBus;
 import xin.vanilla.banira.common.util.CommandUtils;
 import xin.vanilla.banira.common.util.EnvironmentUtils;
@@ -67,8 +67,8 @@ public class NarcissusFarewell {
         NetworkInit.registerPackets();
 
         // 注册配置
-        BaniraConfig.register(CommonConfig.class, MODID);
-        BaniraConfig.register(ClientConfig.class, MODID);
+        BaniraConfigs.register(CommonConfig.class, MODID);
+        BaniraConfigs.register(ClientConfig.class, MODID);
 
         BaniraEventBus.Server.onStopping(server -> PlayerTeleportData.clear());
         BaniraEventBus.Server.onTick(event -> EventHandlerProxy.onServerTick());
@@ -76,7 +76,7 @@ public class NarcissusFarewell {
 
         BaniraEventBus.ModLifecycle.onCommonSetup(event -> {
             NarcissusNotificationTypes.registerAllOnServer();
-            ModLoadedPresence.register(MODID, player -> {
+            BaniraModPresence.register(MODID, player -> {
                 if (!(player instanceof ServerPlayer)) {
                     return;
                 }
@@ -108,7 +108,7 @@ public class NarcissusFarewell {
         public static void init() {
             ClientModEventHandler.bootstrap();
 
-            BaniraClientEventHub.ModLifecycle.onClientSetup(event -> {
+            BaniraClientEvents.ModLifecycle.onClientSetup(event -> {
                 ResourceLocation texture = Identifier.id().create("gui/quick_icon.png");
                 Component label = NarcissusComponent.get().transClient("key.narcissus_farewell.categories");
                 Consumer<QuickActionContext> action = ctx -> ScreenHelper.openScreen();
