@@ -204,7 +204,11 @@ public final class NarcissusUiSmokeRunner {
         phase = Phase.WORLD_LOADING;
         phaseTick = 0;
         appendStatus("LOAD world " + options.worldName());
-        client.createWorldOpenFlows().loadLevel(client.screen, options.worldName());
+        try {
+            client.createWorldOpenFlows().openWorld(options.worldName(), () -> client.setScreen(null));
+        } catch (Throwable t) {
+            fail(client, "world-load", t);
+        }
     }
 
     private void runWorldLoadingTick(Minecraft client) {
