@@ -31,7 +31,6 @@ import net.minecraft.world.level.portal.DimensionTransition;
 import net.minecraftforge.registries.ForgeRegistries;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import xin.vanilla.banira.BaniraCodex;
 import xin.vanilla.banira.common.data.KeyValue;
 import xin.vanilla.banira.common.util.*;
 import xin.vanilla.banira.common.util.CommandUtils;
@@ -478,7 +477,11 @@ public class NarcissusUtils {
     // region 安全坐标
 
     public static ServerLevel getServerLevel() {
-        return BaniraCodex.serverInstance().key().getAllLevels().iterator().next();
+        MinecraftServer server = BaniraServerUtils.currentServer();
+        if (server == null) {
+            throw new IllegalStateException("Minecraft server is not ready");
+        }
+        return server.getAllLevels().iterator().next();
     }
 
     public static SafeWorldCoordinate findTopCandidate(ServerPlayer player, SafeWorldCoordinate start) {
