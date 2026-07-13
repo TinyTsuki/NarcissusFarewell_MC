@@ -3,6 +3,9 @@ package xin.vanilla.narcissus.internal.client.dev;
 import net.minecraft.client.Minecraft;
 import com.mojang.blaze3d.platform.NativeImage;
 import net.minecraft.client.Screenshot;
+import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.gui.screens.BackupConfirmScreen;
+import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.phys.Vec3;
 import org.apache.logging.log4j.LogManager;
@@ -12,6 +15,7 @@ import xin.vanilla.banira.common.util.EnvironmentUtils;
 import xin.vanilla.banira.common.util.PacketUtils;
 import xin.vanilla.narcissus.config.ClientConfig;
 import xin.vanilla.narcissus.config.CommonConfig;
+import xin.vanilla.narcissus.data.TeleportRecord;
 import xin.vanilla.narcissus.data.player.PlayerTeleportData;
 import xin.vanilla.narcissus.enums.EnumTeleportType;
 import xin.vanilla.narcissus.event.ClientModEventHandler;
@@ -60,6 +64,7 @@ public final class NarcissusUiSmokeRunner {
     private int stepTick;
     private int stepIndex;
     private long syncGeneration;
+    private int teleportRecordCount;
     private Vec3 homePosition;
     private String homeDimension;
 
@@ -213,6 +218,7 @@ public final class NarcissusUiSmokeRunner {
 
     private void runWorldLoadingTick(Minecraft client) {
         phaseTick++;
+        continuePastWorldBackupPrompt(client);
         boolean loaded = client.player != null && client.level != null
                 && client.getSingleplayerServer() != null && client.screen == null;
         if (loaded && NarcissusClientSyncState.playerDataGeneration() > syncGeneration) {
@@ -224,8 +230,29 @@ public final class NarcissusUiSmokeRunner {
             return;
         }
         if (phaseTick >= WORLD_TIMEOUT_TICKS) {
-            throw new IllegalStateException("Timed out loading or synchronizing world " + options.worldName());
+            throw new IllegalStateException("Timed out loading or synchronizing world " + options.worldName()
+                    + "; screen=" + describeScreen(client.screen));
         }
+    }
+
+    /** 开发存档跨版本升级时不创建备份，避免自动烟测停在确认界面。 */
+    private void continuePastWorldBackupPrompt(Minecraft client) {
+        if (!(client.screen instanceof BackupConfirmScreen)) {
+            return;
+        }
+        client.screen.children().stream()
+                .filter(Button.class::isInstance)
+                .map(Button.class::cast)
+                .filter(button -> button.getMessage().getString().equals(
+                        net.minecraft.network.chat.Component.translatable("selectWorld.backupJoinSkipButton").getString()))
+                .findFirst()
+                .orElseThrow(() -> new IllegalStateException("World backup prompt has no skip button"))
+                .onPress();
+        appendStatus("CONTINUE world-backup-prompt (skip backup)");
+    }
+
+    private static String describeScreen(Screen screen) {
+        return screen == null ? "none" : screen.getClass().getName() + "[" + screen.getTitle().getString() + "]";
     }
 
     private void beginConfigSync(Minecraft client) {
@@ -290,6 +317,9 @@ public final class NarcissusUiSmokeRunner {
     private void runMoveAwayTick(Minecraft client) {
         phaseTick++;
         if (client.player.position().distanceTo(homePosition) >= 2.0D) {
+            PlayerTeleportData data = PlayerTeleportData.getData(client.player);
+            teleportRecordCount = data.getTeleportRecords().size();
+            syncGeneration = NarcissusClientSyncState.playerDataGeneration();
             PacketUtils.sendPacketToServer(new WaypointTeleportToServer(
                     EnumTeleportType.TP_HOME, HOME_NAME, homeDimension));
             appendStatus("SEND temporary-home-teleport");
@@ -302,7 +332,8 @@ public final class NarcissusUiSmokeRunner {
 
     private void runHomeTeleportTick(Minecraft client) {
         phaseTick++;
-        if (client.player.position().distanceTo(homePosition) < 1.0D) {
+        TeleportRecord record = latestCompletedHomeTeleport(client);
+        if (record != null) {
             appendStatus("PASS temporary-home-teleport");
             PacketUtils.sendPacketToServer(new WaypointDelToServer(0, HOME_NAME, homeDimension));
             appendStatus("SEND temporary-home-delete");
@@ -311,6 +342,24 @@ public final class NarcissusUiSmokeRunner {
         } else if (phaseTick >= TELEPORT_TIMEOUT_TICKS) {
             throw new IllegalStateException("Temporary home teleport did not complete");
         }
+    }
+
+    /** 安全传送允许调整相邻落点，因此以服务端同步的传送记录为准。 */
+    private TeleportRecord latestCompletedHomeTeleport(Minecraft client) {
+        if (NarcissusClientSyncState.playerDataGeneration() <= syncGeneration) {
+            return null;
+        }
+        List<TeleportRecord> records = PlayerTeleportData.getData(client.player).getTeleportRecords();
+        if (records.size() <= teleportRecordCount) {
+            return null;
+        }
+        TeleportRecord record = records.get(records.size() - 1);
+        if (record.getTeleportType() != EnumTeleportType.TP_HOME || record.getAfter() == null) {
+            return null;
+        }
+        boolean sameDimension = client.player.level().dimension().equals(record.getAfter().dimension());
+        boolean reachedRecordedTarget = client.player.position().distanceTo(record.getAfter().toVec3()) < 1.5D;
+        return sameDimension && reachedRecordedTarget ? record : null;
     }
 
     private void runHomeDeleteTick(Minecraft client) {
