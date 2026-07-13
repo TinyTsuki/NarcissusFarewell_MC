@@ -11,12 +11,12 @@ import org.apache.logging.log4j.Logger;
 import xin.vanilla.banira.api.BaniraConfigs;
 import xin.vanilla.banira.api.BaniraModPresence;
 import xin.vanilla.banira.api.client.event.BaniraClientEvents;
+import xin.vanilla.banira.api.event.BaniraEvents;
 import xin.vanilla.banira.client.gui.ConfigEditorScreen;
 import xin.vanilla.banira.client.gui.quickaction.QuickActionContext;
 import xin.vanilla.banira.client.gui.quickaction.QuickActionContextMenuItem;
 import xin.vanilla.banira.client.gui.quickaction.QuickActionRegistry;
 import xin.vanilla.banira.common.data.Component;
-import xin.vanilla.banira.common.util.BaniraEventBus;
 import xin.vanilla.banira.common.util.CommandUtils;
 import xin.vanilla.banira.common.util.EnvironmentUtils;
 import xin.vanilla.banira.common.util.PacketUtils;
@@ -70,11 +70,11 @@ public class NarcissusFarewell {
         BaniraConfigs.register(CommonConfig.class, MODID);
         BaniraConfigs.register(ClientConfig.class, MODID);
 
-        BaniraEventBus.Server.onStopping(server -> PlayerTeleportData.clear());
-        BaniraEventBus.Server.onTick(event -> EventHandlerProxy.onServerTick());
+        BaniraEvents.Server.onStopping(server -> PlayerTeleportData.clear());
+        BaniraEvents.Server.onTick(event -> EventHandlerProxy.onServerTick());
         ForgeNarcissusGameEventAdapter.register();
 
-        BaniraEventBus.ModLifecycle.onCommonSetup(event -> {
+        BaniraEvents.onCommonSetup(event -> {
             NarcissusNotificationTypes.registerAllOnServer();
             BaniraModPresence.register(MODID, player -> {
                 if (!(player instanceof ServerPlayer)) {
