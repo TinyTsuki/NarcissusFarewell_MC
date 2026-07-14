@@ -33,6 +33,7 @@ import net.minecraftforge.common.util.ITeleporter;
 import net.minecraftforge.registries.ForgeRegistries;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import xin.vanilla.banira.api.BaniraServer;
 import xin.vanilla.banira.common.data.KeyValue;
 import xin.vanilla.banira.common.util.*;
 import xin.vanilla.banira.common.util.CommandUtils;
@@ -480,7 +481,7 @@ public class NarcissusUtils {
     // region 安全坐标
 
     public static ServerLevel getServerLevel() {
-        MinecraftServer server = BaniraServerUtils.currentServer();
+        MinecraftServer server = BaniraServer.currentAs(MinecraftServer.class);
         if (server == null) {
             throw new IllegalStateException("Minecraft server is not ready");
         }
