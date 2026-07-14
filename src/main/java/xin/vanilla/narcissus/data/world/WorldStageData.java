@@ -5,15 +5,15 @@ import lombok.NonNull;
 import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.nbt.ListNBT;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.world.server.ServerWorld;
 import net.minecraftforge.common.util.WorldCapabilityData;
-import xin.vanilla.banira.common.util.BaniraServerUtils;
+import xin.vanilla.banira.api.BaniraServer;
 import xin.vanilla.banira.common.data.KeyValue;
 import xin.vanilla.narcissus.data.SafeWorldCoordinate;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.Objects;
 
 /**
  * 世界驿站数据
@@ -88,7 +88,7 @@ public class WorldStageData extends WorldCapabilityData {
     }
 
     public static WorldStageData get() {
-        return get(Objects.requireNonNull(BaniraServerUtils.currentServer()).getAllLevels().iterator().next());
+        return get(BaniraServer.require(MinecraftServer.class).getAllLevels().iterator().next());
     }
 
     public static WorldStageData get(ServerPlayerEntity player) {

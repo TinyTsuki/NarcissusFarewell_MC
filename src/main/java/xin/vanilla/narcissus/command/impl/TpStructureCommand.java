@@ -12,13 +12,14 @@ import net.minecraft.command.Commands;
 import net.minecraft.command.arguments.DimensionArgument;
 import net.minecraft.command.arguments.ResourceLocationArgument;
 import net.minecraft.entity.player.ServerPlayerEntity;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.RegistryKey;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.world.World;
 import net.minecraft.world.biome.Biome;
 import net.minecraft.world.gen.feature.structure.Structure;
 import net.minecraft.world.server.ServerWorld;
-import xin.vanilla.banira.common.util.BaniraServerUtils;
+import xin.vanilla.banira.api.BaniraServer;
 import xin.vanilla.banira.common.data.Component;
 import xin.vanilla.banira.common.data.WorldCoordinate;
 import xin.vanilla.banira.common.util.BiomeUtils;
@@ -35,7 +36,6 @@ import xin.vanilla.narcissus.notification.NarcissusNotificationTypes;
 import xin.vanilla.narcissus.util.CommandUtils;
 import xin.vanilla.narcissus.util.NarcissusUtils;
 
-import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 
 public final class TpStructureCommand {
@@ -62,7 +62,8 @@ public final class TpStructureCommand {
         String searchingKey = isBiome ? "tp_structure_searching_biome" : "tp_structure_searching_structure";
         MessageUtils.sendNotification(player, NarcissusComponent.get().transAuto(searchingKey, structId), NarcissusNotificationTypes.TELEPORT_SEARCH);
         new Thread(() -> {
-            ServerWorld world = Objects.requireNonNull(BaniraServerUtils.currentServer()).getLevel(targetLevel);
+            MinecraftServer server = BaniraServer.require(MinecraftServer.class);
+            ServerWorld world = server.getLevel(targetLevel);
             SafeWorldCoordinate safeWorldCoordinate;
             if (biome != null) {
                 Biome biomeFromWorld = BiomeUtils.getBiome(world, structId);
@@ -76,7 +77,7 @@ public final class TpStructureCommand {
                     safeWorldCoordinate = null;
                 }
             } else {
-                ServerWorld structureWorld = Objects.requireNonNull(BaniraServerUtils.currentServer()).getLevel(targetLevel);
+                ServerWorld structureWorld = server.getLevel(targetLevel);
                 WorldCoordinate structStart = new WorldCoordinate(player).dimension(targetLevel);
                 WorldCoordinate foundStruct = StructureUtils.findNearestStructure(structureWorld, structStart, structure, finalRange);
                 safeWorldCoordinate = foundStruct != null
