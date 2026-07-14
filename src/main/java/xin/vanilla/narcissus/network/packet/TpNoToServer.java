@@ -1,16 +1,10 @@
 package xin.vanilla.narcissus.network.packet;
 
-import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.network.RegistryFriendlyByteBuf;
-import net.minecraft.network.codec.StreamCodec;
-import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.server.level.ServerPlayer;
-import net.neoforged.neoforge.network.handling.IPayloadContext;
-import org.jetbrains.annotations.NotNull;
+import xin.vanilla.banira.common.network.BaniraPacketBuffer;
+import xin.vanilla.banira.common.network.BaniraNetworkContext;
 import xin.vanilla.banira.common.util.CommandUtils;
 import xin.vanilla.banira.common.util.MessageUtils;
-import xin.vanilla.banira.internal.network.BaniraStreamCodecs;
-import xin.vanilla.narcissus.Identifier;
 import xin.vanilla.narcissus.NarcissusComponent;
 import xin.vanilla.narcissus.NarcissusFarewell;
 import xin.vanilla.narcissus.data.TeleportRequest;
@@ -24,42 +18,36 @@ import java.util.Comparator;
 
 public class TpNoToServer implements NetworkPacket {
 
-    public static final Type<TpNoToServer> TYPE =
-            new Type<>(Identifier.id().create("tp_no_server"));
-    public static final StreamCodec<RegistryFriendlyByteBuf, TpNoToServer> STREAM_CODEC =
-            BaniraStreamCodecs.registryBuf(TpNoToServer::toBytes, TpNoToServer::new);
-
     public TpNoToServer() {
     }
 
-    public TpNoToServer(FriendlyByteBuf buf) {
+    public TpNoToServer(BaniraPacketBuffer buf) {
     }
 
-    public void toBytes(FriendlyByteBuf buf) {
+    public void toBytes(BaniraPacketBuffer buf) {
     }
 
-    @Override
-    public @NotNull Type<? extends CustomPacketPayload> type() {
-        return TYPE;
-    }
-
-    public static void handle(TpNoToServer packet, IPayloadContext ctx) {
+    public static void handle(TpNoToServer packet, BaniraNetworkContext ctx) {
+        // 获取网络事件上下文并排队执行工作
         ctx.enqueueWork(() -> {
-            if (!(ctx.player() instanceof ServerPlayer player)) {
-                return;
-            }
-            EnumTeleportType teleportType = NarcissusFarewell.getTeleportRequest().values().stream()
-                    .filter(request -> !request.isIgnore())
-                    .filter(request -> request.getTarget().getUUID().equals(player.getUUID()))
-                    .max(Comparator.comparing(TeleportRequest::getRequestTime))
-                    .orElse(new TeleportRequest())
-                    .getTeleportType();
-            if (EnumTeleportType.TP_ASK == teleportType || EnumTeleportType.TP_HERE == teleportType) {
-                EnumCommandType type = EnumTeleportType.TP_HERE == teleportType ? EnumCommandType.TP_HERE_NO : EnumCommandType.TP_ASK_NO;
-                CommandUtils.executeCommand(player, NarcissusUtils.getCommand(type));
-            } else {
-                MessageUtils.sendNotification(player, NarcissusComponent.get().transAuto("tp_ask_not_found"), NarcissusNotificationTypes.TELEPORT_REQUEST);
+            // 获取发送数据包的玩家实体
+            ServerPlayer player = ctx.senderAs(net.minecraft.server.level.ServerPlayer.class);
+            if (player != null) {
+                EnumTeleportType teleportType = NarcissusFarewell.getTeleportRequest().values().stream()
+                        .filter(request -> !request.isIgnore())
+                        .filter(request -> request.getTarget().getUUID().equals(player.getUUID()))
+                        .max(Comparator.comparing(TeleportRequest::getRequestTime))
+                        .orElse(new TeleportRequest())
+                        .getTeleportType();
+                if (EnumTeleportType.TP_ASK == teleportType || EnumTeleportType.TP_HERE == teleportType) {
+                    EnumCommandType type = EnumTeleportType.TP_HERE == teleportType ? EnumCommandType.TP_HERE_NO : EnumCommandType.TP_ASK_NO;
+                    CommandUtils.executeCommand(player, NarcissusUtils.getCommand(type));
+                } else {
+                    MessageUtils.sendNotification(player, NarcissusComponent.get().transAuto("tp_ask_not_found"), NarcissusNotificationTypes.TELEPORT_REQUEST);
+                }
             }
         });
+        // 设置数据包已处理状态，防止重复处理
+        ctx.markHandled();
     }
 }

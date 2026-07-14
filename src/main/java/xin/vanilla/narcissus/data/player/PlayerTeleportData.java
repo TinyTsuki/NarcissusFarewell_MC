@@ -3,10 +3,10 @@ package xin.vanilla.narcissus.data.player;
 import lombok.NonNull;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
-import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
-import xin.vanilla.banira.BaniraCodex;
+import xin.vanilla.banira.api.BaniraPlayerData;
+import xin.vanilla.banira.common.network.BaniraPacketBuffer;
 import xin.vanilla.banira.common.api.ICommandNotify;
 import xin.vanilla.banira.common.data.KeyValue;
 import xin.vanilla.banira.common.player.IPlayerData;
@@ -19,6 +19,7 @@ import xin.vanilla.narcissus.data.PlayerAccess;
 import xin.vanilla.narcissus.data.SafeWorldCoordinate;
 import xin.vanilla.narcissus.data.TeleportRecord;
 import xin.vanilla.narcissus.enums.EnumTeleportType;
+import xin.vanilla.narcissus.internal.network.NarcissusNbtPacketCodec;
 import xin.vanilla.narcissus.network.packet.PlayerDataSyncToClient;
 
 import java.util.*;
@@ -39,7 +40,8 @@ public final class PlayerTeleportData implements IPlayerData<PlayerTeleportData>
     private PlayerTeleportData(Player player) {
         this.player = player;
         if (this.player instanceof ServerPlayer) {
-            this.deserializeNBT(BaniraCodex.playerDataManager.getOrCreate(player.getUUID(), NarcissusFarewell.MODID), false);
+            this.deserializeNBT(BaniraPlayerData.getOrCreate(
+                    player.getUUID(), NarcissusFarewell.MODID, CompoundTag.class), false);
         }
     }
 
@@ -55,6 +57,7 @@ public final class PlayerTeleportData implements IPlayerData<PlayerTeleportData>
         return this.dirty;
     }
 
+    @Override
     public void setDirty() {
         this.dirty = true;
     }
@@ -65,7 +68,7 @@ public final class PlayerTeleportData implements IPlayerData<PlayerTeleportData>
     }
 
     @Override
-    public void writeToBuffer(FriendlyByteBuf buffer) {
+    public void writeToBuffer(BaniraPacketBuffer buffer) {
         buffer.writeBoolean(this.notified);
         buffer.writeUtf(DateUtils.toDateTimeString(this.getLastCardTime()));
         buffer.writeUtf(DateUtils.toDateTimeString(this.getLastTpTime()));
@@ -73,14 +76,14 @@ public final class PlayerTeleportData implements IPlayerData<PlayerTeleportData>
 
         buffer.writeInt(this.teleportRecords.size());
         for (TeleportRecord teleportRecord : this.getTeleportRecords()) {
-            buffer.writeNbt(teleportRecord.writeToNBT());
+            NarcissusNbtPacketCodec.write(buffer, teleportRecord.writeToNBT());
         }
 
         buffer.writeInt(this.getHomeCoordinate().size());
         for (Map.Entry<KeyValue<String, String>, SafeWorldCoordinate> entry : this.getHomeCoordinate().entrySet()) {
             buffer.writeUtf(entry.getKey().key());
             buffer.writeUtf(entry.getKey().value());
-            buffer.writeNbt(entry.getValue().toTag());
+            NarcissusNbtPacketCodec.write(buffer, entry.getValue().toTag());
         }
 
         buffer.writeInt(this.getDefaultHome().size());
@@ -89,11 +92,11 @@ public final class PlayerTeleportData implements IPlayerData<PlayerTeleportData>
             buffer.writeUtf(entry.getValue());
         }
 
-        buffer.writeNbt(this.getAccess().writeToNBT());
+        NarcissusNbtPacketCodec.write(buffer, this.getAccess().writeToNBT());
     }
 
     @Override
-    public void readFromBuffer(FriendlyByteBuf buffer) {
+    public void readFromBuffer(BaniraPacketBuffer buffer) {
         this.notified = buffer.readBoolean();
         this.lastCardTime = DateUtils.format(buffer.readUtf());
         this.lastTpTime = DateUtils.format(buffer.readUtf());
@@ -101,12 +104,13 @@ public final class PlayerTeleportData implements IPlayerData<PlayerTeleportData>
 
         this.teleportRecords = new ArrayList<>();
         for (int i = 0; i < buffer.readInt(); i++) {
-            this.teleportRecords.add(TeleportRecord.readFromNBT(Objects.requireNonNull(buffer.readNbt())));
+            this.teleportRecords.add(TeleportRecord.readFromNBT(NarcissusNbtPacketCodec.read(buffer)));
         }
 
-        this.homeCoordinate = new HashMap<>();
+        this.homeCoordinate = new LinkedHashMap<>();
         for (int i = 0; i < buffer.readInt(); i++) {
-            this.homeCoordinate.put(new KeyValue<>(buffer.readUtf(), buffer.readUtf()), SafeWorldCoordinate.fromTag(Objects.requireNonNull(buffer.readNbt())));
+            this.homeCoordinate.put(new KeyValue<>(buffer.readUtf(), buffer.readUtf()),
+                    SafeWorldCoordinate.fromTag(NarcissusNbtPacketCodec.read(buffer)));
         }
 
         this.defaultHome = new HashMap<>();
@@ -114,7 +118,7 @@ public final class PlayerTeleportData implements IPlayerData<PlayerTeleportData>
             this.defaultHome.put(buffer.readUtf(), buffer.readUtf());
         }
 
-        this.access = PlayerAccess.readFromNBT(Objects.requireNonNull(buffer.readNbt()));
+        this.access = PlayerAccess.readFromNBT(NarcissusNbtPacketCodec.read(buffer));
 
         this.save();
     }
@@ -180,7 +184,7 @@ public final class PlayerTeleportData implements IPlayerData<PlayerTeleportData>
 
         // 反序列化家坐标
         ListTag homeCoordinateNBT = nbt.getList("homeCoordinate", 10);
-        Map<KeyValue<String, String>, SafeWorldCoordinate> homeCoordinateMap = new HashMap<>();
+        Map<KeyValue<String, String>, SafeWorldCoordinate> homeCoordinateMap = new LinkedHashMap<>();
         for (int i = 0; i < homeCoordinateNBT.size(); i++) {
             CompoundTag homeCoordinateTag = homeCoordinateNBT.getCompound(i);
             homeCoordinateMap.put(new KeyValue<>(homeCoordinateTag.getString("key"), homeCoordinateTag.getString("value")),
@@ -226,23 +230,10 @@ public final class PlayerTeleportData implements IPlayerData<PlayerTeleportData>
         this.save();
     }
 
-    public void applyFromSyncPacket(PlayerDataSyncToClient packet) {
-        this.lastCardTime = packet.getLastCardTime();
-        this.lastTpTime = packet.getLastTpTime();
-        this.teleportCard.set(packet.getTeleportCard());
-        this.teleportRecords = new ArrayList<>(packet.getTeleportRecords());
-        this.homeCoordinate = new LinkedHashMap<>(packet.getHomeCoordinate());
-        this.defaultHome = new LinkedHashMap<>(packet.getDefaultHome());
-        if (packet.getAccessTag() != null) {
-            this.access = PlayerAccess.readFromNBT(packet.getAccessTag());
-        }
-        readTeleportCountdownFromNbt(packet.getTpCountdownTag() != null ? packet.getTpCountdownTag() : new CompoundTag());
-    }
-
     @Override
     public void save() {
         if (this.player instanceof ServerPlayer) {
-            BaniraCodex.playerDataManager.put(player.getUUID(), NarcissusFarewell.MODID, serializeNBT());
+            BaniraPlayerData.put(player.getUUID(), NarcissusFarewell.MODID, serializeNBT());
         }
     }
 
@@ -429,7 +420,7 @@ public final class PlayerTeleportData implements IPlayerData<PlayerTeleportData>
 
     public Map<KeyValue<String, String>, SafeWorldCoordinate> getHomeCoordinate() {
         if (this.isDirty()) this.saveEx();
-        return this.homeCoordinate = this.homeCoordinate == null ? new HashMap<>() : this.homeCoordinate;
+        return this.homeCoordinate = this.homeCoordinate == null ? new LinkedHashMap<>() : this.homeCoordinate;
     }
 
     public void setHomeCoordinate(Map<KeyValue<String, String>, SafeWorldCoordinate> homeCoordinate) {

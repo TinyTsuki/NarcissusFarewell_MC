@@ -1,67 +1,33 @@
 package xin.vanilla.narcissus.network;
 
-import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.fml.common.EventBusSubscriber;
-import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
-import net.neoforged.neoforge.network.handling.IPayloadContext;
-import net.neoforged.neoforge.network.registration.PayloadRegistrar;
-import xin.vanilla.banira.common.network.SplitPacket;
-import xin.vanilla.narcissus.NarcissusFarewell;
+import xin.vanilla.banira.api.BaniraIdentifier;
+import xin.vanilla.banira.common.network.NetworkHandler;
+import xin.vanilla.narcissus.Identifier;
 import xin.vanilla.narcissus.network.packet.*;
 
-import java.util.List;
-import java.util.function.BiConsumer;
-
-@EventBusSubscriber(modid = NarcissusFarewell.MODID, bus = EventBusSubscriber.Bus.MOD)
 public final class NetworkInit {
 
-    private NetworkInit() {
-    }
+    private static final NetworkHandler HANDLER = NetworkHandler.create("main_network",
+            BaniraIdentifier.of(Identifier.id().modId(), "main_network"));
 
-    /**
-     * 保留空方法，便于主类构造函数中仍调用（载荷实际在 {@link #registerPayloadHandlers} 注册）。
-     */
     public static void registerPackets() {
-    }
+        HANDLER.registerSplit(PlayerDataSyncToClient.class, PlayerDataSyncToClient::toBytes, PlayerDataSyncToClient::new, PlayerDataSyncToClient::handle);
+        HANDLER.register(WaypointSyncToClient.class, WaypointSyncToClient::toBytes, WaypointSyncToClient::new, WaypointSyncToClient::handle);
+        HANDLER.register(StageDataSyncToClient.class, StageDataSyncToClient::toBytes, StageDataSyncToClient::new, StageDataSyncToClient::handle);
+        HANDLER.register(CostConfigSyncToClient.class, CostConfigSyncToClient::toBytes, CostConfigSyncToClient::new, CostConfigSyncToClient::handle);
 
-    @SubscribeEvent
-    public static void registerPayloadHandlers(RegisterPayloadHandlersEvent event) {
-        PayloadRegistrar reg = event.registrar("1").optional();
+        HANDLER.register(WaypointTeleportToServer.class, WaypointTeleportToServer::toBytes, WaypointTeleportToServer::new, WaypointTeleportToServer::handle);
+        HANDLER.register(WaypointDelToServer.class, WaypointDelToServer::toBytes, WaypointDelToServer::new, WaypointDelToServer::handle);
+        HANDLER.register(WaypointAddHomeToServer.class, WaypointAddHomeToServer::toBytes, WaypointAddHomeToServer::new, WaypointAddHomeToServer::handle);
+        HANDLER.register(WaypointAddStageToServer.class, WaypointAddStageToServer::toBytes, WaypointAddStageToServer::new, WaypointAddStageToServer::handle);
 
-        reg.playToClient(PlayerDataSyncToClient.TYPE, PlayerDataSyncToClient.STREAM_CODEC, NetworkInit::onPlayerDataSplitFragment);
-        reg.playToClient(WaypointSyncToClient.TYPE, WaypointSyncToClient.STREAM_CODEC, WaypointSyncToClient::handle);
-        reg.playToClient(StageDataSyncToClient.TYPE, StageDataSyncToClient.STREAM_CODEC, StageDataSyncToClient::handle);
-        reg.playToClient(CostConfigSyncToClient.TYPE, CostConfigSyncToClient.STREAM_CODEC, CostConfigSyncToClient::handle);
+        HANDLER.register(TpBackToServer.class, TpBackToServer::toBytes, TpBackToServer::new, TpBackToServer::handle);
+        HANDLER.register(TpGraveToServer.class, TpGraveToServer::toBytes, TpGraveToServer::new, TpGraveToServer::handle);
+        HANDLER.register(TpHomeToServer.class, TpHomeToServer::toBytes, TpHomeToServer::new, TpHomeToServer::handle);
+        HANDLER.register(TpNoToServer.class, TpNoToServer::toBytes, TpNoToServer::new, TpNoToServer::handle);
+        HANDLER.register(TpYesToServer.class, TpYesToServer::toBytes, TpYesToServer::new, TpYesToServer::handle);
 
-        reg.playToServer(TpBackToServer.TYPE, TpBackToServer.STREAM_CODEC, TpBackToServer::handle);
-        reg.playToServer(TpGraveToServer.TYPE, TpGraveToServer.STREAM_CODEC, TpGraveToServer::handle);
-        reg.playToServer(TpHomeToServer.TYPE, TpHomeToServer.STREAM_CODEC, TpHomeToServer::handle);
-        reg.playToServer(TpNoToServer.TYPE, TpNoToServer.STREAM_CODEC, TpNoToServer::handle);
-        reg.playToServer(TpYesToServer.TYPE, TpYesToServer.STREAM_CODEC, TpYesToServer::handle);
-
-        reg.playToServer(WaypointTeleportToServer.TYPE, WaypointTeleportToServer.STREAM_CODEC, WaypointTeleportToServer::handle);
-        reg.playToServer(WaypointDelToServer.TYPE, WaypointDelToServer.STREAM_CODEC, WaypointDelToServer::handle);
-        reg.playToServer(WaypointAddHomeToServer.TYPE, WaypointAddHomeToServer.STREAM_CODEC, WaypointAddHomeToServer::handle);
-        reg.playToServer(WaypointAddStageToServer.TYPE, WaypointAddStageToServer.STREAM_CODEC, WaypointAddStageToServer::handle);
-
-        reg.playToServer(AccessListEditToServer.TYPE, AccessListEditToServer.STREAM_CODEC, AccessListEditToServer::handle);
-        reg.playToServer(PlayerConfigSyncToServer.TYPE, PlayerConfigSyncToServer.STREAM_CODEC, PlayerConfigSyncToServer::handle);
-    }
-
-    private static void onPlayerDataSplitFragment(PlayerDataSyncToClient payload, IPayloadContext ctx) {
-        dispatchSplitClientPayload(payload, ctx, PlayerDataSyncToClient::handle);
-    }
-
-    private static <T extends SplitPacket> void dispatchSplitClientPayload(
-            T payload,
-            IPayloadContext ctx,
-            BiConsumer<T, IPayloadContext> onMerged) {
-        List<T> complete = SplitPacket.handle(payload);
-        if (complete != null && !complete.isEmpty()) {
-            T merged = SplitPacket.merge(complete);
-            if (merged != null) {
-                ctx.enqueueWork(() -> onMerged.accept(merged, ctx));
-            }
-        }
+        HANDLER.register(AccessListEditToServer.class, AccessListEditToServer::toBytes, AccessListEditToServer::new, AccessListEditToServer::handle);
+        HANDLER.register(PlayerConfigSyncToServer.class, PlayerConfigSyncToServer::toBytes, PlayerConfigSyncToServer::new, PlayerConfigSyncToServer::handle);
     }
 }

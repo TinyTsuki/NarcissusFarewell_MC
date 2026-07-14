@@ -1,45 +1,32 @@
 package xin.vanilla.narcissus.network.packet;
 
-import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.network.RegistryFriendlyByteBuf;
-import net.minecraft.network.codec.StreamCodec;
-import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.server.level.ServerPlayer;
-import net.neoforged.neoforge.network.handling.IPayloadContext;
-import org.jetbrains.annotations.NotNull;
+import xin.vanilla.banira.common.network.BaniraPacketBuffer;
+import xin.vanilla.banira.common.network.BaniraNetworkContext;
 import xin.vanilla.banira.common.util.CommandUtils;
-import xin.vanilla.banira.internal.network.BaniraStreamCodecs;
-import xin.vanilla.narcissus.Identifier;
 import xin.vanilla.narcissus.enums.EnumCommandType;
 import xin.vanilla.narcissus.network.NetworkPacket;
 import xin.vanilla.narcissus.util.NarcissusUtils;
 
-public class TpGraveToServer implements NetworkPacket {
 
-    public static final Type<TpGraveToServer> TYPE =
-            new Type<>(Identifier.id().create("tp_grave_server"));
-    public static final StreamCodec<RegistryFriendlyByteBuf, TpGraveToServer> STREAM_CODEC =
-            BaniraStreamCodecs.registryBuf(TpGraveToServer::toBytes, TpGraveToServer::new);
+public class TpGraveToServer implements NetworkPacket {
 
     public TpGraveToServer() {
     }
 
-    public TpGraveToServer(FriendlyByteBuf buf) {
+    public TpGraveToServer(BaniraPacketBuffer buf) {
     }
 
-    public void toBytes(FriendlyByteBuf buf) {
+    public void toBytes(BaniraPacketBuffer buf) {
     }
 
-    @Override
-    public @NotNull Type<? extends CustomPacketPayload> type() {
-        return TYPE;
-    }
-
-    public static void handle(TpGraveToServer packet, IPayloadContext ctx) {
+    public static void handle(TpGraveToServer packet, BaniraNetworkContext ctx) {
         ctx.enqueueWork(() -> {
-            if (ctx.player() instanceof ServerPlayer player) {
+            ServerPlayer player = ctx.senderAs(net.minecraft.server.level.ServerPlayer.class);
+            if (player != null) {
                 CommandUtils.executeCommand(player, NarcissusUtils.getCommand(EnumCommandType.TP_GRAVE));
             }
         });
+        ctx.markHandled();
     }
 }

@@ -1,15 +1,11 @@
 package xin.vanilla.narcissus.event;
 
-import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
-import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.neoforge.event.entity.EntityJoinLevelEvent;
-import net.neoforged.neoforge.event.entity.EntityTeleportEvent;
-import net.neoforged.neoforge.event.entity.player.PlayerEvent;
-import net.neoforged.neoforge.event.tick.ServerTickEvent;
+import net.minecraft.server.MinecraftServer;
+import net.minecraft.world.phys.Vec3;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import xin.vanilla.banira.BaniraCodex;
+import xin.vanilla.banira.api.BaniraServer;
 import xin.vanilla.banira.common.util.DateUtils;
 import xin.vanilla.banira.common.util.MessageUtils;
 import xin.vanilla.narcissus.NarcissusComponent;
@@ -29,12 +25,12 @@ import java.util.Date;
 public class EventHandlerProxy {
     private static final Logger LOGGER = LogManager.getLogger();
 
-    public static void onServerTick(ServerTickEvent event) {
-        MinecraftServer srv = BaniraCodex.serverInstance().key();
+    public static void onServerTick() {
+        MinecraftServer srv = BaniraServer.currentAs(MinecraftServer.class);
         if (srv != null) {
             TeleportCountdownTracker.tickMovementCheck(srv);
         }
-        if (BaniraCodex.serverInstance().key().getTickCount() % 20 == 0) {
+        if (srv != null && srv.getTickCount() % 20 == 0) {
             long currentTimeMillis = System.currentTimeMillis();
             NarcissusFarewell.getTeleportRequest().entrySet().stream()
                     .filter(entry -> entry.getValue().getExpireTime() < currentTimeMillis)
@@ -51,69 +47,54 @@ public class EventHandlerProxy {
         }
     }
 
-    /**
-     * 玩家死亡后重生或者从末地回主世界
-     */
-    @SubscribeEvent
-    public static void onPlayerCloned(PlayerEvent.Clone event) {
-        if (event.getEntity() instanceof ServerPlayer) {
-            ServerPlayer original = (ServerPlayer) event.getOriginal();
-            ServerPlayer newPlayer = (ServerPlayer) event.getEntity();
-            original.revive();
-
-            // 如果是死亡，则记录死亡记录
-            if (event.isWasDeath()) {
-                TeleportRecord record = new TeleportRecord();
-                record.setTeleportTime(new Date());
-                record.setTeleportType(EnumTeleportType.DEATH);
-                SafeWorldCoordinate before = new SafeWorldCoordinate();
-                before.setX(original.getX()).setY(original.getY()).setZ(original.getZ()).setDimension(original.level().dimension());
-                record.setBefore(before);
-                SafeWorldCoordinate after = new SafeWorldCoordinate();
-                after.setX(newPlayer.getX()).setY(newPlayer.getY()).setZ(newPlayer.getZ()).setDimension(newPlayer.level().dimension());
-                record.setAfter(after);
-                PlayerTeleportData.getData(newPlayer).addTeleportRecords(record);
-                PlayerTeleportData.syncPlayerData(newPlayer);
-            }
-        }
-    }
-
-    public static void onEntityJoinWorld(EntityJoinLevelEvent event) {
-        if (event.getEntity() instanceof ServerPlayer player) {
-            // 给予传送卡
-            if (CommonConfig.get().base().teleportCard()) {
-                PlayerTeleportData data = PlayerTeleportData.getData(player);
-                Date current = new Date();
-                if (DateUtils.toDateInt(data.getLastCardTime()) < DateUtils.toDateInt(current)) {
-                    data.setLastCardTime(current);
-                    data.plusTeleportCard(CommonConfig.get().base().teleportCardDaily());
-                    PlayerTeleportData.syncPlayerData(player);
-                }
-            }
-        }
-    }
-
-    public static void onEntityTeleport(EntityTeleportEvent event) {
-        if (event.getEntity() instanceof ServerPlayer player) {
+    public static void onPlayerCloned(ServerPlayer original, ServerPlayer newPlayer, boolean wasDeath) {
+        original.revive();
+        if (wasDeath) {
             TeleportRecord record = new TeleportRecord();
             record.setTeleportTime(new Date());
-            record.setTeleportType(EnumTeleportType.OTHER);
-            SafeWorldCoordinate before = new SafeWorldCoordinate(player);
-            before.fromVec3(event.getPrev());
+            record.setTeleportType(EnumTeleportType.DEATH);
+            SafeWorldCoordinate before = new SafeWorldCoordinate();
+            before.x(original.getX()).y(original.getY()).z(original.getZ()).dimension(original.level().dimension());
             record.setBefore(before);
-            SafeWorldCoordinate after = new SafeWorldCoordinate(player);
-            after.fromVec3(event.getTarget());
+            SafeWorldCoordinate after = new SafeWorldCoordinate();
+            after.x(newPlayer.getX()).y(newPlayer.getY()).z(newPlayer.getZ()).dimension(newPlayer.level().dimension());
             record.setAfter(after);
+            PlayerTeleportData.getData(newPlayer).addTeleportRecords(record);
+            PlayerTeleportData.syncPlayerData(newPlayer);
+        }
+    }
+
+    public static void onPlayerJoinWorld(ServerPlayer player) {
+        if (CommonConfig.get().base().teleportCard()) {
             PlayerTeleportData data = PlayerTeleportData.getData(player);
-            TeleportRecord otherRecord = data.getTeleportRecords().stream().max(Comparator.comparing(o -> o.getTeleportTime().getTime())).orElse(null);
-            if (otherRecord != null && otherRecord.getTeleportType() == EnumTeleportType.OTHER && otherRecord.getBefore().xyzString().equals(record.getBefore().xyzString())) {
-                otherRecord.setAfter(record.getAfter());
-                data.save();
-                PlayerTeleportData.syncPlayerData(player);
-            } else {
-                data.addTeleportRecords(record);
+            Date current = new Date();
+            if (DateUtils.toDateInt(data.getLastCardTime()) < DateUtils.toDateInt(current)) {
+                data.setLastCardTime(current);
+                data.plusTeleportCard(CommonConfig.get().base().teleportCardDaily());
                 PlayerTeleportData.syncPlayerData(player);
             }
+        }
+    }
+
+    public static void onPlayerTeleport(ServerPlayer player, Vec3 previous, Vec3 target) {
+        TeleportRecord record = new TeleportRecord();
+        record.setTeleportTime(new Date());
+        record.setTeleportType(EnumTeleportType.OTHER);
+        SafeWorldCoordinate before = new SafeWorldCoordinate(player);
+        before.fromVec3(previous);
+        record.setBefore(before);
+        SafeWorldCoordinate after = new SafeWorldCoordinate(player);
+        after.fromVec3(target);
+        record.setAfter(after);
+        PlayerTeleportData data = PlayerTeleportData.getData(player);
+        TeleportRecord otherRecord = data.getTeleportRecords().stream().max(Comparator.comparing(o -> o.getTeleportTime().getTime())).orElse(null);
+        if (otherRecord != null && otherRecord.getTeleportType() == EnumTeleportType.OTHER && otherRecord.getBefore().xyzString().equals(record.getBefore().xyzString())) {
+            otherRecord.setAfter(record.getAfter());
+            data.save();
+            PlayerTeleportData.syncPlayerData(player);
+        } else {
+            data.addTeleportRecords(record);
+            PlayerTeleportData.syncPlayerData(player);
         }
     }
 

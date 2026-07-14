@@ -43,17 +43,6 @@ public class SafeWorldCoordinate extends WorldCoordinate implements Serializable
         super(x, y, z, DimensionUtils.parse(dimension));
     }
 
-    @Override
-    public SafeWorldCoordinate dimension(ResourceKey<Level> dimension) {
-        super.dimension(dimension);
-        return this;
-    }
-
-    /** 与历史 {@code Coordinate#toXyzString()} 兼容 */
-    public String toXyzString() {
-        return xyzString();
-    }
-
     public static SafeWorldCoordinate random(ServerPlayer player) {
         return random(player, CommonConfig.get().general().teleportRandomDistanceLimit());
     }
@@ -98,86 +87,5 @@ public class SafeWorldCoordinate extends WorldCoordinate implements Serializable
 
     public String toXyzIntString(String delimiter) {
         return xInt() + delimiter + yInt() + delimiter + zInt();
-    }
-
-    /** 与历史 {@code Coordinate} API 兼容 */
-    public String toXString() {
-        return xString();
-    }
-
-    public String toYString() {
-        return yString();
-    }
-
-    public String toZString() {
-        return zString();
-    }
-
-    /** JavaBean 命名，与 {@link WorldCoordinate} 的 Lombok fluent（x()/x(v)）并存 */
-    public double getX() {
-        return x();
-    }
-
-    public double getY() {
-        return y();
-    }
-
-    public double getZ() {
-        return z();
-    }
-
-    public int getYInt() {
-        return yInt();
-    }
-
-    public double getYaw() {
-        return yaw();
-    }
-
-    public double getPitch() {
-        return pitch();
-    }
-
-    public ResourceKey<Level> getDimension() {
-        return dimension();
-    }
-
-    public SafeWorldCoordinate setX(double v) {
-        x(v);
-        return this;
-    }
-
-    public SafeWorldCoordinate setY(double v) {
-        y(v);
-        return this;
-    }
-
-    public SafeWorldCoordinate setZ(double v) {
-        z(v);
-        return this;
-    }
-
-    public SafeWorldCoordinate setYaw(double v) {
-        yaw(v);
-        return this;
-    }
-
-    public SafeWorldCoordinate setPitch(double v) {
-        pitch(v);
-        return this;
-    }
-
-    public SafeWorldCoordinate setDimension(ResourceKey<Level> v) {
-        dimension(v);
-        return this;
-    }
-
-    public boolean isSafe() {
-        return safe;
-    }
-
-    public SafeWorldCoordinate setSafe(boolean v) {
-        safe(v);
-        return this;
     }
 }

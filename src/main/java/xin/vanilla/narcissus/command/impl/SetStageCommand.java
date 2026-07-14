@@ -54,8 +54,8 @@ public final class SetStageCommand {
             return 0;
         }
         stageData.addCoordinate(key, safeWorldCoordinate);
-        PacketUtils.broadcastPayload(new WaypointSyncToClient(WaypointSyncToClient.Action.ADD, WaypointSyncToClient.Kind.STAGE, name, safeWorldCoordinate));
-        PacketUtils.broadcastPayload(new StageDataSyncToClient(stageData.getStageCoordinate()));
+        PacketUtils.broadcastPacket(new WaypointSyncToClient(WaypointSyncToClient.Action.ADD, WaypointSyncToClient.Type.STAGE, name, safeWorldCoordinate));
+        PacketUtils.broadcastPacket(new StageDataSyncToClient(stageData.getStageCoordinate()));
         sendStageMessage(source, NarcissusComponent.get().transAuto("stage_set", name, safeWorldCoordinate.xyzString()), true, NarcissusNotificationTypes.WAYPOINT);
         return 1;
     }

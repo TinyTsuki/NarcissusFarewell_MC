@@ -2,17 +2,11 @@ package xin.vanilla.narcissus.network.packet;
 
 import lombok.Getter;
 import lombok.experimental.Accessors;
-import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.network.RegistryFriendlyByteBuf;
-import net.minecraft.network.codec.StreamCodec;
-import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.api.distmarker.OnlyIn;
-import net.neoforged.neoforge.network.handling.IPayloadContext;
-import org.jetbrains.annotations.NotNull;
-import xin.vanilla.banira.Identifier;
+import xin.vanilla.banira.common.network.BaniraPacketBuffer;
+import xin.vanilla.banira.common.network.BaniraNetworkContext;
 import xin.vanilla.banira.common.data.KeyValue;
-import xin.vanilla.banira.internal.network.BaniraStreamCodecs;
 import xin.vanilla.narcissus.data.SafeWorldCoordinate;
 import xin.vanilla.narcissus.data.client.ClientStageData;
 import xin.vanilla.narcissus.network.NetworkPacket;
@@ -25,11 +19,6 @@ import java.util.Map;
 @Accessors(fluent = true)
 public class StageDataSyncToClient implements NetworkPacket {
 
-    public static final CustomPacketPayload.Type<StageDataSyncToClient> TYPE =
-            new CustomPacketPayload.Type<>(Identifier.id().create("stage_sync"));
-    public static final StreamCodec<RegistryFriendlyByteBuf, StageDataSyncToClient> STREAM_CODEC =
-            BaniraStreamCodecs.registryBuf(StageDataSyncToClient::toBytes, StageDataSyncToClient::new);
-
     private static final int MAX_NAME_LEN = 64;
     private static final int MAX_DIMENSION_LEN = 256;
 
@@ -39,7 +28,7 @@ public class StageDataSyncToClient implements NetworkPacket {
         this.stageCoordinate = stageCoordinate != null ? new LinkedHashMap<>(stageCoordinate) : new LinkedHashMap<>();
     }
 
-    public StageDataSyncToClient(FriendlyByteBuf buf) {
+    public StageDataSyncToClient(BaniraPacketBuffer buf) {
         int count = buf.readVarInt();
         Map<KeyValue<String, String>, SafeWorldCoordinate> map = new LinkedHashMap<>();
         for (int i = 0; i < count; i++) {
@@ -54,12 +43,7 @@ public class StageDataSyncToClient implements NetworkPacket {
         this.stageCoordinate = map;
     }
 
-    @Override
-    public @NotNull Type<? extends CustomPacketPayload> type() {
-        return TYPE;
-    }
-
-    public void toBytes(FriendlyByteBuf buf) {
+    public void toBytes(BaniraPacketBuffer buf) {
         buf.writeVarInt(stageCoordinate.size());
         for (Map.Entry<KeyValue<String, String>, SafeWorldCoordinate> entry : stageCoordinate.entrySet()) {
             buf.writeUtf(entry.getKey().key(), MAX_DIMENSION_LEN);
@@ -70,14 +54,12 @@ public class StageDataSyncToClient implements NetworkPacket {
         }
     }
 
-    public static void handle(StageDataSyncToClient packet, IPayloadContext ctx) {
-        ctx.enqueueWork(() -> {
-            if (ctx.flow().isClientbound()) {
-                ClientSide.handle(packet);
-            }
-        });
+    public static void handle(StageDataSyncToClient packet, BaniraNetworkContext ctx) {
+        if (ctx.isClientSide()) {
+            ctx.enqueueWork(() -> ClientSide.handle(packet));
+        }
+        ctx.markHandled();
     }
-
 
     @OnlyIn(Dist.CLIENT)
     private static final class ClientSide {

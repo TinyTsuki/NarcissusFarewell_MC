@@ -2,14 +2,9 @@ package xin.vanilla.narcissus.network.packet;
 
 import lombok.Getter;
 import lombok.experimental.Accessors;
-import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.network.RegistryFriendlyByteBuf;
-import net.minecraft.network.codec.StreamCodec;
-import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.server.level.ServerPlayer;
-import net.neoforged.neoforge.network.handling.IPayloadContext;
-import org.jetbrains.annotations.NotNull;
-import xin.vanilla.banira.Identifier;
+import xin.vanilla.banira.common.network.BaniraPacketBuffer;
+import xin.vanilla.banira.common.network.BaniraNetworkContext;
 import xin.vanilla.banira.common.data.Component;
 import xin.vanilla.banira.common.enums.EnumMoveType;
 import xin.vanilla.banira.common.enums.EnumPosition;
@@ -17,7 +12,6 @@ import xin.vanilla.banira.common.util.CollectionUtils;
 import xin.vanilla.banira.common.util.MessageUtils;
 import xin.vanilla.banira.common.util.PlayerUtils;
 import xin.vanilla.banira.common.util.StringUtils;
-import xin.vanilla.banira.internal.network.BaniraStreamCodecs;
 import xin.vanilla.narcissus.NarcissusComponent;
 import xin.vanilla.narcissus.data.PlayerAccess;
 import xin.vanilla.narcissus.data.player.PlayerTeleportData;
@@ -36,11 +30,6 @@ import java.util.stream.Collectors;
 @Getter
 @Accessors(fluent = true)
 public class AccessListEditToServer implements NetworkPacket {
-
-    public static final CustomPacketPayload.Type<AccessListEditToServer> TYPE =
-            new CustomPacketPayload.Type<>(Identifier.id().create("access_list"));
-    public static final StreamCodec<RegistryFriendlyByteBuf, AccessListEditToServer> STREAM_CODEC =
-            BaniraStreamCodecs.registryBuf(AccessListEditToServer::toBytes, AccessListEditToServer::new);
 
     private static final int MAX_PAYLOAD_LEN = 64;
     private static final int MAX_MODE_LEN = 32;
@@ -67,29 +56,25 @@ public class AccessListEditToServer implements NetworkPacket {
         this.payload = payload != null ? payload : "";
     }
 
-    public AccessListEditToServer(FriendlyByteBuf buf) {
+    public AccessListEditToServer(BaniraPacketBuffer buf) {
         this.op = buf.readByte();
         this.mode = buf.readUtf(MAX_MODE_LEN);
         this.payload = buf.readUtf(MAX_PAYLOAD_LEN);
     }
 
-    @Override
-    public @NotNull Type<? extends CustomPacketPayload> type() {
-        return TYPE;
-    }
-
-    public void toBytes(FriendlyByteBuf buf) {
+    public void toBytes(BaniraPacketBuffer buf) {
         buf.writeByte(op);
         buf.writeUtf(mode, MAX_MODE_LEN);
         buf.writeUtf(payload, MAX_PAYLOAD_LEN);
     }
 
-    public static void handle(AccessListEditToServer packet, IPayloadContext ctx) {
+    public static void handle(AccessListEditToServer packet, BaniraNetworkContext ctx) {
         ctx.enqueueWork(() -> {
-            if (!ctx.flow().isServerbound()) {
+            if (!ctx.isServerSide()) {
                 return;
             }
-            if (!(ctx.player() instanceof ServerPlayer player)) {
+            ServerPlayer player = ctx.senderAs(net.minecraft.server.level.ServerPlayer.class);
+            if (player == null) {
                 return;
             }
             int op = packet.op();
@@ -125,6 +110,7 @@ public class AccessListEditToServer implements NetworkPacket {
                     break;
             }
         });
+        ctx.markHandled();
     }
 
     private static void handleBlackAdd(ServerPlayer player, PlayerTeleportData data, PlayerAccess access, String rawPayload) {

@@ -10,14 +10,14 @@ import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.common.Mod;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import xin.vanilla.banira.client.event.BaniraClientEventHub;
+import xin.vanilla.banira.api.BaniraConfigs;
+import xin.vanilla.banira.api.BaniraModPresence;
+import xin.vanilla.banira.api.client.event.BaniraClientEvents;
 import xin.vanilla.banira.client.gui.ConfigEditorScreen;
 import xin.vanilla.banira.client.gui.quickaction.QuickActionContext;
 import xin.vanilla.banira.client.gui.quickaction.QuickActionContextMenuItem;
 import xin.vanilla.banira.client.gui.quickaction.QuickActionRegistry;
-import xin.vanilla.banira.common.config.ForgeConfigAdapter;
 import xin.vanilla.banira.common.data.Component;
-import xin.vanilla.banira.common.network.ModLoadedPresence;
 import xin.vanilla.banira.common.util.BaniraEventBus;
 import xin.vanilla.banira.common.util.CommandUtils;
 import xin.vanilla.banira.common.util.EnvironmentUtils;
@@ -34,6 +34,7 @@ import xin.vanilla.narcissus.enums.EnumTeleportType;
 import xin.vanilla.narcissus.event.ClientModEventHandler;
 import xin.vanilla.narcissus.event.EventHandlerProxy;
 import xin.vanilla.narcissus.integration.ScreenHelper;
+import xin.vanilla.narcissus.internal.neoforge.event.NeoForgeNarcissusGameEventAdapter;
 import xin.vanilla.narcissus.network.NetworkInit;
 import xin.vanilla.narcissus.network.packet.CostConfigSyncToClient;
 import xin.vanilla.narcissus.network.packet.StageDataSyncToClient;
@@ -68,23 +69,24 @@ public class NarcissusFarewell {
         NetworkInit.registerPackets();
 
         // 注册配置
-        ForgeConfigAdapter.register(CommonConfig.class, MODID);
-        ForgeConfigAdapter.register(ClientConfig.class, MODID);
+        BaniraConfigs.register(CommonConfig.class, MODID);
+        BaniraConfigs.register(ClientConfig.class, MODID);
 
         BaniraEventBus.Server.onStopping(server -> PlayerTeleportData.clear());
-        BaniraEventBus.Server.onTick(EventHandlerProxy::onServerTick);
-        BaniraEventBus.Player.onClone(EventHandlerProxy::onPlayerCloned);
-        BaniraEventBus.EntityEvents.onJoinWorld(EventHandlerProxy::onEntityJoinWorld);
-        BaniraEventBus.EntityEvents.onTeleport(EventHandlerProxy::onEntityTeleport);
-        BaniraEventBus.Commands.onRegister(event -> NarcissusCommand.register(event.getDispatcher()));
+        BaniraEventBus.Server.onTick(event -> EventHandlerProxy.onServerTick());
+        NeoForgeNarcissusGameEventAdapter.register();
 
         BaniraEventBus.ModLifecycle.onCommonSetup(event -> {
             NarcissusNotificationTypes.registerAllOnServer();
-            ModLoadedPresence.register(MODID, player -> {
+            BaniraModPresence.register(MODID, player -> {
+                if (!(player instanceof ServerPlayer)) {
+                    return;
+                }
+                ServerPlayer serverPlayer = (ServerPlayer) player;
                 // 同步玩家传送数据到客户端
-                PlayerTeleportData.syncPlayerData(player);
+                PlayerTeleportData.syncPlayerData(serverPlayer);
                 // 同步驿站数据到客户端
-                PacketUtils.sendPacketToPlayer(new StageDataSyncToClient(WorldStageData.get().getStageCoordinate()), player);
+                PacketUtils.sendPacketToPlayer(new StageDataSyncToClient(WorldStageData.get().getStageCoordinate()), serverPlayer);
                 // 同步传送代价配置到客户端
                 Map<EnumTeleportType, TeleportCost> costMap = new HashMap<>();
                 costMap.put(EnumTeleportType.TP_HOME, NarcissusUtils.getCommandCost(EnumTeleportType.TP_HOME));
@@ -92,9 +94,9 @@ public class NarcissusFarewell {
                 costMap.put(EnumTeleportType.TP_BACK, NarcissusUtils.getCommandCost(EnumTeleportType.TP_BACK));
                 PacketUtils.sendPacketToPlayer(new CostConfigSyncToClient(costMap,
                         CommonConfig.get().general().teleportCostDistanceLimit(),
-                        CommonConfig.get().general().teleportCostDistanceAcrossDimension()), player);
+                        CommonConfig.get().general().teleportCostDistanceAcrossDimension()), serverPlayer);
                 // 刷新权限信息
-                CommandUtils.refreshPermission(player);
+                CommandUtils.refreshPermission(serverPlayer);
             });
         });
 
@@ -108,7 +110,7 @@ public class NarcissusFarewell {
         public static void init() {
             ClientModEventHandler.bootstrap();
 
-            BaniraClientEventHub.ModLifecycle.onClientSetup(event -> {
+            BaniraClientEvents.ModLifecycle.onClientSetup(event -> {
                 ResourceLocation texture = Identifier.id().create("gui/quick_icon.png");
                 Component label = NarcissusComponent.get().transClient("key.narcissus_farewell.categories");
                 Consumer<QuickActionContext> action = ctx -> ScreenHelper.openScreen();

@@ -5,16 +5,16 @@ import lombok.NonNull;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.datafix.DataFixTypes;
 import net.minecraft.world.level.saveddata.SavedData;
-import xin.vanilla.banira.BaniraCodex;
+import xin.vanilla.banira.api.BaniraServer;
 import xin.vanilla.banira.common.data.KeyValue;
 import xin.vanilla.narcissus.data.SafeWorldCoordinate;
 
 import javax.annotation.ParametersAreNonnullByDefault;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -34,7 +34,7 @@ public class WorldStageData extends SavedData {
     public static WorldStageData load(CompoundTag nbt, HolderLookup.Provider provider) {
         WorldStageData data = new WorldStageData();
         ListTag stageCoordinateNBT = nbt.getList("stageCoordinate", 10);
-        Map<KeyValue<String, String>, SafeWorldCoordinate> stageCoordinate = new HashMap<>();
+        Map<KeyValue<String, String>, SafeWorldCoordinate> stageCoordinate = new LinkedHashMap<>();
         for (int i = 0; i < stageCoordinateNBT.size(); i++) {
             CompoundTag stageCoordinateTag = stageCoordinateNBT.getCompound(i);
             stageCoordinate.put(new KeyValue<>(stageCoordinateTag.getString("key"), stageCoordinateTag.getString("value")),
@@ -93,7 +93,7 @@ public class WorldStageData extends SavedData {
     }
 
     public static WorldStageData get() {
-        return get(BaniraCodex.serverInstance().key().getAllLevels().iterator().next());
+        return get(BaniraServer.require(MinecraftServer.class).getAllLevels().iterator().next());
     }
 
     public static WorldStageData get(ServerPlayer player) {

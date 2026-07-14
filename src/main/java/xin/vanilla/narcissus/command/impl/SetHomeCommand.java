@@ -52,7 +52,7 @@ public final class SetHomeCommand {
             return 0;
         }
         data.addHomeCoordinate(key, safeWorldCoordinate);
-        PacketUtils.sendPacketToPlayer(new WaypointSyncToClient(WaypointSyncToClient.Action.ADD, WaypointSyncToClient.Kind.HOME, name, safeWorldCoordinate), player);
+        PacketUtils.sendPacketToPlayer(new WaypointSyncToClient(WaypointSyncToClient.Action.ADD, WaypointSyncToClient.Type.HOME, name, safeWorldCoordinate), player);
         if (defaultHome) {
             if (data.getDefaultHome().containsKey(player.level().dimension().location().toString())) {
                 MessageUtils.sendNotification(player, NarcissusComponent.get().transAuto("home_default_remove", data.getDefaultHome(player.level().dimension().location().toString()).value()), NarcissusNotificationTypes.WAYPOINT);

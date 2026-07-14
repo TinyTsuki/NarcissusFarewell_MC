@@ -2,6 +2,7 @@ package xin.vanilla.narcissus.util;
 
 import lombok.NonNull;
 import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.HoverEvent;
@@ -30,6 +31,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.portal.DimensionTransition;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import xin.vanilla.banira.api.BaniraServer;
 import xin.vanilla.banira.common.data.KeyValue;
 import xin.vanilla.banira.common.util.*;
 import xin.vanilla.banira.common.util.CommandUtils;
@@ -48,6 +50,7 @@ import xin.vanilla.narcissus.enums.EnumCardType;
 import xin.vanilla.narcissus.enums.EnumCommandType;
 import xin.vanilla.narcissus.enums.EnumCostType;
 import xin.vanilla.narcissus.enums.EnumTeleportType;
+import xin.vanilla.narcissus.internal.neoforge.network.NeoForgeNativePacketSender;
 import xin.vanilla.narcissus.mixin.LivingEntityInvoker;
 import xin.vanilla.narcissus.mixin.TemptGoalAccessor;
 import xin.vanilla.narcissus.notification.NarcissusNotificationTypes;
@@ -58,6 +61,7 @@ import java.time.Instant;
 import java.util.*;
 import java.util.stream.Stream;
 
+@SuppressWarnings("resource")
 public class NarcissusUtils {
 
     private static final Logger LOGGER = LogManager.getLogger();
@@ -472,6 +476,14 @@ public class NarcissusUtils {
     // endregion 指令相关
 
     // region 安全坐标
+
+    public static ServerLevel getServerLevel() {
+        MinecraftServer server = BaniraServer.currentAs(MinecraftServer.class);
+        if (server == null) {
+            throw new IllegalStateException("Minecraft server is not ready");
+        }
+        return server.getAllLevels().iterator().next();
+    }
 
     public static SafeWorldCoordinate findTopCandidate(ServerPlayer player, SafeWorldCoordinate start) {
         return new SafeCoordinateFinder(player.level(), player).findTopCandidate(start);
@@ -951,7 +963,7 @@ public class NarcissusUtils {
         if (vehicle != null) {
             player.startRiding(vehicle, true);
             // 同步客户端状态
-            PacketUtils.broadcastPacket(new ClientboundSetPassengersPacket(vehicle));
+            NeoForgeNativePacketSender.broadcast(new ClientboundSetPassengersPacket(vehicle));
         }
 
         NarcissusUtils.playSound(player, sound, 1.0f, 1.0f);
@@ -1010,7 +1022,7 @@ public class NarcissusUtils {
             }
         }
         // 同步客户端状态
-        PacketUtils.broadcastPacket(new ClientboundSetPassengersPacket(passenger));
+        NeoForgeNativePacketSender.broadcast(new ClientboundSetPassengersPacket(passenger));
         return playerVehicle;
     }
 
@@ -1680,7 +1692,7 @@ public class NarcissusUtils {
      * @param pitch  音调
      */
     public static void playSound(ServerPlayer player, ResourceLocation sound, float volume, float pitch) {
-        SoundEvent soundEvent = SoundEvent.createVariableRangeEvent(sound);
+        SoundEvent soundEvent = BuiltInRegistries.SOUND_EVENT.get(sound);
         if (soundEvent != null) {
             player.playNotifySound(soundEvent, SoundSource.PLAYERS, volume, pitch);
         }

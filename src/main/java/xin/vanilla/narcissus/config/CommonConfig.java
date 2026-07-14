@@ -6,10 +6,10 @@ import lombok.Setter;
 import lombok.experimental.Accessors;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.level.block.Blocks;
-import net.neoforged.fml.config.ModConfig;
+import xin.vanilla.banira.api.BaniraConfigs;
 import xin.vanilla.banira.common.config.ConfigData;
 import xin.vanilla.banira.common.config.ConfigHolder;
-import xin.vanilla.banira.common.config.ForgeConfigAdapter;
+import xin.vanilla.banira.common.config.ConfigScope;
 import xin.vanilla.banira.common.config.annotation.Config;
 import xin.vanilla.banira.common.config.annotation.ConfigEntry;
 import xin.vanilla.banira.common.util.BlockUtils;
@@ -31,7 +31,7 @@ import java.util.stream.Stream;
  * 运行时通过 {@link #get()} 返回的 {@link RootView} 访问配置，例如 {@code CommonConfig.get().base().teleportCard()}、
  * {@code CommonConfig.get().general().defaultLanguage()}；路径与字段一致（如 {@code general.*}、{@code permission.command.*}）。
  */
-@Config(name = "narcissus_farewell-common", type = ModConfig.Type.COMMON)
+@Config(name = "narcissus_farewell-common", type = ConfigScope.COMMON)
 public class CommonConfig implements ConfigData {
 
     public CommonConfig() {
@@ -97,30 +97,30 @@ public class CommonConfig implements ConfigData {
 
 
     public static RootView get() {
-        return CommonConfigAccess.root(ForgeConfigAdapter.getHolder(CommonConfig.class));
+        return CommonConfigAccess.root(BaniraConfigs.holder(CommonConfig.class));
     }
 
     public static void save() {
-        ConfigHolder h = ForgeConfigAdapter.getHolder(CommonConfig.class);
+        ConfigHolder h = BaniraConfigs.holder(CommonConfig.class);
         if (h != null) {
             h.save();
         }
     }
 
     public static void resetConfig() {
-        CommonConfigAccess.resetConfig(ForgeConfigAdapter.getHolder(CommonConfig.class));
+        CommonConfigAccess.resetConfig(BaniraConfigs.holder(CommonConfig.class));
     }
 
     public static void resetConfigWithMode1() {
-        CommonConfigAccess.resetConfigWithMode1(ForgeConfigAdapter.getHolder(CommonConfig.class));
+        CommonConfigAccess.resetConfigWithMode1(BaniraConfigs.holder(CommonConfig.class));
     }
 
     public static void resetConfigWithMode2() {
-        CommonConfigAccess.resetConfigWithMode2(ForgeConfigAdapter.getHolder(CommonConfig.class));
+        CommonConfigAccess.resetConfigWithMode2(BaniraConfigs.holder(CommonConfig.class));
     }
 
     public static void resetConfigWithMode3() {
-        CommonConfigAccess.resetConfigWithMode3(ForgeConfigAdapter.getHolder(CommonConfig.class));
+        CommonConfigAccess.resetConfigWithMode3(BaniraConfigs.holder(CommonConfig.class));
     }
 
 
@@ -195,8 +195,6 @@ public class CommonConfig implements ConfigData {
     public static class CommandNamesCategory {
         @ConfigEntry.Gui.Tooltip(zh_cn = "指令前缀，请仅使用英文字母及下划线，否则可能会出现问题。", en_us = "The prefix of the command, please only use English characters and underscores, otherwise it may cause problems.")
         private String commandPrefix = NarcissusFarewell.DEFAULT_COMMAND_PREFIX;
-        @ConfigEntry.Gui.Tooltip(zh_cn = "设置玩家默认语言的指令。", en_us = "This command sets the player's default language.")
-        private String commandLanguage = "lang";
         @ConfigEntry.Gui.Tooltip(zh_cn = "获取玩家的UUID的指令。", en_us = "This command is used to get the UUID of the player.")
         private String commandUuid = "uuid";
         @ConfigEntry.Gui.Tooltip(zh_cn = "获取当前世界的维度ID的指令。", en_us = "This command is used to get the dimension ID of the current world.")
@@ -253,8 +251,6 @@ public class CommonConfig implements ConfigData {
         private String commandTpGrave = "grave";
         @ConfigEntry.Gui.Tooltip(zh_cn = "切换创造模式飞行的指令。", en_us = "The command to toggle creative flight.")
         private String commandFly = "fly";
-        @ConfigEntry.Gui.Tooltip(zh_cn = "设置虚拟权限的指令。", en_us = "The command to set virtual permissions.")
-        private String commandVirtualOp = "vop";
     }
 
     @Getter
@@ -1395,10 +1391,6 @@ public class CommonConfig implements ConfigData {
 
         CommandNamesView commandPrefix(String value);
 
-        String commandLanguage();
-
-        CommandNamesView commandLanguage(String value);
-
         String commandUuid();
 
         CommandNamesView commandUuid(String value);
@@ -1470,10 +1462,6 @@ public class CommonConfig implements ConfigData {
         String commandFly();
 
         CommandNamesView commandFly(String value);
-
-        String commandVirtualOp();
-
-        CommandNamesView commandVirtualOp(String value);
 
         String commandTpAsk();
 

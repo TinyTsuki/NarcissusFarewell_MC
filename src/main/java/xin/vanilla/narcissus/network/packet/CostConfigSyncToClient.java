@@ -2,15 +2,10 @@ package xin.vanilla.narcissus.network.packet;
 
 import lombok.Getter;
 import lombok.experimental.Accessors;
-import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.network.RegistryFriendlyByteBuf;
-import net.minecraft.network.codec.StreamCodec;
-import net.minecraft.network.protocol.PacketFlow;
-import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
-import net.neoforged.neoforge.network.handling.IPayloadContext;
-import org.jetbrains.annotations.NotNull;
-import xin.vanilla.banira.internal.network.BaniraStreamCodecs;
-import xin.vanilla.narcissus.Identifier;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
+import xin.vanilla.banira.common.network.BaniraPacketBuffer;
+import xin.vanilla.banira.common.network.BaniraNetworkContext;
 import xin.vanilla.narcissus.data.TeleportCost;
 import xin.vanilla.narcissus.data.client.ClientCostConfig;
 import xin.vanilla.narcissus.enums.EnumCostType;
@@ -20,14 +15,10 @@ import xin.vanilla.narcissus.network.NetworkPacket;
 import java.util.HashMap;
 import java.util.Map;
 
+
 @Getter
 @Accessors(fluent = true)
 public class CostConfigSyncToClient implements NetworkPacket {
-
-    public static final Type<CostConfigSyncToClient> TYPE =
-            new Type<>(Identifier.id().create("cost_config_sync"));
-    public static final StreamCodec<RegistryFriendlyByteBuf, CostConfigSyncToClient> STREAM_CODEC =
-            BaniraStreamCodecs.registryBuf(CostConfigSyncToClient::toBytes, CostConfigSyncToClient::new);
 
     private static final int MAX_EXP_LEN = 256;
 
@@ -41,7 +32,7 @@ public class CostConfigSyncToClient implements NetworkPacket {
         this.distanceAcrossDimension = distanceAcrossDimension;
     }
 
-    public CostConfigSyncToClient(FriendlyByteBuf buf) {
+    public CostConfigSyncToClient(BaniraPacketBuffer buf) {
         int count = buf.readVarInt();
         Map<EnumTeleportType, TeleportCost> map = new HashMap<>();
         for (int i = 0; i < count; i++) {
@@ -54,7 +45,7 @@ public class CostConfigSyncToClient implements NetworkPacket {
         this.distanceAcrossDimension = buf.readVarInt();
     }
 
-    private static TeleportCost readCost(FriendlyByteBuf buf) {
+    private static TeleportCost readCost(BaniraPacketBuffer buf) {
         TeleportCost cost = new TeleportCost();
         String typeName = buf.readUtf(32);
         try {
@@ -70,7 +61,7 @@ public class CostConfigSyncToClient implements NetworkPacket {
         return cost;
     }
 
-    public void toBytes(FriendlyByteBuf buf) {
+    public void toBytes(BaniraPacketBuffer buf) {
         buf.writeVarInt(costMap.size());
         for (Map.Entry<EnumTeleportType, TeleportCost> entry : costMap.entrySet()) {
             buf.writeEnum(entry.getKey());
@@ -80,7 +71,7 @@ public class CostConfigSyncToClient implements NetworkPacket {
         buf.writeVarInt(distanceAcrossDimension);
     }
 
-    private static void writeCost(FriendlyByteBuf buf, TeleportCost cost) {
+    private static void writeCost(BaniraPacketBuffer buf, TeleportCost cost) {
         buf.writeUtf(cost.getType() != null ? cost.getType().name() : "NONE", 32);
         buf.writeVarInt(cost.getNum());
         buf.writeDouble(cost.getRate());
@@ -89,21 +80,22 @@ public class CostConfigSyncToClient implements NetworkPacket {
         buf.writeUtf(cost.getExp() != null ? cost.getExp() : "", MAX_EXP_LEN);
     }
 
-    @Override
-    public @NotNull Type<? extends CustomPacketPayload> type() {
-        return TYPE;
+    public static void handle(CostConfigSyncToClient packet, BaniraNetworkContext ctx) {
+        if (ctx.isClientSide()) {
+            ctx.enqueueWork(() -> ClientSide.handle(packet));
+        }
+        ctx.markHandled();
     }
 
-    public static void handle(CostConfigSyncToClient packet, IPayloadContext ctx) {
-        ctx.enqueueWork(() -> {
-            if (ctx.flow() == PacketFlow.CLIENTBOUND) {
-                ClientCostConfig.clear();
-                for (Map.Entry<EnumTeleportType, TeleportCost> entry : packet.costMap().entrySet()) {
-                    ClientCostConfig.setCost(entry.getKey(), entry.getValue());
-                }
-                ClientCostConfig.setDistanceLimit(packet.distanceLimit());
-                ClientCostConfig.setDistanceAcrossDimension(packet.distanceAcrossDimension());
+    @OnlyIn(Dist.CLIENT)
+    private static final class ClientSide {
+        private static void handle(CostConfigSyncToClient packet) {
+            ClientCostConfig.clear();
+            for (Map.Entry<EnumTeleportType, TeleportCost> entry : packet.costMap().entrySet()) {
+                ClientCostConfig.setCost(entry.getKey(), entry.getValue());
             }
-        });
+            ClientCostConfig.setDistanceLimit(packet.distanceLimit());
+            ClientCostConfig.setDistanceAcrossDimension(packet.distanceAcrossDimension());
+        }
     }
 }

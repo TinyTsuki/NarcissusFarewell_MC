@@ -57,8 +57,8 @@ public final class DelStageCommand {
             }
             return 0;
         }
-        PacketUtils.broadcastPayload(new WaypointSyncToClient(WaypointSyncToClient.Action.REMOVE, WaypointSyncToClient.Kind.STAGE, name, remove));
-        PacketUtils.broadcastPayload(new StageDataSyncToClient(stageData.getStageCoordinate()));
+        PacketUtils.broadcastPacket(new WaypointSyncToClient(WaypointSyncToClient.Action.REMOVE, WaypointSyncToClient.Type.STAGE, name, remove));
+        PacketUtils.broadcastPacket(new StageDataSyncToClient(stageData.getStageCoordinate()));
         Component dimensionComponent = NarcissusComponent.get().literal(dimension)
                 .hoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, NarcissusComponent.get().literal(remove.xyzString()).toVanilla()));
         if (player != null) {

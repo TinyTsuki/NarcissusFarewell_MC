@@ -55,7 +55,7 @@ public final class DelHomeCommand {
                 MessageUtils.sendNotification(player, NarcissusComponent.get().transAuto("home_default_remove", name), NarcissusNotificationTypes.WAYPOINT);
             }
         }
-        PacketUtils.sendPacketToPlayer(new WaypointSyncToClient(WaypointSyncToClient.Action.REMOVE, WaypointSyncToClient.Kind.HOME, name, remove), player);
+        PacketUtils.sendPacketToPlayer(new WaypointSyncToClient(WaypointSyncToClient.Action.REMOVE, WaypointSyncToClient.Type.HOME, name, remove), player);
         PlayerTeleportData.syncPlayerData(player);
         Component dimensionComponent = NarcissusComponent.get().literal(dimension)
                 .hoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, NarcissusComponent.get().literal(remove.xyzString()).toVanilla()));

@@ -42,6 +42,7 @@ public class SafeBlock {
     public void init() {
         if (this.safeBlocksState == null) {
             this.safeBlocksState = CommonConfig.get().general().safeTeleport().safeBlocks().stream()
+                    .map(SafeBlock::normalizeBlockStateId)
                     .map(BlockUtils::deserializeBlockState)
                     .filter(Objects::nonNull)
                     .distinct()
@@ -56,6 +57,7 @@ public class SafeBlock {
         }
         if (this.unsafeBlocksState == null) {
             this.unsafeBlocksState = CommonConfig.get().general().safeTeleport().unsafeBlocks().stream()
+                    .map(SafeBlock::normalizeBlockStateId)
                     .map(BlockUtils::deserializeBlockState)
                     .filter(Objects::nonNull)
                     .distinct()
@@ -70,6 +72,7 @@ public class SafeBlock {
         }
         if (this.suffocatingBlocksState == null) {
             this.suffocatingBlocksState = CommonConfig.get().general().safeTeleport().suffocatingBlocks().stream()
+                    .map(SafeBlock::normalizeBlockStateId)
                     .map(BlockUtils::deserializeBlockState)
                     .filter(Objects::nonNull)
                     .distinct()
@@ -82,5 +85,13 @@ public class SafeBlock {
                     .distinct()
                     .collect(Collectors.toList());
         }
+    }
+
+    /** 适配 1.17 起草径方块的注册名变更，同时保留可能附带的状态属性。 */
+    static String normalizeBlockStateId(String value) {
+        if (value == null) {
+            return null;
+        }
+        return value.replaceFirst("^minecraft:grass_path(?=\\[|$)", "minecraft:dirt_path");
     }
 }

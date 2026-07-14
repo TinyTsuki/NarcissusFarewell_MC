@@ -12,7 +12,7 @@ public final class MapHelper {
     }
 
     public static void handle(final WaypointSyncToClient packet) {
-        switch (packet.kind()) {
+        switch (packet.type()) {
             case HOME:
                 if (!ClientConfig.get().client().syncHomeMapWaypoint()) return;
                 break;
