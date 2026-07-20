@@ -205,6 +205,7 @@ tasks.named('jar', Jar).configure {
     }
 }
 
+apply from: 'gradle/network-smoke.gradle'
 // region 将含 Jar-in-Jar 的 reobf 合并包同步到 builds
 def narcissusCopyFatJar = { File fat, String destName ->
     if (fat != null && fat.exists()) {
