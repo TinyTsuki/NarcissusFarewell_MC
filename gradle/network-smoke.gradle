@@ -8,26 +8,43 @@ def smokeClientDir = file("${smokeRoot}/client")
 def smokePort = 25576
 def smokeChild = (project.findProperty('narcissus.networkSmoke.child') ?: 'false').toString().toBoolean()
 
-// 两个游戏进程使用独立输出和项目缓存，避免 ForgeGradle 并发争用文件。
+// 两个游戏进程使用独立输出、项目缓存和动态仓库，避免 NeoGradle 并发争用文件。
 if (smokeChild) {
+    String smokeSide = project.property('narcissus.networkSmoke.side').toString()
+    if (!(smokeSide in ['server', 'client'])) {
+        throw new GradleException("Unsupported network smoke side: ${smokeSide}")
+    }
+    def isolatedRepository = layout.projectDirectory.dir(
+            "run-network-smoke/${smokeSide}-gradle/neogradle-repository")
+    ivyDummyRepository.repositoryDirectory.set(isolatedRepository)
+    copy {
+        from(layout.projectDirectory.dir('.gradle/repositories')) {
+            include "ng_dummy_ng/net/minecraft/client/${minecraft_version}/ivy-*.xml"
+            include "ng_dummy_ng/net/neoforged/neoforge/${neo_version}/ivy-*.xml"
+        }
+        into isolatedRepository
+    }
+    repositories.named('NeoGradle Artifacts') {
+        url = isolatedRepository.asFile.toURI()
+    }
     layout.buildDirectory.set(file(project.property('narcissus.networkSmoke.buildDir')))
     String phase = project.property('narcissus.networkSmoke.phase').toString()
     String status = project.property('narcissus.networkSmoke.status').toString()
-    minecraft.runs {
+    runs {
         configureEach {
-            property 'narcissus.networkSmoke', 'true'
-            property 'narcissus.networkSmoke.phase', phase
-            property 'narcissus.networkSmoke.status', status
+            systemProperty 'narcissus.networkSmoke', 'true'
+            systemProperty 'narcissus.networkSmoke.phase', phase
+            systemProperty 'narcissus.networkSmoke.status', status
         }
         server {
             workingDirectory smokeServerDir
-            args '--nogui', '--port', smokePort.toString()
+            arguments.addAll '--nogui', '--port', smokePort.toString()
         }
         client {
             workingDirectory smokeClientDir
-            property 'narcissus.networkSmoke.host', '127.0.0.1'
-            property 'narcissus.networkSmoke.port', smokePort.toString()
-            args '--username', 'NetworkSmoke', '--uuid', '380df991-f603-344c-a090-369bad2a924a'
+            systemProperty 'narcissus.networkSmoke.host', '127.0.0.1'
+            systemProperty 'narcissus.networkSmoke.port', smokePort.toString()
+            arguments.addAll '--username', 'NetworkSmoke', '--uuid', '380df991-f603-344c-a090-369bad2a924a'
         }
     }
 }
@@ -71,12 +88,14 @@ def gradleCommand = { String runTask, String phase, File status, File childBuild
     } else {
         command.add(wrapper.absolutePath)
     }
+    String smokeSide = runTask == 'runServer' ? 'server' : 'client'
     command.addAll([
             runTask,
             '--no-daemon',
             '--console=plain',
             '--project-cache-dir', projectCacheDir.absolutePath,
             '-Pnarcissus.networkSmoke.child=true',
+            "-Pnarcissus.networkSmoke.side=${smokeSide}".toString(),
             "-Pnarcissus.networkSmoke.phase=${phase}".toString(),
             "-Pnarcissus.networkSmoke.status=${status.absolutePath}".toString(),
             "-Pnarcissus.networkSmoke.buildDir=${childBuildDir.absolutePath}".toString()

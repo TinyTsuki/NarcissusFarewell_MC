@@ -1,9 +1,10 @@
 package xin.vanilla.narcissus.internal.client.dev;
 
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.screen.ConnectingScreen;
+import net.minecraft.client.gui.screens.ConnectScreen;
 import net.minecraft.client.multiplayer.ServerData;
-import net.minecraft.nbt.CompoundNBT;
+import net.minecraft.client.multiplayer.resolver.ServerAddress;
+import net.minecraft.nbt.CompoundTag;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import xin.vanilla.banira.common.util.PacketUtils;
@@ -78,9 +79,9 @@ public final class NarcissusNetworkSmokeClientRunner {
     private void connect(Minecraft client) {
         String host = System.getProperty("narcissus.networkSmoke.host", "127.0.0.1");
         int port = Integer.getInteger("narcissus.networkSmoke.port", 25576);
-        ServerData server = new ServerData("Narcissus Network Smoke", host + ":" + port, false);
-        client.setCurrentServer(server);
-        client.setScreen(new ConnectingScreen(client.screen, client, server));
+        ServerData server = new ServerData("Narcissus Network Smoke", host + ":" + port, ServerData.Type.OTHER);
+        // Smoke 使用普通多人服务器连接，不进入 Quick Play 或服务器转移流程。
+        ConnectScreen.startConnecting(client.screen, client, ServerAddress.parseString(server.ip), server, false, null);
         NarcissusNetworkSmokeStatus.append("CONNECT " + host + ":" + port);
         state = State.LOGIN_SYNC;
         ticks = 0;
@@ -93,7 +94,7 @@ public final class NarcissusNetworkSmokeClientRunner {
         }
         NarcissusNetworkSmokeStatus.append("PASS remote-login-sync");
         if ("phase-one".equals(NarcissusNetworkSmokeStatus.phase())) {
-            CompoundNBT countdowns = new CompoundNBT();
+            CompoundTag countdowns = new CompoundTag();
             countdowns.putInt(EnumTeleportType.TP_HOME.name(), NarcissusNetworkSmokeFixture.COUNTDOWN);
             syncGeneration = NarcissusClientSyncState.playerDataGeneration();
             PacketUtils.sendPacketToServer(new PlayerConfigSyncToServer(countdowns));

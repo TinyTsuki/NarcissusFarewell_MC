@@ -1,10 +1,9 @@
 package xin.vanilla.narcissus.internal.server.dev;
 
-import net.minecraft.entity.player.ServerPlayerEntity;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.MinecraftServer;
-import net.minecraftforge.common.MinecraftForge;
-import net.minecraftforge.event.TickEvent;
 import xin.vanilla.banira.api.BaniraServer;
+import xin.vanilla.banira.common.util.BaniraEventBus;
 import xin.vanilla.narcissus.data.player.PlayerTeleportData;
 import xin.vanilla.narcissus.enums.EnumTeleportType;
 import xin.vanilla.narcissus.internal.dev.NarcissusNetworkSmokeFixture;
@@ -17,20 +16,18 @@ public final class NarcissusNetworkSmokeServerRunner {
     private static boolean ready;
     private static boolean finished;
     private static int shutdownTicks;
+    private static PlayerTeleportData lastPlayerData;
 
     private NarcissusNetworkSmokeServerRunner() {
     }
 
     public static void register() {
         if (NarcissusNetworkSmokeStatus.enabled()) {
-            MinecraftForge.EVENT_BUS.addListener(NarcissusNetworkSmokeServerRunner::onServerTick);
+            BaniraEventBus.Server.onTick(event -> onServerTick());
         }
     }
 
-    private static void onServerTick(TickEvent.ServerTickEvent event) {
-        if (event.phase != TickEvent.Phase.END) {
-            return;
-        }
+    private static void onServerTick() {
         try {
             MinecraftServer server = BaniraServer.currentAs(MinecraftServer.class);
             if (server == null || !server.isRunning()) {
@@ -44,15 +41,15 @@ public final class NarcissusNetworkSmokeServerRunner {
                 ready = true;
                 NarcissusNetworkSmokeStatus.append("PASS server-ready");
             }
-            List<ServerPlayerEntity> players = server.getPlayerList().getPlayers();
-            if (players.isEmpty()) {
-                return;
+            List<ServerPlayer> players = server.getPlayerList().getPlayers();
+            if (!players.isEmpty()) {
+                lastPlayerData = PlayerTeleportData.getData(players.get(0));
             }
-            PlayerTeleportData data = PlayerTeleportData.getData(players.get(0));
+            if (lastPlayerData == null) return;
             if ("phase-one".equals(NarcissusNetworkSmokeStatus.phase())) {
-                runWritePhase(data);
+                runWritePhase(lastPlayerData);
             } else if ("phase-two".equals(NarcissusNetworkSmokeStatus.phase())) {
-                runVerifyPhase(data);
+                runVerifyPhase(lastPlayerData);
             } else {
                 throw new IllegalStateException("Unknown network smoke phase: " + NarcissusNetworkSmokeStatus.phase());
             }

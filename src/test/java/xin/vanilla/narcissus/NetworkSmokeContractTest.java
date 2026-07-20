@@ -8,6 +8,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 /** 保证独立服务端/客户端 smoke 的两阶段同步与持久化契约保持完整。 */
@@ -28,12 +29,20 @@ public class NetworkSmokeContractTest {
         assertContains(script, "phase-two");
         assertContains(script, "destroyProcessTree");
         assertContains(script, "PASS server-shutdown");
+        assertContains(script, "ivyDummyRepository.repositoryDirectory.set");
+        assertContains(script, "repositories.named('NeoGradle Artifacts')");
+        assertContains(script, "ng_dummy_ng/net/minecraft/client/${minecraft_version}/ivy-*.xml");
+        assertContains(script, "ng_dummy_ng/net/neoforged/neoforge/${neo_version}/ivy-*.xml");
+        assertContains(script, "-Pnarcissus.networkSmoke.side=${smokeSide}");
+        assertContains(script, "--project-cache-dir");
         assertContains(server, "PASS persisted-player-config");
         assertContains(server, "PASS persisted-access-list");
         assertContains(server, "server.halt(false)");
+        assertContains(server, "BaniraEventBus.Server.onTick");
+        assertFalse("NeoForge smoke runner must not reference Forge", server.contains("net.minecraftforge"));
         assertContains(client, "PlayerConfigSyncToServer");
         assertContains(client, "AccessListEditToServer");
-        assertContains(client, "ConnectingScreen");
+        assertContains(client, "ConnectScreen");
         assertContains(client, "PASS persisted-access-list-client");
         assertContains(main, "NarcissusNetworkSmokeServerRunner.register()");
         assertContains(clientEvents, "NarcissusNetworkSmokeClientRunner.register()");
