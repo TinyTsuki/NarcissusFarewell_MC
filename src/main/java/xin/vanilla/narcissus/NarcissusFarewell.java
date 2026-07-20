@@ -33,6 +33,7 @@ import xin.vanilla.narcissus.event.ClientModEventHandler;
 import xin.vanilla.narcissus.event.EventHandlerProxy;
 import xin.vanilla.narcissus.integration.ScreenHelper;
 import xin.vanilla.narcissus.internal.forge.event.ForgeNarcissusGameEventAdapter;
+import xin.vanilla.narcissus.internal.server.dev.NarcissusNetworkSmokeServerRunner;
 import xin.vanilla.narcissus.network.NetworkInit;
 import xin.vanilla.narcissus.network.packet.CostConfigSyncToClient;
 import xin.vanilla.narcissus.network.packet.StageDataSyncToClient;
@@ -73,6 +74,7 @@ public class NarcissusFarewell {
         BaniraEvents.Server.onStopping(server -> PlayerTeleportData.clear());
         BaniraEvents.Server.onTick(event -> EventHandlerProxy.onServerTick());
         ForgeNarcissusGameEventAdapter.register();
+        NarcissusNetworkSmokeServerRunner.register();
 
         BaniraEvents.onCommonSetup(event -> {
             NarcissusNotificationTypes.registerAllOnServer();
