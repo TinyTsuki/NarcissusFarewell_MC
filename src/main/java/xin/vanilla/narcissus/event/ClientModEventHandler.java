@@ -15,6 +15,7 @@ import xin.vanilla.banira.common.util.PacketUtils;
 import xin.vanilla.narcissus.NarcissusFarewell;
 import xin.vanilla.narcissus.integration.ScreenHelper;
 import xin.vanilla.narcissus.internal.client.dev.NarcissusUiSmokeRunner;
+import xin.vanilla.narcissus.internal.client.dev.NarcissusNetworkSmokeClientRunner;
 import xin.vanilla.narcissus.network.packet.*;
 import xin.vanilla.narcissus.notification.NarcissusNotificationTypes;
 
@@ -54,10 +55,12 @@ public final class ClientModEventHandler {
      */
     public static void bootstrap() {
         NarcissusUiSmokeRunner.register();
+        NarcissusNetworkSmokeClientRunner.register();
     }
 
     private static void onClientTick(xin.vanilla.banira.api.client.event.BaniraClientTickEvent event) {
         NarcissusUiSmokeRunner.tick(Minecraft.getInstance());
+        NarcissusNetworkSmokeClientRunner.tick(Minecraft.getInstance());
         if (Minecraft.getInstance().screen == null) {
             if (TP_HOME_KEY.consumeClick()) {
                 if (!keyDown) {
