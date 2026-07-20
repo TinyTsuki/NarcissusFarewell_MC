@@ -1,6 +1,6 @@
 package xin.vanilla.narcissus.internal.server.dev;
 
-import net.minecraft.entity.player.ServerPlayerEntity;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.MinecraftServer;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.TickEvent;
@@ -17,6 +17,7 @@ public final class NarcissusNetworkSmokeServerRunner {
     private static boolean ready;
     private static boolean finished;
     private static int shutdownTicks;
+    private static PlayerTeleportData lastPlayerData;
 
     private NarcissusNetworkSmokeServerRunner() {
     }
@@ -44,15 +45,15 @@ public final class NarcissusNetworkSmokeServerRunner {
                 ready = true;
                 NarcissusNetworkSmokeStatus.append("PASS server-ready");
             }
-            List<ServerPlayerEntity> players = server.getPlayerList().getPlayers();
-            if (players.isEmpty()) {
-                return;
+            List<ServerPlayer> players = server.getPlayerList().getPlayers();
+            if (!players.isEmpty()) {
+                lastPlayerData = PlayerTeleportData.getData(players.get(0));
             }
-            PlayerTeleportData data = PlayerTeleportData.getData(players.get(0));
+            if (lastPlayerData == null) return;
             if ("phase-one".equals(NarcissusNetworkSmokeStatus.phase())) {
-                runWritePhase(data);
+                runWritePhase(lastPlayerData);
             } else if ("phase-two".equals(NarcissusNetworkSmokeStatus.phase())) {
-                runVerifyPhase(data);
+                runVerifyPhase(lastPlayerData);
             } else {
                 throw new IllegalStateException("Unknown network smoke phase: " + NarcissusNetworkSmokeStatus.phase());
             }
