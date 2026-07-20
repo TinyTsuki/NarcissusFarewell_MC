@@ -261,6 +261,7 @@ tasks.named('jar', Jar).configure {
     finalizedBy 'reobfJar'
 }
 
+apply from: 'gradle/network-smoke.gradle'
 // region 将含 Jar-in-Jar 的 reobf 合并包同步到 builds
 afterEvaluate {
     tasks.named('reobfJarJar').configure {
