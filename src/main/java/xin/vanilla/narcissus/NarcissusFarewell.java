@@ -2,25 +2,17 @@ package xin.vanilla.narcissus;
 
 import lombok.Getter;
 import net.minecraft.entity.player.ServerPlayerEntity;
-import net.minecraft.util.ResourceLocation;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.fml.common.Mod;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import xin.vanilla.banira.api.BaniraConfigs;
 import xin.vanilla.banira.api.BaniraModPresence;
-import xin.vanilla.banira.api.client.event.BaniraClientEvents;
 import xin.vanilla.banira.api.event.BaniraEvents;
-import xin.vanilla.banira.client.gui.ConfigEditorScreen;
-import xin.vanilla.banira.client.gui.quickaction.QuickActionContext;
-import xin.vanilla.banira.client.gui.quickaction.QuickActionContextMenuItem;
-import xin.vanilla.banira.client.gui.quickaction.QuickActionRegistry;
-import xin.vanilla.banira.common.data.Component;
 import xin.vanilla.banira.common.util.CommandUtils;
 import xin.vanilla.banira.common.util.EnvironmentUtils;
 import xin.vanilla.banira.common.util.PacketUtils;
 import xin.vanilla.narcissus.command.NarcissusCommand;
+import xin.vanilla.narcissus.client.NarcissusClientBootstrap;
 import xin.vanilla.narcissus.config.ClientConfig;
 import xin.vanilla.narcissus.config.CommonConfig;
 import xin.vanilla.narcissus.data.SafeBlock;
@@ -29,9 +21,7 @@ import xin.vanilla.narcissus.data.TeleportRequest;
 import xin.vanilla.narcissus.data.player.PlayerTeleportData;
 import xin.vanilla.narcissus.data.world.WorldStageData;
 import xin.vanilla.narcissus.enums.EnumTeleportType;
-import xin.vanilla.narcissus.event.ClientModEventHandler;
 import xin.vanilla.narcissus.event.EventHandlerProxy;
-import xin.vanilla.narcissus.integration.ScreenHelper;
 import xin.vanilla.narcissus.internal.forge.event.ForgeNarcissusGameEventAdapter;
 import xin.vanilla.narcissus.internal.server.dev.NarcissusNetworkSmokeServerRunner;
 import xin.vanilla.narcissus.network.NetworkInit;
@@ -43,7 +33,6 @@ import xin.vanilla.narcissus.util.NarcissusUtils;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.function.Consumer;
 
 @Mod(NarcissusFarewell.MODID)
 public class NarcissusFarewell {
@@ -64,12 +53,12 @@ public class NarcissusFarewell {
     private static final SafeBlock safeBlock = new SafeBlock();
 
     public NarcissusFarewell() {
-        // 注册网络通道
-        NetworkInit.registerPackets();
-
         // 注册配置
         BaniraConfigs.register(CommonConfig.class, MODID);
         BaniraConfigs.register(ClientConfig.class, MODID);
+
+        // 注册网络通道
+        NetworkInit.registerPackets();
 
         BaniraEvents.Server.onStopping(server -> PlayerTeleportData.clear());
         BaniraEvents.Server.onTick(event -> EventHandlerProxy.onServerTick());
@@ -101,34 +90,7 @@ public class NarcissusFarewell {
         });
 
         if (EnvironmentUtils.isClient()) {
-            ClientProxy.init();
+            NarcissusClientBootstrap.init();
         }
     }
-
-    @OnlyIn(Dist.CLIENT)
-    public static class ClientProxy {
-        public static void init() {
-            ClientModEventHandler.bootstrap();
-
-            BaniraClientEvents.ModLifecycle.onClientSetup(event -> {
-                ResourceLocation texture = Identifier.id().create("gui/quick_icon.png");
-                Component label = NarcissusComponent.get().transClient("key.narcissus_farewell.categories");
-                Consumer<QuickActionContext> action = ctx -> ScreenHelper.openScreen();
-                QuickActionContextMenuItem editClientConfig = new QuickActionContextMenuItem(NarcissusComponent.get().transClientAuto("edit_client_config"), ctx ->
-                        ConfigEditorScreen.open(ClientConfig.get().holder(), ctx.currentScreen())
-                );
-                QuickActionContextMenuItem editCommonConfig = new QuickActionContextMenuItem(NarcissusComponent.get().transClientAuto("edit_common_config"), ctx ->
-                        ConfigEditorScreen.open(CommonConfig.get().holder(), ctx.currentScreen())
-                );
-                QuickActionContextMenuItem editPlayerConfig = new QuickActionContextMenuItem(NarcissusComponent.get().transClientAuto("edit_player_config"), ctx ->
-                        ScreenHelper.openPlayerTeleportPrefsScreen()
-                );
-                QuickActionContextMenuItem editAccessConfig = new QuickActionContextMenuItem(NarcissusComponent.get().transClientAuto("edit_access_config"), ctx ->
-                        ScreenHelper.openAccessListScreen()
-                );
-                QuickActionRegistry.get().registerIcon(MODID + ":quick", texture, label, action, editAccessConfig, editPlayerConfig, editClientConfig, editCommonConfig);
-            });
-        }
-    }
-
 }
