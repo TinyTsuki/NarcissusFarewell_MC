@@ -10,9 +10,12 @@ import com.mojang.brigadier.suggestion.SuggestionProvider;
 import net.minecraft.command.CommandSource;
 import net.minecraft.command.Commands;
 import net.minecraft.entity.player.ServerPlayerEntity;
+import xin.vanilla.banira.api.BaniraConfigs;
+import xin.vanilla.banira.common.config.ConfigHolder;
 import xin.vanilla.banira.common.data.Component;
 import xin.vanilla.banira.common.enums.EnumMoveType;
 import xin.vanilla.banira.common.enums.EnumPosition;
+import xin.vanilla.banira.common.util.CommandUtils;
 import xin.vanilla.banira.common.util.MessageUtils;
 import xin.vanilla.narcissus.NarcissusComponent;
 import xin.vanilla.narcissus.NarcissusLang;
@@ -25,6 +28,10 @@ import xin.vanilla.narcissus.util.NarcissusUtils;
 
 public final class ConfigCommand {
     private ConfigCommand() {
+    }
+
+    private static ConfigHolder commonConfig() {
+        return BaniraConfigs.holder(CommonConfig.class);
     }
 
     private static int executeTeleportCard(CommandContext<CommandSource> context) throws CommandSyntaxException {
@@ -160,6 +167,25 @@ public final class ConfigCommand {
                                 .requires(source -> NarcissusUtils.hasCommandPermission(source, EnumCommandType.VIRTUAL_OP))
                                 .suggests(LANGUAGE_SUGGESTION)
                                 .executes(ConfigCommand::executeLanguage)
+                        )
+                )
+                // 通用入口按配置描述符的点路径覆盖全部 COMMON 分类与字段。
+                .then(Commands.literal("common")
+                        .requires(source -> NarcissusUtils.hasCommandPermission(source, EnumCommandType.VIRTUAL_OP))
+                        .then(Commands.argument("configKey", StringArgumentType.word())
+                                .suggests((context, builder) -> {
+                                    String input = CommandUtils.getStringEmpty(context, "configKey");
+                                    CommandUtils.configKeySuggestion(commonConfig(), builder, input);
+                                    return builder.buildFuture();
+                                })
+                                .then(Commands.argument("configValue", StringArgumentType.string())
+                                        .suggests((context, builder) -> {
+                                            String configKey = StringArgumentType.getString(context, "configKey");
+                                            CommandUtils.configValueSuggestion(commonConfig(), builder, configKey);
+                                            return builder.buildFuture();
+                                        })
+                                        .executes(context -> CommandUtils.executeModifyConfig(commonConfig(), context))
+                                )
                         )
                 )
                 .then(Commands.literal("countdown")
