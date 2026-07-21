@@ -12,6 +12,7 @@ import xin.vanilla.banira.api.BaniraServer;
 import xin.vanilla.banira.common.data.KeyValue;
 import xin.vanilla.narcissus.data.SafeWorldCoordinate;
 
+import javax.annotation.ParametersAreNonnullByDefault;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -26,10 +27,10 @@ public class WorldStageData extends SavedData {
     private Map<KeyValue<String, String>, SafeWorldCoordinate> stageCoordinate = new LinkedHashMap<>();
 
     public WorldStageData() {
-        super(DATA_NAME);
     }
 
-    public void load(CompoundTag nbt) {
+    public static WorldStageData load(CompoundTag nbt) {
+        WorldStageData data = new WorldStageData();
         ListTag stageCoordinateNBT = nbt.getList("stageCoordinate", 10);
         Map<KeyValue<String, String>, SafeWorldCoordinate> stageCoordinate = new LinkedHashMap<>();
         for (int i = 0; i < stageCoordinateNBT.size(); i++) {
@@ -37,11 +38,13 @@ public class WorldStageData extends SavedData {
             stageCoordinate.put(new KeyValue<>(stageCoordinateTag.getString("key"), stageCoordinateTag.getString("value")),
                     SafeWorldCoordinate.fromTag(stageCoordinateTag.getCompound("coordinate")));
         }
-        this.setCoordinate(stageCoordinate);
+        data.setCoordinate(stageCoordinate);
+        return data;
     }
 
     @Override
     @NonNull
+    @ParametersAreNonnullByDefault
     public CompoundTag save(CompoundTag nbt) {
         ListTag stageCoordinateNBT = new ListTag();
         for (Map.Entry<KeyValue<String, String>, SafeWorldCoordinate> entry : this.getStageCoordinate().entrySet()) {
@@ -96,6 +99,6 @@ public class WorldStageData extends SavedData {
     }
 
     public static WorldStageData get(ServerLevel world) {
-        return world.getDataStorage().computeIfAbsent(WorldStageData::new, DATA_NAME);
+        return world.getDataStorage().computeIfAbsent(WorldStageData::load, WorldStageData::new, DATA_NAME);
     }
 }

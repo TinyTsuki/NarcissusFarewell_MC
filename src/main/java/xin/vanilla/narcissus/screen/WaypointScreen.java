@@ -1386,7 +1386,7 @@ public class WaypointScreen extends BaniraScreen {
                     || lastPlayerPos.z() != minecraft.player.getZ()
                     || lastPlayerPos.dimension() != minecraft.player.level.dimension();
             if (changed) {
-                lastPlayerPos.fromVector3d(minecraft.player.position()).dimension(minecraft.player.level.dimension());
+                lastPlayerPos.fromVec3(minecraft.player.position()).dimension(minecraft.player.level.dimension());
             }
             return changed;
         }

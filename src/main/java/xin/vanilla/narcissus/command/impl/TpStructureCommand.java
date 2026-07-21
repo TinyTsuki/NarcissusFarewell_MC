@@ -17,7 +17,6 @@ import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.biome.Biome;
-import net.minecraft.world.level.levelgen.feature.StructureFeature;
 import net.minecraft.server.level.ServerLevel;
 import xin.vanilla.banira.api.BaniraServer;
 import xin.vanilla.banira.common.data.Component;
@@ -47,9 +46,9 @@ public final class TpStructureCommand {
         ServerPlayer player = context.getSource().getPlayerOrException();
         if (CommandUtils.checkTeleportPre(context.getSource(), EnumCommandType.TP_STRUCTURE)) return 0;
         ResourceLocation structId = ResourceLocationArgument.getId(context, "struct");
-        StructureFeature<?> structure = StructureUtils.getStructure(structId);
+        boolean hasStructure = StructureUtils.hasStructure(structId);
         Biome biome = BiomeUtils.getBiome(structId);
-        if (structure == null && biome == null) {
+        if (!hasStructure && biome == null) {
             MessageUtils.sendNotification(player, NarcissusComponent.get().transAuto("structure_biome_not_found", structId), NarcissusNotificationTypes.TELEPORT_ERROR);
             return 0;
         }
@@ -79,7 +78,7 @@ public final class TpStructureCommand {
             } else {
                 ServerLevel structureWorld = server.getLevel(targetLevel);
                 WorldCoordinate structStart = new WorldCoordinate(player).dimension(targetLevel);
-                WorldCoordinate foundStruct = StructureUtils.findNearestStructure(structureWorld, structStart, structure, finalRange);
+                WorldCoordinate foundStruct = StructureUtils.findNearestStructure(structureWorld, structStart, structId, finalRange);
                 safeWorldCoordinate = foundStruct != null
                         ? new SafeWorldCoordinate(foundStruct.x(), foundStruct.y(), foundStruct.z(), foundStruct.yaw(), foundStruct.pitch(), foundStruct.dimension()).safe(true)
                         : null;

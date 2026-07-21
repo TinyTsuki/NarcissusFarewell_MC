@@ -3,6 +3,7 @@ package xin.vanilla.narcissus.internal.client.dev;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.ConnectScreen;
 import net.minecraft.client.multiplayer.ServerData;
+import net.minecraft.client.multiplayer.resolver.ServerAddress;
 import net.minecraft.nbt.CompoundTag;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -80,7 +81,7 @@ public final class NarcissusNetworkSmokeClientRunner {
         int port = Integer.getInteger("narcissus.networkSmoke.port", 25576);
         ServerData server = new ServerData("Narcissus Network Smoke", host + ":" + port, false);
         client.setCurrentServer(server);
-        client.setScreen(new ConnectScreen(client.screen, client, server));
+        ConnectScreen.startConnecting(client.screen, client, ServerAddress.parseString(server.ip), server);
         NarcissusNetworkSmokeStatus.append("CONNECT " + host + ":" + port);
         state = State.LOGIN_SYNC;
         ticks = 0;

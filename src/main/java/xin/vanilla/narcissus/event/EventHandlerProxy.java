@@ -80,10 +80,10 @@ public class EventHandlerProxy {
         record.setTeleportTime(new Date());
         record.setTeleportType(EnumTeleportType.OTHER);
         SafeWorldCoordinate before = new SafeWorldCoordinate(player);
-        before.fromVector3d(previous);
+        before.fromVec3(previous);
         record.setBefore(before);
         SafeWorldCoordinate after = new SafeWorldCoordinate(player);
-        after.fromVector3d(target);
+        after.fromVec3(target);
         record.setAfter(after);
         PlayerTeleportData data = PlayerTeleportData.getData(player);
         TeleportRecord otherRecord = data.getTeleportRecords().stream().max(Comparator.comparing(o -> o.getTeleportTime().getTime())).orElse(null);

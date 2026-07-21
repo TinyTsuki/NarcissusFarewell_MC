@@ -154,7 +154,7 @@ public class SafeCoordinateFinder {
                     .y(startY + stepY * (collisionStep - 1))
                     .z(startZ + stepZ * (collisionStep - 1));
         } else if (collisionStep == 0) {
-            clone.fromVector3d(startPosition);
+            clone.fromVec3(startPosition);
         } else {
             clone.x(startX + stepX * range)
                     .y(startY + stepY * range)

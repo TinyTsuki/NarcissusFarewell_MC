@@ -326,8 +326,7 @@ public final class NarcissusUiSmokeRunner {
 
     private void capture(Minecraft client, String name) {
         Path file = outputDir.resolve(name + ".png");
-        try (NativeImage image = Screenshot.takeScreenshot(
-                client.getWindow().getWidth(), client.getWindow().getHeight(), client.getMainRenderTarget())) {
+        try (NativeImage image = Screenshot.takeScreenshot(client.getMainRenderTarget())) {
             image.writeToFile(file);
             appendStatus("PASS " + name);
         } catch (IOException error) {

@@ -37,10 +37,10 @@ public final class TpCoordinateCommand {
             } catch (IllegalArgumentException ignored) {
                 targetLevel = player.getLevel().dimension();
             }
-            safeWorldCoordinate = new SafeWorldCoordinate(pos.x(), pos.y(), pos.z(), player.yRot, player.xRot, targetLevel);
+            safeWorldCoordinate = new SafeWorldCoordinate(pos.x(), pos.y(), pos.z(), player.getYRot(), player.getXRot(), targetLevel);
         } catch (IllegalArgumentException ignored) {
             ServerPlayer target = EntityArgument.getPlayer(context, "player");
-            safeWorldCoordinate = new SafeWorldCoordinate(target.getX(), target.getY(), target.getZ(), target.yRot, target.xRot, target.getLevel().dimension());
+            safeWorldCoordinate = new SafeWorldCoordinate(target.getX(), target.getY(), target.getZ(), target.getYRot(), target.getXRot(), target.getLevel().dimension());
         }
         safeWorldCoordinate.safe("safe".equalsIgnoreCase(xin.vanilla.banira.common.util.CommandUtils.getStringEmpty(context, "safe")));
         if (CommandUtils.checkTeleportPost(player, safeWorldCoordinate, EnumTeleportType.TP_COORDINATE, true))

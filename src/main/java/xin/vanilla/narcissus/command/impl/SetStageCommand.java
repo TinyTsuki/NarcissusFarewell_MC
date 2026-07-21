@@ -91,7 +91,7 @@ public final class SetStageCommand {
             targetLevel = player.getLevel().dimension();
             coord = new SafeWorldCoordinate(player);
             coord.dimension(targetLevel);
-            coord.fromVector3d(pos);
+            coord.fromVec3(pos);
         } else {
             boolean fromPlayer = player != null;
             try {
@@ -116,7 +116,7 @@ public final class SetStageCommand {
             if (fromPlayer) {
                 coord = new SafeWorldCoordinate(player);
                 coord.dimension(targetLevel);
-                coord.fromVector3d(pos);
+                coord.fromVec3(pos);
             } else {
                 coord = new SafeWorldCoordinate(pos.x, pos.y, pos.z, targetLevel);
             }

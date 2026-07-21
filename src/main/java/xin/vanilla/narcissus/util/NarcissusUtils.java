@@ -1228,8 +1228,8 @@ public class NarcissusUtils {
         if (entity instanceof ServerPlayer) {
             ServerPlayer player = (ServerPlayer) entity;
             player.teleportTo(level, safeWorldCoordinate.x(), safeWorldCoordinate.y(), safeWorldCoordinate.z()
-                    , safeWorldCoordinate.yaw() == 0 ? player.yRot : (float) safeWorldCoordinate.yaw()
-                    , safeWorldCoordinate.pitch() == 0 ? player.xRot : (float) safeWorldCoordinate.pitch());
+                    , safeWorldCoordinate.yaw() == 0 ? player.getYRot() : (float) safeWorldCoordinate.yaw()
+                    , safeWorldCoordinate.pitch() == 0 ? player.getXRot() : (float) safeWorldCoordinate.pitch());
         } else {
             if (level == entity.level) {
                 entity.teleportToWithTicket(safeWorldCoordinate.x(), safeWorldCoordinate.y(), safeWorldCoordinate.z());
@@ -1242,8 +1242,8 @@ public class NarcissusUtils {
                 Entity moved = entity.changeDimension(level);
                 if (moved != null) {
                     moved.moveTo(safeWorldCoordinate.x(), safeWorldCoordinate.y(), safeWorldCoordinate.z(),
-                            safeWorldCoordinate.yaw() == 0 ? moved.yRot : (float) safeWorldCoordinate.yaw(),
-                            safeWorldCoordinate.pitch() == 0 ? moved.xRot : (float) safeWorldCoordinate.pitch());
+                            safeWorldCoordinate.yaw() == 0 ? moved.getYRot() : (float) safeWorldCoordinate.yaw(),
+                            safeWorldCoordinate.pitch() == 0 ? moved.getXRot() : (float) safeWorldCoordinate.pitch());
                     entity = moved;
                 }
             }
@@ -1555,7 +1555,7 @@ public class NarcissusUtils {
                 try {
                     ItemParser parse = new ItemParser(new StringReader(teleportCost.getConf()), false).parse();
                     ItemStack itemStack = new ItemInput(parse.getItem(), parse.getNbt()).createItemStack(1, false);
-                    result = getItemCount(player.inventory.items, itemStack) >= costNeed;
+                    result = getItemCount(player.getInventory().items, itemStack) >= costNeed;
                     itemStack.setCount(costNeed);
                     if (!result) {
                         MessageUtils.sendNotification(player
@@ -1892,14 +1892,14 @@ public class NarcissusUtils {
 
     public static void setPlayerFlightMode(ServerPlayer player, Boolean enable, Float speed) {
         CompoundTag root = new CompoundTag();
-        player.abilities.addSaveData(root);
+        player.getAbilities().addSaveData(root);
         CompoundTag abilities = root.getCompound("abilities");
         if (enable == null) enable = !abilities.getBoolean("mayfly");
         abilities.putBoolean("mayfly", enable);
         if (!enable) abilities.putBoolean("flying", false);
         if (speed != null) abilities.putFloat("flySpeed", speed);
-        player.abilities.loadSaveData(root);
-        player.connection.send(new ClientboundPlayerAbilitiesPacket(player.abilities));
+        player.getAbilities().loadSaveData(root);
+        player.connection.send(new ClientboundPlayerAbilitiesPacket(player.getAbilities()));
     }
 
     // endregion 杂项

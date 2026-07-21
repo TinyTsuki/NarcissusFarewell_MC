@@ -3,7 +3,7 @@ plugins {
     id 'maven-publish'
 }
 
-def javaVer = 8
+def javaVer = 17
 
 group = project.mod_group_id
 version = project.mod_version
@@ -35,13 +35,20 @@ repositories {
     }
 }
 
+configurations.configureEach {
+    // 本地开发会重复发布同一 Banira 版本，始终检查最新 Maven Local 产物。
+    resolutionStrategy.cacheChangingModulesFor 0, 'seconds'
+}
+
 dependencies {
     minecraft "com.mojang:minecraft:${project.minecraft_version}"
     mappings loom.officialMojangMappings()
     modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
     modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
 
-    modImplementation "xin.vanilla.banira:banira_codex:${loader_type}-${minecraft_version}-${banira_version}"
+    modImplementation("xin.vanilla.banira:banira_codex:${loader_type}-${minecraft_version}-${banira_version}") {
+        changing = true
+    }
     modImplementation "com.terraformersmc:modmenu:${modmenu_version}"
 
     testImplementation 'junit:junit:4.13.2'

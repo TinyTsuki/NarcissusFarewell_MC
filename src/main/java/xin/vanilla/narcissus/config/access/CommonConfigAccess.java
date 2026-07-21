@@ -840,7 +840,7 @@ public final class CommonConfigAccess {
         }).collect(Collectors.toList()));
         h.set("general.safeTeleport.setBlockWhenSafeNotFound", false);
         h.set("general.safeTeleport.getBlockFromInventory", true);
-        h.set("general.safeTeleport.safeBlocks", Stream.of(Blocks.GRASS_BLOCK, Blocks.GRASS_PATH, Blocks.DIRT, Blocks.COBBLESTONE).map(b -> {
+        h.set("general.safeTeleport.safeBlocks", Stream.of(Blocks.GRASS_BLOCK, Blocks.DIRT_PATH, Blocks.DIRT, Blocks.COBBLESTONE).map(b -> {
             ResourceLocation rl = Registry.BLOCK.getKey(b);
             return rl == null ? "" : rl.toString();
         }).collect(Collectors.toList()));

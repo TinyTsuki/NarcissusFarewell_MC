@@ -57,7 +57,7 @@ public class SafeWorldCoordinate extends WorldCoordinate implements Serializable
         double x = player.getX() + (Math.random() * 2 - 1) * range;
         double y = randomWithWeight(DimensionUtils.getWorldMinY(world), DimensionUtils.getWorldMaxY(world), (int) player.getY(), 0.75);
         double z = player.getZ() + (Math.random() * 2 - 1) * range;
-        return new SafeWorldCoordinate(x, y, z, player.yRot, player.xRot, dimension);
+        return new SafeWorldCoordinate(x, y, z, player.getYRot(), player.getXRot(), dimension);
     }
 
     @Override
