@@ -5,6 +5,7 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.TickEvent;
 import xin.vanilla.banira.api.BaniraServer;
+import xin.vanilla.narcissus.config.CommonConfig;
 import xin.vanilla.narcissus.data.player.PlayerTeleportData;
 import xin.vanilla.narcissus.enums.EnumTeleportType;
 import xin.vanilla.narcissus.internal.dev.NarcissusNetworkSmokeFixture;
@@ -77,6 +78,10 @@ public final class NarcissusNetworkSmokeServerRunner {
     }
 
     private static void runWritePhase(PlayerTeleportData data) {
+        if (CommonConfig.get().general().teleportRecordLimit()
+                != NarcissusNetworkSmokeFixture.TELEPORT_RECORD_LIMIT) {
+            return;
+        }
         if (data.getTeleportCountdownSeconds(EnumTeleportType.TP_HOME)
                 != NarcissusNetworkSmokeFixture.COUNTDOWN) {
             return;
@@ -87,6 +92,7 @@ public final class NarcissusNetworkSmokeServerRunner {
             return;
         }
         data.save();
+        NarcissusNetworkSmokeStatus.append("PASS server-common-config-command");
         NarcissusNetworkSmokeStatus.append("PASS server-config-roundtrip");
         NarcissusNetworkSmokeStatus.append("PASS server-access-list-roundtrip");
         NarcissusNetworkSmokeStatus.append("FINISHED phase-one");
@@ -94,6 +100,11 @@ public final class NarcissusNetworkSmokeServerRunner {
     }
 
     private static void runVerifyPhase(PlayerTeleportData data) {
+        if (CommonConfig.get().general().teleportRecordLimit()
+                != NarcissusNetworkSmokeFixture.TELEPORT_RECORD_LIMIT) {
+            throw new IllegalStateException("Common config command value was not restored from disk");
+        }
+        NarcissusNetworkSmokeStatus.append("PASS persisted-common-config");
         if (data.getTeleportCountdownSeconds(EnumTeleportType.TP_HOME)
                 != NarcissusNetworkSmokeFixture.COUNTDOWN) {
             throw new IllegalStateException("Player countdown was not restored from disk");

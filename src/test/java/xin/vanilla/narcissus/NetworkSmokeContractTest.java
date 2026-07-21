@@ -28,10 +28,15 @@ public class NetworkSmokeContractTest {
         assertContains(script, "phase-two");
         assertContains(script, "destroyProcessTree");
         assertContains(script, "PASS server-shutdown");
+        assertContains(script, "PASS server-common-config-command");
+        assertContains(script, "PASS persisted-common-config");
+        assertContains(server, "PASS server-common-config-command");
+        assertContains(server, "PASS persisted-common-config");
         assertContains(server, "PASS persisted-player-config");
         assertContains(server, "PASS persisted-access-list");
         assertContains(server, "server.halt(false)");
         assertContains(client, "PlayerConfigSyncToServer");
+        assertContains(client, "config common general.teleportRecordLimit");
         assertContains(client, "AccessListEditToServer");
         assertContains(client, "ConnectScreen");
         assertContains(client, "PASS persisted-access-list-client");

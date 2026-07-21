@@ -142,6 +142,9 @@ tasks.register('networkSmoke') {
                 "online-mode=false${System.lineSeparator()}server-port=${smokePort}${System.lineSeparator()}" +
                         "level-name=network-smoke-world${System.lineSeparator()}view-distance=4${System.lineSeparator()}",
                 'UTF-8')
+        new File(smokeServerDir, 'ops.json').setText(
+                '[{"uuid":"40073368-cb03-3515-9ee9-04b939db951a","name":"NetworkSmoke","level":4,"bypassesPlayerLimit":false}]',
+                'UTF-8')
 
         String runId = DateTimeFormatter.ofPattern('yyyyMMdd-HHmmss').format(LocalDateTime.now())
         File evidence = file("${smokeRoot}/evidence/${runId}")
@@ -175,9 +178,11 @@ tasks.register('networkSmoke') {
                         : ['PASS remote-login-sync', 'PASS persisted-player-config-client',
                            'PASS persisted-access-list-client', 'FINISHED phase-two'])
                 verifyMarkers(serverStatus, phase == 'phase-one'
-                        ? ['PASS server-config-roundtrip', 'PASS server-access-list-roundtrip',
+                        ? ['PASS server-common-config-command', 'PASS server-config-roundtrip',
+                           'PASS server-access-list-roundtrip',
                            'FINISHED phase-one', 'PASS server-shutdown']
-                        : ['PASS persisted-player-config', 'PASS persisted-access-list',
+                        : ['PASS persisted-common-config', 'PASS persisted-player-config',
+                           'PASS persisted-access-list',
                            'FINISHED phase-two', 'PASS server-shutdown'])
             } finally {
                 destroyProcessTree(client)

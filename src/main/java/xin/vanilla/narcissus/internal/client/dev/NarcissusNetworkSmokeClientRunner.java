@@ -93,6 +93,9 @@ public final class NarcissusNetworkSmokeClientRunner {
         }
         NarcissusNetworkSmokeStatus.append("PASS remote-login-sync");
         if ("phase-one".equals(NarcissusNetworkSmokeStatus.phase())) {
+            client.player.chat("/narcissus config common general.teleportRecordLimit "
+                    + NarcissusNetworkSmokeFixture.TELEPORT_RECORD_LIMIT);
+            NarcissusNetworkSmokeStatus.append("SEND common-config-command");
             CompoundTag countdowns = new CompoundTag();
             countdowns.putInt(EnumTeleportType.TP_HOME.name(), NarcissusNetworkSmokeFixture.COUNTDOWN);
             syncGeneration = NarcissusClientSyncState.playerDataGeneration();
