@@ -2,7 +2,7 @@ package xin.vanilla.narcissus.enums;
 
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import lombok.Getter;
-import net.minecraft.command.CommandSource;
+import net.minecraft.commands.CommandSourceStack;
 import xin.vanilla.banira.command.BaniraCommand;
 import xin.vanilla.banira.api.permission.BaniraVirtualPermission;
 import xin.vanilla.banira.common.data.Component;
@@ -115,14 +115,14 @@ public enum EnumCommandType implements BaniraVirtualPermission, IEnumDescribable
     private final boolean op;
 
     @Nullable
-    private final Supplier<LiteralArgumentBuilder<CommandSource>> instance;
+    private final Supplier<LiteralArgumentBuilder<CommandSourceStack>> instance;
 
     /**
      * Banira 对外以 Object 暴露版本相关命令节点，这里在 1.16.5 分支恢复 Brigadier 类型。
      */
     @SuppressWarnings("unchecked")
-    private static LiteralArgumentBuilder<CommandSource> baniraNode(Object node) {
-        return (LiteralArgumentBuilder<CommandSource>) node;
+    private static LiteralArgumentBuilder<CommandSourceStack> baniraNode(Object node) {
+        return (LiteralArgumentBuilder<CommandSourceStack>) node;
     }
 
     EnumCommandType() {
@@ -143,19 +143,19 @@ public enum EnumCommandType implements BaniraVirtualPermission, IEnumDescribable
         this.op = !this.concise && op;
     }
 
-    EnumCommandType(@Nullable Supplier<LiteralArgumentBuilder<CommandSource>> instance) {
+    EnumCommandType(@Nullable Supplier<LiteralArgumentBuilder<CommandSourceStack>> instance) {
         this.instance = instance;
         this.ignore = false;
         this.op = !this.concise;
     }
 
-    EnumCommandType(@Nullable Supplier<LiteralArgumentBuilder<CommandSource>> instance, boolean ig) {
+    EnumCommandType(@Nullable Supplier<LiteralArgumentBuilder<CommandSourceStack>> instance, boolean ig) {
         this.instance = instance;
         this.ignore = ig;
         this.op = !this.concise;
     }
 
-    EnumCommandType(@Nullable Supplier<LiteralArgumentBuilder<CommandSource>> instance, boolean ig, boolean op) {
+    EnumCommandType(@Nullable Supplier<LiteralArgumentBuilder<CommandSourceStack>> instance, boolean ig, boolean op) {
         this.instance = instance;
         this.ignore = ig;
         this.op = !this.concise && op;

@@ -3,8 +3,6 @@ package xin.vanilla.narcissus.network.packet;
 import lombok.Getter;
 import lombok.experimental.Accessors;
 import xin.vanilla.banira.common.network.BaniraPacketBuffer;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.fml.DistExecutor;
 import xin.vanilla.banira.common.network.BaniraNetworkContext;
 import xin.vanilla.narcissus.data.SafeWorldCoordinate;
 import xin.vanilla.narcissus.integration.MapHelper;
@@ -67,7 +65,7 @@ public class WaypointSyncToClient implements NetworkPacket {
     public static void handle(WaypointSyncToClient packet, BaniraNetworkContext ctx) {
         ctx.enqueueWork(() -> {
             if (ctx.isClientSide()) {
-                DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> MapHelper.handle(packet));
+                MapHelper.handle(packet);
             }
         });
         ctx.markHandled();

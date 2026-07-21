@@ -45,7 +45,7 @@ public class WaypointTeleportToServer implements NetworkPacket {
     public static void handle(WaypointTeleportToServer packet, BaniraNetworkContext ctx) {
         ctx.enqueueWork(() -> {
             if (ctx.isServerSide()) {
-                net.minecraft.entity.player.ServerPlayerEntity sender = ctx.senderAs(net.minecraft.entity.player.ServerPlayerEntity.class);
+                net.minecraft.server.level.ServerPlayer sender = ctx.senderAs(net.minecraft.server.level.ServerPlayer.class);
                 if (sender == null) return;
                 EnumTeleportType type;
                 try {

@@ -2,8 +2,6 @@ package xin.vanilla.narcissus.data.client;
 
 import lombok.Getter;
 import lombok.Setter;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 import xin.vanilla.narcissus.data.TeleportCost;
 import xin.vanilla.narcissus.enums.EnumTeleportType;
 
@@ -11,7 +9,6 @@ import java.util.EnumMap;
 import java.util.Map;
 
 
-@OnlyIn(Dist.CLIENT)
 public final class ClientCostConfig {
     private static final Map<EnumTeleportType, TeleportCost> COST_MAP = new EnumMap<>(EnumTeleportType.class);
     @Getter

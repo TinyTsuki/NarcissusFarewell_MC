@@ -7,11 +7,11 @@ import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.suggestion.SuggestionProvider;
 import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
-import net.minecraft.command.CommandSource;
-import net.minecraft.command.arguments.EntityArgument;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.entity.player.ServerPlayerEntity;
-import net.minecraft.util.text.event.HoverEvent;
+import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.commands.arguments.EntityArgument;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.network.chat.HoverEvent;
 import xin.vanilla.banira.common.data.Component;
 import xin.vanilla.banira.common.data.KeyValue;
 import xin.vanilla.banira.common.enums.EnumMoveType;
@@ -46,17 +46,17 @@ public final class CommandUtils {
     /**
      * 若为第一次使用指令则进行提示
      */
-    public static void notifyHelp(CommandContext<CommandSource> context) {
-        if (context.getSource().getEntity() instanceof ServerPlayerEntity) {
-            ServerPlayerEntity player = (ServerPlayerEntity) context.getSource().getEntity();
+    public static void notifyHelp(CommandContext<CommandSourceStack> context) {
+        if (context.getSource().getEntity() instanceof ServerPlayer) {
+            ServerPlayer player = (ServerPlayer) context.getSource().getEntity();
             Component modName = NarcissusComponent.get().trans("key.narcissus_farewell.categories").languageCode(NarcissusLang.getPlayerLanguage(player));
             xin.vanilla.banira.common.util.CommandUtils.notifyHelp(context, PlayerTeleportData.getData(player), modName, "/" + NarcissusUtils.getCommandPrefix());
         }
     }
 
-    public static boolean checkTeleportPre(CommandSource source, EnumCommandType teleportType) {
-        if (source.getEntity() != null && source.getEntity() instanceof ServerPlayerEntity) {
-            ServerPlayerEntity player = (ServerPlayerEntity) source.getEntity();
+    public static boolean checkTeleportPre(CommandSourceStack source, EnumCommandType teleportType) {
+        if (source.getEntity() != null && source.getEntity() instanceof ServerPlayer) {
+            ServerPlayer player = (ServerPlayer) source.getEntity();
             if (!NarcissusUtils.isCommandEnabled(teleportType)) {
                 MessageUtils.sendDefaultNotification(player, NarcissusComponent.get().transAuto("command_disabled"), EnumPosition.TOP_CENTER, EnumMoveType.AUTO);
                 return true;
@@ -94,11 +94,11 @@ public final class CommandUtils {
         return !result;
     }
 
-    public static boolean checkTeleportPost(ServerPlayerEntity player, SafeWorldCoordinate target, EnumTeleportType type) {
+    public static boolean checkTeleportPost(ServerPlayer player, SafeWorldCoordinate target, EnumTeleportType type) {
         return checkTeleportPost(player, target, type, false);
     }
 
-    public static boolean checkTeleportPost(ServerPlayerEntity player, SafeWorldCoordinate target, EnumTeleportType type, boolean submit) {
+    public static boolean checkTeleportPost(ServerPlayer player, SafeWorldCoordinate target, EnumTeleportType type, boolean submit) {
         boolean result = NarcissusUtils.isTeleportAcrossDimensionEnabled(player, target.dimension(), type);
         result = result && NarcissusUtils.validTeleportCost(player, target, type, submit);
         if (CommonConfig.get().general().tpWithEnemy() && NarcissusUtils.isTargetedByHostile(player)) {
@@ -108,12 +108,12 @@ public final class CommandUtils {
         return !result;
     }
 
-    public static String getRequestId(CommandContext<CommandSource> context, EnumTeleportType teleportType, boolean isTarget) {
+    public static String getRequestId(CommandContext<CommandSourceStack> context, EnumTeleportType teleportType, boolean isTarget) {
         String result = null;
         try {
-            ServerPlayerEntity player = context.getSource().getPlayerOrException();
+            ServerPlayer player = context.getSource().getPlayerOrException();
             try {
-                ServerPlayerEntity requester = EntityArgument.getPlayer(context, "player");
+                ServerPlayer requester = EntityArgument.getPlayer(context, "player");
                 Map.Entry<String, TeleportRequest> entry1 = NarcissusFarewell.getTeleportRequest().entrySet().stream()
                         .filter(entry -> isTarget ? entry.getValue().getTarget().getUUID().equals(player.getUUID()) : entry.getValue().getRequester().getUUID().equals(player.getUUID()))
                         .filter(entry -> isTarget ? entry.getValue().getRequester().getUUID().equals(requester.getUUID()) : entry.getValue().getTarget().getUUID().equals(requester.getUUID()))
@@ -152,9 +152,9 @@ public final class CommandUtils {
         return result;
     }
 
-    public static SuggestionProvider<CommandSource> buildReqIndexSuggestions(EnumTeleportType teleportType, boolean isTarget) {
+    public static SuggestionProvider<CommandSourceStack> buildReqIndexSuggestions(EnumTeleportType teleportType, boolean isTarget) {
         return (context, builder) -> {
-            ServerPlayerEntity player = context.getSource().getPlayerOrException();
+            ServerPlayer player = context.getSource().getPlayerOrException();
             NarcissusFarewell.getTeleportRequest().entrySet().stream()
                     .filter(entry -> isTarget ? entry.getValue().getRequester().getUUID().equals(player.getUUID()) : entry.getValue().getTarget().getUUID().equals(player.getUUID()))
                     .filter(entry -> entry.getValue().getTeleportType() == teleportType)
@@ -168,7 +168,7 @@ public final class CommandUtils {
         };
     }
 
-    public static Component getWhiteListMessage(ServerPlayerEntity player, PlayerAccess access) {
+    public static Component getWhiteListMessage(ServerPlayer player, PlayerAccess access) {
         if (CollectionUtils.isNullOrEmpty(access.getWhiteList())) {
             return NarcissusComponent.get().transAuto("list_is_empty", getBlacklistOrWhitelistHelp(player, false));
         }
@@ -195,7 +195,7 @@ public final class CommandUtils {
         return NarcissusComponent.get().transAuto("list_detail", getBlacklistOrWhitelistHelp(player, false), playerList);
     }
 
-    public static Component getBlacklistOrWhitelistHelp(PlayerEntity player, boolean black) {
+    public static Component getBlacklistOrWhitelistHelp(Player player, boolean black) {
         return NarcissusComponent.get().transAuto(black ? "blacklist_tag" : "whitelist_tag")
                 .hoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT,
                         NarcissusComponent.get().transAuto(black ? "blacklist_help" : "whitelist_help")
@@ -204,7 +204,7 @@ public final class CommandUtils {
 
     // region suggestions
 
-    public static CompletableFuture<Suggestions> dimSuggestion(CommandContext<CommandSource> context, SuggestionsBuilder builder) {
+    public static CompletableFuture<Suggestions> dimSuggestion(CommandContext<CommandSourceStack> context, SuggestionsBuilder builder) {
         String name = xin.vanilla.banira.common.util.CommandUtils.getStringEmpty(context, "dimension");
         String lang = xin.vanilla.banira.common.util.CommandUtils.getLanguage(context.getSource());
         Component dimTooltip = NarcissusComponent.get().transAuto("suggest_dimension");
@@ -215,7 +215,7 @@ public final class CommandUtils {
         return builder.buildFuture();
     }
 
-    public static CompletableFuture<Suggestions> safeSuggestion(CommandContext<CommandSource> context, SuggestionsBuilder builder) {
+    public static CompletableFuture<Suggestions> safeSuggestion(CommandContext<CommandSourceStack> context, SuggestionsBuilder builder) {
         String lang = xin.vanilla.banira.common.util.CommandUtils.getLanguage(context.getSource());
         Component safeTooltip = NarcissusComponent.get().transAuto("suggest_safe");
         Component unsafeTooltip = NarcissusComponent.get().transAuto("suggest_unsafe");
@@ -224,7 +224,7 @@ public final class CommandUtils {
         return builder.buildFuture();
     }
 
-    public static CompletableFuture<Suggestions> rangeSuggestion(CommandContext<CommandSource> context, SuggestionsBuilder builder) {
+    public static CompletableFuture<Suggestions> rangeSuggestion(CommandContext<CommandSourceStack> context, SuggestionsBuilder builder) {
         String lang = xin.vanilla.banira.common.util.CommandUtils.getLanguage(context.getSource());
         for (int i = 1; i <= 5; i++) {
             int index = (int) Math.pow(10, i);
@@ -236,8 +236,8 @@ public final class CommandUtils {
         return builder.buildFuture();
     }
 
-    public static CompletableFuture<Suggestions> homeSuggestion(CommandContext<CommandSource> context, SuggestionsBuilder builder) throws CommandSyntaxException {
-        ServerPlayerEntity player = context.getSource().getPlayerOrException();
+    public static CompletableFuture<Suggestions> homeSuggestion(CommandContext<CommandSourceStack> context, SuggestionsBuilder builder) throws CommandSyntaxException {
+        ServerPlayer player = context.getSource().getPlayerOrException();
         PlayerTeleportData data = PlayerTeleportData.getData(player);
         String lang = xin.vanilla.banira.common.util.CommandUtils.getLanguage(context.getSource());
         Component tooltip = NarcissusComponent.get().transAuto("suggest_home");
@@ -247,7 +247,7 @@ public final class CommandUtils {
         return builder.buildFuture();
     }
 
-    public static CompletableFuture<Suggestions> stageSuggestion(CommandContext<CommandSource> context, SuggestionsBuilder builder) {
+    public static CompletableFuture<Suggestions> stageSuggestion(CommandContext<CommandSourceStack> context, SuggestionsBuilder builder) {
         String lang = xin.vanilla.banira.common.util.CommandUtils.getLanguage(context.getSource());
         Component tooltip = NarcissusComponent.get().transAuto("suggest_stage");
         for (KeyValue<String, String> key : WorldStageData.get().getStageCoordinate().keySet()) {
@@ -256,8 +256,8 @@ public final class CommandUtils {
         return builder.buildFuture();
     }
 
-    public static CompletableFuture<Suggestions> homeDimSuggestion(CommandContext<CommandSource> context, SuggestionsBuilder builder) throws CommandSyntaxException {
-        ServerPlayerEntity player = context.getSource().getPlayerOrException();
+    public static CompletableFuture<Suggestions> homeDimSuggestion(CommandContext<CommandSourceStack> context, SuggestionsBuilder builder) throws CommandSyntaxException {
+        ServerPlayer player = context.getSource().getPlayerOrException();
         PlayerTeleportData data = PlayerTeleportData.getData(player);
         String name = xin.vanilla.banira.common.util.CommandUtils.getStringEmpty(context, "name");
         String lang = xin.vanilla.banira.common.util.CommandUtils.getLanguage(context.getSource());
@@ -269,7 +269,7 @@ public final class CommandUtils {
         return builder.buildFuture();
     }
 
-    public static CompletableFuture<Suggestions> stageDimSuggestion(CommandContext<CommandSource> context, SuggestionsBuilder builder) {
+    public static CompletableFuture<Suggestions> stageDimSuggestion(CommandContext<CommandSourceStack> context, SuggestionsBuilder builder) {
         WorldStageData data = WorldStageData.get();
         String name = xin.vanilla.banira.common.util.CommandUtils.getStringEmpty(context, "name");
         String lang = xin.vanilla.banira.common.util.CommandUtils.getLanguage(context.getSource());

@@ -5,9 +5,9 @@ import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
-import net.minecraft.command.CommandSource;
-import net.minecraft.command.Commands;
-import net.minecraft.entity.player.ServerPlayerEntity;
+import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.commands.Commands;
+import net.minecraft.server.level.ServerPlayer;
 import xin.vanilla.banira.common.util.MessageUtils;
 import xin.vanilla.narcissus.NarcissusComponent;
 import xin.vanilla.narcissus.config.CommonConfig;
@@ -23,10 +23,10 @@ public final class TpViewCommand {
     private TpViewCommand() {
     }
 
-    private static int execute(CommandContext<CommandSource> context) throws CommandSyntaxException {
+    private static int execute(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
         CommandUtils.notifyHelp(context);
         if (CommandUtils.checkTeleportPre(context.getSource(), EnumCommandType.TP_VIEW)) return 0;
-        ServerPlayerEntity player = context.getSource().getPlayerOrException();
+        ServerPlayer player = context.getSource().getPlayerOrException();
         boolean safe = "safe".equalsIgnoreCase(xin.vanilla.banira.common.util.CommandUtils.getStringEmpty(context, "safe"));
         int range = xin.vanilla.banira.common.util.CommandUtils.getIntDefault(context, "range", CommonConfig.get().general().teleportViewDistanceLimit());
         range = NarcissusUtils.checkRange(player, EnumTeleportType.TP_VIEW, range);
@@ -45,7 +45,7 @@ public final class TpViewCommand {
         return 1;
     }
 
-    public static LiteralArgumentBuilder<CommandSource> create() {
+    public static LiteralArgumentBuilder<CommandSourceStack> create() {
         return Commands.literal(CommonConfig.get().commandNames().commandTpView())
                 .requires(source -> NarcissusUtils.hasCommandPermission(source, EnumCommandType.TP_VIEW))
                 .executes(TpViewCommand::execute)

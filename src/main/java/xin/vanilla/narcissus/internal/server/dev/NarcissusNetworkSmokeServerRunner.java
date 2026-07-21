@@ -1,10 +1,9 @@
 package xin.vanilla.narcissus.internal.server.dev;
 
-import net.minecraft.entity.player.ServerPlayerEntity;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.MinecraftServer;
-import net.minecraftforge.common.MinecraftForge;
-import net.minecraftforge.event.TickEvent;
 import xin.vanilla.banira.api.BaniraServer;
+import xin.vanilla.banira.api.event.BaniraEvents;
 import xin.vanilla.narcissus.data.player.PlayerTeleportData;
 import xin.vanilla.narcissus.enums.EnumTeleportType;
 import xin.vanilla.narcissus.internal.dev.NarcissusNetworkSmokeFixture;
@@ -23,14 +22,11 @@ public final class NarcissusNetworkSmokeServerRunner {
 
     public static void register() {
         if (NarcissusNetworkSmokeStatus.enabled()) {
-            MinecraftForge.EVENT_BUS.addListener(NarcissusNetworkSmokeServerRunner::onServerTick);
+            BaniraEvents.Server.onTick(event -> onServerTick());
         }
     }
 
-    private static void onServerTick(TickEvent.ServerTickEvent event) {
-        if (event.phase != TickEvent.Phase.END) {
-            return;
-        }
+    private static void onServerTick() {
         try {
             MinecraftServer server = BaniraServer.currentAs(MinecraftServer.class);
             if (server == null || !server.isRunning()) {
@@ -44,7 +40,7 @@ public final class NarcissusNetworkSmokeServerRunner {
                 ready = true;
                 NarcissusNetworkSmokeStatus.append("PASS server-ready");
             }
-            List<ServerPlayerEntity> players = server.getPlayerList().getPlayers();
+            List<ServerPlayer> players = server.getPlayerList().getPlayers();
             if (players.isEmpty()) {
                 return;
             }

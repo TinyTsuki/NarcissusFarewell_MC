@@ -6,12 +6,12 @@ import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
-import net.minecraft.command.CommandSource;
-import net.minecraft.command.Commands;
-import net.minecraft.entity.player.ServerPlayerEntity;
-import net.minecraft.util.RegistryKey;
-import net.minecraft.world.World;
-import net.minecraft.world.server.ServerWorld;
+import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.commands.Commands;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.world.level.Level;
+import net.minecraft.server.level.ServerLevel;
 import xin.vanilla.banira.common.util.DimensionUtils;
 import xin.vanilla.banira.common.util.MessageUtils;
 import xin.vanilla.banira.common.util.StringUtils;
@@ -32,15 +32,15 @@ public final class TpBackCommand {
     private TpBackCommand() {
     }
 
-    private static int execute(CommandContext<CommandSource> context) throws CommandSyntaxException {
+    private static int execute(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
         CommandUtils.notifyHelp(context);
-        ServerPlayerEntity player = context.getSource().getPlayerOrException();
+        ServerPlayer player = context.getSource().getPlayerOrException();
         if (CommandUtils.checkTeleportPre(context.getSource(), EnumCommandType.TP_BACK)) return 0;
         EnumTeleportType type = EnumTeleportType.valueOfEx(xin.vanilla.banira.common.util.CommandUtils.getStringEmpty(context, "type"));
-        RegistryKey<World> targetLevel = null;
+        ResourceKey<Level> targetLevel = null;
         try {
-            RegistryKey<World> targetDimension = DimensionUtils.parse(StringArgumentType.getString(context, "dimension"));
-            ServerWorld level = context.getSource().getServer().getLevel(targetDimension);
+            ResourceKey<Level> targetDimension = DimensionUtils.parse(StringArgumentType.getString(context, "dimension"));
+            ServerLevel level = context.getSource().getServer().getLevel(targetDimension);
             if (level != null) {
                 targetLevel = targetDimension;
             }
@@ -59,7 +59,7 @@ public final class TpBackCommand {
         return 1;
     }
 
-    public static CompletableFuture<Suggestions> typeSuggestion(CommandContext<CommandSource> context, SuggestionsBuilder builder) {
+    public static CompletableFuture<Suggestions> typeSuggestion(CommandContext<CommandSourceStack> context, SuggestionsBuilder builder) {
         String type = xin.vanilla.banira.common.util.CommandUtils.getStringEmpty(context, "type");
         if (StringUtils.isNullOrEmptyEx(type)) {
             builder.suggest("ALL");
@@ -72,8 +72,8 @@ public final class TpBackCommand {
         return builder.buildFuture();
     }
 
-    public static CompletableFuture<Suggestions> dimSuggestion(CommandContext<CommandSource> context, SuggestionsBuilder builder) throws CommandSyntaxException {
-        ServerPlayerEntity player = context.getSource().getPlayerOrException();
+    public static CompletableFuture<Suggestions> dimSuggestion(CommandContext<CommandSourceStack> context, SuggestionsBuilder builder) throws CommandSyntaxException {
+        ServerPlayer player = context.getSource().getPlayerOrException();
         PlayerTeleportData data = PlayerTeleportData.getData(player);
         EnumTeleportType type = EnumTeleportType.valueOfEx(xin.vanilla.banira.common.util.CommandUtils.getStringEmpty(context, "type"));
         data.getTeleportRecords().stream()
@@ -86,7 +86,7 @@ public final class TpBackCommand {
     }
 
 
-    public static LiteralArgumentBuilder<CommandSource> create() {
+    public static LiteralArgumentBuilder<CommandSourceStack> create() {
         return Commands.literal(CommonConfig.get().commandNames().commandTpBack())
                 .requires(source -> NarcissusUtils.hasCommandPermission(source, EnumCommandType.TP_BACK))
                 .executes(TpBackCommand::execute)

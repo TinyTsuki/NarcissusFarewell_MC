@@ -1,8 +1,8 @@
 package xin.vanilla.narcissus.mixin;
 
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.network.datasync.DataParameter;
-import net.minecraft.util.DamageSource;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.network.syncher.EntityDataAccessor;
+import net.minecraft.world.damagesource.DamageSource;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.gen.Accessor;
 import org.spongepowered.asm.mixin.gen.Invoker;
@@ -10,7 +10,9 @@ import org.spongepowered.asm.mixin.gen.Invoker;
 @Mixin(LivingEntity.class)
 public interface LivingEntityInvoker {
     @Accessor("DATA_HEALTH_ID")
-    DataParameter<Float> narcissus$dataHealthId();
+    static EntityDataAccessor<Float> narcissus$dataHealthId() {
+        throw new AssertionError();
+    }
 
     @Invoker("die")
     void narcissus$invokeDie(DamageSource damageSource);

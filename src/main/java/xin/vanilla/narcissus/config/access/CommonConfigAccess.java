@@ -1,8 +1,9 @@
 package xin.vanilla.narcissus.config.access;
 
-import net.minecraft.block.Blocks;
-import net.minecraft.util.ResourceLocation;
-import net.minecraft.util.SoundEvents;
+import net.minecraft.core.Registry;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.sounds.SoundEvents;
 import xin.vanilla.banira.common.config.ConfigCategoryViewProxy;
 import xin.vanilla.banira.common.config.ConfigHolder;
 import xin.vanilla.narcissus.NarcissusFarewell;
@@ -821,7 +822,7 @@ public final class CommonConfigAccess {
         h.set("general.graveSearchRangeLimit", 32);
         h.set("general.teleportHomeLimit", 5);
         h.set("general.helpHeader", "-----==== Narcissus Farewell Help (%d/%d) ====-----");
-        h.set("general.tpSound", SoundEvents.ENDERMAN_TELEPORT.getRegistryName().toString());
+        h.set("general.tpSound", Registry.SOUND_EVENT.getKey(SoundEvents.ENDERMAN_TELEPORT).toString());
         h.set("general.tpWithVehicle", true);
         h.set("general.tpWithFollower", true);
         h.set("general.tpWithFollowerRange", 10);
@@ -830,17 +831,17 @@ public final class CommonConfigAccess {
         h.set("general.tpWithEnemy", false);
         h.set("general.tpSpawnNoBedWorldDimension", "minecraft:overworld");
         h.set("general.safeTeleport.unsafeBlocks", Stream.of(Blocks.LAVA, Blocks.FIRE, Blocks.CAMPFIRE, Blocks.SOUL_FIRE, Blocks.SOUL_CAMPFIRE, Blocks.CACTUS, Blocks.MAGMA_BLOCK, Blocks.SWEET_BERRY_BUSH).map(b -> {
-            ResourceLocation rl = b.getRegistryName();
+            ResourceLocation rl = Registry.BLOCK.getKey(b);
             return rl == null ? "" : rl.toString();
         }).collect(Collectors.toList()));
         h.set("general.safeTeleport.suffocatingBlocks", Stream.of(Blocks.LAVA, Blocks.WATER).map(b -> {
-            ResourceLocation rl = b.getRegistryName();
+            ResourceLocation rl = Registry.BLOCK.getKey(b);
             return rl == null ? "" : rl.toString();
         }).collect(Collectors.toList()));
         h.set("general.safeTeleport.setBlockWhenSafeNotFound", false);
         h.set("general.safeTeleport.getBlockFromInventory", true);
         h.set("general.safeTeleport.safeBlocks", Stream.of(Blocks.GRASS_BLOCK, Blocks.GRASS_PATH, Blocks.DIRT, Blocks.COBBLESTONE).map(b -> {
-            ResourceLocation rl = b.getRegistryName();
+            ResourceLocation rl = Registry.BLOCK.getKey(b);
             return rl == null ? "" : rl.toString();
         }).collect(Collectors.toList()));
         h.set("general.safeTeleport.safeChunkRange", 1);

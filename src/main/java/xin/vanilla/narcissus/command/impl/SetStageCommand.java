@@ -5,14 +5,14 @@ import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
-import net.minecraft.command.CommandSource;
-import net.minecraft.command.Commands;
-import net.minecraft.command.arguments.Vec3Argument;
-import net.minecraft.entity.player.ServerPlayerEntity;
-import net.minecraft.util.RegistryKey;
-import net.minecraft.util.math.vector.Vector3d;
-import net.minecraft.world.World;
-import net.minecraft.world.server.ServerWorld;
+import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.commands.Commands;
+import net.minecraft.commands.arguments.coordinates.Vec3Argument;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.world.phys.Vec3;
+import net.minecraft.world.level.Level;
+import net.minecraft.server.level.ServerLevel;
 import xin.vanilla.banira.common.data.Component;
 import xin.vanilla.banira.common.data.KeyValue;
 import xin.vanilla.banira.common.util.DimensionUtils;
@@ -37,15 +37,15 @@ public final class SetStageCommand {
     private SetStageCommand() {
     }
 
-    private static void sendStageMessage(CommandSource source, Component message, boolean success, String notificationType) {
-        if (source.getEntity() instanceof ServerPlayerEntity) {
-            MessageUtils.sendNotification((ServerPlayerEntity) source.getEntity(), message, notificationType);
+    private static void sendStageMessage(CommandSourceStack source, Component message, boolean success, String notificationType) {
+        if (source.getEntity() instanceof ServerPlayer) {
+            MessageUtils.sendNotification((ServerPlayer) source.getEntity(), message, notificationType);
         } else {
             MessageUtils.sendMessage(source, success, message);
         }
     }
 
-    private static int addStage(CommandSource source, String name, RegistryKey<World> targetLevel, SafeWorldCoordinate safeWorldCoordinate) {
+    private static int addStage(CommandSourceStack source, String name, ResourceKey<Level> targetLevel, SafeWorldCoordinate safeWorldCoordinate) {
         WorldStageData stageData = WorldStageData.get();
         String dimension = targetLevel.location().toString();
         KeyValue<String, String> key = new KeyValue<>(dimension, name);
@@ -60,12 +60,12 @@ public final class SetStageCommand {
         return 1;
     }
 
-    private static int execute(CommandContext<CommandSource> context) {
+    private static int execute(CommandContext<CommandSourceStack> context) {
         CommandUtils.notifyHelp(context);
-        CommandSource source = context.getSource();
-        ServerPlayerEntity player = source.getEntity() instanceof ServerPlayerEntity ? (ServerPlayerEntity) source.getEntity() : null;
+        CommandSourceStack source = context.getSource();
+        ServerPlayer player = source.getEntity() instanceof ServerPlayer ? (ServerPlayer) source.getEntity() : null;
 
-        Vector3d pos = null;
+        Vec3 pos = null;
         try {
             pos = Vec3Argument.getCoordinates(context, "coordinate").getPosition(source);
         } catch (IllegalArgumentException ignored) {
@@ -81,7 +81,7 @@ public final class SetStageCommand {
         if (CommandUtils.checkTeleportPre(source, EnumCommandType.SET_STAGE)) return 0;
 
         String name = StringArgumentType.getString(context, "name");
-        RegistryKey<World> targetLevel;
+        ResourceKey<Level> targetLevel;
         SafeWorldCoordinate coord;
 
         if (!hasCoord) {
@@ -95,8 +95,8 @@ public final class SetStageCommand {
         } else {
             boolean fromPlayer = player != null;
             try {
-                RegistryKey<World> parsed = DimensionUtils.parse(dimArg);
-                ServerWorld level = source.getServer().getLevel(parsed);
+                ResourceKey<Level> parsed = DimensionUtils.parse(dimArg);
+                ServerLevel level = source.getServer().getLevel(parsed);
                 if (level != null) {
                     targetLevel = parsed;
                 } else if (fromPlayer) {
@@ -124,12 +124,12 @@ public final class SetStageCommand {
         return addStage(source, name, targetLevel, coord);
     }
 
-    public static CompletableFuture<Suggestions> suggestion(CommandContext<CommandSource> context, SuggestionsBuilder builder) {
+    public static CompletableFuture<Suggestions> suggestion(CommandContext<CommandSourceStack> context, SuggestionsBuilder builder) {
         builder.suggest("stage");
         return builder.buildFuture();
     }
 
-    public static LiteralArgumentBuilder<CommandSource> create() {
+    public static LiteralArgumentBuilder<CommandSourceStack> create() {
         return Commands.literal(CommonConfig.get().commandNames().commandSetStage())
                 .requires(source -> NarcissusUtils.hasCommandPermission(source, EnumCommandType.SET_STAGE))
                 .then(Commands.argument("name", StringArgumentType.string())

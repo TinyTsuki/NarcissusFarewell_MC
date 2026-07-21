@@ -1,23 +1,17 @@
 package xin.vanilla.narcissus.integration;
 
 import net.minecraft.client.Minecraft;
-import net.minecraftforge.fml.ModList;
-import xin.vanilla.narcissus.integration.ui.ApricityUI;
 import xin.vanilla.narcissus.screen.AccessListScreen;
 import xin.vanilla.narcissus.screen.PlayerConfigScreen;
 import xin.vanilla.narcissus.screen.WaypointScreen;
 
-
+/** 客户端界面入口；Fabric 基线始终使用内置 Banira UI。 */
 public final class ScreenHelper {
     private ScreenHelper() {
     }
 
     public static void openScreen() {
-        if (ModList.get().isLoaded("apricityui")) {
-            Minecraft.getInstance().setScreen(new ApricityUI());
-        } else {
-            Minecraft.getInstance().setScreen(new WaypointScreen());
-        }
+        Minecraft.getInstance().setScreen(new WaypointScreen());
     }
 
     public static void openAccessListScreen() {
@@ -28,5 +22,4 @@ public final class ScreenHelper {
         Minecraft.getInstance().setScreen(new PlayerConfigScreen(
                 new PlayerConfigScreen.Args().parentScreen(Minecraft.getInstance().screen)));
     }
-
 }

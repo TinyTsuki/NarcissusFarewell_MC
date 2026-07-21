@@ -7,9 +7,9 @@ import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
-import net.minecraft.command.CommandSource;
-import net.minecraft.command.Commands;
-import net.minecraft.entity.player.ServerPlayerEntity;
+import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.commands.Commands;
+import net.minecraft.server.level.ServerPlayer;
 import xin.vanilla.banira.common.data.Component;
 import xin.vanilla.banira.common.data.KeyValue;
 import xin.vanilla.banira.common.util.MessageUtils;
@@ -30,9 +30,9 @@ public final class SetHomeCommand {
     private SetHomeCommand() {
     }
 
-    private static int execute(CommandContext<CommandSource> context) throws CommandSyntaxException {
+    private static int execute(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
         CommandUtils.notifyHelp(context);
-        ServerPlayerEntity player = context.getSource().getPlayerOrException();
+        ServerPlayer player = context.getSource().getPlayerOrException();
         if (CommandUtils.checkTeleportPre(context.getSource(), EnumCommandType.SET_HOME)) return 0;
         PlayerTeleportData data = PlayerTeleportData.getData(player);
         if (data.getHomeCoordinate().size() >= CommonConfig.get().general().teleportHomeLimit()) {
@@ -66,7 +66,7 @@ public final class SetHomeCommand {
         return 1;
     }
 
-    public static CompletableFuture<Suggestions> suggestion(CommandContext<CommandSource> context, SuggestionsBuilder builder) {
+    public static CompletableFuture<Suggestions> suggestion(CommandContext<CommandSourceStack> context, SuggestionsBuilder builder) {
         String lang = xin.vanilla.banira.common.util.CommandUtils.getLanguage(context.getSource());
         Component homeTooltip = NarcissusComponent.get().transAuto("suggest_home_name");
         Component nameTooltip = NarcissusComponent.get().transAuto("suggest_custom_name");
@@ -75,7 +75,7 @@ public final class SetHomeCommand {
         return builder.buildFuture();
     }
 
-    public static CompletableFuture<Suggestions> defaultSuggestion(CommandContext<CommandSource> context, SuggestionsBuilder builder) {
+    public static CompletableFuture<Suggestions> defaultSuggestion(CommandContext<CommandSourceStack> context, SuggestionsBuilder builder) {
         String lang = xin.vanilla.banira.common.util.CommandUtils.getLanguage(context.getSource());
         Component trueTooltip = NarcissusComponent.get().transAuto("suggest_default_home_true");
         Component falseTooltip = NarcissusComponent.get().transAuto("suggest_default_home_false");
@@ -84,7 +84,7 @@ public final class SetHomeCommand {
         return builder.buildFuture();
     }
 
-    public static LiteralArgumentBuilder<CommandSource> create() {
+    public static LiteralArgumentBuilder<CommandSourceStack> create() {
         return Commands.literal(CommonConfig.get().commandNames().commandSetHome())
                 .requires(source -> NarcissusUtils.hasCommandPermission(source, EnumCommandType.TP_HOME))
                 .executes(SetHomeCommand::execute)

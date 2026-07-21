@@ -4,12 +4,12 @@ import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
-import net.minecraft.command.CommandSource;
-import net.minecraft.command.Commands;
-import net.minecraft.command.arguments.EntityArgument;
-import net.minecraft.entity.player.ServerPlayerEntity;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.server.ServerWorld;
+import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.commands.Commands;
+import net.minecraft.commands.arguments.EntityArgument;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.core.BlockPos;
+import net.minecraft.server.level.ServerLevel;
 import xin.vanilla.banira.common.util.DimensionUtils;
 import xin.vanilla.narcissus.config.CommonConfig;
 import xin.vanilla.narcissus.data.SafeWorldCoordinate;
@@ -22,11 +22,11 @@ public final class TpSpawnCommand {
     private TpSpawnCommand() {
     }
 
-    private static int execute(CommandContext<CommandSource> context) throws CommandSyntaxException {
+    private static int execute(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
         CommandUtils.notifyHelp(context);
         if (CommandUtils.checkTeleportPre(context.getSource(), EnumCommandType.TP_SPAWN)) return 0;
-        ServerPlayerEntity player = context.getSource().getPlayerOrException();
-        ServerPlayerEntity target = xin.vanilla.banira.common.util.CommandUtils.getPlayerOptional(context, "player");
+        ServerPlayer player = context.getSource().getPlayerOrException();
+        ServerPlayer target = xin.vanilla.banira.common.util.CommandUtils.getPlayerOptional(context, "player");
         if (target == null) target = player;
         SafeWorldCoordinate safeWorldCoordinate = new SafeWorldCoordinate(target);
         BlockPos respawnPosition = target.getRespawnPosition();
@@ -34,7 +34,7 @@ public final class TpSpawnCommand {
         if (respawnPosition == null) {
             String raw = CommonConfig.get().general().tpSpawnNoBedWorldDimension();
             String s = raw == null ? "" : raw.trim();
-            ServerWorld level;
+            ServerLevel level;
             if (s.isEmpty() || "CURRENT".equalsIgnoreCase(s) || "AUTO".equalsIgnoreCase(s)) {
                 level = target.getLevel();
             } else {
@@ -53,7 +53,7 @@ public final class TpSpawnCommand {
         return 1;
     }
 
-    public static LiteralArgumentBuilder<CommandSource> create() {
+    public static LiteralArgumentBuilder<CommandSourceStack> create() {
         return Commands.literal(CommonConfig.get().commandNames().commandTpSpawn())
                 .requires(source -> NarcissusUtils.hasCommandPermission(source, EnumCommandType.TP_SPAWN))
                 .executes(TpSpawnCommand::execute)

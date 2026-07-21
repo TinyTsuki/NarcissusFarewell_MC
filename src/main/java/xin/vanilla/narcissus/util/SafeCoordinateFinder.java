@@ -1,10 +1,10 @@
 package xin.vanilla.narcissus.util;
 
-import net.minecraft.entity.player.ServerPlayerEntity;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.MathHelper;
-import net.minecraft.util.math.vector.Vector3d;
-import net.minecraft.world.World;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.core.BlockPos;
+import net.minecraft.util.Mth;
+import net.minecraft.world.phys.Vec3;
+import net.minecraft.world.level.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import xin.vanilla.banira.common.util.DimensionUtils;
@@ -19,14 +19,14 @@ public class SafeCoordinateFinder {
 
     private static final Logger LOGGER = LogManager.getLogger();
 
-    private final World world;
+    private final Level world;
     private final SafeBlockChecker checker;
-    private final BlockPos.Mutable mutablePos;
+    private final BlockPos.MutableBlockPos mutablePos;
 
-    public SafeCoordinateFinder(World world) {
+    public SafeCoordinateFinder(Level world) {
         this.world = world;
         this.checker = new SafeBlockChecker(world);
-        this.mutablePos = new BlockPos.Mutable();
+        this.mutablePos = new BlockPos.MutableBlockPos();
     }
 
     public int getWorldMinY() {
@@ -118,14 +118,14 @@ public class SafeCoordinateFinder {
      * 若 safe 则反向查找安全站立位置
      */
     @Nullable
-    public SafeWorldCoordinate findViewEndCandidate(ServerPlayerEntity player, boolean safe, int range) {
+    public SafeWorldCoordinate findViewEndCandidate(ServerPlayer player, boolean safe, int range) {
         LOGGER.debug("TimeMillis before findViewEndCandidate: {}", System.currentTimeMillis());
         final double stepScale = 0.75;
         final SafeWorldCoordinate start = new SafeWorldCoordinate(player);
         SafeWorldCoordinate result;
 
-        final Vector3d startPosition = player.getEyePosition(1.0F);
-        final Vector3d stepVector = player.getViewVector(1.0F).normalize().scale(stepScale);
+        final Vec3 startPosition = player.getEyePosition(1.0F);
+        final Vec3 stepVector = player.getViewVector(1.0F).normalize().scale(stepScale);
         final double stepX = stepVector.x;
         final double stepY = stepVector.y;
         final double stepZ = stepVector.z;
@@ -137,9 +137,9 @@ public class SafeCoordinateFinder {
         int collisionStep = -1;
         for (int stepCount = 0; stepCount <= range; stepCount++) {
             mutablePos.set(
-                    MathHelper.floor(startX + stepX * stepCount),
-                    MathHelper.floor(startY + stepY * stepCount),
-                    MathHelper.floor(startZ + stepZ * stepCount)
+                    Mth.floor(startX + stepX * stepCount),
+                    Mth.floor(startY + stepY * stepCount),
+                    Mth.floor(startZ + stepZ * stepCount)
             );
             if (world.getBlockState(mutablePos).getMaterial().blocksMotion()) {
                 collisionStep = stepCount;
@@ -171,9 +171,9 @@ public class SafeCoordinateFinder {
             final int[] yOffsets = {0, -1, 1, -2, 2, -3};
             boolean found = false;
             for (int stepCount = maxStep; stepCount >= 0 && !found; stepCount--) {
-                final int blockX = MathHelper.floor(startX + stepX * stepCount);
-                final int blockY = MathHelper.floor(startY + stepY * stepCount);
-                final int blockZ = MathHelper.floor(startZ + stepZ * stepCount);
+                final int blockX = Mth.floor(startX + stepX * stepCount);
+                final int blockY = Mth.floor(startY + stepY * stepCount);
+                final int blockZ = Mth.floor(startZ + stepZ * stepCount);
                 for (int yOffset : yOffsets) {
                     mutablePos.set(blockX, blockY + yOffset, blockZ);
                     if (checker.isSafeBlock(mutablePos.immutable(), false)) {

@@ -8,26 +8,26 @@ def smokeClientDir = file("${smokeRoot}/client")
 def smokePort = 25576
 def smokeChild = (project.findProperty('narcissus.networkSmoke.child') ?: 'false').toString().toBoolean()
 
-// 两个游戏进程使用独立输出和项目缓存，避免 ForgeGradle 并发争用文件。
+// 两个游戏进程使用独立输出和项目缓存，避免 Loom 并发争用文件。
 if (smokeChild) {
     layout.buildDirectory.set(file(project.property('narcissus.networkSmoke.buildDir')))
     String phase = project.property('narcissus.networkSmoke.phase').toString()
     String status = project.property('narcissus.networkSmoke.status').toString()
-    minecraft.runs {
+    loom.runs {
         configureEach {
             property 'narcissus.networkSmoke', 'true'
             property 'narcissus.networkSmoke.phase', phase
             property 'narcissus.networkSmoke.status', status
         }
         server {
-            workingDirectory smokeServerDir
-            args '--nogui', '--port', smokePort.toString()
+            runDir project.relativePath(smokeServerDir)
+            programArgs '--nogui', '--port', smokePort.toString()
         }
         client {
-            workingDirectory smokeClientDir
+            runDir project.relativePath(smokeClientDir)
             property 'narcissus.networkSmoke.host', '127.0.0.1'
             property 'narcissus.networkSmoke.port', smokePort.toString()
-            args '--username', 'NetworkSmoke', '--uuid', '380df991-f603-344c-a090-369bad2a924a'
+            programArgs '--username', 'NetworkSmoke', '--uuid', '380df991-f603-344c-a090-369bad2a924a'
         }
     }
 }

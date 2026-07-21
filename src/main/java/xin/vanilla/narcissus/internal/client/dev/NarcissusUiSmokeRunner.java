@@ -1,10 +1,10 @@
 package xin.vanilla.narcissus.internal.client.dev;
 
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.texture.NativeImage;
-import net.minecraft.util.ScreenShotHelper;
-import net.minecraft.util.math.vector.Vector3d;
-import net.minecraft.entity.player.ServerPlayerEntity;
+import com.mojang.blaze3d.platform.NativeImage;
+import net.minecraft.client.Screenshot;
+import net.minecraft.world.phys.Vec3;
+import net.minecraft.server.level.ServerPlayer;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import xin.vanilla.banira.client.gui.ConfigEditorScreen;
@@ -60,7 +60,7 @@ public final class NarcissusUiSmokeRunner {
     private int stepTick;
     private int stepIndex;
     private long syncGeneration;
-    private Vector3d homePosition;
+    private Vec3 homePosition;
     private String homeDimension;
 
     private NarcissusUiSmokeRunner(Path outputDir, NarcissusSmokeOptions options) {
@@ -276,7 +276,7 @@ public final class NarcissusUiSmokeRunner {
 
     private void moveServerPlayerAway(Minecraft client) {
         client.getSingleplayerServer().execute(() -> {
-            ServerPlayerEntity player = client.getSingleplayerServer().getPlayerList().getPlayer(client.player.getUUID());
+            ServerPlayer player = client.getSingleplayerServer().getPlayerList().getPlayer(client.player.getUUID());
             if (player != null) {
                 player.teleportTo(homePosition.x + 4.0D, homePosition.y, homePosition.z);
             }
@@ -326,7 +326,7 @@ public final class NarcissusUiSmokeRunner {
 
     private void capture(Minecraft client, String name) {
         Path file = outputDir.resolve(name + ".png");
-        try (NativeImage image = ScreenShotHelper.takeScreenshot(
+        try (NativeImage image = Screenshot.takeScreenshot(
                 client.getWindow().getWidth(), client.getWindow().getHeight(), client.getMainRenderTarget())) {
             image.writeToFile(file);
             appendStatus("PASS " + name);

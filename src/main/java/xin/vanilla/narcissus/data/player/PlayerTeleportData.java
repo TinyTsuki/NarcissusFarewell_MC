@@ -1,10 +1,10 @@
 package xin.vanilla.narcissus.data.player;
 
 import lombok.NonNull;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.entity.player.ServerPlayerEntity;
-import net.minecraft.nbt.CompoundNBT;
-import net.minecraft.nbt.ListNBT;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
 import xin.vanilla.banira.api.BaniraPlayerData;
 import xin.vanilla.banira.common.network.BaniraPacketBuffer;
 import xin.vanilla.banira.common.api.ICommandNotify;
@@ -34,21 +34,21 @@ public final class PlayerTeleportData implements IPlayerData<PlayerTeleportData>
     // region override
 
     private static final Map<UUID, PlayerTeleportData> CACHE = Collections.synchronizedMap(new WeakHashMap<>());
-    private final PlayerEntity player;
+    private final Player player;
     private boolean dirty = false;
 
-    private PlayerTeleportData(PlayerEntity player) {
+    private PlayerTeleportData(Player player) {
         this.player = player;
-        if (this.player instanceof ServerPlayerEntity) {
+        if (this.player instanceof ServerPlayer) {
             this.deserializeNBT(BaniraPlayerData.getOrCreate(
-                    player.getUUID(), NarcissusFarewell.MODID, CompoundNBT.class), false);
+                    player.getUUID(), NarcissusFarewell.MODID, CompoundTag.class), false);
         }
     }
 
     /**
      * 获取或创建 PlayerTeleportData
      */
-    public static PlayerTeleportData getData(PlayerEntity player) {
+    public static PlayerTeleportData getData(Player player) {
         return CACHE.computeIfAbsent(player.getUUID(), k -> new PlayerTeleportData(player));
     }
 
@@ -126,8 +126,8 @@ public final class PlayerTeleportData implements IPlayerData<PlayerTeleportData>
     }
 
     @Override
-    public CompoundNBT serializeNBT() {
-        CompoundNBT tag = new CompoundNBT();
+    public CompoundTag serializeNBT() {
+        CompoundTag tag = new CompoundTag();
         tag.putBoolean("notified", this.notified);
 
         tag.putString("lastCardTime", DateUtils.toDateTimeString(this.getLastCardTime()));
@@ -135,16 +135,16 @@ public final class PlayerTeleportData implements IPlayerData<PlayerTeleportData>
         tag.putInt("teleportCard", this.getTeleportCard());
 
         // 序列化传送记录
-        ListNBT recordsNBT = new ListNBT();
+        ListTag recordsNBT = new ListTag();
         for (TeleportRecord record : this.getTeleportRecords()) {
             recordsNBT.add(record.writeToNBT());
         }
         tag.put("teleportRecords", recordsNBT);
 
         // 序列化家坐标
-        ListNBT homeCoordinateNBT = new ListNBT();
+        ListTag homeCoordinateNBT = new ListTag();
         for (Map.Entry<KeyValue<String, String>, SafeWorldCoordinate> entry : this.getHomeCoordinate().entrySet()) {
-            CompoundNBT homeCoordinateTag = new CompoundNBT();
+            CompoundTag homeCoordinateTag = new CompoundTag();
             homeCoordinateTag.putString("key", entry.getKey().key());
             homeCoordinateTag.putString("value", entry.getKey().value());
             homeCoordinateTag.put("coordinate", entry.getValue().toTag());
@@ -153,9 +153,9 @@ public final class PlayerTeleportData implements IPlayerData<PlayerTeleportData>
         tag.put("homeCoordinate", homeCoordinateNBT);
 
         // 序列化默认家
-        ListNBT defaultHomeNBT = new ListNBT();
+        ListTag defaultHomeNBT = new ListTag();
         for (Map.Entry<String, String> entry : this.getDefaultHome().entrySet()) {
-            CompoundNBT defaultHomeTag = new CompoundNBT();
+            CompoundTag defaultHomeTag = new CompoundTag();
             defaultHomeTag.putString("key", entry.getKey());
             defaultHomeTag.putString("value", entry.getValue());
             defaultHomeNBT.add(defaultHomeTag);
@@ -171,7 +171,7 @@ public final class PlayerTeleportData implements IPlayerData<PlayerTeleportData>
     }
 
     @Override
-    public void deserializeNBT(CompoundNBT nbt, boolean dirty) {
+    public void deserializeNBT(CompoundTag nbt, boolean dirty) {
         this.notified = nbt.getBoolean("notified");
 
         this.lastCardTime = DateUtils.format(nbt.getString("lastCardTime"));
@@ -179,7 +179,7 @@ public final class PlayerTeleportData implements IPlayerData<PlayerTeleportData>
         this.teleportCard.set(nbt.getInt("teleportCard"));
 
         // 反序列化传送记录
-        ListNBT recordsNBT = nbt.getList("teleportRecords", 10);
+        ListTag recordsNBT = nbt.getList("teleportRecords", 10);
         List<TeleportRecord> records = new ArrayList<>();
         for (int i = 0; i < recordsNBT.size(); i++) {
             records.add(TeleportRecord.readFromNBT(recordsNBT.getCompound(i)));
@@ -187,20 +187,20 @@ public final class PlayerTeleportData implements IPlayerData<PlayerTeleportData>
         this.teleportRecords = records;
 
         // 反序列化家坐标
-        ListNBT homeCoordinateNBT = nbt.getList("homeCoordinate", 10);
+        ListTag homeCoordinateNBT = nbt.getList("homeCoordinate", 10);
         Map<KeyValue<String, String>, SafeWorldCoordinate> homeCoordinateMap = new LinkedHashMap<>();
         for (int i = 0; i < homeCoordinateNBT.size(); i++) {
-            CompoundNBT homeCoordinateTag = homeCoordinateNBT.getCompound(i);
+            CompoundTag homeCoordinateTag = homeCoordinateNBT.getCompound(i);
             homeCoordinateMap.put(new KeyValue<>(homeCoordinateTag.getString("key"), homeCoordinateTag.getString("value")),
                     SafeWorldCoordinate.fromTag(homeCoordinateTag.getCompound("coordinate")));
         }
         this.homeCoordinate = homeCoordinateMap;
 
         // 反序列化默认家
-        ListNBT defaultHomeNBT = nbt.getList("defaultHome", 10);
+        ListTag defaultHomeNBT = nbt.getList("defaultHome", 10);
         Map<String, String> defaultHomeMap = new HashMap<>();
         for (int i = 0; i < defaultHomeNBT.size(); i++) {
-            CompoundNBT defaultHomeTag = defaultHomeNBT.getCompound(i);
+            CompoundTag defaultHomeTag = defaultHomeNBT.getCompound(i);
             defaultHomeMap.put(defaultHomeTag.getString("key"), defaultHomeTag.getString("value"));
         }
         this.defaultHome = defaultHomeMap;
@@ -208,7 +208,7 @@ public final class PlayerTeleportData implements IPlayerData<PlayerTeleportData>
         // 反序列化黑白名单
         this.access = PlayerAccess.readFromNBT(nbt.getCompound("access"));
 
-        readTeleportCountdownFromNbt(nbt.contains("tpCountdowns", 10) ? nbt.getCompound("tpCountdowns") : new CompoundNBT());
+        readTeleportCountdownFromNbt(nbt.contains("tpCountdowns", 10) ? nbt.getCompound("tpCountdowns") : new CompoundTag());
 
         if (dirty) {
             this.save();
@@ -236,7 +236,7 @@ public final class PlayerTeleportData implements IPlayerData<PlayerTeleportData>
 
     @Override
     public void save() {
-        if (this.player instanceof ServerPlayerEntity) {
+        if (this.player instanceof ServerPlayer) {
             BaniraPlayerData.put(player.getUUID(), NarcissusFarewell.MODID, serializeNBT());
         }
     }
@@ -270,8 +270,8 @@ public final class PlayerTeleportData implements IPlayerData<PlayerTeleportData>
      */
     private EnumMap<EnumTeleportType, Integer> teleportCountdownSeconds;
 
-    public CompoundNBT writeTeleportCountdownToNbt() {
-        CompoundNBT cd = new CompoundNBT();
+    public CompoundTag writeTeleportCountdownToNbt() {
+        CompoundTag cd = new CompoundTag();
         EnumMap<EnumTeleportType, Integer> map = this.teleportCountdownSeconds;
         if (map != null) {
             for (Map.Entry<EnumTeleportType, Integer> e : map.entrySet()) {
@@ -283,7 +283,7 @@ public final class PlayerTeleportData implements IPlayerData<PlayerTeleportData>
         return cd;
     }
 
-    public void readTeleportCountdownFromNbt(CompoundNBT cd) {
+    public void readTeleportCountdownFromNbt(CompoundTag cd) {
         this.teleportCountdownSeconds = new EnumMap<>(EnumTeleportType.class);
         if (cd == null || cd.isEmpty()) {
             return;
@@ -336,7 +336,7 @@ public final class PlayerTeleportData implements IPlayerData<PlayerTeleportData>
     /**
      * 用客户端提交的完整表替换各传送倒计时（秒），仅接受 {@link EnumTeleportType#countdownConfigurableTypes()} 中的键。
      */
-    public void replaceAllTeleportCountdownsFromTag(CompoundNBT tag) {
+    public void replaceAllTeleportCountdownsFromTag(CompoundTag tag) {
         this.teleportCountdownSeconds = new EnumMap<>(EnumTeleportType.class);
         if (tag != null) {
             for (EnumTeleportType t : EnumTeleportType.countdownConfigurableTypes()) {
@@ -473,7 +473,7 @@ public final class PlayerTeleportData implements IPlayerData<PlayerTeleportData>
     /**
      * 同步玩家数据到客户端
      */
-    public static void syncPlayerData(ServerPlayerEntity player) {
+    public static void syncPlayerData(ServerPlayer player) {
         PlayerDataSyncToClient packet = new PlayerDataSyncToClient(player.getUUID(), getData(player));
         PacketUtils.sendSplitPacketToPlayer(packet, player);
     }

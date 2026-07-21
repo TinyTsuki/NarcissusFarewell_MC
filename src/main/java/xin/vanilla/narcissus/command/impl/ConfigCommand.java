@@ -7,9 +7,9 @@ import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.suggestion.SuggestionProvider;
-import net.minecraft.command.CommandSource;
-import net.minecraft.command.Commands;
-import net.minecraft.entity.player.ServerPlayerEntity;
+import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.commands.Commands;
+import net.minecraft.server.level.ServerPlayer;
 import xin.vanilla.banira.api.BaniraConfigs;
 import xin.vanilla.banira.common.config.ConfigHolder;
 import xin.vanilla.banira.common.data.Component;
@@ -34,8 +34,8 @@ public final class ConfigCommand {
         return BaniraConfigs.holder(CommonConfig.class);
     }
 
-    private static int executeTeleportCard(CommandContext<CommandSource> context) throws CommandSyntaxException {
-        ServerPlayerEntity player = context.getSource().getPlayerOrException();
+    private static int executeTeleportCard(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
+        ServerPlayer player = context.getSource().getPlayerOrException();
         Component msg = NarcissusComponent.get().transAuto("server_config_status"
                 , NarcissusLang.get().enabled(CommonConfig.get().base().teleportCard())
                 , NarcissusComponent.get().transAuto("teleport_card"));
@@ -43,10 +43,10 @@ public final class ConfigCommand {
         return 1;
     }
 
-    private static int executeTeleportCardSet(CommandContext<CommandSource> context) throws CommandSyntaxException {
+    private static int executeTeleportCardSet(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
         boolean bool = BoolArgumentType.getBool(context, "bool");
         CommonConfig.get().base().teleportCard(bool);
-        ServerPlayerEntity player = context.getSource().getPlayerOrException();
+        ServerPlayer player = context.getSource().getPlayerOrException();
         Component msg = NarcissusComponent.get().transAuto("server_config_status"
                 , NarcissusLang.get().enabled(CommonConfig.get().base().teleportCard())
                 , NarcissusComponent.get().transAuto("teleport_card"));
@@ -54,9 +54,9 @@ public final class ConfigCommand {
         return 1;
     }
 
-    private static int executeMode(CommandContext<CommandSource> context) {
+    private static int executeMode(CommandContext<CommandSourceStack> context) {
         int mode = IntegerArgumentType.getInteger(context, "mode");
-        CommandSource source = context.getSource();
+        CommandSourceStack source = context.getSource();
         switch (mode) {
             case 0:
                 CommonConfig.resetConfig();
@@ -80,15 +80,15 @@ public final class ConfigCommand {
         return 1;
     }
 
-    private static int executeLanguage(CommandContext<CommandSource> context) throws CommandSyntaxException {
+    private static int executeLanguage(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
         String code = StringArgumentType.getString(context, "language");
         CommonConfig.get().general().defaultLanguage(code);
-        ServerPlayerEntity player = context.getSource().getPlayerOrException();
+        ServerPlayer player = context.getSource().getPlayerOrException();
         MessageUtils.broadcastMessage(player, NarcissusComponent.get().transAuto("server_default_language", CommonConfig.get().general().defaultLanguage()));
         return 1;
     }
 
-    private static final SuggestionProvider<CommandSource> MODE_SUGGESTION = (context, builder) -> {
+    private static final SuggestionProvider<CommandSourceStack> MODE_SUGGESTION = (context, builder) -> {
         builder.suggest(0);
         builder.suggest(1);
         builder.suggest(2);
@@ -96,12 +96,12 @@ public final class ConfigCommand {
         return builder.buildFuture();
     };
 
-    private static final SuggestionProvider<CommandSource> LANGUAGE_SUGGESTION = (context, builder) -> {
+    private static final SuggestionProvider<CommandSourceStack> LANGUAGE_SUGGESTION = (context, builder) -> {
         NarcissusLang.get().getI18nFiles().forEach(builder::suggest);
         return builder.buildFuture();
     };
 
-    private static final SuggestionProvider<CommandSource> TYPE_SUGGESTIONS = (context, builder) -> {
+    private static final SuggestionProvider<CommandSourceStack> TYPE_SUGGESTIONS = (context, builder) -> {
         String remaining = builder.getRemaining().toLowerCase();
         for (EnumTeleportType t : EnumTeleportType.countdownConfigurableTypes()) {
             String name = t.name().toLowerCase();
@@ -112,9 +112,9 @@ public final class ConfigCommand {
         return builder.buildFuture();
     };
 
-    private static int executeTpCountdownQuery(CommandContext<CommandSource> context) throws CommandSyntaxException {
+    private static int executeTpCountdownQuery(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
         xin.vanilla.narcissus.util.CommandUtils.notifyHelp(context);
-        ServerPlayerEntity player = context.getSource().getPlayerOrException();
+        ServerPlayer player = context.getSource().getPlayerOrException();
         if (xin.vanilla.narcissus.util.CommandUtils.checkTeleportPre(context.getSource(), EnumCommandType.CONFIG)) {
             return 0;
         }
@@ -126,8 +126,8 @@ public final class ConfigCommand {
         return 1;
     }
 
-    private static int executeTpCountdownSet(CommandContext<CommandSource> context) throws CommandSyntaxException {
-        ServerPlayerEntity player = context.getSource().getPlayerOrException();
+    private static int executeTpCountdownSet(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
+        ServerPlayer player = context.getSource().getPlayerOrException();
         if (xin.vanilla.narcissus.util.CommandUtils.checkTeleportPre(context.getSource(), EnumCommandType.CONFIG)) {
             return 0;
         }
@@ -146,7 +146,7 @@ public final class ConfigCommand {
         return 1;
     }
 
-    public static LiteralArgumentBuilder<CommandSource> create() {
+    public static LiteralArgumentBuilder<CommandSourceStack> create() {
         return Commands.literal("config")
                 .then(Commands.literal("teleportCard")
                         .executes(ConfigCommand::executeTeleportCard)

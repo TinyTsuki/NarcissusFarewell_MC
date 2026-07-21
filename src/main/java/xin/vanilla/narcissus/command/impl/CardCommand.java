@@ -5,10 +5,10 @@ import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
-import net.minecraft.command.CommandSource;
-import net.minecraft.command.Commands;
-import net.minecraft.command.arguments.EntityArgument;
-import net.minecraft.entity.player.ServerPlayerEntity;
+import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.commands.Commands;
+import net.minecraft.commands.arguments.EntityArgument;
+import net.minecraft.server.level.ServerPlayer;
 import xin.vanilla.banira.common.data.Component;
 import xin.vanilla.banira.common.enums.EnumMoveType;
 import xin.vanilla.banira.common.enums.EnumPosition;
@@ -24,12 +24,12 @@ public final class CardCommand {
     private CardCommand() {
     }
 
-    private static int execute(CommandContext<CommandSource> context) throws CommandSyntaxException {
+    private static int execute(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
         CommandUtils.notifyHelp(context);
         if (CommandUtils.checkTeleportPre(context.getSource(), EnumCommandType.CARD)) return 0;
-        CommandSource source = context.getSource();
+        CommandSourceStack source = context.getSource();
         String type = xin.vanilla.banira.common.util.CommandUtils.getStringDefault(context, "type", "get");
-        ServerPlayerEntity target = xin.vanilla.banira.common.util.CommandUtils.getPlayerOrSelf(context, "player");
+        ServerPlayer target = xin.vanilla.banira.common.util.CommandUtils.getPlayerOrSelf(context, "player");
         int num = xin.vanilla.banira.common.util.CommandUtils.getIntDefault(context, "num", 0);
         PlayerTeleportData data = PlayerTeleportData.getData(target);
         switch (type) {
@@ -49,15 +49,15 @@ public final class CardCommand {
         Component component = NarcissusComponent.get().transAuto("player_card"
                 , target.getDisplayName().getString()
                 , data.getTeleportCard());
-        if (source.getEntity() instanceof ServerPlayerEntity) {
-            MessageUtils.sendDefaultNotification((ServerPlayerEntity) source.getEntity(), component, EnumPosition.TOP_RIGHT, EnumMoveType.AUTO);
+        if (source.getEntity() instanceof ServerPlayer) {
+            MessageUtils.sendDefaultNotification((ServerPlayer) source.getEntity(), component, EnumPosition.TOP_RIGHT, EnumMoveType.AUTO);
         } else {
             MessageUtils.sendMessage(source, true, component);
         }
         return 1;
     }
 
-    public static LiteralArgumentBuilder<CommandSource> create() {
+    public static LiteralArgumentBuilder<CommandSourceStack> create() {
         return Commands.literal(CommonConfig.get().commandNames().commandCard())
                 .executes(CardCommand::execute)
                 .then(Commands.argument("type", StringArgumentType.word())

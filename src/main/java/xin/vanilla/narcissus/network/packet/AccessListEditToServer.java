@@ -2,7 +2,7 @@ package xin.vanilla.narcissus.network.packet;
 
 import lombok.Getter;
 import lombok.experimental.Accessors;
-import net.minecraft.entity.player.ServerPlayerEntity;
+import net.minecraft.server.level.ServerPlayer;
 import xin.vanilla.banira.common.network.BaniraPacketBuffer;
 import xin.vanilla.banira.common.network.BaniraNetworkContext;
 import xin.vanilla.banira.common.data.Component;
@@ -73,7 +73,7 @@ public class AccessListEditToServer implements NetworkPacket {
             if (!ctx.isServerSide()) {
                 return;
             }
-            ServerPlayerEntity player = ctx.senderAs(net.minecraft.entity.player.ServerPlayerEntity.class);
+            ServerPlayer player = ctx.senderAs(net.minecraft.server.level.ServerPlayer.class);
             if (player == null) {
                 return;
             }
@@ -113,7 +113,7 @@ public class AccessListEditToServer implements NetworkPacket {
         ctx.markHandled();
     }
 
-    private static void handleBlackAdd(ServerPlayerEntity player, PlayerTeleportData data, PlayerAccess access, String rawPayload) {
+    private static void handleBlackAdd(ServerPlayer player, PlayerTeleportData data, PlayerAccess access, String rawPayload) {
         String uuidStr = resolveTargetUuid(player, rawPayload);
         if (uuidStr == null) {
             MessageUtils.sendDefaultNotification(player, NarcissusComponent.get().transAuto("access_list_err_target"), EnumPosition.TOP_CENTER, EnumMoveType.AUTO);
@@ -137,7 +137,7 @@ public class AccessListEditToServer implements NetworkPacket {
         }
     }
 
-    private static void handleBlackDel(ServerPlayerEntity player, PlayerTeleportData data, PlayerAccess access, String rawPayload) {
+    private static void handleBlackDel(ServerPlayer player, PlayerTeleportData data, PlayerAccess access, String rawPayload) {
         String uuidStr = resolveTargetUuid(player, rawPayload);
         if (uuidStr == null) {
             MessageUtils.sendDefaultNotification(player, NarcissusComponent.get().transAuto("access_list_err_target"), EnumPosition.TOP_CENTER, EnumMoveType.AUTO);
@@ -160,7 +160,7 @@ public class AccessListEditToServer implements NetworkPacket {
         MessageUtils.sendDefaultNotification(player, msg, EnumPosition.TOP_RIGHT, EnumMoveType.AUTO);
     }
 
-    private static void handleWhiteAdd(ServerPlayerEntity player, PlayerTeleportData data, PlayerAccess access, String rawPayload, EnumWhiteListMode mode) {
+    private static void handleWhiteAdd(ServerPlayer player, PlayerTeleportData data, PlayerAccess access, String rawPayload, EnumWhiteListMode mode) {
         String uuidStr = resolveTargetUuid(player, rawPayload);
         if (uuidStr == null) {
             MessageUtils.sendDefaultNotification(player, NarcissusComponent.get().transAuto("access_list_err_target"), EnumPosition.TOP_CENTER, EnumMoveType.AUTO);
@@ -198,7 +198,7 @@ public class AccessListEditToServer implements NetworkPacket {
         }
     }
 
-    private static void handleWhiteDel(ServerPlayerEntity player, PlayerTeleportData data, PlayerAccess access, String rawPayload, EnumWhiteListMode mode) {
+    private static void handleWhiteDel(ServerPlayer player, PlayerTeleportData data, PlayerAccess access, String rawPayload, EnumWhiteListMode mode) {
         String uuidStr = resolveTargetUuid(player, rawPayload);
         if (uuidStr == null) {
             MessageUtils.sendDefaultNotification(player, NarcissusComponent.get().transAuto("access_list_err_target"), EnumPosition.TOP_CENTER, EnumMoveType.AUTO);
@@ -242,7 +242,7 @@ public class AccessListEditToServer implements NetworkPacket {
      * 合法 UUID 则规范为字符串；否则按不区分大小写匹配当前在线玩家名。
      */
     @Nullable
-    private static String resolveTargetUuid(ServerPlayerEntity sender, String raw) {
+    private static String resolveTargetUuid(ServerPlayer sender, String raw) {
         String s = raw == null ? "" : raw.trim();
         if (s.isEmpty()) {
             return null;
@@ -250,12 +250,12 @@ public class AccessListEditToServer implements NetworkPacket {
         if (isValidUuidString(s)) {
             return UUID.fromString(s).toString();
         }
-        ServerPlayerEntity target = findOnlinePlayer(sender, s);
+        ServerPlayer target = findOnlinePlayer(sender, s);
         return target != null ? PlayerUtils.getPlayerUUIDString(target) : null;
     }
 
-    private static ServerPlayerEntity findOnlinePlayer(ServerPlayerEntity sender, String name) {
-        for (ServerPlayerEntity p : sender.server.getPlayerList().getPlayers()) {
+    private static ServerPlayer findOnlinePlayer(ServerPlayer sender, String name) {
+        for (ServerPlayer p : sender.server.getPlayerList().getPlayers()) {
             if (p.getName().getString().equalsIgnoreCase(name)) {
                 return p;
             }

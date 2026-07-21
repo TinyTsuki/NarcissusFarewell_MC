@@ -1,6 +1,6 @@
 package xin.vanilla.narcissus.network.packet;
 
-import net.minecraft.entity.player.ServerPlayerEntity;
+import net.minecraft.server.level.ServerPlayer;
 import xin.vanilla.banira.common.network.BaniraPacketBuffer;
 import xin.vanilla.banira.common.network.BaniraNetworkContext;
 import xin.vanilla.banira.common.util.CommandUtils;
@@ -22,7 +22,7 @@ public class TpHomeToServer implements NetworkPacket {
 
     public static void handle(TpHomeToServer packet, BaniraNetworkContext ctx) {
         ctx.enqueueWork(() -> {
-            ServerPlayerEntity player = ctx.senderAs(net.minecraft.entity.player.ServerPlayerEntity.class);
+            ServerPlayer player = ctx.senderAs(net.minecraft.server.level.ServerPlayer.class);
             if (player != null) {
                 CommandUtils.executeCommand(player, NarcissusUtils.getCommand(EnumCommandType.TP_HOME));
             }

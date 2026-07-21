@@ -1,7 +1,6 @@
 package xin.vanilla.narcissus.client;
 
-import net.minecraft.util.ResourceLocation;
-import xin.vanilla.banira.api.client.event.BaniraClientEvents;
+import net.minecraft.resources.ResourceLocation;
 import xin.vanilla.banira.client.gui.ConfigEditorScreen;
 import xin.vanilla.banira.client.gui.quickaction.QuickActionContext;
 import xin.vanilla.banira.client.gui.quickaction.QuickActionContextMenuItem;
@@ -31,7 +30,7 @@ public final class NarcissusClientBootstrap {
         initialized = true;
 
         ClientModEventHandler.register();
-        BaniraClientEvents.ModLifecycle.onClientSetup(event -> registerQuickAction());
+        registerQuickAction();
     }
 
     private static void registerQuickAction() {

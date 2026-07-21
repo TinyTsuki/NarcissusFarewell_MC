@@ -1,6 +1,6 @@
 package xin.vanilla.narcissus.config;
 
-import net.minecraft.entity.player.ServerPlayerEntity;
+import net.minecraft.server.level.ServerPlayer;
 import xin.vanilla.narcissus.data.player.PlayerTeleportData;
 import xin.vanilla.narcissus.enums.EnumTeleportType;
 
@@ -82,7 +82,7 @@ public final class TeleportCountdownHelper {
     /**
      * 传送前实际等待秒数
      */
-    public static int getEffectiveCountdownSeconds(ServerPlayerEntity player, EnumTeleportType type) {
+    public static int getEffectiveCountdownSeconds(ServerPlayer player, EnumTeleportType type) {
         int server = Math.min(ABSOLUTE_MAX_SEC, Math.max(0, serverCountdownForType(type)));
         if (CommonConfig.get().teleportCountdown().forceServerCountdown()) {
             return server;

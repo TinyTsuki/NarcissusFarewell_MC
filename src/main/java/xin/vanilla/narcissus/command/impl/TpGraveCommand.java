@@ -6,11 +6,11 @@ import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
-import net.minecraft.command.CommandSource;
-import net.minecraft.command.Commands;
-import net.minecraft.entity.player.ServerPlayerEntity;
-import net.minecraft.util.RegistryKey;
-import net.minecraft.world.World;
+import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.commands.Commands;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.world.level.Level;
 import xin.vanilla.banira.common.util.DimensionUtils;
 import xin.vanilla.banira.common.util.MessageUtils;
 import xin.vanilla.banira.common.util.StringUtils;
@@ -34,9 +34,9 @@ public final class TpGraveCommand {
     private TpGraveCommand() {
     }
 
-    private static int executeDefault(CommandContext<CommandSource> context) throws CommandSyntaxException {
+    private static int executeDefault(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
         CommandUtils.notifyHelp(context);
-        ServerPlayerEntity player = context.getSource().getPlayerOrException();
+        ServerPlayer player = context.getSource().getPlayerOrException();
         if (CommandUtils.checkTeleportPre(context.getSource(), EnumCommandType.TP_GRAVE)) return 0;
 
         SafeWorldCoordinate coord2 = GraveHelper.parseObituaryFromHeldItem(player);
@@ -67,9 +67,9 @@ public final class TpGraveCommand {
         return 1;
     }
 
-    private static int executeRange(CommandContext<CommandSource> context, int range) throws CommandSyntaxException {
+    private static int executeRange(CommandContext<CommandSourceStack> context, int range) throws CommandSyntaxException {
         CommandUtils.notifyHelp(context);
-        ServerPlayerEntity player = context.getSource().getPlayerOrException();
+        ServerPlayer player = context.getSource().getPlayerOrException();
         if (CommandUtils.checkTeleportPre(context.getSource(), EnumCommandType.TP_GRAVE)) return 0;
 
         int limit = CommonConfig.get().general().graveSearchRangeLimit();
@@ -90,9 +90,9 @@ public final class TpGraveCommand {
         return 1;
     }
 
-    private static int executeDim(CommandContext<CommandSource> context, RegistryKey<World> dim) throws CommandSyntaxException {
+    private static int executeDim(CommandContext<CommandSourceStack> context, ResourceKey<Level> dim) throws CommandSyntaxException {
         CommandUtils.notifyHelp(context);
-        ServerPlayerEntity player = context.getSource().getPlayerOrException();
+        ServerPlayer player = context.getSource().getPlayerOrException();
         if (CommandUtils.checkTeleportPre(context.getSource(), EnumCommandType.TP_GRAVE)) return 0;
 
         TeleportRecord record = GraveHelper.findLastDeathRecord(player, dim);
@@ -127,10 +127,10 @@ public final class TpGraveCommand {
         return preferred.clone().safe(false);
     }
 
-    public static CompletableFuture<Suggestions> suggestion(CommandContext<CommandSource> context, SuggestionsBuilder builder) throws CommandSyntaxException {
+    public static CompletableFuture<Suggestions> suggestion(CommandContext<CommandSourceStack> context, SuggestionsBuilder builder) throws CommandSyntaxException {
         builder.suggest("64");
         builder.suggest("128");
-        ServerPlayerEntity player = context.getSource().getPlayerOrException();
+        ServerPlayer player = context.getSource().getPlayerOrException();
         PlayerTeleportData.getData(player).getTeleportRecords().stream()
                 .filter(r -> r.getTeleportType() == EnumTeleportType.DEATH)
                 .map(r -> r.getBefore().dimension().location().toString())
@@ -139,7 +139,7 @@ public final class TpGraveCommand {
         return builder.buildFuture();
     }
 
-    public static LiteralArgumentBuilder<CommandSource> create() {
+    public static LiteralArgumentBuilder<CommandSourceStack> create() {
         return Commands.literal(CommonConfig.get().commandNames().commandTpGrave())
                 .requires(source -> NarcissusUtils.hasCommandPermission(source, EnumCommandType.TP_GRAVE))
                 .executes(TpGraveCommand::executeDefault)
@@ -157,9 +157,9 @@ public final class TpGraveCommand {
                             } catch (NumberFormatException ignored) {
                             }
 
-                            RegistryKey<World> dim = null;
+                            ResourceKey<Level> dim = null;
                             try {
-                                RegistryKey<World> d = DimensionUtils.parse(arg);
+                                ResourceKey<Level> d = DimensionUtils.parse(arg);
                                 if (ctx.getSource().getServer().getLevel(d) != null) dim = d;
                             } catch (IllegalArgumentException ignored) {
                             }

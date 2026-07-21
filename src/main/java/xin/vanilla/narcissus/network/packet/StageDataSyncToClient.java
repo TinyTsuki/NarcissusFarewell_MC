@@ -3,8 +3,6 @@ package xin.vanilla.narcissus.network.packet;
 import lombok.Getter;
 import lombok.experimental.Accessors;
 import xin.vanilla.banira.common.network.BaniraPacketBuffer;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.fml.DistExecutor;
 import xin.vanilla.banira.common.network.BaniraNetworkContext;
 import xin.vanilla.banira.common.data.KeyValue;
 import xin.vanilla.narcissus.data.SafeWorldCoordinate;
@@ -57,9 +55,7 @@ public class StageDataSyncToClient implements NetworkPacket {
     public static void handle(StageDataSyncToClient packet, BaniraNetworkContext ctx) {
         ctx.enqueueWork(() -> {
             if (ctx.isClientSide()) {
-                DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> {
-                    ClientStageData.setStageCoordinate(packet.stageCoordinate());
-                });
+                ClientStageData.setStageCoordinate(packet.stageCoordinate());
             }
         });
         ctx.markHandled();

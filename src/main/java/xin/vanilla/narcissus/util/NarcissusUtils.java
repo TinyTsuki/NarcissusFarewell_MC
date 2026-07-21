@@ -2,35 +2,38 @@ package xin.vanilla.narcissus.util;
 
 import com.mojang.brigadier.StringReader;
 import lombok.NonNull;
-import net.minecraft.block.BlockState;
-import net.minecraft.command.CommandSource;
-import net.minecraft.command.arguments.ItemInput;
-import net.minecraft.command.arguments.ItemParser;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.MobEntity;
-import net.minecraft.entity.ai.brain.memory.MemoryModuleType;
-import net.minecraft.entity.ai.goal.TemptGoal;
-import net.minecraft.entity.monster.MonsterEntity;
-import net.minecraft.entity.passive.TameableEntity;
-import net.minecraft.entity.player.ServerPlayerEntity;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.CompoundNBT;
-import net.minecraft.network.datasync.DataParameter;
-import net.minecraft.network.play.server.SPlayerAbilitiesPacket;
-import net.minecraft.network.play.server.SSetPassengersPacket;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.commands.arguments.item.ItemInput;
+import net.minecraft.commands.arguments.item.ItemParser;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.ai.memory.MemoryModuleType;
+import net.minecraft.world.entity.ai.goal.TemptGoal;
+import net.minecraft.world.entity.monster.Monster;
+import net.minecraft.world.entity.TamableAnimal;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.syncher.EntityDataAccessor;
+import net.minecraft.network.protocol.game.ClientboundPlayerAbilitiesPacket;
+import net.minecraft.network.protocol.game.ClientboundSetPassengersPacket;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.util.*;
-import net.minecraft.util.math.ChunkPos;
-import net.minecraft.util.text.ITextComponent;
-import net.minecraft.util.text.StringTextComponent;
-import net.minecraft.util.text.event.HoverEvent;
-import net.minecraft.world.World;
-import net.minecraft.world.server.ServerWorld;
-import net.minecraft.world.server.TicketType;
-import net.minecraftforge.common.util.ITeleporter;
-import net.minecraftforge.registries.ForgeRegistries;
+import net.minecraft.core.Registry;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.sounds.SoundEvent;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.level.ChunkPos;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.TextComponent;
+import net.minecraft.network.chat.HoverEvent;
+import net.minecraft.world.level.Level;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.TicketType;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import xin.vanilla.banira.common.data.KeyValue;
@@ -52,8 +55,9 @@ import xin.vanilla.narcissus.enums.EnumCardType;
 import xin.vanilla.narcissus.enums.EnumCommandType;
 import xin.vanilla.narcissus.enums.EnumCostType;
 import xin.vanilla.narcissus.enums.EnumTeleportType;
-import xin.vanilla.narcissus.internal.forge.network.ForgeNativePacketSender;
+import xin.vanilla.narcissus.internal.fabric.network.FabricNativePacketSender;
 import xin.vanilla.narcissus.mixin.LivingEntityInvoker;
+import xin.vanilla.narcissus.mixin.MobAccessor;
 import xin.vanilla.narcissus.mixin.TemptGoalAccessor;
 import xin.vanilla.narcissus.notification.NarcissusNotificationTypes;
 
@@ -634,7 +638,7 @@ public class NarcissusUtils {
         }
     }
 
-    public static boolean hasCommandPermission(CommandSource source, EnumCommandType type) {
+    public static boolean hasCommandPermission(CommandSourceStack source, EnumCommandType type) {
         return source.hasPermission(getCommandPermissionLevel(type)) || CommandUtils.hasVirtualPermission(source.getEntity(), type);
     }
 
@@ -642,28 +646,28 @@ public class NarcissusUtils {
 
     // region 安全坐标
 
-    public static SafeWorldCoordinate findTopCandidate(ServerWorld world, SafeWorldCoordinate start) {
+    public static SafeWorldCoordinate findTopCandidate(ServerLevel world, SafeWorldCoordinate start) {
         return new SafeCoordinateFinder(world).findTopCandidate(start);
     }
 
-    public static SafeWorldCoordinate findBottomCandidate(ServerWorld world, SafeWorldCoordinate start) {
+    public static SafeWorldCoordinate findBottomCandidate(ServerLevel world, SafeWorldCoordinate start) {
         return new SafeCoordinateFinder(world).findBottomCandidate(start);
     }
 
-    public static SafeWorldCoordinate findUpCandidate(ServerWorld world, SafeWorldCoordinate start) {
+    public static SafeWorldCoordinate findUpCandidate(ServerLevel world, SafeWorldCoordinate start) {
         return new SafeCoordinateFinder(world).findUpCandidate(start);
     }
 
-    public static SafeWorldCoordinate findDownCandidate(ServerWorld world, SafeWorldCoordinate start) {
+    public static SafeWorldCoordinate findDownCandidate(ServerLevel world, SafeWorldCoordinate start) {
         return new SafeCoordinateFinder(world).findDownCandidate(start);
     }
 
-    public static SafeWorldCoordinate findViewEndCandidate(ServerPlayerEntity player, boolean safe, int range) {
+    public static SafeWorldCoordinate findViewEndCandidate(ServerPlayer player, boolean safe, int range) {
         return new SafeCoordinateFinder(player.getLevel()).findViewEndCandidate(player, safe, range);
     }
 
     public static SafeWorldCoordinate findSafeCoordinate(SafeWorldCoordinate safeWorldCoordinate, boolean belowAllowAir) {
-        World world = DimensionUtils.getLevel(safeWorldCoordinate.dimension());
+        Level world = DimensionUtils.getLevel(safeWorldCoordinate.dimension());
         int chunkX = safeWorldCoordinate.chunkX();
         int chunkZ = safeWorldCoordinate.chunkZ();
         SafeWorldCoordinate result = new SafeCoordinateFinder(world).searchInChunk(safeWorldCoordinate, chunkX, chunkZ, belowAllowAir);
@@ -675,7 +679,7 @@ public class NarcissusUtils {
 
     // region 坐标查找
 
-    public static String getHomeDimensionByName(ServerPlayerEntity player, String name) {
+    public static String getHomeDimensionByName(ServerPlayer player, String name) {
         PlayerTeleportData data = PlayerTeleportData.getData(player);
         List<KeyValue<String, String>> list = data.getHomeCoordinate().keySet().stream()
                 .filter(key -> key.value().equals(name))
@@ -691,7 +695,7 @@ public class NarcissusUtils {
         }
     }
 
-    public static KeyValue<String, String> getPlayerHomeKey(ServerPlayerEntity player, RegistryKey<World> dimension, String name) {
+    public static KeyValue<String, String> getPlayerHomeKey(ServerPlayer player, ResourceKey<Level> dimension, String name) {
         PlayerTeleportData data = PlayerTeleportData.getData(player);
         Map<KeyValue<String, String>, SafeWorldCoordinate> homeCoordinate = data.getHomeCoordinate();
         Map<String, String> defaultHome = data.getDefaultHome();
@@ -767,11 +771,11 @@ public class NarcissusUtils {
      * @param dimension 维度
      * @param name      名称
      */
-    public static SafeWorldCoordinate getPlayerHome(ServerPlayerEntity player, RegistryKey<World> dimension, String name) {
+    public static SafeWorldCoordinate getPlayerHome(ServerPlayer player, ResourceKey<Level> dimension, String name) {
         return PlayerTeleportData.getData(player).getHomeCoordinate().getOrDefault(getPlayerHomeKey(player, dimension, name), null);
     }
 
-    public static String getStageDimensionByName(@Nullable ServerPlayerEntity player, String name) {
+    public static String getStageDimensionByName(@Nullable ServerPlayer player, String name) {
         WorldStageData stageData = WorldStageData.get();
         List<KeyValue<String, String>> list = stageData.getStageCoordinate().keySet().stream()
                 .filter(key -> key.value().equals(name))
@@ -788,7 +792,7 @@ public class NarcissusUtils {
         return null;
     }
 
-    public static KeyValue<String, String> getStageKey(ServerPlayerEntity player, RegistryKey<World> dimension, String name) {
+    public static KeyValue<String, String> getStageKey(ServerPlayer player, ResourceKey<Level> dimension, String name) {
         WorldStageData stageData = WorldStageData.get();
         Map<KeyValue<String, String>, SafeWorldCoordinate> stageCoordinate = stageData.getStageCoordinate();
         String currentDimStr = DimensionUtils.getDimensionId(player);
@@ -851,7 +855,7 @@ public class NarcissusUtils {
      * 在指定维度内找距离玩家最近的驿站
      */
     private static KeyValue<String, String> findNearestStageInDimension(Map<KeyValue<String, String>, SafeWorldCoordinate> stageCoordinate,
-                                                                        ServerPlayerEntity player, String dimensionStr) {
+                                                                        ServerPlayer player, String dimensionStr) {
         return stageCoordinate.entrySet().stream()
                 .filter(entry -> entry.getKey().key().equals(dimensionStr))
                 .min(Comparator.comparingDouble(entry -> {
@@ -868,7 +872,7 @@ public class NarcissusUtils {
     /**
      * 获取驿站坐标
      */
-    public static SafeWorldCoordinate getStageCoordinate(ServerPlayerEntity player, RegistryKey<World> dimension, String name) {
+    public static SafeWorldCoordinate getStageCoordinate(ServerPlayer player, ResourceKey<Level> dimension, String name) {
         KeyValue<String, String> key = getStageKey(player, dimension, name);
         return key != null ? WorldStageData.get().getStageCoordinate().get(key) : null;
     }
@@ -881,7 +885,7 @@ public class NarcissusUtils {
      * @param dimension 维度
      * @return 查询到的离开坐标（如果未找到则返回 null）
      */
-    public static TeleportRecord getBackTeleportRecord(ServerPlayerEntity player, @Nullable EnumTeleportType type, @Nullable RegistryKey<World> dimension) {
+    public static TeleportRecord getBackTeleportRecord(ServerPlayer player, @Nullable EnumTeleportType type, @Nullable ResourceKey<Level> dimension) {
         TeleportRecord result = null;
         // 获取玩家的传送数据
         PlayerTeleportData data = PlayerTeleportData.getData(player);
@@ -902,7 +906,7 @@ public class NarcissusUtils {
         return result;
     }
 
-    public static void removeBackTeleportRecord(ServerPlayerEntity player, TeleportRecord record) {
+    public static void removeBackTeleportRecord(ServerPlayer player, TeleportRecord record) {
         PlayerTeleportData data = PlayerTeleportData.getData(player);
         data.getTeleportRecords().remove(record);
         data.save();
@@ -916,7 +920,7 @@ public class NarcissusUtils {
     /**
      * 在真正执行传送前按玩家配置进行倒计时；{@code teleportAction} 在倒计时结束时于服务端主线程执行（调用方应自行解析在线玩家等）。
      */
-    private static void executeTeleportWithCountdown(ServerPlayerEntity player, EnumTeleportType type, Runnable teleportAction) {
+    private static void executeTeleportWithCountdown(ServerPlayer player, EnumTeleportType type, Runnable teleportAction) {
         MinecraftServer server = player.getServer();
         int sec = TeleportCountdownHelper.getEffectiveCountdownSeconds(player, type);
         if (sec <= 0 || server == null) {
@@ -933,7 +937,7 @@ public class NarcissusUtils {
                 if (countdownSession.isCancelled()) {
                     return;
                 }
-                ServerPlayerEntity p = server.getPlayerList().getPlayer(uuid);
+                ServerPlayer p = server.getPlayerList().getPlayer(uuid);
                 if (p == null) {
                     return;
                 }
@@ -951,7 +955,7 @@ public class NarcissusUtils {
     /**
      * 检查传送范围
      */
-    public static int checkRange(ServerPlayerEntity player, EnumTeleportType type, int range) {
+    public static int checkRange(ServerPlayer player, EnumTeleportType type, int range) {
         int maxRange;
         switch (type) {
             case TP_VIEW:
@@ -982,7 +986,7 @@ public class NarcissusUtils {
      * @param from 传送者
      * @param to   目标玩家
      */
-    public static void teleportTo(@NonNull ServerPlayerEntity from, @NonNull ServerPlayerEntity to, EnumTeleportType type, boolean safe) {
+    public static void teleportTo(@NonNull ServerPlayer from, @NonNull ServerPlayer to, EnumTeleportType type, boolean safe) {
         if (EnumTeleportType.TP_HERE == type) {
             teleportTo(to, new SafeWorldCoordinate(from).safe(safe), type);
         } else {
@@ -996,18 +1000,18 @@ public class NarcissusUtils {
      * @param player 玩家
      * @param after  坐标
      */
-    public static void teleportTo(@NonNull ServerPlayerEntity player, @NonNull SafeWorldCoordinate after, EnumTeleportType type) {
+    public static void teleportTo(@NonNull ServerPlayer player, @NonNull SafeWorldCoordinate after, EnumTeleportType type) {
         teleportTo(player, after, type, -1);
     }
 
     /**
      * @param tprHorizontalRange 仅用于随机传送安全搜索失败时的重试
      */
-    public static void teleportTo(@NonNull ServerPlayerEntity player, @NonNull SafeWorldCoordinate after, EnumTeleportType type, int tprHorizontalRange) {
+    public static void teleportTo(@NonNull ServerPlayer player, @NonNull SafeWorldCoordinate after, EnumTeleportType type, int tprHorizontalRange) {
         SafeWorldCoordinate before = new SafeWorldCoordinate(player);
-        World world = player.level;
+        Level world = player.level;
         if (world != null) {
-            ServerWorld level = DimensionUtils.getLevel(after.dimension());
+            ServerLevel level = DimensionUtils.getLevel(after.dimension());
             if (level != null) {
                 if (after.safe()) {
                     MessageUtils.sendNotification(player, NarcissusComponent.get().transAuto("safe_searching"), NarcissusNotificationTypes.TELEPORT_SEARCH);
@@ -1079,12 +1083,12 @@ public class NarcissusUtils {
                         UUID pid = player.getUUID();
                         player.server.submit(() -> {
                             if (runnable != null) runnable.run();
-                            ServerPlayerEntity online = srv.getPlayerList().getPlayer(pid);
+                            ServerPlayer online = srv.getPlayerList().getPlayer(pid);
                             if (online == null) {
                                 return;
                             }
                             executeTeleportWithCountdown(online, type, () -> {
-                                ServerPlayerEntity pl = srv.getPlayerList().getPlayer(pid);
+                                ServerPlayer pl = srv.getPlayerList().getPlayer(pid);
                                 if (pl != null) {
                                     teleportPlayer(pl, finalAfter1, type, before, level);
                                 }
@@ -1095,7 +1099,7 @@ public class NarcissusUtils {
                     MinecraftServer srv = player.getServer();
                     UUID pid = player.getUUID();
                     executeTeleportWithCountdown(player, type, () -> {
-                        ServerPlayerEntity pl = srv != null ? srv.getPlayerList().getPlayer(pid) : null;
+                        ServerPlayer pl = srv != null ? srv.getPlayerList().getPlayer(pid) : null;
                         if (pl != null) {
                             teleportPlayer(pl, after, type, before, level);
                         }
@@ -1105,7 +1109,7 @@ public class NarcissusUtils {
         }
     }
 
-    private static void teleportPlayer(@NonNull ServerPlayerEntity player, @NonNull SafeWorldCoordinate after, EnumTeleportType type, SafeWorldCoordinate before, ServerWorld level) {
+    private static void teleportPlayer(@NonNull ServerPlayer player, @NonNull SafeWorldCoordinate after, EnumTeleportType type, SafeWorldCoordinate before, ServerLevel level) {
         ResourceLocation sound = Identifier.id().parse(CommonConfig.get().general().tpSound());
         NarcissusUtils.playSound(player, sound, 1.0f, 1.0f);
         after.y(Math.floor(after.y()) + 0.1);
@@ -1120,7 +1124,7 @@ public class NarcissusUtils {
         if (vehicle != null) {
             player.startRiding(vehicle, true);
             // 同步客户端状态
-            ForgeNativePacketSender.broadcast(new SSetPassengersPacket(vehicle));
+            FabricNativePacketSender.broadcast(new ClientboundSetPassengersPacket(vehicle));
         }
 
         NarcissusUtils.playSound(player, sound, 1.0f, 1.0f);
@@ -1142,7 +1146,7 @@ public class NarcissusUtils {
      * @param level               目标世界
      * @return 玩家的坐骑
      */
-    private static @Nullable Entity teleportPassengers(ServerPlayerEntity player, Entity parent, Entity passenger, @NonNull SafeWorldCoordinate safeWorldCoordinate, ServerWorld level) {
+    private static @Nullable Entity teleportPassengers(ServerPlayer player, Entity parent, Entity passenger, @NonNull SafeWorldCoordinate safeWorldCoordinate, ServerLevel level) {
         if (!CommonConfig.get().general().tpWithVehicle() || passenger == null) return null;
 
         Entity playerVehicle = null;
@@ -1179,38 +1183,38 @@ public class NarcissusUtils {
             }
         }
         // 同步客户端状态
-        ForgeNativePacketSender.broadcast(new SSetPassengersPacket(passenger));
+        FabricNativePacketSender.broadcast(new ClientboundSetPassengersPacket(passenger));
         return playerVehicle;
     }
 
     /**
      * 传送跟随的实体
      */
-    private static void teleportFollowers(@NonNull ServerPlayerEntity player, @NonNull SafeWorldCoordinate safeWorldCoordinate, ServerWorld level) {
+    private static void teleportFollowers(@NonNull ServerPlayer player, @NonNull SafeWorldCoordinate safeWorldCoordinate, ServerLevel level) {
         if (!CommonConfig.get().general().tpWithFollower()) return;
 
         int followerRange = CommonConfig.get().general().tpWithFollowerRange();
 
         // 传送主动跟随的实体
-        for (TameableEntity entity : player.level.getEntitiesOfClass(TameableEntity.class, player.getBoundingBox().inflate(followerRange))) {
+        for (TamableAnimal entity : player.level.getEntitiesOfClass(TamableAnimal.class, player.getBoundingBox().inflate(followerRange))) {
             if (entity.getOwnerUUID() != null && entity.getOwnerUUID().equals(player.getUUID()) && !entity.isOrderedToSit()) {
                 doTeleport(entity, safeWorldCoordinate, level);
             }
         }
 
         // 传送拴绳实体
-        for (MobEntity entity : player.level.getEntitiesOfClass(MobEntity.class, player.getBoundingBox().inflate(followerRange))) {
+        for (Mob entity : player.level.getEntitiesOfClass(Mob.class, player.getBoundingBox().inflate(followerRange))) {
             if (entity.getLeashHolder() == player) {
                 doTeleport(entity, safeWorldCoordinate, level);
             }
         }
 
         // 传送被吸引的非敌对实体
-        for (MobEntity entity : player.level.getEntitiesOfClass(MobEntity.class, player.getBoundingBox().inflate(followerRange))) {
+        for (Mob entity : player.level.getEntitiesOfClass(Mob.class, player.getBoundingBox().inflate(followerRange))) {
             // 排除敌对生物
-            if (entity instanceof MonsterEntity) continue;
+            if (entity instanceof Monster) continue;
 
-            if (entity.goalSelector.getRunningGoals()
+            if (((MobAccessor) entity).narcissus$goalSelector().getRunningGoals()
                     .anyMatch(goal -> goal.isRunning()
                             && (goal.getGoal() instanceof TemptGoal)
                             && ((TemptGoalAccessor) goal.getGoal()).narcissus$player() == player
@@ -1220,9 +1224,9 @@ public class NarcissusUtils {
         }
     }
 
-    private static Entity doTeleport(@NonNull Entity entity, @NonNull SafeWorldCoordinate safeWorldCoordinate, ServerWorld level) {
-        if (entity instanceof ServerPlayerEntity) {
-            ServerPlayerEntity player = (ServerPlayerEntity) entity;
+    private static Entity doTeleport(@NonNull Entity entity, @NonNull SafeWorldCoordinate safeWorldCoordinate, ServerLevel level) {
+        if (entity instanceof ServerPlayer) {
+            ServerPlayer player = (ServerPlayer) entity;
             player.teleportTo(level, safeWorldCoordinate.x(), safeWorldCoordinate.y(), safeWorldCoordinate.z()
                     , safeWorldCoordinate.yaw() == 0 ? player.yRot : (float) safeWorldCoordinate.yaw()
                     , safeWorldCoordinate.pitch() == 0 ? player.xRot : (float) safeWorldCoordinate.pitch());
@@ -1230,25 +1234,18 @@ public class NarcissusUtils {
             if (level == entity.level) {
                 entity.teleportToWithTicket(safeWorldCoordinate.x(), safeWorldCoordinate.y(), safeWorldCoordinate.z());
             } else {
-                entity = entity.changeDimension(level, new ITeleporter() {
-                    @Override
-                    public Entity placeEntity(Entity entity, ServerWorld currentWorld, ServerWorld destWorld, float yaw, Function<Boolean, Entity> repositionEntity) {
-                        // 计算目标区块坐标
-                        int chunkX = safeWorldCoordinate.chunkX();
-                        int chunkZ = safeWorldCoordinate.chunkZ();
-                        // 确保目标区块已加载
-                        destWorld.getChunkSource().addRegionTicket(
-                                TicketType.POST_TELEPORT,
-                                new ChunkPos(chunkX, chunkZ),
-                                4, // 加载等级
-                                entity.getId()
-                        );
-                        // 复制实体，并且不生成传送门
-                        Entity newEntity = repositionEntity.apply(false);
-                        newEntity.moveTo(safeWorldCoordinate.x(), safeWorldCoordinate.y(), safeWorldCoordinate.z(), yaw, newEntity.xRot);
-                        return newEntity;
-                    }
-                });
+                level.getChunkSource().addRegionTicket(
+                        TicketType.POST_TELEPORT,
+                        new ChunkPos(safeWorldCoordinate.chunkX(), safeWorldCoordinate.chunkZ()),
+                        4,
+                        entity.getId());
+                Entity moved = entity.changeDimension(level);
+                if (moved != null) {
+                    moved.moveTo(safeWorldCoordinate.x(), safeWorldCoordinate.y(), safeWorldCoordinate.z(),
+                            safeWorldCoordinate.yaw() == 0 ? moved.yRot : (float) safeWorldCoordinate.yaw(),
+                            safeWorldCoordinate.pitch() == 0 ? moved.xRot : (float) safeWorldCoordinate.pitch());
+                    entity = moved;
+                }
             }
         }
         return entity;
@@ -1259,7 +1256,7 @@ public class NarcissusUtils {
 
     // region 跨维度传送
 
-    public static boolean isTeleportAcrossDimensionEnabled(ServerPlayerEntity player, RegistryKey<World> to, EnumTeleportType type) {
+    public static boolean isTeleportAcrossDimensionEnabled(ServerPlayer player, ResourceKey<Level> to, EnumTeleportType type) {
         boolean result = true;
         if (player.level.dimension() != to) {
             if (CommonConfig.get().general().teleportAcrossDimension()) {
@@ -1278,7 +1275,7 @@ public class NarcissusUtils {
     /**
      * 判断传送类型跨维度传送是否开启
      */
-    public static boolean isTeleportTypeAcrossDimensionEnabled(ServerPlayerEntity player, EnumTeleportType type) {
+    public static boolean isTeleportTypeAcrossDimensionEnabled(ServerPlayer player, EnumTeleportType type) {
         int permission;
         switch (type) {
             case TP_COORDINATE:
@@ -1331,7 +1328,7 @@ public class NarcissusUtils {
      * @param player 玩家
      * @param type   传送类型
      */
-    public static int getTeleportCoolDown(ServerPlayerEntity player, EnumTeleportType type) {
+    public static int getTeleportCoolDown(ServerPlayer player, EnumTeleportType type) {
         // 如果传送卡类型为抵消冷却时间，则不计算冷却时间
         if (EnumCardType.REFUND_COOLDOWN.name().equalsIgnoreCase(CommonConfig.get().base().teleportCardType().name())
                 || EnumCardType.REFUND_ALL_COST_AND_COOLDOWN.name().equalsIgnoreCase(CommonConfig.get().base().teleportCardType().name())
@@ -1428,7 +1425,7 @@ public class NarcissusUtils {
      * @param submit 是否收取代价
      * @return 是否验证通过
      */
-    public static boolean validTeleportCost(ServerPlayerEntity player, SafeWorldCoordinate target, EnumTeleportType type, boolean submit) {
+    public static boolean validTeleportCost(ServerPlayer player, SafeWorldCoordinate target, EnumTeleportType type, boolean submit) {
         return validateCost(player, target.dimension(), calculateDistance(new SafeWorldCoordinate(player), target), type, submit);
     }
 
@@ -1455,7 +1452,7 @@ public class NarcissusUtils {
      * @param submit       是否收取代价
      * @return 是否验证通过
      */
-    private static boolean validateCost(ServerPlayerEntity player, RegistryKey<World> targetDim, double distance, EnumTeleportType teleportType, boolean submit) {
+    private static boolean validateCost(ServerPlayer player, ResourceKey<Level> targetDim, double distance, EnumTeleportType teleportType, boolean submit) {
         TeleportCost teleportCost = NarcissusUtils.getCommandCost(teleportType);
         if (teleportCost.getType() == EnumCostType.NONE) return true;
         PlayerTeleportData data = PlayerTeleportData.getData(player);
@@ -1532,7 +1529,7 @@ public class NarcissusUtils {
                             ), NarcissusNotificationTypes.TELEPORT_ERROR);
                 } else if (submit) {
                     try {
-                        DataParameter<? super Float> DATA_HEALTH_ID = ((LivingEntityInvoker) player).narcissus$dataHealthId();
+                        EntityDataAccessor<? super Float> DATA_HEALTH_ID = LivingEntityInvoker.narcissus$dataHealthId();
                         Float health = (Float) player.getEntityData().get(DATA_HEALTH_ID);
                         player.getEntityData().set(DATA_HEALTH_ID, health - costNeed);
                     } catch (Exception e) {
@@ -1564,7 +1561,7 @@ public class NarcissusUtils {
                         MessageUtils.sendNotification(player
                                 , NarcissusComponent.get().transAuto("cost_not_enough"
                                         , NarcissusComponent.get().literal(ItemUtils.getItemHoverNameString(itemStack))
-                                                .hoverEvent(new HoverEvent(HoverEvent.Action.SHOW_ITEM, new HoverEvent.ItemHover(itemStack)))
+                                                .hoverEvent(new HoverEvent(HoverEvent.Action.SHOW_ITEM, new HoverEvent.ItemStackInfo(itemStack)))
                                         , costNeed
                                 ), NarcissusNotificationTypes.TELEPORT_ERROR);
                     } else if (submit) {
@@ -1576,7 +1573,7 @@ public class NarcissusUtils {
                             MessageUtils.sendNotification(player
                                     , NarcissusComponent.get().transAuto("cost_not_enough"
                                             , NarcissusComponent.get().literal(ItemUtils.getItemHoverNameString(itemStack))
-                                                    .hoverEvent(new HoverEvent(HoverEvent.Action.SHOW_ITEM, new HoverEvent.ItemHover(itemStack)))
+                                                    .hoverEvent(new HoverEvent(HoverEvent.Action.SHOW_ITEM, new HoverEvent.ItemStackInfo(itemStack)))
                                             , costNeed
                                     ), NarcissusNotificationTypes.TELEPORT_ERROR);
                         }
@@ -1813,7 +1810,7 @@ public class NarcissusUtils {
         ItemStack copy = itemStack.copy();
         return items.stream().filter(item -> {
             copy.setCount(item.getCount());
-            return item.equals(copy, false);
+            return ItemStack.isSame(item, copy);
         }).mapToInt(ItemStack::getCount).sum();
     }
 
@@ -1826,17 +1823,23 @@ public class NarcissusUtils {
     // region 杂项
 
     public static final DamageSource damageSource = new DamageSource(NarcissusFarewell.MODID) {
+        {
+            bypassArmor();
+            bypassMagic();
+            bypassInvul();
+        }
+
         @Nonnull
         @Override
-        public ITextComponent getLocalizedDeathMessage(@Nonnull LivingEntity entity) {
-            return StringTextComponent.EMPTY;
+        public Component getLocalizedDeathMessage(@Nonnull LivingEntity entity) {
+            return TextComponent.EMPTY;
         }
-    }.bypassArmor().bypassMagic().bypassInvul();
+    };
 
     /**
      * 强行使玩家死亡
      */
-    public static boolean killPlayer(@Nullable ServerPlayerEntity source, ServerPlayerEntity target) {
+    public static boolean killPlayer(@Nullable ServerPlayer source, ServerPlayer target) {
         try {
             if (target.isSleeping() && !target.level.isClientSide) {
                 target.stopSleeping();
@@ -1844,7 +1847,7 @@ public class NarcissusUtils {
             float lethal = target.getHealth() + target.getAbsorptionAmount();
             if (source != null) target.getCombatTracker().recordDamage(DamageSource.playerAttack(source), lethal, 0f);
             target.getCombatTracker().recordDamage(damageSource, lethal, 0f);
-            target.getEntityData().set(((LivingEntityInvoker) target).narcissus$dataHealthId(), 0f);
+            target.getEntityData().set(LivingEntityInvoker.narcissus$dataHealthId(), 0f);
             ((LivingEntityInvoker) target).narcissus$invokeDie(damageSource);
             return true;
         } catch (Exception ignored) {
@@ -1860,18 +1863,18 @@ public class NarcissusUtils {
      * @param volume 音量
      * @param pitch  音调
      */
-    public static void playSound(ServerPlayerEntity player, ResourceLocation sound, float volume, float pitch) {
-        SoundEvent soundEvent = ForgeRegistries.SOUND_EVENTS.getValue(sound);
+    public static void playSound(ServerPlayer player, ResourceLocation sound, float volume, float pitch) {
+        SoundEvent soundEvent = Registry.SOUND_EVENT.get(sound);
         if (soundEvent != null) {
-            player.playNotifySound(soundEvent, SoundCategory.PLAYERS, volume, pitch);
+            player.playNotifySound(soundEvent, SoundSource.PLAYERS, volume, pitch);
         }
     }
 
     /**
      * 判断玩家是否被任何敌对生物锁定为攻击目标
      */
-    public static boolean isTargetedByHostile(ServerPlayerEntity player) {
-        return player.level.getEntitiesOfClass(MobEntity.class, player.getBoundingBox()
+    public static boolean isTargetedByHostile(ServerPlayer player) {
+        return player.level.getEntitiesOfClass(Mob.class, player.getBoundingBox()
                         .inflate(CommonConfig.get().general().tpWithFollowerRange()))
                 .stream()
                 .anyMatch(entity -> player.equals(entity.getTarget())
@@ -1879,24 +1882,24 @@ public class NarcissusUtils {
                 );
     }
 
-    public static void setPlayerFlightMode(ServerPlayerEntity player) {
+    public static void setPlayerFlightMode(ServerPlayer player) {
         setPlayerFlightMode(player, null);
     }
 
-    public static void setPlayerFlightMode(ServerPlayerEntity player, Boolean enable) {
+    public static void setPlayerFlightMode(ServerPlayer player, Boolean enable) {
         setPlayerFlightMode(player, enable, null);
     }
 
-    public static void setPlayerFlightMode(ServerPlayerEntity player, Boolean enable, Float speed) {
-        CompoundNBT root = new CompoundNBT();
+    public static void setPlayerFlightMode(ServerPlayer player, Boolean enable, Float speed) {
+        CompoundTag root = new CompoundTag();
         player.abilities.addSaveData(root);
-        CompoundNBT abilities = root.getCompound("abilities");
+        CompoundTag abilities = root.getCompound("abilities");
         if (enable == null) enable = !abilities.getBoolean("mayfly");
         abilities.putBoolean("mayfly", enable);
         if (!enable) abilities.putBoolean("flying", false);
         if (speed != null) abilities.putFloat("flySpeed", speed);
         player.abilities.loadSaveData(root);
-        player.connection.send(new SPlayerAbilitiesPacket(player.abilities));
+        player.connection.send(new ClientboundPlayerAbilitiesPacket(player.abilities));
     }
 
     // endregion 杂项

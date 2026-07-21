@@ -1,59 +1,19 @@
 package xin.vanilla.narcissus.integration;
 
-import net.minecraftforge.fml.ModList;
-import xin.vanilla.narcissus.config.ClientConfig;
-import xin.vanilla.narcissus.integration.map.FtbChunks;
-import xin.vanilla.narcissus.integration.map.JourneyMap;
-import xin.vanilla.narcissus.integration.map.XaeroMinimap;
 import xin.vanilla.narcissus.network.packet.WaypointSyncToClient;
 
+/** 地图同步的稳定入口；具体地图模组由后续 Fabric adapter 按需接入。 */
 public final class MapHelper {
     private MapHelper() {
     }
 
-    public static void handle(final WaypointSyncToClient packet) {
-        switch (packet.type()) {
-            case HOME:
-                if (!ClientConfig.get().client().syncHomeMapWaypoint()) return;
-                break;
-            case STAGE:
-                if (!ClientConfig.get().client().syncStageMapWaypoint()) return;
-                break;
-            default:
-                return;
-        }
-        switch (packet.action()) {
-            case ADD:
-                addWaypoint(packet.name(), packet.dimension(), packet.x(), packet.y(), packet.z());
-                break;
-            case REMOVE:
-                removeWaypoint(packet.name(), packet.dimension(), packet.x(), packet.y(), packet.z());
-                break;
-        }
+    public static void handle(WaypointSyncToClient packet) {
+        // 核心传送点同步不依赖第三方地图模组。
     }
 
-    public static void addWaypoint(final String name, final String dimension, final double x, final double y, final double z) {
-        if (ModList.get().isLoaded("xaerominimap")) {
-            XaeroMinimap.addWaypoint(name, dimension, x, y, z);
-        }
-        if (ModList.get().isLoaded("journeymap")) {
-            JourneyMap.addWaypoint(name, dimension, x, y, z);
-        }
-        if (ModList.get().isLoaded("ftbchunks")) {
-            FtbChunks.addWaypoint(name, dimension, x, y, z);
-        }
+    public static void addWaypoint(String name, String dimension, double x, double y, double z) {
     }
 
-    public static void removeWaypoint(final String name, final String dimension, final double x, final double y, final double z) {
-        if (ModList.get().isLoaded("xaerominimap")) {
-            XaeroMinimap.removeWaypoint(name, dimension, x, y, z);
-        }
-        if (ModList.get().isLoaded("journeymap")) {
-            JourneyMap.removeWaypoint(name, dimension, x, y, z);
-        }
-        if (ModList.get().isLoaded("ftbchunks")) {
-            FtbChunks.removeWaypoint(name, dimension, x, y, z);
-        }
+    public static void removeWaypoint(String name, String dimension, double x, double y, double z) {
     }
-
 }

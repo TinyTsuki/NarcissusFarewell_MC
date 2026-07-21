@@ -28,12 +28,14 @@ public class NetworkSmokeContractTest {
         assertContains(script, "phase-two");
         assertContains(script, "destroyProcessTree");
         assertContains(script, "PASS server-shutdown");
+        assertContains(script, "runDir project.relativePath(smokeServerDir)");
+        assertContains(script, "runDir project.relativePath(smokeClientDir)");
         assertContains(server, "PASS persisted-player-config");
         assertContains(server, "PASS persisted-access-list");
         assertContains(server, "server.halt(false)");
         assertContains(client, "PlayerConfigSyncToServer");
         assertContains(client, "AccessListEditToServer");
-        assertContains(client, "ConnectingScreen");
+        assertContains(client, "ConnectScreen");
         assertContains(client, "PASS persisted-access-list-client");
         assertContains(main, "NarcissusNetworkSmokeServerRunner.register()");
         assertContains(clientEvents, "NarcissusNetworkSmokeClientRunner.register()");

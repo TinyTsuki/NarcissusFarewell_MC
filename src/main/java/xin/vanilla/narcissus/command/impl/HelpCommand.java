@@ -6,11 +6,11 @@ import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
-import net.minecraft.command.CommandSource;
-import net.minecraft.command.Commands;
-import net.minecraft.entity.player.ServerPlayerEntity;
-import net.minecraft.util.text.event.ClickEvent;
-import net.minecraft.util.text.event.HoverEvent;
+import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.commands.Commands;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.network.chat.ClickEvent;
+import net.minecraft.network.chat.HoverEvent;
 import xin.vanilla.banira.common.data.Component;
 import xin.vanilla.banira.common.data.KeyValue;
 import xin.vanilla.banira.common.enums.EnumMCColor;
@@ -35,8 +35,8 @@ public final class HelpCommand {
     private HelpCommand() {
     }
 
-    private static int execute(CommandContext<CommandSource> context) throws CommandSyntaxException {
-        ServerPlayerEntity player = context.getSource().getPlayerOrException();
+    private static int execute(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
+        ServerPlayer player = context.getSource().getPlayerOrException();
         String lang = NarcissusLang.getPlayerLanguage(player);
         String command;
         int page;
@@ -120,7 +120,7 @@ public final class HelpCommand {
         return 1;
     }
 
-    private static CompletableFuture<Suggestions> suggestion(CommandContext<CommandSource> context, SuggestionsBuilder builder) {
+    private static CompletableFuture<Suggestions> suggestion(CommandContext<CommandSourceStack> context, SuggestionsBuilder builder) {
         String input = CommandUtils.getStringEmpty(context, "command");
         boolean isInputEmpty = StringUtils.isNullOrEmpty(input);
         int totalPages = (int) Math.ceil((double) NarcissusCommand.HELP_MESSAGE.size() / CommonConfig.get().general().helpInfoNumPerPage());
@@ -139,7 +139,7 @@ public final class HelpCommand {
         return builder.buildFuture();
     }
 
-    public static LiteralArgumentBuilder<CommandSource> create() {
+    public static LiteralArgumentBuilder<CommandSourceStack> create() {
         return Commands.literal("help")
                 .executes(HelpCommand::execute)
                 .then(Commands.argument("command", StringArgumentType.word())

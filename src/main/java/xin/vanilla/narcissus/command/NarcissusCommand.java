@@ -3,8 +3,8 @@ package xin.vanilla.narcissus.command;
 
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
-import net.minecraft.command.CommandSource;
-import net.minecraft.command.Commands;
+import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.commands.Commands;
 import xin.vanilla.banira.common.data.KeyValue;
 import xin.vanilla.banira.common.util.StringUtils;
 import xin.vanilla.narcissus.command.impl.HelpCommand;
@@ -38,12 +38,12 @@ public class NarcissusCommand {
      *
      * @param dispatcher 命令调度器，用于管理服务器中的所有命令
      */
-    public static void register(CommandDispatcher<CommandSource> dispatcher) {
+    public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
         // 刷新帮助信息
         refreshHelpMessage();
 
         // 注册有前缀的指令
-        LiteralArgumentBuilder<CommandSource> mainCommand = Commands.literal(NarcissusUtils.getCommandPrefix());
+        LiteralArgumentBuilder<CommandSourceStack> mainCommand = Commands.literal(NarcissusUtils.getCommandPrefix());
 
         // 主指令直接执行显示帮助
         mainCommand.executes(HelpCommand.create().getCommand());

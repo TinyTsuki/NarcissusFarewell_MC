@@ -7,18 +7,18 @@ import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
-import net.minecraft.command.CommandSource;
-import net.minecraft.command.Commands;
-import net.minecraft.command.arguments.DimensionArgument;
-import net.minecraft.command.arguments.ResourceLocationArgument;
-import net.minecraft.entity.player.ServerPlayerEntity;
+import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.commands.Commands;
+import net.minecraft.commands.arguments.DimensionArgument;
+import net.minecraft.commands.arguments.ResourceLocationArgument;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.util.RegistryKey;
-import net.minecraft.util.ResourceLocation;
-import net.minecraft.world.World;
-import net.minecraft.world.biome.Biome;
-import net.minecraft.world.gen.feature.structure.Structure;
-import net.minecraft.world.server.ServerWorld;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.biome.Biome;
+import net.minecraft.world.level.levelgen.feature.StructureFeature;
+import net.minecraft.server.level.ServerLevel;
 import xin.vanilla.banira.api.BaniraServer;
 import xin.vanilla.banira.common.data.Component;
 import xin.vanilla.banira.common.data.WorldCoordinate;
@@ -42,12 +42,12 @@ public final class TpStructureCommand {
     private TpStructureCommand() {
     }
 
-    private static int execute(CommandContext<CommandSource> context) throws CommandSyntaxException {
+    private static int execute(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
         CommandUtils.notifyHelp(context);
-        ServerPlayerEntity player = context.getSource().getPlayerOrException();
+        ServerPlayer player = context.getSource().getPlayerOrException();
         if (CommandUtils.checkTeleportPre(context.getSource(), EnumCommandType.TP_STRUCTURE)) return 0;
         ResourceLocation structId = ResourceLocationArgument.getId(context, "struct");
-        Structure<?> structure = StructureUtils.getStructure(structId);
+        StructureFeature<?> structure = StructureUtils.getStructure(structId);
         Biome biome = BiomeUtils.getBiome(structId);
         if (structure == null && biome == null) {
             MessageUtils.sendNotification(player, NarcissusComponent.get().transAuto("structure_biome_not_found", structId), NarcissusNotificationTypes.TELEPORT_ERROR);
@@ -55,7 +55,7 @@ public final class TpStructureCommand {
         }
         int range = xin.vanilla.banira.common.util.CommandUtils.getIntDefault(context, "range", CommonConfig.get().general().teleportRandomDistanceLimit());
         range = NarcissusUtils.checkRange(player, EnumTeleportType.TP_STRUCTURE, range);
-        RegistryKey<World> targetLevel = xin.vanilla.banira.common.util.CommandUtils.getDimensionKeyDefault(context, "dimension", player.getLevel().dimension());
+        ResourceKey<Level> targetLevel = xin.vanilla.banira.common.util.CommandUtils.getDimensionKeyDefault(context, "dimension", player.getLevel().dimension());
         boolean safe = "safe".equalsIgnoreCase(xin.vanilla.banira.common.util.CommandUtils.getStringDefault(context, "safe", "safe"));
         int finalRange = range;
         boolean isBiome = biome != null;
@@ -63,7 +63,7 @@ public final class TpStructureCommand {
         MessageUtils.sendNotification(player, NarcissusComponent.get().transAuto(searchingKey, structId), NarcissusNotificationTypes.TELEPORT_SEARCH);
         new Thread(() -> {
             MinecraftServer server = BaniraServer.require(MinecraftServer.class);
-            ServerWorld world = server.getLevel(targetLevel);
+            ServerLevel world = server.getLevel(targetLevel);
             SafeWorldCoordinate safeWorldCoordinate;
             if (biome != null) {
                 Biome biomeFromWorld = BiomeUtils.getBiome(world, structId);
@@ -77,7 +77,7 @@ public final class TpStructureCommand {
                     safeWorldCoordinate = null;
                 }
             } else {
-                ServerWorld structureWorld = server.getLevel(targetLevel);
+                ServerLevel structureWorld = server.getLevel(targetLevel);
                 WorldCoordinate structStart = new WorldCoordinate(player).dimension(targetLevel);
                 WorldCoordinate foundStruct = StructureUtils.findNearestStructure(structureWorld, structStart, structure, finalRange);
                 safeWorldCoordinate = foundStruct != null
@@ -97,7 +97,7 @@ public final class TpStructureCommand {
         return 1;
     }
 
-    public static CompletableFuture<Suggestions> suggestion(CommandContext<CommandSource> context, SuggestionsBuilder builder) {
+    public static CompletableFuture<Suggestions> suggestion(CommandContext<CommandSourceStack> context, SuggestionsBuilder builder) {
         String input = xin.vanilla.banira.common.util.CommandUtils.getStringEx(context, "struct", "");
         boolean isInputEmpty = StringUtils.isNullOrEmpty(input);
         String language = CommonConfig.get().general().defaultLanguage();
@@ -116,7 +116,7 @@ public final class TpStructureCommand {
         return builder.buildFuture();
     }
 
-    public static LiteralArgumentBuilder<CommandSource> create() {
+    public static LiteralArgumentBuilder<CommandSourceStack> create() {
         return Commands.literal(CommonConfig.get().commandNames().commandTpStructure())
                 .requires(source -> NarcissusUtils.hasCommandPermission(source, EnumCommandType.TP_STRUCTURE))
                 .then(Commands.argument("struct", ResourceLocationArgument.id())

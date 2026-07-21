@@ -1,10 +1,10 @@
 package xin.vanilla.narcissus.screen;
 
-import com.mojang.blaze3d.matrix.MatrixStack;
+import com.mojang.blaze3d.vertex.PoseStack;
 import lombok.experimental.Accessors;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.network.play.NetworkPlayerInfo;
-import net.minecraft.util.math.MathHelper;
+import net.minecraft.client.multiplayer.PlayerInfo;
+import net.minecraft.util.Mth;
 import xin.vanilla.banira.BaniraComponent;
 import xin.vanilla.banira.client.data.*;
 import xin.vanilla.banira.client.enums.EnumAlignment;
@@ -173,7 +173,7 @@ public class AccessListScreen extends BaniraScreen {
         } else if (maxListPixel >= LIST_ROWS_COMPACT * ITEM_HEIGHT) {
             visibleRowCount = LIST_ROWS_COMPACT;
         } else {
-            visibleRowCount = MathHelper.clamp(maxListPixel / ITEM_HEIGHT, 1, LIST_ROWS_COMPACT);
+            visibleRowCount = Mth.clamp(maxListPixel / ITEM_HEIGHT, 1, LIST_ROWS_COMPACT);
         }
         listHeight = visibleRowCount * ITEM_HEIGHT;
 
@@ -543,9 +543,9 @@ public class AccessListScreen extends BaniraScreen {
         if (minecraft == null || minecraft.player == null || minecraft.player.connection == null) {
             return map;
         }
-        List<NetworkPlayerInfo> list = new ArrayList<>(minecraft.player.connection.getOnlinePlayers());
+        List<PlayerInfo> list = new ArrayList<>(minecraft.player.connection.getOnlinePlayers());
         list.sort(Comparator.comparing(a -> a.getProfile().getName(), String.CASE_INSENSITIVE_ORDER));
-        for (NetworkPlayerInfo info : list) {
+        for (PlayerInfo info : list) {
             if (info.getProfile() == null || info.getProfile().getId() == null) {
                 continue;
             }
@@ -566,7 +566,7 @@ public class AccessListScreen extends BaniraScreen {
     }
 
     @Override
-    protected void onRender(@Nonnull MatrixStack stack, float partialTicks) {
+    protected void onRender(@Nonnull PoseStack stack, float partialTicks) {
         renderBackground(stack);
 
         refreshListsIfNeeded();
@@ -673,7 +673,7 @@ public class AccessListScreen extends BaniraScreen {
         renderWidgets(stack, partialTicks);
     }
 
-    private void drawLimitedTextLine(MatrixStack stack, String text, double x, double y, int maxWidth, int colorArgb) {
+    private void drawLimitedTextLine(PoseStack stack, String text, double x, double y, int maxWidth, int colorArgb) {
         LabelWidget.drawLimitedText(FontDrawArgs.of(Text.literal(text).stack(stack).font(font).color(Color.argb(colorArgb)))
                 .x(x).y(y)
                 .maxWidth(maxWidth)
@@ -682,7 +682,7 @@ public class AccessListScreen extends BaniraScreen {
                 .inScreen(false));
     }
 
-    private void drawLimitedTextCentered(MatrixStack stack, String text, double x, double y, int maxWidth, int colorArgb) {
+    private void drawLimitedTextCentered(PoseStack stack, String text, double x, double y, int maxWidth, int colorArgb) {
         LabelWidget.drawLimitedText(FontDrawArgs.of(Text.literal(text).stack(stack).font(font).color(Color.argb(colorArgb)))
                 .x(x).y(y)
                 .maxWidth(maxWidth)
@@ -691,7 +691,7 @@ public class AccessListScreen extends BaniraScreen {
                 .inScreen(false));
     }
 
-    private void drawTopBarAndDividers(MatrixStack stack, BaniraColorConfig theme) {
+    private void drawTopBarAndDividers(PoseStack stack, BaniraColorConfig theme) {
         ShapeDrawArgs topBg = ShapeDrawArgs.rect(stack, startX, topBarY, footerW, TOP_BAR_H, theme.panelBg());
         topBg.rect().radius(6f, 6f, 0f, 0f);
         BaseShapeWidget.drawShape(topBg);
@@ -706,7 +706,7 @@ public class AccessListScreen extends BaniraScreen {
         BaseShapeWidget.drawShape(div2);
     }
 
-    private void drawColumnHeaders(MatrixStack stack, BaniraColorConfig theme) {
+    private void drawColumnHeaders(PoseStack stack, BaniraColorConfig theme) {
         if (panelMode == EnumPanelMode.TAB_SINGLE) {
             ShapeDrawArgs h = ShapeDrawArgs.rect(stack, startX, headerRowY, footerW, HEADER_ROW_H, theme.bgSecondary());
             h.rect().radius(0);
@@ -726,7 +726,7 @@ public class AccessListScreen extends BaniraScreen {
         }
     }
 
-    private void drawListColumns(MatrixStack stack, BaniraColorConfig theme, int mouseX, int mouseY) {
+    private void drawListColumns(PoseStack stack, BaniraColorConfig theme, int mouseX, int mouseY) {
         if (panelMode == EnumPanelMode.TAB_SINGLE) {
             drawColumnList(stack, theme, startX, footerW, activeTabItems(), tabListScrollbar, activeTabColumn(), mouseX, mouseY);
             return;
@@ -735,7 +735,7 @@ public class AccessListScreen extends BaniraScreen {
         drawColumnList(stack, theme, startX + panelWidth + GAP_H, panelWidth, whiteItems, whiteScrollbar, Column.WHITE, mouseX, mouseY);
     }
 
-    private void drawColumnList(MatrixStack stack, BaniraColorConfig theme, int listOriginX, int listPanelOuterW, List<String> items,
+    private void drawColumnList(PoseStack stack, BaniraColorConfig theme, int listOriginX, int listPanelOuterW, List<String> items,
                                 ScrollbarWidget scrollbar, Column column, int mouseX, int mouseY) {
         ShapeDrawArgs panelShape = ShapeDrawArgs.rect(stack, listOriginX, listAreaY, listPanelOuterW, listHeight, theme.panelBg());
         panelShape.rect().radius(0);
@@ -745,7 +745,7 @@ public class AccessListScreen extends BaniraScreen {
         boolean scrollNeeded = items.size() > visibleRowCount;
         int cw = listBodyW - (scrollNeeded ? SCROLLBAR_WIDTH + SCROLLBAR_GAP : 0);
         int scroll = scrollbar != null
-                ? (int) Math.round(MathHelper.clamp(scrollbar.value(), 0, Math.max(0, items.size() - visibleRowCount)))
+                ? (int) Math.round(Mth.clamp(scrollbar.value(), 0, Math.max(0, items.size() - visibleRowCount)))
                 : 0;
 
         int innerTop = listAreaY + LIST_PADDING_V;
@@ -818,7 +818,7 @@ public class AccessListScreen extends BaniraScreen {
         }
     }
 
-    private void drawFooterHint(MatrixStack stack, BaniraColorConfig theme) {
+    private void drawFooterHint(PoseStack stack, BaniraColorConfig theme) {
         ShapeDrawArgs footerBg = ShapeDrawArgs.rect(stack, startX, footerY, footerW, footerPanelHeight, theme.panelBg());
         footerBg.rect().radius(0f, 0f, 6f, 6f);
         BaseShapeWidget.drawShape(footerBg);
@@ -837,7 +837,7 @@ public class AccessListScreen extends BaniraScreen {
         }
     }
 
-    private static void drawPlayerHeadFace(MatrixStack stack, String uuidStr, int x, int y, int size) {
+    private static void drawPlayerHeadFace(PoseStack stack, String uuidStr, int x, int y, int size) {
         UUID uuid;
         try {
             uuid = UUID.fromString(uuidStr);
@@ -854,7 +854,7 @@ public class AccessListScreen extends BaniraScreen {
         }
     }
 
-    private void drawFooterLineTooltip(MatrixStack stack, BaniraColorConfig theme, int mouseX, int mouseY, String fullText) {
+    private void drawFooterLineTooltip(PoseStack stack, BaniraColorConfig theme, int mouseX, int mouseY, String fullText) {
         Text tooltipText = Text.literal(fullText).stack(stack).font(font).color(Color.argb(theme.textPrimary()));
         FontDrawArgs args = FontDrawArgs.ofPopo(tooltipText)
                 .x(mouseX)
@@ -862,7 +862,7 @@ public class AccessListScreen extends BaniraScreen {
         TooltipWidget.drawPopupMessage(stack, args);
     }
 
-    private void drawDeleteConfirmOverlay(MatrixStack stack, BaniraColorConfig theme) {
+    private void drawDeleteConfirmOverlay(PoseStack stack, BaniraColorConfig theme) {
         ShapeDrawArgs dim = ShapeDrawArgs.rect(stack, 0, 0, width, height, ColorUtils.applyAlphaToArgb(theme.bgQuaternary(), 0x78));
         BaseShapeWidget.drawShape(dim);
 
@@ -936,7 +936,7 @@ public class AccessListScreen extends BaniraScreen {
     private boolean checkPanelClick(double mouseX, double mouseY, int listX, int listY, List<String> items, ScrollbarWidget bar, Column column) {
         boolean scrollNeeded = items.size() > visibleRowCount;
         int cw = listBodyW - (scrollNeeded ? SCROLLBAR_WIDTH + SCROLLBAR_GAP : 0);
-        int scroll = bar != null ? (int) Math.round(MathHelper.clamp(bar.value(), 0, Math.max(0, items.size() - visibleRowCount))) : 0;
+        int scroll = bar != null ? (int) Math.round(Mth.clamp(bar.value(), 0, Math.max(0, items.size() - visibleRowCount))) : 0;
 
         int rowSlots = scrollNeeded ? visibleRowCount : items.size();
 

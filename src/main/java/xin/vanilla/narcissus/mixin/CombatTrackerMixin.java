@@ -1,19 +1,18 @@
 package xin.vanilla.narcissus.mixin;
 
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.entity.player.ServerPlayerEntity;
-import net.minecraft.util.CombatEntry;
-import net.minecraft.util.CombatTracker;
-import net.minecraft.util.text.ITextComponent;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.damagesource.CombatEntry;
+import net.minecraft.world.damagesource.CombatTracker;
+import net.minecraft.network.chat.Component;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
-import xin.vanilla.banira.common.data.Component;
 import xin.vanilla.narcissus.NarcissusComponent;
 import xin.vanilla.narcissus.NarcissusFarewell;
 
@@ -38,13 +37,14 @@ public abstract class CombatTrackerMixin {
     public abstract LivingEntity getKiller();
 
     @Inject(method = "getDeathMessage", at = @At("RETURN"), cancellable = true)
-    private void narcissus$cancelNarcissusDeathMessage(CallbackInfoReturnable<ITextComponent> cir) {
-        if (!(mob instanceof ServerPlayerEntity)) return;
+    private void narcissus$cancelNarcissusDeathMessage(CallbackInfoReturnable<Component> cir) {
+        if (!(mob instanceof ServerPlayer)) return;
         if (entries.isEmpty()) return;
         if (entries.stream().noneMatch(entry -> entry.getSource().getMsgId().equals(NarcissusFarewell.MODID))) return;
-        PlayerEntity player = (PlayerEntity) mob;
+        Player player = (Player) mob;
 
-        Component message = NarcissusComponent.get().transAuto("died_of_narcissus_" + (new Random().nextInt(4) + 1), player.getDisplayName().getString());
+        xin.vanilla.banira.common.data.Component message = NarcissusComponent.get().transAuto(
+                "died_of_narcissus_" + (new Random().nextInt(4) + 1), player.getDisplayName().getString());
         Entity entity = getKiller();
 
         cir.setReturnValue(NarcissusComponent.get().literal("[%s] %s")

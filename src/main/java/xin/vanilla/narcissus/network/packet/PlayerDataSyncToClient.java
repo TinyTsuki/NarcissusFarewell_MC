@@ -1,11 +1,8 @@
 package xin.vanilla.narcissus.network.packet;
 
 import lombok.Getter;
-import net.minecraft.nbt.CompoundNBT;
+import net.minecraft.nbt.CompoundTag;
 import xin.vanilla.banira.common.network.BaniraPacketBuffer;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
-import net.minecraftforge.fml.DistExecutor;
 import xin.vanilla.banira.common.network.BaniraNetworkContext;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -39,11 +36,11 @@ public class PlayerDataSyncToClient extends SplitPacket
     /**
      * 黑白名单等；分片时仅首片携带完整内容，合并时取首片。
      */
-    private CompoundNBT accessTag;
+    private CompoundTag accessTag;
     /**
      * 各传送指令倒计时配置；分片规则同 {@link #accessTag}。
      */
-    private CompoundNBT tpCountdownTag;
+    private CompoundTag tpCountdownTag;
 
     public PlayerDataSyncToClient(UUID playerUUID, PlayerTeleportData data) {
         super();
@@ -85,11 +82,11 @@ public class PlayerDataSyncToClient extends SplitPacket
         }
         this.accessTag = NarcissusNbtPacketCodec.read(buffer);
         if (this.accessTag == null) {
-            this.accessTag = new CompoundNBT();
+            this.accessTag = new CompoundTag();
         }
         this.tpCountdownTag = NarcissusNbtPacketCodec.read(buffer);
         if (this.tpCountdownTag == null) {
-            this.tpCountdownTag = new CompoundNBT();
+            this.tpCountdownTag = new CompoundTag();
         }
     }
 
@@ -109,10 +106,10 @@ public class PlayerDataSyncToClient extends SplitPacket
                 .flatMap(map -> map.entrySet().stream())
                 .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (v1, v2) -> v1));
         this.defaultHome = packets.get(0).defaultHome;
-        CompoundNBT mergedAccess = packets.get(0).accessTag;
-        this.accessTag = mergedAccess != null ? mergedAccess.copy() : new CompoundNBT();
-        CompoundNBT mergedCd = packets.get(0).tpCountdownTag;
-        this.tpCountdownTag = mergedCd != null ? mergedCd.copy() : new CompoundNBT();
+        CompoundTag mergedAccess = packets.get(0).accessTag;
+        this.accessTag = mergedAccess != null ? mergedAccess.copy() : new CompoundTag();
+        CompoundTag mergedCd = packets.get(0).tpCountdownTag;
+        this.tpCountdownTag = mergedCd != null ? mergedCd.copy() : new CompoundTag();
     }
 
     private PlayerDataSyncToClient(UUID playerUUID, Date lastCardTime, Date lastTpTime, int teleportCard) {
@@ -124,8 +121,8 @@ public class PlayerDataSyncToClient extends SplitPacket
         this.teleportRecords = new ArrayList<>();
         this.homeCoordinate = new HashMap<>();
         this.defaultHome = new HashMap<>();
-        this.accessTag = new CompoundNBT();
-        this.tpCountdownTag = new CompoundNBT();
+        this.accessTag = new CompoundTag();
+        this.tpCountdownTag = new CompoundTag();
     }
 
     public void toBytes(BaniraPacketBuffer buffer) {
@@ -149,13 +146,13 @@ public class PlayerDataSyncToClient extends SplitPacket
             buffer.writeUtf(entry.getKey());
             buffer.writeUtf(entry.getValue());
         }
-        NarcissusNbtPacketCodec.write(buffer, this.accessTag != null ? this.accessTag : new CompoundNBT());
-        NarcissusNbtPacketCodec.write(buffer, this.tpCountdownTag != null ? this.tpCountdownTag : new CompoundNBT());
+        NarcissusNbtPacketCodec.write(buffer, this.accessTag != null ? this.accessTag : new CompoundTag());
+        NarcissusNbtPacketCodec.write(buffer, this.tpCountdownTag != null ? this.tpCountdownTag : new CompoundTag());
     }
 
     public static void handle(PlayerDataSyncToClient packet, BaniraNetworkContext ctx) {
         if (ctx.isClientSide()) {
-            DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> ClientSide.handle(packet));
+            ctx.enqueueWork(() -> ClientSide.handle(packet));
         }
         ctx.markHandled();
     }
@@ -193,8 +190,8 @@ public class PlayerDataSyncToClient extends SplitPacket
 
             if (i == 0) {
                 packet.defaultHome.putAll(this.defaultHome);
-                packet.accessTag = this.accessTag != null ? this.accessTag.copy() : new CompoundNBT();
-                packet.tpCountdownTag = this.tpCountdownTag != null ? this.tpCountdownTag.copy() : new CompoundNBT();
+                packet.accessTag = this.accessTag != null ? this.accessTag.copy() : new CompoundTag();
+                packet.tpCountdownTag = this.tpCountdownTag != null ? this.tpCountdownTag.copy() : new CompoundTag();
             }
             packet.setSort(i);
             result.add(packet);
@@ -211,19 +208,18 @@ public class PlayerDataSyncToClient extends SplitPacket
             packet.setId(this.getId());
             packet.setTotal(1);
             packet.defaultHome.putAll(this.defaultHome);
-            packet.accessTag = this.accessTag != null ? this.accessTag.copy() : new CompoundNBT();
-            packet.tpCountdownTag = this.tpCountdownTag != null ? this.tpCountdownTag.copy() : new CompoundNBT();
+            packet.accessTag = this.accessTag != null ? this.accessTag.copy() : new CompoundTag();
+            packet.tpCountdownTag = this.tpCountdownTag != null ? this.tpCountdownTag.copy() : new CompoundTag();
             result.add(packet);
         }
         return result;
     }
 
-    @OnlyIn(Dist.CLIENT)
     private static final class ClientSide {
         public static final Logger LOGGER = LogManager.getLogger();
 
         public static void handle(PlayerDataSyncToClient packet) {
-            net.minecraft.client.entity.player.ClientPlayerEntity player = net.minecraft.client.Minecraft.getInstance().player;
+            net.minecraft.client.player.LocalPlayer player = net.minecraft.client.Minecraft.getInstance().player;
             if (player != null) {
                 try {
                     PlayerTeleportData clientData = PlayerTeleportData.getData(player);
@@ -237,7 +233,7 @@ public class PlayerDataSyncToClient extends SplitPacket
         }
 
         public static PlayerTeleportData getData(PlayerDataSyncToClient packet) {
-            net.minecraft.client.entity.player.ClientPlayerEntity player = net.minecraft.client.Minecraft.getInstance().player;
+            net.minecraft.client.player.LocalPlayer player = net.minecraft.client.Minecraft.getInstance().player;
             if (player == null) {
                 return null;
             }
@@ -252,8 +248,8 @@ public class PlayerDataSyncToClient extends SplitPacket
             data.setTeleportRecords(packet.teleportRecords);
             data.setHomeCoordinate(new LinkedHashMap<>(packet.homeCoordinate));
             data.setDefaultHome(new HashMap<>(packet.defaultHome));
-            data.setAccess(PlayerAccess.readFromNBT(packet.accessTag != null ? packet.accessTag : new CompoundNBT()));
-            data.readTeleportCountdownFromNbt(packet.tpCountdownTag != null ? packet.tpCountdownTag : new CompoundNBT());
+            data.setAccess(PlayerAccess.readFromNBT(packet.accessTag != null ? packet.accessTag : new CompoundTag()));
+            data.readTeleportCountdownFromNbt(packet.tpCountdownTag != null ? packet.tpCountdownTag : new CompoundTag());
             return data;
         }
     }

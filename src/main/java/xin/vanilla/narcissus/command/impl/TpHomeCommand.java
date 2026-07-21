@@ -7,12 +7,12 @@ import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
-import net.minecraft.command.CommandSource;
-import net.minecraft.command.Commands;
-import net.minecraft.entity.player.ServerPlayerEntity;
-import net.minecraft.util.RegistryKey;
-import net.minecraft.world.World;
-import net.minecraft.world.server.ServerWorld;
+import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.commands.Commands;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.world.level.Level;
+import net.minecraft.server.level.ServerLevel;
 import xin.vanilla.banira.common.data.Component;
 import xin.vanilla.banira.common.data.KeyValue;
 import xin.vanilla.banira.common.util.DimensionUtils;
@@ -33,14 +33,14 @@ public final class TpHomeCommand {
     private TpHomeCommand() {
     }
 
-    private static int execute(CommandContext<CommandSource> context) throws CommandSyntaxException {
+    private static int execute(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
         CommandUtils.notifyHelp(context);
-        ServerPlayerEntity player = context.getSource().getPlayerOrException();
+        ServerPlayer player = context.getSource().getPlayerOrException();
         if (CommandUtils.checkTeleportPre(context.getSource(), EnumCommandType.TP_HOME)) return 0;
-        RegistryKey<World> targetLevel = null;
+        ResourceKey<Level> targetLevel = null;
         try {
-            RegistryKey<World> targetDimension = DimensionUtils.parse(StringArgumentType.getString(context, "dimension"));
-            ServerWorld level = context.getSource().getServer().getLevel(targetDimension);
+            ResourceKey<Level> targetDimension = DimensionUtils.parse(StringArgumentType.getString(context, "dimension"));
+            ServerLevel level = context.getSource().getServer().getLevel(targetDimension);
             if (level != null) {
                 targetLevel = targetDimension;
             }
@@ -69,14 +69,14 @@ public final class TpHomeCommand {
         return 1;
     }
 
-    public static CompletableFuture<Suggestions> safeSuggestion(CommandContext<CommandSource> context, SuggestionsBuilder builder) throws CommandSyntaxException {
+    public static CompletableFuture<Suggestions> safeSuggestion(CommandContext<CommandSourceStack> context, SuggestionsBuilder builder) throws CommandSyntaxException {
         String name = xin.vanilla.banira.common.util.CommandUtils.getStringDefault(context, "name", null);
         String lang = xin.vanilla.banira.common.util.CommandUtils.getLanguage(context.getSource());
         Component trueTooltip = NarcissusComponent.get().transAuto("suggest_safe_true").languageCode(lang);
         Component falseTooltip = NarcissusComponent.get().transAuto("suggest_safe_false").languageCode(lang);
         Component dimTooltip = NarcissusComponent.get().transAuto("suggest_dimension").languageCode(lang);
         if ("true".equals(name) || "false".equals(name)) {
-            ServerPlayerEntity player = context.getSource().getPlayerOrException();
+            ServerPlayer player = context.getSource().getPlayerOrException();
             PlayerTeleportData data = PlayerTeleportData.getData(player);
             for (KeyValue<String, String> keyValue : data.getHomeCoordinate().keySet()) {
                 builder.suggest(keyValue.key(), dimTooltip.toVanilla());
@@ -93,7 +93,7 @@ public final class TpHomeCommand {
         return builder.buildFuture();
     }
 
-    public static LiteralArgumentBuilder<CommandSource> create() {
+    public static LiteralArgumentBuilder<CommandSourceStack> create() {
         return Commands.literal(CommonConfig.get().commandNames().commandTpHome())
                 .requires(source -> NarcissusUtils.hasCommandPermission(source, EnumCommandType.TP_HOME))
                 .executes(TpHomeCommand::execute)

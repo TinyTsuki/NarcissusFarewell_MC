@@ -1,405 +1,142 @@
-buildscript {
-    repositories {
-        // These repositories are only for Gradle plugins, put any other repositories in the repository block further below
-        maven { url = 'https://repo.spongepowered.org/repository/maven-public/' }
-        mavenCentral()
-    }
-    dependencies {
-        classpath 'org.spongepowered:mixingradle:0.7-SNAPSHOT'
-    }
-}
-
 plugins {
-    id 'eclipse'
-    id 'idea'
-    id 'net.minecraftforge.gradle' version '[6.0.16,6.2)'
-    // 若以上行报错则大概率为网络问题, 请切换网络并刷新Gradle
+    id 'fabric-loom' version '1.15-SNAPSHOT'
+    id 'maven-publish'
 }
 
 def javaVer = 8
 
-apply plugin: 'org.spongepowered.mixin'
-
-group = mod_group_id
-version = mod_version
+group = project.mod_group_id
+version = project.mod_version
 
 base {
-    archivesName = mod_id
+    archivesName = project.mod_id
 }
 
 java {
     toolchain.languageVersion = JavaLanguageVersion.of(javaVer)
 }
 
-minecraft {
-    // The mappings can be changed at any time and must be in the following format.
-    // Channel:   Version:
-    // official   MCVersion             Official field/method names from Mojang mapping files
-    // parchment  YYYY.MM.DD-MCVersion  Open community-sourced parameter names and javadocs layered on top of official
-    //
-    // You must be aware of the Mojang license when using the 'official' or 'parchment' mappings.
-    // See more information here: https://github.com/MinecraftForge/MCPConfig/blob/master/Mojang.md
-    //
-    // Parchment is an unofficial project maintained by ParchmentMC, separate from MinecraftForge
-    // Additional setup is needed to use their mappings: https://parchmentmc.org/docs/getting-started
-    //
-    // Use non-default mappings at your own risk. They may not always work.
-    // Simply re-run your setup task after changing the mappings to update your workspace.
-    mappings channel: mapping_channel, version: mapping_version
-
-    // When true, this property will have all Eclipse/IntelliJ IDEA run configurations run the "prepareX" task for the given run configuration before launching the game.
-    // In most cases, it is not necessary to enable.
-    // enableEclipsePrepareRuns = true
-    // enableIdeaPrepareRuns = true
-
-    // This property allows configuring Gradle's ProcessResources task(s) to run on IDE output locations before launching the game.
-    // It is REQUIRED to be set to true for this template to function.
-    // See https://docs.gradle.org/current/dsl/org.gradle.language.jvm.tasks.ProcessResources.html
-    copyIdeResources = true
-
-    // When true, this property will add the folder name of all declared run configurations to generated IDE run configurations.
-    // The folder name can be set on a run configuration using the "folderName" property.
-    // By default, the folder name of a run configuration is the name of the Gradle project containing it.
-    // generateRunFolders = true
-
-    // This property enables access transformers for use in development.
-    // They will be applied to the Minecraft artifact.
-    // The access transformer file can be anywhere in the project.
-    // However, it must be at "META-INF/accesstransformer.cfg" in the final mod jar to be loaded by Forge.
-    // This default location is a best practice to automatically put the file in the right place in the final jar.
-    // See https://docs.minecraftforge.net/en/latest/advanced/accesstransformers/ for more information.
-    // accessTransformer = file('src/main/resources/META-INF/accesstransformer.cfg')
-
-    // Default run configurations.
-    // These can be tweaked, removed, or duplicated as needed.
+loom {
     runs {
-        // applies to all the run configs below
-        configureEach {
-            workingDirectory project.file('run')
-
-            // Recommended logging data for a userdev environment
-            // The markers can be added/remove as needed separated by commas.
-            // "SCAN": For mods scan.
-            // "REGISTRIES": For firing of registry events.
-            // "REGISTRYDUMP": For getting the contents of all registries.
-            property 'forge.logging.markers', 'REGISTRIES'
-
-
-            // Recommended logging level for the console
-            // You can set various levels here.
-            // Please read: https://stackoverflow.com/questions/2031163/when-to-use-the-different-log-levels
-            property 'forge.logging.console.level', 'debug'
-
-            mods {
-                "${mod_id}" {
-                    source sourceSets.main
-                }
-            }
-        }
-
         client {
-            def uiSmoke = (project.findProperty('narcissus.uiSmoke') ?: System.getProperty('narcissus.uiSmoke') ?: 'false').toString()
-            def uiSmokeExit = (project.findProperty('narcissus.uiSmoke.exitOnFinish') ?: System.getProperty('narcissus.uiSmoke.exitOnFinish') ?: 'false').toString()
-            def uiSmokeWorld = (project.findProperty('narcissus.uiSmoke.world') ?: System.getProperty('narcissus.uiSmoke.world') ?: '').toString()
-            def uiSmokeTeleport = (project.findProperty('narcissus.uiSmoke.teleport') ?: System.getProperty('narcissus.uiSmoke.teleport') ?: 'false').toString()
-            property 'narcissus.uiSmoke', uiSmoke
-            property 'narcissus.uiSmoke.exitOnFinish', uiSmokeExit
-            property 'narcissus.uiSmoke.world', uiSmokeWorld
-            property 'narcissus.uiSmoke.teleport', uiSmokeTeleport
-        }
-
-        server {
-            // args '--nogui'
-        }
-
-        data {
-            // example of overriding the workingDirectory set in configureEach above
-            workingDirectory project.file('run-data')
-
-            // Specify the modid for data generation, where to output the resulting resource, and where to look for existing resources.
-            args '--mod', mod_id, '--all', '--output', file('src/generated/resources/'), '--existing', file('src/main/resources/')
+            programArgs '--username', 'Dev', '--uuid', '380df991-f603-344c-a090-369bad2a924a'
+            property 'narcissus.uiSmoke', (project.findProperty('narcissus.uiSmoke') ?: 'false').toString()
+            property 'narcissus.uiSmoke.exitOnFinish', (project.findProperty('narcissus.uiSmoke.exitOnFinish') ?: 'false').toString()
+            property 'narcissus.uiSmoke.world', (project.findProperty('narcissus.uiSmoke.world') ?: '').toString()
         }
     }
 }
-
-mixin {
-    add sourceSets.main, "${mod_id}.refmap.json"
-
-    config "${mod_id}.mixins.json"
-}
-
-// Include resources generated by data generators.
-sourceSets.main.resources { srcDir 'src/generated/resources' }
-
-// region banira_codex：JarJar / 胖 JAR 合并
-def baniraArtifactVersionRange = "${banira_version_range}"
-def baniraCodexCoords = "xin.vanilla.banira:banira_codex:${loader_type}-${minecraft_version}-${banira_version}"
-
-// 仓库中的 banira_codex（与 Banira 工程 publish + reobfJar 产物一致，SRG），用于胖包 zip 合并；勿用 fg.deobf
-configurations {
-    baniraCodexObf {
-        canBeConsumed = false
-        canBeResolved = true
-        transitive = false
-    }
-}
-// endregion banira_codex
 
 repositories {
     mavenLocal()
-
     maven {
-        url "https://cursemaven.com/"
-        content { includeGroup "curse.maven" }
-    }
-
-    flatDir {
-        dir 'libs'
+        name = 'Terraformers Maven'
+        url = 'https://maven.terraformersmc.com/'
     }
 }
 
 dependencies {
-    // Specify the version of Minecraft to use.
-    // Any artifact can be supplied so long as it has a "userdev" classifier artifact and is a compatible patcher artifact.
-    // The "userdev" classifier will be requested and setup by ForgeGradle.
-    // If the group id is "net.minecraft" and the artifact id is one of ["client", "server", "joined"],
-    // then special handling is done to allow a setup of a vanilla dependency without the use of an external repository.
-    minecraft "net.minecraftforge:forge:${minecraft_version}-${forge_version}"
+    minecraft "com.mojang:minecraft:${project.minecraft_version}"
+    mappings loom.officialMojangMappings()
+    modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
+    modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
 
-    annotationProcessor 'org.spongepowered:mixin:0.8.5:processor'
+    modImplementation "xin.vanilla.banira:banira_codex:${loader_type}-${minecraft_version}-${banira_version}"
+    modImplementation "com.terraformersmc:modmenu:${modmenu_version}"
 
     testImplementation 'junit:junit:4.13.2'
-
     compileOnly 'org.projectlombok:lombok:1.18.34'
     annotationProcessor 'org.projectlombok:lombok:1.18.34'
     testCompileOnly 'org.projectlombok:lombok:1.18.34'
     testAnnotationProcessor 'org.projectlombok:lombok:1.18.34'
-    annotationProcessor 'org.spongepowered:mixin:0.8.5:processor'
-
-    // Example mod dependency with JEI - using fg.deobf() ensures the dependency is remapped to your development mappings
-    // The JEI API is declared for compile time use, while the full JEI artifact is used at runtime
-    // compileOnly fg.deobf("mezz.jei:jei-${mc_version}-common-api:${jei_version}")
-    // compileOnly fg.deobf("mezz.jei:jei-${mc_version}-forge-api:${jei_version}")
-    // runtimeOnly fg.deobf("mezz.jei:jei-${mc_version}-forge:${jei_version}")
-    // runtimeOnly fg.deobf("blank:aotake_sweep-forge-1.16.5:1.0.0")
-
-    // Example mod dependency using a mod jar from ./libs with a flat dir repository
-    // This maps to ./libs/coolmod-${mc_version}-${coolmod_version}.jar
-    // The group id is ignored when searching -- in this case, it is "blank"
-    // implementation fg.deobf("blank:coolmod-${mc_version}:${coolmod_version}")
-
-    implementation fg.deobf(baniraCodexCoords)
-    baniraCodexObf baniraCodexCoords
-    // jarJar("xin.vanilla.banira:banira_codex:${loader_type}-${minecraft_version}-${banira_version}") {
-    //     jarJar.ranged(it, baniraArtifactVersionRange)
-    // }
-
-    // implementation fg.deobf("curse.maven:apricityui-1470115:${apricityui_id}")
-    compileOnly fg.deobf("blank:apricityui:1.0.0")
-
-    compileOnly fg.deobf("curse.maven:gravestone-mod-238551:${gravestone_id}")
-    compileOnly fg.deobf("curse.maven:corpse-316582:${corpse_id}")
-    compileOnly fg.deobf("curse.maven:simple-tomb-399669:${simple_tomb_id}")
-    // compileOnly fg.deobf("curse.maven:corail-tombstone-243707:${corail_tomb_id}")
-    compileOnly fg.deobf("blank:tombstone-${minecraft_version}:${corail_tomb_version}")
-
-    compileOnly fg.deobf("curse.maven:xaeros-minimap-263420:${xaeros_minimap_id}")
-    compileOnly fg.deobf("curse.maven:xaeros-world-map-317780:${xaeros_world_map_id}")
-    compileOnly fg.deobf("curse.maven:xaerolib-1417462:${xaerolib_id}")
-    compileOnly fg.deobf("curse.maven:journeymap-32274:${journeymap_id}")
-
-    compileOnly fg.deobf("curse.maven:ftb-chunks-forge-314906:${ftb_chunk_id}")
-    compileOnly fg.deobf("curse.maven:architectury-api-419699:${architectury_api_id}")
-    compileOnly fg.deobf("curse.maven:ftb-library-forge-404465:${ftb_library_id}")
-    compileOnly fg.deobf("curse.maven:ftb-teams-forge-404468:${ftb_teams_id}")
-
-    runtimeOnly fg.deobf("curse.maven:jade-324717:${jade_id}")
-
-    // For more info:
-    // http://www.gradle.org/docs/current/userguide/artifact_dependencies_tutorial.html
-    // http://www.gradle.org/docs/current/userguide/dependency_management.html
-
+    implementation 'com.google.code.findbugs:jsr305:3.0.2'
 }
 
-// 纯单元测试不需要解析仅供游戏运行的可选联动 mod。
-configurations.testRuntimeOnly.setExtendsFrom(
-        configurations.testRuntimeOnly.extendsFrom.findAll { it != configurations.runtimeOnly })
+processResources {
+    inputs.property 'mod_id', project.mod_id
+    inputs.property 'mod_name', project.mod_name
+    inputs.property 'mod_desc', project.mod_description
+    inputs.property 'mod_version', project.mod_version
+    inputs.property 'mod_authors', project.mod_authors
+    inputs.property 'sources_url', project.sources_url
+    inputs.property 'issues_url', project.issues_url
+    inputs.property 'license', project.mod_license
+    inputs.property 'minecraft_version', project.minecraft_version
+    inputs.property 'loader_version', project.loader_version
+    inputs.property 'banira_version_range', project.banira_version_range
+    filteringCharset 'UTF-8'
 
-// This block of code expands all declared replace properties in the specified resource targets.
-// A missing property will result in an error. Properties are expanded using ${} Groovy notation.
-// When "copyIdeResources" is enabled, this will also run before the game launches in IDE environments.
-// See https://docs.gradle.org/current/dsl/org.gradle.language.jvm.tasks.ProcessResources.html
-tasks.named('processResources', ProcessResources).configure {
-    var replaceProperties = [minecraft_version   : minecraft_version, minecraft_version_range: minecraft_version_range,
-                             forge_version       : forge_version, forge_version_range: forge_version_range,
-                             loader_version_range: loader_version_range,
-                             loader_type         : loader_type,
-                             banira_version_range: banira_version_range,
-                             mod_id              : mod_id, mod_name: mod_name, mod_license: mod_license, mod_version: mod_version,
-                             mod_authors         : mod_authors, mod_description: mod_description,]
-
-    inputs.properties replaceProperties
-
-    filesMatching(['META-INF/mods.toml', 'pack.mcmeta']) {
-        expand replaceProperties + [project: project]
+    filesMatching('fabric.mod.json') {
+        expand 'mod_id': project.mod_id,
+                'mod_name': project.mod_name,
+                'mod_desc': project.mod_description,
+                'mod_version': project.mod_version,
+                'mod_authors': project.mod_authors,
+                'sources_url': project.sources_url,
+                'issues_url': project.issues_url,
+                'license': project.mod_license,
+                'minecraft_version': project.minecraft_version,
+                'loader_version': project.loader_version,
+                'banira_version_range': project.banira_version_range
     }
 }
-
-// 仅用于 jarAll：从瘦资源复制并追加 banira_codex 的 [[mods]]（瘦 jar 的 mods.toml 不追加）
-tasks.register('prepareFatResources') {
-    dependsOn 'processResources'
-    inputs.dir(layout.buildDirectory.dir('resources/main'))
-    inputs.property('banira_embed_mods_toml', "${banira_version}|${minecraft_version}|${forge_version_range}|${minecraft_version_range}")
-    outputs.dir(layout.buildDirectory.dir('fatResources/main'))
-    doLast {
-        copy {
-            from layout.buildDirectory.dir('resources/main')
-            into layout.buildDirectory.dir('fatResources/main')
-        }
-        def modsToml = layout.buildDirectory.file('fatResources/main/META-INF/mods.toml').get().asFile
-        if (!modsToml.isFile()) {
-            throw new GradleException('fatResources: META-INF/mods.toml missing')
-        }
-        modsToml.append("""
-[[mods]]
-    modId = "banira_codex"
-    version = "${banira_version}"
-    displayName = "香草志(Banira Codex)"
-    updateJSONURL = "https://update.mc.vanilla.xin/banira_codex/forge/${minecraft_version}"
-    displayURL = "https://mc.vanilla.xin/banira_codex"
-    authors = "Tsuki Maaii"
-    description = ''''''
-    clientRequired = false
-[[dependencies."banira_codex"]]
-    modId = "forge"
-    mandatory = true
-    versionRange = "${forge_version_range}"
-    ordering = "NONE"
-    side = "BOTH"
-[[dependencies."banira_codex"]]
-    modId = "minecraft"
-    mandatory = true
-    versionRange = "${minecraft_version_range}"
-    ordering = "NONE"
-    side = "BOTH"
-[[dependencies."banira_codex"]]
-    modId = "banira_codex"
-    mandatory = true
-    versionRange = "[1.0.0,)"
-    ordering = "NONE"
-    side = "SERVER"
-[[dependencies."banira_codex"]]
-    modId = "banira_codex"
-    mandatory = false
-    versionRange = "[1.0.0,)"
-    ordering = "NONE"
-    side = "CLIENT"
-""".stripIndent(), 'UTF-8')
-    }
-}
-
-def modsJarVersion = "${loader_type}-${minecraft_version}-${mod_version}"
-def modsDestinationDir = file("${projectDir}/builds/${mod_version}")
-
-// Example for how to get properties into the manifest for reading at runtime.
-tasks.named('jar', Jar).configure {
-    // 瘦 JAR：不含 banira_codex 字节与资源
-    archiveBaseName.set(mod_id)
-    archiveVersion.set(modsJarVersion)
-    destinationDirectory.set(modsDestinationDir)
-
-    manifest {
-        attributes(["Specification-Title"     : mod_id,
-                    "Specification-Vendor"    : mod_authors,
-                    "Specification-Version"   : "1",
-                    "Implementation-Title"    : project.name,
-                    "Implementation-Version"  : project.jar.archiveVersion,
-                    "Implementation-Vendor"   : mod_authors,
-                    "Implementation-Timestamp": new Date().format("yyyy-MM-dd'T'HH:mm:ssZ")])
-    }
-
-    finalizedBy 'reobfJar'
-}
-
-// 胖 JAR：reobf 后的瘦包（SRG）+ 仓库中已 reobf 的 banira_codex（SRG）+ 追加 mods.toml；不再对合并结果跑第二次 reobf（MCP 混包会导致 remapper NPE）
-tasks.register('jarAll', Jar) {
-    archiveBaseName.set(mod_id)
-    archiveVersion.set(modsJarVersion)
-    archiveClassifier.set('all')
-    destinationDirectory.set(modsDestinationDir)
-
-    dependsOn 'reobfJar', 'prepareFatResources', configurations.named('baniraCodexObf')
-    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
-
-    def slimJar = tasks.named('jar', Jar)
-
-    from {
-        zipTree(slimJar.get().archiveFile.get().asFile)
-    } {
-        exclude 'META-INF/mods.toml'
-        exclude 'META-INF/MANIFEST.MF'
-        exclude 'META-INF/*.SF'
-        exclude 'META-INF/*.RSA'
-        exclude 'META-INF/*.DSA'
-    }
-    from(layout.buildDirectory.file('fatResources/main/META-INF/mods.toml')) {
-        into 'META-INF'
-    }
-    from {
-        zipTree(configurations.baniraCodexObf.singleFile)
-    } {
-        exclude 'META-INF/mods.toml'
-        exclude 'META-INF/MANIFEST.MF'
-        exclude 'META-INF/*.SF'
-        exclude 'META-INF/*.RSA'
-        exclude 'META-INF/*.DSA'
-    }
-
-    manifest {
-        attributes(["Specification-Title"     : mod_id,
-                    "Specification-Vendor"    : mod_authors,
-                    "Specification-Version"   : "1",
-                    "Implementation-Title"    : project.name,
-                    "Implementation-Version"  : "${modsJarVersion}-all",
-                    "Implementation-Vendor"   : mod_authors,
-                    "Implementation-Timestamp": new Date().format("yyyy-MM-dd'T'HH:mm:ssZ")])
-    }
-}
-
-tasks.named('assemble').configure {
-    dependsOn 'jarAll'
-}
-
-apply from: 'gradle/network-smoke.gradle'
-
-afterEvaluate {
-    tasks.named('jar', Jar).configure {
-        manifest.attributes('MixinConfigs': "${mod_id}.mixins.json")
-    }
-    tasks.named('jarAll', Jar).configure {
-        manifest.attributes(
-                'MixinConfigs': "${mod_id}.mixins.json, banira_codex.mixins.json"
-        )
-    }
-}
-
-// region 将含 Jar-in-Jar 的 reobf 合并包同步到 builds
-// afterEvaluate {
-//     tasks.named('reobfJarJar').configure {
-//         doLast {
-//             def reobfFat = layout.buildDirectory.file('reobfJarJar/output.jar').get().asFile
-//             if (reobfFat.exists()) {
-//                 copy {
-//                     from reobfFat
-//                     into file("${projectDir}/builds/${mod_version}")
-//                     rename { "${mod_id}-${loader_type}-${minecraft_version}-${mod_version}-all.jar" }
-//                 }
-//             }
-//         }
-//     }
-// }
-// endregion
 
 tasks.withType(JavaCompile).configureEach {
     options.encoding = 'UTF-8'
+    if (javaVer >= 10) {
+        options.release.set(javaVer)
+    }
 }
+
+java {
+    withSourcesJar()
+}
+
+tasks.named('jar', Jar).configure {
+    from('LICENSE') {
+        rename { "${it}_${project.mod_id}" }
+    }
+    manifest {
+        attributes([
+                'Specification-Title'      : project.mod_id,
+                'Specification-Vendor'     : project.mod_authors,
+                'Specification-Version'    : '1',
+                'Implementation-Title'     : project.name,
+                'Implementation-Version'   : project.version,
+                'Implementation-Vendor'    : project.mod_authors,
+                'Implementation-Timestamp' : new Date().format("yyyy-MM-dd'T'HH:mm:ssZ")
+        ])
+    }
+}
+
+tasks.named('remapJar') {
+    archiveBaseName.set(project.mod_id)
+    archiveVersion.set("${loader_type}-${minecraft_version}-${mod_version}")
+    destinationDirectory.set(file("${projectDir}/builds/${mod_version}"))
+}
+
+publishing {
+    publications {
+        register('mavenJava', MavenPublication) {
+            groupId = project.group
+            artifactId = base.archivesName.get()
+            version = "${loader_type}-${minecraft_version}-${mod_version}"
+        }
+    }
+    repositories {
+        mavenLocal()
+    }
+}
+
+afterEvaluate {
+    publishing.publications.named('mavenJava', MavenPublication) {
+        artifact tasks.named('remapJar')
+        artifact tasks.named('sourcesJar')
+    }
+}
+
+tasks.withType(PublishToMavenLocal).configureEach {
+    dependsOn 'remapJar', 'sourcesJar'
+}
+
+apply from: 'gradle/network-smoke.gradle'

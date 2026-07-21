@@ -4,9 +4,10 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
-import net.minecraft.block.Blocks;
-import net.minecraft.util.ResourceLocation;
-import net.minecraft.util.SoundEvents;
+import net.minecraft.core.Registry;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.sounds.SoundEvents;
 import xin.vanilla.banira.api.BaniraConfigs;
 import xin.vanilla.banira.common.config.ConfigData;
 import xin.vanilla.banira.common.config.ConfigHolder;
@@ -299,7 +300,7 @@ public class CommonConfig implements ConfigData {
         @ConfigEntry.Gui.Tooltip(zh_cn = "帮助指令信息头部内容。", en_us = "The header content of the help command.")
         private String helpHeader = "-----==== Narcissus Farewell Help (%d/%d) ====-----";
         @ConfigEntry.Gui.Tooltip(zh_cn = "传送时的音效。", en_us = "The sound effect when teleporting.")
-        private String tpSound = SoundEvents.ENDERMAN_TELEPORT.getRegistryName().toString();
+        private String tpSound = Registry.SOUND_EVENT.getKey(SoundEvents.ENDERMAN_TELEPORT).toString();
         @ConfigEntry.Gui.Tooltip(zh_cn = "是否允许载具一起传送。", en_us = "Whether to allow vehicles to be teleported together.")
         private boolean tpWithVehicle = true;
         @ConfigEntry.Gui.Tooltip(zh_cn = "是否允许跟随的实体一起传送。", en_us = "Whether to allow followers to be teleported together.")
@@ -329,12 +330,12 @@ public class CommonConfig implements ConfigData {
     public static class SafeTeleportCategory {
         @ConfigEntry.Gui.Tooltip(zh_cn = "不安全的方块列表，玩家不会传送到这些方块上。", en_us = "The list of unsafe blocks, players will not be teleported to these blocks.")
         private List<String> unsafeBlocks = Stream.of(Blocks.LAVA, Blocks.FIRE, Blocks.CAMPFIRE, Blocks.SOUL_FIRE, Blocks.SOUL_CAMPFIRE, Blocks.CACTUS, Blocks.MAGMA_BLOCK, Blocks.SWEET_BERRY_BUSH).map(block -> {
-            ResourceLocation rl = block.getRegistryName();
+            ResourceLocation rl = Registry.BLOCK.getKey(block);
             return rl == null ? "" : rl.toString();
         }).collect(Collectors.toList());
         @ConfigEntry.Gui.Tooltip(zh_cn = "窒息的方块列表，玩家头不会处于这些方块里面。", en_us = "The list of suffocating blocks, players will not be teleported to these blocks.")
         private List<String> suffocatingBlocks = Stream.of(Blocks.LAVA, Blocks.WATER).map(block -> {
-            ResourceLocation rl = block.getRegistryName();
+            ResourceLocation rl = Registry.BLOCK.getKey(block);
             return rl == null ? "" : rl.toString();
         }).collect(Collectors.toList());
         @ConfigEntry.Gui.Tooltip(zh_cn = "当进行安全传送时，如果未找到安全坐标，是否在脚下放置方块。", en_us = "When performing a safe teleport, whether to place a block underfoot if a safe safeWorldCoordinate is not found.")
@@ -343,7 +344,7 @@ public class CommonConfig implements ConfigData {
         private boolean getBlockFromInventory = true;
         @ConfigEntry.Gui.Tooltip(zh_cn = "当进行安全传送时，如果未找到安全坐标，放置方块的列表。若'getBlockFromInventory'为false，则始终使用列表中的第一个方块。", en_us = "When performing a safe teleport, the list of blocks to place if a safe safeWorldCoordinate is not found. If 'getBlockFromInventory' is set to false, the first block in the list will always be used.")
         private List<String> safeBlocks = Stream.of(Blocks.GRASS_BLOCK, Blocks.GRASS_PATH, Blocks.DIRT, Blocks.COBBLESTONE).map(block -> {
-            ResourceLocation rl = block.getRegistryName();
+            ResourceLocation rl = Registry.BLOCK.getKey(block);
             return rl == null ? "" : rl.toString();
         }).collect(Collectors.toList());
         @ConfigEntry.Gui.Tooltip(zh_cn = "当进行安全传送时，寻找安全坐标的半径，单位为区块。", en_us = "The chunk range for finding a safe safeWorldCoordinate, in chunks.")

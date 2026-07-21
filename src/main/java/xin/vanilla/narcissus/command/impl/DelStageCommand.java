@@ -3,12 +3,12 @@ package xin.vanilla.narcissus.command.impl;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
-import net.minecraft.command.CommandSource;
-import net.minecraft.command.Commands;
-import net.minecraft.entity.player.ServerPlayerEntity;
-import net.minecraft.util.RegistryKey;
-import net.minecraft.util.text.event.HoverEvent;
-import net.minecraft.world.World;
+import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.commands.Commands;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.network.chat.HoverEvent;
+import net.minecraft.world.level.Level;
 import xin.vanilla.banira.common.data.Component;
 import xin.vanilla.banira.common.data.KeyValue;
 import xin.vanilla.banira.common.util.DimensionUtils;
@@ -30,18 +30,18 @@ public final class DelStageCommand {
     private DelStageCommand() {
     }
 
-    private static int execute(CommandContext<CommandSource> context) {
+    private static int execute(CommandContext<CommandSourceStack> context) {
         CommandUtils.notifyHelp(context);
-        CommandSource source = context.getSource();
-        ServerPlayerEntity player = null;
-        if (source.getEntity() instanceof ServerPlayerEntity) {
-            player = (ServerPlayerEntity) source.getEntity();
+        CommandSourceStack source = context.getSource();
+        ServerPlayer player = null;
+        if (source.getEntity() instanceof ServerPlayer) {
+            player = (ServerPlayer) source.getEntity();
         }
         if (CommandUtils.checkTeleportPre(source, EnumCommandType.DEL_STAGE)) return 0;
         String name = StringArgumentType.getString(context, "name");
         String dimension;
         try {
-            RegistryKey<World> targetLevel = DimensionUtils.parse(StringArgumentType.getString(context, "dimension"));
+            ResourceKey<Level> targetLevel = DimensionUtils.parse(StringArgumentType.getString(context, "dimension"));
             dimension = targetLevel.location().toString();
         } catch (IllegalArgumentException ignored) {
             dimension = NarcissusUtils.getStageDimensionByName(player, name);
@@ -69,7 +69,7 @@ public final class DelStageCommand {
         return 1;
     }
 
-    public static LiteralArgumentBuilder<CommandSource> create() {
+    public static LiteralArgumentBuilder<CommandSourceStack> create() {
         return Commands.literal(CommonConfig.get().commandNames().commandDelStage())
                 .requires(source -> NarcissusUtils.hasCommandPermission(source, EnumCommandType.DEL_STAGE))
                 .then(Commands.argument("name", StringArgumentType.string())

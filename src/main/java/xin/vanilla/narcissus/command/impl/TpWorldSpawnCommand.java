@@ -4,11 +4,11 @@ import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
-import net.minecraft.command.CommandSource;
-import net.minecraft.command.Commands;
-import net.minecraft.entity.player.ServerPlayerEntity;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.World;
+import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.commands.Commands;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.level.Level;
 import xin.vanilla.narcissus.config.CommonConfig;
 import xin.vanilla.narcissus.data.SafeWorldCoordinate;
 import xin.vanilla.narcissus.enums.EnumCommandType;
@@ -20,16 +20,16 @@ public final class TpWorldSpawnCommand {
     private TpWorldSpawnCommand() {
     }
 
-    private static int execute(CommandContext<CommandSource> context) throws CommandSyntaxException {
+    private static int execute(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
         CommandUtils.notifyHelp(context);
         if (CommandUtils.checkTeleportPre(context.getSource(), EnumCommandType.TP_WORLD_SPAWN)) return 0;
-        ServerPlayerEntity player = context.getSource().getPlayerOrException();
+        ServerPlayer player = context.getSource().getPlayerOrException();
         SafeWorldCoordinate safeWorldCoordinate = new SafeWorldCoordinate(player);
         BlockPos respawnPosition = player.getLevel().getSharedSpawnPos();
         safeWorldCoordinate.dimension(player.getLevel().dimension());
         if (respawnPosition == null) {
-            respawnPosition = player.getServer().getLevel(World.OVERWORLD).getSharedSpawnPos();
-            safeWorldCoordinate.dimension(World.OVERWORLD);
+            respawnPosition = player.getServer().getLevel(Level.OVERWORLD).getSharedSpawnPos();
+            safeWorldCoordinate.dimension(Level.OVERWORLD);
         }
         safeWorldCoordinate.fromBlockPos(respawnPosition);
         safeWorldCoordinate.safe("safe".equalsIgnoreCase(xin.vanilla.banira.common.util.CommandUtils.getStringDefault(context, "safe", "safe")));
@@ -38,7 +38,7 @@ public final class TpWorldSpawnCommand {
         return 1;
     }
 
-    public static LiteralArgumentBuilder<CommandSource> create() {
+    public static LiteralArgumentBuilder<CommandSourceStack> create() {
         return Commands.literal(CommonConfig.get().commandNames().commandTpWorldSpawn())
                 .requires(source -> NarcissusUtils.hasCommandPermission(source, EnumCommandType.TP_WORLD_SPAWN))
                 .executes(TpWorldSpawnCommand::execute)

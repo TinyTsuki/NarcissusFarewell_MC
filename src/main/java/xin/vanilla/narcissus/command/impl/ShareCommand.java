@@ -4,12 +4,12 @@ import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
-import net.minecraft.command.CommandSource;
-import net.minecraft.command.Commands;
-import net.minecraft.command.arguments.EntityArgument;
-import net.minecraft.entity.player.ServerPlayerEntity;
-import net.minecraft.util.text.event.ClickEvent;
-import net.minecraft.util.text.event.HoverEvent;
+import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.commands.Commands;
+import net.minecraft.commands.arguments.EntityArgument;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.network.chat.ClickEvent;
+import net.minecraft.network.chat.HoverEvent;
 import xin.vanilla.banira.common.data.Component;
 import xin.vanilla.banira.common.data.KeyValue;
 import xin.vanilla.banira.common.enums.EnumMCColor;
@@ -32,15 +32,15 @@ public final class ShareCommand {
     private ShareCommand() {
     }
 
-    private static int execute(CommandContext<CommandSource> context) throws CommandSyntaxException {
+    private static int execute(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
         CommandUtils.notifyHelp(context);
         if (CommandUtils.checkTeleportPre(context.getSource(), EnumCommandType.SHARE)) return 0;
-        CommandSource source = context.getSource();
-        ServerPlayerEntity player = source.getPlayerOrException();
+        CommandSourceStack source = context.getSource();
+        ServerPlayer player = source.getPlayerOrException();
 
         String name = xin.vanilla.banira.common.util.CommandUtils.getStringDefault(context, "name", "Shared");
 
-        List<ServerPlayerEntity> targetList = new ArrayList<>(xin.vanilla.banira.common.util.CommandUtils.getPlayersOptional(context, "players",
+        List<ServerPlayer> targetList = new ArrayList<>(xin.vanilla.banira.common.util.CommandUtils.getPlayersOptional(context, "players",
                 context.getSource().getServer().getPlayerList().getPlayers()));
 
         Component nameComponent;
@@ -107,7 +107,7 @@ public final class ShareCommand {
                 , nameComponent
                 , tpButton
                 , copyButton);
-        for (ServerPlayerEntity target : targetList) {
+        for (ServerPlayer target : targetList) {
             if (!target.getUUID().equals(player.getUUID())) {
                 MessageUtils.sendNotification(target, component, NarcissusNotificationTypes.INTERACTIVE_SHARE);
             }
@@ -126,14 +126,14 @@ public final class ShareCommand {
         );
     }
 
-    public static LiteralArgumentBuilder<CommandSource> create() {
+    public static LiteralArgumentBuilder<CommandSourceStack> create() {
         return Commands.literal(CommonConfig.get().commandNames().commandShare())
                 .executes(ShareCommand::execute)
                 .then(Commands.argument("name", StringArgumentType.string())
                         .suggests((context, builder) -> {
                             String name = xin.vanilla.banira.common.util.CommandUtils.getStringEmpty(context, "name");
-                            CommandSource source = context.getSource();
-                            ServerPlayerEntity player = source.getPlayerOrException();
+                            CommandSourceStack source = context.getSource();
+                            ServerPlayer player = source.getPlayerOrException();
                             PlayerTeleportData data = PlayerTeleportData.getData(player);
                             for (KeyValue<String, String> home : data.getHomeCoordinate().keySet()) {
                                 String homeString = home.value() + "->" + home.key();

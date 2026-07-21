@@ -1,8 +1,8 @@
 package xin.vanilla.narcissus.internal.network;
 
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
-import net.minecraft.nbt.CompoundNBT;
-import net.minecraft.nbt.JsonToNBT;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.TagParser;
 import xin.vanilla.banira.common.network.BaniraPacketBuffer;
 
 /**
@@ -14,21 +14,21 @@ public final class NarcissusNbtPacketCodec {
     private NarcissusNbtPacketCodec() {
     }
 
-    public static void write(BaniraPacketBuffer buffer, CompoundNBT tag) {
+    public static void write(BaniraPacketBuffer buffer, CompoundTag tag) {
         buffer.writeUtf(serialize(tag), MAX_SNBT_LENGTH);
     }
 
-    public static CompoundNBT read(BaniraPacketBuffer buffer) {
+    public static CompoundTag read(BaniraPacketBuffer buffer) {
         return deserialize(buffer.readUtf(MAX_SNBT_LENGTH));
     }
 
-    public static String serialize(CompoundNBT tag) {
+    public static String serialize(CompoundTag tag) {
         return tag == null ? "{}" : tag.toString();
     }
 
-    public static CompoundNBT deserialize(String value) {
+    public static CompoundTag deserialize(String value) {
         try {
-            return JsonToNBT.parseTag(value == null || value.isEmpty() ? "{}" : value);
+            return TagParser.parseTag(value == null || value.isEmpty() ? "{}" : value);
         } catch (CommandSyntaxException e) {
             throw new IllegalArgumentException("Invalid Narcissus packet SNBT", e);
         }

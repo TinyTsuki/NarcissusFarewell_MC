@@ -1,8 +1,6 @@
 package xin.vanilla.narcissus.util;
 
-import net.minecraft.client.entity.player.ClientPlayerEntity;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
+import net.minecraft.client.player.LocalPlayer;
 import xin.vanilla.banira.common.enums.EnumI18nType;
 import xin.vanilla.banira.common.util.SafeExpressionEvaluator;
 import xin.vanilla.narcissus.NarcissusLang;
@@ -18,7 +16,6 @@ import java.util.HashMap;
 import java.util.Map;
 
 
-@OnlyIn(Dist.CLIENT)
 public final class ClientCostCalculator {
 
     private ClientCostCalculator() {
@@ -27,7 +24,7 @@ public final class ClientCostCalculator {
     /**
      * 计算并格式化传送代价显示
      */
-    public static String formatCostDisplay(ClientPlayerEntity player, SafeWorldCoordinate target, EnumTeleportType type) {
+    public static String formatCostDisplay(LocalPlayer player, SafeWorldCoordinate target, EnumTeleportType type) {
         if (player == null || target == null) return "";
         TeleportCost cost = ClientCostConfig.getCost(type);
         if (cost == null || cost.getType() == EnumCostType.NONE) {

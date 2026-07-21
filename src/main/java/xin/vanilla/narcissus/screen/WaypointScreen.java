@@ -1,10 +1,10 @@
 package xin.vanilla.narcissus.screen;
 
-import com.mojang.blaze3d.matrix.MatrixStack;
+import com.mojang.blaze3d.vertex.PoseStack;
 import lombok.experimental.Accessors;
 import net.minecraft.client.Minecraft;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.util.math.MathHelper;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.util.Mth;
 import xin.vanilla.banira.client.data.*;
 import xin.vanilla.banira.client.enums.EnumAlignment;
 import xin.vanilla.banira.client.enums.EnumEllipsisPosition;
@@ -216,7 +216,7 @@ public class WaypointScreen extends BaniraScreen {
         } else if (maxListPixel >= LIST_ROWS_COMPACT * ITEM_HEIGHT) {
             visibleRowCount = LIST_ROWS_COMPACT;
         } else {
-            visibleRowCount = MathHelper.clamp(maxListPixel / ITEM_HEIGHT, 1, LIST_ROWS_COMPACT);
+            visibleRowCount = Mth.clamp(maxListPixel / ITEM_HEIGHT, 1, LIST_ROWS_COMPACT);
         }
         listHeight = visibleRowCount * ITEM_HEIGHT;
 
@@ -585,7 +585,7 @@ public class WaypointScreen extends BaniraScreen {
         if (!CommonConfig.get().featureSwitch().switchTpHome()) {
             return false;
         }
-        PlayerEntity p = minecraft.player;
+        Player p = minecraft.player;
         int need = NarcissusUtils.getCommandPermissionLevel(EnumCommandType.TP_HOME);
         if (!p.hasPermissions(need) && !CommandUtils.hasVirtualPermission(p, EnumCommandType.TP_HOME)) {
             return false;
@@ -600,7 +600,7 @@ public class WaypointScreen extends BaniraScreen {
         if (!CommonConfig.get().featureSwitch().switchTpStage()) {
             return false;
         }
-        PlayerEntity p = minecraft.player;
+        Player p = minecraft.player;
         int need = NarcissusUtils.getCommandPermissionLevel(EnumCommandType.SET_STAGE);
         return p.hasPermissions(need) || CommandUtils.hasVirtualPermission(p, EnumCommandType.SET_STAGE);
     }
@@ -702,7 +702,7 @@ public class WaypointScreen extends BaniraScreen {
     }
 
     @Override
-    protected void onRender(@Nonnull MatrixStack stack, float partialTicks) {
+    protected void onRender(@Nonnull PoseStack stack, float partialTicks) {
         renderBackground(stack);
 
         if (minecraft != null && minecraft.player != null) {
@@ -818,7 +818,7 @@ public class WaypointScreen extends BaniraScreen {
         renderWidgets(stack, partialTicks);
     }
 
-    private void drawLimitedTextLine(MatrixStack stack, String text, double x, double y, int maxWidth, int colorArgb) {
+    private void drawLimitedTextLine(PoseStack stack, String text, double x, double y, int maxWidth, int colorArgb) {
         LabelWidget.drawLimitedText(FontDrawArgs.of(Text.literal(text).stack(stack).font(font).color(Color.argb(colorArgb)))
                 .x(x).y(y)
                 .maxWidth(maxWidth)
@@ -827,7 +827,7 @@ public class WaypointScreen extends BaniraScreen {
                 .inScreen(false));
     }
 
-    private void drawLimitedTextCentered(MatrixStack stack, String text, double x, double y, int maxWidth, int colorArgb) {
+    private void drawLimitedTextCentered(PoseStack stack, String text, double x, double y, int maxWidth, int colorArgb) {
         LabelWidget.drawLimitedText(FontDrawArgs.of(Text.literal(text).stack(stack).font(font).color(Color.argb(colorArgb)))
                 .x(x).y(y)
                 .maxWidth(maxWidth)
@@ -836,7 +836,7 @@ public class WaypointScreen extends BaniraScreen {
                 .inScreen(false));
     }
 
-    private void drawTopBarAndDividers(MatrixStack stack, BaniraColorConfig theme) {
+    private void drawTopBarAndDividers(PoseStack stack, BaniraColorConfig theme) {
         ShapeDrawArgs topBg = ShapeDrawArgs.rect(stack, startX, topBarY, footerW, TOP_BAR_H, theme.panelBg());
         topBg.rect().radius(6f, 6f, 0f, 0f);
         BaseShapeWidget.drawShape(topBg);
@@ -851,7 +851,7 @@ public class WaypointScreen extends BaniraScreen {
         BaseShapeWidget.drawShape(div2);
     }
 
-    private void drawColumnHeaders(MatrixStack stack, BaniraColorConfig theme) {
+    private void drawColumnHeaders(PoseStack stack, BaniraColorConfig theme) {
         if (panelMode == EnumPanelMode.COLUMNS) {
             for (int c = 0; c < 3; c++) {
                 int x = startX + c * (panelWidth + GAP_H);
@@ -873,7 +873,7 @@ public class WaypointScreen extends BaniraScreen {
         }
     }
 
-    private void drawListColumns(MatrixStack stack, BaniraColorConfig theme, int mouseX, int mouseY) {
+    private void drawListColumns(PoseStack stack, BaniraColorConfig theme, int mouseX, int mouseY) {
         if (panelMode == EnumPanelMode.COLUMNS) {
             drawColumnList(stack, theme, startX, panelWidth, homeItems, homeScrollbar, false, false, mouseX, mouseY);
             drawColumnList(stack, theme, startX + panelWidth + GAP_H, panelWidth, stageItems, stageScrollbar, false, false, mouseX, mouseY);
@@ -883,7 +883,7 @@ public class WaypointScreen extends BaniraScreen {
         }
     }
 
-    private void drawColumnList(MatrixStack stack, BaniraColorConfig theme, int listOriginX, int listPanelOuterW, List<WaypointEntry> items,
+    private void drawColumnList(PoseStack stack, BaniraColorConfig theme, int listOriginX, int listPanelOuterW, List<WaypointEntry> items,
                                 ScrollbarWidget scrollbar, boolean isBackPanel, boolean appendDistanceAfterCoords, int mouseX, int mouseY) {
         int x = listOriginX;
         ShapeDrawArgs panelShape = ShapeDrawArgs.rect(stack, x, listAreaY, listPanelOuterW, listHeight, theme.panelBg());
@@ -894,7 +894,7 @@ public class WaypointScreen extends BaniraScreen {
         boolean scrollNeeded = items.size() > visibleRowCount;
         int cw = listBodyW - (scrollNeeded ? SCROLLBAR_WIDTH + SCROLLBAR_GAP : 0);
         int scroll = scrollbar != null
-                ? (int) Math.round(MathHelper.clamp(scrollbar.value(), 0, Math.max(0, items.size() - visibleRowCount)))
+                ? (int) Math.round(Mth.clamp(scrollbar.value(), 0, Math.max(0, items.size() - visibleRowCount)))
                 : 0;
 
         int innerTop = listAreaY + LIST_PADDING_V;
@@ -1052,7 +1052,7 @@ public class WaypointScreen extends BaniraScreen {
     private boolean checkPanelClick(double mouseX, double mouseY, int listX, int listY, List<WaypointEntry> items, ScrollbarWidget bar) {
         boolean scrollNeeded = items.size() > visibleRowCount;
         int cw = listBodyW - (scrollNeeded ? SCROLLBAR_WIDTH + SCROLLBAR_GAP : 0);
-        int scroll = bar != null ? (int) Math.round(MathHelper.clamp(bar.value(), 0, Math.max(0, items.size() - visibleRowCount))) : 0;
+        int scroll = bar != null ? (int) Math.round(Mth.clamp(bar.value(), 0, Math.max(0, items.size() - visibleRowCount))) : 0;
 
         int rowSlots = scrollNeeded ? visibleRowCount : items.size();
 
@@ -1108,7 +1108,7 @@ public class WaypointScreen extends BaniraScreen {
             ScrollbarWidget bar = tabListScrollbar;
             boolean scrollNeeded = items.size() > visibleRowCount;
             int cw = listBodyW - (scrollNeeded ? SCROLLBAR_WIDTH + SCROLLBAR_GAP : 0);
-            int scroll = bar != null ? (int) Math.round(MathHelper.clamp(bar.value(), 0, Math.max(0, items.size() - visibleRowCount))) : 0;
+            int scroll = bar != null ? (int) Math.round(Mth.clamp(bar.value(), 0, Math.max(0, items.size() - visibleRowCount))) : 0;
             int rowSlots = scrollNeeded ? visibleRowCount : items.size();
             for (int i = 0; i < rowSlots; i++) {
                 int idx = i + scroll;
@@ -1131,7 +1131,7 @@ public class WaypointScreen extends BaniraScreen {
             ScrollbarWidget bar = p == 0 ? homeScrollbar : (p == 1 ? stageScrollbar : backScrollbar);
             boolean scrollNeeded = items.size() > visibleRowCount;
             int cw = listBodyW - (scrollNeeded ? SCROLLBAR_WIDTH + SCROLLBAR_GAP : 0);
-            int scroll = bar != null ? (int) Math.round(MathHelper.clamp(bar.value(), 0, Math.max(0, items.size() - visibleRowCount))) : 0;
+            int scroll = bar != null ? (int) Math.round(Mth.clamp(bar.value(), 0, Math.max(0, items.size() - visibleRowCount))) : 0;
             int rowSlots = scrollNeeded ? visibleRowCount : items.size();
 
             for (int i = 0; i < rowSlots; i++) {
@@ -1149,7 +1149,7 @@ public class WaypointScreen extends BaniraScreen {
         }
     }
 
-    private void drawCustomTooltip(MatrixStack stack, BaniraColorConfig theme, WaypointEntry item, int mouseX, int mouseY) {
+    private void drawCustomTooltip(PoseStack stack, BaniraColorConfig theme, WaypointEntry item, int mouseX, int mouseY) {
         List<String> lines = new ArrayList<>();
         lines.add(item.name);
         lines.add(item.getDetailTypeName() + " | " + item.getDimensionName());
@@ -1165,7 +1165,7 @@ public class WaypointScreen extends BaniraScreen {
         TooltipWidget.drawPopupMessage(stack, args);
     }
 
-    private void drawFooter(MatrixStack stack, BaniraColorConfig theme) {
+    private void drawFooter(PoseStack stack, BaniraColorConfig theme) {
         ShapeDrawArgs footerBg = ShapeDrawArgs.rect(stack, footerX, footerY, footerW, footerPanelHeight, theme.panelBg());
         footerBg.rect().radius(0f, 0f, 6f, 6f);
         BaseShapeWidget.drawShape(footerBg);
@@ -1225,7 +1225,7 @@ public class WaypointScreen extends BaniraScreen {
 
     // region Tab footer cost layout
 
-    private void drawTabFooterCostAroundTeleport(MatrixStack stack, int textArgb, String costFull) {
+    private void drawTabFooterCostAroundTeleport(PoseStack stack, int textArgb, String costFull) {
         if (StringUtils.isNullOrEmptyEx(costFull)) {
             return;
         }
@@ -1295,7 +1295,7 @@ public class WaypointScreen extends BaniraScreen {
         return NumberUtils.toFixedEx(item.safeWorldCoordinate.distanceFrom(new SafeWorldCoordinate(minecraft.player)), 1) + "m";
     }
 
-    private void drawDeleteConfirmOverlay(MatrixStack stack, BaniraColorConfig theme) {
+    private void drawDeleteConfirmOverlay(PoseStack stack, BaniraColorConfig theme) {
         ShapeDrawArgs dim = ShapeDrawArgs.rect(stack, 0, 0, width, height, ColorUtils.applyAlphaToArgb(theme.bgQuaternary(), 0x78));
         BaseShapeWidget.drawShape(dim);
 

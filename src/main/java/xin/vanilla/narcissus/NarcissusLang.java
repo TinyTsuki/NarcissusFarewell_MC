@@ -1,7 +1,7 @@
 package xin.vanilla.narcissus;
 
 import lombok.NonNull;
-import net.minecraft.entity.player.ServerPlayerEntity;
+import net.minecraft.server.level.ServerPlayer;
 import xin.vanilla.banira.common.data.Component;
 import xin.vanilla.banira.common.data.ScopedComponent;
 import xin.vanilla.banira.common.enums.EnumI18nType;
@@ -36,7 +36,7 @@ public final class NarcissusLang extends Translator {
         return CommonConfig.get().general().defaultLanguage();
     }
 
-    public static String getServerPlayerLanguage(ServerPlayerEntity player) {
+    public static String getServerPlayerLanguage(ServerPlayer player) {
         return Translator.getServerPlayerLanguage(player);
     }
 

@@ -1,8 +1,8 @@
 package xin.vanilla.narcissus.event;
 
-import net.minecraft.entity.player.ServerPlayerEntity;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.util.math.vector.Vector3d;
+import net.minecraft.world.phys.Vec3;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import xin.vanilla.banira.api.BaniraServer;
@@ -47,8 +47,7 @@ public class EventHandlerProxy {
         }
     }
 
-    public static void onPlayerCloned(ServerPlayerEntity original, ServerPlayerEntity newPlayer, boolean wasDeath) {
-        original.revive();
+    public static void onPlayerCloned(ServerPlayer original, ServerPlayer newPlayer, boolean wasDeath) {
         if (wasDeath) {
             TeleportRecord record = new TeleportRecord();
             record.setTeleportTime(new Date());
@@ -64,7 +63,7 @@ public class EventHandlerProxy {
         }
     }
 
-    public static void onPlayerJoinWorld(ServerPlayerEntity player) {
+    public static void onPlayerJoinWorld(ServerPlayer player) {
         if (CommonConfig.get().base().teleportCard()) {
             PlayerTeleportData data = PlayerTeleportData.getData(player);
             Date current = new Date();
@@ -76,7 +75,7 @@ public class EventHandlerProxy {
         }
     }
 
-    public static void onPlayerTeleport(ServerPlayerEntity player, Vector3d previous, Vector3d target) {
+    public static void onPlayerTeleport(ServerPlayer player, Vec3 previous, Vec3 target) {
         TeleportRecord record = new TeleportRecord();
         record.setTeleportTime(new Date());
         record.setTeleportType(EnumTeleportType.OTHER);

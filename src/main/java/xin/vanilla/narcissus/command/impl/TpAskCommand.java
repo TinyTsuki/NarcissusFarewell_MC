@@ -4,12 +4,12 @@ import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
-import net.minecraft.command.CommandSource;
-import net.minecraft.command.Commands;
-import net.minecraft.command.arguments.EntityArgument;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.entity.player.ServerPlayerEntity;
-import net.minecraft.util.text.event.ClickEvent;
+import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.commands.Commands;
+import net.minecraft.commands.arguments.EntityArgument;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.network.chat.ClickEvent;
 import xin.vanilla.banira.common.data.Component;
 import xin.vanilla.banira.common.util.MessageUtils;
 import xin.vanilla.banira.common.util.PlayerUtils;
@@ -32,18 +32,18 @@ public final class TpAskCommand {
     private TpAskCommand() {
     }
 
-    private static int execute(CommandContext<CommandSource> context) throws CommandSyntaxException {
+    private static int execute(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
         CommandUtils.notifyHelp(context);
         if (CommandUtils.checkTeleportPre(context.getSource(), EnumCommandType.TP_ASK)) return 0;
-        ServerPlayerEntity player = context.getSource().getPlayerOrException();
-        ServerPlayerEntity target;
+        ServerPlayer player = context.getSource().getPlayerOrException();
+        ServerPlayer target;
         try {
             target = EntityArgument.getPlayer(context, "player");
         } catch (IllegalArgumentException ignored) {
             target = NarcissusFarewell.getTeleportRequest().values().stream()
                     .filter(request -> request.getRequester().getUUID().equals(player.getUUID()))
                     .filter(request -> {
-                        PlayerEntity entity = request.getTarget();
+                        Player entity = request.getTarget();
                         return NarcissusUtils.isTeleportTypeAcrossDimensionEnabled(player, EnumTeleportType.TP_ASK)
                                 || entity != null && entity.level.dimension() == player.getLevel().dimension();
                     })
@@ -80,13 +80,13 @@ public final class TpAskCommand {
                 .clickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, String.format("/%s %s %s", NarcissusUtils.getCommandPrefix(), CommonConfig.get().commandNames().commandTpAskCancel(), request.getRequestId())));
         MessageUtils.sendNotification(player, NarcissusComponent.get().transAuto("tp_ask_request_sent", target.getDisplayName().getString(), cancelButton), NarcissusNotificationTypes.INTERACTIVE_TP_FLOW);
         if (autoAccept) {
-            ServerPlayerEntity finalTarget = target;
+            ServerPlayer finalTarget = target;
             new Thread(() -> xin.vanilla.banira.common.util.CommandUtils.executeCommand(finalTarget, NarcissusUtils.getCommand(EnumCommandType.TP_ASK_YES) + " " + request.getRequestId())).start();
         }
         return 1;
     }
 
-    public static LiteralArgumentBuilder<CommandSource> create() {
+    public static LiteralArgumentBuilder<CommandSourceStack> create() {
         return Commands.literal(CommonConfig.get().commandNames().commandTpAsk())
                 .requires(source -> NarcissusUtils.hasCommandPermission(source, EnumCommandType.TP_ASK))
                 .executes(TpAskCommand::execute)

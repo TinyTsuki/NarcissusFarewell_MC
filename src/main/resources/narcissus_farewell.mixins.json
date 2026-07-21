@@ -7,6 +7,9 @@
   "mixins": [
     "CombatTrackerMixin",
     "LivingEntityInvoker",
+    "MobAccessor",
+    "ServerPlayerDamageMixin",
+    "ServerPlayerTeleportMixin",
     "TemptGoalAccessor"
   ],
   "client": [

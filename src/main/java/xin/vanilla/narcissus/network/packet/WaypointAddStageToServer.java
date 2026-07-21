@@ -53,7 +53,7 @@ public class WaypointAddStageToServer implements NetworkPacket {
             if (!ctx.isServerSide()) {
                 return;
             }
-            net.minecraft.entity.player.ServerPlayerEntity sender = ctx.senderAs(net.minecraft.entity.player.ServerPlayerEntity.class);
+            net.minecraft.server.level.ServerPlayer sender = ctx.senderAs(net.minecraft.server.level.ServerPlayer.class);
             if (sender == null) {
                 return;
             }

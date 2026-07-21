@@ -1,9 +1,9 @@
 package xin.vanilla.narcissus.util;
 
-import net.minecraft.block.BlockState;
-import net.minecraft.block.Blocks;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.World;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.level.Level;
 import xin.vanilla.narcissus.NarcissusFarewell;
 import xin.vanilla.narcissus.data.SafeBlock;
 
@@ -11,10 +11,10 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class SafeBlockChecker {
-    private final World level;
+    private final Level level;
     private final SafeBlock safeBlock;
 
-    public SafeBlockChecker(World level) {
+    public SafeBlockChecker(Level level) {
         this.level = level;
         safeBlock = NarcissusFarewell.getSafeBlock();
         safeBlock.init();

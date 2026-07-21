@@ -2,12 +2,12 @@ package xin.vanilla.narcissus.data.world;
 
 import lombok.Getter;
 import lombok.NonNull;
-import net.minecraft.entity.player.ServerPlayerEntity;
-import net.minecraft.nbt.CompoundNBT;
-import net.minecraft.nbt.ListNBT;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.world.server.ServerWorld;
-import net.minecraftforge.common.util.WorldCapabilityData;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.level.saveddata.SavedData;
 import xin.vanilla.banira.api.BaniraServer;
 import xin.vanilla.banira.common.data.KeyValue;
 import xin.vanilla.narcissus.data.SafeWorldCoordinate;
@@ -19,7 +19,7 @@ import java.util.Map;
  * 世界驿站数据
  */
 @Getter
-public class WorldStageData extends WorldCapabilityData {
+public class WorldStageData extends SavedData {
     private static final String DATA_NAME = "world_stage_data";
 
     // dimension:name coordinate
@@ -29,11 +29,11 @@ public class WorldStageData extends WorldCapabilityData {
         super(DATA_NAME);
     }
 
-    public void load(CompoundNBT nbt) {
-        ListNBT stageCoordinateNBT = nbt.getList("stageCoordinate", 10);
+    public void load(CompoundTag nbt) {
+        ListTag stageCoordinateNBT = nbt.getList("stageCoordinate", 10);
         Map<KeyValue<String, String>, SafeWorldCoordinate> stageCoordinate = new LinkedHashMap<>();
         for (int i = 0; i < stageCoordinateNBT.size(); i++) {
-            CompoundNBT stageCoordinateTag = stageCoordinateNBT.getCompound(i);
+            CompoundTag stageCoordinateTag = stageCoordinateNBT.getCompound(i);
             stageCoordinate.put(new KeyValue<>(stageCoordinateTag.getString("key"), stageCoordinateTag.getString("value")),
                     SafeWorldCoordinate.fromTag(stageCoordinateTag.getCompound("coordinate")));
         }
@@ -42,10 +42,10 @@ public class WorldStageData extends WorldCapabilityData {
 
     @Override
     @NonNull
-    public CompoundNBT save(CompoundNBT nbt) {
-        ListNBT stageCoordinateNBT = new ListNBT();
+    public CompoundTag save(CompoundTag nbt) {
+        ListTag stageCoordinateNBT = new ListTag();
         for (Map.Entry<KeyValue<String, String>, SafeWorldCoordinate> entry : this.getStageCoordinate().entrySet()) {
-            CompoundNBT stageCoordinateTag = new CompoundNBT();
+            CompoundTag stageCoordinateTag = new CompoundTag();
             stageCoordinateTag.putString("key", entry.getKey().key());
             stageCoordinateTag.putString("value", entry.getKey().value());
             stageCoordinateTag.put("coordinate", entry.getValue().toTag());
@@ -91,11 +91,11 @@ public class WorldStageData extends WorldCapabilityData {
         return get(BaniraServer.require(MinecraftServer.class).getAllLevels().iterator().next());
     }
 
-    public static WorldStageData get(ServerPlayerEntity player) {
+    public static WorldStageData get(ServerPlayer player) {
         return get(player.getLevel());
     }
 
-    public static WorldStageData get(ServerWorld world) {
+    public static WorldStageData get(ServerLevel world) {
         return world.getDataStorage().computeIfAbsent(WorldStageData::new, DATA_NAME);
     }
 }

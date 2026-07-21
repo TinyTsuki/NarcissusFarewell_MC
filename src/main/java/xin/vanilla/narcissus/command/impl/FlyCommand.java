@@ -7,10 +7,10 @@ import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
-import net.minecraft.command.CommandSource;
-import net.minecraft.command.Commands;
-import net.minecraft.command.arguments.EntityArgument;
-import net.minecraft.entity.player.ServerPlayerEntity;
+import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.commands.Commands;
+import net.minecraft.commands.arguments.EntityArgument;
+import net.minecraft.server.level.ServerPlayer;
 import xin.vanilla.narcissus.config.CommonConfig;
 import xin.vanilla.narcissus.enums.EnumCommandType;
 import xin.vanilla.narcissus.util.CommandUtils;
@@ -22,11 +22,11 @@ public final class FlyCommand {
     private FlyCommand() {
     }
 
-    private static int execute(CommandContext<CommandSource> context) throws CommandSyntaxException {
+    private static int execute(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
         CommandUtils.notifyHelp(context);
-        CommandSource source = context.getSource();
+        CommandSourceStack source = context.getSource();
         if (CommandUtils.checkTeleportPre(source, EnumCommandType.FLY)) return 0;
-        ServerPlayerEntity target = xin.vanilla.banira.common.util.CommandUtils.getPlayerOrSelf(context, "player");
+        ServerPlayer target = xin.vanilla.banira.common.util.CommandUtils.getPlayerOrSelf(context, "player");
         Boolean enable = xin.vanilla.banira.common.util.CommandUtils.getBooleanOptional(context, "enable");
         Double speedDouble = xin.vanilla.banira.common.util.CommandUtils.getDoubleOptional(context, "speed");
         Float speed = speedDouble != null ? speedDouble.floatValue() : null;
@@ -34,7 +34,7 @@ public final class FlyCommand {
         return 1;
     }
 
-    public static CompletableFuture<Suggestions> suggestion(CommandContext<CommandSource> context, SuggestionsBuilder builder) {
+    public static CompletableFuture<Suggestions> suggestion(CommandContext<CommandSourceStack> context, SuggestionsBuilder builder) {
         Double min = CommonConfig.get().base().flySpeedMin();
         Double max = CommonConfig.get().base().flySpeedMax();
         builder.suggest(String.valueOf(min));
@@ -45,7 +45,7 @@ public final class FlyCommand {
         return builder.buildFuture();
     }
 
-    public static LiteralArgumentBuilder<CommandSource> create() {
+    public static LiteralArgumentBuilder<CommandSourceStack> create() {
         return Commands.literal(CommonConfig.get().commandNames().commandFly())
                 .requires(source -> NarcissusUtils.hasCommandPermission(source, EnumCommandType.FLY))
                 .executes(FlyCommand::execute)

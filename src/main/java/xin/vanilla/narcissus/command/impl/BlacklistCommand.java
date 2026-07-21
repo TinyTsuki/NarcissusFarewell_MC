@@ -3,10 +3,10 @@ package xin.vanilla.narcissus.command.impl;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
-import net.minecraft.command.CommandSource;
-import net.minecraft.command.Commands;
-import net.minecraft.command.arguments.EntityArgument;
-import net.minecraft.entity.player.ServerPlayerEntity;
+import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.commands.Commands;
+import net.minecraft.commands.arguments.EntityArgument;
+import net.minecraft.server.level.ServerPlayer;
 import xin.vanilla.banira.common.data.Component;
 import xin.vanilla.banira.common.enums.EnumMoveType;
 import xin.vanilla.banira.common.enums.EnumPosition;
@@ -25,8 +25,8 @@ public final class BlacklistCommand {
     private BlacklistCommand() {
     }
 
-    private static int executeGet(CommandContext<CommandSource> context) throws CommandSyntaxException {
-        ServerPlayerEntity player = context.getSource().getPlayerOrException();
+    private static int executeGet(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
+        ServerPlayer player = context.getSource().getPlayerOrException();
         PlayerTeleportData data = PlayerTeleportData.getData(player);
         PlayerAccess access = data.getAccess();
         Component msg;
@@ -44,10 +44,10 @@ public final class BlacklistCommand {
         return 1;
     }
 
-    private static int executeAdd(CommandContext<CommandSource> context) throws CommandSyntaxException {
-        Collection<ServerPlayerEntity> players = EntityArgument.getPlayers(context, "players");
+    private static int executeAdd(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
+        Collection<ServerPlayer> players = EntityArgument.getPlayers(context, "players");
         if (CollectionUtils.isNullOrEmpty(players)) return 0;
-        ServerPlayerEntity player = context.getSource().getPlayerOrException();
+        ServerPlayer player = context.getSource().getPlayerOrException();
         PlayerTeleportData data = PlayerTeleportData.getData(player);
         PlayerAccess access = data.getAccess();
         String[] uuids = players.stream().map(PlayerUtils::getPlayerUUIDString).toArray(String[]::new);
@@ -66,10 +66,10 @@ public final class BlacklistCommand {
         return 1;
     }
 
-    private static int executeDel(CommandContext<CommandSource> context) throws CommandSyntaxException {
-        Collection<ServerPlayerEntity> players = EntityArgument.getPlayers(context, "players");
+    private static int executeDel(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
+        Collection<ServerPlayer> players = EntityArgument.getPlayers(context, "players");
         if (CollectionUtils.isNullOrEmpty(players)) return 0;
-        ServerPlayerEntity player = context.getSource().getPlayerOrException();
+        ServerPlayer player = context.getSource().getPlayerOrException();
         PlayerTeleportData data = PlayerTeleportData.getData(player);
         PlayerAccess access = data.getAccess();
         String[] uuids = players.stream().map(PlayerUtils::getPlayerUUIDString).toArray(String[]::new);
@@ -89,7 +89,7 @@ public final class BlacklistCommand {
         return 1;
     }
 
-    public static LiteralArgumentBuilder<CommandSource> create() {
+    public static LiteralArgumentBuilder<CommandSourceStack> create() {
         return Commands.literal("black")
                 .then(Commands.literal("get")
                         .executes(BlacklistCommand::executeGet)

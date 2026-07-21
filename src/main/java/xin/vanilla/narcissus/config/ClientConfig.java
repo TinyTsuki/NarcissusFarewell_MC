@@ -14,7 +14,7 @@ import xin.vanilla.narcissus.config.access.ClientConfigAccess;
 import xin.vanilla.narcissus.enums.EnumPanelMode;
 
 /**
- * 客户端配置：注解结构用于 ForgeConfigSpec；运行时通过 {@link #get()} 返回的 {@link RootView} 分层读取。
+ * 客户端配置：注解结构由 Banira 配置后端解析；运行时通过 {@link #get()} 返回的 {@link RootView} 分层读取。
  * GUI 说明与项目根目录 {@code narcissus_farewell-client.toml} 中的注释一致。
  */
 @Config(name = "narcissus_farewell-client", type = ConfigScope.CLIENT)

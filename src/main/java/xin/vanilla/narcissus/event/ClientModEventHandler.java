@@ -1,8 +1,6 @@
 package xin.vanilla.narcissus.event;
 
 import net.minecraft.client.Minecraft;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import xin.vanilla.banira.api.client.BaniraInput;
@@ -22,7 +20,6 @@ import xin.vanilla.narcissus.notification.NarcissusNotificationTypes;
 /**
  * 客户端：Banira 键位入队与稳定事件回调注册（不在此类上使用 Forge {@code @SubscribeEvent}）。
  */
-@OnlyIn(Dist.CLIENT)
 public final class ClientModEventHandler {
     private static final Logger LOGGER = LogManager.getLogger();
 
@@ -47,13 +44,10 @@ public final class ClientModEventHandler {
         }
         registered = true;
 
-        BaniraClientEvents.ModLifecycle.onClientSetup(event -> {
-            for (String id : NarcissusNotificationTypes.ALL_TYPE_IDS) {
-                NotificationTypeRegistry.register(id);
-            }
-        });
-        BaniraClientEvents.ModLifecycle.onClientSetup(event ->
-                BaniraLogos.register(NarcissusFarewell.MODID, () -> Math.random() > 0.5 ? "logo_.png" : "logo.png"));
+        for (String id : NarcissusNotificationTypes.ALL_TYPE_IDS) {
+            NotificationTypeRegistry.register(id);
+        }
+        BaniraLogos.register(NarcissusFarewell.MODID, () -> Math.random() > 0.5 ? "logo_.png" : "logo.png");
         BaniraClientEvents.Client.onClientTick(ClientModEventHandler::onClientTick);
         NarcissusUiSmokeRunner.register();
         NarcissusNetworkSmokeClientRunner.register();

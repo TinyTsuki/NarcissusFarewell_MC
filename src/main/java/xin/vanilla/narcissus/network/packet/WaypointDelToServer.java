@@ -44,7 +44,7 @@ public class WaypointDelToServer implements NetworkPacket {
     public static void handle(WaypointDelToServer packet, BaniraNetworkContext ctx) {
         ctx.enqueueWork(() -> {
             if (ctx.isServerSide()) {
-                net.minecraft.entity.player.ServerPlayerEntity sender = ctx.senderAs(net.minecraft.entity.player.ServerPlayerEntity.class);
+                net.minecraft.server.level.ServerPlayer sender = ctx.senderAs(net.minecraft.server.level.ServerPlayer.class);
                 if (sender == null) return;
                 // home
                 if (packet.type() == 0) {

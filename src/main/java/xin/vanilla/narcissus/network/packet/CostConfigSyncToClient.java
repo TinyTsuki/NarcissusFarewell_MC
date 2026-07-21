@@ -3,8 +3,6 @@ package xin.vanilla.narcissus.network.packet;
 import lombok.Getter;
 import lombok.experimental.Accessors;
 import xin.vanilla.banira.common.network.BaniraPacketBuffer;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.fml.DistExecutor;
 import xin.vanilla.banira.common.network.BaniraNetworkContext;
 import xin.vanilla.narcissus.data.TeleportCost;
 import xin.vanilla.narcissus.data.client.ClientCostConfig;
@@ -83,14 +81,12 @@ public class CostConfigSyncToClient implements NetworkPacket {
     public static void handle(CostConfigSyncToClient packet, BaniraNetworkContext ctx) {
         ctx.enqueueWork(() -> {
             if (ctx.isClientSide()) {
-                DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> {
-                    ClientCostConfig.clear();
-                    for (Map.Entry<EnumTeleportType, TeleportCost> entry : packet.costMap().entrySet()) {
-                        ClientCostConfig.setCost(entry.getKey(), entry.getValue());
-                    }
-                    ClientCostConfig.setDistanceLimit(packet.distanceLimit());
-                    ClientCostConfig.setDistanceAcrossDimension(packet.distanceAcrossDimension());
-                });
+                ClientCostConfig.clear();
+                for (Map.Entry<EnumTeleportType, TeleportCost> entry : packet.costMap().entrySet()) {
+                    ClientCostConfig.setCost(entry.getKey(), entry.getValue());
+                }
+                ClientCostConfig.setDistanceLimit(packet.distanceLimit());
+                ClientCostConfig.setDistanceAcrossDimension(packet.distanceAcrossDimension());
             }
         });
         ctx.markHandled();

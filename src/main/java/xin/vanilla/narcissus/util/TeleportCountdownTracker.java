@@ -1,6 +1,6 @@
 package xin.vanilla.narcissus.util;
 
-import net.minecraft.entity.player.ServerPlayerEntity;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.MinecraftServer;
 import xin.vanilla.banira.common.data.Component;
 import xin.vanilla.banira.common.util.MessageUtils;
@@ -67,7 +67,7 @@ public final class TeleportCountdownTracker {
             SESSIONS.remove(playerId, this);
         }
 
-        private void cancelWithNotify(ServerPlayerEntity player, boolean damageReason) {
+        private void cancelWithNotify(ServerPlayer player, boolean damageReason) {
             if (cancelled.getAndSet(true)) {
                 return;
             }
@@ -82,7 +82,7 @@ public final class TeleportCountdownTracker {
     /**
      * 开始新的传送倒计时会话；若该玩家已有会话则静默取消旧会话。
      */
-    public static Session begin(ServerPlayerEntity player, boolean watchMove, boolean watchDamage) {
+    public static Session begin(ServerPlayer player, boolean watchMove, boolean watchDamage) {
         UUID id = player.getUUID();
         Session session = new Session(id, player.getX(), player.getY(), player.getZ(), watchMove, watchDamage);
         Session old = SESSIONS.put(id, session);
@@ -99,7 +99,7 @@ public final class TeleportCountdownTracker {
         }
     }
 
-    public static void onPlayerHurt(ServerPlayerEntity player) {
+    public static void onPlayerHurt(ServerPlayer player) {
         Session s = SESSIONS.get(player.getUUID());
         if (s == null || !s.watchDamage || s.isCancelled()) {
             return;
@@ -115,7 +115,7 @@ public final class TeleportCountdownTracker {
             if (!s.watchMove || s.isCancelled()) {
                 continue;
             }
-            ServerPlayerEntity p = server.getPlayerList().getPlayer(s.playerId);
+            ServerPlayer p = server.getPlayerList().getPlayer(s.playerId);
             if (p == null) {
                 s.cancelSilently();
                 continue;

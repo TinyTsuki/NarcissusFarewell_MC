@@ -2,10 +2,10 @@ package xin.vanilla.narcissus.data;
 
 import lombok.Getter;
 import lombok.NonNull;
-import net.minecraft.nbt.CompoundNBT;
-import net.minecraft.nbt.INBT;
-import net.minecraft.nbt.ListNBT;
-import net.minecraft.nbt.StringNBT;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.Tag;
+import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.StringTag;
 
 import java.util.Arrays;
 import java.util.HashSet;
@@ -76,42 +76,42 @@ public class PlayerAccess {
         return this.autoTphList.addAll(Arrays.asList(uuids));
     }
 
-    public CompoundNBT writeToNBT() {
-        CompoundNBT tag = new CompoundNBT();
+    public CompoundTag writeToNBT() {
+        CompoundTag tag = new CompoundTag();
 
-        ListNBT blackListTag = new ListNBT();
-        this.blackList.stream().map(StringNBT::valueOf).forEach(blackListTag::add);
+        ListTag blackListTag = new ListTag();
+        this.blackList.stream().map(StringTag::valueOf).forEach(blackListTag::add);
         tag.put("blackList", blackListTag);
 
-        ListNBT whiteListTag = new ListNBT();
-        this.whiteList.stream().map(StringNBT::valueOf).forEach(whiteListTag::add);
+        ListTag whiteListTag = new ListTag();
+        this.whiteList.stream().map(StringTag::valueOf).forEach(whiteListTag::add);
         tag.put("whiteList", whiteListTag);
 
-        ListNBT tpaListTag = new ListNBT();
-        this.autoTpaList.stream().map(StringNBT::valueOf).forEach(tpaListTag::add);
+        ListTag tpaListTag = new ListTag();
+        this.autoTpaList.stream().map(StringTag::valueOf).forEach(tpaListTag::add);
         tag.put("autoTpaList", tpaListTag);
 
-        ListNBT tphListTag = new ListNBT();
-        this.autoTphList.stream().map(StringNBT::valueOf).forEach(tphListTag::add);
+        ListTag tphListTag = new ListTag();
+        this.autoTphList.stream().map(StringTag::valueOf).forEach(tphListTag::add);
         tag.put("autoTphList", tphListTag);
 
         return tag;
     }
 
-    public static PlayerAccess readFromNBT(CompoundNBT tag) {
+    public static PlayerAccess readFromNBT(CompoundTag tag) {
         PlayerAccess result = new PlayerAccess();
 
         tag.getList("blackList", 8).stream()
-                .map(INBT::getAsString).forEach(result.blackList::add);
+                .map(Tag::getAsString).forEach(result.blackList::add);
 
         tag.getList("whiteList", 8).stream()
-                .map(INBT::getAsString).forEach(result.whiteList::add);
+                .map(Tag::getAsString).forEach(result.whiteList::add);
 
         tag.getList("autoTpaList", 8).stream()
-                .map(INBT::getAsString).forEach(result.autoTpaList::add);
+                .map(Tag::getAsString).forEach(result.autoTpaList::add);
 
         tag.getList("autoTphList", 8).stream()
-                .map(INBT::getAsString).forEach(result.autoTphList::add);
+                .map(Tag::getAsString).forEach(result.autoTphList::add);
 
         return result;
     }

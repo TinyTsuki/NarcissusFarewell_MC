@@ -1,12 +1,12 @@
 package xin.vanilla.narcissus.screen;
 
-import com.mojang.blaze3d.matrix.MatrixStack;
+import com.mojang.blaze3d.vertex.PoseStack;
 import lombok.Data;
 import lombok.experimental.Accessors;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.entity.player.ClientPlayerEntity;
-import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.nbt.CompoundNBT;
+import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.nbt.CompoundTag;
 import xin.vanilla.banira.BaniraComponent;
 import xin.vanilla.banira.client.data.BaniraColorConfig;
 import xin.vanilla.banira.client.data.ScreenCoordinate;
@@ -158,7 +158,7 @@ public class PlayerConfigScreen extends BaniraScreen {
         root.headerHeight(ROW_HEIGHT);
         root.onExpandChanged(p -> syncContentHeight());
 
-        ClientPlayerEntity player = Minecraft.getInstance().player;
+        LocalPlayer player = Minecraft.getInstance().player;
         PlayerTeleportData data = player != null ? PlayerTeleportData.getData(player) : null;
         double cw = root.getContentWidth();
         for (EnumTeleportType t : EnumTeleportType.countdownConfigurableTypes()) {
@@ -330,8 +330,8 @@ public class PlayerConfigScreen extends BaniraScreen {
         }
     }
 
-    private CompoundNBT buildFullCountdownTag() {
-        CompoundNBT tag = new CompoundNBT();
+    private CompoundTag buildFullCountdownTag() {
+        CompoundTag tag = new CompoundTag();
         for (EnumTeleportType t : EnumTeleportType.countdownConfigurableTypes()) {
             SliderWidget sw = sliders.get(t);
             int v = sw != null ? (int) Math.round(sw.value()) : 0;
@@ -348,12 +348,12 @@ public class PlayerConfigScreen extends BaniraScreen {
             NotificationManager.get().addNotification(n);
             return;
         }
-        ClientPlayerEntity player = Minecraft.getInstance().player;
+        LocalPlayer player = Minecraft.getInstance().player;
         if (player == null) {
             return;
         }
         try {
-            CompoundNBT payload = buildFullCountdownTag();
+            CompoundTag payload = buildFullCountdownTag();
             PacketUtils.sendPacketToServer(new PlayerConfigSyncToServer(payload));
             PlayerTeleportData.getData(player).replaceAllTeleportCountdownsFromTag(payload);
             Notification ok = Notification.ofComponent(NarcissusComponent.get().transClientAuto("tp_prefs_sync_ok"));
@@ -372,7 +372,7 @@ public class PlayerConfigScreen extends BaniraScreen {
     private static final int CARD_ALPHA = 0xFF;
 
     @Override
-    protected void renderWidgets(MatrixStack stack, float partialTicks) {
+    protected void renderWidgets(PoseStack stack, float partialTicks) {
         BaniraColorConfig theme = getEffectiveTheme();
         int cardBg = ColorUtils.applyAlphaToArgb(theme.bgSurface(), CARD_ALPHA);
         int btnAreaH = BUTTON_HEIGHT + CARD_INNER;
@@ -432,7 +432,7 @@ public class PlayerConfigScreen extends BaniraScreen {
     }
 
     @Override
-    protected void onRender(MatrixStack stack, float partialTicks) {
+    protected void onRender(PoseStack stack, float partialTicks) {
         renderWidgets(stack, partialTicks);
     }
 
@@ -486,7 +486,7 @@ public class PlayerConfigScreen extends BaniraScreen {
         }
 
         @Override
-        public void render(MatrixStack stack, float partialTicks) {
+        public void render(PoseStack stack, float partialTicks) {
             if (!visible) {
                 return;
             }

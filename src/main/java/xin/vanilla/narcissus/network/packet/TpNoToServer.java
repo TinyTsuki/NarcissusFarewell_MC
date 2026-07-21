@@ -1,6 +1,6 @@
 package xin.vanilla.narcissus.network.packet;
 
-import net.minecraft.entity.player.ServerPlayerEntity;
+import net.minecraft.server.level.ServerPlayer;
 import xin.vanilla.banira.common.network.BaniraPacketBuffer;
 import xin.vanilla.banira.common.network.BaniraNetworkContext;
 import xin.vanilla.banira.common.util.CommandUtils;
@@ -31,7 +31,7 @@ public class TpNoToServer implements NetworkPacket {
         // 获取网络事件上下文并排队执行工作
         ctx.enqueueWork(() -> {
             // 获取发送数据包的玩家实体
-            ServerPlayerEntity player = ctx.senderAs(net.minecraft.entity.player.ServerPlayerEntity.class);
+            ServerPlayer player = ctx.senderAs(net.minecraft.server.level.ServerPlayer.class);
             if (player != null) {
                 EnumTeleportType teleportType = NarcissusFarewell.getTeleportRequest().values().stream()
                         .filter(request -> !request.isIgnore())

@@ -1,8 +1,8 @@
 package xin.vanilla.narcissus.network.packet;
 
 import lombok.Getter;
-import net.minecraft.entity.player.ServerPlayerEntity;
-import net.minecraft.nbt.CompoundNBT;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.nbt.CompoundTag;
 import xin.vanilla.banira.common.network.BaniraPacketBuffer;
 import xin.vanilla.banira.common.network.BaniraNetworkContext;
 import xin.vanilla.narcissus.data.player.PlayerTeleportData;
@@ -14,15 +14,15 @@ import xin.vanilla.narcissus.network.NetworkPacket;
 @Getter
 public class PlayerConfigSyncToServer implements NetworkPacket {
 
-    private final CompoundNBT countdownTag;
+    private final CompoundTag countdownTag;
 
-    public PlayerConfigSyncToServer(CompoundNBT countdownTag) {
-        this.countdownTag = countdownTag != null ? countdownTag : new CompoundNBT();
+    public PlayerConfigSyncToServer(CompoundTag countdownTag) {
+        this.countdownTag = countdownTag != null ? countdownTag : new CompoundTag();
     }
 
     public PlayerConfigSyncToServer(BaniraPacketBuffer buf) {
-        CompoundNBT n = NarcissusNbtPacketCodec.read(buf);
-        this.countdownTag = n != null ? n : new CompoundNBT();
+        CompoundTag n = NarcissusNbtPacketCodec.read(buf);
+        this.countdownTag = n != null ? n : new CompoundTag();
     }
 
     public void toBytes(BaniraPacketBuffer buf) {
@@ -34,7 +34,7 @@ public class PlayerConfigSyncToServer implements NetworkPacket {
             if (!ctx.isServerSide()) {
                 return;
             }
-            ServerPlayerEntity player = ctx.senderAs(net.minecraft.entity.player.ServerPlayerEntity.class);
+            ServerPlayer player = ctx.senderAs(net.minecraft.server.level.ServerPlayer.class);
             if (player == null) {
                 return;
             }
