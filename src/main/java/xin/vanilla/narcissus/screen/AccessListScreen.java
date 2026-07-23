@@ -568,7 +568,7 @@ public class AccessListScreen extends BaniraScreen {
 
     @Override
     protected void onRender(@Nonnull GuiGraphics graphics, int mouseX, int mouseY, float partialTicks) {
-        renderBackground(graphics);
+        renderBackground(graphics, mouseX, mouseY, partialTicks);
 
         refreshListsIfNeeded();
 

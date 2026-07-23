@@ -2,11 +2,13 @@ package xin.vanilla.narcissus.data.world;
 
 import lombok.Getter;
 import lombok.NonNull;
-import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.util.datafix.DataFixTypes;
 import net.minecraft.world.level.saveddata.SavedData;
 import xin.vanilla.banira.api.BaniraServer;
 import xin.vanilla.banira.common.data.KeyValue;
@@ -29,7 +31,7 @@ public class WorldStageData extends SavedData {
     public WorldStageData() {
     }
 
-    public static WorldStageData load(CompoundTag nbt) {
+    public static WorldStageData load(CompoundTag nbt, HolderLookup.Provider provider) {
         WorldStageData data = new WorldStageData();
         ListTag stageCoordinateNBT = nbt.getList("stageCoordinate", 10);
         Map<KeyValue<String, String>, SafeWorldCoordinate> stageCoordinate = new LinkedHashMap<>();
@@ -45,7 +47,7 @@ public class WorldStageData extends SavedData {
     @Override
     @NonNull
     @ParametersAreNonnullByDefault
-    public CompoundTag save(CompoundTag nbt) {
+    public CompoundTag save(CompoundTag nbt, HolderLookup.Provider provider) {
         ListTag stageCoordinateNBT = new ListTag();
         for (Map.Entry<KeyValue<String, String>, SafeWorldCoordinate> entry : this.getStageCoordinate().entrySet()) {
             CompoundTag stageCoordinateTag = new CompoundTag();
@@ -99,6 +101,6 @@ public class WorldStageData extends SavedData {
     }
 
     public static WorldStageData get(ServerLevel world) {
-        return world.getDataStorage().computeIfAbsent(WorldStageData::load, WorldStageData::new, DATA_NAME);
+        return world.getDataStorage().computeIfAbsent(new Factory<>(WorldStageData::new, WorldStageData::load, DataFixTypes.SAVED_DATA_MAP_DATA), DATA_NAME);
     }
 }

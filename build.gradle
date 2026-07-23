@@ -3,7 +3,7 @@ plugins {
     id 'maven-publish'
 }
 
-def javaVer = 17
+def javaVer = 21
 
 group = project.mod_group_id
 version = project.mod_version

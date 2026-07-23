@@ -702,7 +702,7 @@ public class WaypointScreen extends BaniraScreen {
 
     @Override
     protected void onRender(GuiGraphics graphics, int mouseX, int mouseY, float partialTicks) {
-        renderBackground(graphics);
+        renderBackground(graphics, mouseX, mouseY, partialTicks);
 
         if (minecraft != null && minecraft.player != null) {
             PlayerTeleportData data = PlayerTeleportData.getData(minecraft.player);

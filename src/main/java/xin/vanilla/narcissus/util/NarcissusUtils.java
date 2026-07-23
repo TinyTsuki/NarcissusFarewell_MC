@@ -25,11 +25,10 @@ import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.damagesource.DamageType;
-import net.minecraft.world.level.ChunkPos;
 import net.minecraft.network.chat.HoverEvent;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.portal.DimensionTransition;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.server.level.TicketType;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import xin.vanilla.banira.common.data.KeyValue;
@@ -1209,7 +1208,7 @@ public class NarcissusUtils {
             // 排除敌对生物
             if (entity instanceof Monster) continue;
 
-            if (((MobAccessor) entity).narcissus$goalSelector().getRunningGoals()
+            if (((MobAccessor) entity).narcissus$goalSelector().getAvailableGoals().stream()
                     .anyMatch(goal -> goal.isRunning()
                             && (goal.getGoal() instanceof TemptGoal)
                             && ((TemptGoalAccessor) goal.getGoal()).narcissus$player() == player
@@ -1227,14 +1226,17 @@ public class NarcissusUtils {
                     , safeWorldCoordinate.pitch() == 0 ? player.getXRot() : (float) safeWorldCoordinate.pitch());
         } else {
             if (level == entity.level()) {
-                entity.teleportToWithTicket(safeWorldCoordinate.x(), safeWorldCoordinate.y(), safeWorldCoordinate.z());
+                entity.teleportTo(safeWorldCoordinate.x(), safeWorldCoordinate.y(), safeWorldCoordinate.z());
             } else {
-                level.getChunkSource().addRegionTicket(
-                        TicketType.POST_TELEPORT,
-                        new ChunkPos(safeWorldCoordinate.chunkX(), safeWorldCoordinate.chunkZ()),
-                        4,
-                        entity.getId());
-                Entity moved = entity.changeDimension(level);
+                Entity moved = entity.changeDimension(new DimensionTransition(
+                        level,
+                        safeWorldCoordinate.toVec3(),
+                        entity.getDeltaMovement(),
+                        entity.getYRot(),
+                        entity.getXRot(),
+                        false,
+                        DimensionTransition.DO_NOTHING
+                ));
                 if (moved != null) {
                     moved.moveTo(safeWorldCoordinate.x(), safeWorldCoordinate.y(), safeWorldCoordinate.z(),
                             safeWorldCoordinate.yaw() == 0 ? moved.getYRot() : (float) safeWorldCoordinate.yaw(),
@@ -1804,7 +1806,7 @@ public class NarcissusUtils {
         ItemStack copy = itemStack.copy();
         return items.stream().filter(item -> {
             copy.setCount(item.getCount());
-            return ItemStack.isSameItemSameTags(item, copy);
+            return ItemStack.matches(item, copy);
         }).mapToInt(ItemStack::getCount).sum();
     }
 
