@@ -33,7 +33,7 @@ public final class ClientCostCalculator {
         PlayerTeleportData data = PlayerTeleportData.getData(player);
         double distance = NarcissusUtils.calculateDistance(new SafeWorldCoordinate(player), target);
         double adjustedDistance;
-        if (player.level.dimension() == target.dimension()) {
+        if (player.level().dimension() == target.dimension()) {
             int limit = ClientCostConfig.getDistanceLimit();
             adjustedDistance = limit == 0 ? distance : Math.min(limit, distance);
         } else {

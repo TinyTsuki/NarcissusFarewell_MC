@@ -4,8 +4,9 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import lombok.Data;
 import lombok.experimental.Accessors;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.nbt.CompoundTag;
 import xin.vanilla.banira.BaniraComponent;
 import xin.vanilla.banira.client.data.BaniraColorConfig;
@@ -372,12 +373,13 @@ public class PlayerConfigScreen extends BaniraScreen {
     private static final int CARD_ALPHA = 0xFF;
 
     @Override
-    protected void renderWidgets(PoseStack stack, float partialTicks) {
+    protected void renderWidgets(GuiGraphics graphics, float partialTicks) {
         BaniraColorConfig theme = getEffectiveTheme();
         int cardBg = ColorUtils.applyAlphaToArgb(theme.bgSurface(), CARD_ALPHA);
         int btnAreaH = BUTTON_HEIGHT + CARD_INNER;
         int btnAreaTop = cardY + cardH - btnAreaH;
         int contentHDraw = btnAreaTop - cardY - CARD_GAP;
+        PoseStack stack = graphics.pose();
 
         AbstractGuiUtils.drawRoundedRect(stack, cardX, cardY, cardW, contentHDraw,
                 CARD_RADIUS, CARD_RADIUS, 0, 0, cardBg);
@@ -397,13 +399,13 @@ public class PlayerConfigScreen extends BaniraScreen {
             if (contentRootPanel.enabled() && contentRootPanel.needsUpdate()) {
                 contentRootPanel.update();
             }
-            contentRootPanel.render(stack, partialTicks);
+            contentRootPanel.render(graphics, partialTicks);
         }
         if (scrollbar != null && scrollbar.visible()) {
             if (scrollbar.enabled() && scrollbar.needsUpdate()) {
                 scrollbar.update();
             }
-            scrollbar.render(stack, partialTicks);
+            scrollbar.render(graphics, partialTicks);
         }
 
         AbstractGuiUtils.disableScissor();
@@ -413,7 +415,7 @@ public class PlayerConfigScreen extends BaniraScreen {
                 if (btn.enabled() && btn.needsUpdate()) {
                     btn.update();
                 }
-                btn.render(stack, partialTicks);
+                btn.render(graphics, partialTicks);
             }
         }
 
@@ -427,13 +429,13 @@ public class PlayerConfigScreen extends BaniraScreen {
             if (widget.enabled() && widget.needsUpdate()) {
                 widget.update();
             }
-            widget.render(stack, partialTicks);
+            widget.render(graphics, partialTicks);
         }
     }
 
     @Override
-    protected void onRender(PoseStack stack, float partialTicks) {
-        renderWidgets(stack, partialTicks);
+    protected void onRender(GuiGraphics graphics, int mouseX, int mouseY, float partialTicks) {
+        renderWidgets(graphics, partialTicks);
     }
 
     @Override
@@ -486,11 +488,11 @@ public class PlayerConfigScreen extends BaniraScreen {
         }
 
         @Override
-        public void render(PoseStack stack, float partialTicks) {
+        public void render(GuiGraphics graphics, float partialTicks) {
             if (!visible) {
                 return;
             }
-            renderChildren(stack, partialTicks);
+            renderChildren(graphics, partialTicks);
         }
     }
 }

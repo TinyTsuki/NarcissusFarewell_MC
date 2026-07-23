@@ -1,10 +1,10 @@
 package xin.vanilla.narcissus.util;
 
-import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.core.BlockPos;
-import net.minecraft.util.Mth;
-import net.minecraft.world.phys.Vec3;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.Vec3;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import xin.vanilla.banira.common.util.DimensionUtils;
@@ -23,9 +23,9 @@ public class SafeCoordinateFinder {
     private final SafeBlockChecker checker;
     private final BlockPos.MutableBlockPos mutablePos;
 
-    public SafeCoordinateFinder(Level world) {
+    public SafeCoordinateFinder(Level world, Entity entity) {
         this.world = world;
-        this.checker = new SafeBlockChecker(world);
+        this.checker = new SafeBlockChecker(world, entity);
         this.mutablePos = new BlockPos.MutableBlockPos();
     }
 
@@ -137,11 +137,11 @@ public class SafeCoordinateFinder {
         int collisionStep = -1;
         for (int stepCount = 0; stepCount <= range; stepCount++) {
             mutablePos.set(
-                    Mth.floor(startX + stepX * stepCount),
-                    Mth.floor(startY + stepY * stepCount),
-                    Mth.floor(startZ + stepZ * stepCount)
+                    Math.floor(startX + stepX * stepCount),
+                    Math.floor(startY + stepY * stepCount),
+                    Math.floor(startZ + stepZ * stepCount)
             );
-            if (world.getBlockState(mutablePos).getMaterial().blocksMotion()) {
+            if (world.getBlockState(mutablePos).blocksMotion()) {
                 collisionStep = stepCount;
                 break;
             }
@@ -171,9 +171,9 @@ public class SafeCoordinateFinder {
             final int[] yOffsets = {0, -1, 1, -2, 2, -3};
             boolean found = false;
             for (int stepCount = maxStep; stepCount >= 0 && !found; stepCount--) {
-                final int blockX = Mth.floor(startX + stepX * stepCount);
-                final int blockY = Mth.floor(startY + stepY * stepCount);
-                final int blockZ = Mth.floor(startZ + stepZ * stepCount);
+                final int blockX = (int) Math.floor(startX + stepX * stepCount);
+                final int blockY = (int) Math.floor(startY + stepY * stepCount);
+                final int blockZ = (int) Math.floor(startZ + stepZ * stepCount);
                 for (int yOffset : yOffsets) {
                     mutablePos.set(blockX, blockY + yOffset, blockZ);
                     if (checker.isSafeBlock(mutablePos.immutable(), false)) {

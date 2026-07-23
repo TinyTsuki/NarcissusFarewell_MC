@@ -3,7 +3,7 @@ package xin.vanilla.narcissus.screen;
 import com.mojang.blaze3d.vertex.PoseStack;
 import lombok.experimental.Accessors;
 import net.minecraft.client.Minecraft;
-import net.minecraft.world.entity.player.Player;
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.util.Mth;
 import xin.vanilla.banira.client.data.*;
 import xin.vanilla.banira.client.enums.EnumAlignment;
@@ -35,11 +35,10 @@ import xin.vanilla.narcissus.network.packet.WaypointTeleportToServer;
 import xin.vanilla.narcissus.util.ClientCostCalculator;
 import xin.vanilla.narcissus.util.NarcissusUtils;
 
-import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.util.*;
-import java.util.stream.Collectors;
 
+@SuppressWarnings("resource")
 @Accessors(chain = true, fluent = true)
 public class WaypointScreen extends BaniraScreen {
 
@@ -585,7 +584,7 @@ public class WaypointScreen extends BaniraScreen {
         if (!CommonConfig.get().featureSwitch().switchTpHome()) {
             return false;
         }
-        Player p = minecraft.player;
+        var p = minecraft.player;
         int need = NarcissusUtils.getCommandPermissionLevel(EnumCommandType.TP_HOME);
         if (!p.hasPermissions(need) && !CommandUtils.hasVirtualPermission(p, EnumCommandType.TP_HOME)) {
             return false;
@@ -600,7 +599,7 @@ public class WaypointScreen extends BaniraScreen {
         if (!CommonConfig.get().featureSwitch().switchTpStage()) {
             return false;
         }
-        Player p = minecraft.player;
+        var p = minecraft.player;
         int need = NarcissusUtils.getCommandPermissionLevel(EnumCommandType.SET_STAGE);
         return p.hasPermissions(need) || CommandUtils.hasVirtualPermission(p, EnumCommandType.SET_STAGE);
     }
@@ -639,7 +638,7 @@ public class WaypointScreen extends BaniraScreen {
         if (minecraft == null || minecraft.player == null || !canAddStageClient()) {
             return;
         }
-        String dim = minecraft.player.level.dimension().location().toString();
+        String dim = minecraft.player.level().dimension().location().toString();
         String dx = NumberUtils.toFixedEx(minecraft.player.getX(), 1);
         String dy = NumberUtils.toFixedEx(minecraft.player.getY(), 1);
         String dz = NumberUtils.toFixedEx(minecraft.player.getZ(), 1);
@@ -702,8 +701,8 @@ public class WaypointScreen extends BaniraScreen {
     }
 
     @Override
-    protected void onRender(@Nonnull PoseStack stack, float partialTicks) {
-        renderBackground(stack);
+    protected void onRender(GuiGraphics graphics, int mouseX, int mouseY, float partialTicks) {
+        renderBackground(graphics);
 
         if (minecraft != null && minecraft.player != null) {
             PlayerTeleportData data = PlayerTeleportData.getData(minecraft.player);
@@ -720,8 +719,6 @@ public class WaypointScreen extends BaniraScreen {
         }
 
         BaniraColorConfig theme = getEffectiveTheme();
-        int mouseX = (int) inputState.mouseX();
-        int mouseY = (int) inputState.mouseY();
 
         if (deleteConfirmItem == null) {
             updateHoveredItem(mouseX, mouseY);
@@ -802,20 +799,21 @@ public class WaypointScreen extends BaniraScreen {
             deleteConfirmButton.visible(dialogOpen);
         }
 
+        PoseStack stack = graphics.pose();
         drawTopBarAndDividers(stack, theme);
         drawColumnHeaders(stack, theme);
         drawListColumns(stack, theme, mouseX, mouseY);
         drawFooter(stack, theme);
 
         if (hoveredItem != null && !dialogOpen) {
-            addDeferredTooltipRender(s -> drawCustomTooltip(s, theme, hoveredItem, mouseX, mouseY));
+            addDeferredTooltipRender(s -> drawCustomTooltip(s.pose(), theme, hoveredItem, mouseX, mouseY));
         }
 
         if (dialogOpen) {
             drawDeleteConfirmOverlay(stack, theme);
         }
 
-        renderWidgets(stack, partialTicks);
+        renderWidgets(graphics, partialTicks);
     }
 
     private void drawLimitedTextLine(PoseStack stack, String text, double x, double y, int maxWidth, int colorArgb) {
@@ -1032,7 +1030,7 @@ public class WaypointScreen extends BaniraScreen {
         backItemsAll.clear();
         List<TeleportRecord> records = data.getTeleportRecords().stream()
                 .filter(r -> r.getBefore() != null)
-                .collect(Collectors.toList());
+                .toList();
         Set<String> seenRecordTypes = new HashSet<>();
         for (int i = records.size() - 1; i >= 0; i--) {
             TeleportRecord record = records.get(i);
@@ -1289,7 +1287,7 @@ public class WaypointScreen extends BaniraScreen {
 
     private String formatItemDistanceMeters(WaypointEntry item) {
         if (minecraft == null || minecraft.player == null || item.safeWorldCoordinate == null
-                || item.safeWorldCoordinate.dimension() != minecraft.player.level.dimension()) {
+                || item.safeWorldCoordinate.dimension() != minecraft.player.level().dimension()) {
             return "∞m";
         }
         return NumberUtils.toFixedEx(item.safeWorldCoordinate.distanceFrom(new SafeWorldCoordinate(minecraft.player)), 1) + "m";
@@ -1384,9 +1382,9 @@ public class WaypointScreen extends BaniraScreen {
             boolean changed = lastPlayerPos.x() != minecraft.player.getX()
                     || lastPlayerPos.y() != minecraft.player.getY()
                     || lastPlayerPos.z() != minecraft.player.getZ()
-                    || lastPlayerPos.dimension() != minecraft.player.level.dimension();
+                    || lastPlayerPos.dimension() != minecraft.player.level().dimension();
             if (changed) {
-                lastPlayerPos.fromVec3(minecraft.player.position()).dimension(minecraft.player.level.dimension());
+                lastPlayerPos.fromVec3(minecraft.player.position()).dimension(minecraft.player.level().dimension());
             }
             return changed;
         }

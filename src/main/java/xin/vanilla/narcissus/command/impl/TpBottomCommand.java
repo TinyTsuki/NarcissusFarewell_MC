@@ -26,7 +26,7 @@ public final class TpBottomCommand {
         CommandUtils.notifyHelp(context);
         if (CommandUtils.checkTeleportPre(context.getSource(), EnumCommandType.TP_BOTTOM)) return 0;
         ServerPlayer player = context.getSource().getPlayerOrException();
-        SafeWorldCoordinate safeWorldCoordinate = NarcissusUtils.findBottomCandidate(player.getLevel(), new SafeWorldCoordinate(player));
+        SafeWorldCoordinate safeWorldCoordinate = NarcissusUtils.findBottomCandidate(player, new SafeWorldCoordinate(player));
         if (safeWorldCoordinate == null) {
             MessageUtils.sendNotification(player, NarcissusComponent.get().transAuto("tp_bottom_not_found"), NarcissusNotificationTypes.TELEPORT_ERROR);
             return 0;

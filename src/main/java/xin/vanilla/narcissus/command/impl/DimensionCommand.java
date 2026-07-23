@@ -26,7 +26,7 @@ public final class DimensionCommand {
         CommandUtils.notifyHelp(context);
         if (CommandUtils.checkTeleportPre(context.getSource(), EnumCommandType.DIMENSION)) return 0;
         ServerPlayer player = context.getSource().getPlayerOrException();
-        String dimString = player.getLevel().dimension().location().toString();
+        String dimString = player.level().dimension().location().toString();
         Component dim = NarcissusComponent.get().literal(dimString);
         dim.color(EnumMCColor.GREEN.getColor())
                 .clickEvent(new ClickEvent(ClickEvent.Action.COPY_TO_CLIPBOARD, dimString))

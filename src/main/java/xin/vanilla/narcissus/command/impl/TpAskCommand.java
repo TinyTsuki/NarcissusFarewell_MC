@@ -45,7 +45,7 @@ public final class TpAskCommand {
                     .filter(request -> {
                         Player entity = request.getTarget();
                         return NarcissusUtils.isTeleportTypeAcrossDimensionEnabled(player, EnumTeleportType.TP_ASK)
-                                || entity != null && entity.level.dimension() == player.getLevel().dimension();
+                                || entity != null && entity.level().dimension() == player.level().dimension();
                     })
                     .max(Comparator.comparing(TeleportRequest::getRequestTime))
                     .orElse(new TeleportRequest().setTarget(NarcissusFarewell.getLastTeleportRequest()

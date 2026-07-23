@@ -26,7 +26,7 @@ public final class TpTopCommand {
         CommandUtils.notifyHelp(context);
         if (CommandUtils.checkTeleportPre(context.getSource(), EnumCommandType.TP_TOP)) return 0;
         ServerPlayer player = context.getSource().getPlayerOrException();
-        SafeWorldCoordinate safeWorldCoordinate = NarcissusUtils.findTopCandidate(player.getLevel(), new SafeWorldCoordinate(player));
+        SafeWorldCoordinate safeWorldCoordinate = NarcissusUtils.findTopCandidate(player, new SafeWorldCoordinate(player));
         if (safeWorldCoordinate == null) {
             MessageUtils.sendNotification(player, NarcissusComponent.get().transAuto("tp_top_not_found"), NarcissusNotificationTypes.TELEPORT_ERROR);
             return 0;

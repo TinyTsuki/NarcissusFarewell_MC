@@ -85,10 +85,10 @@ public final class SetStageCommand {
         SafeWorldCoordinate coord;
 
         if (!hasCoord) {
-            targetLevel = player.getLevel().dimension();
+            targetLevel = player.level().dimension();
             coord = new SafeWorldCoordinate(player);
         } else if (!hasDim) {
-            targetLevel = player.getLevel().dimension();
+            targetLevel = player.level().dimension();
             coord = new SafeWorldCoordinate(player);
             coord.dimension(targetLevel);
             coord.fromVec3(pos);
@@ -100,14 +100,14 @@ public final class SetStageCommand {
                 if (level != null) {
                     targetLevel = parsed;
                 } else if (fromPlayer) {
-                    targetLevel = player.getLevel().dimension();
+                    targetLevel = player.level().dimension();
                 } else {
                     sendStageMessage(source, NarcissusComponent.get().transAuto("set_stage_dimension_invalid"), false, NarcissusNotificationTypes.TELEPORT_ERROR);
                     return 0;
                 }
             } catch (IllegalArgumentException e) {
                 if (fromPlayer) {
-                    targetLevel = player.getLevel().dimension();
+                    targetLevel = player.level().dimension();
                 } else {
                     sendStageMessage(source, NarcissusComponent.get().transAuto("set_stage_dimension_invalid"), false, NarcissusNotificationTypes.TELEPORT_ERROR);
                     return 0;

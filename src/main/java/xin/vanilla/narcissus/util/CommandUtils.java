@@ -85,7 +85,7 @@ public final class CommandUtils {
     }
 
     public static boolean checkTeleportPost(TeleportRequest request, boolean submit) {
-        boolean result = NarcissusUtils.isTeleportAcrossDimensionEnabled(request.getRequester(), request.getTarget().getLevel().dimension(), request.getTeleportType());
+        boolean result = NarcissusUtils.isTeleportAcrossDimensionEnabled(request.getRequester(), request.getTarget().level().dimension(), request.getTeleportType());
         result = result && NarcissusUtils.validTeleportCost(request, submit);
         if (CommonConfig.get().general().tpWithEnemy() && NarcissusUtils.isTargetedByHostile(request.getRequester())) {
             MessageUtils.sendNotification(request.getRequester(), NarcissusComponent.get().transAuto("locked_by_mob"), NarcissusNotificationTypes.TELEPORT_GUARD);

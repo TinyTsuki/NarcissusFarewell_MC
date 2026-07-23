@@ -1,9 +1,11 @@
 package xin.vanilla.narcissus.util;
 
-import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.block.Blocks;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.state.BlockState;
 import xin.vanilla.narcissus.NarcissusFarewell;
 import xin.vanilla.narcissus.data.SafeBlock;
 
@@ -12,12 +14,18 @@ import java.util.Map;
 
 public class SafeBlockChecker {
     private final Level level;
+    private final Entity entity;
     private final SafeBlock safeBlock;
 
-    public SafeBlockChecker(Level level) {
+    public SafeBlockChecker(Level level, Entity entity) {
         this.level = level;
+        this.entity = entity;
         safeBlock = NarcissusFarewell.getSafeBlock();
         safeBlock.init();
+    }
+
+    public SafeBlockChecker(Level level) {
+        this(level, null);
     }
 
     private final Map<BlockPos, BlockState> blockStateCaches = new HashMap<>();
@@ -31,11 +39,11 @@ public class SafeBlockChecker {
         // 可穿过判断
         BlockState block = getCachedBlockState(pos);
         BlockState fluid = getCachedFluidLegacyState(pos);
-        boolean isCurrentPassable = !block.getMaterial().blocksMotion()
+        boolean isCurrentPassable = !block.isCollisionShapeFullBlock(level, pos)
                 && !safeBlock.getUnsafeBlocksState().contains(block)
                 && !safeBlock.getUnsafeBlocks().contains(block.getBlock())
 
-                && !fluid.getMaterial().blocksMotion()
+                && !fluid.isCollisionShapeFullBlock(level, pos)
                 && !safeBlock.getUnsafeBlocksState().contains(fluid)
                 && !safeBlock.getUnsafeBlocks().contains(fluid.getBlock());
 
@@ -44,7 +52,7 @@ public class SafeBlockChecker {
         BlockState blockAbove = getCachedBlockState(above);
         BlockState fluidAbove = getCachedFluidLegacyState(above);
         boolean isHeadSafe = !blockAbove.isSuffocating(level, above)
-                && !blockAbove.getMaterial().blocksMotion()
+                && !blockAbove.isCollisionShapeFullBlock(level, above)
                 && !safeBlock.getUnsafeBlocksState().contains(blockAbove)
                 && !safeBlock.getUnsafeBlocks().contains(blockAbove.getBlock())
                 && !safeBlock.getSuffocatingBlocksState().contains(blockAbove)
@@ -61,11 +69,14 @@ public class SafeBlockChecker {
         BlockState blockBelow = getCachedBlockState(below);
         BlockState fluidBelow = getCachedFluidLegacyState(below);
         boolean isBelowValid;
-        if (blockBelow.getMaterial().isLiquid()) {
+        if (!blockBelow.getFluidState().isEmpty()) {
             isBelowValid = !safeBlock.getUnsafeBlocksState().contains(blockBelow)
                     && !safeBlock.getUnsafeBlocks().contains(blockBelow.getBlock());
         } else {
-            isBelowValid = blockBelow.getMaterial().isSolid()
+            boolean canStand = entity != null
+                    ? blockBelow.entityCanStandOn(level, below, entity)
+                    : blockBelow.isFaceSturdy(level, below, Direction.UP);
+            isBelowValid = canStand
                     && !safeBlock.getUnsafeBlocksState().contains(blockBelow)
                     && !safeBlock.getUnsafeBlocks().contains(blockBelow.getBlock())
 

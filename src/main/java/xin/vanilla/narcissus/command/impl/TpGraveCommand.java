@@ -8,8 +8,8 @@ import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
-import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.resources.ResourceKey;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.Level;
 import xin.vanilla.banira.common.util.DimensionUtils;
 import xin.vanilla.banira.common.util.MessageUtils;
@@ -53,7 +53,7 @@ public final class TpGraveCommand {
             coord1 = coord2.clone();
         }
 
-        SafeWorldCoordinate target = resolveTeleportTarget(coord1, coord2);
+        SafeWorldCoordinate target = resolveTeleportTarget(player, coord1, coord2);
         if (target == null) {
             MessageUtils.sendNotification(player, NarcissusComponent.get().transAuto("death_not_found"), NarcissusNotificationTypes.TELEPORT_ERROR);
             return 0;
@@ -84,7 +84,7 @@ public final class TpGraveCommand {
             return 0;
         }
 
-        SafeWorldCoordinate target = resolveTeleportTarget(null, coord2);
+        SafeWorldCoordinate target = resolveTeleportTarget(player, null, coord2);
         if (CommandUtils.checkTeleportPost(player, target, EnumTeleportType.TP_GRAVE, true)) return 0;
         NarcissusUtils.teleportTo(player, target, EnumTeleportType.TP_GRAVE);
         return 1;
@@ -103,7 +103,7 @@ public final class TpGraveCommand {
 
         SafeWorldCoordinate coord1 = record.getBefore().clone();
         SafeWorldCoordinate coord2 = GraveHelper.findCorpseGravestoneNearDeath(player, record);
-        SafeWorldCoordinate target = resolveTeleportTarget(coord1, coord2);
+        SafeWorldCoordinate target = resolveTeleportTarget(player, coord1, coord2);
 
         if (CommandUtils.checkTeleportPost(player, target, EnumTeleportType.TP_GRAVE, true)) return 0;
         NarcissusUtils.removeBackTeleportRecord(player, record);
@@ -114,13 +114,13 @@ public final class TpGraveCommand {
     /**
      * 解析并执行传送目标
      */
-    private static SafeWorldCoordinate resolveTeleportTarget(SafeWorldCoordinate coord1, SafeWorldCoordinate coord2) {
+    private static SafeWorldCoordinate resolveTeleportTarget(ServerPlayer player, SafeWorldCoordinate coord1, SafeWorldCoordinate coord2) {
         SafeWorldCoordinate preferred = (coord2 != null) ? coord2 : coord1;
         if (preferred == null) return null;
         if (GraveHelper.isCoordinateSafe(preferred)) {
             return preferred.clone().safe(false);
         }
-        SafeWorldCoordinate safe = NarcissusUtils.findSafeCoordinate(preferred.clone().safeMode(EnumSafeMode.Y_C_OFFSET_3), false);
+        SafeWorldCoordinate safe = NarcissusUtils.findSafeCoordinate(preferred.clone().safeMode(EnumSafeMode.Y_C_OFFSET_3), player, false);
         if (safe != null && GraveHelper.isCoordinateSafe(safe)) {
             return safe.safe(false);
         }

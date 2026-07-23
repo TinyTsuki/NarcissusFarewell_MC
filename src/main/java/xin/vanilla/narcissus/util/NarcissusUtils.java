@@ -1,13 +1,11 @@
 package xin.vanilla.narcissus.util;
 
-import com.mojang.brigadier.StringReader;
 import lombok.NonNull;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.commands.CommandSourceStack;
-import net.minecraft.commands.arguments.item.ItemInput;
-import net.minecraft.commands.arguments.item.ItemParser;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.ai.memory.MemoryModuleType;
 import net.minecraft.world.entity.ai.goal.TemptGoal;
@@ -21,15 +19,13 @@ import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.protocol.game.ClientboundPlayerAbilitiesPacket;
 import net.minecraft.network.protocol.game.ClientboundSetPassengersPacket;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.core.HolderLookup;
-import net.minecraft.core.Registry;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.damagesource.DamageType;
 import net.minecraft.world.level.ChunkPos;
-import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.HoverEvent;
 import net.minecraft.world.level.Level;
 import net.minecraft.server.level.ServerLevel;
@@ -61,7 +57,6 @@ import xin.vanilla.narcissus.mixin.MobAccessor;
 import xin.vanilla.narcissus.mixin.TemptGoalAccessor;
 import xin.vanilla.narcissus.notification.NarcissusNotificationTypes;
 
-import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.time.Duration;
 import java.time.Instant;
@@ -646,31 +641,31 @@ public class NarcissusUtils {
 
     // region 安全坐标
 
-    public static SafeWorldCoordinate findTopCandidate(ServerLevel world, SafeWorldCoordinate start) {
-        return new SafeCoordinateFinder(world).findTopCandidate(start);
+    public static SafeWorldCoordinate findTopCandidate(ServerPlayer player, SafeWorldCoordinate start) {
+        return new SafeCoordinateFinder(player.level(), player).findTopCandidate(start);
     }
 
-    public static SafeWorldCoordinate findBottomCandidate(ServerLevel world, SafeWorldCoordinate start) {
-        return new SafeCoordinateFinder(world).findBottomCandidate(start);
+    public static SafeWorldCoordinate findBottomCandidate(ServerPlayer player, SafeWorldCoordinate start) {
+        return new SafeCoordinateFinder(player.level(), player).findBottomCandidate(start);
     }
 
-    public static SafeWorldCoordinate findUpCandidate(ServerLevel world, SafeWorldCoordinate start) {
-        return new SafeCoordinateFinder(world).findUpCandidate(start);
+    public static SafeWorldCoordinate findUpCandidate(ServerPlayer player, SafeWorldCoordinate start) {
+        return new SafeCoordinateFinder(player.level(), player).findUpCandidate(start);
     }
 
-    public static SafeWorldCoordinate findDownCandidate(ServerLevel world, SafeWorldCoordinate start) {
-        return new SafeCoordinateFinder(world).findDownCandidate(start);
+    public static SafeWorldCoordinate findDownCandidate(ServerPlayer player, SafeWorldCoordinate start) {
+        return new SafeCoordinateFinder(player.level(), player).findDownCandidate(start);
     }
 
     public static SafeWorldCoordinate findViewEndCandidate(ServerPlayer player, boolean safe, int range) {
-        return new SafeCoordinateFinder(player.getLevel()).findViewEndCandidate(player, safe, range);
+        return new SafeCoordinateFinder(player.level(), player).findViewEndCandidate(player, safe, range);
     }
 
-    public static SafeWorldCoordinate findSafeCoordinate(SafeWorldCoordinate safeWorldCoordinate, boolean belowAllowAir) {
+    public static SafeWorldCoordinate findSafeCoordinate(SafeWorldCoordinate safeWorldCoordinate, ServerPlayer player, boolean belowAllowAir) {
         Level world = DimensionUtils.getLevel(safeWorldCoordinate.dimension());
         int chunkX = safeWorldCoordinate.chunkX();
         int chunkZ = safeWorldCoordinate.chunkZ();
-        SafeWorldCoordinate result = new SafeCoordinateFinder(world).searchInChunk(safeWorldCoordinate, chunkX, chunkZ, belowAllowAir);
+        SafeWorldCoordinate result = new SafeCoordinateFinder(world, player).searchInChunk(safeWorldCoordinate, chunkX, chunkZ, belowAllowAir);
         LOGGER.debug("Target:{}, {}, {} | Safe:{}, {}, {}", safeWorldCoordinate.xInt(), safeWorldCoordinate.yInt(), safeWorldCoordinate.zInt(), result == null ? "null" : result.xInt(), result == null ? "null" : result.yInt(), result == null ? "null" : result.zInt());
         return result == null ? safeWorldCoordinate : result;
     }
@@ -1009,7 +1004,7 @@ public class NarcissusUtils {
      */
     public static void teleportTo(@NonNull ServerPlayer player, @NonNull SafeWorldCoordinate after, EnumTeleportType type, int tprHorizontalRange) {
         SafeWorldCoordinate before = new SafeWorldCoordinate(player);
-        Level world = player.level;
+        Level world = player.level();
         if (world != null) {
             ServerLevel level = DimensionUtils.getLevel(after.dimension());
             if (level != null) {
@@ -1017,7 +1012,7 @@ public class NarcissusUtils {
                     MessageUtils.sendNotification(player, NarcissusComponent.get().transAuto("safe_searching"), NarcissusNotificationTypes.TELEPORT_SEARCH);
                     final int tpRandomRangeArg = tprHorizontalRange;
                     new Thread(() -> {
-                        SafeBlockChecker checker = new SafeBlockChecker(level);
+                        SafeBlockChecker checker = new SafeBlockChecker(level, player);
                         SafeWorldCoordinate finalAfter;
                         if (type == EnumTeleportType.TP_RANDOM) {
                             int extra = CommonConfig.get().general().tpRandomSafeNotFoundRetries();
@@ -1026,7 +1021,7 @@ public class NarcissusUtils {
                             SafeWorldCoordinate working = after.clone();
                             finalAfter = working;
                             for (int attempt = 0; attempt < totalAttempts; attempt++) {
-                                SafeWorldCoordinate resolved = findSafeCoordinate(working.clone(), false);
+                                SafeWorldCoordinate resolved = findSafeCoordinate(working.clone(), player, false);
                                 finalAfter = resolved;
                                 if (checker.isSafeBlock(resolved.toBlockPos(), false)) {
                                     break;
@@ -1036,7 +1031,7 @@ public class NarcissusUtils {
                                 }
                             }
                         } else {
-                            finalAfter = findSafeCoordinate(after.clone(), false);
+                            finalAfter = findSafeCoordinate(after.clone(), player, false);
                         }
                         Runnable runnable;
                         // 判断是否需要在脚下放置方块
@@ -1055,7 +1050,7 @@ public class NarcissusUtils {
                                 blockState = null;
                             }
                             if (blockState != null) {
-                                SafeWorldCoordinate airSafeWorldCoordinate = findSafeCoordinate(finalAfter, true);
+                                SafeWorldCoordinate airSafeWorldCoordinate = findSafeCoordinate(finalAfter, player, true);
                                 if (!airSafeWorldCoordinate.xyzString().equals(finalAfter.xyzString())) {
                                     finalAfter = airSafeWorldCoordinate;
                                     runnable = () -> {
@@ -1196,21 +1191,21 @@ public class NarcissusUtils {
         int followerRange = CommonConfig.get().general().tpWithFollowerRange();
 
         // 传送主动跟随的实体
-        for (TamableAnimal entity : player.level.getEntitiesOfClass(TamableAnimal.class, player.getBoundingBox().inflate(followerRange))) {
+        for (TamableAnimal entity : player.level().getEntitiesOfClass(TamableAnimal.class, player.getBoundingBox().inflate(followerRange))) {
             if (entity.getOwnerUUID() != null && entity.getOwnerUUID().equals(player.getUUID()) && !entity.isOrderedToSit()) {
                 doTeleport(entity, safeWorldCoordinate, level);
             }
         }
 
         // 传送拴绳实体
-        for (Mob entity : player.level.getEntitiesOfClass(Mob.class, player.getBoundingBox().inflate(followerRange))) {
+        for (Mob entity : player.level().getEntitiesOfClass(Mob.class, player.getBoundingBox().inflate(followerRange))) {
             if (entity.getLeashHolder() == player) {
                 doTeleport(entity, safeWorldCoordinate, level);
             }
         }
 
         // 传送被吸引的非敌对实体
-        for (Mob entity : player.level.getEntitiesOfClass(Mob.class, player.getBoundingBox().inflate(followerRange))) {
+        for (Mob entity : player.level().getEntitiesOfClass(Mob.class, player.getBoundingBox().inflate(followerRange))) {
             // 排除敌对生物
             if (entity instanceof Monster) continue;
 
@@ -1231,7 +1226,7 @@ public class NarcissusUtils {
                     , safeWorldCoordinate.yaw() == 0 ? player.getYRot() : (float) safeWorldCoordinate.yaw()
                     , safeWorldCoordinate.pitch() == 0 ? player.getXRot() : (float) safeWorldCoordinate.pitch());
         } else {
-            if (level == entity.level) {
+            if (level == entity.level()) {
                 entity.teleportToWithTicket(safeWorldCoordinate.x(), safeWorldCoordinate.y(), safeWorldCoordinate.z());
             } else {
                 level.getChunkSource().addRegionTicket(
@@ -1258,7 +1253,7 @@ public class NarcissusUtils {
 
     public static boolean isTeleportAcrossDimensionEnabled(ServerPlayer player, ResourceKey<Level> to, EnumTeleportType type) {
         boolean result = true;
-        if (player.level.dimension() != to) {
+        if (player.level().dimension() != to) {
             if (CommonConfig.get().general().teleportAcrossDimension()) {
                 if (!NarcissusUtils.isTeleportTypeAcrossDimensionEnabled(player, type)) {
                     result = false;
@@ -1439,7 +1434,7 @@ public class NarcissusUtils {
     public static boolean validTeleportCost(TeleportRequest request, boolean submit) {
         SafeWorldCoordinate requesterSafeWorldCoordinate = new SafeWorldCoordinate(request.getRequester());
         SafeWorldCoordinate targetSafeWorldCoordinate = new SafeWorldCoordinate(request.getTarget());
-        return validateCost(request.getRequester(), request.getTarget().getLevel().dimension(), calculateDistance(requesterSafeWorldCoordinate, targetSafeWorldCoordinate), request.getTeleportType(), submit);
+        return validateCost(request.getRequester(), request.getTarget().level().dimension(), calculateDistance(requesterSafeWorldCoordinate, targetSafeWorldCoordinate), request.getTeleportType(), submit);
     }
 
     /**
@@ -1458,7 +1453,7 @@ public class NarcissusUtils {
         PlayerTeleportData data = PlayerTeleportData.getData(player);
 
         double adjustedDistance;
-        if (player.getLevel().dimension() == targetDim) {
+        if (player.level().dimension() == targetDim) {
             int limit = CommonConfig.get().general().teleportCostDistanceLimit();
             adjustedDistance = limit == 0 ? distance : Math.min(limit, distance);
         } else {
@@ -1533,7 +1528,7 @@ public class NarcissusUtils {
                         Float health = (Float) player.getEntityData().get(DATA_HEALTH_ID);
                         player.getEntityData().set(DATA_HEALTH_ID, health - costNeed);
                     } catch (Exception e) {
-                        player.hurt(DamageSource.MAGIC, costNeed);
+                        player.hurt(player.level().damageSources().magic(), costNeed);
                     }
                     data.subTeleportCard(Math.min(data.getTeleportCard(), cardNeed));
                 }
@@ -1553,10 +1548,7 @@ public class NarcissusUtils {
                 break;
             case ITEM:
                 try {
-                    ItemParser.ItemResult parse = ItemParser.parseForItem(
-                            HolderLookup.forRegistry(Registry.ITEM),
-                            new StringReader(teleportCost.getConf()));
-                    ItemStack itemStack = new ItemInput(parse.item(), parse.nbt()).createItemStack(1, false);
+                    ItemStack itemStack = ItemUtils.deserializeItemStack(teleportCost.getConf());
                     result = getItemCount(player.getInventory().items, itemStack) >= costNeed;
                     itemStack.setCount(costNeed);
                     if (!result) {
@@ -1812,7 +1804,7 @@ public class NarcissusUtils {
         ItemStack copy = itemStack.copy();
         return items.stream().filter(item -> {
             copy.setCount(item.getCount());
-            return ItemStack.isSame(item, copy);
+            return ItemStack.isSameItemSameTags(item, copy);
         }).mapToInt(ItemStack::getCount).sum();
     }
 
@@ -1824,31 +1816,30 @@ public class NarcissusUtils {
 
     // region 杂项
 
-    public static final DamageSource damageSource = new DamageSource(NarcissusFarewell.MODID) {
-        {
-            bypassArmor();
-            bypassMagic();
-            bypassInvul();
-        }
+    public static final ResourceKey<DamageType> MOD_DAMAGE_TYPE =
+            ResourceKey.create(Registries.DAMAGE_TYPE, Identifier.id().create("mod"));
 
-        @Nonnull
-        @Override
-        public Component getLocalizedDeathMessage(@Nonnull LivingEntity entity) {
-            return Component.empty();
-        }
-    };
+    public static DamageSource getModDamageSource(Level level, @Nullable ServerPlayer player) {
+        return new DamageSource(
+                level.registryAccess().registryOrThrow(Registries.DAMAGE_TYPE).getHolderOrThrow(MOD_DAMAGE_TYPE),
+                player
+        );
+    }
 
     /**
      * 强行使玩家死亡
      */
     public static boolean killPlayer(@Nullable ServerPlayer source, ServerPlayer target) {
         try {
-            if (target.isSleeping() && !target.level.isClientSide) {
+            if (target.isSleeping() && !target.level().isClientSide) {
                 target.stopSleeping();
             }
             float lethal = target.getHealth() + target.getAbsorptionAmount();
-            if (source != null) target.getCombatTracker().recordDamage(DamageSource.playerAttack(source), lethal, 0f);
-            target.getCombatTracker().recordDamage(damageSource, lethal, 0f);
+            DamageSource damageSource = getModDamageSource(target.level(), source);
+            if (source != null) {
+                target.getCombatTracker().recordDamage(target.damageSources().playerAttack(source), lethal);
+            }
+            target.getCombatTracker().recordDamage(damageSource, lethal);
             target.getEntityData().set(LivingEntityInvoker.narcissus$dataHealthId(), 0f);
             ((LivingEntityInvoker) target).narcissus$invokeDie(damageSource);
             return true;
@@ -1866,7 +1857,7 @@ public class NarcissusUtils {
      * @param pitch  音调
      */
     public static void playSound(ServerPlayer player, ResourceLocation sound, float volume, float pitch) {
-        SoundEvent soundEvent = Registry.SOUND_EVENT.get(sound);
+        SoundEvent soundEvent = BuiltInRegistries.SOUND_EVENT.get(sound);
         if (soundEvent != null) {
             player.playNotifySound(soundEvent, SoundSource.PLAYERS, volume, pitch);
         }
@@ -1876,7 +1867,7 @@ public class NarcissusUtils {
      * 判断玩家是否被任何敌对生物锁定为攻击目标
      */
     public static boolean isTargetedByHostile(ServerPlayer player) {
-        return player.level.getEntitiesOfClass(Mob.class, player.getBoundingBox()
+        return player.level().getEntitiesOfClass(Mob.class, player.getBoundingBox()
                         .inflate(CommonConfig.get().general().tpWithFollowerRange()))
                 .stream()
                 .anyMatch(entity -> player.equals(entity.getTarget())

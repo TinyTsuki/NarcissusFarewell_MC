@@ -3,6 +3,7 @@ package xin.vanilla.narcissus.screen;
 import com.mojang.blaze3d.vertex.PoseStack;
 import lombok.experimental.Accessors;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.multiplayer.PlayerInfo;
 import net.minecraft.util.Mth;
 import xin.vanilla.banira.BaniraComponent;
@@ -566,14 +567,12 @@ public class AccessListScreen extends BaniraScreen {
     }
 
     @Override
-    protected void onRender(@Nonnull PoseStack stack, float partialTicks) {
-        renderBackground(stack);
+    protected void onRender(@Nonnull GuiGraphics graphics, int mouseX, int mouseY, float partialTicks) {
+        renderBackground(graphics);
 
         refreshListsIfNeeded();
 
         BaniraColorConfig theme = getEffectiveTheme();
-        int mouseX = (int) inputState.mouseX();
-        int mouseY = (int) inputState.mouseY();
 
         boolean dialogOpen = deleteConfirmUuid != null;
 
@@ -634,6 +633,7 @@ public class AccessListScreen extends BaniraScreen {
             deleteConfirmButton.visible(dialogOpen);
         }
 
+        PoseStack stack = graphics.pose();
         drawTopBarAndDividers(stack, theme);
         drawColumnHeaders(stack, theme);
         drawListColumns(stack, theme, mouseX, mouseY);
@@ -649,7 +649,7 @@ public class AccessListScreen extends BaniraScreen {
                 boolean hoverLine = mouseX >= startX && mouseX < startX + footerW
                         && mouseY >= y1 && mouseY < y1 + lh;
                 if (hoverLine) {
-                    addDeferredTooltipRender(s -> drawFooterLineTooltip(s, theme, mouseX, mouseY, h));
+                    addDeferredTooltipRender(s -> drawFooterLineTooltip(s.pose(), theme, mouseX, mouseY, h));
                 }
             } else {
                 int lineGap = 2;
@@ -659,9 +659,9 @@ public class AccessListScreen extends BaniraScreen {
                 boolean hoverWhite = mouseX >= startX && mouseX < startX + footerW
                         && mouseY >= y2 && mouseY < y2 + lh;
                 if (hoverBlack) {
-                    addDeferredTooltipRender(s -> drawFooterLineTooltip(s, theme, mouseX, mouseY, h1));
+                    addDeferredTooltipRender(s -> drawFooterLineTooltip(s.pose(), theme, mouseX, mouseY, h1));
                 } else if (hoverWhite) {
-                    addDeferredTooltipRender(s -> drawFooterLineTooltip(s, theme, mouseX, mouseY, h2));
+                    addDeferredTooltipRender(s -> drawFooterLineTooltip(s.pose(), theme, mouseX, mouseY, h2));
                 }
             }
         }
@@ -670,7 +670,7 @@ public class AccessListScreen extends BaniraScreen {
             drawDeleteConfirmOverlay(stack, theme);
         }
 
-        renderWidgets(stack, partialTicks);
+        renderWidgets(graphics, partialTicks);
     }
 
     private void drawLimitedTextLine(PoseStack stack, String text, double x, double y, int maxWidth, int colorArgb) {

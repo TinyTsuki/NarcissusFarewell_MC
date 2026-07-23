@@ -36,12 +36,12 @@ public final class TpSpawnCommand {
             String s = raw == null ? "" : raw.trim();
             ServerLevel level;
             if (s.isEmpty() || "CURRENT".equalsIgnoreCase(s) || "AUTO".equalsIgnoreCase(s)) {
-                level = target.getLevel();
+                level = target.serverLevel();
             } else {
                 level = DimensionUtils.getLevel(s);
             }
             if (level == null) {
-                level = target.getLevel();
+                level = target.serverLevel();
             }
             respawnPosition = level.getSharedSpawnPos();
             safeWorldCoordinate.dimension(level.dimension());

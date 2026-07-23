@@ -9,10 +9,10 @@ import net.minecraft.commands.Commands;
 import net.minecraft.commands.arguments.DimensionArgument;
 import net.minecraft.commands.arguments.EntityArgument;
 import net.minecraft.commands.arguments.coordinates.Vec3Argument;
-import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.resources.ResourceKey;
-import net.minecraft.world.phys.Vec3;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.Vec3;
 import xin.vanilla.narcissus.config.CommonConfig;
 import xin.vanilla.narcissus.data.SafeWorldCoordinate;
 import xin.vanilla.narcissus.enums.EnumCommandType;
@@ -35,12 +35,12 @@ public final class TpCoordinateCommand {
             try {
                 targetLevel = DimensionArgument.getDimension(context, "dimension").dimension();
             } catch (IllegalArgumentException ignored) {
-                targetLevel = player.getLevel().dimension();
+                targetLevel = player.level().dimension();
             }
-            safeWorldCoordinate = new SafeWorldCoordinate(pos.x(), pos.y(), pos.z(), player.getYRot(), player.getXRot(), targetLevel);
+            safeWorldCoordinate = new SafeWorldCoordinate(pos.x(), pos.y(), pos.z(), player.yRotO, player.xRotO, targetLevel);
         } catch (IllegalArgumentException ignored) {
             ServerPlayer target = EntityArgument.getPlayer(context, "player");
-            safeWorldCoordinate = new SafeWorldCoordinate(target.getX(), target.getY(), target.getZ(), target.getYRot(), target.getXRot(), target.getLevel().dimension());
+            safeWorldCoordinate = new SafeWorldCoordinate(target.getX(), target.getY(), target.getZ(), target.yRotO, target.xRotO, target.level().dimension());
         }
         safeWorldCoordinate.safe("safe".equalsIgnoreCase(xin.vanilla.banira.common.util.CommandUtils.getStringEmpty(context, "safe")));
         if (CommandUtils.checkTeleportPost(player, safeWorldCoordinate, EnumTeleportType.TP_COORDINATE, true))

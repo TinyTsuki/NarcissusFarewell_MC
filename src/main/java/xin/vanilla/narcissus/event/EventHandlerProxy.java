@@ -53,10 +53,10 @@ public class EventHandlerProxy {
             record.setTeleportTime(new Date());
             record.setTeleportType(EnumTeleportType.DEATH);
             SafeWorldCoordinate before = new SafeWorldCoordinate();
-            before.x(original.getX()).y(original.getY()).z(original.getZ()).dimension(original.level.dimension());
+            before.x(original.getX()).y(original.getY()).z(original.getZ()).dimension(original.level().dimension());
             record.setBefore(before);
             SafeWorldCoordinate after = new SafeWorldCoordinate();
-            after.x(newPlayer.getX()).y(newPlayer.getY()).z(newPlayer.getZ()).dimension(newPlayer.level.dimension());
+            after.x(newPlayer.getX()).y(newPlayer.getY()).z(newPlayer.getZ()).dimension(newPlayer.level().dimension());
             record.setAfter(after);
             PlayerTeleportData.getData(newPlayer).addTeleportRecords(record);
             PlayerTeleportData.syncPlayerData(newPlayer);

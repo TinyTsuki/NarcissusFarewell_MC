@@ -251,7 +251,7 @@ public final class NarcissusUiSmokeRunner {
 
     private void beginHomeAdd(Minecraft client) {
         homePosition = client.player.position();
-        homeDimension = client.player.level.dimension().location().toString();
+        homeDimension = client.player.level().dimension().location().toString();
         if (hasSmokeHome(client)) {
             PacketUtils.sendPacketToServer(new WaypointDelToServer(0, HOME_NAME, homeDimension));
         }

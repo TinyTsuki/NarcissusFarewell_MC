@@ -48,7 +48,7 @@ public class SafeWorldCoordinate extends WorldCoordinate implements Serializable
     }
 
     public static SafeWorldCoordinate random(ServerPlayer player, int range) {
-        return random(player, range, player.level.dimension());
+        return random(player, range, player.level().dimension());
     }
 
     public static SafeWorldCoordinate random(ServerPlayer player, int range, ResourceKey<Level> dimension) {

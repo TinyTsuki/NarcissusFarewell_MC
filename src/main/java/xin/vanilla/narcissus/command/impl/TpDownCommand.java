@@ -26,7 +26,7 @@ public final class TpDownCommand {
         CommandUtils.notifyHelp(context);
         if (CommandUtils.checkTeleportPre(context.getSource(), EnumCommandType.TP_DOWN)) return 0;
         ServerPlayer player = context.getSource().getPlayerOrException();
-        SafeWorldCoordinate safeWorldCoordinate = NarcissusUtils.findDownCandidate(player.getLevel(), new SafeWorldCoordinate(player));
+        SafeWorldCoordinate safeWorldCoordinate = NarcissusUtils.findDownCandidate(player, new SafeWorldCoordinate(player));
         if (safeWorldCoordinate == null) {
             MessageUtils.sendNotification(player, NarcissusComponent.get().transAuto("tp_down_not_found"), NarcissusNotificationTypes.TELEPORT_ERROR);
             return 0;

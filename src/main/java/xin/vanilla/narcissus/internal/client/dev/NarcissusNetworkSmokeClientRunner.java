@@ -80,8 +80,8 @@ public final class NarcissusNetworkSmokeClientRunner {
         String host = System.getProperty("narcissus.networkSmoke.host", "127.0.0.1");
         int port = Integer.getInteger("narcissus.networkSmoke.port", 25576);
         ServerData server = new ServerData("Narcissus Network Smoke", host + ":" + port, false);
-        client.setCurrentServer(server);
-        ConnectScreen.startConnecting(client.screen, client, ServerAddress.parseString(server.ip), server);
+        // Smoke 使用普通多人服务器连接，不进入 Quick Play 流程。
+        ConnectScreen.startConnecting(client.screen, client, ServerAddress.parseString(server.ip), server, false);
         NarcissusNetworkSmokeStatus.append("CONNECT " + host + ":" + port);
         state = State.LOGIN_SYNC;
         ticks = 0;

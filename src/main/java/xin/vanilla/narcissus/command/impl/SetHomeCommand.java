@@ -46,7 +46,7 @@ public final class SetHomeCommand {
         } catch (IllegalArgumentException ignored) {
         }
         SafeWorldCoordinate safeWorldCoordinate = new SafeWorldCoordinate(player);
-        KeyValue<String, String> key = new KeyValue<>(player.getLevel().dimension().location().toString(), name);
+        KeyValue<String, String> key = new KeyValue<>(player.level().dimension().location().toString(), name);
         if (data.getHomeCoordinate().containsKey(key)) {
             MessageUtils.sendNotification(player, NarcissusComponent.get().transAuto("home_already_exists", key.key(), key.value()), NarcissusNotificationTypes.WAYPOINT);
             return 0;
@@ -54,10 +54,10 @@ public final class SetHomeCommand {
         data.addHomeCoordinate(key, safeWorldCoordinate);
         PacketUtils.sendPacketToPlayer(new WaypointSyncToClient(WaypointSyncToClient.Action.ADD, WaypointSyncToClient.Type.HOME, name, safeWorldCoordinate), player);
         if (defaultHome) {
-            if (data.getDefaultHome().containsKey(player.getLevel().dimension().location().toString())) {
-                MessageUtils.sendNotification(player, NarcissusComponent.get().transAuto("home_default_remove", data.getDefaultHome(player.getLevel().dimension().location().toString()).value()), NarcissusNotificationTypes.WAYPOINT);
+            if (data.getDefaultHome().containsKey(player.level().dimension().location().toString())) {
+                MessageUtils.sendNotification(player, NarcissusComponent.get().transAuto("home_default_remove", data.getDefaultHome(player.level().dimension().location().toString()).value()), NarcissusNotificationTypes.WAYPOINT);
             }
-            data.addDefaultHome(player.getLevel().dimension().location().toString(), name);
+            data.addDefaultHome(player.level().dimension().location().toString(), name);
             MessageUtils.sendNotification(player, NarcissusComponent.get().transAuto("home_set_default", name, safeWorldCoordinate.xyzString()), NarcissusNotificationTypes.WAYPOINT);
         } else {
             MessageUtils.sendNotification(player, NarcissusComponent.get().transAuto("home_set", name, safeWorldCoordinate.xyzString()), NarcissusNotificationTypes.WAYPOINT);

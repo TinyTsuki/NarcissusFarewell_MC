@@ -4,16 +4,15 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
-import net.minecraft.core.Registry;
-import net.minecraft.world.level.block.Blocks;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.SoundEvents;
+import net.minecraft.world.level.block.Blocks;
 import xin.vanilla.banira.api.BaniraConfigs;
 import xin.vanilla.banira.common.config.ConfigData;
 import xin.vanilla.banira.common.config.ConfigHolder;
 import xin.vanilla.banira.common.config.ConfigScope;
 import xin.vanilla.banira.common.config.annotation.Config;
 import xin.vanilla.banira.common.config.annotation.ConfigEntry;
+import xin.vanilla.banira.common.util.BlockUtils;
 import xin.vanilla.narcissus.NarcissusFarewell;
 import xin.vanilla.narcissus.config.access.CommonConfigAccess;
 import xin.vanilla.narcissus.enums.EnumCardType;
@@ -23,7 +22,6 @@ import xin.vanilla.narcissus.enums.EnumTeleportType;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
@@ -263,7 +261,7 @@ public class CommonConfig implements ConfigData {
         @ConfigEntry.BoundedDiscrete(max = 99999)
         private int teleportRecordLimit = 100;
         @ConfigEntry.Gui.Tooltip(zh_cn = "传送回时忽略的传送类型。", en_us = "The teleport back skip type.")
-        private List<String> teleportBackSkipType = new ArrayList<String>() {{
+        private List<String> teleportBackSkipType = new ArrayList<>() {{
             add(EnumTeleportType.TP_BACK.name());
         }};
         @ConfigEntry.Gui.Tooltip(zh_cn = "是否启用跨维度传送。", en_us = "Is the teleport across dimensions enabled?")
@@ -300,7 +298,7 @@ public class CommonConfig implements ConfigData {
         @ConfigEntry.Gui.Tooltip(zh_cn = "帮助指令信息头部内容。", en_us = "The header content of the help command.")
         private String helpHeader = "-----==== Narcissus Farewell Help (%d/%d) ====-----";
         @ConfigEntry.Gui.Tooltip(zh_cn = "传送时的音效。", en_us = "The sound effect when teleporting.")
-        private String tpSound = Registry.SOUND_EVENT.getKey(SoundEvents.ENDERMAN_TELEPORT).toString();
+        private String tpSound = SoundEvents.ENDERMAN_TELEPORT.getLocation().toString();
         @ConfigEntry.Gui.Tooltip(zh_cn = "是否允许载具一起传送。", en_us = "Whether to allow vehicles to be teleported together.")
         private boolean tpWithVehicle = true;
         @ConfigEntry.Gui.Tooltip(zh_cn = "是否允许跟随的实体一起传送。", en_us = "Whether to allow followers to be teleported together.")
@@ -329,24 +327,15 @@ public class CommonConfig implements ConfigData {
     @Accessors(chain = true, fluent = true)
     public static class SafeTeleportCategory {
         @ConfigEntry.Gui.Tooltip(zh_cn = "不安全的方块列表，玩家不会传送到这些方块上。", en_us = "The list of unsafe blocks, players will not be teleported to these blocks.")
-        private List<String> unsafeBlocks = Stream.of(Blocks.LAVA, Blocks.FIRE, Blocks.CAMPFIRE, Blocks.SOUL_FIRE, Blocks.SOUL_CAMPFIRE, Blocks.CACTUS, Blocks.MAGMA_BLOCK, Blocks.SWEET_BERRY_BUSH).map(block -> {
-            ResourceLocation rl = Registry.BLOCK.getKey(block);
-            return rl == null ? "" : rl.toString();
-        }).collect(Collectors.toList());
+        private List<String> unsafeBlocks = Stream.of(Blocks.LAVA, Blocks.FIRE, Blocks.CAMPFIRE, Blocks.SOUL_FIRE, Blocks.SOUL_CAMPFIRE, Blocks.CACTUS, Blocks.MAGMA_BLOCK, Blocks.SWEET_BERRY_BUSH).map(BlockUtils::getBlockRegistryString).toList();
         @ConfigEntry.Gui.Tooltip(zh_cn = "窒息的方块列表，玩家头不会处于这些方块里面。", en_us = "The list of suffocating blocks, players will not be teleported to these blocks.")
-        private List<String> suffocatingBlocks = Stream.of(Blocks.LAVA, Blocks.WATER).map(block -> {
-            ResourceLocation rl = Registry.BLOCK.getKey(block);
-            return rl == null ? "" : rl.toString();
-        }).collect(Collectors.toList());
+        private List<String> suffocatingBlocks = Stream.of(Blocks.LAVA, Blocks.WATER).map(BlockUtils::getBlockRegistryString).toList();
         @ConfigEntry.Gui.Tooltip(zh_cn = "当进行安全传送时，如果未找到安全坐标，是否在脚下放置方块。", en_us = "When performing a safe teleport, whether to place a block underfoot if a safe safeWorldCoordinate is not found.")
         private boolean setBlockWhenSafeNotFound = false;
         @ConfigEntry.Gui.Tooltip(zh_cn = "当进行安全传送时，如果未找到安全坐标，是否仅从背包中获取可放置的方块。", en_us = "When performing a safe teleport, whether to only use placeable blocks from the player's inventory if a safe safeWorldCoordinate is not found.")
         private boolean getBlockFromInventory = true;
         @ConfigEntry.Gui.Tooltip(zh_cn = "当进行安全传送时，如果未找到安全坐标，放置方块的列表。若'getBlockFromInventory'为false，则始终使用列表中的第一个方块。", en_us = "When performing a safe teleport, the list of blocks to place if a safe safeWorldCoordinate is not found. If 'getBlockFromInventory' is set to false, the first block in the list will always be used.")
-        private List<String> safeBlocks = Stream.of(Blocks.GRASS_BLOCK, Blocks.DIRT_PATH, Blocks.DIRT, Blocks.COBBLESTONE).map(block -> {
-            ResourceLocation rl = Registry.BLOCK.getKey(block);
-            return rl == null ? "" : rl.toString();
-        }).collect(Collectors.toList());
+        private List<String> safeBlocks = Stream.of(Blocks.GRASS_BLOCK, Blocks.DIRT_PATH, Blocks.DIRT, Blocks.COBBLESTONE).map(BlockUtils::getBlockRegistryString).toList();
         @ConfigEntry.Gui.Tooltip(zh_cn = "当进行安全传送时，寻找安全坐标的半径，单位为区块。", en_us = "The chunk range for finding a safe safeWorldCoordinate, in chunks.")
         @ConfigEntry.BoundedDiscrete(min = 1, max = 16)
         private int safeChunkRange = 1;
