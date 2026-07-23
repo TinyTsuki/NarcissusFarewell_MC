@@ -21,6 +21,7 @@ import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.protocol.game.ClientboundPlayerAbilitiesPacket;
 import net.minecraft.network.protocol.game.ClientboundSetPassengersPacket;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.core.HolderLookup;
 import net.minecraft.core.Registry;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
@@ -29,7 +30,6 @@ import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.TextComponent;
 import net.minecraft.network.chat.HoverEvent;
 import net.minecraft.world.level.Level;
 import net.minecraft.server.level.ServerLevel;
@@ -1553,8 +1553,10 @@ public class NarcissusUtils {
                 break;
             case ITEM:
                 try {
-                    ItemParser parse = new ItemParser(new StringReader(teleportCost.getConf()), false).parse();
-                    ItemStack itemStack = new ItemInput(parse.getItem(), parse.getNbt()).createItemStack(1, false);
+                    ItemParser.ItemResult parse = ItemParser.parseForItem(
+                            HolderLookup.forRegistry(Registry.ITEM),
+                            new StringReader(teleportCost.getConf()));
+                    ItemStack itemStack = new ItemInput(parse.item(), parse.nbt()).createItemStack(1, false);
                     result = getItemCount(player.getInventory().items, itemStack) >= costNeed;
                     itemStack.setCount(costNeed);
                     if (!result) {
@@ -1832,7 +1834,7 @@ public class NarcissusUtils {
         @Nonnull
         @Override
         public Component getLocalizedDeathMessage(@Nonnull LivingEntity entity) {
-            return TextComponent.EMPTY;
+            return Component.empty();
         }
     };
 

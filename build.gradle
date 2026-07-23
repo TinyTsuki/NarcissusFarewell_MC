@@ -8,6 +8,10 @@ def javaVer = 17
 group = project.mod_group_id
 version = project.mod_version
 
+def uiSmokeEnabled = (project.findProperty('narcissus.uiSmoke') ?: 'false').toString().toBoolean()
+def uiSmokeExitOnFinish = (project.findProperty('narcissus.uiSmoke.exitOnFinish') ?: 'false').toString().toBoolean()
+def uiSmokeOutputRoot = file("${projectDir}/run/screenshots/narcissus-ui-smoke")
+
 base {
     archivesName = project.mod_id
 }
@@ -20,9 +24,35 @@ loom {
     runs {
         client {
             programArgs '--username', 'Dev', '--uuid', '380df991-f603-344c-a090-369bad2a924a'
-            property 'narcissus.uiSmoke', (project.findProperty('narcissus.uiSmoke') ?: 'false').toString()
-            property 'narcissus.uiSmoke.exitOnFinish', (project.findProperty('narcissus.uiSmoke.exitOnFinish') ?: 'false').toString()
+            property 'narcissus.uiSmoke', uiSmokeEnabled.toString()
+            property 'narcissus.uiSmoke.exitOnFinish', uiSmokeExitOnFinish.toString()
             property 'narcissus.uiSmoke.world', (project.findProperty('narcissus.uiSmoke.world') ?: '').toString()
+        }
+    }
+}
+
+tasks.named('runClient').configure {
+    if (uiSmokeEnabled && uiSmokeExitOnFinish) {
+        doFirst { task ->
+            task.ext.narcissusUiSmokeStartedAt = System.currentTimeMillis()
+        }
+        doLast { task ->
+            long startedAt = task.ext.narcissusUiSmokeStartedAt as long
+            File status = fileTree(uiSmokeOutputRoot) {
+                include '**/status.txt'
+            }.files.findAll { it.lastModified() >= startedAt }
+                    .max { it.lastModified() }
+            if (status == null) {
+                throw new GradleException('Narcissus UI smoke did not finish: no status file was produced')
+            }
+            String result = status.getText('UTF-8')
+            if (result.contains('FAILED ')) {
+                throw new GradleException("Narcissus UI smoke reported failure:\n${result}")
+            }
+            if (!result.contains('FINISHED ')) {
+                throw new GradleException("Narcissus UI smoke did not finish:\n${result}")
+            }
+            logger.lifecycle("Narcissus UI smoke verified: ${status.parentFile}")
         }
     }
 }
@@ -31,7 +61,7 @@ repositories {
     mavenLocal()
     maven {
         name = 'Terraformers Maven'
-        url = 'https://maven.terraformersmc.com/'
+        url = 'https://maven.terraformersmc.com/releases/'
     }
 }
 

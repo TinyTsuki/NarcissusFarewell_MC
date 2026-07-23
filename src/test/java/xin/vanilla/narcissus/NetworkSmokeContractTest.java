@@ -28,6 +28,8 @@ public class NetworkSmokeContractTest {
         assertContains(script, "phase-two");
         assertContains(script, "destroyProcessTree");
         assertContains(script, "PASS server-shutdown");
+        assertContains(script, "--refresh-dependencies");
+        assertContains(script, "phase == 'phase-one'");
         assertContains(script, "runDir project.relativePath(smokeServerDir)");
         assertContains(script, "runDir project.relativePath(smokeClientDir)");
         assertContains(server, "PASS persisted-player-config");

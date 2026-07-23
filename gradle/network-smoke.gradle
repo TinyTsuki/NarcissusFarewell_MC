@@ -63,7 +63,8 @@ def waitForStatus = { Process process, File status, String marker, File log, int
     throw new GradleException("Timed out waiting for '${marker}':\n${tailUtf8(log, 120)}")
 }
 
-def gradleCommand = { String runTask, String phase, File status, File childBuildDir, File projectCacheDir ->
+def gradleCommand = { String runTask, String phase, File status, File childBuildDir, File projectCacheDir,
+                      boolean refreshDependencies ->
     File wrapper = file("${projectDir}/${System.getProperty('os.name').toLowerCase().contains('windows') ? 'gradlew.bat' : 'gradlew'}")
     List<String> command = []
     if (System.getProperty('os.name').toLowerCase().contains('windows')) {
@@ -81,17 +82,21 @@ def gradleCommand = { String runTask, String phase, File status, File childBuild
             "-Pnarcissus.networkSmoke.status=${status.absolutePath}".toString(),
             "-Pnarcissus.networkSmoke.buildDir=${childBuildDir.absolutePath}".toString()
     ])
+    if (refreshDependencies) {
+        command.add('--refresh-dependencies')
+    }
     return command
 }
 
-def startGradleRun = { String runTask, String phase, File status, File log ->
+def startGradleRun = { String runTask, String phase, File status, File log, boolean refreshDependencies ->
     File childRoot = new File(smokeRoot, runTask == 'runServer' ? 'server-gradle' : 'client-gradle')
     File childBuildDir = new File(childRoot, 'build')
     File projectCacheDir = new File(childRoot, 'project-cache')
     childBuildDir.mkdirs()
     projectCacheDir.mkdirs()
     log.parentFile.mkdirs()
-    ProcessBuilder builder = new ProcessBuilder(gradleCommand(runTask, phase, status, childBuildDir, projectCacheDir))
+    ProcessBuilder builder = new ProcessBuilder(gradleCommand(
+            runTask, phase, status, childBuildDir, projectCacheDir, refreshDependencies))
     builder.directory(projectDir)
     builder.redirectErrorStream(true)
     builder.redirectOutput(log)
@@ -119,11 +124,12 @@ def verifyMarkers = { File status, List<String> markers ->
 }
 
 def runNetworkSmokeServer = { String phase, File status, File log ->
-    startGradleRun('runServer', phase, status, log)
+    // 首个子进程刷新一次 Loom 的本地 Maven 重映射缓存，后续阶段复用同一结果。
+    startGradleRun('runServer', phase, status, log, phase == 'phase-one')
 }
 
 def runNetworkSmokeClient = { String phase, File status, File log ->
-    startGradleRun('runClient', phase, status, log)
+    startGradleRun('runClient', phase, status, log, false)
 }
 
 tasks.register('networkSmoke') {

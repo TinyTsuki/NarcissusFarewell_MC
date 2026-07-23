@@ -1,6 +1,6 @@
 package xin.vanilla.narcissus.internal.fabric.event;
 
-import net.fabricmc.fabric.api.command.v1.CommandRegistrationCallback;
+import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
 import net.fabricmc.fabric.api.entity.event.v1.ServerPlayerEvents;
 import xin.vanilla.narcissus.command.NarcissusCommand;
 import xin.vanilla.narcissus.event.EventHandlerProxy;
@@ -17,7 +17,7 @@ public final class FabricNarcissusGameEventAdapter {
             return;
         }
         registered = true;
-        CommandRegistrationCallback.EVENT.register((dispatcher, dedicated) ->
+        CommandRegistrationCallback.EVENT.register((dispatcher, registryAccess, environment) ->
                 NarcissusCommand.register(dispatcher));
         ServerPlayerEvents.AFTER_RESPAWN.register((oldPlayer, newPlayer, alive) ->
                 EventHandlerProxy.onPlayerCloned(oldPlayer, newPlayer, !alive));
