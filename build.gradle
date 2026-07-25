@@ -143,6 +143,10 @@ configurations {
         transitive = false
     }
 }
+
+configurations.configureEach {
+    resolutionStrategy.cacheChangingModulesFor 0, 'seconds'
+}
 // endregion banira_codex
 
 repositories {
@@ -188,8 +192,12 @@ dependencies {
     // The group id is ignored when searching -- in this case, it is "blank"
     // implementation fg.deobf("blank:coolmod-${mc_version}:${coolmod_version}")
 
-    implementation fg.deobf(baniraCodexCoords)
-    baniraCodexObf baniraCodexCoords
+    implementation(fg.deobf(baniraCodexCoords)) {
+        changing = true
+    }
+    baniraCodexObf(baniraCodexCoords) {
+        changing = true
+    }
     // jarJar("xin.vanilla.banira:banira_codex:${loader_type}-${minecraft_version}-${banira_version}") {
     //     jarJar.ranged(it, baniraArtifactVersionRange)
     // }
