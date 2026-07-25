@@ -84,6 +84,11 @@ sourceSets.main.resources {
 
 // region banira_codex：JarJar
 def baniraArtifactVersionRange = "${banira_version_range}"
+def baniraCodexCoords = "xin.vanilla.banira:banira_codex:${loader_type}-${minecraft_version}-${banira_version}"
+
+configurations.configureEach {
+    resolutionStrategy.cacheChangingModulesFor 0, 'seconds'
+}
 // endregion banira_codex
 
 configurations {
@@ -135,8 +140,11 @@ dependencies {
     // This maps to ./libs/coolmod-${mc_version}-${coolmod_version}.jar
     // The group id is ignored when searching -- in this case, it is "blank"
 
-    implementation "xin.vanilla.banira:banira_codex:${loader_type}-${minecraft_version}-${banira_version}"
-    jarJar("xin.vanilla.banira:banira_codex:${loader_type}-${minecraft_version}-${banira_version}") {
+    implementation(baniraCodexCoords) {
+        changing = true
+    }
+    jarJar(baniraCodexCoords) {
+        changing = true
         jarJar.ranged(it, baniraArtifactVersionRange)
     }
 
