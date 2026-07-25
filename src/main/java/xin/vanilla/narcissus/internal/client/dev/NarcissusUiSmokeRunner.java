@@ -24,6 +24,7 @@ import xin.vanilla.narcissus.network.packet.WaypointAddHomeToServer;
 import xin.vanilla.narcissus.network.packet.WaypointDelToServer;
 import xin.vanilla.narcissus.network.packet.WaypointTeleportToServer;
 import xin.vanilla.narcissus.screen.AccessListScreen;
+import xin.vanilla.narcissus.screen.PlayerConfigScreen;
 
 import javax.annotation.Nonnull;
 import java.io.IOException;
@@ -80,6 +81,8 @@ public final class NarcissusUiSmokeRunner {
         this.outputDir = outputDir;
         this.options = options;
         this.preWorldSteps = Arrays.asList(
+                new ScreenStep("player-preferences", true, client -> client.setScreen(
+                        new PlayerConfigScreen(new PlayerConfigScreen.Args()))),
                 new ScreenStep("client-config", false, client -> client.setScreen(
                         new ConfigEditorScreen(ClientConfig.get().holder(), new ConfigEditorScreen.Args()))),
                 new ScreenStep("common-config", true, client -> client.setScreen(
