@@ -15,8 +15,12 @@ public class BaniraDependencyRefreshContractTest {
     public void baniraDependenciesAreChangingAndUncached() throws Exception {
         String build = new String(Files.readAllBytes(Paths.get("build.gradle")), StandardCharsets.UTF_8);
         assertTrue(build.contains("cacheChangingModulesFor 0, 'seconds'"));
-        assertChanging(build, "implementation");
-        assertChanging(build, "baniraCodexObf");
+        String developmentConfiguration = build.contains("modImplementation(baniraCodexCoords)")
+                ? "modImplementation" : "implementation";
+        assertChanging(build, developmentConfiguration);
+        if (!"modImplementation".equals(developmentConfiguration)) {
+            assertChanging(build, build.contains("baniraCodexObf(baniraCodexCoords)") ? "baniraCodexObf" : "jarJar");
+        }
     }
 
     private static void assertChanging(String build, String configuration) {

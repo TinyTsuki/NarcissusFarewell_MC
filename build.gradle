@@ -27,6 +27,12 @@ loom {
     }
 }
 
+def baniraCodexCoords = "xin.vanilla.banira:banira_codex:${loader_type}-${minecraft_version}-${banira_version}"
+
+configurations.configureEach {
+    resolutionStrategy.cacheChangingModulesFor 0, 'seconds'
+}
+
 repositories {
     mavenLocal()
     maven {
@@ -41,7 +47,9 @@ dependencies {
     modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
     modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
 
-    modImplementation "xin.vanilla.banira:banira_codex:${loader_type}-${minecraft_version}-${banira_version}"
+    modImplementation(baniraCodexCoords) {
+        changing = true
+    }
     modImplementation "com.terraformersmc:modmenu:${modmenu_version}"
 
     testImplementation 'junit:junit:4.13.2'
