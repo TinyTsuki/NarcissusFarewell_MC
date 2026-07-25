@@ -7,7 +7,9 @@ import net.minecraft.world.phys.Vec3;
 import net.minecraft.server.level.ServerPlayer;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.lwjgl.glfw.GLFW;
 import xin.vanilla.banira.client.gui.ConfigEditorScreen;
+import xin.vanilla.banira.client.gui.NotificationTypeConfigScreen;
 import xin.vanilla.banira.common.util.EnvironmentUtils;
 import xin.vanilla.banira.common.util.PacketUtils;
 import xin.vanilla.narcissus.config.ClientConfig;
@@ -73,7 +75,10 @@ public final class NarcissusUiSmokeRunner {
                 new ScreenStep("client-config", false, client -> client.setScreen(
                         new ConfigEditorScreen(ClientConfig.get().holder(), new ConfigEditorScreen.Args()))),
                 new ScreenStep("common-config", true, client -> client.setScreen(
-                        new ConfigEditorScreen(CommonConfig.get().holder(), new ConfigEditorScreen.Args())))
+                        new ConfigEditorScreen(CommonConfig.get().holder(), new ConfigEditorScreen.Args()))),
+                new ScreenStep("notification-type-config", true, client -> client.setScreen(
+                        new NotificationTypeConfigScreen(new NotificationTypeConfigScreen.Args())),
+                        NotificationTypeConfigScreen.class, NarcissusUiSmokeRunner::verifyCleanEscapeCloses)
         );
         this.worldSteps = Arrays.asList(
                 new ScreenStep("waypoints", true, client -> ScreenHelper.openScreen()),
@@ -174,8 +179,16 @@ public final class NarcissusUiSmokeRunner {
         List<ScreenStep> steps = phase == Phase.PRE_WORLD_UI ? preWorldSteps : worldSteps;
         ScreenStep step = steps.get(stepIndex);
         if (stepTick == CAPTURE_TICK && step.capture) {
+            if (step.expectedScreen != null && !step.expectedScreen.isInstance(client.screen)) {
+                throw new IllegalStateException("Expected screen " + step.expectedScreen.getName()
+                        + " but found " + (client.screen == null ? "null" : client.screen.getClass().getName()));
+            }
             int number = phase == Phase.PRE_WORLD_UI ? stepIndex + 1 : preWorldSteps.size() + stepIndex + 1;
             capture(client, String.format(Locale.ROOT, "%02d-%s", number, step.name));
+        }
+        if (stepTick == CAPTURE_TICK + 2 && step.verifier != null) {
+            step.verifier.accept(client);
+            appendStatus("PASS " + step.name + "-behavior");
         }
         if (stepTick < STEP_TICKS) {
             return;
@@ -327,6 +340,19 @@ public final class NarcissusUiSmokeRunner {
                 .anyMatch(key -> HOME_NAME.equals(key.value()));
     }
 
+    private static void verifyCleanEscapeCloses(Minecraft client) {
+        if (client.screen == null) {
+            throw new IllegalStateException("Notification type config disappeared before ESC");
+        }
+        Object openedScreen = client.screen;
+        boolean handled = client.screen.keyPressed(GLFW.GLFW_KEY_ESCAPE, 0, 0);
+        if (!handled || client.screen == openedScreen) {
+            throw new IllegalStateException("Clean notification type config did not close on ESC"
+                    + " (handled=" + handled + ", current="
+                    + (client.screen == null ? "null" : client.screen.getClass().getName()) + ")");
+        }
+    }
+
     private void capture(Minecraft client, String name) {
         Path file = outputDir.resolve(name + ".png");
         try (NativeImage image = Screenshot.takeScreenshot(client.getMainRenderTarget())) {
@@ -369,11 +395,24 @@ public final class NarcissusUiSmokeRunner {
         private final String name;
         private final boolean capture;
         private final Consumer<Minecraft> opener;
+        private final Class<?> expectedScreen;
+        private final Consumer<Minecraft> verifier;
 
         private ScreenStep(String name, boolean capture, Consumer<Minecraft> opener) {
+            this(name, capture, opener, null, null);
+        }
+
+        private ScreenStep(String name, boolean capture, Consumer<Minecraft> opener, Class<?> expectedScreen) {
+            this(name, capture, opener, expectedScreen, null);
+        }
+
+        private ScreenStep(String name, boolean capture, Consumer<Minecraft> opener,
+                           Class<?> expectedScreen, Consumer<Minecraft> verifier) {
             this.name = name;
             this.capture = capture;
             this.opener = opener;
+            this.expectedScreen = expectedScreen;
+            this.verifier = verifier;
         }
     }
 
