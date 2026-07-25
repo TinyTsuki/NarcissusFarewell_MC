@@ -130,11 +130,11 @@ public class PlayerConfigScreen extends BaniraScreen {
         });
         addWidget(scrollbar);
 
-        ButtonWidget syncBtn = new ButtonWidget(this);
-        syncBtn.id("tp_prefs_sync");
-        syncBtn.text(NarcissusComponent.get().transClientAuto("tp_prefs_sync").toString());
-        syncBtn.onClick(b -> syncToServer());
-        bottomButtons.add(syncBtn);
+        ButtonWidget saveBtn = new ButtonWidget(this);
+        saveBtn.id("tp_prefs_save");
+        saveBtn.text(BaniraComponent.get().transClientAuto("config_editor_save").toString());
+        saveBtn.onClick(b -> saveToServer());
+        bottomButtons.add(saveBtn);
 
         ButtonWidget closeBtn = new ButtonWidget(this);
         closeBtn.id("tp_prefs_close");
@@ -341,7 +341,7 @@ public class PlayerConfigScreen extends BaniraScreen {
         return tag;
     }
 
-    private void syncToServer() {
+    private void saveToServer() {
         if (Minecraft.getInstance().getConnection() == null) {
             Notification n = Notification.ofComponent(NarcissusComponent.get().transClientAuto("tp_prefs_sync_not_connected"));
             n.position(EnumPosition.TOP_RIGHT).durationTime(3500);
@@ -359,6 +359,7 @@ public class PlayerConfigScreen extends BaniraScreen {
             Notification ok = Notification.ofComponent(NarcissusComponent.get().transClientAuto("tp_prefs_sync_ok"));
             ok.position(EnumPosition.TOP_RIGHT).durationTime(2500);
             NotificationManager.get().addNotification(ok);
+            onClose();
         } catch (Exception ex) {
             Notification err = Notification.ofComponent(
                     NarcissusComponent.get().transClientAuto("tp_prefs_sync_failed",
@@ -455,6 +456,15 @@ public class PlayerConfigScreen extends BaniraScreen {
             return true;
         }
         return false;
+    }
+
+    @Override
+    public void onClose() {
+        if (args.parentScreen() != null) {
+            Minecraft.getInstance().setScreen(args.parentScreen());
+        } else {
+            super.onClose();
+        }
     }
 
     private static class EntryRowWidget extends BaseWidget {
