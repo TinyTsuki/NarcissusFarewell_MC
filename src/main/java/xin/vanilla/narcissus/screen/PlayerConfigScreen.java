@@ -49,8 +49,6 @@ public class PlayerConfigScreen extends BaniraScreen {
     private static final double LABEL_COLUMN_MIN_WIDTH = 64;
     private static final int GAP_LABEL_TO_VALUE = 4;
     private static final double VALUE_AREA_MIN_WIDTH = 56;
-    private static final int RESET_BTN_SIZE = 18;
-    private static final int RESET_BTN_GAP = 2;
     private static final int SCROLL_WIDTH = 6;
     private static final int SCROLL_GAP = 2;
     private static final int BUTTON_HEIGHT = 18;
@@ -152,7 +150,7 @@ public class PlayerConfigScreen extends BaniraScreen {
 
     private CollapsiblePanelWidget buildContentPanel() {
         CollapsiblePanelWidget root = CollapsiblePanelWidget.createAutoHeight(this, 0, 0, contentW);
-        root.text(Text.from(NarcissusComponent.get().transClientAuto("tp_prefs_countdown_title")));
+        root.text(Text.from(NarcissusComponent.get().transClientAuto("tp_prefs_screen_title")));
         root.expanded(true);
         root.contentGap(ROW_GAP);
         root.headerHeight(ROW_HEIGHT);
@@ -193,40 +191,20 @@ public class PlayerConfigScreen extends BaniraScreen {
 
         row.addChild(label);
         row.addChild(slider);
-        addResetButton(row, w, ROW_HEIGHT, slider);
         return row;
-    }
-
-    private void addResetButton(EntryRowWidget row, double rowW, int rowH, SliderWidget slider) {
-        int btnYRow = (rowH - RESET_BTN_SIZE) / 2;
-        ButtonWidget btn = new ButtonWidget(this);
-        btn.id("tp_prefs_reset_" + slider.id());
-        btn.presetStyle(ButtonWidget.PresetStyle.RESET);
-        btn.bounds(new ScreenCoordinate(resetBtnX(rowW), btnYRow, RESET_BTN_SIZE, RESET_BTN_SIZE));
-        btn.onClick(b -> slider.setValue(TeleportCountdownHelper.playerRangeLo()));
-        TooltipWidget resetTip = new TooltipWidget(this, new ScreenCoordinate(resetBtnX(rowW), btnYRow, RESET_BTN_SIZE, RESET_BTN_SIZE));
-        resetTip.text(BaniraComponent.get().transClientAuto("config_editor_reset_tooltip"));
-        resetTip.popupAtScreenCoords(true);
-        row.addChild(btn);
-        row.addChild(resetTip);
     }
 
     private double labelColumnEndX(double rowWidth) {
         if (rowWidth <= 1) {
             return 1;
         }
-        double reservedRight = RESET_BTN_GAP + RESET_BTN_SIZE;
-        double maxEnd = rowWidth - reservedRight - VALUE_AREA_MIN_WIDTH;
+        double maxEnd = rowWidth - VALUE_AREA_MIN_WIDTH;
         if (maxEnd < 1) {
             return Math.max(1, rowWidth * 0.2);
         }
         double fromRatio = rowWidth * LABEL_COLUMN_WIDTH_RATIO;
-        double inner = Math.min(fromRatio, maxEnd);
-        double end = Math.max(LABEL_COLUMN_MIN_WIDTH, inner);
-        if (end > maxEnd) {
-            end = Math.max(1, maxEnd);
-        }
-        return end;
+        double end = Math.max(LABEL_COLUMN_MIN_WIDTH, Math.min(fromRatio, maxEnd));
+        return Math.min(end, maxEnd);
     }
 
     private double labelTextWidth(double rowWidth) {
@@ -238,12 +216,7 @@ public class PlayerConfigScreen extends BaniraScreen {
     }
 
     private double valueWidgetWidth(double rowWidth) {
-        double vw = rowWidth - labelColumnEndX(rowWidth) - RESET_BTN_GAP - RESET_BTN_SIZE;
-        return Math.max(1, vw);
-    }
-
-    private double resetBtnX(double rowWidth) {
-        return rowWidth - RESET_BTN_SIZE;
+        return Math.max(1, rowWidth - labelColumnEndX(rowWidth));
     }
 
     private void syncContentHeight() {
