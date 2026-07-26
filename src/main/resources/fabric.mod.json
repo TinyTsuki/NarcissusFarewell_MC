@@ -20,6 +20,9 @@
     ],
     "client": [
       "xin.vanilla.narcissus.internal.fabric.client.FabricNarcissusClientEntry"
+    ],
+    "modmenu": [
+      "xin.vanilla.narcissus.internal.fabric.modmenu.NarcissusModMenuIntegration"
     ]
   },
   "mixins": [
