@@ -19,6 +19,7 @@ import xin.vanilla.narcissus.config.ClientConfig;
 import xin.vanilla.narcissus.config.CommonConfig;
 import xin.vanilla.narcissus.data.PlayerAccess;
 import xin.vanilla.narcissus.data.TeleportRecord;
+import xin.vanilla.narcissus.internal.fabric.modmenu.NarcissusModMenuIntegration;
 import xin.vanilla.narcissus.data.player.PlayerTeleportData;
 import xin.vanilla.narcissus.enums.EnumPanelMode;
 import xin.vanilla.narcissus.enums.EnumTeleportType;
@@ -88,6 +89,8 @@ public final class NarcissusUiSmokeRunner {
         this.outputDir = outputDir;
         this.options = options;
         this.preWorldSteps = Arrays.asList(
+                new ScreenStep("modmenu-client-config", true, client -> client.setScreen(
+                        new NarcissusModMenuIntegration().getModConfigScreenFactory().create(null))),
                 new ScreenStep("player-preferences", true, client -> client.setScreen(
                         new PlayerConfigScreen(new PlayerConfigScreen.Args()))),
                 new ScreenStep("client-config", false, client -> client.setScreen(
