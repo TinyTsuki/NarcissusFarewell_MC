@@ -15,7 +15,9 @@ import xin.vanilla.narcissus.util.SafeBlockChecker;
 
 import javax.annotation.Nullable;
 
-/** Fabric 基线的死亡记录查询；外部墓碑模组需要各自的 Fabric adapter。 */
+/**
+ * Fabric 基线的死亡记录查询；外部墓碑模组需要各自的 Fabric adapter。
+ */
 public final class GraveHelper {
     private GraveHelper() {
     }

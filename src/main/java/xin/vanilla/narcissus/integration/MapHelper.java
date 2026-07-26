@@ -2,7 +2,9 @@ package xin.vanilla.narcissus.integration;
 
 import xin.vanilla.narcissus.network.packet.WaypointSyncToClient;
 
-/** 地图同步的稳定入口；具体地图模组由后续 Fabric adapter 按需接入。 */
+/**
+ * 地图同步的稳定入口；具体地图模组由后续 Fabric adapter 按需接入。
+ */
 public final class MapHelper {
     private MapHelper() {
     }
