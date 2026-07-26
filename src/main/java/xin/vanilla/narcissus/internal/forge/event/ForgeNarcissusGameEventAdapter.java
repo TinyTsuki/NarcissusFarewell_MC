@@ -1,12 +1,12 @@
 package xin.vanilla.narcissus.internal.forge.event;
 
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.RegisterCommandsEvent;
 import net.minecraftforge.event.entity.EntityJoinLevelEvent;
 import net.minecraftforge.event.entity.EntityTeleportEvent;
 import net.minecraftforge.event.entity.living.LivingHurtEvent;
 import net.minecraftforge.event.entity.player.PlayerEvent;
-import net.minecraft.server.level.ServerPlayer;
 import xin.vanilla.narcissus.command.NarcissusCommand;
 import xin.vanilla.narcissus.event.EventHandlerProxy;
 import xin.vanilla.narcissus.util.TeleportCountdownTracker;

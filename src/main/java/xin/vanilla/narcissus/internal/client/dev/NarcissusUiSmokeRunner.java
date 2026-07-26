@@ -1,7 +1,7 @@
 package xin.vanilla.narcissus.internal.client.dev;
 
-import net.minecraft.client.Minecraft;
 import com.mojang.blaze3d.platform.NativeImage;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.Screenshot;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.phys.Vec3;
@@ -36,11 +36,7 @@ import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Locale;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Consumer;
 
 /**
@@ -176,7 +172,9 @@ public final class NarcissusUiSmokeRunner {
         enterStep(client, preWorldSteps);
     }
 
-    /** 先访问稳定 API，尽早发现配置或键位注册时序回归。 */
+    /**
+     * 先访问稳定 API，尽早发现配置或键位注册时序回归。
+     */
     private static void validateIntegration() {
         if (ClientConfig.get().holder() == null || CommonConfig.get().holder() == null) {
             throw new IllegalStateException("Narcissus config holder is not registered");
@@ -223,7 +221,9 @@ public final class NarcissusUiSmokeRunner {
         }
     }
 
-    /** 临时填充两列数据，让截图真正覆盖列表项绘制，结束后会恢复原值。 */
+    /**
+     * 临时填充两列数据，让截图真正覆盖列表项绘制，结束后会恢复原值。
+     */
     private void installAccessListFixtures(Minecraft client) {
         fixtureAccess = PlayerTeleportData.getData(client.player).getAccess();
         originalBlackList = new HashSet<>(fixtureAccess.getBlackList());

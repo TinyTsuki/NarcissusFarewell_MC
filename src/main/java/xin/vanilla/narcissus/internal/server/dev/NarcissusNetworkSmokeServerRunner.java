@@ -1,7 +1,7 @@
 package xin.vanilla.narcissus.internal.server.dev;
 
-import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.TickEvent;
 import xin.vanilla.banira.api.BaniraServer;
@@ -12,7 +12,9 @@ import xin.vanilla.narcissus.internal.dev.NarcissusNetworkSmokeStatus;
 
 import java.util.List;
 
-/** 在独立服务端内复核网络往返，并在第二阶段验证重启后的玩家数据。 */
+/**
+ * 在独立服务端内复核网络往返，并在第二阶段验证重启后的玩家数据。
+ */
 public final class NarcissusNetworkSmokeServerRunner {
     private static boolean ready;
     private static boolean finished;
@@ -64,7 +66,9 @@ public final class NarcissusNetworkSmokeServerRunner {
         }
     }
 
-    /** 玩家离线后留出两秒保存时间，再走 Minecraft 自身的正常关闭流程。 */
+    /**
+     * 玩家离线后留出两秒保存时间，再走 Minecraft 自身的正常关闭流程。
+     */
     private static void shutdownWhenSaved(MinecraftServer server) {
         if (server.getPlayerList().getPlayerCount() > 0) {
             shutdownTicks = 0;
