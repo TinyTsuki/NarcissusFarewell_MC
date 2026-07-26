@@ -16,7 +16,9 @@ import xin.vanilla.narcissus.integration.ScreenHelper;
 
 import java.util.function.Consumer;
 
-/** 集中注册 Narcissus 的客户端事件、快捷入口和开发期 runner。 */
+/**
+ * 集中注册 Narcissus 的客户端事件、快捷入口和开发期 runner。
+ */
 public final class NarcissusClientBootstrap {
     private static boolean initialized;
 

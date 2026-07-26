@@ -6,8 +6,8 @@ import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
-import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.core.BlockPos;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.Level;
 import xin.vanilla.narcissus.config.CommonConfig;
 import xin.vanilla.narcissus.data.SafeWorldCoordinate;
@@ -33,7 +33,8 @@ public final class TpWorldSpawnCommand {
         }
         safeWorldCoordinate.fromBlockPos(respawnPosition);
         safeWorldCoordinate.safe("safe".equalsIgnoreCase(xin.vanilla.banira.common.util.CommandUtils.getStringDefault(context, "safe", "safe")));
-        if (CommandUtils.checkTeleportPost(player, safeWorldCoordinate, EnumTeleportType.TP_WORLD_SPAWN, true)) return 0;
+        if (CommandUtils.checkTeleportPost(player, safeWorldCoordinate, EnumTeleportType.TP_WORLD_SPAWN, true))
+            return 0;
         NarcissusUtils.teleportTo(player, safeWorldCoordinate, EnumTeleportType.TP_WORLD_SPAWN);
         return 1;
     }
