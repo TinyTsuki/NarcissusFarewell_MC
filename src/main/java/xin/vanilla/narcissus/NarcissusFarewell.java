@@ -12,7 +12,6 @@ import xin.vanilla.banira.common.util.BaniraEventBus;
 import xin.vanilla.banira.common.util.CommandUtils;
 import xin.vanilla.banira.common.util.EnvironmentUtils;
 import xin.vanilla.banira.common.util.PacketUtils;
-import xin.vanilla.narcissus.command.NarcissusCommand;
 import xin.vanilla.narcissus.client.NarcissusClientBootstrap;
 import xin.vanilla.narcissus.config.ClientConfig;
 import xin.vanilla.narcissus.config.CommonConfig;

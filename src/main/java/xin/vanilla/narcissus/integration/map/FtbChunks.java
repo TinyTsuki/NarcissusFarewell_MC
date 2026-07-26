@@ -23,7 +23,7 @@ public final class FtbChunks {
         try {
             ResourceKey<Level> dim = DimensionUtils.parse(dimension);
             MapDimension map = MapManager.getInstance().get().getDimension(dim);
-            WaypointImpl waypoint = new WaypointImpl(WaypointType.DEFAULT,map, new BlockPos((int) x, (int) y, (int) z));
+            WaypointImpl waypoint = new WaypointImpl(WaypointType.DEFAULT, map, new BlockPos((int) x, (int) y, (int) z));
             waypoint.setName(name);
             waypoint.setColor(EnumMCColor.GREEN.getColor());
             map.getWaypointManager().add(waypoint);

@@ -87,7 +87,9 @@ public class SafeBlock {
         }
     }
 
-    /** 适配 1.17 起草径方块的注册名变更，同时保留可能附带的状态属性。 */
+    /**
+     * 适配 1.17 起草径方块的注册名变更，同时保留可能附带的状态属性。
+     */
     static String normalizeBlockStateId(String value) {
         if (value == null) {
             return null;
