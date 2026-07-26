@@ -11,7 +11,9 @@ import xin.vanilla.narcissus.command.NarcissusCommand;
 import xin.vanilla.narcissus.event.EventHandlerProxy;
 import xin.vanilla.narcissus.util.TeleportCountdownTracker;
 
-/** 将 NeoForge 游戏事件转换为不依赖加载器类型的业务参数。 */
+/**
+ * 将 NeoForge 游戏事件转换为不依赖加载器类型的业务参数。
+ */
 public final class NeoForgeNarcissusGameEventAdapter {
     private static boolean registered;
 

@@ -14,8 +14,8 @@ import xin.vanilla.banira.client.notification.NotificationTypeRegistry;
 import xin.vanilla.banira.common.util.PacketUtils;
 import xin.vanilla.narcissus.NarcissusFarewell;
 import xin.vanilla.narcissus.integration.ScreenHelper;
-import xin.vanilla.narcissus.internal.client.dev.NarcissusUiSmokeRunner;
 import xin.vanilla.narcissus.internal.client.dev.NarcissusNetworkSmokeClientRunner;
+import xin.vanilla.narcissus.internal.client.dev.NarcissusUiSmokeRunner;
 import xin.vanilla.narcissus.network.packet.*;
 import xin.vanilla.narcissus.notification.NarcissusNotificationTypes;
 
@@ -40,7 +40,9 @@ public final class ClientModEventHandler {
     private ClientModEventHandler() {
     }
 
-    /** 显式注册客户端生命周期、输入事件和 dev-only runner。 */
+    /**
+     * 显式注册客户端生命周期、输入事件和 dev-only runner。
+     */
     public static synchronized void register() {
         if (registered) {
             return;

@@ -1,7 +1,7 @@
 package xin.vanilla.narcissus.internal.client.dev;
 
-import net.minecraft.client.Minecraft;
 import com.mojang.blaze3d.platform.NativeImage;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.Screenshot;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.BackupConfirmScreen;
@@ -165,7 +165,9 @@ public final class NarcissusUiSmokeRunner {
         enterStep(client, preWorldSteps);
     }
 
-    /** 先访问稳定 API，尽早发现配置或键位注册时序回归。 */
+    /**
+     * 先访问稳定 API，尽早发现配置或键位注册时序回归。
+     */
     private static void validateIntegration() {
         if (ClientConfig.get().holder() == null || CommonConfig.get().holder() == null) {
             throw new IllegalStateException("Narcissus config holder is not registered");
@@ -251,7 +253,9 @@ public final class NarcissusUiSmokeRunner {
         }
     }
 
-    /** 开发存档跨版本升级时不创建备份，避免自动烟测停在确认界面。 */
+    /**
+     * 开发存档跨版本升级时不创建备份，避免自动烟测停在确认界面。
+     */
     private void continuePastWorldBackupPrompt(Minecraft client) {
         if (!(client.screen instanceof BackupConfirmScreen)) {
             return;
@@ -360,7 +364,9 @@ public final class NarcissusUiSmokeRunner {
         }
     }
 
-    /** 安全传送允许调整相邻落点，因此以服务端同步的传送记录为准。 */
+    /**
+     * 安全传送允许调整相邻落点，因此以服务端同步的传送记录为准。
+     */
     private TeleportRecord latestCompletedHomeTeleport(Minecraft client) {
         if (NarcissusClientSyncState.playerDataGeneration() <= syncGeneration) {
             return null;
