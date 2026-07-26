@@ -1,9 +1,9 @@
 package xin.vanilla.narcissus.config.access;
 
 import net.minecraft.core.Registry;
-import net.minecraft.world.level.block.Blocks;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.SoundEvents;
+import net.minecraft.world.level.block.Blocks;
 import xin.vanilla.banira.common.config.ConfigCategoryViewProxy;
 import xin.vanilla.banira.common.config.ConfigHolder;
 import xin.vanilla.narcissus.NarcissusFarewell;

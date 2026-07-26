@@ -5,7 +5,9 @@ import net.fabricmc.fabric.api.entity.event.v1.ServerPlayerEvents;
 import xin.vanilla.narcissus.command.NarcissusCommand;
 import xin.vanilla.narcissus.event.EventHandlerProxy;
 
-/** 将 Fabric 原生回调转换为 Narcissus 的稳定业务方法。 */
+/**
+ * 将 Fabric 原生回调转换为 Narcissus 的稳定业务方法。
+ */
 public final class FabricNarcissusGameEventAdapter {
     private static boolean registered;
 

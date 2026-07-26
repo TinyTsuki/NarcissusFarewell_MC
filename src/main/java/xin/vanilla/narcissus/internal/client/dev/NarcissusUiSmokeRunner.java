@@ -1,10 +1,10 @@
 package xin.vanilla.narcissus.internal.client.dev;
 
-import net.minecraft.client.Minecraft;
 import com.mojang.blaze3d.platform.NativeImage;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.Screenshot;
-import net.minecraft.world.phys.Vec3;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.phys.Vec3;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.lwjgl.glfw.GLFW;
@@ -14,12 +14,12 @@ import xin.vanilla.banira.common.util.EnvironmentUtils;
 import xin.vanilla.banira.common.util.PacketUtils;
 import xin.vanilla.narcissus.config.ClientConfig;
 import xin.vanilla.narcissus.config.CommonConfig;
-import xin.vanilla.narcissus.internal.fabric.modmenu.NarcissusModMenuIntegration;
 import xin.vanilla.narcissus.data.player.PlayerTeleportData;
 import xin.vanilla.narcissus.enums.EnumTeleportType;
 import xin.vanilla.narcissus.event.ClientModEventHandler;
 import xin.vanilla.narcissus.integration.ScreenHelper;
 import xin.vanilla.narcissus.internal.client.NarcissusClientSyncState;
+import xin.vanilla.narcissus.internal.fabric.modmenu.NarcissusModMenuIntegration;
 import xin.vanilla.narcissus.network.packet.PlayerConfigSyncToServer;
 import xin.vanilla.narcissus.network.packet.WaypointAddHomeToServer;
 import xin.vanilla.narcissus.network.packet.WaypointDelToServer;
@@ -163,7 +163,9 @@ public final class NarcissusUiSmokeRunner {
         enterStep(client, preWorldSteps);
     }
 
-    /** 先访问稳定 API，尽早发现配置或键位注册时序回归。 */
+    /**
+     * 先访问稳定 API，尽早发现配置或键位注册时序回归。
+     */
     private static void validateIntegration() {
         if (ClientConfig.get().holder() == null || CommonConfig.get().holder() == null) {
             throw new IllegalStateException("Narcissus config holder is not registered");

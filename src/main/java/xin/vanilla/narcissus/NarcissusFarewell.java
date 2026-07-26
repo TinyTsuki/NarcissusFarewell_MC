@@ -28,7 +28,9 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-/** 加载器无关的 Narcissus 公共初始化与共享状态。 */
+/**
+ * 加载器无关的 Narcissus 公共初始化与共享状态。
+ */
 public final class NarcissusFarewell {
     public static final String DEFAULT_COMMAND_PREFIX = "narcissus";
     public static final String MODID = "narcissus_farewell";
@@ -45,7 +47,9 @@ public final class NarcissusFarewell {
     private NarcissusFarewell() {
     }
 
-    /** 由加载器公共 entrypoint 调用一次。 */
+    /**
+     * 由加载器公共 entrypoint 调用一次。
+     */
     public static synchronized void bootstrapCommon() {
         if (initialized) {
             return;
