@@ -2,9 +2,9 @@ package xin.vanilla.narcissus.internal.client.dev;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.texture.NativeImage;
+import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.util.ScreenShotHelper;
 import net.minecraft.util.math.vector.Vector3d;
-import net.minecraft.entity.player.ServerPlayerEntity;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.lwjgl.glfw.GLFW;
@@ -160,7 +160,9 @@ public final class NarcissusUiSmokeRunner {
         enterStep(client, preWorldSteps);
     }
 
-    /** 先访问稳定 API，尽早发现配置或键位注册时序回归。 */
+    /**
+     * 先访问稳定 API，尽早发现配置或键位注册时序回归。
+     */
     private static void validateIntegration() {
         if (ClientConfig.get().holder() == null || CommonConfig.get().holder() == null) {
             throw new IllegalStateException("Narcissus config holder is not registered");

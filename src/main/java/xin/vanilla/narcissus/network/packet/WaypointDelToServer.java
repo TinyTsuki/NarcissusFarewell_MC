@@ -2,14 +2,13 @@ package xin.vanilla.narcissus.network.packet;
 
 import lombok.Getter;
 import lombok.experimental.Accessors;
-import xin.vanilla.banira.common.network.BaniraPacketBuffer;
 import xin.vanilla.banira.common.network.BaniraNetworkContext;
+import xin.vanilla.banira.common.network.BaniraPacketBuffer;
 import xin.vanilla.banira.common.util.CommandUtils;
 import xin.vanilla.banira.common.util.StringUtils;
 import xin.vanilla.narcissus.config.CommonConfig;
 import xin.vanilla.narcissus.network.NetworkPacket;
 import xin.vanilla.narcissus.util.NarcissusUtils;
-
 
 
 @Getter

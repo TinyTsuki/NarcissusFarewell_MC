@@ -1,8 +1,8 @@
 package xin.vanilla.narcissus.network.packet;
 
 import net.minecraft.entity.player.ServerPlayerEntity;
-import xin.vanilla.banira.common.network.BaniraPacketBuffer;
 import xin.vanilla.banira.common.network.BaniraNetworkContext;
+import xin.vanilla.banira.common.network.BaniraPacketBuffer;
 import xin.vanilla.banira.common.util.CommandUtils;
 import xin.vanilla.narcissus.enums.EnumCommandType;
 import xin.vanilla.narcissus.network.NetworkPacket;
