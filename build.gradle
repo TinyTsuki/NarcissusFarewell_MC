@@ -199,6 +199,8 @@ tasks.withType(ProcessResources).configureEach {
     }
 }
 
+apply from: 'gradle/mixin-runtime.gradle'
+
 // Example for how to get properties into the manifest for reading at runtime.
 tasks.named('jar', Jar).configure {
     // 自定义打包路径与输出格式
