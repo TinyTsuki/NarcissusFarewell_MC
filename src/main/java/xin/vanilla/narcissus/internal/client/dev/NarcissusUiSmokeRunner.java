@@ -1,7 +1,7 @@
 package xin.vanilla.narcissus.internal.client.dev;
 
-import net.minecraft.client.Minecraft;
 import com.mojang.blaze3d.platform.NativeImage;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.Screenshot;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.phys.Vec3;
@@ -160,7 +160,9 @@ public final class NarcissusUiSmokeRunner {
         enterStep(client, preWorldSteps);
     }
 
-    /** 先访问稳定 API，尽早发现配置或键位注册时序回归。 */
+    /**
+     * 先访问稳定 API，尽早发现配置或键位注册时序回归。
+     */
     private static void validateIntegration() {
         if (ClientConfig.get().holder() == null || CommonConfig.get().holder() == null) {
             throw new IllegalStateException("Narcissus config holder is not registered");

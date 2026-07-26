@@ -19,7 +19,9 @@ import xin.vanilla.narcissus.network.packet.PlayerConfigSyncToServer;
 
 import javax.annotation.Nonnull;
 
-/** 自动连接独立服务端并验证玩家配置与访问名单的真实网络往返。 */
+/**
+ * 自动连接独立服务端并验证玩家配置与访问名单的真实网络往返。
+ */
 public final class NarcissusNetworkSmokeClientRunner {
     private static final Logger LOGGER = LogManager.getLogger();
     private static final int TIMEOUT_TICKS = 1200;
