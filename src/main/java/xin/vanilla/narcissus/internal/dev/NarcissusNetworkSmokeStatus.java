@@ -11,7 +11,9 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 
-/** Dedicated network smoke 的 UTF-8 状态记录器。 */
+/**
+ * Dedicated network smoke 的 UTF-8 状态记录器。
+ */
 public final class NarcissusNetworkSmokeStatus {
     public static final String ENABLE_PROPERTY = "narcissus.networkSmoke";
     public static final String PHASE_PROPERTY = "narcissus.networkSmoke.phase";

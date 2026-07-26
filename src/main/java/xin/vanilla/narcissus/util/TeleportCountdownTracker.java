@@ -1,7 +1,7 @@
 package xin.vanilla.narcissus.util;
 
-import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.level.ServerPlayer;
 import xin.vanilla.banira.common.data.Component;
 import xin.vanilla.banira.common.util.MessageUtils;
 import xin.vanilla.narcissus.NarcissusComponent;
