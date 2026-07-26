@@ -35,7 +35,7 @@ public class Fabric21VersionContractTest {
         assertTrue(properties.contains("loader_version=0.16.14"));
         assertTrue(properties.contains("fabric_version=0.116.13+1.21.1"));
         assertTrue(properties.contains("modmenu_version=11.0.4"));
-        assertTrue(mixins.contains("\"compatibilityLevel\": \"JAVA_17\""));
+        assertTrue(mixins.contains("\"compatibilityLevel\": \"JAVA_21\""));
 
         // Fabric 1.21.1 继续使用 command API v2 与注册表上下文。
         assertTrue(events.contains("fabric.api.command.v2.CommandRegistrationCallback"));
