@@ -9,9 +9,10 @@ import xin.vanilla.banira.api.client.BaniraInput;
 import xin.vanilla.banira.api.client.BaniraKeyHandle;
 import xin.vanilla.banira.api.client.BaniraLogos;
 import xin.vanilla.banira.api.client.event.BaniraClientEvents;
+import xin.vanilla.banira.api.client.notification.BaniraClientNotificationTypes;
 import xin.vanilla.banira.client.data.GLFWKey;
-import xin.vanilla.banira.client.notification.NotificationTypeRegistry;
 import xin.vanilla.banira.common.util.PacketUtils;
+import xin.vanilla.narcissus.NarcissusComponent;
 import xin.vanilla.narcissus.NarcissusFarewell;
 import xin.vanilla.narcissus.integration.ScreenHelper;
 import xin.vanilla.narcissus.internal.client.dev.NarcissusNetworkSmokeClientRunner;
@@ -49,16 +50,37 @@ public final class ClientModEventHandler {
         }
         registered = true;
 
-        BaniraClientEvents.ModLifecycle.onClientSetup(event -> {
-            for (String id : NarcissusNotificationTypes.ALL_TYPE_IDS) {
-                NotificationTypeRegistry.register(id);
-            }
-        });
+        BaniraClientEvents.ModLifecycle.onClientSetup(event -> registerNotificationTypes());
         BaniraClientEvents.ModLifecycle.onClientSetup(event ->
                 BaniraLogos.register(NarcissusFarewell.MODID, () -> Math.random() > 0.5 ? "logo_.png" : "logo.png"));
         BaniraClientEvents.Client.onClientTick(ClientModEventHandler::onClientTick);
         NarcissusUiSmokeRunner.register();
         NarcissusNetworkSmokeClientRunner.register();
+    }
+
+    /**
+     * 通知类型的名称和说明由子 Mod 登记，Banira 只负责展示。
+     */
+    private static void registerNotificationTypes() {
+        BaniraClientNotificationTypes.registerModDisplayName(
+                NarcissusFarewell.MODID,
+                NarcissusComponent.get().transClientAuto("mod_name"));
+        registerNotificationType(NarcissusNotificationTypes.TELEPORT_REQUEST, "notification_type_teleport_request");
+        registerNotificationType(NarcissusNotificationTypes.TELEPORT_GUARD, "notification_type_teleport_guard");
+        registerNotificationType(NarcissusNotificationTypes.TELEPORT_SEARCH, "notification_type_teleport_search");
+        registerNotificationType(NarcissusNotificationTypes.TELEPORT_ERROR, "notification_type_teleport_error");
+        registerNotificationType(NarcissusNotificationTypes.WAYPOINT, "notification_type_waypoint");
+        registerNotificationType(NarcissusNotificationTypes.INTERACTIVE_TP_FLOW, "notification_type_interactive_tp_flow");
+        registerNotificationType(NarcissusNotificationTypes.INTERACTIVE_SHARE, "notification_type_interactive_share");
+        registerNotificationType(NarcissusNotificationTypes.INTERACTIVE_HELP, "notification_type_interactive_help");
+        registerNotificationType(NarcissusNotificationTypes.INTERACTIVE_COORDINATE_LIST, "notification_type_interactive_coordinate_list");
+        registerNotificationType(NarcissusNotificationTypes.INTERACTIVE_QUERY, "notification_type_interactive_query");
+    }
+
+    private static void registerNotificationType(String typeId, String descriptionKey) {
+        BaniraClientNotificationTypes.register(
+                typeId,
+                NarcissusComponent.get().transClientAuto(descriptionKey));
     }
 
     private static void onClientTick(xin.vanilla.banira.api.client.event.BaniraClientTickEvent event) {

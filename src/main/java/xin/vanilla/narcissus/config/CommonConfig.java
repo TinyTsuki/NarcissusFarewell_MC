@@ -4,8 +4,6 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.level.block.Blocks;
 import xin.vanilla.banira.api.BaniraConfigs;
 import xin.vanilla.banira.common.config.ConfigData;
 import xin.vanilla.banira.common.config.ConfigHolder;
@@ -20,8 +18,8 @@ import xin.vanilla.narcissus.enums.EnumCostType;
 import xin.vanilla.narcissus.enums.EnumTeleportType;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
-import java.util.stream.Stream;
 
 /**
  * 通用配置
@@ -377,24 +375,20 @@ public class CommonConfig implements ConfigData {
     @Accessors(chain = true, fluent = true)
     public static class SafeTeleportCategory {
         @ConfigEntry.Gui.Tooltip(zh_cn = "不安全的方块列表，玩家不会传送到这些方块上。", en_us = "The list of unsafe blocks, players will not be teleported to these blocks.")
-        private List<String> unsafeBlocks = Stream.of(Blocks.LAVA, Blocks.FIRE, Blocks.CAMPFIRE, Blocks.SOUL_FIRE, Blocks.SOUL_CAMPFIRE, Blocks.CACTUS, Blocks.MAGMA_BLOCK, Blocks.SWEET_BERRY_BUSH).map(block -> {
-            ResourceLocation rl = block.getRegistryName();
-            return rl == null ? "" : rl.toString();
-        }).toList();
+        private List<String> unsafeBlocks = new ArrayList<>(Arrays.asList(
+                "minecraft:lava", "minecraft:fire", "minecraft:campfire", "minecraft:soul_fire",
+                "minecraft:soul_campfire", "minecraft:cactus", "minecraft:magma_block",
+                "minecraft:sweet_berry_bush"));
         @ConfigEntry.Gui.Tooltip(zh_cn = "窒息的方块列表，玩家头不会处于这些方块里面。", en_us = "The list of suffocating blocks, players will not be teleported to these blocks.")
-        private List<String> suffocatingBlocks = Stream.of(Blocks.LAVA, Blocks.WATER).map(block -> {
-            ResourceLocation rl = block.getRegistryName();
-            return rl == null ? "" : rl.toString();
-        }).toList();
+        private List<String> suffocatingBlocks = new ArrayList<>(Arrays.asList(
+                "minecraft:lava", "minecraft:water"));
         @ConfigEntry.Gui.Tooltip(zh_cn = "当进行安全传送时，如果未找到安全坐标，是否在脚下放置方块。", en_us = "When performing a safe teleport, whether to place a block underfoot if a safe safeWorldCoordinate is not found.")
         private boolean setBlockWhenSafeNotFound = false;
         @ConfigEntry.Gui.Tooltip(zh_cn = "当进行安全传送时，如果未找到安全坐标，是否仅从背包中获取可放置的方块。", en_us = "When performing a safe teleport, whether to only use placeable blocks from the player's inventory if a safe safeWorldCoordinate is not found.")
         private boolean getBlockFromInventory = true;
         @ConfigEntry.Gui.Tooltip(zh_cn = "当进行安全传送时，如果未找到安全坐标，放置方块的列表。若'getBlockFromInventory'为false，则始终使用列表中的第一个方块。", en_us = "When performing a safe teleport, the list of blocks to place if a safe safeWorldCoordinate is not found. If 'getBlockFromInventory' is set to false, the first block in the list will always be used.")
-        private List<String> safeBlocks = Stream.of(Blocks.GRASS_BLOCK, Blocks.DIRT_PATH, Blocks.DIRT, Blocks.COBBLESTONE).map(block -> {
-            ResourceLocation rl = block.getRegistryName();
-            return rl == null ? "" : rl.toString();
-        }).toList();
+        private List<String> safeBlocks = new ArrayList<>(Arrays.asList(
+                "minecraft:grass_block", "minecraft:dirt_path", "minecraft:dirt", "minecraft:cobblestone"));
         @ConfigEntry.Gui.Tooltip(zh_cn = "当进行安全传送时，寻找安全坐标的半径，单位为区块。", en_us = "The chunk range for finding a safe safeWorldCoordinate, in chunks.")
         @ConfigEntry.BoundedDiscrete(min = 1, max = 16)
         private int safeChunkRange = 1;
