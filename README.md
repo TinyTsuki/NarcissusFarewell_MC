@@ -93,7 +93,6 @@
 
 - 通用及服务器行为配置：`config/narcissus_farewell-common.toml`
 - 客户端配置：`config/narcissus_farewell-client.toml`
-- 安装 Mod Menu 后可从模组列表直接打开水仙辞客户端配置界面。
 
 ## 指令说明
 

@@ -94,7 +94,6 @@
 
 - 共通およびサーバー動作設定：`config/narcissus_farewell-common.toml`
 - クライアント設定：`config/narcissus_farewell-client.toml`
-- Mod Menu を導入すると、MOD 一覧から水仙辞のクライアント設定画面を直接開けます。
 
 ## コマンド
 

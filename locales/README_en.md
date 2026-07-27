@@ -91,19 +91,18 @@ to in-game tooltips and generated comments for the meaning and valid range of ea
 
 ### Forge
 
-- Common and server-behavior configuration: `config/narcissus_farewell-common.toml`
-- Client configuration: `config/narcissus_farewell-client.toml`
+- Common and server-behavior Config: `config/narcissus_farewell-common.toml`
+- Client Config: `config/narcissus_farewell-client.toml`
 
 ### NeoForge
 
-- Common and server-behavior configuration: `config/narcissus_farewell-common.toml`
-- Client configuration: `config/narcissus_farewell-client.toml`
+- Common and server-behavior Config: `config/narcissus_farewell-common.toml`
+- Client Config: `config/narcissus_farewell-client.toml`
 
 ### Fabric
 
-- Common and server-behavior configuration: `config/narcissus_farewell-common.toml`
-- Client configuration: `config/narcissus_farewell-client.toml`
-- With Mod Menu installed, the Narcissus Farewell client configuration screen can be opened directly from the mod list.
+- Common and server-behavior Config: `config/narcissus_farewell-common.toml`
+- Client Config: `config/narcissus_farewell-client.toml`
 
 ## Commands
 
