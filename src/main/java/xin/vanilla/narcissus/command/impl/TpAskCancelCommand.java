@@ -43,7 +43,7 @@ public final class TpAskCancelCommand {
     }
 
     public static LiteralArgumentBuilder<CommandSourceStack> create() {
-        return Commands.literal(CommonConfig.get().commandNames().commandTpAskCancel())
+        return Commands.literal(CommonConfig.get().command().commandTpAskCancel())
                 .requires(source -> NarcissusUtils.hasCommandPermission(source, EnumCommandType.TP_ASK_CANCEL))
                 .executes(TpAskCancelCommand::execute)
                 .then(Commands.argument("requestIndex", IntegerArgumentType.integer(1))

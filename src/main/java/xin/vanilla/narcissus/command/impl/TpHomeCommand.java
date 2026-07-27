@@ -94,7 +94,7 @@ public final class TpHomeCommand {
     }
 
     public static LiteralArgumentBuilder<CommandSourceStack> create() {
-        return Commands.literal(CommonConfig.get().commandNames().commandTpHome())
+        return Commands.literal(CommonConfig.get().command().commandTpHome())
                 .requires(source -> NarcissusUtils.hasCommandPermission(source, EnumCommandType.TP_HOME))
                 .executes(TpHomeCommand::execute)
                 .then(Commands.argument("name", StringArgumentType.string())

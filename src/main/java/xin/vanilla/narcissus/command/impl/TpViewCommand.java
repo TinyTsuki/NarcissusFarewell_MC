@@ -28,7 +28,7 @@ public final class TpViewCommand {
         if (CommandUtils.checkTeleportPre(context.getSource(), EnumCommandType.TP_VIEW)) return 0;
         ServerPlayer player = context.getSource().getPlayerOrException();
         boolean safe = "safe".equalsIgnoreCase(xin.vanilla.banira.common.util.CommandUtils.getStringEmpty(context, "safe"));
-        int range = xin.vanilla.banira.common.util.CommandUtils.getIntDefault(context, "range", CommonConfig.get().general().teleportViewDistanceLimit());
+        int range = xin.vanilla.banira.common.util.CommandUtils.getIntDefault(context, "range", CommonConfig.get().base().teleportLimit().teleportViewDistanceLimit());
         range = NarcissusUtils.checkRange(player, EnumTeleportType.TP_VIEW, range);
         MessageUtils.sendNotification(player, NarcissusComponent.get().transAuto("tp_view_searching"), NarcissusNotificationTypes.TELEPORT_SEARCH);
         int finalRange = range;
@@ -46,7 +46,7 @@ public final class TpViewCommand {
     }
 
     public static LiteralArgumentBuilder<CommandSourceStack> create() {
-        return Commands.literal(CommonConfig.get().commandNames().commandTpView())
+        return Commands.literal(CommonConfig.get().command().commandTpView())
                 .requires(source -> NarcissusUtils.hasCommandPermission(source, EnumCommandType.TP_VIEW))
                 .executes(TpViewCommand::execute)
                 .then(Commands.argument("safe", StringArgumentType.word())

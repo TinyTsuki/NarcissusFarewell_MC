@@ -77,8 +77,8 @@ public final class ClientCostCalculator {
 
     private static int getTeleportCardNeed(double need) {
         int ceil = (int) Math.ceil(need);
-        if (!CommonConfig.get().base().teleportCard()) return 0;
-        switch (CommonConfig.get().base().teleportCardType()) {
+        if (!CommonConfig.get().base().teleportCard().teleportCard()) return 0;
+        switch (CommonConfig.get().base().teleportCard().teleportCardType()) {
             case LIKE_COST:
             case REFUND_COST:
             case REFUND_COST_AND_COOLDOWN:
@@ -89,8 +89,8 @@ public final class ClientCostCalculator {
     }
 
     private static int getTeleportCostNeed(PlayerTeleportData data, int card, int need) {
-        if (!CommonConfig.get().base().teleportCard()) return need;
-        switch (CommonConfig.get().base().teleportCardType()) {
+        if (!CommonConfig.get().base().teleportCard().teleportCard()) return need;
+        switch (CommonConfig.get().base().teleportCard().teleportCardType()) {
             case NONE:
                 return data.getTeleportCard() >= card ? need : -1;
             case LIKE_COST:

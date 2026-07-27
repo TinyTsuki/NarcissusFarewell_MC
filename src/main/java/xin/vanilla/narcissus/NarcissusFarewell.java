@@ -90,8 +90,8 @@ public final class NarcissusFarewell {
             costMap.put(EnumTeleportType.TP_STAGE, NarcissusUtils.getCommandCost(EnumTeleportType.TP_STAGE));
             costMap.put(EnumTeleportType.TP_BACK, NarcissusUtils.getCommandCost(EnumTeleportType.TP_BACK));
             PacketUtils.sendPacketToPlayer(new CostConfigSyncToClient(costMap,
-                    CommonConfig.get().general().teleportCostDistanceLimit(),
-                    CommonConfig.get().general().teleportCostDistanceAcrossDimension()), serverPlayer);
+                    CommonConfig.get().base().teleportLimit().teleportCostDistanceLimit(),
+                    CommonConfig.get().base().teleportLimit().teleportCostDistanceAcrossDimension()), serverPlayer);
             CommandUtils.refreshPermission(serverPlayer);
         });
     }
