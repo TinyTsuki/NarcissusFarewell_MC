@@ -195,7 +195,7 @@ public class SafeCoordinateFinder {
      */
     @Nullable
     public SafeWorldCoordinate searchInChunk(SafeWorldCoordinate safeWorldCoordinate, int chunkX, int chunkZ, boolean belowAllowAir) {
-        int offset = (CommonConfig.get().general().safeTeleport().safeChunkRange() - 1) * 16;
+        int offset = (CommonConfig.get().base().safeTeleport().safeChunkRange() - 1) * 16;
         int chunkMinX = (chunkX << 4) - offset;
         int chunkMinZ = (chunkZ << 4) - offset;
         int chunkMaxX = chunkMinX + 15 + offset;

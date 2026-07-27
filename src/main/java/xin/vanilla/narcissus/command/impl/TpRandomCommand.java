@@ -26,7 +26,7 @@ public final class TpRandomCommand {
         CommandUtils.notifyHelp(context);
         if (CommandUtils.checkTeleportPre(context.getSource(), EnumCommandType.TP_RANDOM)) return 0;
         ServerPlayer player = context.getSource().getPlayerOrException();
-        int range = xin.vanilla.banira.common.util.CommandUtils.getIntDefault(context, "range", CommonConfig.get().general().teleportRandomDistanceLimit());
+        int range = xin.vanilla.banira.common.util.CommandUtils.getIntDefault(context, "range", CommonConfig.get().base().randomTeleport().teleportRandomDistanceLimit());
         range = NarcissusUtils.checkRange(player, EnumTeleportType.TP_RANDOM, range);
         ResourceKey<Level> targetLevel = xin.vanilla.banira.common.util.CommandUtils.getDimensionKeyDefault(context, "dimension", player.getLevel().dimension());
         SafeWorldCoordinate safeWorldCoordinate = SafeWorldCoordinate.random(player, range, targetLevel).safe(true);
@@ -36,7 +36,7 @@ public final class TpRandomCommand {
     }
 
     public static LiteralArgumentBuilder<CommandSourceStack> create() {
-        return Commands.literal(CommonConfig.get().commandNames().commandTpRandom())
+        return Commands.literal(CommonConfig.get().command().commandTpRandom())
                 .requires(source -> NarcissusUtils.hasCommandPermission(source, EnumCommandType.TP_RANDOM))
                 .executes(TpRandomCommand::execute)
                 .then(Commands.argument("range", IntegerArgumentType.integer(1))

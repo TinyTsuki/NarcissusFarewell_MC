@@ -40,7 +40,7 @@ public final class TpWorldSpawnCommand {
     }
 
     public static LiteralArgumentBuilder<CommandSourceStack> create() {
-        return Commands.literal(CommonConfig.get().commandNames().commandTpWorldSpawn())
+        return Commands.literal(CommonConfig.get().command().commandTpWorldSpawn())
                 .requires(source -> NarcissusUtils.hasCommandPermission(source, EnumCommandType.TP_WORLD_SPAWN))
                 .executes(TpWorldSpawnCommand::execute)
                 .then(Commands.argument("safe", StringArgumentType.word())

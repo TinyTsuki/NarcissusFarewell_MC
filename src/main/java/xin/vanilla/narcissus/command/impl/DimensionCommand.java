@@ -37,7 +37,7 @@ public final class DimensionCommand {
     }
 
     public static LiteralArgumentBuilder<CommandSourceStack> create() {
-        return Commands.literal(CommonConfig.get().commandNames().commandDimension())
+        return Commands.literal(CommonConfig.get().command().commandDimension())
                 .executes(DimensionCommand::execute);
     }
 }
