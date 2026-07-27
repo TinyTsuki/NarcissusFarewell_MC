@@ -72,9 +72,28 @@
 
 ## 配置说明
 
-本地配置文件路径 `world/serverconfig/narcissus_farewell-server.toml`、
-`config/narcissus_farewell-common.toml`
-，其他的信息不再赘述，请参考默认配置文件中的注释。
+您可以通过水仙辞配置编辑器修改配置，也可以直接编辑下列文件。配置项含义和取值范围以游戏内提示及生成文件中的注释为准。
+
+### 通用部分
+
+- 传送点、传送记录、权限和玩家偏好等数据保存在香草芯系列玩家数据中：`world/vanilla.xin/playerdata/*.nbt`
+- 共享语言等香草芯系列设置：`config/vanilla.xin/common_config.json`
+
+### Forge
+
+- 通用及服务器行为配置：`config/narcissus_farewell-common.toml`
+- 客户端配置：`config/narcissus_farewell-client.toml`
+
+### NeoForge
+
+- 通用及服务器行为配置：`config/narcissus_farewell-common.toml`
+- 客户端配置：`config/narcissus_farewell-client.toml`
+
+### Fabric
+
+- 通用及服务器行为配置：`config/narcissus_farewell-common.toml`
+- 客户端配置：`config/narcissus_farewell-client.toml`
+- 安装 Mod Menu 后可从模组列表直接打开水仙辞客户端配置界面。
 
 ## 指令说明
 
@@ -289,11 +308,23 @@ docs 分支提供统一批量构建脚本：
 scripts\build-all.bat
 ```
 
-脚本通过 detached 临时 worktree 构建全部维护分支，不会切换当前工作树。仅检查分支和 JDK 配置时使用：
+脚本默认动态构建本地 `forge/*`、`fabric/*`、`neoforge/*` 分支，不包含 `dev/*`、`maintenance/*` 等其他命名空间。
+每个分支都在 detached 临时 worktree 中构建，不会切换当前工作树。仅检查分支和 JDK 配置时使用：
 
 ```bat
 scripts\build-all.bat -ListOnly
 ```
+
+通过 glob 表达式选择分支：
+
+```bat
+scripts\build-all.bat -BranchExpression "forge/*"
+scripts\build-all.bat -BranchExpression "*/21.1"
+scripts\build-all.bat -BranchExpression "forge/*,!forge/16.5"
+scripts\build-all.bat -BranchExpression "fabric/18.2"
+```
+
+`!` 开头的表达式用于排除分支；旧参数名 `-Branches` 仍可作为别名使用。
 
 ---
 

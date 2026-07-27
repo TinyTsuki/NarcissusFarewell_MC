@@ -80,9 +80,30 @@ This mod is required on the server side, and optional on the client side.
 
 ## Configuration Instructions
 
-The local configuration files are `world/serverconfig/narcissus_farewell-server.toml` and
-`config/narcissus_farewell-common.toml`. For further details,
-please refer to the comments in the default config file.
+Configuration can be changed through the Narcissus Farewell configuration editor or by editing the files below. Refer
+to in-game tooltips and generated comments for the meaning and valid range of each option.
+
+### Shared Files
+
+- Teleport points, history, permissions, and player preferences are stored in shared Vanilla Xin player data:
+  `world/vanilla.xin/playerdata/*.nbt`
+- Shared Vanilla Xin settings such as language preferences: `config/vanilla.xin/common_config.json`
+
+### Forge
+
+- Common and server-behavior configuration: `config/narcissus_farewell-common.toml`
+- Client configuration: `config/narcissus_farewell-client.toml`
+
+### NeoForge
+
+- Common and server-behavior configuration: `config/narcissus_farewell-common.toml`
+- Client configuration: `config/narcissus_farewell-client.toml`
+
+### Fabric
+
+- Common and server-behavior configuration: `config/narcissus_farewell-common.toml`
+- Client configuration: `config/narcissus_farewell-client.toml`
+- With Mod Menu installed, the Narcissus Farewell client configuration screen can be opened directly from the mod list.
 
 ## Command Instructions
 
@@ -303,8 +324,27 @@ The docs branch provides one build entry for all maintained branches:
 scripts\build-all.bat
 ```
 
-It builds each branch in a detached temporary worktree without switching the current checkout. Use
-`scripts\build-all.bat -ListOnly` to validate branch and JDK discovery without running Gradle.
+By default, it dynamically builds all local `forge/*`, `fabric/*`, and `neoforge/*` branches. Other namespaces such
+as `dev/*` and `maintenance/*` are excluded. Each branch is built in a detached temporary worktree without switching
+the current checkout.
+
+List selected branches and validate JDK discovery without running Gradle:
+
+```bat
+scripts\build-all.bat -ListOnly
+```
+
+Select branches with glob expressions:
+
+```bat
+scripts\build-all.bat -BranchExpression "forge/*"
+scripts\build-all.bat -BranchExpression "*/21.1"
+scripts\build-all.bat -BranchExpression "forge/*,!forge/16.5"
+scripts\build-all.bat -BranchExpression "fabric/18.2"
+```
+
+Expressions beginning with `!` exclude matching branches. The previous parameter name `-Branches` remains available
+as an alias.
 
 ---
 
