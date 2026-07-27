@@ -10,6 +10,7 @@ import com.mojang.brigadier.suggestion.SuggestionProvider;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.server.level.ServerPlayer;
+import xin.vanilla.banira.api.BaniraCommonSettings;
 import xin.vanilla.banira.api.BaniraConfigs;
 import xin.vanilla.banira.common.config.ConfigHolder;
 import xin.vanilla.banira.common.data.Component;
@@ -37,7 +38,7 @@ public final class ConfigCommand {
     private static int executeTeleportCard(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
         ServerPlayer player = context.getSource().getPlayerOrException();
         Component msg = NarcissusComponent.get().transAuto("server_config_status"
-                , NarcissusLang.get().enabled(CommonConfig.get().base().teleportCard())
+                , NarcissusLang.get().enabled(CommonConfig.get().base().teleportCard().teleportCard())
                 , NarcissusComponent.get().transAuto("teleport_card"));
         MessageUtils.sendDefaultNotification(player, msg, EnumPosition.TOP_RIGHT, EnumMoveType.AUTO);
         return 1;
@@ -45,10 +46,10 @@ public final class ConfigCommand {
 
     private static int executeTeleportCardSet(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
         boolean bool = BoolArgumentType.getBool(context, "bool");
-        CommonConfig.get().base().teleportCard(bool);
+        CommonConfig.get().base().teleportCard().teleportCard(bool);
         ServerPlayer player = context.getSource().getPlayerOrException();
         Component msg = NarcissusComponent.get().transAuto("server_config_status"
-                , NarcissusLang.get().enabled(CommonConfig.get().base().teleportCard())
+                , NarcissusLang.get().enabled(CommonConfig.get().base().teleportCard().teleportCard())
                 , NarcissusComponent.get().transAuto("teleport_card"));
         MessageUtils.broadcastMessage(player, msg);
         return 1;
@@ -82,9 +83,10 @@ public final class ConfigCommand {
 
     private static int executeLanguage(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
         String code = StringArgumentType.getString(context, "language");
-        CommonConfig.get().general().defaultLanguage(code);
+        BaniraCommonSettings.defaultLanguage(code);
         ServerPlayer player = context.getSource().getPlayerOrException();
-        MessageUtils.broadcastMessage(player, NarcissusComponent.get().transAuto("server_default_language", CommonConfig.get().general().defaultLanguage()));
+        MessageUtils.broadcastMessage(player, NarcissusComponent.get().transAuto(
+                "server_default_language", BaniraCommonSettings.defaultLanguage()));
         return 1;
     }
 

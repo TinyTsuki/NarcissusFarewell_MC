@@ -19,6 +19,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.levelgen.feature.StructureFeature;
+import xin.vanilla.banira.api.BaniraCommonSettings;
 import xin.vanilla.banira.api.BaniraServer;
 import xin.vanilla.banira.common.data.Component;
 import xin.vanilla.banira.common.data.WorldCoordinate;
@@ -53,7 +54,7 @@ public final class TpStructureCommand {
             MessageUtils.sendNotification(player, NarcissusComponent.get().transAuto("structure_biome_not_found", structId), NarcissusNotificationTypes.TELEPORT_ERROR);
             return 0;
         }
-        int range = xin.vanilla.banira.common.util.CommandUtils.getIntDefault(context, "range", CommonConfig.get().general().teleportRandomDistanceLimit());
+        int range = xin.vanilla.banira.common.util.CommandUtils.getIntDefault(context, "range", CommonConfig.get().base().randomTeleport().teleportRandomDistanceLimit());
         range = NarcissusUtils.checkRange(player, EnumTeleportType.TP_STRUCTURE, range);
         ResourceKey<Level> targetLevel = xin.vanilla.banira.common.util.CommandUtils.getDimensionKeyDefault(context, "dimension", player.getLevel().dimension());
         boolean safe = "safe".equalsIgnoreCase(xin.vanilla.banira.common.util.CommandUtils.getStringDefault(context, "safe", "safe"));
@@ -100,7 +101,7 @@ public final class TpStructureCommand {
     public static CompletableFuture<Suggestions> suggestion(CommandContext<CommandSourceStack> context, SuggestionsBuilder builder) {
         String input = xin.vanilla.banira.common.util.CommandUtils.getStringEx(context, "struct", "");
         boolean isInputEmpty = StringUtils.isNullOrEmpty(input);
-        String language = CommonConfig.get().general().defaultLanguage();
+        String language = BaniraCommonSettings.defaultLanguage();
         try {
             language = NarcissusLang.getPlayerLanguage(context.getSource().getPlayerOrException());
         } catch (CommandSyntaxException ignored) {
@@ -117,7 +118,7 @@ public final class TpStructureCommand {
     }
 
     public static LiteralArgumentBuilder<CommandSourceStack> create() {
-        return Commands.literal(CommonConfig.get().commandNames().commandTpStructure())
+        return Commands.literal(CommonConfig.get().command().commandTpStructure())
                 .requires(source -> NarcissusUtils.hasCommandPermission(source, EnumCommandType.TP_STRUCTURE))
                 .then(Commands.argument("struct", ResourceLocationArgument.id())
                         .suggests(TpStructureCommand::suggestion)

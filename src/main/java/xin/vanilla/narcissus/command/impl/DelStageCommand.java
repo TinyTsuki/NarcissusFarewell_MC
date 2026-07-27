@@ -70,7 +70,7 @@ public final class DelStageCommand {
     }
 
     public static LiteralArgumentBuilder<CommandSourceStack> create() {
-        return Commands.literal(CommonConfig.get().commandNames().commandDelStage())
+        return Commands.literal(CommonConfig.get().command().commandDelStage())
                 .requires(source -> NarcissusUtils.hasCommandPermission(source, EnumCommandType.DEL_STAGE))
                 .then(Commands.argument("name", StringArgumentType.string())
                         .suggests(CommandUtils::stageSuggestion)

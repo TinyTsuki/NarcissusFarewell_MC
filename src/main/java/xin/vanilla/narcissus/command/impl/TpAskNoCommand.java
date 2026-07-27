@@ -40,7 +40,7 @@ public final class TpAskNoCommand {
     }
 
     public static LiteralArgumentBuilder<CommandSourceStack> create() {
-        return Commands.literal(CommonConfig.get().commandNames().commandTpAskNo())
+        return Commands.literal(CommonConfig.get().command().commandTpAskNo())
                 .requires(source -> NarcissusUtils.hasCommandPermission(source, EnumCommandType.TP_ASK_NO))
                 .executes(TpAskNoCommand::execute)
                 .then(Commands.argument("requestIndex", IntegerArgumentType.integer(1))
