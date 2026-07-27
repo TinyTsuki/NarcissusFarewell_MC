@@ -1,9 +1,5 @@
 package xin.vanilla.narcissus.config.access;
 
-import net.minecraft.core.Registry;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.sounds.SoundEvents;
-import net.minecraft.world.level.block.Blocks;
 import xin.vanilla.banira.common.config.ConfigCategoryViewProxy;
 import xin.vanilla.banira.common.config.ConfigHolder;
 import xin.vanilla.narcissus.NarcissusFarewell;
@@ -17,17 +13,22 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.util.ArrayList;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 /**
  * {@link CommonConfig} 运行时 {@link CommonConfig.RootView} 实现。
  */
 public final class CommonConfigAccess {
 
-    private static final CommonConfig.BaseCategory DEFAULT_BASE = new CommonConfig.BaseCategory();
+    private static final CommonConfig.OtherCategory DEFAULT_OTHER = new CommonConfig.OtherCategory();
+    private static final CommonConfig.TeleportCardCategory DEFAULT_TELEPORT_CARD = new CommonConfig.TeleportCardCategory();
+    private static final CommonConfig.TeleportLimitCategory DEFAULT_TELEPORT_LIMIT = new CommonConfig.TeleportLimitCategory();
+    private static final CommonConfig.TeleportTogetherCategory DEFAULT_TELEPORT_TOGETHER = new CommonConfig.TeleportTogetherCategory();
+    private static final CommonConfig.TeleportRequestCategory DEFAULT_TELEPORT_REQUEST = new CommonConfig.TeleportRequestCategory();
+    private static final CommonConfig.SafeTeleportCategory DEFAULT_SAFE = new CommonConfig.SafeTeleportCategory();
+    private static final CommonConfig.RandomTeleportCategory DEFAULT_RANDOM_TELEPORT = new CommonConfig.RandomTeleportCategory();
+    private static final CommonConfig.CreativeFlightCategory DEFAULT_CREATIVE_FLIGHT = new CommonConfig.CreativeFlightCategory();
     private static final CommonConfig.FeatureSwitchCategory DEFAULT_FS = new CommonConfig.FeatureSwitchCategory();
-    private static final CommonConfig.CommandNamesCategory DEFAULT_CN = new CommonConfig.CommandNamesCategory();
+    private static final CommonConfig.CommandCategory DEFAULT_CN = new CommonConfig.CommandCategory();
     private static final CommonConfig.CommandTpAskNames DEFAULT_CN_TP_ASK = new CommonConfig.CommandTpAskNames();
     private static final CommonConfig.CommandTpHereNames DEFAULT_CN_TP_HERE = new CommonConfig.CommandTpHereNames();
     private static final CommonConfig.CommandTpHomeNames DEFAULT_CN_TP_HOME = new CommonConfig.CommandTpHomeNames();
@@ -37,8 +38,6 @@ public final class CommonConfigAccess {
     private static final CommonConfig.ConciseTpHereNames DEFAULT_CC_TP_HERE = new CommonConfig.ConciseTpHereNames();
     private static final CommonConfig.ConciseTpHomeNames DEFAULT_CC_TP_HOME = new CommonConfig.ConciseTpHomeNames();
     private static final CommonConfig.ConciseTpStageNames DEFAULT_CC_TP_STAGE = new CommonConfig.ConciseTpStageNames();
-    private static final CommonConfig.GeneralCategory DEFAULT_GENERAL = new CommonConfig.GeneralCategory();
-    private static final CommonConfig.SafeTeleportCategory DEFAULT_SAFE = new CommonConfig.SafeTeleportCategory();
     private static final CommonConfig.PermissionCommandCategory DEFAULT_PERM_CMD = new CommonConfig.PermissionCommandCategory();
     private static final CommonConfig.PermissionAcrossCategory DEFAULT_PERM_ACROSS = new CommonConfig.PermissionAcrossCategory();
     private static final CommonConfig.CooldownCategory DEFAULT_CD = new CommonConfig.CooldownCategory();
@@ -77,18 +76,14 @@ public final class CommonConfigAccess {
         }
         switch (method.getName()) {
             case "base":
-                return ConfigCategoryViewProxy.create(CommonConfig.BaseView.class, holder, "base", DEFAULT_BASE,
-                        CommonConfigAccess::readBase);
+                return base(holder);
             case "featureSwitch":
                 return ConfigCategoryViewProxy.create(CommonConfig.FeatureSwitchView.class, holder, "featureSwitch", DEFAULT_FS,
                         CommonConfigAccess::readFeatureSwitch);
-            case "commandNames":
-                return commandNames(holder);
-            case "conciseCommands":
+            case "command":
+                return command(holder);
             case "concise":
-                return conciseCommands(holder);
-            case "general":
-                return general(holder);
+                return concise(holder);
             case "permission":
                 return permission(holder);
             case "cooldown":
@@ -110,7 +105,49 @@ public final class CommonConfigAccess {
         }
     }
 
-    private static CommonConfig.CommandNamesView commandNames(ConfigHolder holder) {
+    private static CommonConfig.BaseView base(ConfigHolder holder) {
+        return (CommonConfig.BaseView) Proxy.newProxyInstance(
+                CommonConfig.class.getClassLoader(),
+                new Class<?>[]{CommonConfig.BaseView.class},
+                (proxy, method, args) -> {
+                    if (method.getDeclaringClass() == Object.class) {
+                        return objectMethod(proxy, method, args, "BaseView");
+                    }
+                    if (method.getParameterCount() != 0) {
+                        throw new UnsupportedOperationException(method.toString());
+                    }
+                    switch (method.getName()) {
+                        case "other":
+                            return ConfigCategoryViewProxy.create(CommonConfig.OtherView.class, holder,
+                                    "base.other", DEFAULT_OTHER, CommonConfigAccess::readGeneralLeaf);
+                        case "teleportCard":
+                            return ConfigCategoryViewProxy.create(CommonConfig.TeleportCardView.class, holder,
+                                    "base.teleportCard.teleportCard", DEFAULT_TELEPORT_CARD, CommonConfigAccess::readBase);
+                        case "teleportLimit":
+                            return ConfigCategoryViewProxy.create(CommonConfig.TeleportLimitView.class, holder,
+                                    "base.teleportLimit", DEFAULT_TELEPORT_LIMIT, CommonConfigAccess::readGeneralLeaf);
+                        case "teleportTogether":
+                            return ConfigCategoryViewProxy.create(CommonConfig.TeleportTogetherView.class, holder,
+                                    "base.teleportTogether", DEFAULT_TELEPORT_TOGETHER, CommonConfigAccess::readGeneralLeaf);
+                        case "teleportRequest":
+                            return ConfigCategoryViewProxy.create(CommonConfig.TeleportRequestView.class, holder,
+                                    "base.teleportRequest", DEFAULT_TELEPORT_REQUEST, CommonConfigAccess::readGeneralLeaf);
+                        case "safeTeleport":
+                            return ConfigCategoryViewProxy.create(CommonConfig.SafeTeleportView.class, holder,
+                                    "base.safeTeleport", DEFAULT_SAFE, CommonConfigAccess::readSafeTeleport);
+                        case "randomTeleport":
+                            return ConfigCategoryViewProxy.create(CommonConfig.RandomTeleportView.class, holder,
+                                    "base.randomTeleport", DEFAULT_RANDOM_TELEPORT, CommonConfigAccess::readGeneralLeaf);
+                        case "creativeFlight":
+                            return ConfigCategoryViewProxy.create(CommonConfig.CreativeFlightView.class, holder,
+                                    "base.creativeFlight", DEFAULT_CREATIVE_FLIGHT, CommonConfigAccess::readGeneralLeaf);
+                        default:
+                            throw new UnsupportedOperationException(method.toString());
+                    }
+                });
+    }
+
+    private static CommonConfig.CommandNamesView command(ConfigHolder holder) {
         return (CommonConfig.CommandNamesView) Proxy.newProxyInstance(
                 CommonConfig.class.getClassLoader(),
                 new Class<?>[]{CommonConfig.CommandNamesView.class},
@@ -120,33 +157,33 @@ public final class CommonConfigAccess {
                     }
                     switch (method.getName()) {
                         case "tpAsk":
-                            return ConfigCategoryViewProxy.create(CommonConfig.CommandTpAskView.class, holder, "commandNames.tpAsk",
+                            return ConfigCategoryViewProxy.create(CommonConfig.CommandTpAskView.class, holder, "command.tpAsk",
                                     DEFAULT_CN_TP_ASK, CommonConfigAccess::readCommandStringLeaf);
                         case "tpHere":
-                            return ConfigCategoryViewProxy.create(CommonConfig.CommandTpHereView.class, holder, "commandNames.tpHere",
+                            return ConfigCategoryViewProxy.create(CommonConfig.CommandTpHereView.class, holder, "command.tpHere",
                                     DEFAULT_CN_TP_HERE, CommonConfigAccess::readCommandStringLeaf);
                         case "tpHome":
-                            return ConfigCategoryViewProxy.create(CommonConfig.CommandTpHomeView.class, holder, "commandNames.tpHome",
+                            return ConfigCategoryViewProxy.create(CommonConfig.CommandTpHomeView.class, holder, "command.tpHome",
                                     DEFAULT_CN_TP_HOME, CommonConfigAccess::readCommandStringLeaf);
                         case "tpStage":
-                            return ConfigCategoryViewProxy.create(CommonConfig.CommandTpStageView.class, holder, "commandNames.tpStage",
+                            return ConfigCategoryViewProxy.create(CommonConfig.CommandTpStageView.class, holder, "command.tpStage",
                                     DEFAULT_CN_TP_STAGE, CommonConfigAccess::readCommandStringLeaf);
                         default:
-                            return commandNamesLeaf(holder, proxy, method, args);
+                            return commandLeaf(holder, proxy, method, args);
                     }
                 });
     }
 
-    private static Object commandNamesLeaf(ConfigHolder holder, Object proxy, Method method, Object[] args) {
+    private static Object commandLeaf(ConfigHolder holder, Object proxy, Method method, Object[] args) {
         String leaf = method.getName();
         int pc = method.getParameterCount();
-        String pathPrefix = commandNamesPathPrefix(leaf);
+        String pathPrefix = commandPathPrefix(leaf);
         String fullPath = pathPrefix + "." + leaf;
         Object defBean = defaultBeanForCommandLeaf(leaf);
         if (pc == 0) {
             Object raw = holder != null ? holder.get(fullPath) : null;
             try {
-                if ("commandNames".equals(pathPrefix) && "commandPrefix".equals(leaf)) {
+                if ("command".equals(pathPrefix) && "commandPrefix".equals(leaf)) {
                     return readCommandNamesTop(leaf, raw, DEFAULT_CN);
                 }
                 return readCommandStringLeaf(leaf, raw, defBean);
@@ -163,30 +200,30 @@ public final class CommonConfigAccess {
         throw new UnsupportedOperationException(method.toString());
     }
 
-    private static String commandNamesPathPrefix(String leaf) {
+    private static String commandPathPrefix(String leaf) {
         switch (leaf) {
             case "commandTpAsk":
             case "commandTpAskYes":
             case "commandTpAskNo":
             case "commandTpAskCancel":
-                return "commandNames.tpAsk";
+                return "command.tpAsk";
             case "commandTpHere":
             case "commandTpHereYes":
             case "commandTpHereNo":
             case "commandTpHereCancel":
-                return "commandNames.tpHere";
+                return "command.tpHere";
             case "commandTpHome":
             case "commandSetHome":
             case "commandDelHome":
             case "commandGetHome":
-                return "commandNames.tpHome";
+                return "command.tpHome";
             case "commandTpStage":
             case "commandSetStage":
             case "commandDelStage":
             case "commandGetStage":
-                return "commandNames.tpStage";
+                return "command.tpStage";
             default:
-                return "commandNames";
+                return "command";
         }
     }
 
@@ -217,7 +254,7 @@ public final class CommonConfigAccess {
         }
     }
 
-    private static CommonConfig.ConciseCommandsView conciseCommands(ConfigHolder holder) {
+    private static CommonConfig.ConciseCommandsView concise(ConfigHolder holder) {
         return (CommonConfig.ConciseCommandsView) Proxy.newProxyInstance(
                 CommonConfig.class.getClassLoader(),
                 new Class<?>[]{CommonConfig.ConciseCommandsView.class},
@@ -227,27 +264,27 @@ public final class CommonConfigAccess {
                     }
                     switch (method.getName()) {
                         case "tpAsk":
-                            return ConfigCategoryViewProxy.create(CommonConfig.ConciseTpAskView.class, holder, "conciseCommands.tpAsk",
+                            return ConfigCategoryViewProxy.create(CommonConfig.ConciseTpAskView.class, holder, "concise.tpAsk",
                                     DEFAULT_CC_TP_ASK, CommonConfigAccess::readFeatureSwitch);
                         case "tpHere":
-                            return ConfigCategoryViewProxy.create(CommonConfig.ConciseTpHereView.class, holder, "conciseCommands.tpHere",
+                            return ConfigCategoryViewProxy.create(CommonConfig.ConciseTpHereView.class, holder, "concise.tpHere",
                                     DEFAULT_CC_TP_HERE, CommonConfigAccess::readFeatureSwitch);
                         case "tpHome":
-                            return ConfigCategoryViewProxy.create(CommonConfig.ConciseTpHomeView.class, holder, "conciseCommands.tpHome",
+                            return ConfigCategoryViewProxy.create(CommonConfig.ConciseTpHomeView.class, holder, "concise.tpHome",
                                     DEFAULT_CC_TP_HOME, CommonConfigAccess::readFeatureSwitch);
                         case "tpStage":
-                            return ConfigCategoryViewProxy.create(CommonConfig.ConciseTpStageView.class, holder, "conciseCommands.tpStage",
+                            return ConfigCategoryViewProxy.create(CommonConfig.ConciseTpStageView.class, holder, "concise.tpStage",
                                     DEFAULT_CC_TP_STAGE, CommonConfigAccess::readFeatureSwitch);
                         default:
-                            return conciseCommandsLeaf(holder, proxy, method, args);
+                            return conciseLeaf(holder, proxy, method, args);
                     }
                 });
     }
 
-    private static Object conciseCommandsLeaf(ConfigHolder holder, Object proxy, Method method, Object[] args) {
+    private static Object conciseLeaf(ConfigHolder holder, Object proxy, Method method, Object[] args) {
         String leaf = method.getName();
         int pc = method.getParameterCount();
-        String pathPrefix = conciseCommandsPathPrefix(leaf);
+        String pathPrefix = concisePathPrefix(leaf);
         String fullPath = pathPrefix + "." + leaf;
         Object defBean = defaultBeanForConciseLeaf(leaf);
         if (pc == 0) {
@@ -267,30 +304,30 @@ public final class CommonConfigAccess {
         throw new UnsupportedOperationException(method.toString());
     }
 
-    private static String conciseCommandsPathPrefix(String leaf) {
+    private static String concisePathPrefix(String leaf) {
         switch (leaf) {
             case "conciseTpAsk":
             case "conciseTpAskYes":
             case "conciseTpAskNo":
             case "conciseTpAskCancel":
-                return "conciseCommands.tpAsk";
+                return "concise.tpAsk";
             case "conciseTpHere":
             case "conciseTpHereYes":
             case "conciseTpHereNo":
             case "conciseTpHereCancel":
-                return "conciseCommands.tpHere";
+                return "concise.tpHere";
             case "conciseTpHome":
             case "conciseSetHome":
             case "conciseDelHome":
             case "conciseGetHome":
-                return "conciseCommands.tpHome";
+                return "concise.tpHome";
             case "conciseTpStage":
             case "conciseSetStage":
             case "conciseDelStage":
             case "conciseGetStage":
-                return "conciseCommands.tpStage";
+                return "concise.tpStage";
             default:
-                return "conciseCommands";
+                return "concise";
         }
     }
 
@@ -319,42 +356,6 @@ public final class CommonConfigAccess {
             default:
                 return DEFAULT_CC;
         }
-    }
-
-    private static CommonConfig.GeneralView general(ConfigHolder holder) {
-        return (CommonConfig.GeneralView) Proxy.newProxyInstance(
-                CommonConfig.class.getClassLoader(),
-                new Class<?>[]{CommonConfig.GeneralView.class},
-                (proxy, method, args) -> {
-                    if (method.getDeclaringClass() == Object.class) {
-                        return objectMethod(proxy, method, args, "GeneralView");
-                    }
-                    if ("safeTeleport".equals(method.getName()) && method.getParameterCount() == 0) {
-                        return ConfigCategoryViewProxy.create(CommonConfig.SafeTeleportView.class, holder, "general.safeTeleport",
-                                DEFAULT_SAFE, CommonConfigAccess::readSafeTeleport);
-                    }
-                    return generalLeaf(holder, proxy, method, args);
-                });
-    }
-
-    private static Object generalLeaf(ConfigHolder holder, Object proxy, Method method, Object[] args) {
-        String leaf = method.getName();
-        int pc = method.getParameterCount();
-        if (pc == 0) {
-            Object raw = holder != null ? holder.get("general." + leaf) : null;
-            try {
-                return readGeneralLeaf(leaf, raw, DEFAULT_GENERAL);
-            } catch (Exception e) {
-                throw new RuntimeException(e);
-            }
-        }
-        if (pc == 1) {
-            if (holder != null) {
-                holder.set("general." + leaf, args[0]);
-            }
-            return proxy;
-        }
-        throw new UnsupportedOperationException(method.toString());
     }
 
     private static CommonConfig.PermissionView permission(ConfigHolder holder) {
@@ -644,7 +645,7 @@ public final class CommonConfigAccess {
             }
             return raw;
         }
-        if ("defaultLanguage".equals(leaf) || "helpHeader".equals(leaf) || "tpSound".equals(leaf)) {
+        if ("tpSound".equals(leaf)) {
             if (raw == null) {
                 return field(bean, leaf);
             }
@@ -707,12 +708,12 @@ public final class CommonConfigAccess {
     }
 
     private static void applyBaseThroughConcise(ConfigHolder h) {
-        h.set("base.teleportCard", false);
-        h.set("base.teleportCardDaily", 0);
-        h.set("base.teleportCardType", EnumCardType.REFUND_ALL_COST);
-        h.set("base.removeOriginalTp", false);
-        h.set("base.flySpeedMin", -5d);
-        h.set("base.flySpeedMax", 5d);
+        h.set("base.teleportCard.teleportCard", false);
+        h.set("base.teleportCard.teleportCardDaily", 0);
+        h.set("base.teleportCard.teleportCardType", EnumCardType.REFUND_ALL_COST);
+        h.set("base.other.removeOriginalTp", false);
+        h.set("base.creativeFlight.flySpeedMin", -5d);
+        h.set("base.creativeFlight.flySpeedMax", 5d);
         h.set("featureSwitch.switchShare", true);
         h.set("featureSwitch.switchFeed", true);
         h.set("featureSwitch.switchTpCoordinate", true);
@@ -732,119 +733,107 @@ public final class CommonConfigAccess {
         h.set("featureSwitch.switchTpBack", true);
         h.set("featureSwitch.switchTpGrave", true);
         h.set("featureSwitch.switchFly", true);
-        h.set("commandNames.commandPrefix", NarcissusFarewell.DEFAULT_COMMAND_PREFIX);
-        h.set("commandNames.commandUuid", "uuid");
-        h.set("commandNames.commandDimension", "dim");
-        h.set("commandNames.commandCard", "card");
-        h.set("commandNames.commandShare", "share");
-        h.set("commandNames.commandFeed", "feed");
-        h.set("commandNames.commandTpCoordinate", "tpx");
-        h.set("commandNames.commandTpStructure", "tpst");
-        h.set("commandNames.tpAsk.commandTpAsk", "tpa");
-        h.set("commandNames.tpAsk.commandTpAskYes", "tpay");
-        h.set("commandNames.tpAsk.commandTpAskNo", "tpan");
-        h.set("commandNames.tpAsk.commandTpAskCancel", "tpac");
-        h.set("commandNames.tpHere.commandTpHere", "tph");
-        h.set("commandNames.tpHere.commandTpHereYes", "tphy");
-        h.set("commandNames.tpHere.commandTpHereNo", "tphn");
-        h.set("commandNames.tpHere.commandTpHereCancel", "tphc");
-        h.set("commandNames.commandTpRandom", "tpr");
-        h.set("commandNames.commandTpSpawn", "tpsp");
-        h.set("commandNames.commandTpWorldSpawn", "tpws");
-        h.set("commandNames.commandTpTop", "tpt");
-        h.set("commandNames.commandTpBottom", "tpb");
-        h.set("commandNames.commandTpUp", "tpu");
-        h.set("commandNames.commandTpDown", "tpd");
-        h.set("commandNames.commandTpView", "tpv");
-        h.set("commandNames.tpHome.commandTpHome", "home");
-        h.set("commandNames.tpHome.commandSetHome", "sethome");
-        h.set("commandNames.tpHome.commandDelHome", "delhome");
-        h.set("commandNames.tpHome.commandGetHome", "gethome");
-        h.set("commandNames.tpStage.commandTpStage", "stage");
-        h.set("commandNames.tpStage.commandSetStage", "setstage");
-        h.set("commandNames.tpStage.commandDelStage", "delstage");
-        h.set("commandNames.tpStage.commandGetStage", "getstage");
-        h.set("commandNames.commandTpBack", "back");
-        h.set("commandNames.commandTpGrave", "grave");
-        h.set("commandNames.commandFly", "fly");
-        h.set("conciseCommands.conciseLanguage", false);
-        h.set("conciseCommands.conciseUuid", false);
-        h.set("conciseCommands.conciseDimension", false);
-        h.set("conciseCommands.conciseCard", false);
-        h.set("conciseCommands.conciseShare", false);
-        h.set("conciseCommands.conciseFeed", false);
-        h.set("conciseCommands.conciseTpCoordinate", true);
-        h.set("conciseCommands.conciseTpStructure", true);
-        h.set("conciseCommands.tpAsk.conciseTpAsk", true);
-        h.set("conciseCommands.tpAsk.conciseTpAskYes", true);
-        h.set("conciseCommands.tpAsk.conciseTpAskNo", true);
-        h.set("conciseCommands.tpAsk.conciseTpAskCancel", true);
-        h.set("conciseCommands.tpHere.conciseTpHere", true);
-        h.set("conciseCommands.tpHere.conciseTpHereYes", true);
-        h.set("conciseCommands.tpHere.conciseTpHereNo", true);
-        h.set("conciseCommands.tpHere.conciseTpHereCancel", true);
-        h.set("conciseCommands.conciseTpRandom", false);
-        h.set("conciseCommands.conciseTpSpawn", true);
-        h.set("conciseCommands.conciseTpWorldSpawn", false);
-        h.set("conciseCommands.conciseTpTop", false);
-        h.set("conciseCommands.conciseTpBottom", false);
-        h.set("conciseCommands.conciseTpUp", false);
-        h.set("conciseCommands.conciseTpDown", false);
-        h.set("conciseCommands.conciseTpView", false);
-        h.set("conciseCommands.tpHome.conciseTpHome", true);
-        h.set("conciseCommands.tpHome.conciseSetHome", true);
-        h.set("conciseCommands.tpHome.conciseDelHome", true);
-        h.set("conciseCommands.tpHome.conciseGetHome", true);
-        h.set("conciseCommands.tpStage.conciseTpStage", true);
-        h.set("conciseCommands.tpStage.conciseSetStage", true);
-        h.set("conciseCommands.tpStage.conciseDelStage", true);
-        h.set("conciseCommands.tpStage.conciseGetStage", true);
-        h.set("conciseCommands.conciseTpBack", true);
-        h.set("conciseCommands.conciseTpGrave", true);
-        h.set("conciseCommands.conciseFly", true);
-        h.set("conciseCommands.conciseVirtualOp", false);
+        h.set("command.commandPrefix", NarcissusFarewell.DEFAULT_COMMAND_PREFIX);
+        h.set("command.commandUuid", "uuid");
+        h.set("command.commandDimension", "dim");
+        h.set("command.commandCard", "card");
+        h.set("command.commandShare", "share");
+        h.set("command.commandFeed", "feed");
+        h.set("command.commandTpCoordinate", "tpx");
+        h.set("command.commandTpStructure", "tpst");
+        h.set("command.tpAsk.commandTpAsk", "tpa");
+        h.set("command.tpAsk.commandTpAskYes", "tpay");
+        h.set("command.tpAsk.commandTpAskNo", "tpan");
+        h.set("command.tpAsk.commandTpAskCancel", "tpac");
+        h.set("command.tpHere.commandTpHere", "tph");
+        h.set("command.tpHere.commandTpHereYes", "tphy");
+        h.set("command.tpHere.commandTpHereNo", "tphn");
+        h.set("command.tpHere.commandTpHereCancel", "tphc");
+        h.set("command.commandTpRandom", "tpr");
+        h.set("command.commandTpSpawn", "tpsp");
+        h.set("command.commandTpWorldSpawn", "tpws");
+        h.set("command.commandTpTop", "tpt");
+        h.set("command.commandTpBottom", "tpb");
+        h.set("command.commandTpUp", "tpu");
+        h.set("command.commandTpDown", "tpd");
+        h.set("command.commandTpView", "tpv");
+        h.set("command.tpHome.commandTpHome", "home");
+        h.set("command.tpHome.commandSetHome", "sethome");
+        h.set("command.tpHome.commandDelHome", "delhome");
+        h.set("command.tpHome.commandGetHome", "gethome");
+        h.set("command.tpStage.commandTpStage", "stage");
+        h.set("command.tpStage.commandSetStage", "setstage");
+        h.set("command.tpStage.commandDelStage", "delstage");
+        h.set("command.tpStage.commandGetStage", "getstage");
+        h.set("command.commandTpBack", "back");
+        h.set("command.commandTpGrave", "grave");
+        h.set("command.commandFly", "fly");
+        h.set("concise.conciseLanguage", false);
+        h.set("concise.conciseUuid", false);
+        h.set("concise.conciseDimension", false);
+        h.set("concise.conciseCard", false);
+        h.set("concise.conciseShare", false);
+        h.set("concise.conciseFeed", false);
+        h.set("concise.conciseTpCoordinate", true);
+        h.set("concise.conciseTpStructure", true);
+        h.set("concise.tpAsk.conciseTpAsk", true);
+        h.set("concise.tpAsk.conciseTpAskYes", true);
+        h.set("concise.tpAsk.conciseTpAskNo", true);
+        h.set("concise.tpAsk.conciseTpAskCancel", true);
+        h.set("concise.tpHere.conciseTpHere", true);
+        h.set("concise.tpHere.conciseTpHereYes", true);
+        h.set("concise.tpHere.conciseTpHereNo", true);
+        h.set("concise.tpHere.conciseTpHereCancel", true);
+        h.set("concise.conciseTpRandom", false);
+        h.set("concise.conciseTpSpawn", true);
+        h.set("concise.conciseTpWorldSpawn", false);
+        h.set("concise.conciseTpTop", false);
+        h.set("concise.conciseTpBottom", false);
+        h.set("concise.conciseTpUp", false);
+        h.set("concise.conciseTpDown", false);
+        h.set("concise.conciseTpView", false);
+        h.set("concise.tpHome.conciseTpHome", true);
+        h.set("concise.tpHome.conciseSetHome", true);
+        h.set("concise.tpHome.conciseDelHome", true);
+        h.set("concise.tpHome.conciseGetHome", true);
+        h.set("concise.tpStage.conciseTpStage", true);
+        h.set("concise.tpStage.conciseSetStage", true);
+        h.set("concise.tpStage.conciseDelStage", true);
+        h.set("concise.tpStage.conciseGetStage", true);
+        h.set("concise.conciseTpBack", true);
+        h.set("concise.conciseTpGrave", true);
+        h.set("concise.conciseFly", true);
+        h.set("concise.conciseVirtualOp", false);
     }
 
-    private static void applyGeneralPermissionCooldownCost(ConfigHolder h) {
-        h.set("general.teleportRecordLimit", 100);
-        h.set("general.teleportBackSkipType", new ArrayList<String>() {{
+    private static void applyBasePermissionCooldownCost(ConfigHolder h) {
+        h.set("base.teleportLimit.teleportRecordLimit", 100);
+        h.set("base.teleportLimit.teleportBackSkipType", new ArrayList<String>() {{
             add(EnumTeleportType.TP_BACK.name());
         }});
-        h.set("general.teleportAcrossDimension", true);
-        h.set("general.teleportCostDistanceLimit", 10000);
-        h.set("general.teleportCostDistanceAcrossDimension", 10000);
-        h.set("general.teleportViewDistanceLimit", 16 * 64);
-        h.set("general.teleportRequestExpireTime", 60);
-        h.set("general.teleportRequestCooldownType", EnumCoolDownType.INDIVIDUAL);
-        h.set("general.teleportRequestCooldown", 10);
-        h.set("general.teleportRandomDistanceLimit", 10000);
-        h.set("general.tpRandomSafeNotFoundRetries", 0);
-        h.set("general.graveSearchRangeLimit", 32);
-        h.set("general.teleportHomeLimit", 5);
-        h.set("general.helpHeader", "-----==== Narcissus Farewell Help (%d/%d) ====-----");
-        h.set("general.tpSound", Registry.SOUND_EVENT.getKey(SoundEvents.ENDERMAN_TELEPORT).toString());
-        h.set("general.tpWithVehicle", true);
-        h.set("general.tpWithFollower", true);
-        h.set("general.tpWithFollowerRange", 10);
-        h.set("general.helpInfoNumPerPage", 5);
-        h.set("general.defaultLanguage", "en_us");
-        h.set("general.tpWithEnemy", false);
-        h.set("general.tpSpawnNoBedWorldDimension", "minecraft:overworld");
-        h.set("general.safeTeleport.unsafeBlocks", Stream.of(Blocks.LAVA, Blocks.FIRE, Blocks.CAMPFIRE, Blocks.SOUL_FIRE, Blocks.SOUL_CAMPFIRE, Blocks.CACTUS, Blocks.MAGMA_BLOCK, Blocks.SWEET_BERRY_BUSH).map(b -> {
-            ResourceLocation rl = Registry.BLOCK.getKey(b);
-            return rl == null ? "" : rl.toString();
-        }).collect(Collectors.toList()));
-        h.set("general.safeTeleport.suffocatingBlocks", Stream.of(Blocks.LAVA, Blocks.WATER).map(b -> {
-            ResourceLocation rl = Registry.BLOCK.getKey(b);
-            return rl == null ? "" : rl.toString();
-        }).collect(Collectors.toList()));
-        h.set("general.safeTeleport.setBlockWhenSafeNotFound", false);
-        h.set("general.safeTeleport.getBlockFromInventory", true);
-        h.set("general.safeTeleport.safeBlocks", Stream.of(Blocks.GRASS_BLOCK, Blocks.DIRT_PATH, Blocks.DIRT, Blocks.COBBLESTONE).map(b -> {
-            ResourceLocation rl = Registry.BLOCK.getKey(b);
-            return rl == null ? "" : rl.toString();
-        }).collect(Collectors.toList()));
-        h.set("general.safeTeleport.safeChunkRange", 1);
+        h.set("base.teleportLimit.teleportAcrossDimension", true);
+        h.set("base.teleportLimit.teleportCostDistanceLimit", 10000);
+        h.set("base.teleportLimit.teleportCostDistanceAcrossDimension", 10000);
+        h.set("base.teleportLimit.teleportViewDistanceLimit", 16 * 64);
+        h.set("base.teleportRequest.teleportRequestExpireTime", 60);
+        h.set("base.teleportRequest.teleportRequestCooldownType", EnumCoolDownType.INDIVIDUAL);
+        h.set("base.teleportRequest.teleportRequestCooldown", 10);
+        h.set("base.randomTeleport.teleportRandomDistanceLimit", 10000);
+        h.set("base.randomTeleport.tpRandomSafeNotFoundRetries", 0);
+        h.set("base.teleportLimit.graveSearchRangeLimit", 32);
+        h.set("base.teleportLimit.teleportHomeLimit", 5);
+        h.set("base.other.tpSound", DEFAULT_OTHER.tpSound());
+        h.set("base.teleportTogether.tpWithVehicle", true);
+        h.set("base.teleportTogether.tpWithFollower", true);
+        h.set("base.teleportTogether.tpWithFollowerRange", 10);
+        h.set("base.teleportTogether.tpWithEnemy", false);
+        h.set("base.teleportLimit.tpSpawnNoBedWorldDimension", "minecraft:overworld");
+        h.set("base.safeTeleport.unsafeBlocks", new ArrayList<>(DEFAULT_SAFE.unsafeBlocks()));
+        h.set("base.safeTeleport.suffocatingBlocks", new ArrayList<>(DEFAULT_SAFE.suffocatingBlocks()));
+        h.set("base.safeTeleport.setBlockWhenSafeNotFound", false);
+        h.set("base.safeTeleport.getBlockFromInventory", true);
+        h.set("base.safeTeleport.safeBlocks", new ArrayList<>(DEFAULT_SAFE.safeBlocks()));
+        h.set("base.safeTeleport.safeChunkRange", 1);
         h.set("permission.command.permissionFeedOther", 2);
         h.set("permission.command.permissionTpCoordinate", 2);
         h.set("permission.command.permissionTpStructure", 2);
@@ -930,7 +919,7 @@ public final class CommonConfigAccess {
             return;
         }
         applyBaseThroughConcise(h);
-        applyGeneralPermissionCooldownCost(h);
+        applyBasePermissionCooldownCost(h);
         h.save();
     }
 
@@ -939,20 +928,20 @@ public final class CommonConfigAccess {
             return;
         }
         applyBaseThroughConcise(h);
-        applyGeneralPermissionCooldownCost(h);
-        h.set("general.teleportBackSkipType", new ArrayList<>());
-        h.set("commandNames.tpHome.commandTpHome", "home");
-        h.set("commandNames.tpHome.commandSetHome", "home_set");
-        h.set("commandNames.tpHome.commandDelHome", "home_del");
-        h.set("commandNames.tpHome.commandGetHome", "home_get");
-        h.set("commandNames.tpStage.commandTpStage", "warp");
-        h.set("commandNames.tpStage.commandSetStage", "warp_set");
-        h.set("commandNames.tpStage.commandDelStage", "warp_del");
-        h.set("commandNames.tpStage.commandGetStage", "warp_get");
-        h.set("commandNames.commandTpTop", "top");
-        h.set("commandNames.commandTpUp", "up");
-        h.set("commandNames.commandTpDown", "down");
-        h.set("commandNames.commandTpBottom", "bottom");
+        applyBasePermissionCooldownCost(h);
+        h.set("base.teleportLimit.teleportBackSkipType", new ArrayList<>());
+        h.set("command.tpHome.commandTpHome", "home");
+        h.set("command.tpHome.commandSetHome", "home_set");
+        h.set("command.tpHome.commandDelHome", "home_del");
+        h.set("command.tpHome.commandGetHome", "home_get");
+        h.set("command.tpStage.commandTpStage", "warp");
+        h.set("command.tpStage.commandSetStage", "warp_set");
+        h.set("command.tpStage.commandDelStage", "warp_del");
+        h.set("command.tpStage.commandGetStage", "warp_get");
+        h.set("command.commandTpTop", "top");
+        h.set("command.commandTpUp", "up");
+        h.set("command.commandTpDown", "down");
+        h.set("command.commandTpBottom", "bottom");
         h.save();
     }
 
@@ -978,17 +967,17 @@ public final class CommonConfigAccess {
             return;
         }
         applyBaseThroughConcise(h);
-        applyGeneralPermissionCooldownCost(h);
-        h.set("conciseCommands.tpAsk.conciseTpAskCancel", false);
-        h.set("conciseCommands.tpHere.conciseTpHereCancel", false);
-        h.set("conciseCommands.conciseTpRandom", false);
-        h.set("conciseCommands.conciseTpSpawn", false);
-        h.set("conciseCommands.conciseTpWorldSpawn", false);
-        h.set("conciseCommands.conciseTpTop", false);
-        h.set("conciseCommands.conciseTpUp", false);
-        h.set("conciseCommands.conciseTpBottom", false);
-        h.set("conciseCommands.conciseTpDown", false);
-        h.set("conciseCommands.conciseTpView", false);
+        applyBasePermissionCooldownCost(h);
+        h.set("concise.tpAsk.conciseTpAskCancel", false);
+        h.set("concise.tpHere.conciseTpHereCancel", false);
+        h.set("concise.conciseTpRandom", false);
+        h.set("concise.conciseTpSpawn", false);
+        h.set("concise.conciseTpWorldSpawn", false);
+        h.set("concise.conciseTpTop", false);
+        h.set("concise.conciseTpUp", false);
+        h.set("concise.conciseTpBottom", false);
+        h.set("concise.conciseTpDown", false);
+        h.set("concise.conciseTpView", false);
         String[] subs = {"tpCoordinate", "tpStructure", "tpAsk", "tpHere", "tpRandom", "tpSpawn", "tpWorldSpawn",
                 "tpTop", "tpBottom", "tpUp", "tpDown", "tpView", "tpHome", "tpStage", "tpBack", "tpGrave"};
         String[] stems = {"costTpCoordinate", "costTpStructure", "costTpAsk", "costTpHere", "costTpRandom", "costTpSpawn",

@@ -50,7 +50,7 @@ public final class TpCoordinateCommand {
     }
 
     public static LiteralArgumentBuilder<CommandSourceStack> create() {
-        return Commands.literal(CommonConfig.get().commandNames().commandTpCoordinate())
+        return Commands.literal(CommonConfig.get().command().commandTpCoordinate())
                 .requires(source -> NarcissusUtils.hasCommandPermission(source, EnumCommandType.TP_COORDINATE))
                 .then(Commands.argument("coordinate", Vec3Argument.vec3())
                         .executes(TpCoordinateCommand::execute)

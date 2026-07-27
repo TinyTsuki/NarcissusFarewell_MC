@@ -88,7 +88,7 @@ public final class GetHomeCommand {
     }
 
     public static LiteralArgumentBuilder<CommandSourceStack> create() {
-        return Commands.literal(CommonConfig.get().commandNames().commandGetHome())
+        return Commands.literal(CommonConfig.get().command().commandGetHome())
                 .requires(source -> NarcissusUtils.hasCommandPermission(source, EnumCommandType.GET_HOME))
                 .executes(GetHomeCommand::execute);
     }
