@@ -35,8 +35,8 @@ public final class SetHomeCommand {
         ServerPlayer player = context.getSource().getPlayerOrException();
         if (CommandUtils.checkTeleportPre(context.getSource(), EnumCommandType.SET_HOME)) return 0;
         PlayerTeleportData data = PlayerTeleportData.getData(player);
-        if (data.getHomeCoordinate().size() >= CommonConfig.get().general().teleportHomeLimit()) {
-            MessageUtils.sendNotification(player, NarcissusComponent.get().transAuto("home_limit", CommonConfig.get().general().teleportHomeLimit()), NarcissusNotificationTypes.WAYPOINT);
+        if (data.getHomeCoordinate().size() >= CommonConfig.get().base().teleportLimit().teleportHomeLimit()) {
+            MessageUtils.sendNotification(player, NarcissusComponent.get().transAuto("home_limit", CommonConfig.get().base().teleportLimit().teleportHomeLimit()), NarcissusNotificationTypes.WAYPOINT);
             return 0;
         }
         String name = xin.vanilla.banira.common.util.CommandUtils.getStringDefault(context, "name", "home");
@@ -85,7 +85,7 @@ public final class SetHomeCommand {
     }
 
     public static LiteralArgumentBuilder<CommandSourceStack> create() {
-        return Commands.literal(CommonConfig.get().commandNames().commandSetHome())
+        return Commands.literal(CommonConfig.get().command().commandSetHome())
                 .requires(source -> NarcissusUtils.hasCommandPermission(source, EnumCommandType.TP_HOME))
                 .executes(SetHomeCommand::execute)
                 .then(Commands.argument("name", StringArgumentType.string())
