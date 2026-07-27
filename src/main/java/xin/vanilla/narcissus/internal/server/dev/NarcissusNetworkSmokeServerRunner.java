@@ -82,7 +82,7 @@ public final class NarcissusNetworkSmokeServerRunner {
     }
 
     private static void runWritePhase(PlayerTeleportData data) {
-        if (CommonConfig.get().general().teleportRecordLimit()
+        if (CommonConfig.get().base().teleportLimit().teleportRecordLimit()
                 != NarcissusNetworkSmokeFixture.TELEPORT_RECORD_LIMIT) {
             return;
         }
@@ -104,7 +104,7 @@ public final class NarcissusNetworkSmokeServerRunner {
     }
 
     private static void runVerifyPhase(PlayerTeleportData data) {
-        if (CommonConfig.get().general().teleportRecordLimit()
+        if (CommonConfig.get().base().teleportLimit().teleportRecordLimit()
                 != NarcissusNetworkSmokeFixture.TELEPORT_RECORD_LIMIT) {
             throw new IllegalStateException("Common config command value was not restored from disk");
         }
