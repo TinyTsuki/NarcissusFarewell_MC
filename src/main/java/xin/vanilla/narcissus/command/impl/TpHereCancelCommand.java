@@ -43,7 +43,7 @@ public final class TpHereCancelCommand {
     }
 
     public static LiteralArgumentBuilder<CommandSourceStack> create() {
-        return Commands.literal(CommonConfig.get().commandNames().commandTpHereCancel())
+        return Commands.literal(CommonConfig.get().command().commandTpHereCancel())
                 .requires(source -> NarcissusUtils.hasCommandPermission(source, EnumCommandType.TP_HERE_CANCEL))
                 .executes(TpHereCancelCommand::execute)
                 .then(Commands.argument("requestIndex", IntegerArgumentType.integer(1))

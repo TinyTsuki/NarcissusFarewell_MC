@@ -65,12 +65,12 @@ public class EventHandlerProxy {
     }
 
     public static void onPlayerJoinWorld(ServerPlayer player) {
-        if (CommonConfig.get().base().teleportCard()) {
+        if (CommonConfig.get().base().teleportCard().teleportCard()) {
             PlayerTeleportData data = PlayerTeleportData.getData(player);
             Date current = new Date();
             if (DateUtils.toDateInt(data.getLastCardTime()) < DateUtils.toDateInt(current)) {
                 data.setLastCardTime(current);
-                data.plusTeleportCard(CommonConfig.get().base().teleportCardDaily());
+                data.plusTeleportCard(CommonConfig.get().base().teleportCard().teleportCardDaily());
                 PlayerTeleportData.syncPlayerData(player);
             }
         }
