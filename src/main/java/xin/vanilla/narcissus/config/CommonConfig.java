@@ -4,9 +4,6 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
-import net.minecraft.core.Registry;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.level.block.Blocks;
 import xin.vanilla.banira.api.BaniraConfigs;
 import xin.vanilla.banira.common.config.ConfigData;
 import xin.vanilla.banira.common.config.ConfigHolder;
@@ -23,8 +20,6 @@ import xin.vanilla.narcissus.enums.EnumTeleportType;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 /**
  * 通用配置
@@ -392,10 +387,8 @@ public class CommonConfig implements ConfigData {
         @ConfigEntry.Gui.Tooltip(zh_cn = "当进行安全传送时，如果未找到安全坐标，是否仅从背包中获取可放置的方块。", en_us = "When performing a safe teleport, whether to only use placeable blocks from the player's inventory if a safe safeWorldCoordinate is not found.")
         private boolean getBlockFromInventory = true;
         @ConfigEntry.Gui.Tooltip(zh_cn = "当进行安全传送时，如果未找到安全坐标，放置方块的列表。若'getBlockFromInventory'为false，则始终使用列表中的第一个方块。", en_us = "When performing a safe teleport, the list of blocks to place if a safe safeWorldCoordinate is not found. If 'getBlockFromInventory' is set to false, the first block in the list will always be used.")
-        private List<String> safeBlocks = Stream.of(Blocks.GRASS_BLOCK, Blocks.DIRT_PATH, Blocks.DIRT, Blocks.COBBLESTONE).map(block -> {
-            ResourceLocation rl = Registry.BLOCK.getKey(block);
-            return rl == null ? "" : rl.toString();
-        }).collect(Collectors.toList());
+        private List<String> safeBlocks = new ArrayList<>(Arrays.asList(
+                "minecraft:grass_block", "minecraft:dirt_path", "minecraft:dirt", "minecraft:cobblestone"));
         @ConfigEntry.Gui.Tooltip(zh_cn = "当进行安全传送时，寻找安全坐标的半径，单位为区块。", en_us = "The chunk range for finding a safe safeWorldCoordinate, in chunks.")
         @ConfigEntry.BoundedDiscrete(min = 1, max = 16)
         private int safeChunkRange = 1;
