@@ -127,7 +127,7 @@ public final class ShareCommand {
     }
 
     public static LiteralArgumentBuilder<CommandSourceStack> create() {
-        return Commands.literal(CommonConfig.get().commandNames().commandShare())
+        return Commands.literal(CommonConfig.get().command().commandShare())
                 .executes(ShareCommand::execute)
                 .then(Commands.argument("name", StringArgumentType.string())
                         .suggests((context, builder) -> {

@@ -56,17 +56,17 @@ public class WaypointTeleportToServer implements NetworkPacket {
                 String cmd;
                 switch (type) {
                     case TP_HOME:
-                        cmd = prefix + " " + CommonConfig.get().commandNames().commandTpHome();
+                        cmd = prefix + " " + CommonConfig.get().command().commandTpHome();
                         if (!packet.name().isEmpty()) cmd += " " + StringUtils.formatString(packet.name());
                         if (!packet.dimension().isEmpty()) cmd += " true " + packet.dimension();
                         break;
                     case TP_STAGE:
-                        cmd = prefix + " " + CommonConfig.get().commandNames().commandTpStage();
+                        cmd = prefix + " " + CommonConfig.get().command().commandTpStage();
                         if (!packet.name().isEmpty()) cmd += " " + StringUtils.formatString(packet.name());
                         if (!packet.dimension().isEmpty()) cmd += " safe " + packet.dimension();
                         break;
                     case TP_BACK:
-                        cmd = prefix + " " + CommonConfig.get().commandNames().commandTpBack();
+                        cmd = prefix + " " + CommonConfig.get().command().commandTpBack();
                         if (!packet.name().isEmpty()) cmd += " safe " + packet.name();
                         break;
                     default:

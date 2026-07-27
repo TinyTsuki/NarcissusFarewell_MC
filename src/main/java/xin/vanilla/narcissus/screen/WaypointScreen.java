@@ -589,7 +589,7 @@ public class WaypointScreen extends BaniraScreen {
         if (!p.hasPermissions(need) && !CommandUtils.hasVirtualPermission(p, EnumCommandType.TP_HOME)) {
             return false;
         }
-        return homeItemsAll.size() < CommonConfig.get().general().teleportHomeLimit();
+        return homeItemsAll.size() < CommonConfig.get().base().teleportLimit().teleportHomeLimit();
     }
 
     private boolean canAddStageClient() {
