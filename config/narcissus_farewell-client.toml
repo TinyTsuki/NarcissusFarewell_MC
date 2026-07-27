@@ -1,0 +1,19 @@
+
+#客户端设置
+#Client settings
+[client]
+	#创建家时同步地图路标
+	#Sync map waypoint when setting home
+	syncHomeMapWaypoint = true
+	#创建驿站时同步地图路标
+	#Sync map waypoint when setting stage
+	syncStageMapWaypoint = true
+	#传送路标界面布局：三列或 Tab 单栏；在界面内切换布局时会写入此选项。
+	#Waypoint screen layout: three columns or tabbed panel; toggling layout in the GUI updates this option.
+	#Allowed Values: COLUMNS, TAB_SINGLE
+	waypointScreenPanelMode = "COLUMNS"
+	#黑白名单界面布局：双列或 Tab 单栏；在界面内长按标题切换时会写入此选项。
+	#Access list screen layout: two columns or tabbed panel; long-press the title in the GUI to toggle and persist.
+	#Allowed Values: COLUMNS, TAB_SINGLE
+	accessListScreenPanelMode = "COLUMNS"
+

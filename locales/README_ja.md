@@ -80,20 +80,10 @@
   `world/vanilla.xin/playerdata/*.nbt`
 - 言語設定などの Vanilla Xin シリーズ共通設定：`config/vanilla.xin/common_config.json`
 
-### Forge
+### モジュールファイル
 
-- 共通およびサーバー動作設定：`config/narcissus_farewell-common.toml`
-- クライアント設定：`config/narcissus_farewell-client.toml`
-
-### NeoForge
-
-- 共通およびサーバー動作設定：`config/narcissus_farewell-common.toml`
-- クライアント設定：`config/narcissus_farewell-client.toml`
-
-### Fabric
-
-- 共通およびサーバー動作設定：`config/narcissus_farewell-common.toml`
-- クライアント設定：`config/narcissus_farewell-client.toml`
+- 共通およびサーバー動作設定：[`config/narcissus_farewell-common.toml`](/config/narcissus_farewell-common.toml)
+- クライアント設定：[`config/narcissus_farewell-client.toml`](/config/narcissus_farewell-client.toml)
 
 ## コマンド
 

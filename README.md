@@ -79,20 +79,10 @@
 - 传送点、传送记录、权限和玩家偏好等数据保存在香草芯系列玩家数据中：`world/vanilla.xin/playerdata/*.nbt`
 - 共享语言等香草芯系列设置：`config/vanilla.xin/common_config.json`
 
-### Forge
+### 模组部分
 
-- 通用及服务器行为配置：`config/narcissus_farewell-common.toml`
-- 客户端配置：`config/narcissus_farewell-client.toml`
-
-### NeoForge
-
-- 通用及服务器行为配置：`config/narcissus_farewell-common.toml`
-- 客户端配置：`config/narcissus_farewell-client.toml`
-
-### Fabric
-
-- 通用及服务器行为配置：`config/narcissus_farewell-common.toml`
-- 客户端配置：`config/narcissus_farewell-client.toml`
+- 通用及服务器行为配置：[`config/narcissus_farewell-common.toml`](/config/narcissus_farewell-common.toml)
+- 客户端配置：[`config/narcissus_farewell-client.toml`](/config/narcissus_farewell-client.toml)
 
 ## 指令说明
 

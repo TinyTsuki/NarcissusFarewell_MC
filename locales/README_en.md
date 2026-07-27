@@ -89,20 +89,10 @@ to in-game tooltips and generated comments for the meaning and valid range of ea
   `world/vanilla.xin/playerdata/*.nbt`
 - Shared Vanilla Xin settings such as language preferences: `config/vanilla.xin/common_config.json`
 
-### Forge
+### Mod Files
 
-- Common and server-behavior Config: `config/narcissus_farewell-common.toml`
-- Client Config: `config/narcissus_farewell-client.toml`
-
-### NeoForge
-
-- Common and server-behavior Config: `config/narcissus_farewell-common.toml`
-- Client Config: `config/narcissus_farewell-client.toml`
-
-### Fabric
-
-- Common and server-behavior Config: `config/narcissus_farewell-common.toml`
-- Client Config: `config/narcissus_farewell-client.toml`
+- Common and server-behavior Config: [`config/narcissus_farewell-common.toml`](/config/narcissus_farewell-common.toml)
+- Client Config: [`config/narcissus_farewell-client.toml`](/config/narcissus_farewell-client.toml)
 
 ## Commands
 
