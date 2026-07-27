@@ -58,7 +58,7 @@ public class WaypointAddStageToServer implements NetworkPacket {
                 return;
             }
             String prefix = NarcissusUtils.getCommandPrefix();
-            String cmd = prefix + " " + CommonConfig.get().commandNames().commandSetStage()
+            String cmd = prefix + " " + CommonConfig.get().command().commandSetStage()
                     + " " + StringUtils.formatString(packet.name())
                     + " " + packet.x() + " " + packet.y() + " " + packet.z()
                     + " " + StringUtils.formatString(packet.dimension());

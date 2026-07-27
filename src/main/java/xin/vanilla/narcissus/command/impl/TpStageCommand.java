@@ -59,7 +59,7 @@ public final class TpStageCommand {
     }
 
     public static LiteralArgumentBuilder<CommandSourceStack> create() {
-        return Commands.literal(CommonConfig.get().commandNames().commandTpStage())
+        return Commands.literal(CommonConfig.get().command().commandTpStage())
                 .requires(source -> NarcissusUtils.hasCommandPermission(source, EnumCommandType.TP_STAGE))
                 .executes(TpStageCommand::execute)
                 .then(Commands.argument("name", StringArgumentType.string())

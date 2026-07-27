@@ -69,7 +69,7 @@ public final class CommandUtils {
                     return true;
                 }
             }
-            if (CommonConfig.get().general().tpWithEnemy() && NarcissusUtils.isTargetedByHostile(player)) {
+            if (CommonConfig.get().base().teleportTogether().tpWithEnemy() && NarcissusUtils.isTargetedByHostile(player)) {
                 MessageUtils.sendNotification(player, NarcissusComponent.get().transAuto("locked_by_mob"), NarcissusNotificationTypes.TELEPORT_GUARD);
                 return true;
             }
@@ -87,7 +87,7 @@ public final class CommandUtils {
     public static boolean checkTeleportPost(TeleportRequest request, boolean submit) {
         boolean result = NarcissusUtils.isTeleportAcrossDimensionEnabled(request.getRequester(), request.getTarget().level().dimension(), request.getTeleportType());
         result = result && NarcissusUtils.validTeleportCost(request, submit);
-        if (CommonConfig.get().general().tpWithEnemy() && NarcissusUtils.isTargetedByHostile(request.getRequester())) {
+        if (CommonConfig.get().base().teleportTogether().tpWithEnemy() && NarcissusUtils.isTargetedByHostile(request.getRequester())) {
             MessageUtils.sendNotification(request.getRequester(), NarcissusComponent.get().transAuto("locked_by_mob"), NarcissusNotificationTypes.TELEPORT_GUARD);
             result = false;
         }
@@ -101,7 +101,7 @@ public final class CommandUtils {
     public static boolean checkTeleportPost(ServerPlayer player, SafeWorldCoordinate target, EnumTeleportType type, boolean submit) {
         boolean result = NarcissusUtils.isTeleportAcrossDimensionEnabled(player, target.dimension(), type);
         result = result && NarcissusUtils.validTeleportCost(player, target, type, submit);
-        if (CommonConfig.get().general().tpWithEnemy() && NarcissusUtils.isTargetedByHostile(player)) {
+        if (CommonConfig.get().base().teleportTogether().tpWithEnemy() && NarcissusUtils.isTargetedByHostile(player)) {
             MessageUtils.sendNotification(player, NarcissusComponent.get().transAuto("locked_by_mob"), NarcissusNotificationTypes.TELEPORT_GUARD);
             result = false;
         }
@@ -228,7 +228,7 @@ public final class CommandUtils {
         String lang = xin.vanilla.banira.common.util.CommandUtils.getLanguage(context.getSource());
         for (int i = 1; i <= 5; i++) {
             int index = (int) Math.pow(10, i);
-            if (index <= CommonConfig.get().general().teleportRandomDistanceLimit()) {
+            if (index <= CommonConfig.get().base().randomTeleport().teleportRandomDistanceLimit()) {
                 Component tooltip = NarcissusComponent.get().transAuto("suggest_range", index);
                 builder.suggest(index, tooltip.toVanilla(lang));
             }

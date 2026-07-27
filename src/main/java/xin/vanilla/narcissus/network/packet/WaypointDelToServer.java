@@ -47,14 +47,14 @@ public class WaypointDelToServer implements NetworkPacket {
                 if (sender == null) return;
                 // home
                 if (packet.type() == 0) {
-                    String cmd = NarcissusUtils.getCommandPrefix() + " " + CommonConfig.get().commandNames().commandDelHome();
+                    String cmd = NarcissusUtils.getCommandPrefix() + " " + CommonConfig.get().command().commandDelHome();
                     if (!packet.name().isEmpty()) cmd += " " + StringUtils.formatString(packet.name());
                     if (!packet.dimension().isEmpty()) cmd += " " + packet.dimension();
                     CommandUtils.executeCommand(sender, cmd);
                 }
                 // stage
                 else if (packet.type() == 1) {
-                    String cmd = NarcissusUtils.getCommandPrefix() + " " + CommonConfig.get().commandNames().commandDelStage();
+                    String cmd = NarcissusUtils.getCommandPrefix() + " " + CommonConfig.get().command().commandDelStage();
                     if (!packet.name().isEmpty()) cmd += " " + StringUtils.formatString(packet.name());
                     if (!packet.dimension().isEmpty()) cmd += " " + packet.dimension();
                     CommandUtils.executeCommand(sender, cmd);

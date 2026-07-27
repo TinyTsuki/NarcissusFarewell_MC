@@ -40,7 +40,7 @@ public final class GraveHelper {
 
     @Nullable
     public static SafeWorldCoordinate findCorpseGravestoneNearPlayer(ServerPlayer player, int range) {
-        int limit = CommonConfig.get().general().graveSearchRangeLimit();
+        int limit = CommonConfig.get().base().teleportLimit().graveSearchRangeLimit();
         int radius = Math.min(Math.max(range, 1), limit);
         return findCorpseGravestoneNear(new SafeWorldCoordinate(player), radius, player.getUUID());
     }
