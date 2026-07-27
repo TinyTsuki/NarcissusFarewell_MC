@@ -1,11 +1,11 @@
 <div align="center">
 
 | [中文](../README.md) | [English](README_en.md) | [日本語](README_ja.md) |
-|:-------------------:|:-----------------------:|:-------------------:|
+|:------------------:|:-----------------------:|:-------------------:|
 
 <img src="../assets/logo.png" alt="Narcissus Farewell" width="160" />
 
-# Narcissus Farewell（水仙辞）
+# Narcissus Farewell
 
 **A Minecraft Forge, Fabric, and NeoForge teleport command mod.**
 
@@ -17,17 +17,17 @@
 
 - [Narcissus Farewell](#narcissus-farewell)
     - [Table of Contents](#table-of-contents)
-    - [Definitions](#definitions)
+    - [Meaning](#meaning)
     - [Introduction](#introduction)
     - [Features](#features)
-    - [Configuration Instructions](#configuration-instructions)
-    - [Command Instructions](#command-instructions)
+    - [Configuration](#configuration)
+    - [Commands](#commands)
     - [Notes](#notes)
+    - [Performance Tests](#performance-tests)
     - [Building](#building)
-    - [Performance](#performance)
     - [License](#license)
 
-## Definitions
+## Meaning
 
 - **Narcissus**: Symbolizes longing, auspiciousness, reunion, new beginnings, and beautiful hope.
 - **Farewell**: To say goodbye, to not accept, to request leaving.
@@ -78,7 +78,7 @@ This mod is required on the server side, and optional on the client side.
 - **Add config**: Disable specific teleport commands in specified dimensions
 - **Add config**: Particle effects on teleport
 
-## Configuration Instructions
+## Configuration
 
 Configuration can be changed through the Narcissus Farewell configuration editor or by editing the files below. Refer
 to in-game tooltips and generated comments for the meaning and valid range of each option.
@@ -105,7 +105,7 @@ to in-game tooltips and generated comments for the meaning and valid range of ea
 - Client configuration: `config/narcissus_farewell-client.toml`
 - With Mod Menu installed, the Narcissus Farewell client configuration screen can be opened directly from the mod list.
 
-## Command Instructions
+## Commands
 
 - **dim**: Get the dimension ID of the current world.
 - **tpx**: Teleport to the specified coordinates or player.
@@ -244,7 +244,7 @@ to in-game tooltips and generated comments for the meaning and valid range of ea
 
 ---
 
-## Performance
+## Performance Tests
 
 | Minecraft | 1.16.5             |
 |-----------|--------------------|
@@ -253,8 +253,9 @@ to in-game tooltips and generated comments for the meaning and valid range of ea
 | Memory    | 14044MB            |
 | CPU       | AMD Ryzen 7 9700X  |
 
-The following are timings (by total time) for teleporting to a random safe safeWorldCoordinate (`/narcissus tpr 10000 safe`) in
-the End with default config in development—versions 1.1.2 and earlier, for reference only.
+The following timings, sorted by total duration, were measured in a development environment using the default
+configuration in the End for versions 1.1.2 and earlier. The command teleports to a random safe coordinate:
+`/narcissus tpr 10000 safe`. Results are for reference only.
 
 | #  | Gen (ms) | Sort (ms) | Find (ms) | Total (ms) | Safe |
 |----|----------|-----------|-----------|------------|------|
