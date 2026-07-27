@@ -38,7 +38,7 @@ public final class TpBottomCommand {
     }
 
     public static LiteralArgumentBuilder<CommandSourceStack> create() {
-        return Commands.literal(CommonConfig.get().commandNames().commandTpBottom())
+        return Commands.literal(CommonConfig.get().command().commandTpBottom())
                 .requires(source -> NarcissusUtils.hasCommandPermission(source, EnumCommandType.TP_BOTTOM))
                 .executes(TpBottomCommand::execute)
                 .then(Commands.argument("safe", StringArgumentType.word())
