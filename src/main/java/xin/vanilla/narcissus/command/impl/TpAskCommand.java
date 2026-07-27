@@ -71,13 +71,13 @@ public final class TpAskCommand {
         NarcissusFarewell.getTeleportRequest().put(request.getRequestId(), request.setIgnore(ignore));
         if (!ignore) {
             Component yesButton = NarcissusComponent.get().transAuto("yes_button")
-                    .clickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, String.format("/%s %s %s", NarcissusUtils.getCommandPrefix(), CommonConfig.get().commandNames().commandTpAskYes(), request.getRequestId())));
+                    .clickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, String.format("/%s %s %s", NarcissusUtils.getCommandPrefix(), CommonConfig.get().command().commandTpAskYes(), request.getRequestId())));
             Component noButton = NarcissusComponent.get().transAuto("no_button")
-                    .clickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, String.format("/%s %s %s", NarcissusUtils.getCommandPrefix(), CommonConfig.get().commandNames().commandTpAskNo(), request.getRequestId())));
+                    .clickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, String.format("/%s %s %s", NarcissusUtils.getCommandPrefix(), CommonConfig.get().command().commandTpAskNo(), request.getRequestId())));
             MessageUtils.sendNotification(target, NarcissusComponent.get().transAuto("tp_ask_request_received", player.getDisplayName().getString(), yesButton, noButton), NarcissusNotificationTypes.INTERACTIVE_TP_FLOW);
         }
         Component cancelButton = NarcissusComponent.get().transAuto("cancel_button")
-                .clickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, String.format("/%s %s %s", NarcissusUtils.getCommandPrefix(), CommonConfig.get().commandNames().commandTpAskCancel(), request.getRequestId())));
+                .clickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, String.format("/%s %s %s", NarcissusUtils.getCommandPrefix(), CommonConfig.get().command().commandTpAskCancel(), request.getRequestId())));
         MessageUtils.sendNotification(player, NarcissusComponent.get().transAuto("tp_ask_request_sent", target.getDisplayName().getString(), cancelButton), NarcissusNotificationTypes.INTERACTIVE_TP_FLOW);
         if (autoAccept) {
             ServerPlayerEntity finalTarget = target;
@@ -87,7 +87,7 @@ public final class TpAskCommand {
     }
 
     public static LiteralArgumentBuilder<CommandSource> create() {
-        return Commands.literal(CommonConfig.get().commandNames().commandTpAsk())
+        return Commands.literal(CommonConfig.get().command().commandTpAsk())
                 .requires(source -> NarcissusUtils.hasCommandPermission(source, EnumCommandType.TP_ASK))
                 .executes(TpAskCommand::execute)
                 .then(Commands.argument("player", EntityArgument.player())

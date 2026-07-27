@@ -87,7 +87,7 @@ public final class TpBackCommand {
 
 
     public static LiteralArgumentBuilder<CommandSource> create() {
-        return Commands.literal(CommonConfig.get().commandNames().commandTpBack())
+        return Commands.literal(CommonConfig.get().command().commandTpBack())
                 .requires(source -> NarcissusUtils.hasCommandPermission(source, EnumCommandType.TP_BACK))
                 .executes(TpBackCommand::execute)
                 .then(Commands.argument("safe", StringArgumentType.word())

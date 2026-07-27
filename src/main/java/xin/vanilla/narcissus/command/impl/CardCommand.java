@@ -58,7 +58,7 @@ public final class CardCommand {
     }
 
     public static LiteralArgumentBuilder<CommandSource> create() {
-        return Commands.literal(CommonConfig.get().commandNames().commandCard())
+        return Commands.literal(CommonConfig.get().command().commandCard())
                 .executes(CardCommand::execute)
                 .then(Commands.argument("type", StringArgumentType.word())
                         .requires(source -> NarcissusUtils.hasCommandPermission(source, EnumCommandType.SET_CARD))

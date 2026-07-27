@@ -4,9 +4,6 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
-import net.minecraft.block.Blocks;
-import net.minecraft.util.ResourceLocation;
-import net.minecraft.util.SoundEvents;
 import xin.vanilla.banira.api.BaniraConfigs;
 import xin.vanilla.banira.common.config.ConfigData;
 import xin.vanilla.banira.common.config.ConfigHolder;
@@ -21,18 +18,13 @@ import xin.vanilla.narcissus.enums.EnumCostType;
 import xin.vanilla.narcissus.enums.EnumTeleportType;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 /**
- * 通用配置（COMMON）。配置 GUI 的 {@link ConfigEntry.Gui.Tooltip} 与项目根目录 {@code narcissus_farewell-common.toml}
- * 中各分类段的注释一致，请勿脱离 TOML 随意改写说明文案。
- * <p>
- * 运行时通过 {@link #get()} 返回的 {@link RootView} 访问配置，例如 {@code CommonConfig.get().base().teleportCard()}、
- * {@code CommonConfig.get().general().defaultLanguage()}；路径与字段一致（如 {@code general.*}、{@code permission.command.*}）。
+ * 通用配置
  */
-@Config(name = "narcissus_farewell-common", type = ConfigScope.COMMON)
+@Config(name = NarcissusFarewell.MODID + "-common", type = ConfigScope.COMMON)
 public class CommonConfig implements ConfigData {
 
     public CommonConfig() {
@@ -56,24 +48,18 @@ public class CommonConfig implements ConfigData {
     @Setter(AccessLevel.NONE)
     @ConfigEntry.Gui.CollapsibleObject
     @ConfigEntry.Gui.Tooltip(zh_cn = "自定义指令，请勿添加前缀'/'", en_us = "Custom Command Settings, don't add prefix '/'")
-    private CommandNamesCategory commandNames = new CommandNamesCategory();
+    private CommandCategory command = new CommandCategory();
 
     @Getter(AccessLevel.NONE)
     @Setter(AccessLevel.NONE)
     @ConfigEntry.Gui.CollapsibleObject
-    @ConfigEntry.Gui.Tooltip(zh_cn = "简化指令", en_us = "Concise Command Settings")
-    private ConciseCategory conciseCommands = new ConciseCategory();
+    @ConfigEntry.Gui.Tooltip(zh_cn = "无前缀简短指令开关", en_us = "Concise (no-prefix) command toggles")
+    private ConciseCategory concise = new ConciseCategory();
 
     @Getter(AccessLevel.NONE)
     @Setter(AccessLevel.NONE)
     @ConfigEntry.Gui.CollapsibleObject
-    @ConfigEntry.Gui.Tooltip(zh_cn = "基础设置", en_us = "Base Settings")
-    private GeneralCategory general = new GeneralCategory();
-
-    @Getter(AccessLevel.NONE)
-    @Setter(AccessLevel.NONE)
-    @ConfigEntry.Gui.CollapsibleObject
-    @ConfigEntry.Gui.Tooltip(zh_cn = "指令权限", en_us = "Command Permission")
+    @ConfigEntry.Gui.Tooltip(zh_cn = "各指令所需权限等级", en_us = "Permission levels for commands")
     private PermissionCategory permission = new PermissionCategory();
 
     @Getter(AccessLevel.NONE)
@@ -129,21 +115,53 @@ public class CommonConfig implements ConfigData {
     @Setter
     @Accessors(chain = true, fluent = true)
     public static class BaseCategory {
-        @ConfigEntry.Gui.Tooltip(zh_cn = "是否启用传送卡。", en_us = "Enable or disable the option to 'Teleport Card'.")
-        private boolean teleportCard = false;
-        @ConfigEntry.Gui.Tooltip(zh_cn = "每日可获得的传送卡数量。", en_us = "The number of Teleport Card that can be obtained daily.")
-        @ConfigEntry.BoundedDiscrete(max = 9999)
-        private int teleportCardDaily = 0;
-        @ConfigEntry.Gui.Tooltip(zh_cn = "传送卡的使用方式：", en_us = "Teleport Card Usage Modes:")
-        private EnumCardType teleportCardType = EnumCardType.REFUND_ALL_COST;
-        @ConfigEntry.Gui.Tooltip(zh_cn = "是否禁用原版TP指令。", en_us = "Whether to disable the original TP command.")
-        private boolean removeOriginalTp = false;
-        @ConfigEntry.Gui.Tooltip(zh_cn = "创造模式飞行最低速度。", en_us = "Minimum creative flight speed (GUI / config unit).")
-        @ConfigEntry.BoundedDouble(min = -1.0d * Integer.MAX_VALUE, max = 1.0d * Integer.MAX_VALUE, decimalPlaces = 3)
-        private double flySpeedMin = -5d;
-        @ConfigEntry.Gui.Tooltip(zh_cn = "创造模式飞行最高速度。", en_us = "Maximum creative flight speed (GUI / config unit).")
-        @ConfigEntry.BoundedDouble(min = -1.0d * Integer.MAX_VALUE, max = 1.0d * Integer.MAX_VALUE, decimalPlaces = 3)
-        private double flySpeedMax = 5d;
+        @Getter(AccessLevel.NONE)
+        @Setter(AccessLevel.NONE)
+        @ConfigEntry.Gui.CollapsibleObject
+        @ConfigEntry.Gui.Tooltip(zh_cn = "其他设置", en_us = "Other Settings")
+        private OtherCategory other = new OtherCategory();
+
+        @Getter(AccessLevel.NONE)
+        @Setter(AccessLevel.NONE)
+        @ConfigEntry.Gui.CollapsibleObject
+        @ConfigEntry.Gui.Tooltip(zh_cn = "传送卡", en_us = "Teleport Card")
+        private TeleportCardCategory teleportCard = new TeleportCardCategory();
+
+        @Getter(AccessLevel.NONE)
+        @Setter(AccessLevel.NONE)
+        @ConfigEntry.Gui.CollapsibleObject
+        @ConfigEntry.Gui.Tooltip(zh_cn = "传送限制", en_us = "Teleport Limit")
+        private TeleportLimitCategory teleportLimit = new TeleportLimitCategory();
+
+        @Getter(AccessLevel.NONE)
+        @Setter(AccessLevel.NONE)
+        @ConfigEntry.Gui.CollapsibleObject
+        @ConfigEntry.Gui.Tooltip(zh_cn = "传送跟随", en_us = "Teleport Together")
+        private TeleportTogetherCategory teleportTogether = new TeleportTogetherCategory();
+
+        @Getter(AccessLevel.NONE)
+        @Setter(AccessLevel.NONE)
+        @ConfigEntry.Gui.CollapsibleObject
+        @ConfigEntry.Gui.Tooltip(zh_cn = "传送请求", en_us = "Teleport Request")
+        private TeleportRequestCategory teleportRequest = new TeleportRequestCategory();
+
+        @Getter(AccessLevel.NONE)
+        @Setter(AccessLevel.NONE)
+        @ConfigEntry.Gui.CollapsibleObject
+        @ConfigEntry.Gui.Tooltip(zh_cn = "安全传送", en_us = "Safe Teleport")
+        private SafeTeleportCategory safeTeleport = new SafeTeleportCategory();
+
+        @Getter(AccessLevel.NONE)
+        @Setter(AccessLevel.NONE)
+        @ConfigEntry.Gui.CollapsibleObject
+        @ConfigEntry.Gui.Tooltip(zh_cn = "随机传送", en_us = "Random Teleport")
+        private RandomTeleportCategory randomTeleport = new RandomTeleportCategory();
+
+        @Getter(AccessLevel.NONE)
+        @Setter(AccessLevel.NONE)
+        @ConfigEntry.Gui.CollapsibleObject
+        @ConfigEntry.Gui.Tooltip(zh_cn = "创造模式飞行", en_us = "Creative Flight")
+        private CreativeFlightCategory creativeFlight = new CreativeFlightCategory();
     }
 
     @Getter
@@ -193,7 +211,7 @@ public class CommonConfig implements ConfigData {
     @Getter
     @Setter
     @Accessors(chain = true, fluent = true)
-    public static class CommandNamesCategory {
+    public static class CommandCategory {
         @ConfigEntry.Gui.Tooltip(zh_cn = "指令前缀，请仅使用英文字母及下划线，否则可能会出现问题。", en_us = "The prefix of the command, please only use English characters and underscores, otherwise it may cause problems.")
         private String commandPrefix = NarcissusFarewell.DEFAULT_COMMAND_PREFIX;
         @ConfigEntry.Gui.Tooltip(zh_cn = "获取玩家的UUID的指令。", en_us = "This command is used to get the UUID of the player.")
@@ -257,14 +275,50 @@ public class CommonConfig implements ConfigData {
     @Getter
     @Setter
     @Accessors(chain = true, fluent = true)
-    public static class GeneralCategory {
-        @ConfigEntry.Gui.Tooltip(zh_cn = "传送记录数量限制，数量为0表示不限制。", en_us = "The limit of teleport records, 0 means no limit.")
-        @ConfigEntry.BoundedDiscrete(max = 99999)
-        private int teleportRecordLimit = 100;
+    public static class OtherCategory {
+        @ConfigEntry.Gui.Tooltip(zh_cn = "是否禁用原版TP指令。", en_us = "Whether to disable the original TP command.")
+        private boolean removeOriginalTp = false;
+
+        @ConfigEntry.Gui.Tooltip(zh_cn = "传送时的音效。", en_us = "The sound effect when teleporting.")
+        private String tpSound = "minecraft:entity.enderman.teleport";
+    }
+
+    @Getter
+    @Setter
+    @Accessors(chain = true, fluent = true)
+    public static class TeleportCardCategory {
+        @ConfigEntry.Gui.Tooltip(zh_cn = "是否启用传送卡。", en_us = "Enable or disable the option to 'Teleport Card'.")
+        private boolean teleportCard = false;
+        @ConfigEntry.Gui.Tooltip(zh_cn = "每日可获得的传送卡数量。", en_us = "The number of Teleport Card that can be obtained daily.")
+        @ConfigEntry.BoundedDiscrete(max = 9999)
+        private int teleportCardDaily = 0;
+        @ConfigEntry.Gui.Tooltip(zh_cn = "传送卡的使用方式：", en_us = "Teleport Card Usage Modes:")
+        private EnumCardType teleportCardType = EnumCardType.REFUND_ALL_COST;
+    }
+
+    @Getter
+    @Setter
+    @Accessors(chain = true, fluent = true)
+    public static class TeleportLimitCategory {
         @ConfigEntry.Gui.Tooltip(zh_cn = "传送回时忽略的传送类型。", en_us = "The teleport back skip type.")
         private List<String> teleportBackSkipType = new ArrayList<String>() {{
             add(EnumTeleportType.TP_BACK.name());
         }};
+        @ConfigEntry.Gui.Tooltip(zh_cn = "传送记录数量限制，数量为0表示不限制。", en_us = "The limit of teleport records, 0 means no limit.")
+        @ConfigEntry.BoundedDiscrete(max = 99999)
+        private int teleportRecordLimit = 100;
+        @ConfigEntry.Gui.Tooltip(zh_cn = "坟墓传送时搜索死亡点/坟墓位置的范围上限。", en_us = "The search range limit for grave teleport, in blocks (chunk-related logic uses this as radius cap).")
+        @ConfigEntry.BoundedDiscrete(min = 1, max = 256)
+        private int graveSearchRangeLimit = 32;
+        @ConfigEntry.Gui.Tooltip(zh_cn = "玩家可设置的家的数量。", en_us = "The maximum number of homes that can be set by the player.")
+        @ConfigEntry.BoundedDiscrete(min = 1, max = 9999)
+        private int teleportHomeLimit = 5;
+        @ConfigEntry.Gui.Tooltip(zh_cn = "传送至视线尽头时最远传送距离限制，值为0表示不限制。", en_us = "The distance limit for teleporting to the view, 0 means no limit.")
+        @ConfigEntry.BoundedDiscrete()
+        private int teleportViewDistanceLimit = 16 * 64;
+
+        @ConfigEntry.Gui.Tooltip(zh_cn = "当玩家没有个人重生点（床/重生锚等）时，commandTpSpawn 取世界出生点的维度。填 CURRENT 或 AUTO（不区分大小写）表示使用玩家当前维度；否则填维度 ID（如 minecraft:overworld）。维度 ID 解析失败或世界未加载时亦使用玩家当前维度。", en_us = "When the player has no personal respawn (bed/anchor, etc.), which dimension's world spawn commandTpSpawn uses. Use CURRENT or AUTO (case-insensitive) for the player's current dimension; otherwise a dimension ID (e.g. minecraft:overworld). On parse failure or if the world is not loaded, uses the current dimension.")
+        private String tpSpawnNoBedWorldDimension = "minecraft:overworld";
         @ConfigEntry.Gui.Tooltip(zh_cn = "是否启用跨维度传送。", en_us = "Is the teleport across dimensions enabled?")
         private boolean teleportAcrossDimension = true;
         @ConfigEntry.Gui.Tooltip(zh_cn = "传送代价中传送距离计算限制，值为0表示不限制。(此配置项并非限制传送距离，而是限制计算传送代价时使用的距离乘数。)", en_us = "The distance calculation limit for teleport cost, 0 means no limit. (This config item is not the limit of teleport distance, but the limit of the distance multiplier used when calculating teleport cost.)")
@@ -273,9 +327,27 @@ public class CommonConfig implements ConfigData {
         @ConfigEntry.Gui.Tooltip(zh_cn = "跨维度传送时传送代价中传送距离取值，值为0表示不限制。", en_us = "The distance value for teleport cost when teleport across dimensions, 0 means no limit.")
         @ConfigEntry.BoundedDiscrete()
         private int teleportCostDistanceAcrossDimension = 10000;
-        @ConfigEntry.Gui.Tooltip(zh_cn = "传送至视线尽头时最远传送距离限制，值为0表示不限制。", en_us = "The distance limit for teleporting to the view, 0 means no limit.")
-        @ConfigEntry.BoundedDiscrete()
-        private int teleportViewDistanceLimit = 16 * 64;
+    }
+
+    @Getter
+    @Setter
+    @Accessors(chain = true, fluent = true)
+    public static class TeleportTogetherCategory {
+        @ConfigEntry.Gui.Tooltip(zh_cn = "是否允许载具一起传送。", en_us = "Whether to allow vehicles to be teleported together.")
+        private boolean tpWithVehicle = true;
+        @ConfigEntry.Gui.Tooltip(zh_cn = "是否允许跟随的实体一起传送。", en_us = "Whether to allow followers to be teleported together.")
+        private boolean tpWithFollower = true;
+        @ConfigEntry.Gui.Tooltip(zh_cn = "跟随的实体识别范围半径。", en_us = "The range of followers to be recognized, in blocks.")
+        @ConfigEntry.BoundedDiscrete(min = 1, max = 256)
+        private int tpWithFollowerRange = 10;
+        @ConfigEntry.Gui.Tooltip(zh_cn = "是否在被敌对生物锁定（仇恨）时限制玩家进行传送操作。", en_us = "Whether to restrict teleportation when the player is targeted (agroed) by hostile mobs.")
+        private boolean tpWithEnemy = false;
+    }
+
+    @Getter
+    @Setter
+    @Accessors(chain = true, fluent = true)
+    public static class TeleportRequestCategory {
         @ConfigEntry.Gui.Tooltip(zh_cn = "传送请求过期时间，单位为秒。", en_us = "The expire time for teleport request, in seconds.")
         @ConfigEntry.BoundedDiscrete(max = 3600)
         private int teleportRequestExpireTime = 60;
@@ -284,71 +356,55 @@ public class CommonConfig implements ConfigData {
         @ConfigEntry.Gui.Tooltip(zh_cn = "传送请求的全局冷却时间，单位为秒。", en_us = "The global cooldown time for teleport requests, measured in seconds.")
         @ConfigEntry.BoundedDiscrete(max = 86400)
         private int teleportRequestCooldown = 10;
+    }
+
+    @Getter
+    @Setter
+    @Accessors(chain = true, fluent = true)
+    public static class RandomTeleportCategory {
         @ConfigEntry.Gui.Tooltip(zh_cn = "随机传送与传送至指定结构的最大距离限制。", en_us = "The maximum distance limit for random teleportation or teleportation to a specified structure.")
         @ConfigEntry.BoundedDiscrete(min = 5)
         private int teleportRandomDistanceLimit = 10000;
         @ConfigEntry.Gui.Tooltip(zh_cn = "随机传送开启安全传送时，若当前随机目标未找到安全落脚点，重新随机目标坐标的次数。", en_us = "When random teleport uses safe teleport, how many times to pick a new random target if no safe spot is found.")
         @ConfigEntry.BoundedDiscrete(max = 64)
         private int tpRandomSafeNotFoundRetries = 0;
-        @ConfigEntry.Gui.Tooltip(zh_cn = "坟墓传送时搜索死亡点/坟墓位置的范围上限。", en_us = "The search range limit for grave teleport, in blocks (chunk-related logic uses this as radius cap).")
-        @ConfigEntry.BoundedDiscrete(min = 1, max = 256)
-        private int graveSearchRangeLimit = 32;
-        @ConfigEntry.Gui.Tooltip(zh_cn = "玩家可设置的家的数量。", en_us = "The maximum number of homes that can be set by the player.")
-        @ConfigEntry.BoundedDiscrete(min = 1, max = 9999)
-        private int teleportHomeLimit = 5;
-        @ConfigEntry.Gui.Tooltip(zh_cn = "帮助指令信息头部内容。", en_us = "The header content of the help command.")
-        private String helpHeader = "-----==== Narcissus Farewell Help (%d/%d) ====-----";
-        @ConfigEntry.Gui.Tooltip(zh_cn = "传送时的音效。", en_us = "The sound effect when teleporting.")
-        private String tpSound = SoundEvents.ENDERMAN_TELEPORT.getRegistryName().toString();
-        @ConfigEntry.Gui.Tooltip(zh_cn = "是否允许载具一起传送。", en_us = "Whether to allow vehicles to be teleported together.")
-        private boolean tpWithVehicle = true;
-        @ConfigEntry.Gui.Tooltip(zh_cn = "是否允许跟随的实体一起传送。", en_us = "Whether to allow followers to be teleported together.")
-        private boolean tpWithFollower = true;
-        @ConfigEntry.Gui.Tooltip(zh_cn = "跟随的实体识别范围半径。", en_us = "The range of followers to be recognized, in blocks.")
-        @ConfigEntry.BoundedDiscrete(min = 1, max = 256)
-        private int tpWithFollowerRange = 10;
-        @ConfigEntry.Gui.Tooltip(zh_cn = "每页显示的帮助信息数量。", en_us = "The number of help information displayed per page.")
-        @ConfigEntry.BoundedDiscrete(min = 1, max = 9999)
-        private int helpInfoNumPerPage = 5;
-        @ConfigEntry.Gui.Tooltip(zh_cn = "服务器默认语言。", en_us = "The default language of the server.")
-        private String defaultLanguage = "en_us";
-        @ConfigEntry.Gui.Tooltip(zh_cn = "是否在被敌对生物锁定（仇恨）时限制玩家进行传送操作。", en_us = "Whether to restrict teleportation when the player is targeted (agroed) by hostile mobs.")
-        private boolean tpWithEnemy = false;
-        @ConfigEntry.Gui.Tooltip(zh_cn = "当玩家没有个人重生点（床/重生锚等）时，tpsp 取世界出生点的维度。填 CURRENT 或 AUTO（不区分大小写）表示使用玩家当前维度；否则填维度 ID（如 minecraft:overworld）。维度 ID 解析失败或世界未加载时亦使用玩家当前维度。", en_us = "When the player has no personal respawn (bed/anchor, etc.), which dimension's world spawn tpsp uses. Use CURRENT or AUTO (case-insensitive) for the player's current dimension; otherwise a dimension ID (e.g. minecraft:overworld). On parse failure or if the world is not loaded, uses the current dimension.")
-        private String tpSpawnNoBedWorldDimension = "minecraft:overworld";
-        @Getter(AccessLevel.NONE)
-        @Setter(AccessLevel.NONE)
-        @ConfigEntry.Gui.CollapsibleObject
-        @ConfigEntry.Gui.Tooltip(zh_cn = "安全传送", en_us = "Safe Teleport")
-        private SafeTeleportCategory safeTeleport = new SafeTeleportCategory();
     }
 
     @Getter
     @Setter
-    @Accessors(chain = true, fluent = true)
+        @Accessors(chain = true, fluent = true)
     public static class SafeTeleportCategory {
         @ConfigEntry.Gui.Tooltip(zh_cn = "不安全的方块列表，玩家不会传送到这些方块上。", en_us = "The list of unsafe blocks, players will not be teleported to these blocks.")
-        private List<String> unsafeBlocks = Stream.of(Blocks.LAVA, Blocks.FIRE, Blocks.CAMPFIRE, Blocks.SOUL_FIRE, Blocks.SOUL_CAMPFIRE, Blocks.CACTUS, Blocks.MAGMA_BLOCK, Blocks.SWEET_BERRY_BUSH).map(block -> {
-            ResourceLocation rl = block.getRegistryName();
-            return rl == null ? "" : rl.toString();
-        }).collect(Collectors.toList());
+        private List<String> unsafeBlocks = new ArrayList<>(Arrays.asList(
+                "minecraft:lava", "minecraft:fire", "minecraft:campfire", "minecraft:soul_fire",
+                "minecraft:soul_campfire", "minecraft:cactus", "minecraft:magma_block",
+                "minecraft:sweet_berry_bush"));
         @ConfigEntry.Gui.Tooltip(zh_cn = "窒息的方块列表，玩家头不会处于这些方块里面。", en_us = "The list of suffocating blocks, players will not be teleported to these blocks.")
-        private List<String> suffocatingBlocks = Stream.of(Blocks.LAVA, Blocks.WATER).map(block -> {
-            ResourceLocation rl = block.getRegistryName();
-            return rl == null ? "" : rl.toString();
-        }).collect(Collectors.toList());
+        private List<String> suffocatingBlocks = new ArrayList<>(Arrays.asList(
+                "minecraft:lava", "minecraft:water"));
         @ConfigEntry.Gui.Tooltip(zh_cn = "当进行安全传送时，如果未找到安全坐标，是否在脚下放置方块。", en_us = "When performing a safe teleport, whether to place a block underfoot if a safe safeWorldCoordinate is not found.")
         private boolean setBlockWhenSafeNotFound = false;
         @ConfigEntry.Gui.Tooltip(zh_cn = "当进行安全传送时，如果未找到安全坐标，是否仅从背包中获取可放置的方块。", en_us = "When performing a safe teleport, whether to only use placeable blocks from the player's inventory if a safe safeWorldCoordinate is not found.")
         private boolean getBlockFromInventory = true;
         @ConfigEntry.Gui.Tooltip(zh_cn = "当进行安全传送时，如果未找到安全坐标，放置方块的列表。若'getBlockFromInventory'为false，则始终使用列表中的第一个方块。", en_us = "When performing a safe teleport, the list of blocks to place if a safe safeWorldCoordinate is not found. If 'getBlockFromInventory' is set to false, the first block in the list will always be used.")
-        private List<String> safeBlocks = Stream.of(Blocks.GRASS_BLOCK, Blocks.GRASS_PATH, Blocks.DIRT, Blocks.COBBLESTONE).map(block -> {
-            ResourceLocation rl = block.getRegistryName();
-            return rl == null ? "" : rl.toString();
-        }).collect(Collectors.toList());
+        private List<String> safeBlocks = new ArrayList<>(Arrays.asList(
+                "minecraft:grass_block", "minecraft:grass_path", "minecraft:dirt",
+                "minecraft:cobblestone"));
         @ConfigEntry.Gui.Tooltip(zh_cn = "当进行安全传送时，寻找安全坐标的半径，单位为区块。", en_us = "The chunk range for finding a safe safeWorldCoordinate, in chunks.")
         @ConfigEntry.BoundedDiscrete(min = 1, max = 16)
         private int safeChunkRange = 1;
+    }
+
+    @Getter
+    @Setter
+    @Accessors(chain = true, fluent = true)
+    public static class CreativeFlightCategory {
+        @ConfigEntry.Gui.Tooltip(zh_cn = "创造模式飞行最低速度。", en_us = "Minimum creative flight speed (GUI / config unit).")
+        @ConfigEntry.BoundedDouble(min = -1.0d * Integer.MAX_VALUE, max = 1.0d * Integer.MAX_VALUE, decimalPlaces = 3)
+        private double flySpeedMin = -5d;
+        @ConfigEntry.Gui.Tooltip(zh_cn = "创造模式飞行最高速度。", en_us = "Maximum creative flight speed (GUI / config unit).")
+        @ConfigEntry.BoundedDouble(min = -1.0d * Integer.MAX_VALUE, max = 1.0d * Integer.MAX_VALUE, decimalPlaces = 3)
+        private double flySpeedMax = 5d;
     }
 
     @Getter
@@ -1271,13 +1327,9 @@ public class CommonConfig implements ConfigData {
 
         FeatureSwitchView featureSwitch();
 
-        CommandNamesView commandNames();
-
-        ConciseCommandsView conciseCommands();
+        CommandNamesView command();
 
         ConciseCommandsView concise();
-
-        GeneralView general();
 
         PermissionView permission();
 
@@ -1293,29 +1345,135 @@ public class CommonConfig implements ConfigData {
     }
 
     public interface BaseView {
+        OtherView other();
+
+        TeleportCardView teleportCard();
+
+        TeleportLimitView teleportLimit();
+
+        TeleportTogetherView teleportTogether();
+
+        TeleportRequestView teleportRequest();
+
+        SafeTeleportView safeTeleport();
+
+        RandomTeleportView randomTeleport();
+
+        CreativeFlightView creativeFlight();
+    }
+
+    public interface OtherView {
+        boolean removeOriginalTp();
+
+        OtherView removeOriginalTp(boolean value);
+
+        String tpSound();
+
+        OtherView tpSound(String value);
+    }
+
+    public interface TeleportCardView {
         boolean teleportCard();
 
-        BaseView teleportCard(boolean value);
+        TeleportCardView teleportCard(boolean value);
 
         int teleportCardDaily();
 
-        BaseView teleportCardDaily(int value);
+        TeleportCardView teleportCardDaily(int value);
 
         EnumCardType teleportCardType();
 
-        BaseView teleportCardType(EnumCardType value);
+        TeleportCardView teleportCardType(EnumCardType value);
+    }
 
-        boolean removeOriginalTp();
+    public interface TeleportLimitView {
+        List<String> teleportBackSkipType();
 
-        BaseView removeOriginalTp(boolean value);
+        TeleportLimitView teleportBackSkipType(List<String> value);
 
+        int teleportRecordLimit();
+
+        TeleportLimitView teleportRecordLimit(int value);
+
+        int graveSearchRangeLimit();
+
+        TeleportLimitView graveSearchRangeLimit(int value);
+
+        int teleportHomeLimit();
+
+        TeleportLimitView teleportHomeLimit(int value);
+
+        int teleportViewDistanceLimit();
+
+        TeleportLimitView teleportViewDistanceLimit(int value);
+
+        String tpSpawnNoBedWorldDimension();
+
+        TeleportLimitView tpSpawnNoBedWorldDimension(String value);
+
+        boolean teleportAcrossDimension();
+
+        TeleportLimitView teleportAcrossDimension(boolean value);
+
+        int teleportCostDistanceLimit();
+
+        TeleportLimitView teleportCostDistanceLimit(int value);
+
+        int teleportCostDistanceAcrossDimension();
+
+        TeleportLimitView teleportCostDistanceAcrossDimension(int value);
+    }
+
+    public interface TeleportTogetherView {
+        boolean tpWithVehicle();
+
+        TeleportTogetherView tpWithVehicle(boolean value);
+
+        boolean tpWithFollower();
+
+        TeleportTogetherView tpWithFollower(boolean value);
+
+        int tpWithFollowerRange();
+
+        TeleportTogetherView tpWithFollowerRange(int value);
+
+        boolean tpWithEnemy();
+
+        TeleportTogetherView tpWithEnemy(boolean value);
+    }
+
+    public interface TeleportRequestView {
+        int teleportRequestExpireTime();
+
+        TeleportRequestView teleportRequestExpireTime(int value);
+
+        EnumCoolDownType teleportRequestCooldownType();
+
+        TeleportRequestView teleportRequestCooldownType(EnumCoolDownType value);
+
+        int teleportRequestCooldown();
+
+        TeleportRequestView teleportRequestCooldown(int value);
+    }
+
+    public interface RandomTeleportView {
+        int teleportRandomDistanceLimit();
+
+        RandomTeleportView teleportRandomDistanceLimit(int value);
+
+        int tpRandomSafeNotFoundRetries();
+
+        RandomTeleportView tpRandomSafeNotFoundRetries(int value);
+    }
+
+    public interface CreativeFlightView {
         double flySpeedMin();
 
-        BaseView flySpeedMin(double value);
+        CreativeFlightView flySpeedMin(double value);
 
         double flySpeedMax();
 
-        BaseView flySpeedMax(double value);
+        CreativeFlightView flySpeedMax(double value);
     }
 
     public interface FeatureSwitchView {
@@ -1842,98 +2000,6 @@ public class CommonConfig implements ConfigData {
         boolean conciseGetStage();
 
         ConciseTpStageView conciseGetStage(boolean value);
-    }
-
-    public interface GeneralView {
-        int teleportRecordLimit();
-
-        GeneralView teleportRecordLimit(int value);
-
-        List<String> teleportBackSkipType();
-
-        GeneralView teleportBackSkipType(List<String> value);
-
-        boolean teleportAcrossDimension();
-
-        GeneralView teleportAcrossDimension(boolean value);
-
-        int teleportCostDistanceLimit();
-
-        GeneralView teleportCostDistanceLimit(int value);
-
-        int teleportCostDistanceAcrossDimension();
-
-        GeneralView teleportCostDistanceAcrossDimension(int value);
-
-        int teleportViewDistanceLimit();
-
-        GeneralView teleportViewDistanceLimit(int value);
-
-        int teleportRequestExpireTime();
-
-        GeneralView teleportRequestExpireTime(int value);
-
-        EnumCoolDownType teleportRequestCooldownType();
-
-        GeneralView teleportRequestCooldownType(EnumCoolDownType value);
-
-        int teleportRequestCooldown();
-
-        GeneralView teleportRequestCooldown(int value);
-
-        int teleportRandomDistanceLimit();
-
-        GeneralView teleportRandomDistanceLimit(int value);
-
-        int tpRandomSafeNotFoundRetries();
-
-        GeneralView tpRandomSafeNotFoundRetries(int value);
-
-        int graveSearchRangeLimit();
-
-        GeneralView graveSearchRangeLimit(int value);
-
-        int teleportHomeLimit();
-
-        GeneralView teleportHomeLimit(int value);
-
-        String helpHeader();
-
-        GeneralView helpHeader(String value);
-
-        String tpSound();
-
-        GeneralView tpSound(String value);
-
-        boolean tpWithVehicle();
-
-        GeneralView tpWithVehicle(boolean value);
-
-        boolean tpWithFollower();
-
-        GeneralView tpWithFollower(boolean value);
-
-        int tpWithFollowerRange();
-
-        GeneralView tpWithFollowerRange(int value);
-
-        int helpInfoNumPerPage();
-
-        GeneralView helpInfoNumPerPage(int value);
-
-        String defaultLanguage();
-
-        GeneralView defaultLanguage(String value);
-
-        boolean tpWithEnemy();
-
-        GeneralView tpWithEnemy(boolean value);
-
-        String tpSpawnNoBedWorldDimension();
-
-        GeneralView tpSpawnNoBedWorldDimension(String value);
-
-        SafeTeleportView safeTeleport();
     }
 
     public interface SafeTeleportView {

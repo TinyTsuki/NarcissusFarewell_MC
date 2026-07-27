@@ -38,7 +38,7 @@ public final class TpTopCommand {
     }
 
     public static LiteralArgumentBuilder<CommandSource> create() {
-        return Commands.literal(CommonConfig.get().commandNames().commandTpTop())
+        return Commands.literal(CommonConfig.get().command().commandTpTop())
                 .requires(source -> NarcissusUtils.hasCommandPermission(source, EnumCommandType.TP_TOP))
                 .executes(TpTopCommand::execute)
                 .then(Commands.argument("safe", StringArgumentType.word())

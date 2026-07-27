@@ -42,7 +42,7 @@ public final class UuidCommand {
     }
 
     public static LiteralArgumentBuilder<CommandSource> create() {
-        return Commands.literal(CommonConfig.get().commandNames().commandUuid())
+        return Commands.literal(CommonConfig.get().command().commandUuid())
                 .executes(UuidCommand::execute)
                 .then(Commands.argument("player", EntityArgument.player())
                         .executes(UuidCommand::execute));

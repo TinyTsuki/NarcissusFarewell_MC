@@ -64,7 +64,7 @@ public final class DelHomeCommand {
     }
 
     public static LiteralArgumentBuilder<CommandSource> create() {
-        return Commands.literal(CommonConfig.get().commandNames().commandDelHome())
+        return Commands.literal(CommonConfig.get().command().commandDelHome())
                 .requires(source -> NarcissusUtils.hasCommandPermission(source, EnumCommandType.TP_HOME))
                 .then(Commands.argument("name", StringArgumentType.string())
                         .suggests(CommandUtils::homeSuggestion)

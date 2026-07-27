@@ -2,11 +2,11 @@ package xin.vanilla.narcissus;
 
 import lombok.NonNull;
 import net.minecraft.entity.player.ServerPlayerEntity;
+import xin.vanilla.banira.api.BaniraCommonSettings;
 import xin.vanilla.banira.common.data.Component;
 import xin.vanilla.banira.common.data.ScopedComponent;
 import xin.vanilla.banira.common.enums.EnumI18nType;
 import xin.vanilla.banira.common.util.Translator;
-import xin.vanilla.narcissus.config.CommonConfig;
 
 /**
  * 水仙辞语言入口
@@ -33,7 +33,7 @@ public final class NarcissusLang extends Translator {
     }
 
     public static String getServerLanguage() {
-        return CommonConfig.get().general().defaultLanguage();
+        return BaniraCommonSettings.defaultLanguage();
     }
 
     public static String getServerPlayerLanguage(ServerPlayerEntity player) {

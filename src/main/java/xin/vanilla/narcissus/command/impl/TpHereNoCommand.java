@@ -40,7 +40,7 @@ public final class TpHereNoCommand {
     }
 
     public static LiteralArgumentBuilder<CommandSource> create() {
-        return Commands.literal(CommonConfig.get().commandNames().commandTpHereNo())
+        return Commands.literal(CommonConfig.get().command().commandTpHereNo())
                 .requires(source -> NarcissusUtils.hasCommandPermission(source, EnumCommandType.TP_HERE_NO))
                 .executes(TpHereNoCommand::execute)
                 .then(Commands.argument("requestIndex", IntegerArgumentType.integer(1))

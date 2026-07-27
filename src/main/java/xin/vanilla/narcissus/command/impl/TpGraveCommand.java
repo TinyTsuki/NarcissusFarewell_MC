@@ -72,7 +72,7 @@ public final class TpGraveCommand {
         ServerPlayerEntity player = context.getSource().getPlayerOrException();
         if (CommandUtils.checkTeleportPre(context.getSource(), EnumCommandType.TP_GRAVE)) return 0;
 
-        int limit = CommonConfig.get().general().graveSearchRangeLimit();
+        int limit = CommonConfig.get().base().teleportLimit().graveSearchRangeLimit();
         if (range > limit) {
             MessageUtils.sendNotification(player, NarcissusComponent.get().transAuto("grave_range_too_large", limit), NarcissusNotificationTypes.TELEPORT_ERROR);
             return 0;
@@ -140,7 +140,7 @@ public final class TpGraveCommand {
     }
 
     public static LiteralArgumentBuilder<CommandSource> create() {
-        return Commands.literal(CommonConfig.get().commandNames().commandTpGrave())
+        return Commands.literal(CommonConfig.get().command().commandTpGrave())
                 .requires(source -> NarcissusUtils.hasCommandPermission(source, EnumCommandType.TP_GRAVE))
                 .executes(TpGraveCommand::executeDefault)
                 .then(Commands.argument("rangeOrDim", StringArgumentType.greedyString())

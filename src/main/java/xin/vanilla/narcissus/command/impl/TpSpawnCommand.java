@@ -32,7 +32,7 @@ public final class TpSpawnCommand {
         BlockPos respawnPosition = target.getRespawnPosition();
         safeWorldCoordinate.dimension(target.getRespawnDimension());
         if (respawnPosition == null) {
-            String raw = CommonConfig.get().general().tpSpawnNoBedWorldDimension();
+            String raw = CommonConfig.get().base().teleportLimit().tpSpawnNoBedWorldDimension();
             String s = raw == null ? "" : raw.trim();
             ServerWorld level;
             if (s.isEmpty() || "CURRENT".equalsIgnoreCase(s) || "AUTO".equalsIgnoreCase(s)) {
@@ -54,7 +54,7 @@ public final class TpSpawnCommand {
     }
 
     public static LiteralArgumentBuilder<CommandSource> create() {
-        return Commands.literal(CommonConfig.get().commandNames().commandTpSpawn())
+        return Commands.literal(CommonConfig.get().command().commandTpSpawn())
                 .requires(source -> NarcissusUtils.hasCommandPermission(source, EnumCommandType.TP_SPAWN))
                 .executes(TpSpawnCommand::execute)
                 .then(Commands.argument("safe", StringArgumentType.word())

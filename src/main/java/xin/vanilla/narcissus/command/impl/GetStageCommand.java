@@ -80,7 +80,7 @@ public final class GetStageCommand {
     }
 
     public static LiteralArgumentBuilder<CommandSource> create() {
-        return Commands.literal(CommonConfig.get().commandNames().commandGetStage())
+        return Commands.literal(CommonConfig.get().command().commandGetStage())
                 .requires(source -> NarcissusUtils.hasCommandPermission(source, EnumCommandType.GET_STAGE))
                 .executes(GetStageCommand::execute);
     }

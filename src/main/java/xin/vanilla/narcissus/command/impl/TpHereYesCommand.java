@@ -44,7 +44,7 @@ public final class TpHereYesCommand {
     }
 
     public static LiteralArgumentBuilder<CommandSource> create() {
-        return Commands.literal(CommonConfig.get().commandNames().commandTpHereYes())
+        return Commands.literal(CommonConfig.get().command().commandTpHereYes())
                 .requires(source -> NarcissusUtils.hasCommandPermission(source, EnumCommandType.TP_HERE_YES))
                 .executes(TpHereYesCommand::execute)
                 .then(Commands.argument("requestIndex", IntegerArgumentType.integer(1))

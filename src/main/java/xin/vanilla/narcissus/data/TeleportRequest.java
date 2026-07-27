@@ -36,7 +36,7 @@ public class TeleportRequest {
 
     public TeleportRequest setRequestTime(Date requestTime) {
         this.requestTime = requestTime;
-        this.expireTime = requestTime.getTime() + CommonConfig.get().general().teleportRequestExpireTime() * 1000L;
+        this.expireTime = requestTime.getTime() + CommonConfig.get().base().teleportRequest().teleportRequestExpireTime() * 1000L;
         return this;
     }
 
