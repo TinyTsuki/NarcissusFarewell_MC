@@ -49,7 +49,7 @@ public final class FeedCommand {
     }
 
     public static LiteralArgumentBuilder<CommandSourceStack> create() {
-        return Commands.literal(CommonConfig.get().commandNames().commandFeed())
+        return Commands.literal(CommonConfig.get().command().commandFeed())
                 .executes(FeedCommand::execute)
                 .then(Commands.argument("player", EntityArgument.players())
                         .requires(source -> NarcissusUtils.hasCommandPermission(source, EnumCommandType.FEED_OTHER))

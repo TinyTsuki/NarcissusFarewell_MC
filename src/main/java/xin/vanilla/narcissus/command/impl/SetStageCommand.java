@@ -130,7 +130,7 @@ public final class SetStageCommand {
     }
 
     public static LiteralArgumentBuilder<CommandSourceStack> create() {
-        return Commands.literal(CommonConfig.get().commandNames().commandSetStage())
+        return Commands.literal(CommonConfig.get().command().commandSetStage())
                 .requires(source -> NarcissusUtils.hasCommandPermission(source, EnumCommandType.SET_STAGE))
                 .then(Commands.argument("name", StringArgumentType.string())
                         .suggests(SetStageCommand::suggestion)

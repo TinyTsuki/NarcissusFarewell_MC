@@ -41,7 +41,7 @@ public class SafeBlock {
 
     public void init() {
         if (this.safeBlocksState == null) {
-            this.safeBlocksState = CommonConfig.get().general().safeTeleport().safeBlocks().stream()
+            this.safeBlocksState = CommonConfig.get().base().safeTeleport().safeBlocks().stream()
                     .map(SafeBlock::normalizeBlockStateId)
                     .map(BlockUtils::deserializeBlockState)
                     .filter(Objects::nonNull)
@@ -56,7 +56,7 @@ public class SafeBlock {
                     .collect(Collectors.toList());
         }
         if (this.unsafeBlocksState == null) {
-            this.unsafeBlocksState = CommonConfig.get().general().safeTeleport().unsafeBlocks().stream()
+            this.unsafeBlocksState = CommonConfig.get().base().safeTeleport().unsafeBlocks().stream()
                     .map(SafeBlock::normalizeBlockStateId)
                     .map(BlockUtils::deserializeBlockState)
                     .filter(Objects::nonNull)
@@ -71,7 +71,7 @@ public class SafeBlock {
                     .collect(Collectors.toList());
         }
         if (this.suffocatingBlocksState == null) {
-            this.suffocatingBlocksState = CommonConfig.get().general().safeTeleport().suffocatingBlocks().stream()
+            this.suffocatingBlocksState = CommonConfig.get().base().safeTeleport().suffocatingBlocks().stream()
                     .map(SafeBlock::normalizeBlockStateId)
                     .map(BlockUtils::deserializeBlockState)
                     .filter(Objects::nonNull)
