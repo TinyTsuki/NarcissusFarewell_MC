@@ -34,6 +34,10 @@ import net.minecraftforge.registries.ForgeRegistries;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import xin.vanilla.banira.common.data.KeyValue;
+import xin.vanilla.banira.common.enums.EnumMoveType;
+import xin.vanilla.banira.common.enums.EnumNotificationStyle;
+import xin.vanilla.banira.common.enums.EnumNotificationVanillaFallback;
+import xin.vanilla.banira.common.enums.EnumPosition;
 import xin.vanilla.banira.common.util.*;
 import xin.vanilla.banira.common.util.CommandUtils;
 import xin.vanilla.banira.common.util.StringUtils;
@@ -937,7 +941,12 @@ public class NarcissusUtils {
                 if (p == null) {
                     return;
                 }
-                MessageUtils.sendActionBarMessage(p, NarcissusComponent.get().transAuto("tp_countdown_actionbar", String.valueOf(display)));
+                // 倒计时仍回退到原版操作栏，但允许安装 Banira 的客户端按类型接管
+                MessageUtils.sendNotification(p,
+                        NarcissusComponent.get().transAuto("tp_countdown_actionbar", String.valueOf(display)),
+                        EnumPosition.TOP_CENTER, EnumMoveType.AUTO, 1200L,
+                        EnumNotificationStyle.NORMAL, EnumNotificationVanillaFallback.ACTION_BAR,
+                        NarcissusNotificationTypes.TELEPORT_GUARD);
             });
         }
         BaniraScheduler.scheduleAfterMillis(server, sec * 1000.0, () -> {
