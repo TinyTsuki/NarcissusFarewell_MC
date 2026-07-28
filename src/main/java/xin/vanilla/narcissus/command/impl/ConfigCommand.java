@@ -25,6 +25,7 @@ import xin.vanilla.narcissus.config.TeleportCountdownHelper;
 import xin.vanilla.narcissus.data.player.PlayerTeleportData;
 import xin.vanilla.narcissus.enums.EnumCommandType;
 import xin.vanilla.narcissus.enums.EnumTeleportType;
+import xin.vanilla.narcissus.notification.NarcissusNotificationTypes;
 import xin.vanilla.narcissus.util.NarcissusUtils;
 
 public final class ConfigCommand {
@@ -51,7 +52,7 @@ public final class ConfigCommand {
         Component msg = NarcissusComponent.get().transAuto("server_config_status"
                 , NarcissusLang.get().enabled(CommonConfig.get().base().teleportCard().teleportCard())
                 , NarcissusComponent.get().transAuto("teleport_card"));
-        MessageUtils.broadcastMessage(player, msg);
+        MessageUtils.broadcastNotification(msg, NarcissusNotificationTypes.INTERACTIVE_QUERY);
         return 1;
     }
 
@@ -84,9 +85,10 @@ public final class ConfigCommand {
     private static int executeLanguage(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
         String code = StringArgumentType.getString(context, "language");
         BaniraCommonSettings.defaultLanguage(code);
-        ServerPlayer player = context.getSource().getPlayerOrException();
-        MessageUtils.broadcastMessage(player, NarcissusComponent.get().transAuto(
-                "server_default_language", BaniraCommonSettings.defaultLanguage()));
+        context.getSource().getPlayerOrException();
+        MessageUtils.broadcastNotification(NarcissusComponent.get().transAuto(
+                        "server_default_language", BaniraCommonSettings.defaultLanguage()),
+                NarcissusNotificationTypes.INTERACTIVE_QUERY);
         return 1;
     }
 

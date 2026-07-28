@@ -43,6 +43,14 @@ public class NotificationTypeMetadataContractTest {
         String help = read("src/main/java/xin/vanilla/narcissus/command/impl/HelpCommand.java");
         assertTrue(help.contains("MessageUtils.sendNotification(player, helpInfo,"
                 + " NarcissusNotificationTypes.INTERACTIVE_HELP)"));
+
+        String config = read("src/main/java/xin/vanilla/narcissus/command/impl/ConfigCommand.java");
+        assertFalse(config.contains("MessageUtils.broadcastMessage("));
+        assertTrue(config.contains("NarcissusNotificationTypes.INTERACTIVE_QUERY"));
+
+        String utils = read("src/main/java/xin/vanilla/narcissus/util/NarcissusUtils.java");
+        assertFalse(utils.contains("MessageUtils.sendActionBarMessage("));
+        assertTrue(utils.contains("NarcissusNotificationTypes.TELEPORT_GUARD"));
     }
 
     @Test
