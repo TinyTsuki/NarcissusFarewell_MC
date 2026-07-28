@@ -18,6 +18,7 @@ import xin.vanilla.banira.common.util.*;
 import xin.vanilla.narcissus.NarcissusComponent;
 import xin.vanilla.narcissus.command.NarcissusCommand;
 import xin.vanilla.narcissus.enums.EnumCommandType;
+import xin.vanilla.narcissus.notification.NarcissusNotificationTypes;
 import xin.vanilla.narcissus.util.NarcissusUtils;
 
 import java.util.Arrays;
@@ -113,7 +114,7 @@ public class HelpCommand {
                         .append("\n")
                         .append(NarcissusComponent.get().transLang(Translator.getServerPlayerLanguage(player), EnumI18nType.WORD, command.toLowerCase() + "_detail").color(EnumMCColor.GRAY.getColor()));
             }
-            MessageUtils.sendMessage(player, helpInfo);
+            MessageUtils.sendNotification(player, helpInfo, NarcissusNotificationTypes.INTERACTIVE_HELP);
             return 1;
         };
 
