@@ -56,10 +56,10 @@ public class ClientConfig implements ConfigData {
         @ConfigEntry.Gui.Tooltip(zh_cn = "创建驿站时同步地图路标", en_us = "Sync map waypoint when setting stage")
         private boolean syncStageMapWaypoint = true;
 
-        @ConfigEntry.Gui.Tooltip(zh_cn = "传送路标界面布局：三列或 Tab 单栏；在界面内切换布局时会写入此选项。", en_us = "Waypoint screen layout: three columns or tabbed panel; toggling layout in the GUI updates this option.")
+        @ConfigEntry.Gui.Tooltip(zh_cn = "传送路标界面布局：三列或 Tab 单栏；在界面内切换布局时会写入此选项", en_us = "Waypoint screen layout: three columns or tabbed panel; toggling layout in the GUI updates this option.")
         private EnumPanelMode waypointScreenPanelMode = EnumPanelMode.COLUMNS;
 
-        @ConfigEntry.Gui.Tooltip(zh_cn = "黑白名单界面布局：双列或 Tab 单栏；在界面内长按标题切换时会写入此选项。", en_us = "Access list screen layout: two columns or tabbed panel; long-press the title in the GUI to toggle and persist.")
+        @ConfigEntry.Gui.Tooltip(zh_cn = "黑白名单界面布局：双列或 Tab 单栏；\n在界面内长按标题切换时会写入此选项", en_us = "Access list screen layout: two columns or tabbed panel; long-press the title in the GUI to toggle and persist.")
         private EnumPanelMode accessListScreenPanelMode = EnumPanelMode.COLUMNS;
     }
 
