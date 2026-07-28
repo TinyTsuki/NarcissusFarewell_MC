@@ -19,7 +19,7 @@ import xin.vanilla.narcissus.network.packet.*;
 import xin.vanilla.narcissus.notification.NarcissusNotificationTypes;
 
 /**
- * 客户端：Banira 键位入队与稳定事件回调注册（不在此类上使用 Forge {@code @SubscribeEvent}）。
+ * 客户端：Banira 键位入队与稳定事件回调注册（不在此类上使用 Forge {@code @SubscribeEvent}）
  */
 public final class ClientModEventHandler {
     private static final Logger LOGGER = LogManager.getLogger();
@@ -58,9 +58,7 @@ public final class ClientModEventHandler {
      * 通知类型的名称和说明由子 Mod 登记，Banira 只负责展示。
      */
     private static void registerNotificationTypes() {
-        BaniraClientNotificationTypes.registerModDisplayName(
-                NarcissusFarewell.MODID,
-                NarcissusComponent.get().transClientAuto("mod_name"));
+        BaniraClientNotificationTypes.registerModDisplayName(NarcissusFarewell.MODID, NarcissusComponent.get().transClientAuto("mod_name"));
         registerNotificationType(NarcissusNotificationTypes.TELEPORT_REQUEST, "notification_type_teleport_request");
         registerNotificationType(NarcissusNotificationTypes.TELEPORT_GUARD, "notification_type_teleport_guard");
         registerNotificationType(NarcissusNotificationTypes.TELEPORT_SEARCH, "notification_type_teleport_search");
@@ -74,9 +72,7 @@ public final class ClientModEventHandler {
     }
 
     private static void registerNotificationType(String typeId, String descriptionKey) {
-        BaniraClientNotificationTypes.register(
-                typeId,
-                NarcissusComponent.get().transClientAuto(descriptionKey));
+        BaniraClientNotificationTypes.register(typeId, NarcissusComponent.get().transClientAuto(descriptionKey));
     }
 
     private static void onClientTick(xin.vanilla.banira.api.client.event.BaniraClientTickEvent event) {
