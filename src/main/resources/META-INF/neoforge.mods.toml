@@ -32,18 +32,6 @@ logoFile = "logo.png"
     ordering = "NONE"
     side = "BOTH"
 [[dependencies."${mod_id}"]]
-    modId = "${mod_id}"
-    type = "required"
-    versionRange = "[1.0.0,)"
-    ordering = "NONE"
-    side = "SERVER"
-[[dependencies."${mod_id}"]]
-    modId = "${mod_id}"
-    type = "optional"
-    versionRange = "[1.0.0,)"
-    ordering = "NONE"
-    side = "CLIENT"
-[[dependencies."${mod_id}"]]
     modId = "apricityui"
     type = "optional"
     versionRange = "[1.0.0,)"
