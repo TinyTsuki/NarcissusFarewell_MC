@@ -40,6 +40,9 @@ public class NotificationTypeMetadataContractTest {
             assertTrue("Missing zh_cn translation for " + key, zh.contains("\"word.narcissus_farewell." + key + "\""));
             assertTrue("Missing en_us translation for " + key, en.contains("\"word.narcissus_farewell." + key + "\""));
         }
+        String help = read("src/main/java/xin/vanilla/narcissus/command/impl/HelpCommand.java");
+        assertTrue(help.contains("MessageUtils.sendNotification(player, helpInfo,"
+                + " NarcissusNotificationTypes.INTERACTIVE_HELP)"));
     }
 
     @Test
