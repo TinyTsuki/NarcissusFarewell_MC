@@ -35,22 +35,22 @@ public class AccessListScreen extends BaniraScreen {
 
     // region Constants
 
-    private static final int SCREEN_MARGIN = 8;
-    private static final int GAP_H = 1;
+    private static final int SCREEN_MARGIN = 16;
+    private static final int GAP_H = 6;
     private static final int PANEL_PADDING = 6;
-    private static final int HEADER_ROW_H = 22;
-    private static final int TOP_BAR_H = 22;
-    private static final int ITEM_HEIGHT = 24;
+    private static final int HEADER_ROW_H = 24;
+    private static final int TOP_BAR_H = 28;
+    private static final int ITEM_HEIGHT = 28;
     private static final int MAX_VISIBLE_ITEMS = 7;
     private static final int LIST_ROWS_COMPACT = 5;
     private static final int SCROLLBAR_WIDTH = 6;
     private static final int SCROLLBAR_GAP = 2;
-    private static final int LIST_PADDING_V = 2;
-    private static final int FOOTER_HEIGHT = 40;
+    private static final int LIST_PADDING_V = 3;
+    private static final int FOOTER_HEIGHT = 44;
     /**
      * Tab 单栏时页脚仅一行提示
      */
-    private static final int FOOTER_HEIGHT_TAB = 28;
+    private static final int FOOTER_HEIGHT_TAB = 32;
     private static final int DIVIDER = 1;
     private static final int HEAD_SIZE = 16;
     private static final int HEAD_GAP_AFTER = 2;
@@ -153,16 +153,12 @@ public class AccessListScreen extends BaniraScreen {
 
         footerPanelHeight = panelMode == EnumPanelMode.TAB_SINGLE ? FOOTER_HEIGHT_TAB : FOOTER_HEIGHT;
 
-        int usableOuter = width - 2 * SCREEN_MARGIN;
-        if (panelMode == EnumPanelMode.TAB_SINGLE) {
-            panelWidth = (usableOuter - 2 * GAP_H) / 3;
-            footerW = 2 * panelWidth + GAP_H;
-            listBodyW = footerW - 2 * PANEL_PADDING;
-        } else {
-            panelWidth = (usableOuter - GAP_H) / 2;
-            footerW = 2 * panelWidth + GAP_H;
-            listBodyW = panelWidth - 2 * PANEL_PADDING;
-        }
+        int usableOuter = Math.max(1, Math.min(width - 2 * SCREEN_MARGIN, 720));
+        panelWidth = (usableOuter - GAP_H) / 2;
+        footerW = 2 * panelWidth + GAP_H;
+        listBodyW = panelMode == EnumPanelMode.TAB_SINGLE
+                ? footerW - 2 * PANEL_PADDING
+                : panelWidth - 2 * PANEL_PADDING;
 
         int listOverhead = TOP_BAR_H + DIVIDER + HEADER_ROW_H + DIVIDER + DIVIDER;
         int minEdge = SCREEN_MARGIN + 4;
@@ -177,7 +173,7 @@ public class AccessListScreen extends BaniraScreen {
         }
         listHeight = visibleRowCount * ITEM_HEIGHT;
 
-        startX = SCREEN_MARGIN + (usableOuter - footerW) / 2;
+        startX = (width - footerW) / 2;
 
         int listBlockH = TOP_BAR_H + DIVIDER + HEADER_ROW_H + DIVIDER + listHeight + DIVIDER;
         int contentBlockHeight = listBlockH + footerPanelHeight;
@@ -361,6 +357,12 @@ public class AccessListScreen extends BaniraScreen {
 
     private Column activeTabColumn() {
         return activeTab == AccessListTab.BLACK ? Column.BLACK : Column.WHITE;
+    }
+
+    private String emptyText(Column column) {
+        String title = NarcissusComponent.get().transClientAuto(
+                column == Column.BLACK ? "access_list_column_black" : "access_list_column_white").toString();
+        return NarcissusComponent.get().transClientAuto("list_is_empty", title).toString();
     }
 
     private void applyTabButtonStyle(ButtonWidget btn, boolean selected, BaniraColorConfig theme) {
@@ -634,7 +636,7 @@ public class AccessListScreen extends BaniraScreen {
             deleteConfirmButton.visible(dialogOpen);
         }
 
-        drawTopBarAndDividers(stack, theme);
+        drawChrome(stack, theme);
         drawColumnHeaders(stack, theme);
         drawListColumns(stack, theme, mouseX, mouseY);
         drawFooterHint(stack, theme);
@@ -691,33 +693,20 @@ public class AccessListScreen extends BaniraScreen {
                 .inScreen(false));
     }
 
-    private void drawTopBarAndDividers(MatrixStack stack, BaniraColorConfig theme) {
-        ShapeDrawArgs topBg = ShapeDrawArgs.rect(stack, startX, topBarY, footerW, TOP_BAR_H, theme.panelBg());
-        topBg.rect().radius(6f, 6f, 0f, 0f);
-        BaseShapeWidget.drawShape(topBg);
-
-        ShapeDrawArgs div0 = ShapeDrawArgs.rect(stack, startX, topBarY + TOP_BAR_H, footerW, DIVIDER, theme.border());
-        BaseShapeWidget.drawShape(div0);
-
-        ShapeDrawArgs div1 = ShapeDrawArgs.rect(stack, startX, headerRowY + HEADER_ROW_H, footerW, DIVIDER, theme.border());
-        BaseShapeWidget.drawShape(div1);
-
-        ShapeDrawArgs div2 = ShapeDrawArgs.rect(stack, startX, listAreaY + listHeight, footerW, DIVIDER, theme.border());
-        BaseShapeWidget.drawShape(div2);
+    private void drawChrome(MatrixStack stack, BaniraColorConfig theme) {
+        int fullHeight = footerY + footerPanelHeight - topBarY;
+        NarcissusScreenChrome.drawOuterSurface(stack, theme, startX, topBarY, footerW, fullHeight);
+        NarcissusScreenChrome.drawTopBar(stack, theme, startX, topBarY, footerW, TOP_BAR_H);
     }
 
     private void drawColumnHeaders(MatrixStack stack, BaniraColorConfig theme) {
         if (panelMode == EnumPanelMode.TAB_SINGLE) {
-            ShapeDrawArgs h = ShapeDrawArgs.rect(stack, startX, headerRowY, footerW, HEADER_ROW_H, theme.bgSecondary());
-            h.rect().radius(0);
-            BaseShapeWidget.drawShape(h);
+            NarcissusScreenChrome.drawSegmentHeader(stack, theme, startX, headerRowY, footerW, HEADER_ROW_H);
             return;
         }
         for (int c = 0; c < 2; c++) {
             int x = startX + c * (panelWidth + GAP_H);
-            ShapeDrawArgs h = ShapeDrawArgs.rect(stack, x, headerRowY, panelWidth, HEADER_ROW_H, theme.bgSecondary());
-            h.rect().radius(0);
-            BaseShapeWidget.drawShape(h);
+            NarcissusScreenChrome.drawSegmentHeader(stack, theme, x, headerRowY, panelWidth, HEADER_ROW_H);
             String hdr = c == 0
                     ? NarcissusComponent.get().transClientAuto("access_list_column_black").toString()
                     : NarcissusComponent.get().transClientAuto("access_list_column_white").toString();
@@ -728,18 +717,20 @@ public class AccessListScreen extends BaniraScreen {
 
     private void drawListColumns(MatrixStack stack, BaniraColorConfig theme, int mouseX, int mouseY) {
         if (panelMode == EnumPanelMode.TAB_SINGLE) {
-            drawColumnList(stack, theme, startX, footerW, activeTabItems(), tabListScrollbar, activeTabColumn(), mouseX, mouseY);
+            Column column = activeTabColumn();
+            drawColumnList(stack, theme, startX, footerW, activeTabItems(), tabListScrollbar, column,
+                    emptyText(column), mouseX, mouseY);
             return;
         }
-        drawColumnList(stack, theme, startX, panelWidth, blackItems, blackScrollbar, Column.BLACK, mouseX, mouseY);
-        drawColumnList(stack, theme, startX + panelWidth + GAP_H, panelWidth, whiteItems, whiteScrollbar, Column.WHITE, mouseX, mouseY);
+        drawColumnList(stack, theme, startX, panelWidth, blackItems, blackScrollbar, Column.BLACK,
+                emptyText(Column.BLACK), mouseX, mouseY);
+        drawColumnList(stack, theme, startX + panelWidth + GAP_H, panelWidth, whiteItems, whiteScrollbar, Column.WHITE,
+                emptyText(Column.WHITE), mouseX, mouseY);
     }
 
     private void drawColumnList(MatrixStack stack, BaniraColorConfig theme, int listOriginX, int listPanelOuterW, List<String> items,
-                                ScrollbarWidget scrollbar, Column column, int mouseX, int mouseY) {
-        ShapeDrawArgs panelShape = ShapeDrawArgs.rect(stack, listOriginX, listAreaY, listPanelOuterW, listHeight, theme.panelBg());
-        panelShape.rect().radius(0);
-        BaseShapeWidget.drawShape(panelShape);
+                                ScrollbarWidget scrollbar, Column column, String emptyText, int mouseX, int mouseY) {
+        NarcissusScreenChrome.drawListSurface(stack, theme, listOriginX, listAreaY, listPanelOuterW, listHeight);
 
         int listX = listOriginX + PANEL_PADDING;
         boolean scrollNeeded = items.size() > visibleRowCount;
@@ -751,11 +742,16 @@ public class AccessListScreen extends BaniraScreen {
         int innerTop = listAreaY + LIST_PADDING_V;
         int rowSlots = scrollNeeded ? visibleRowCount : items.size();
 
+        if (items.isEmpty()) {
+            NarcissusScreenChrome.drawEmptyState(stack, font, theme, emptyText,
+                    listX, listAreaY, cw, listHeight);
+        }
+
         PlayerAccess access = minecraft != null && minecraft.player != null
                 ? PlayerTeleportData.getData(minecraft.player).getAccess()
                 : null;
 
-        int headSlot = 3 + HEAD_SIZE + HEAD_GAP_AFTER;
+        int headSlot = 6 + HEAD_SIZE + HEAD_GAP_AFTER;
         // 头像 + 文本 + 删除按钮
         int textMaxW = Math.max(8, cw - headSlot - 16);
 
@@ -772,20 +768,10 @@ public class AccessListScreen extends BaniraScreen {
 
             boolean hover = mouseX >= listX && mouseX < listX + cw && mouseY >= itemY && mouseY < itemY + rowH;
 
-            int rowBg = hover
-                    ? ColorUtils.applyAlphaToArgb(theme.bgSecondary(), 0x45)
-                    : ColorUtils.applyAlphaToArgb(theme.bgSecondary(), 0x28);
+            NarcissusScreenChrome.drawListRow(stack, theme, listX, itemY, cw, rowDrawH,
+                    true, hover, false);
 
-            ShapeDrawArgs rowRect = ShapeDrawArgs.rect(stack, listX, itemY, cw, rowDrawH, rowBg);
-            rowRect.rect().radius(4);
-            BaseShapeWidget.drawShape(rowRect);
-
-            if (hover) {
-                ShapeDrawArgs softBar = ShapeDrawArgs.rect(stack, listX, itemY, 2, rowDrawH, ColorUtils.applyAlphaToArgb(theme.accent(), 0x90));
-                BaseShapeWidget.drawShape(softBar);
-            }
-
-            int headX = listX + 3;
+            int headX = listX + 6;
             int headY = itemY + (rowH - HEAD_SIZE) / 2;
             drawPlayerHeadFace(stack, uuidStr, headX, headY, HEAD_SIZE);
 
@@ -819,9 +805,7 @@ public class AccessListScreen extends BaniraScreen {
     }
 
     private void drawFooterHint(MatrixStack stack, BaniraColorConfig theme) {
-        ShapeDrawArgs footerBg = ShapeDrawArgs.rect(stack, startX, footerY, footerW, footerPanelHeight, theme.panelBg());
-        footerBg.rect().radius(0f, 0f, 6f, 6f);
-        BaseShapeWidget.drawShape(footerBg);
+        NarcissusScreenChrome.drawFooterSurface(stack, theme, startX, footerY, footerW, footerPanelHeight);
 
         String h1 = NarcissusComponent.get().transClientAuto("blacklist_help").toString();
         String h2 = NarcissusComponent.get().transClientAuto("whitelist_help").toString();
@@ -866,13 +850,7 @@ public class AccessListScreen extends BaniraScreen {
         ShapeDrawArgs dim = ShapeDrawArgs.rect(stack, 0, 0, width, height, ColorUtils.applyAlphaToArgb(theme.bgQuaternary(), 0x78));
         BaseShapeWidget.drawShape(dim);
 
-        ShapeDrawArgs dlg = ShapeDrawArgs.rect(stack, dlgX, dlgY, DIALOG_W, DIALOG_H, theme.panelBg());
-        dlg.rect().radius(6);
-        BaseShapeWidget.drawShape(dlg);
-
-        ShapeDrawArgs dlgBorder = ShapeDrawArgs.rect(stack, dlgX, dlgY, DIALOG_W, DIALOG_H, theme.border());
-        dlgBorder.rect().radius(6).border(1f);
-        BaseShapeWidget.drawShape(dlgBorder);
+        NarcissusScreenChrome.drawDialog(stack, theme, dlgX, dlgY, DIALOG_W, DIALOG_H);
 
         String title = NarcissusComponent.get().transClientAuto("del_confirm_title").toString();
         String msg = NarcissusComponent.get().transClientAuto("access_list_del_confirm_msg").toString();

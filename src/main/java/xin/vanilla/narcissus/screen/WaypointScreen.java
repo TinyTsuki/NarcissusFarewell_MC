@@ -45,12 +45,12 @@ public class WaypointScreen extends BaniraScreen {
 
     // region Constants
 
-    private static final int SCREEN_MARGIN = 8;
-    private static final int GAP_H = 1;
+    private static final int SCREEN_MARGIN = 16;
+    private static final int GAP_H = 6;
     private static final int PANEL_PADDING = 6;
-    private static final int HEADER_ROW_H = 22;
-    private static final int TOP_BAR_H = 22;
-    private static final int ITEM_HEIGHT = 24;
+    private static final int HEADER_ROW_H = 24;
+    private static final int TOP_BAR_H = 28;
+    private static final int ITEM_HEIGHT = 28;
     private static final int MAX_VISIBLE_ITEMS = 6;
     /**
      * 窗口高度较低时列表固定显示行数
@@ -58,12 +58,12 @@ public class WaypointScreen extends BaniraScreen {
     private static final int LIST_ROWS_COMPACT = 5;
     private static final int SCROLLBAR_WIDTH = 6;
     private static final int SCROLLBAR_GAP = 2;
-    private static final int LIST_PADDING_V = 2;
-    private static final int FOOTER_HEIGHT = 48;
+    private static final int LIST_PADDING_V = 3;
+    private static final int FOOTER_HEIGHT = 52;
     /**
      * Tab 模式详情区
      */
-    private static final int FOOTER_HEIGHT_TAB = 48;
+    private static final int FOOTER_HEIGHT_TAB = 52;
     private static final int FOOTER_PAD_H = 10;
     private static final int FOOTER_PAD_V = 6;
     private static final int DIVIDER = 1;
@@ -196,11 +196,11 @@ public class WaypointScreen extends BaniraScreen {
 
         footerPanelHeight = panelMode == EnumPanelMode.TAB_SINGLE ? FOOTER_HEIGHT_TAB : FOOTER_HEIGHT;
 
-        int usableOuter = width - 2 * SCREEN_MARGIN;
+        int usableOuter = Math.max(1, Math.min(width - 2 * SCREEN_MARGIN, 720));
         panelWidth = (usableOuter - 2 * GAP_H) / 3;
         int columnsTotalWidth = 3 * panelWidth + 2 * GAP_H;
         if (panelMode == EnumPanelMode.TAB_SINGLE) {
-            footerW = 2 * panelWidth + GAP_H;
+            footerW = columnsTotalWidth;
             listBodyW = footerW - 2 * PANEL_PADDING;
         } else {
             footerW = columnsTotalWidth;
@@ -220,7 +220,7 @@ public class WaypointScreen extends BaniraScreen {
         }
         listHeight = visibleRowCount * ITEM_HEIGHT;
 
-        startX = SCREEN_MARGIN + (usableOuter - footerW) / 2;
+        startX = (width - footerW) / 2;
         footerX = startX;
 
         int listBlockH = TOP_BAR_H + DIVIDER + HEADER_ROW_H + DIVIDER + listHeight + DIVIDER;
@@ -802,7 +802,7 @@ public class WaypointScreen extends BaniraScreen {
             deleteConfirmButton.visible(dialogOpen);
         }
 
-        drawTopBarAndDividers(stack, theme);
+        drawChrome(stack, theme);
         drawColumnHeaders(stack, theme);
         drawListColumns(stack, theme, mouseX, mouseY);
         drawFooter(stack, theme);
@@ -836,28 +836,17 @@ public class WaypointScreen extends BaniraScreen {
                 .inScreen(false));
     }
 
-    private void drawTopBarAndDividers(MatrixStack stack, BaniraColorConfig theme) {
-        ShapeDrawArgs topBg = ShapeDrawArgs.rect(stack, startX, topBarY, footerW, TOP_BAR_H, theme.panelBg());
-        topBg.rect().radius(6f, 6f, 0f, 0f);
-        BaseShapeWidget.drawShape(topBg);
-
-        ShapeDrawArgs div0 = ShapeDrawArgs.rect(stack, startX, topBarY + TOP_BAR_H, footerW, DIVIDER, theme.border());
-        BaseShapeWidget.drawShape(div0);
-
-        ShapeDrawArgs div1 = ShapeDrawArgs.rect(stack, startX, headerRowY + HEADER_ROW_H, footerW, DIVIDER, theme.border());
-        BaseShapeWidget.drawShape(div1);
-
-        ShapeDrawArgs div2 = ShapeDrawArgs.rect(stack, startX, listAreaY + listHeight, footerW, DIVIDER, theme.border());
-        BaseShapeWidget.drawShape(div2);
+    private void drawChrome(MatrixStack stack, BaniraColorConfig theme) {
+        int fullHeight = footerY + footerPanelHeight - topBarY;
+        NarcissusScreenChrome.drawOuterSurface(stack, theme, startX, topBarY, footerW, fullHeight);
+        NarcissusScreenChrome.drawTopBar(stack, theme, startX, topBarY, footerW, TOP_BAR_H);
     }
 
     private void drawColumnHeaders(MatrixStack stack, BaniraColorConfig theme) {
         if (panelMode == EnumPanelMode.COLUMNS) {
             for (int c = 0; c < 3; c++) {
                 int x = startX + c * (panelWidth + GAP_H);
-                ShapeDrawArgs h = ShapeDrawArgs.rect(stack, x, headerRowY, panelWidth, HEADER_ROW_H, theme.bgSecondary());
-                h.rect().radius(0);
-                BaseShapeWidget.drawShape(h);
+                NarcissusScreenChrome.drawSegmentHeader(stack, theme, x, headerRowY, panelWidth, HEADER_ROW_H);
                 String title = c == 0
                         ? NarcissusComponent.get().transClientAuto("private").toString()
                         : c == 1
@@ -867,28 +856,36 @@ public class WaypointScreen extends BaniraScreen {
                 drawLimitedTextLine(stack, title, x + PANEL_PADDING, titleY, Math.max(8, panelWidth - 2 * PANEL_PADDING), theme.textPrimary());
             }
         } else {
-            ShapeDrawArgs h = ShapeDrawArgs.rect(stack, startX, headerRowY, footerW, HEADER_ROW_H, theme.bgSecondary());
-            h.rect().radius(0);
-            BaseShapeWidget.drawShape(h);
+            NarcissusScreenChrome.drawSegmentHeader(stack, theme, startX, headerRowY, footerW, HEADER_ROW_H);
         }
     }
 
     private void drawListColumns(MatrixStack stack, BaniraColorConfig theme, int mouseX, int mouseY) {
         if (panelMode == EnumPanelMode.COLUMNS) {
-            drawColumnList(stack, theme, startX, panelWidth, homeItems, homeScrollbar, false, false, mouseX, mouseY);
-            drawColumnList(stack, theme, startX + panelWidth + GAP_H, panelWidth, stageItems, stageScrollbar, false, false, mouseX, mouseY);
-            drawColumnList(stack, theme, startX + 2 * (panelWidth + GAP_H), panelWidth, backItems, backScrollbar, true, false, mouseX, mouseY);
+            drawColumnList(stack, theme, startX, panelWidth, homeItems, homeScrollbar, false, false,
+                    NarcissusComponent.get().transClientAuto("home_is_empty").toString(), mouseX, mouseY);
+            drawColumnList(stack, theme, startX + panelWidth + GAP_H, panelWidth, stageItems, stageScrollbar, false, false,
+                    NarcissusComponent.get().transClientAuto("stage_is_empty").toString(), mouseX, mouseY);
+            drawColumnList(stack, theme, startX + 2 * (panelWidth + GAP_H), panelWidth, backItems, backScrollbar, true, false,
+                    NarcissusComponent.get().transClientAuto("list_is_empty",
+                            NarcissusComponent.get().transClientAuto("footprints").toString()).toString(), mouseX, mouseY);
         } else {
-            drawColumnList(stack, theme, startX, footerW, activeTabItems(), tabListScrollbar, activeTab == WaypointListTab.FOOTPRINTS, true, mouseX, mouseY);
+            String emptyText = activeTab == WaypointListTab.PRIVATE
+                    ? NarcissusComponent.get().transClientAuto("home_is_empty").toString()
+                    : activeTab == WaypointListTab.PUBLIC
+                    ? NarcissusComponent.get().transClientAuto("stage_is_empty").toString()
+                    : NarcissusComponent.get().transClientAuto("list_is_empty",
+                    NarcissusComponent.get().transClientAuto("footprints").toString()).toString();
+            drawColumnList(stack, theme, startX, footerW, activeTabItems(), tabListScrollbar,
+                    activeTab == WaypointListTab.FOOTPRINTS, true, emptyText, mouseX, mouseY);
         }
     }
 
     private void drawColumnList(MatrixStack stack, BaniraColorConfig theme, int listOriginX, int listPanelOuterW, List<WaypointEntry> items,
-                                ScrollbarWidget scrollbar, boolean isBackPanel, boolean appendDistanceAfterCoords, int mouseX, int mouseY) {
+                                ScrollbarWidget scrollbar, boolean isBackPanel, boolean appendDistanceAfterCoords,
+                                String emptyText, int mouseX, int mouseY) {
         int x = listOriginX;
-        ShapeDrawArgs panelShape = ShapeDrawArgs.rect(stack, x, listAreaY, listPanelOuterW, listHeight, theme.panelBg());
-        panelShape.rect().radius(0);
-        BaseShapeWidget.drawShape(panelShape);
+        NarcissusScreenChrome.drawListSurface(stack, theme, x, listAreaY, listPanelOuterW, listHeight);
 
         int listX = x + PANEL_PADDING;
         boolean scrollNeeded = items.size() > visibleRowCount;
@@ -899,6 +896,11 @@ public class WaypointScreen extends BaniraScreen {
 
         int innerTop = listAreaY + LIST_PADDING_V;
         int rowSlots = scrollNeeded ? visibleRowCount : items.size();
+
+        if (items.isEmpty()) {
+            NarcissusScreenChrome.drawEmptyState(stack, font, theme, emptyText,
+                    listX, listAreaY, cw, listHeight);
+        }
 
         for (int i = 0; i < rowSlots; i++) {
             int idx = i + scroll;
@@ -914,53 +916,23 @@ public class WaypointScreen extends BaniraScreen {
             boolean hover = mouseX >= listX && mouseX < listX + cw && mouseY >= itemY && mouseY < itemY + rowH;
             boolean selected = item == selectedItem;
 
-            int rowBg;
-            if (!item.canTeleport) {
-                rowBg = isBackPanel
-                        ? ColorUtils.applyAlphaToArgb(theme.bgDisabled(), 0x55)
-                        : ColorUtils.applyAlphaToArgb(theme.bgDisabled(), 0x40);
-                if (selected) {
-                    rowBg = ColorUtils.applyAlphaToArgb(theme.bgTertiary(), 0x50);
-                }
-            } else {
-                rowBg = selected
-                        ? ColorUtils.applyAlphaToArgb(theme.accent(), 0x38)
-                        : hover
-                        ? ColorUtils.applyAlphaToArgb(theme.bgSecondary(), 0x45)
-                        : ColorUtils.applyAlphaToArgb(theme.bgSecondary(), 0x28);
-            }
-
             int textColor = !item.canTeleport && isBackPanel ? theme.textDisabled() : theme.textPrimary();
             int metaColor = !item.canTeleport && isBackPanel ? theme.textDisabled() : theme.textSecondary();
 
-            ShapeDrawArgs rowRect = ShapeDrawArgs.rect(stack, listX, itemY, cw, rowDrawH, rowBg);
-            rowRect.rect().radius(4);
-            BaseShapeWidget.drawShape(rowRect);
-
-            if (item.canTeleport) {
-                if (selected) {
-                    ShapeDrawArgs accentBar = ShapeDrawArgs.rect(stack, listX, itemY, 3, rowDrawH, theme.accent());
-                    BaseShapeWidget.drawShape(accentBar);
-                } else if (hover) {
-                    ShapeDrawArgs softBar = ShapeDrawArgs.rect(stack, listX, itemY, 2, rowDrawH, ColorUtils.applyAlphaToArgb(theme.accent(), 0x90));
-                    BaseShapeWidget.drawShape(softBar);
-                }
-            } else if (selected) {
-                ShapeDrawArgs disBar = ShapeDrawArgs.rect(stack, listX, itemY, 3, rowDrawH, theme.textDisabled());
-                BaseShapeWidget.drawShape(disBar);
-            }
+            NarcissusScreenChrome.drawListRow(stack, theme, listX, itemY, cw, rowDrawH,
+                    item.canTeleport, hover, selected);
 
             String titleLine = item.name;
             if (appendDistanceAfterCoords && item.recordTime != null) {
                 titleLine = item.name + "  " + DateUtils.toString(item.recordTime, "yy-MM-dd HH:mm:ss");
             }
-            int rowTextMaxW = Math.max(8, cw - 18);
-            drawLimitedTextLine(stack, titleLine, listX + 3, itemY + 2, rowTextMaxW, textColor);
+            int rowTextMaxW = Math.max(8, cw - 28);
+            drawLimitedTextLine(stack, titleLine, listX + 7, itemY + 3, rowTextMaxW, textColor);
             String meta = item.getDimensionName() + " " + item.getCoordinateName();
             if (appendDistanceAfterCoords) {
                 meta = meta + "  " + formatItemDistanceMeters(item);
             }
-            drawLimitedTextLine(stack, meta, listX + 3, itemY + 12, rowTextMaxW, metaColor);
+            drawLimitedTextLine(stack, meta, listX + 7, itemY + 15, rowTextMaxW, metaColor);
 
             if ((item.type == WaypointEntry.Type.HOME || item.type == WaypointEntry.Type.STAGE) && item.canTeleport) {
                 int delX = listX + cw - 16;
@@ -1166,9 +1138,7 @@ public class WaypointScreen extends BaniraScreen {
     }
 
     private void drawFooter(MatrixStack stack, BaniraColorConfig theme) {
-        ShapeDrawArgs footerBg = ShapeDrawArgs.rect(stack, footerX, footerY, footerW, footerPanelHeight, theme.panelBg());
-        footerBg.rect().radius(0f, 0f, 6f, 6f);
-        BaseShapeWidget.drawShape(footerBg);
+        NarcissusScreenChrome.drawFooterSurface(stack, theme, footerX, footerY, footerW, footerPanelHeight);
 
         if (selectedItem == null) {
             return;
@@ -1299,13 +1269,7 @@ public class WaypointScreen extends BaniraScreen {
         ShapeDrawArgs dim = ShapeDrawArgs.rect(stack, 0, 0, width, height, ColorUtils.applyAlphaToArgb(theme.bgQuaternary(), 0x78));
         BaseShapeWidget.drawShape(dim);
 
-        ShapeDrawArgs dlg = ShapeDrawArgs.rect(stack, dlgX, dlgY, DIALOG_W, DIALOG_H, theme.panelBg());
-        dlg.rect().radius(6);
-        BaseShapeWidget.drawShape(dlg);
-
-        ShapeDrawArgs dlgBorder = ShapeDrawArgs.rect(stack, dlgX, dlgY, DIALOG_W, DIALOG_H, theme.border());
-        dlgBorder.rect().radius(6).border(1f);
-        BaseShapeWidget.drawShape(dlgBorder);
+        NarcissusScreenChrome.drawDialog(stack, theme, dlgX, dlgY, DIALOG_W, DIALOG_H);
 
         String title = NarcissusComponent.get().transClientAuto("del_confirm_title").toString();
         String msg = NarcissusComponent.get().transClientAuto("del_confirm_msg").toString();
