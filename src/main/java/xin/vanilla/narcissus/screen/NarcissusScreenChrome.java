@@ -20,8 +20,6 @@ final class NarcissusScreenChrome {
 
     static void drawOuterSurface(MatrixStack stack, BaniraColorConfig theme,
                                  int x, int y, int width, int height) {
-        drawRounded(stack, x + 2, y + 3, width, height,
-                ColorUtils.applyAlphaToArgb(theme.bgQuaternary(), 0x55), OUTER_RADIUS, 0);
         drawRounded(stack, x, y, width, height, theme.panelBg(), OUTER_RADIUS, 0);
         drawRounded(stack, x, y, width, height,
                 ColorUtils.applyAlphaToArgb(theme.border(), 0xB8), OUTER_RADIUS, 1);
@@ -88,8 +86,6 @@ final class NarcissusScreenChrome {
 
     static void drawDialog(MatrixStack stack, BaniraColorConfig theme,
                            int x, int y, int width, int height) {
-        drawRounded(stack, x + 2, y + 3, width, height,
-                ColorUtils.applyAlphaToArgb(theme.bgQuaternary(), 0x66), OUTER_RADIUS, 0);
         drawRounded(stack, x, y, width, height, theme.panelBg(), OUTER_RADIUS, 0);
         drawRounded(stack, x, y, width, height, theme.borderHover(), OUTER_RADIUS, 1);
     }
