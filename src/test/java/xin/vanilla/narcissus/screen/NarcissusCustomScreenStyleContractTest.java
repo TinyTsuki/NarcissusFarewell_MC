@@ -7,6 +7,7 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 /** 保证两个自定义管理界面复用同一套轻量面板层级。 */
@@ -35,6 +36,23 @@ public class NarcissusCustomScreenStyleContractTest {
 
         assertFalse(waypoint.contains("private void drawTopBarAndDividers"));
         assertFalse(accessList.contains("private void drawTopBarAndDividers"));
+    }
+
+    @Test
+    public void customChromeDoesNotFakeDepthWithOffsetDuplicateSurfaces() throws Exception {
+        String chrome = source("src/main/java/xin/vanilla/narcissus/screen/NarcissusScreenChrome.java");
+
+        assertEquals(0, occurrences(chrome, "x + 2, y + 3"));
+    }
+
+    private static int occurrences(String source, String value) {
+        int count = 0;
+        int index = 0;
+        while ((index = source.indexOf(value, index)) >= 0) {
+            count++;
+            index += value.length();
+        }
+        return count;
     }
 
     private static String source(String path) throws Exception {
