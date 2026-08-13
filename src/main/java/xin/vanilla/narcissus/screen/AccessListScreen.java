@@ -4,7 +4,6 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import lombok.experimental.Accessors;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.PlayerInfo;
-import net.minecraft.util.Mth;
 import xin.vanilla.banira.BaniraComponent;
 import xin.vanilla.banira.client.data.*;
 import xin.vanilla.banira.client.enums.EnumAlignment;
@@ -13,6 +12,7 @@ import xin.vanilla.banira.client.gui.BaniraScreen;
 import xin.vanilla.banira.client.gui.InputFormScreen;
 import xin.vanilla.banira.client.gui.component.Text;
 import xin.vanilla.banira.client.gui.widget.*;
+import xin.vanilla.banira.client.util.AbstractGuiUtils;
 import xin.vanilla.banira.client.util.PlayerSkinTextureUtils;
 import xin.vanilla.banira.common.data.Color;
 import xin.vanilla.banira.common.util.ColorUtils;
@@ -20,10 +20,8 @@ import xin.vanilla.banira.common.util.PacketUtils;
 import xin.vanilla.banira.common.util.PlayerUtils;
 import xin.vanilla.banira.common.util.StringUtils;
 import xin.vanilla.narcissus.NarcissusComponent;
-import xin.vanilla.narcissus.config.ClientConfig;
 import xin.vanilla.narcissus.data.PlayerAccess;
 import xin.vanilla.narcissus.data.player.PlayerTeleportData;
-import xin.vanilla.narcissus.enums.EnumPanelMode;
 import xin.vanilla.narcissus.enums.EnumWhiteListMode;
 import xin.vanilla.narcissus.network.packet.AccessListEditToServer;
 
@@ -35,27 +33,13 @@ public class AccessListScreen extends BaniraScreen {
 
     // region Constants
 
-    private static final int SCREEN_MARGIN = 16;
-    private static final int GAP_H = 6;
     private static final int PANEL_PADDING = 6;
-    private static final int HEADER_ROW_H = 24;
-    private static final int TOP_BAR_H = 28;
     private static final int ITEM_HEIGHT = 28;
-    private static final int MAX_VISIBLE_ITEMS = 7;
-    private static final int LIST_ROWS_COMPACT = 5;
     private static final int SCROLLBAR_WIDTH = 6;
     private static final int SCROLLBAR_GAP = 2;
     private static final int LIST_PADDING_V = 3;
-    private static final int FOOTER_HEIGHT = 44;
-    /**
-     * Tab 单栏时页脚仅一行提示
-     */
-    private static final int FOOTER_HEIGHT_TAB = 32;
-    private static final int DIVIDER = 1;
     private static final int HEAD_SIZE = 16;
     private static final int HEAD_GAP_AFTER = 2;
-    private static final float TAB_BTN_CORNER_R = 3f;
-    private static final long TITLE_LONG_PRESS_MS = 550L;
     private static final int DIALOG_W = 280;
     private static final int DIALOG_H = 118;
     private static final int ADD_BTN_SIZE = 14;
@@ -83,40 +67,29 @@ public class AccessListScreen extends BaniraScreen {
     private final List<String> blackItems = new ArrayList<>();
     private final List<String> whiteItems = new ArrayList<>();
 
-    private int panelWidth;
-    private int visibleRowCount = MAX_VISIBLE_ITEMS;
     private int listHeight;
     private int listBodyW;
-    private int startX;
-    private int topBarY;
-    private int headerRowY;
     private int listAreaY;
-    private int footerY;
-    private int footerW;
-    private int footerPanelHeight = FOOTER_HEIGHT;
     private int dlgX;
     private int dlgY;
 
-    private EnumPanelMode panelMode = EnumPanelMode.COLUMNS;
     private AccessListTab activeTab = AccessListTab.BLACK;
 
     private String deleteConfirmUuid;
     private Column deleteConfirmColumn;
+    private String hoveredUuid;
+    private Column hoveredColumn;
 
     private InputWidget searchInput;
-    private ButtonWidget titleLayoutToggleButton;
-    private ButtonWidget addBlackButton;
-    private ButtonWidget addWhiteButton;
-    private ButtonWidget tabBlackButton;
-    private ButtonWidget tabWhiteButton;
-    private ButtonWidget tabAddButton;
-    private ScrollbarWidget blackScrollbar;
-    private ScrollbarWidget whiteScrollbar;
-    private ScrollbarWidget tabListScrollbar;
+    private ButtonWidget addButton;
+    private ScrollbarWidget activeScrollbar;
     private ButtonWidget deleteCancelButton;
     private ButtonWidget deleteConfirmButton;
 
     private int lastAccessFingerprint = Integer.MIN_VALUE;
+    private NarcissusScreenChrome.Layout journalLayout;
+    private NarcissusScreenChrome.Rect accessListRect;
+    private NarcissusScreenChrome.Palette journalPalette;
 
     // endregion Data
 
@@ -132,7 +105,6 @@ public class AccessListScreen extends BaniraScreen {
 
     @Override
     protected void onInit() {
-        panelMode = ClientConfig.get().client().accessListScreenPanelMode();
         if (minecraft == null || minecraft.player == null) {
             return;
         }
@@ -141,48 +113,16 @@ public class AccessListScreen extends BaniraScreen {
 
     @Override
     protected void initWidgets() {
-        blackScrollbar = null;
-        whiteScrollbar = null;
-        tabListScrollbar = null;
-        addBlackButton = null;
-        addWhiteButton = null;
-        titleLayoutToggleButton = null;
-        tabBlackButton = null;
-        tabWhiteButton = null;
-        tabAddButton = null;
-
-        footerPanelHeight = panelMode == EnumPanelMode.TAB_SINGLE ? FOOTER_HEIGHT_TAB : FOOTER_HEIGHT;
-
-        int usableOuter = Math.max(1, Math.min(width - 2 * SCREEN_MARGIN, 720));
-        panelWidth = (usableOuter - GAP_H) / 2;
-        footerW = 2 * panelWidth + GAP_H;
-        listBodyW = panelMode == EnumPanelMode.TAB_SINGLE
-                ? footerW - 2 * PANEL_PADDING
-                : panelWidth - 2 * PANEL_PADDING;
-
-        int listOverhead = TOP_BAR_H + DIVIDER + HEADER_ROW_H + DIVIDER + DIVIDER;
-        int minEdge = SCREEN_MARGIN + 4;
-        int maxBlockH = height - 2 * minEdge;
-        int maxListPixel = maxBlockH - footerPanelHeight - listOverhead;
-        if (maxListPixel >= MAX_VISIBLE_ITEMS * ITEM_HEIGHT) {
-            visibleRowCount = MAX_VISIBLE_ITEMS;
-        } else if (maxListPixel >= LIST_ROWS_COMPACT * ITEM_HEIGHT) {
-            visibleRowCount = LIST_ROWS_COMPACT;
-        } else {
-            visibleRowCount = Mth.clamp(maxListPixel / ITEM_HEIGHT, 1, LIST_ROWS_COMPACT);
-        }
-        listHeight = visibleRowCount * ITEM_HEIGHT;
-
-        startX = (width - footerW) / 2;
-
-        int listBlockH = TOP_BAR_H + DIVIDER + HEADER_ROW_H + DIVIDER + listHeight + DIVIDER;
-        int contentBlockHeight = listBlockH + footerPanelHeight;
-        int blockTop = Math.max(SCREEN_MARGIN + 4, (height - contentBlockHeight) / 2);
-
-        topBarY = blockTop;
-        headerRowY = topBarY + TOP_BAR_H + DIVIDER;
-        listAreaY = headerRowY + HEADER_ROW_H + DIVIDER;
-        footerY = listAreaY + listHeight + DIVIDER;
+        journalLayout = NarcissusScreenChrome.layout(width, height);
+        journalPalette = NarcissusScreenChrome.palette(getEffectiveTheme());
+        int listY = journalLayout.list().y();
+        accessListRect = new NarcissusScreenChrome.Rect(journalLayout.list().x(), listY,
+                journalLayout.list().width(), journalLayout.content().y() + journalLayout.content().height() - listY);
+        listAreaY = accessListRect.y();
+        listHeight = accessListRect.height();
+        listBodyW = accessListRect.width() - PANEL_PADDING * 2;
+        activeScrollbar = null;
+        addButton = null;
 
         dlgX = (width - DIALOG_W) / 2;
         dlgY = (height - DIALOG_H) / 2;
@@ -193,84 +133,27 @@ public class AccessListScreen extends BaniraScreen {
         int cancelX = dlgX + (DIALOG_W - cancelW - deleteW - 10) / 2;
         int deleteX = cancelX + cancelW + 10;
 
-        int searchW = Math.min(220, footerW / 2);
-        int titleBtnW = Math.max(72, footerW - searchW - 2 * PANEL_PADDING - 8);
-        titleLayoutToggleButton = new ButtonWidget(this);
-        titleLayoutToggleButton.id("access_list_title_layout");
-        titleLayoutToggleButton.bounds(new ScreenCoordinate(startX + PANEL_PADDING, topBarY, titleBtnW, TOP_BAR_H));
-        titleLayoutToggleButton.text(NarcissusComponent.get().transClientAuto("access_list_title"));
-        titleLayoutToggleButton.paddingLeft(6);
-        titleLayoutToggleButton.paddingRight(6);
-        titleLayoutToggleButton.paddingTop(Math.max(0, (TOP_BAR_H - 9) / 2));
-        titleLayoutToggleButton.paddingBottom(Math.max(0, (TOP_BAR_H - 9) / 2));
-        titleLayoutToggleButton.borderWidth(0);
-        titleLayoutToggleButton.radius(4);
-        titleLayoutToggleButton.onLongPress(TITLE_LONG_PRESS_MS, b -> togglePanelMode());
-        addWidget(titleLayoutToggleButton);
-
+        int searchX = journalLayout.top().x() + compactTabsEndOffset() + 8;
+        int searchW = Math.max(50,
+                journalLayout.top().x() + journalLayout.top().width() - ADD_BTN_SIZE - 12 - searchX);
         searchInput = new InputWidget(this);
         searchInput.id("search");
-        searchInput.bounds(new ScreenCoordinate(startX + footerW - searchW - PANEL_PADDING, topBarY + 3, searchW, TOP_BAR_H - 6));
+        searchInput.bounds(new ScreenCoordinate(searchX, journalLayout.top().y() + 6, searchW, 24));
         searchInput.text(Text.literal(NarcissusComponent.get().transClientAuto("access_list_search_hint").toString()));
         searchInput.onTextChanged(t -> applySearchFilter());
         addWidget(searchInput);
 
-        int addY = headerRowY + (HEADER_ROW_H - ADD_BTN_SIZE) / 2;
-        if (panelMode == EnumPanelMode.COLUMNS) {
-            addBlackButton = new ButtonWidget(this);
-            addBlackButton.id("add_black");
-            addBlackButton.bounds(new ScreenCoordinate(startX + panelWidth - PANEL_PADDING - ADD_BTN_SIZE, addY, ADD_BTN_SIZE, ADD_BTN_SIZE));
-            addBlackButton.presetStyle(ButtonWidget.PresetStyle.PLUS);
-            addBlackButton.radius(ADD_BTN_SIZE / 4f);
-            addBlackButton.padding(1);
-            addBlackButton.onClick(b -> openAddBlackDialog());
-            addWidget(addBlackButton);
+        addButton = new ButtonWidget(this);
+        addButton.id("add_access_entry");
+        addButton.bounds(new ScreenCoordinate(journalLayout.top().x() + journalLayout.top().width() - ADD_BTN_SIZE - 4,
+                journalLayout.top().y() + 11, ADD_BTN_SIZE, ADD_BTN_SIZE));
+        addButton.presetStyle(ButtonWidget.PresetStyle.PLUS);
+        addButton.radius(ADD_BTN_SIZE / 4f);
+        addButton.padding(1);
+        addButton.onClick(b -> onTabAddClick());
+        addWidget(addButton);
 
-            addWhiteButton = new ButtonWidget(this);
-            addWhiteButton.id("add_white");
-            addWhiteButton.bounds(new ScreenCoordinate(startX + panelWidth + GAP_H + panelWidth - PANEL_PADDING - ADD_BTN_SIZE, addY, ADD_BTN_SIZE, ADD_BTN_SIZE));
-            addWhiteButton.presetStyle(ButtonWidget.PresetStyle.PLUS);
-            addWhiteButton.radius(ADD_BTN_SIZE / 4f);
-            addWhiteButton.padding(1);
-            addWhiteButton.onClick(b -> openAddWhiteDialog());
-            addWidget(addWhiteButton);
-
-            blackScrollbar = buildListScrollbarAt(startX, blackItems, "scrollbar_0");
-            whiteScrollbar = buildListScrollbarAt(startX + panelWidth + GAP_H, whiteItems, "scrollbar_1");
-        } else {
-            int hdrPad = PANEL_PADDING;
-            int tabBarInner = footerW - 2 * hdrPad;
-            int gapTabs = 4;
-            int tabW = (tabBarInner - ADD_BTN_SIZE - gapTabs) / 2 - 1;
-            int tx = startX + hdrPad;
-            int tabY = headerRowY + (HEADER_ROW_H - 18) / 2;
-            tabBlackButton = new ButtonWidget(this);
-            tabBlackButton.id("tab_black");
-            tabBlackButton.bounds(new ScreenCoordinate(tx, tabY, tabW, 18));
-            tabBlackButton.text(NarcissusComponent.get().transClientAuto("access_list_column_black"));
-            tabBlackButton.radius(TAB_BTN_CORNER_R, 0f, TAB_BTN_CORNER_R, 0f);
-            tabBlackButton.onClick(b -> onAccessTabSelected(AccessListTab.BLACK));
-            addWidget(tabBlackButton);
-
-            tabWhiteButton = new ButtonWidget(this);
-            tabWhiteButton.id("tab_white");
-            tabWhiteButton.bounds(new ScreenCoordinate(tx + (tabW + 1), tabY, tabW, 18));
-            tabWhiteButton.text(NarcissusComponent.get().transClientAuto("access_list_column_white"));
-            tabWhiteButton.radius(0f, TAB_BTN_CORNER_R, 0f, TAB_BTN_CORNER_R);
-            tabWhiteButton.onClick(b -> onAccessTabSelected(AccessListTab.WHITE));
-            addWidget(tabWhiteButton);
-
-            tabAddButton = new ButtonWidget(this);
-            tabAddButton.id("tab_add");
-            tabAddButton.bounds(new ScreenCoordinate(startX + footerW - hdrPad - ADD_BTN_SIZE, addY, ADD_BTN_SIZE, ADD_BTN_SIZE));
-            tabAddButton.presetStyle(ButtonWidget.PresetStyle.PLUS);
-            tabAddButton.radius(ADD_BTN_SIZE / 4f);
-            tabAddButton.padding(1);
-            tabAddButton.onClick(b -> onTabAddClick());
-            addWidget(tabAddButton);
-
-            tabListScrollbar = buildListScrollbarAt(startX, activeTabItems(), "scrollbar_tab");
-        }
+        activeScrollbar = buildActiveScrollbar();
 
         deleteCancelButton = new ButtonWidget(this);
         deleteCancelButton.id("delete_cancel");
@@ -306,39 +189,44 @@ public class AccessListScreen extends BaniraScreen {
         applySearchFilter();
     }
 
-    private ScrollbarWidget buildListScrollbarAt(int panelOriginX, List<String> items, String barId) {
-        int listX = panelOriginX + PANEL_PADDING;
-        int maxScroll = Math.max(0, items.size() - visibleRowCount);
+    private ScrollbarWidget buildActiveScrollbar() {
+        int listX = accessListRect.x() + PANEL_PADDING;
+        int viewportY = listAreaY + LIST_PADDING_V;
+        int viewportHeight = listViewportHeight();
+        double maxScroll = maxScrollOffset(activeTabItems());
 
         ScrollbarWidget bar = new ScrollbarWidget(this);
-        bar.id(barId);
-        bar.bounds(new ScreenCoordinate(listX + listBodyW - SCROLLBAR_WIDTH, listAreaY, SCROLLBAR_WIDTH, listHeight));
+        bar.id("active_access_scrollbar");
+        bar.bounds(new ScreenCoordinate(listX + listBodyW - SCROLLBAR_WIDTH,
+                viewportY, SCROLLBAR_WIDTH, viewportHeight));
         bar.orientation(EnumOrientation.VERTICAL);
         bar.minValue(0);
         bar.maxValue(maxScroll);
-        bar.visibleSize(visibleRowCount);
-        bar.scrollStep(1.0);
-        bar.addScrollHoverArea(new ScreenCoordinate(listX, listAreaY, listBodyW, listHeight));
+        bar.visibleSize(viewportHeight);
+        bar.scrollStep(ITEM_HEIGHT * 0.45D);
+        bar.addScrollHoverArea(new ScreenCoordinate(listX, viewportY, listBodyW, viewportHeight));
         addWidget(bar);
         return bar;
     }
 
-    private void togglePanelMode() {
-        if (panelMode == EnumPanelMode.COLUMNS) {
-            panelMode = EnumPanelMode.TAB_SINGLE;
-        } else {
-            panelMode = EnumPanelMode.COLUMNS;
-        }
-        ClientConfig.RootView cfg = ClientConfig.get();
-        cfg.client().accessListScreenPanelMode(panelMode);
-        cfg.save();
-        refreshWidget();
+    private int listViewportHeight() {
+        return Math.max(1, listHeight - LIST_PADDING_V * 2);
+    }
+
+    private double maxScrollOffset(List<?> items) {
+        return Math.max(0.0D, items.size() * (double) ITEM_HEIGHT - listViewportHeight());
+    }
+
+    private NarcissusScreenChrome.ListViewport activeViewport(List<?> items) {
+        double offset = activeScrollbar != null ? activeScrollbar.value() : 0.0D;
+        return NarcissusScreenChrome.listViewport(
+                items.size(), ITEM_HEIGHT, listAreaY + LIST_PADDING_V, listViewportHeight(), offset);
     }
 
     private void onAccessTabSelected(AccessListTab tab) {
         activeTab = tab;
-        if (tabListScrollbar != null) {
-            tabListScrollbar.value(0);
+        if (activeScrollbar != null) {
+            activeScrollbar.value(0);
         }
         syncScrollbarLimits();
     }
@@ -365,23 +253,8 @@ public class AccessListScreen extends BaniraScreen {
         return NarcissusComponent.get().transClientAuto("list_is_empty", title).toString();
     }
 
-    private void applyTabButtonStyle(ButtonWidget btn, boolean selected, BaniraColorConfig theme) {
-        if (selected) {
-            btn.bgColor(ColorUtils.applyAlphaToArgb(theme.accent(), 0x50));
-            btn.hoverBgColor(ColorUtils.applyAlphaToArgb(theme.accent(), 0x68));
-        } else {
-            btn.bgColor(theme.bgTertiary());
-            btn.hoverBgColor(ColorUtils.applyAlphaToArgb(theme.bgSecondary(), 0x90));
-        }
-    }
-
     private void syncScrollbarLimits() {
-        if (panelMode == EnumPanelMode.COLUMNS) {
-            syncOneScrollbar(blackScrollbar, blackItems);
-            syncOneScrollbar(whiteScrollbar, whiteItems);
-        } else {
-            syncOneScrollbar(tabListScrollbar, activeTabItems());
-        }
+        syncOneScrollbar(activeScrollbar, activeTabItems());
     }
 
     private void syncOneScrollbar(ScrollbarWidget bar, List<String> items) {
@@ -389,8 +262,9 @@ public class AccessListScreen extends BaniraScreen {
             return;
         }
         double v = bar.value();
-        double maxScroll = Math.max(0, items.size() - visibleRowCount);
+        double maxScroll = maxScrollOffset(items);
         bar.maxValue(maxScroll);
+        bar.visibleSize(listViewportHeight());
         bar.value(Math.min(v, maxScroll));
     }
 
@@ -574,98 +448,34 @@ public class AccessListScreen extends BaniraScreen {
         refreshListsIfNeeded();
 
         BaniraColorConfig theme = getEffectiveTheme();
+        journalPalette = NarcissusScreenChrome.palette(theme);
         int mouseX = (int) inputState.mouseX();
         int mouseY = (int) inputState.mouseY();
 
         boolean dialogOpen = deleteConfirmUuid != null;
-
-        if (blackScrollbar != null) {
-            boolean bScroll = !dialogOpen && panelMode == EnumPanelMode.COLUMNS && blackItems.size() > visibleRowCount;
-            blackScrollbar.visible(bScroll);
-            blackScrollbar.enabled(bScroll);
-            boolean wScroll = !dialogOpen && panelMode == EnumPanelMode.COLUMNS && whiteItems.size() > visibleRowCount;
-            whiteScrollbar.visible(wScroll);
-            whiteScrollbar.enabled(wScroll);
-        }
-        if (tabListScrollbar != null) {
-            boolean tScroll = !dialogOpen && panelMode == EnumPanelMode.TAB_SINGLE && activeTabItems().size() > visibleRowCount;
-            tabListScrollbar.visible(tScroll);
-            tabListScrollbar.enabled(tScroll);
+        if (activeScrollbar != null) {
+            boolean scroll = !dialogOpen && maxScrollOffset(activeTabItems()) > 0.0D;
+            activeScrollbar.visible(scroll);
+            activeScrollbar.enabled(scroll);
         }
         if (searchInput != null) {
             searchInput.enabled(!dialogOpen);
         }
-        if (titleLayoutToggleButton != null) {
-            titleLayoutToggleButton.visible(!dialogOpen);
-            titleLayoutToggleButton.enabled(!dialogOpen);
-            titleLayoutToggleButton.text(NarcissusComponent.get().transClientAuto("access_list_title"));
-            titleLayoutToggleButton.bgColor(theme.panelBg());
-            titleLayoutToggleButton.hoverBgColor(theme.panelBg());
-            titleLayoutToggleButton.focusedBgColor(theme.panelBg());
-            titleLayoutToggleButton.pressedBgColor(ColorUtils.applyAlphaToArgb(theme.accent(), 0x62));
-            titleLayoutToggleButton.borderWidth(0);
-            titleLayoutToggleButton.textColor(theme.textPrimary());
-            titleLayoutToggleButton.hoverTextColor(theme.textPrimary());
-            titleLayoutToggleButton.focusedTextColor(theme.textPrimary());
-            titleLayoutToggleButton.pressedTextColor(theme.textPrimary());
-        }
-        if (addBlackButton != null) {
-            addBlackButton.enabled(!dialogOpen);
-            addBlackButton.visible(!dialogOpen && panelMode == EnumPanelMode.COLUMNS);
-        }
-        if (addWhiteButton != null) {
-            addWhiteButton.enabled(!dialogOpen);
-            addWhiteButton.visible(!dialogOpen && panelMode == EnumPanelMode.COLUMNS);
-        }
-        if (tabBlackButton != null) {
-            tabBlackButton.visible(!dialogOpen && panelMode == EnumPanelMode.TAB_SINGLE);
-            tabBlackButton.enabled(!dialogOpen);
-            applyTabButtonStyle(tabBlackButton, activeTab == AccessListTab.BLACK, theme);
-        }
-        if (tabWhiteButton != null) {
-            tabWhiteButton.visible(!dialogOpen && panelMode == EnumPanelMode.TAB_SINGLE);
-            tabWhiteButton.enabled(!dialogOpen);
-            applyTabButtonStyle(tabWhiteButton, activeTab == AccessListTab.WHITE, theme);
-        }
-        if (tabAddButton != null) {
-            tabAddButton.visible(!dialogOpen && panelMode == EnumPanelMode.TAB_SINGLE);
-            tabAddButton.enabled(!dialogOpen);
+        if (addButton != null) {
+            addButton.visible(!dialogOpen);
+            addButton.enabled(!dialogOpen);
         }
         if (deleteCancelButton != null) {
             deleteCancelButton.visible(dialogOpen);
             deleteConfirmButton.visible(dialogOpen);
         }
 
-        drawChrome(stack, theme);
-        drawColumnHeaders(stack, theme);
-        drawListColumns(stack, theme, mouseX, mouseY);
-        drawFooterHint(stack, theme);
+        NarcissusScreenChrome.drawJournal(stack, journalPalette, journalLayout);
+        drawAccessTabs(stack, mouseX, mouseY);
+        drawActiveList(stack, mouseX, mouseY);
 
-        if (!dialogOpen) {
-            String h1 = NarcissusComponent.get().transClientAuto("blacklist_help").toString();
-            String h2 = NarcissusComponent.get().transClientAuto("whitelist_help").toString();
-            int y1 = footerY + 6;
-            int lh = font.lineHeight;
-            if (panelMode == EnumPanelMode.TAB_SINGLE) {
-                String h = activeTab == AccessListTab.BLACK ? h1 : h2;
-                boolean hoverLine = mouseX >= startX && mouseX < startX + footerW
-                        && mouseY >= y1 && mouseY < y1 + lh;
-                if (hoverLine) {
-                    addDeferredTooltipRender(s -> drawFooterLineTooltip(s, theme, mouseX, mouseY, h));
-                }
-            } else {
-                int lineGap = 2;
-                int y2 = y1 + lh + lineGap;
-                boolean hoverBlack = mouseX >= startX && mouseX < startX + footerW
-                        && mouseY >= y1 && mouseY < y1 + lh;
-                boolean hoverWhite = mouseX >= startX && mouseX < startX + footerW
-                        && mouseY >= y2 && mouseY < y2 + lh;
-                if (hoverBlack) {
-                    addDeferredTooltipRender(s -> drawFooterLineTooltip(s, theme, mouseX, mouseY, h1));
-                } else if (hoverWhite) {
-                    addDeferredTooltipRender(s -> drawFooterLineTooltip(s, theme, mouseX, mouseY, h2));
-                }
-            }
+        if (hoveredUuid != null && !dialogOpen) {
+            addDeferredTooltipRender(s -> drawAccessTooltip(s, theme, hoveredUuid, hoveredColumn, mouseX, mouseY));
         }
 
         if (dialogOpen) {
@@ -693,58 +503,39 @@ public class AccessListScreen extends BaniraScreen {
                 .inScreen(false));
     }
 
-    private void drawChrome(PoseStack stack, BaniraColorConfig theme) {
-        int fullHeight = footerY + footerPanelHeight - topBarY;
-        NarcissusScreenChrome.drawOuterSurface(stack, theme, startX, topBarY, footerW, fullHeight);
-        NarcissusScreenChrome.drawTopBar(stack, theme, startX, topBarY, footerW, TOP_BAR_H);
-    }
-
-    private void drawColumnHeaders(PoseStack stack, BaniraColorConfig theme) {
-        if (panelMode == EnumPanelMode.TAB_SINGLE) {
-            NarcissusScreenChrome.drawSegmentHeader(stack, theme, startX, headerRowY, footerW, HEADER_ROW_H);
-            return;
-        }
-        for (int c = 0; c < 2; c++) {
-            int x = startX + c * (panelWidth + GAP_H);
-            NarcissusScreenChrome.drawSegmentHeader(stack, theme, x, headerRowY, panelWidth, HEADER_ROW_H);
-            String hdr = c == 0
-                    ? NarcissusComponent.get().transClientAuto("access_list_column_black").toString()
-                    : NarcissusComponent.get().transClientAuto("access_list_column_white").toString();
-            int titleY = headerRowY + (HEADER_ROW_H - font.lineHeight) / 2;
-            drawLimitedTextLine(stack, hdr, x + PANEL_PADDING, titleY, Math.max(8, panelWidth - 2 * PANEL_PADDING), theme.textPrimary());
+    private void drawAccessTabs(PoseStack stack, int mouseX, int mouseY) {
+        AccessListTab[] tabs = AccessListTab.values();
+        for (int i = 0; i < tabs.length; i++) {
+            AccessListTab tab = tabs[i];
+            NarcissusScreenChrome.Rect rect = tabRect(i);
+            boolean hovered = contains(rect, mouseX, mouseY);
+            NarcissusScreenChrome.drawCompactTab(stack, journalPalette, rect, hovered, tab == activeTab);
+            String name = NarcissusComponent.get().transClientAuto(
+                    tab == AccessListTab.BLACK ? "access_list_column_black" : "access_list_column_white").toString();
+            int count = tab == AccessListTab.BLACK ? blackItems.size() : whiteItems.size();
+            String label = name + "  " + count;
+            int textWidth = Math.min(font.width(label), rect.width() - 16);
+            drawLimitedTextLine(stack, label, rect.x() + (rect.width() - textWidth) / 2,
+                    rect.y() + (rect.height() - font.lineHeight) / 2,
+                    textWidth, tab == activeTab ? journalPalette.primary() : journalPalette.secondary());
         }
     }
 
-    private void drawListColumns(PoseStack stack, BaniraColorConfig theme, int mouseX, int mouseY) {
-        if (panelMode == EnumPanelMode.TAB_SINGLE) {
-            Column column = activeTabColumn();
-            drawColumnList(stack, theme, startX, footerW, activeTabItems(), tabListScrollbar, column,
-                    emptyText(column), mouseX, mouseY);
-            return;
-        }
-        drawColumnList(stack, theme, startX, panelWidth, blackItems, blackScrollbar, Column.BLACK,
-                emptyText(Column.BLACK), mouseX, mouseY);
-        drawColumnList(stack, theme, startX + panelWidth + GAP_H, panelWidth, whiteItems, whiteScrollbar, Column.WHITE,
-                emptyText(Column.WHITE), mouseX, mouseY);
-    }
-
-    private void drawColumnList(PoseStack stack, BaniraColorConfig theme, int listOriginX, int listPanelOuterW, List<String> items,
-                                ScrollbarWidget scrollbar, Column column, String emptyText, int mouseX, int mouseY) {
-        NarcissusScreenChrome.drawListSurface(stack, theme, listOriginX, listAreaY, listPanelOuterW, listHeight);
-
-        int listX = listOriginX + PANEL_PADDING;
-        boolean scrollNeeded = items.size() > visibleRowCount;
+    private void drawActiveList(PoseStack stack, int mouseX, int mouseY) {
+        List<String> items = activeTabItems();
+        Column column = activeTabColumn();
+        int listX = accessListRect.x() + PANEL_PADDING;
+        NarcissusScreenChrome.ListViewport viewport = activeViewport(items);
+        boolean scrollNeeded = viewport.maxOffset() > 0.0D;
         int cw = listBodyW - (scrollNeeded ? SCROLLBAR_WIDTH + SCROLLBAR_GAP : 0);
-        int scroll = scrollbar != null
-                ? (int) Math.round(Mth.clamp(scrollbar.value(), 0, Math.max(0, items.size() - visibleRowCount)))
-                : 0;
-
-        int innerTop = listAreaY + LIST_PADDING_V;
-        int rowSlots = scrollNeeded ? visibleRowCount : items.size();
 
         if (items.isEmpty()) {
-            NarcissusScreenChrome.drawEmptyState(stack, font, theme, emptyText,
-                    listX, listAreaY, cw, listHeight);
+            drawLimitedTextCentered(stack, emptyText(column), listX,
+                    listAreaY + listHeight / 2 - font.lineHeight / 2,
+                    cw, journalPalette.secondary());
+            hoveredUuid = null;
+            hoveredColumn = null;
+            return;
         }
 
         PlayerAccess access = minecraft != null && minecraft.player != null
@@ -752,73 +543,98 @@ public class AccessListScreen extends BaniraScreen {
                 : null;
 
         int headSlot = 6 + HEAD_SIZE + HEAD_GAP_AFTER;
-        // 头像 + 文本 + 删除按钮
         int textMaxW = Math.max(8, cw - headSlot - 16);
+        hoveredUuid = null;
+        hoveredColumn = null;
 
-        for (int i = 0; i < rowSlots; i++) {
-            int idx = i + scroll;
-            if (idx >= items.size()) {
-                break;
+        int viewportY = listAreaY + LIST_PADDING_V;
+        AbstractGuiUtils.pushScissor(listX, viewportY, cw, listViewportHeight());
+        try {
+            for (int idx = viewport.firstIndex(); idx < viewport.lastIndexExclusive(); idx++) {
+                String uuidStr = items.get(idx);
+                int itemY = (int) Math.floor(viewport.rowY(idx));
+                int rowH = ITEM_HEIGHT;
+                int rowDrawH = Math.max(1, rowH - 1);
+
+                boolean hover = mouseX >= listX && mouseX < listX + cw
+                        && viewport.itemIndexAt(mouseY) == idx;
+                if (hover) {
+                    hoveredUuid = uuidStr;
+                    hoveredColumn = column;
+                }
+
+                NarcissusScreenChrome.drawJournalListRow(stack, journalPalette,
+                        new NarcissusScreenChrome.Rect(listX, itemY, cw, rowDrawH),
+                        true, hover, false);
+
+                int headX = listX + 6;
+                int headY = itemY + (rowH - HEAD_SIZE) / 2;
+                drawPlayerHeadFace(stack, uuidStr, headX, headY, HEAD_SIZE);
+
+                int textX = listX + headSlot;
+                String titleLine = playerNameForListUuid(uuidStr);
+                drawLimitedTextLine(stack, titleLine, textX, itemY + 2, textMaxW, journalPalette.primary());
+
+                String meta;
+                if (column == Column.WHITE && access != null) {
+                    StringBuilder sb = new StringBuilder();
+                    if (access.getAutoTpaList().contains(uuidStr)) {
+                        sb.append("TPA ");
+                    }
+                    if (access.getAutoTphList().contains(uuidStr)) {
+                        sb.append("TPH");
+                    }
+                    meta = sb.toString().trim();
+                    if (meta.isEmpty()) {
+                        meta = "NONE";
+                    }
+                } else {
+                    meta = uuidStr;
+                }
+                drawLimitedTextLine(stack, meta, textX, itemY + 12, textMaxW, journalPalette.secondary());
+
+                int delX = listX + cw - 16;
+                int delY = itemY + (rowH - 10) / 2;
+                boolean delHover = mouseX >= delX && mouseX <= delX + 14 && mouseY >= delY && mouseY < delY + 10;
+                drawLimitedTextLine(stack, "×", delX + 2, delY, 14,
+                        delHover ? journalPalette.danger() : journalPalette.secondary());
             }
-
-            String uuidStr = items.get(idx);
-            int itemY = innerTop + i * ITEM_HEIGHT;
-            int rowH = ITEM_HEIGHT;
-            int rowDrawH = Math.max(1, rowH - 1);
-
-            boolean hover = mouseX >= listX && mouseX < listX + cw && mouseY >= itemY && mouseY < itemY + rowH;
-
-            NarcissusScreenChrome.drawListRow(stack, theme, listX, itemY, cw, rowDrawH,
-                    true, hover, false);
-
-            int headX = listX + 6;
-            int headY = itemY + (rowH - HEAD_SIZE) / 2;
-            drawPlayerHeadFace(stack, uuidStr, headX, headY, HEAD_SIZE);
-
-            int textX = listX + headSlot;
-            String titleLine = playerNameForListUuid(uuidStr);
-            drawLimitedTextLine(stack, titleLine, textX, itemY + 2, textMaxW, theme.textPrimary());
-
-            String meta;
-            if (column == Column.WHITE && access != null) {
-                StringBuilder sb = new StringBuilder();
-                if (access.getAutoTpaList().contains(uuidStr)) {
-                    sb.append("TPA ");
-                }
-                if (access.getAutoTphList().contains(uuidStr)) {
-                    sb.append("TPH");
-                }
-                meta = sb.toString().trim();
-                if (meta.isEmpty()) {
-                    meta = "NONE";
-                }
-            } else {
-                meta = uuidStr;
-            }
-            drawLimitedTextLine(stack, meta, textX, itemY + 12, textMaxW, theme.textSecondary());
-
-            int delX = listX + cw - 16;
-            int delY = itemY + (rowH - 10) / 2;
-            boolean delHover = mouseX >= delX && mouseX <= delX + 14 && mouseY >= delY && mouseY < delY + 10;
-            drawLimitedTextLine(stack, "×", delX + 2, delY, 14, delHover ? theme.error() : theme.textHint());
+        } finally {
+            AbstractGuiUtils.popScissor();
         }
     }
 
-    private void drawFooterHint(PoseStack stack, BaniraColorConfig theme) {
-        NarcissusScreenChrome.drawFooterSurface(stack, theme, startX, footerY, footerW, footerPanelHeight);
-
-        String h1 = NarcissusComponent.get().transClientAuto("blacklist_help").toString();
-        String h2 = NarcissusComponent.get().transClientAuto("whitelist_help").toString();
-        int maxW = Math.max(8, footerW - 2 * PANEL_PADDING);
-        int y = footerY + 6;
-        if (panelMode == EnumPanelMode.TAB_SINGLE) {
-            String h = activeTab == AccessListTab.BLACK ? h1 : h2;
-            drawLimitedTextLine(stack, h, startX + PANEL_PADDING, y, maxW, theme.textHint());
-        } else {
-            drawLimitedTextLine(stack, h1, startX + PANEL_PADDING, y, maxW, theme.textHint());
-            y += font.lineHeight + 2;
-            drawLimitedTextLine(stack, h2, startX + PANEL_PADDING, y, maxW, theme.textHint());
+    private NarcissusScreenChrome.Rect tabRect(int index) {
+        AccessListTab[] tabs = AccessListTab.values();
+        int offset = 4;
+        for (int i = 0; i < index; i++) {
+            offset += compactTabWidth(tabs[i]) + 4;
         }
+        return NarcissusScreenChrome.compactTabRect(
+                journalLayout.top(), offset, compactTabWidth(tabs[index]));
+    }
+
+    private int compactTabsEndOffset() {
+        int offset = 4;
+        AccessListTab[] tabs = AccessListTab.values();
+        for (int i = 0; i < tabs.length; i++) {
+            offset += compactTabWidth(tabs[i]);
+            if (i + 1 < tabs.length) {
+                offset += 4;
+            }
+        }
+        return offset;
+    }
+
+    private int compactTabWidth(AccessListTab tab) {
+        String name = NarcissusComponent.get().transClientAuto(
+                tab == AccessListTab.BLACK ? "access_list_column_black" : "access_list_column_white").toString();
+        return Math.max(52, font.width(name + "  999") + 12);
+    }
+
+    private static boolean contains(NarcissusScreenChrome.Rect rect, double x, double y) {
+        return x >= rect.x() && x < rect.x() + rect.width()
+                && y >= rect.y() && y < rect.y() + rect.height();
     }
 
     private static void drawPlayerHeadFace(PoseStack stack, String uuidStr, int x, int y, int size) {
@@ -838,19 +654,42 @@ public class AccessListScreen extends BaniraScreen {
         }
     }
 
-    private void drawFooterLineTooltip(PoseStack stack, BaniraColorConfig theme, int mouseX, int mouseY, String fullText) {
-        Text tooltipText = Text.literal(fullText).stack(stack).font(font).color(Color.argb(theme.textPrimary()));
+    private void drawAccessTooltip(PoseStack stack, BaniraColorConfig theme, String uuid,
+                                   Column column, int mouseX, int mouseY) {
+        List<String> lines = new ArrayList<>();
+        lines.add(playerNameForListUuid(uuid));
+        lines.add("UUID: " + uuid);
+        if (column == Column.WHITE) {
+            lines.add(NarcissusComponent.get().transClientAuto("access_list_white_mode").toString()
+                    + ": " + whiteMode(uuid));
+        }
+        lines.add(NarcissusComponent.get().transClientAuto(
+                column == Column.BLACK ? "blacklist_help" : "whitelist_help").toString());
+        Text tooltipText = Text.literal(String.join("\n", lines)).stack(stack).font(font).color(Color.argb(theme.textPrimary()));
         FontDrawArgs args = FontDrawArgs.ofPopo(tooltipText)
                 .x(mouseX)
                 .y(mouseY);
-        TooltipWidget.drawPopupMessage(stack, args);
+        TooltipWidget.drawPopupMessage(stack, args, theme, season());
+    }
+
+    private String whiteMode(String uuid) {
+        if (minecraft == null || minecraft.player == null) {
+            return "NONE";
+        }
+        PlayerAccess access = PlayerTeleportData.getData(minecraft.player).getAccess();
+        boolean tpa = access.getAutoTpaList().contains(uuid);
+        boolean tph = access.getAutoTphList().contains(uuid);
+        if (tpa && tph) return "TPA + TPH";
+        if (tpa) return "TPA";
+        if (tph) return "TPH";
+        return "NONE";
     }
 
     private void drawDeleteConfirmOverlay(PoseStack stack, BaniraColorConfig theme) {
         ShapeDrawArgs dim = ShapeDrawArgs.rect(stack, 0, 0, width, height, ColorUtils.applyAlphaToArgb(theme.bgQuaternary(), 0x78));
         BaseShapeWidget.drawShape(dim);
 
-        NarcissusScreenChrome.drawDialog(stack, theme, dlgX, dlgY, DIALOG_W, DIALOG_H);
+        NarcissusScreenChrome.drawDialog(stack, journalPalette, dlgX, dlgY, DIALOG_W, DIALOG_H);
 
         String title = NarcissusComponent.get().transClientAuto("del_confirm_title").toString();
         String msg = NarcissusComponent.get().transClientAuto("access_list_del_confirm_msg").toString();
@@ -884,17 +723,18 @@ public class AccessListScreen extends BaniraScreen {
         double mouseX = eventArgs.mouseX();
         double mouseY = eventArgs.mouseY();
 
-        if (panelMode == EnumPanelMode.TAB_SINGLE) {
-            if (checkPanelClick(mouseX, mouseY, startX + PANEL_PADDING, listAreaY + LIST_PADDING_V,
-                    activeTabItems(), tabListScrollbar, activeTabColumn())) {
+        AccessListTab[] tabs = AccessListTab.values();
+        for (int i = 0; i < tabs.length; i++) {
+            if (contains(tabRect(i), mouseX, mouseY)) {
+                onAccessTabSelected(tabs[i]);
                 eventArgs.consumed(true);
+                super.onMouseClicked(eventArgs);
+                return;
             }
-        } else {
-            if (checkPanelClick(mouseX, mouseY, startX + PANEL_PADDING, listAreaY + LIST_PADDING_V, blackItems, blackScrollbar, Column.BLACK)) {
-                eventArgs.consumed(true);
-            } else if (checkPanelClick(mouseX, mouseY, startX + panelWidth + GAP_H + PANEL_PADDING, listAreaY + LIST_PADDING_V, whiteItems, whiteScrollbar, Column.WHITE)) {
-                eventArgs.consumed(true);
-            }
+        }
+        if (checkPanelClick(mouseX, mouseY, accessListRect.x() + PANEL_PADDING,
+                listAreaY + LIST_PADDING_V, activeTabItems(), activeScrollbar, activeTabColumn())) {
+            eventArgs.consumed(true);
         }
 
         super.onMouseClicked(eventArgs);
@@ -912,30 +752,19 @@ public class AccessListScreen extends BaniraScreen {
     }
 
     private boolean checkPanelClick(double mouseX, double mouseY, int listX, int listY, List<String> items, ScrollbarWidget bar, Column column) {
-        boolean scrollNeeded = items.size() > visibleRowCount;
+        NarcissusScreenChrome.ListViewport viewport = NarcissusScreenChrome.listViewport(
+                items.size(), ITEM_HEIGHT, listY, listViewportHeight(), bar != null ? bar.value() : 0.0D);
+        boolean scrollNeeded = viewport.maxOffset() > 0.0D;
         int cw = listBodyW - (scrollNeeded ? SCROLLBAR_WIDTH + SCROLLBAR_GAP : 0);
-        int scroll = bar != null ? (int) Math.round(Mth.clamp(bar.value(), 0, Math.max(0, items.size() - visibleRowCount))) : 0;
-
-        int rowSlots = scrollNeeded ? visibleRowCount : items.size();
-
-        for (int i = 0; i < rowSlots; i++) {
-            int idx = i + scroll;
-            if (idx >= items.size()) {
-                break;
-            }
-
-            String uuidStr = items.get(idx);
-            int itemY = listY + i * ITEM_HEIGHT;
-            int rowH = ITEM_HEIGHT;
-
-            if (mouseX >= listX && mouseX < listX + cw && mouseY >= itemY && mouseY < itemY + rowH - 1) {
-                int delX = listX + cw - 16;
-                if (mouseX >= delX) {
-                    deleteConfirmUuid = uuidStr;
-                    deleteConfirmColumn = column;
-                    return true;
-                }
-            }
+        int idx = viewport.itemIndexAt(mouseY);
+        if (idx < 0 || mouseX < listX || mouseX >= listX + cw) {
+            return false;
+        }
+        int delX = listX + cw - 16;
+        if (mouseX >= delX) {
+            deleteConfirmUuid = items.get(idx);
+            deleteConfirmColumn = column;
+            return true;
         }
         return false;
     }
