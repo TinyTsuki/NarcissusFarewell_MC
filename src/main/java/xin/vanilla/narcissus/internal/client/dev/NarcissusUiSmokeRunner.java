@@ -10,6 +10,7 @@ import org.apache.logging.log4j.Logger;
 import org.lwjgl.glfw.GLFW;
 import xin.vanilla.banira.client.gui.ConfigEditorScreen;
 import xin.vanilla.banira.client.gui.NotificationTypeConfigScreen;
+import xin.vanilla.banira.common.enums.EnumGuiNightMode;
 import xin.vanilla.banira.common.util.EnvironmentUtils;
 import xin.vanilla.banira.common.util.PacketUtils;
 import xin.vanilla.narcissus.config.ClientConfig;
@@ -65,6 +66,8 @@ public final class NarcissusUiSmokeRunner {
     private long syncGeneration;
     private Vector3d homePosition;
     private String homeDimension;
+    private EnumGuiNightMode previousNightMode;
+    private boolean nightModeCaptured;
 
     private NarcissusUiSmokeRunner(Path outputDir, NarcissusSmokeOptions options) {
         this.outputDir = outputDir;
@@ -81,10 +84,31 @@ public final class NarcissusUiSmokeRunner {
                         NotificationTypeConfigScreen.class, NarcissusUiSmokeRunner::verifyCleanEscapeCloses)
         );
         this.worldSteps = Arrays.asList(
-                new ScreenStep("waypoints", true, client -> ScreenHelper.openScreen()),
+                new ScreenStep("waypoints-day", true, client -> openWithNightMode(client, false, ScreenHelper::openScreen)),
+                new ScreenStep("waypoints-night", true, client -> openWithNightMode(client, true, ScreenHelper::openScreen)),
                 new ScreenStep("player-preferences", true, client -> ScreenHelper.openPlayerTeleportPrefsScreen()),
-                new ScreenStep("access-list", true, client -> ScreenHelper.openAccessListScreen())
+                new ScreenStep("access-list-day", true, client -> openWithNightMode(client, false, ScreenHelper::openAccessListScreen)),
+                new ScreenStep("access-list-night", true, client -> openWithNightMode(client, true, ScreenHelper::openAccessListScreen))
         );
+    }
+
+    private void openWithNightMode(Minecraft client, boolean night, Runnable opener) {
+        xin.vanilla.banira.internal.config.ClientConfig.RootView config =
+                xin.vanilla.banira.internal.config.ClientConfig.get();
+        if (!nightModeCaptured) {
+            previousNightMode = config.guiNightMode();
+            nightModeCaptured = true;
+        }
+        config.guiNightMode(night ? EnumGuiNightMode.ALWAYS : EnumGuiNightMode.OFF);
+        opener.run();
+    }
+
+    private void restoreNightMode() {
+        if (!nightModeCaptured) {
+            return;
+        }
+        xin.vanilla.banira.internal.config.ClientConfig.get().guiNightMode(previousNightMode);
+        nightModeCaptured = false;
     }
 
     public static void register() {
@@ -367,6 +391,7 @@ public final class NarcissusUiSmokeRunner {
     }
 
     private void finish(Minecraft client) {
+        restoreNightMode();
         phase = Phase.FINISHED;
         appendStatus("FINISHED " + LocalDateTime.now());
         LOGGER.info("Narcissus UI smoke finished; output: {}", outputDir);
@@ -377,6 +402,7 @@ public final class NarcissusUiSmokeRunner {
     }
 
     private void fail(Minecraft client, String step, Throwable error) {
+        restoreNightMode();
         phase = Phase.FINISHED;
         appendStatus("FAILED " + step + ": " + error);
         LOGGER.error("Narcissus UI smoke failed at {}", step, error);

@@ -321,8 +321,6 @@
   "word.narcissus_farewell.enum_teleport_type_tp_grave": "Death location",
   "word.narcissus_farewell.enum_teleport_type_death": "Death",
   "word.narcissus_farewell.enum_teleport_type_other": "Other",
-  "word.narcissus_farewell.enum_panel_mode_columns": "Column layout",
-  "word.narcissus_farewell.enum_panel_mode_tab_single": "Single-column tabs",
   "word.narcissus_farewell.enum_operation_type_add": "Add",
   "word.narcissus_farewell.enum_operation_type_clear": "Clear",
   "word.narcissus_farewell.enum_operation_type_del": "Delete",
