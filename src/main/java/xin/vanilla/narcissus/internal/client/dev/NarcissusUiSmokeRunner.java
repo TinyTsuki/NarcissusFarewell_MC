@@ -10,6 +10,7 @@ import org.apache.logging.log4j.Logger;
 import org.lwjgl.glfw.GLFW;
 import xin.vanilla.banira.client.gui.ConfigEditorScreen;
 import xin.vanilla.banira.client.gui.NotificationTypeConfigScreen;
+import xin.vanilla.banira.common.enums.EnumGuiNightMode;
 import xin.vanilla.banira.common.util.EnvironmentUtils;
 import xin.vanilla.banira.common.util.PacketUtils;
 import xin.vanilla.narcissus.config.ClientConfig;
@@ -73,7 +74,8 @@ public final class NarcissusUiSmokeRunner {
     private Set<String> originalWhiteList;
     private Set<String> originalAutoTpaList;
     private Set<String> originalAutoTphList;
-    private EnumPanelMode originalAccessPanelMode;
+    private EnumGuiNightMode previousNightMode;
+    private boolean nightModeCaptured;
 
     private NarcissusUiSmokeRunner(Path outputDir, NarcissusSmokeOptions options) {
         this.outputDir = outputDir;
@@ -90,13 +92,34 @@ public final class NarcissusUiSmokeRunner {
                         NotificationTypeConfigScreen.class, NarcissusUiSmokeRunner::verifyCleanEscapeCloses)
         );
         this.worldSteps = Arrays.asList(
-                new ScreenStep("waypoints", true, client -> ScreenHelper.openScreen()),
+                new ScreenStep("waypoints-day", true, client -> openWithNightMode(client, false, ScreenHelper::openScreen)),
+                new ScreenStep("waypoints-night", true, client -> openWithNightMode(client, true, ScreenHelper::openScreen)),
                 new ScreenStep("player-preferences", true, client -> ScreenHelper.openPlayerTeleportPrefsScreen()),
-                new ScreenStep("access-list", true, client -> {
+                new ScreenStep("access-list-day", true, client -> {
                     installAccessListFixtures(client);
-                    ScreenHelper.openAccessListScreen();
-                })
+                    openWithNightMode(client, false, ScreenHelper::openAccessListScreen);
+                }, AccessListScreen.class, this::validateAccessListFixtures),
+                new ScreenStep("access-list-night", true, client -> openWithNightMode(client, true, ScreenHelper::openAccessListScreen))
         );
+    }
+
+    private void openWithNightMode(Minecraft client, boolean night, Runnable opener) {
+        xin.vanilla.banira.internal.config.ClientConfig.RootView config =
+                xin.vanilla.banira.internal.config.ClientConfig.get();
+        if (!nightModeCaptured) {
+            previousNightMode = config.guiNightMode();
+            nightModeCaptured = true;
+        }
+        config.guiNightMode(night ? EnumGuiNightMode.ALWAYS : EnumGuiNightMode.OFF);
+        opener.run();
+    }
+
+    private void restoreNightMode() {
+        if (!nightModeCaptured) {
+            return;
+        }
+        xin.vanilla.banira.internal.config.ClientConfig.get().guiNightMode(previousNightMode);
+        nightModeCaptured = false;
     }
 
     public static void register() {
@@ -230,12 +253,10 @@ public final class NarcissusUiSmokeRunner {
         originalWhiteList = new HashSet<>(fixtureAccess.getWhiteList());
         originalAutoTpaList = new HashSet<>(fixtureAccess.getAutoTpaList());
         originalAutoTphList = new HashSet<>(fixtureAccess.getAutoTphList());
-        originalAccessPanelMode = ClientConfig.get().client().accessListScreenPanelMode();
-        ClientConfig.get().client().accessListScreenPanelMode(EnumPanelMode.COLUMNS);
         fixtureAccess.getBlackList().add(ACCESS_BLACK_FIXTURE);
         fixtureAccess.getWhiteList().add(ACCESS_WHITE_FIXTURE);
         fixtureAccess.getAutoTpaList().add(ACCESS_WHITE_FIXTURE);
-        appendStatus("SEED access-list black=1 white=1 mode=COLUMNS");
+        appendStatus("SEED access-list black=1 white=1");
     }
 
     private void validateAccessListFixtures(Minecraft client) {
@@ -246,9 +267,6 @@ public final class NarcissusUiSmokeRunner {
         if (!access.getBlackList().contains(ACCESS_BLACK_FIXTURE)
                 || !access.getWhiteList().contains(ACCESS_WHITE_FIXTURE)) {
             throw new IllegalStateException("Access-list fixtures disappeared before capture");
-        }
-        if (ClientConfig.get().client().accessListScreenPanelMode() != EnumPanelMode.COLUMNS) {
-            throw new IllegalStateException("Access-list smoke did not keep the two-column layout");
         }
         appendStatus("PASS access-list-fixture-data");
     }
@@ -261,11 +279,7 @@ public final class NarcissusUiSmokeRunner {
         restoreSet(fixtureAccess.getWhiteList(), originalWhiteList);
         restoreSet(fixtureAccess.getAutoTpaList(), originalAutoTpaList);
         restoreSet(fixtureAccess.getAutoTphList(), originalAutoTphList);
-        if (originalAccessPanelMode != null) {
-            ClientConfig.get().client().accessListScreenPanelMode(originalAccessPanelMode);
-        }
         fixtureAccess = null;
-        originalAccessPanelMode = null;
     }
 
     private static void restoreSet(Set<String> target, Set<String> original) {
@@ -436,6 +450,7 @@ public final class NarcissusUiSmokeRunner {
     }
 
     private void finish(Minecraft client) {
+        restoreNightMode();
         phase = Phase.FINISHED;
         restoreAccessListFixtures();
         appendStatus("FINISHED " + LocalDateTime.now());
@@ -447,6 +462,7 @@ public final class NarcissusUiSmokeRunner {
     }
 
     private void fail(Minecraft client, String step, Throwable error) {
+        restoreNightMode();
         phase = Phase.FINISHED;
         restoreAccessListFixtures();
         appendStatus("FAILED " + step + ": " + error);
