@@ -21,7 +21,16 @@ public class NarcissusCustomScreenStyleContractTest {
 
     @Test
     public void journalPaletteUsesTheEffectiveBaniraTheme() throws Exception {
-        BaniraColorConfig theme = BaniraColorConfig.spring();
+        BaniraColorConfig theme = new BaniraColorConfig()
+                .bgPrimary(0xFF101112)
+                .bgSurface(0xFF202122)
+                .bgSecondary(0xFF303132)
+                .textPrimary(0xFF404142)
+                .textSecondary(0xFF505152)
+                .accent(0xFF606162)
+                .accentFocused(0xFF707172)
+                .borderFocused(0xFF808182)
+                .border(0xFF909192);
         Object palette = palette(theme);
 
         assertPalette(palette,
