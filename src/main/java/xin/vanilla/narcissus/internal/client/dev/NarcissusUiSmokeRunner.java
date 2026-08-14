@@ -10,10 +10,12 @@ import org.apache.logging.log4j.Logger;
 import org.lwjgl.glfw.GLFW;
 import xin.vanilla.banira.client.gui.ConfigEditorScreen;
 import xin.vanilla.banira.client.gui.NotificationTypeConfigScreen;
+import xin.vanilla.banira.common.enums.EnumGuiNightMode;
 import xin.vanilla.banira.common.util.EnvironmentUtils;
 import xin.vanilla.banira.common.util.PacketUtils;
 import xin.vanilla.narcissus.config.ClientConfig;
 import xin.vanilla.narcissus.config.CommonConfig;
+import xin.vanilla.narcissus.data.PlayerAccess;
 import xin.vanilla.narcissus.data.player.PlayerTeleportData;
 import xin.vanilla.narcissus.enums.EnumTeleportType;
 import xin.vanilla.narcissus.event.ClientModEventHandler;
@@ -23,6 +25,7 @@ import xin.vanilla.narcissus.network.packet.PlayerConfigSyncToServer;
 import xin.vanilla.narcissus.network.packet.WaypointAddHomeToServer;
 import xin.vanilla.narcissus.network.packet.WaypointDelToServer;
 import xin.vanilla.narcissus.network.packet.WaypointTeleportToServer;
+import xin.vanilla.narcissus.screen.AccessListScreen;
 import xin.vanilla.narcissus.screen.PlayerConfigScreen;
 
 import javax.annotation.Nonnull;
@@ -33,9 +36,7 @@ import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Locale;
+import java.util.*;
 import java.util.function.Consumer;
 
 /**
@@ -50,6 +51,8 @@ public final class NarcissusUiSmokeRunner {
     private static final int SYNC_TIMEOUT_TICKS = 300;
     private static final int TELEPORT_TIMEOUT_TICKS = 1200;
     private static final String HOME_NAME = "__narcissus_smoke_home__";
+    private static final String ACCESS_BLACK_FIXTURE = "00000000-0000-0000-0000-000000000001";
+    private static final String ACCESS_WHITE_FIXTURE = "00000000-0000-0000-0000-000000000002";
 
     private static NarcissusUiSmokeRunner instance;
 
@@ -65,6 +68,13 @@ public final class NarcissusUiSmokeRunner {
     private long syncGeneration;
     private Vec3 homePosition;
     private String homeDimension;
+    private PlayerAccess fixtureAccess;
+    private Set<String> originalBlackList;
+    private Set<String> originalWhiteList;
+    private Set<String> originalAutoTpaList;
+    private Set<String> originalAutoTphList;
+    private EnumGuiNightMode previousNightMode;
+    private boolean nightModeCaptured;
 
     private NarcissusUiSmokeRunner(Path outputDir, NarcissusSmokeOptions options) {
         this.outputDir = outputDir;
@@ -81,10 +91,34 @@ public final class NarcissusUiSmokeRunner {
                         NotificationTypeConfigScreen.class, NarcissusUiSmokeRunner::verifyCleanEscapeCloses)
         );
         this.worldSteps = Arrays.asList(
-                new ScreenStep("waypoints", true, client -> ScreenHelper.openScreen()),
+                new ScreenStep("waypoints-day", true, client -> openWithNightMode(client, false, ScreenHelper::openScreen)),
+                new ScreenStep("waypoints-night", true, client -> openWithNightMode(client, true, ScreenHelper::openScreen)),
                 new ScreenStep("player-preferences", true, client -> ScreenHelper.openPlayerTeleportPrefsScreen()),
-                new ScreenStep("access-list", true, client -> ScreenHelper.openAccessListScreen())
+                new ScreenStep("access-list-day", true, client -> {
+                    installAccessListFixtures(client);
+                    openWithNightMode(client, false, ScreenHelper::openAccessListScreen);
+                }, AccessListScreen.class, this::validateAccessListFixtures),
+                new ScreenStep("access-list-night", true, client -> openWithNightMode(client, true, ScreenHelper::openAccessListScreen))
         );
+    }
+
+    private void openWithNightMode(Minecraft client, boolean night, Runnable opener) {
+        xin.vanilla.banira.internal.config.ClientConfig.RootView config =
+                xin.vanilla.banira.internal.config.ClientConfig.get();
+        if (!nightModeCaptured) {
+            previousNightMode = config.guiNightMode();
+            nightModeCaptured = true;
+        }
+        config.guiNightMode(night ? EnumGuiNightMode.ALWAYS : EnumGuiNightMode.OFF);
+        opener.run();
+    }
+
+    private void restoreNightMode() {
+        if (!nightModeCaptured) {
+            return;
+        }
+        xin.vanilla.banira.internal.config.ClientConfig.get().guiNightMode(previousNightMode);
+        nightModeCaptured = false;
     }
 
     public static void register() {
@@ -181,6 +215,9 @@ public final class NarcissusUiSmokeRunner {
         List<ScreenStep> steps = phase == Phase.PRE_WORLD_UI ? preWorldSteps : worldSteps;
         ScreenStep step = steps.get(stepIndex);
         if (stepTick == CAPTURE_TICK && step.capture) {
+            if ("access-list".equals(step.name)) {
+                validateAccessListFixtures(client);
+            }
             if (step.expectedScreen != null && !step.expectedScreen.isInstance(client.screen)) {
                 throw new IllegalStateException("Expected screen " + step.expectedScreen.getName()
                         + " but found " + (client.screen == null ? "null" : client.screen.getClass().getName()));
@@ -201,7 +238,53 @@ public final class NarcissusUiSmokeRunner {
         } else if (phase == Phase.PRE_WORLD_UI) {
             beginWorldSmoke(client);
         } else {
+            restoreAccessListFixtures();
             beginConfigSync(client);
+        }
+    }
+
+    /**
+     * 临时填充两列数据，让截图真正覆盖列表项绘制，结束后会恢复原值。
+     */
+    private void installAccessListFixtures(Minecraft client) {
+        fixtureAccess = PlayerTeleportData.getData(client.player).getAccess();
+        originalBlackList = new HashSet<>(fixtureAccess.getBlackList());
+        originalWhiteList = new HashSet<>(fixtureAccess.getWhiteList());
+        originalAutoTpaList = new HashSet<>(fixtureAccess.getAutoTpaList());
+        originalAutoTphList = new HashSet<>(fixtureAccess.getAutoTphList());
+        fixtureAccess.getBlackList().add(ACCESS_BLACK_FIXTURE);
+        fixtureAccess.getWhiteList().add(ACCESS_WHITE_FIXTURE);
+        fixtureAccess.getAutoTpaList().add(ACCESS_WHITE_FIXTURE);
+        appendStatus("SEED access-list black=1 white=1");
+    }
+
+    private void validateAccessListFixtures(Minecraft client) {
+        if (!(client.screen instanceof AccessListScreen)) {
+            throw new IllegalStateException("Access-list screen did not open");
+        }
+        PlayerAccess access = PlayerTeleportData.getData(client.player).getAccess();
+        if (!access.getBlackList().contains(ACCESS_BLACK_FIXTURE)
+                || !access.getWhiteList().contains(ACCESS_WHITE_FIXTURE)) {
+            throw new IllegalStateException("Access-list fixtures disappeared before capture");
+        }
+        appendStatus("PASS access-list-fixture-data");
+    }
+
+    private void restoreAccessListFixtures() {
+        if (fixtureAccess == null) {
+            return;
+        }
+        restoreSet(fixtureAccess.getBlackList(), originalBlackList);
+        restoreSet(fixtureAccess.getWhiteList(), originalWhiteList);
+        restoreSet(fixtureAccess.getAutoTpaList(), originalAutoTpaList);
+        restoreSet(fixtureAccess.getAutoTphList(), originalAutoTphList);
+        fixtureAccess = null;
+    }
+
+    private static void restoreSet(Set<String> target, Set<String> original) {
+        target.clear();
+        if (original != null) {
+            target.addAll(original);
         }
     }
 
@@ -366,7 +449,9 @@ public final class NarcissusUiSmokeRunner {
     }
 
     private void finish(Minecraft client) {
+        restoreNightMode();
         phase = Phase.FINISHED;
+        restoreAccessListFixtures();
         appendStatus("FINISHED " + LocalDateTime.now());
         LOGGER.info("Narcissus UI smoke finished; output: {}", outputDir);
         client.setScreen(null);
@@ -376,7 +461,9 @@ public final class NarcissusUiSmokeRunner {
     }
 
     private void fail(Minecraft client, String step, Throwable error) {
+        restoreNightMode();
         phase = Phase.FINISHED;
+        restoreAccessListFixtures();
         appendStatus("FAILED " + step + ": " + error);
         LOGGER.error("Narcissus UI smoke failed at {}", step, error);
         if (options.exitOnFinish()) {
