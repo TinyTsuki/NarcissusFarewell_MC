@@ -321,8 +321,6 @@
   "word.narcissus_farewell.enum_teleport_type_tp_grave": "传送至死亡地点",
   "word.narcissus_farewell.enum_teleport_type_death": "死亡",
   "word.narcissus_farewell.enum_teleport_type_other": "其他",
-  "word.narcissus_farewell.enum_panel_mode_columns": "多列布局",
-  "word.narcissus_farewell.enum_panel_mode_tab_single": "单栏标签页",
   "word.narcissus_farewell.enum_operation_type_add": "添加",
   "word.narcissus_farewell.enum_operation_type_clear": "清空",
   "word.narcissus_farewell.enum_operation_type_del": "删除",
@@ -438,7 +436,5 @@
   "word.narcissus_farewell.enum_command_type_virtual_op_concise": "虚拟 OP（简短）",
   "word.narcissus_farewell.enum_command_type_config": "配置",
   "word.narcissus_farewell.enum_command_type_blacklist": "黑名单",
-  "word.narcissus_farewell.enum_command_type_whitelist": "白名单",
-
-  "death.attack.narcissus_farewell": ""
+  "word.narcissus_farewell.enum_command_type_whitelist": "白名单"
 }
