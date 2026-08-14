@@ -2,6 +2,9 @@ package xin.vanilla.narcissus.internal.client.dev;
 
 import com.mojang.blaze3d.platform.NativeImage;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.gui.components.events.GuiEventListener;
+import net.minecraft.client.gui.screens.BackupConfirmScreen;
 import net.minecraft.client.Screenshot;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.phys.Vec3;
@@ -75,6 +78,7 @@ public final class NarcissusUiSmokeRunner {
     private Set<String> originalAutoTphList;
     private EnumGuiNightMode previousNightMode;
     private boolean nightModeCaptured;
+    private boolean backupPromptHandled;
 
     private NarcissusUiSmokeRunner(Path outputDir, NarcissusSmokeOptions options) {
         this.outputDir = outputDir;
@@ -304,12 +308,14 @@ public final class NarcissusUiSmokeRunner {
         syncGeneration = NarcissusClientSyncState.playerDataGeneration();
         phase = Phase.WORLD_LOADING;
         phaseTick = 0;
+        backupPromptHandled = false;
         appendStatus("LOAD world " + options.worldName());
         client.createWorldOpenFlows().openWorld(options.worldName(), () -> client.setScreen(null));
     }
 
     private void runWorldLoadingTick(Minecraft client) {
         phaseTick++;
+        continueWithoutBackupIfNeeded(client);
         boolean loaded = client.player != null && client.level != null
                 && client.getSingleplayerServer() != null && client.screen == null;
         if (loaded && NarcissusClientSyncState.playerDataGeneration() > syncGeneration) {
@@ -321,7 +327,30 @@ public final class NarcissusUiSmokeRunner {
             return;
         }
         if (phaseTick >= WORLD_TIMEOUT_TICKS) {
-            throw new IllegalStateException("Timed out loading or synchronizing world " + options.worldName());
+            throw new IllegalStateException("Timed out loading or synchronizing world " + options.worldName()
+                    + " (screen=" + (client.screen == null ? "null" : client.screen.getClass().getName())
+                    + ", player=" + (client.player != null)
+                    + ", level=" + (client.level != null)
+                    + ", server=" + (client.getSingleplayerServer() != null) + ")");
+        }
+    }
+
+    /** 测试世界来自其他开发环境时，自动走原版的“不备份并继续”按钮。 */
+    private void continueWithoutBackupIfNeeded(Minecraft client) {
+        if (backupPromptHandled || !(client.screen instanceof BackupConfirmScreen)) {
+            return;
+        }
+        int buttonIndex = 0;
+        for (GuiEventListener child : client.screen.children()) {
+            if (!(child instanceof Button)) {
+                continue;
+            }
+            if (buttonIndex++ == 1) {
+                backupPromptHandled = true;
+                ((Button) child).onPress();
+                appendStatus("PASS backup-confirm-skip");
+                return;
+            }
         }
     }
 
