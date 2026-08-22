@@ -26,6 +26,8 @@ import java.io.Serializable;
 public class SafeWorldCoordinate extends WorldCoordinate implements Serializable, Cloneable {
     private boolean safe = false;
     private EnumSafeMode safeMode = EnumSafeMode.NONE;
+    /** 创建传送点的时间；旧数据没有该字段时为 0。 */
+    private long createdAt = System.currentTimeMillis();
 
     public SafeWorldCoordinate(PlayerEntity player) {
         super(player);
@@ -69,7 +71,16 @@ public class SafeWorldCoordinate extends WorldCoordinate implements Serializable
 
     public static SafeWorldCoordinate fromTag(CompoundNBT tag) {
         WorldCoordinate w = WorldCoordinate.fromTag(tag);
-        return copyFromWorldCoordinate(w);
+        SafeWorldCoordinate coordinate = copyFromWorldCoordinate(w);
+        coordinate.createdAt(tag.contains("createdAt") ? tag.getLong("createdAt") : 0L);
+        return coordinate;
+    }
+
+    @Override
+    public CompoundTag toTag() {
+        CompoundTag tag = super.toTag();
+        tag.putLong("createdAt", createdAt);
+        return tag;
     }
 
     private static SafeWorldCoordinate copyFromWorldCoordinate(WorldCoordinate w) {

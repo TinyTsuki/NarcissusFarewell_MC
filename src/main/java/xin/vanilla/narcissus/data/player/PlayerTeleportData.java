@@ -18,6 +18,7 @@ import xin.vanilla.narcissus.config.TeleportCountdownHelper;
 import xin.vanilla.narcissus.data.PlayerAccess;
 import xin.vanilla.narcissus.data.SafeWorldCoordinate;
 import xin.vanilla.narcissus.data.TeleportRecord;
+import xin.vanilla.narcissus.data.WaypointOrder;
 import xin.vanilla.narcissus.enums.EnumTeleportType;
 import xin.vanilla.narcissus.internal.network.NarcissusNbtPacketCodec;
 import xin.vanilla.narcissus.network.packet.PlayerDataSyncToClient;
@@ -433,7 +434,7 @@ public final class PlayerTeleportData implements IPlayerData<PlayerTeleportData>
     }
 
     public void addHomeCoordinate(KeyValue<String, String> key, SafeWorldCoordinate coordinate) {
-        this.getHomeCoordinate().put(key, coordinate);
+        this.homeCoordinate = WaypointOrder.prepend(key, coordinate, this.getHomeCoordinate());
         this.save();
     }
 

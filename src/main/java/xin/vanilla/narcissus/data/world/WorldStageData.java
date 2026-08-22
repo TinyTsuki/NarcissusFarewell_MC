@@ -11,6 +11,7 @@ import net.minecraftforge.common.util.WorldCapabilityData;
 import xin.vanilla.banira.api.BaniraServer;
 import xin.vanilla.banira.common.data.KeyValue;
 import xin.vanilla.narcissus.data.SafeWorldCoordinate;
+import xin.vanilla.narcissus.data.WaypointOrder;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -61,7 +62,7 @@ public class WorldStageData extends WorldCapabilityData {
     }
 
     public void addCoordinate(KeyValue<String, String> key, SafeWorldCoordinate coordinate) {
-        this.stageCoordinate.put(key, coordinate);
+        this.stageCoordinate = WaypointOrder.prepend(key, coordinate, this.stageCoordinate);
         super.setDirty();
     }
 
