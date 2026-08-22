@@ -68,7 +68,7 @@ public class PlayerDataSyncToClient extends SplitPacket
             this.teleportRecords.add(TeleportRecord.readFromNBT(NarcissusNbtPacketCodec.read(buffer)));
         }
 
-        this.homeCoordinate = new HashMap<>();
+        this.homeCoordinate = new LinkedHashMap<>();
         int homeSize = buffer.readInt();
         for (int i = 0; i < homeSize; i++) {
             this.homeCoordinate.put(new KeyValue<>(buffer.readUtf(), buffer.readUtf()),
@@ -104,7 +104,8 @@ public class PlayerDataSyncToClient extends SplitPacket
         this.homeCoordinate = packets.stream()
                 .map(PlayerDataSyncToClient::getHomeCoordinate)
                 .flatMap(map -> map.entrySet().stream())
-                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (v1, v2) -> v1));
+                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue,
+                        (v1, v2) -> v1, LinkedHashMap::new));
         this.defaultHome = packets.get(0).defaultHome;
         CompoundTag mergedAccess = packets.get(0).accessTag;
         this.accessTag = mergedAccess != null ? mergedAccess.copy() : new CompoundTag();
@@ -119,7 +120,7 @@ public class PlayerDataSyncToClient extends SplitPacket
         this.lastTpTime = lastTpTime;
         this.teleportCard = teleportCard;
         this.teleportRecords = new ArrayList<>();
-        this.homeCoordinate = new HashMap<>();
+        this.homeCoordinate = new LinkedHashMap<>();
         this.defaultHome = new HashMap<>();
         this.accessTag = new CompoundTag();
         this.tpCountdownTag = new CompoundTag();
