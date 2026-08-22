@@ -36,6 +36,8 @@ public class NetworkSmokeContractTest {
         assertContains(client, "PlayerConfigSyncToServer");
         assertContains(client, "AccessListEditToServer");
         assertContains(client, "ConnectScreen");
+        assertContains(client, "SERVER_SETTLE_TICKS");
+        assertContains(client, "State.SERVER_SETTLE");
         assertContains(client, "PASS persisted-access-list-client");
         assertContains(main, "NarcissusNetworkSmokeServerRunner.register()");
         assertContains(clientEvents, "NarcissusNetworkSmokeClientRunner.register()");
