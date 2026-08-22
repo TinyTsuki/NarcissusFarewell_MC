@@ -25,6 +25,7 @@ import javax.annotation.Nonnull;
 public final class NarcissusNetworkSmokeClientRunner {
     private static final Logger LOGGER = LogManager.getLogger();
     private static final int TIMEOUT_TICKS = 1200;
+    private static final int SERVER_SETTLE_TICKS = 20;
 
     private static NarcissusNetworkSmokeClientRunner instance;
 
@@ -67,6 +68,9 @@ public final class NarcissusNetworkSmokeClientRunner {
                     break;
                 case ACCESS_ECHO:
                     waitForAccessEcho(client);
+                    break;
+                case SERVER_SETTLE:
+                    waitForServerSettle(client);
                     break;
                 case FINISHED:
                     break;
@@ -134,7 +138,15 @@ public final class NarcissusNetworkSmokeClientRunner {
         }
         NarcissusNetworkSmokeFixture.verifyAccess(PlayerTeleportData.getData(client.player).getAccess());
         NarcissusNetworkSmokeStatus.append("PASS access-list-roundtrip");
-        finish(client, "phase-one");
+        // 留出一个短窗口，让服务端 tick 在玩家离线前验证同一份数据。
+        state = State.SERVER_SETTLE;
+        ticks = 0;
+    }
+
+    private void waitForServerSettle(Minecraft client) {
+        if (ticks >= SERVER_SETTLE_TICKS) {
+            finish(client, "phase-one");
+        }
     }
 
     private void verifyPersistedClientData(Minecraft client) {
@@ -166,6 +178,7 @@ public final class NarcissusNetworkSmokeClientRunner {
         LOGIN_SYNC,
         CONFIG_ECHO,
         ACCESS_ECHO,
+        SERVER_SETTLE,
         FINISHED
     }
 }
