@@ -74,7 +74,7 @@ public class WaypointScreen extends BaniraScreen {
 
     private final SafeWorldCoordinate lastPlayerPos = new SafeWorldCoordinate();
     private long lastUpdateTime = 0;
-    private long observedPlayerDataGeneration;
+    private long observedWaypointDataGeneration;
 
     private final List<WaypointEntry> homeItemsAll = new ArrayList<>();
     private final List<WaypointEntry> stageItemsAll = new ArrayList<>();
@@ -134,7 +134,7 @@ public class WaypointScreen extends BaniraScreen {
         if (minecraft == null || minecraft.player == null) {
             return;
         }
-        observedPlayerDataGeneration = NarcissusClientSyncState.playerDataGeneration();
+        observedWaypointDataGeneration = NarcissusClientSyncState.waypointDataGeneration();
         loadData();
         selectInitialNonEmptyTab();
     }
@@ -142,9 +142,9 @@ public class WaypointScreen extends BaniraScreen {
     @Override
     public void tick() {
         super.tick();
-        long generation = NarcissusClientSyncState.playerDataGeneration();
-        if (generation == observedPlayerDataGeneration) return;
-        observedPlayerDataGeneration = generation;
+        long generation = NarcissusClientSyncState.waypointDataGeneration();
+        if (generation == observedWaypointDataGeneration) return;
+        observedWaypointDataGeneration = generation;
         refreshFromSynchronizedPlayerData();
     }
 
@@ -838,26 +838,23 @@ public class WaypointScreen extends BaniraScreen {
         selectedItem = null;
         lastSelectedItem = null;
         loadData();
-        if (previousSelection == null) return;
-        for (WaypointEntry item : activeTabItems()) {
-            if (sameWaypoint(previousSelection, item)) {
-                selectedItem = item;
-                return;
-            }
-        }
+        selectedItem = findMatchingWaypoint(previousSelection, activeTabItems());
     }
 
-    private static boolean sameWaypoint(WaypointEntry previousSelection, WaypointEntry candidate) {
-        if (previousSelection.type != candidate.type
-                || !Objects.equals(previousSelection.name, candidate.name)
-                || !Objects.equals(previousSelection.recordTime, candidate.recordTime)) {
-            return false;
-        }
-        String previousDimension = previousSelection.safeWorldCoordinate == null
-                ? null : previousSelection.safeWorldCoordinate.getDimensionResourceId();
-        String candidateDimension = candidate.safeWorldCoordinate == null
-                ? null : candidate.safeWorldCoordinate.getDimensionResourceId();
-        return Objects.equals(previousDimension, candidateDimension);
+    static WaypointEntry findMatchingWaypoint(WaypointEntry previousSelection, List<WaypointEntry> candidates) {
+        return WaypointSelectionState.findMatching(
+                selectionKey(previousSelection), candidates, WaypointScreen::selectionKey);
+    }
+
+    private static WaypointSelectionState.Key selectionKey(WaypointEntry entry) {
+        if (entry == null) return null;
+        String dimension = entry.safeWorldCoordinate == null
+                ? null : entry.safeWorldCoordinate.getDimensionResourceId();
+        return new WaypointSelectionState.Key(entry.type.name(), entry.name, dimension, entry.recordTime);
+    }
+
+    static WaypointEntry selectionAfterDelete(WaypointEntry selected, WaypointEntry deleted) {
+        return WaypointSelectionState.afterDelete(selected, deleted);
     }
 
     private boolean checkPanelClick(double mouseX, double mouseY, int listX, int listY, List<WaypointEntry> items, ScrollbarWidget bar) {
@@ -1028,9 +1025,8 @@ public class WaypointScreen extends BaniraScreen {
             stageItemsAll.removeIf(e -> e.name.equals(item.name) && e.safeWorldCoordinate != null && dimension.equals(e.safeWorldCoordinate.getDimensionResourceId()));
         }
         applySearchFilter();
-        if (selectedItem == item) {
-            pickFirstSelection();
-        }
+        selectedItem = selectionAfterDelete(selectedItem, item);
+        if (selectedItem == null) lastSelectedItem = null;
     }
 
     private String calculateCostDisplay(WaypointEntry item) {
