@@ -21,6 +21,13 @@ final class WaypointSelectionState {
         return findMatching(selected, candidates, value -> value);
     }
 
+    static <T> T afterRefresh(Key previousSelection, T loadedDefault,
+                              List<T> candidates, Function<T, Key> keyMapper) {
+        return previousSelection == null
+                ? loadedDefault
+                : findMatching(previousSelection, candidates, keyMapper);
+    }
+
     static <T> T afterDelete(T selected, T deleted) {
         return selected == deleted ? null : selected;
     }
