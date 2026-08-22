@@ -88,6 +88,17 @@ public final class NarcissusNotificationTypes {
         ServerNotificationTypeRegistry.register(INTERACTIVE_QUERY, EnumPosition.TOP_CENTER, EnumMoveType.AUTO, vanillaChat);
     }
 
+    public static EnumNotificationTypeDisplayMode defaultDisplay(String typeId) {
+        if (INTERACTIVE_TP_FLOW.equals(typeId)
+                || INTERACTIVE_SHARE.equals(typeId)
+                || INTERACTIVE_HELP.equals(typeId)
+                || INTERACTIVE_COORDINATE_LIST.equals(typeId)
+                || INTERACTIVE_QUERY.equals(typeId)) {
+            return EnumNotificationTypeDisplayMode.VANILLA_CHAT;
+        }
+        return EnumNotificationTypeDisplayMode.OVERLAY;
+    }
+
     private NarcissusNotificationTypes() {
     }
 }
