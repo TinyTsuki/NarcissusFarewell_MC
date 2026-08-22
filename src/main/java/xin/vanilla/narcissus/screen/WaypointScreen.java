@@ -25,6 +25,7 @@ import xin.vanilla.narcissus.data.client.ClientStageData;
 import xin.vanilla.narcissus.data.player.PlayerTeleportData;
 import xin.vanilla.narcissus.enums.EnumCommandType;
 import xin.vanilla.narcissus.enums.EnumTeleportType;
+import xin.vanilla.narcissus.internal.client.NarcissusClientSyncState;
 import xin.vanilla.narcissus.network.packet.WaypointAddHomeToServer;
 import xin.vanilla.narcissus.network.packet.WaypointAddStageToServer;
 import xin.vanilla.narcissus.network.packet.WaypointDelToServer;
@@ -72,6 +73,7 @@ public class WaypointScreen extends BaniraScreen {
 
     private final SafeWorldCoordinate lastPlayerPos = new SafeWorldCoordinate();
     private long lastUpdateTime = 0;
+    private long observedPlayerDataGeneration;
 
     private final List<WaypointEntry> homeItemsAll = new ArrayList<>();
     private final List<WaypointEntry> stageItemsAll = new ArrayList<>();
@@ -131,8 +133,18 @@ public class WaypointScreen extends BaniraScreen {
         if (minecraft == null || minecraft.player == null) {
             return;
         }
+        observedPlayerDataGeneration = NarcissusClientSyncState.playerDataGeneration();
         loadData();
         selectInitialNonEmptyTab();
+    }
+
+    @Override
+    public void tick() {
+        super.tick();
+        long generation = NarcissusClientSyncState.playerDataGeneration();
+        if (generation == observedPlayerDataGeneration) return;
+        observedPlayerDataGeneration = generation;
+        refreshFromSynchronizedPlayerData();
     }
 
     @Override
@@ -815,6 +827,38 @@ public class WaypointScreen extends BaniraScreen {
 
         ticketCount = data.getTeleportCard();
         applySearchFilter();
+    }
+
+    /** 同步完成后重建列表，并尽量保留玩家当前正在查看的条目。 */
+    private void refreshFromSynchronizedPlayerData() {
+        WaypointEntry previousSelection = selectedItem;
+        deleteConfirmItem = null;
+        hoveredItem = null;
+        lastDoubleClickEntry = null;
+        lastDoubleClickTime = 0L;
+        selectedItem = null;
+        lastSelectedItem = null;
+        loadData();
+        if (previousSelection == null) return;
+        for (WaypointEntry item : activeTabItems()) {
+            if (sameWaypoint(previousSelection, item)) {
+                selectedItem = item;
+                return;
+            }
+        }
+    }
+
+    private static boolean sameWaypoint(WaypointEntry previousSelection, WaypointEntry candidate) {
+        if (previousSelection.type != candidate.type
+                || !Objects.equals(previousSelection.name, candidate.name)
+                || !Objects.equals(previousSelection.recordTime, candidate.recordTime)) {
+            return false;
+        }
+        String previousDimension = previousSelection.safeWorldCoordinate == null
+                ? null : previousSelection.safeWorldCoordinate.getDimensionResourceId();
+        String candidateDimension = candidate.safeWorldCoordinate == null
+                ? null : candidate.safeWorldCoordinate.getDimensionResourceId();
+        return Objects.equals(previousDimension, candidateDimension);
     }
 
     private boolean checkPanelClick(double mouseX, double mouseY, int listX, int listY, List<WaypointEntry> items, ScrollbarWidget bar) {
