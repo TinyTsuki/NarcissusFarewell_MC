@@ -57,8 +57,11 @@ public class WaypointScreen extends BaniraScreen {
     private static final int ADD_BTN_SIZE = 14;
     private static final int TELEPORT_BTN_W = 100;
     private static final int TELEPORT_BTN_H = 20;
-    private static final int DRAG_HANDLE_W = 15;
+    private static final int DRAG_HANDLE_W = 11;
     private static final long DRAG_HOLD_MS = 260L;
+    private static final int DRAG_SCROLL_EDGE = 36;
+    private static final double DRAG_SCROLL_MAX_SPEED = 150.0D;
+    private static final double DRAG_ROW_ANIMATION_RATE = 18.0D;
 
     // endregion Constants
 
@@ -93,6 +96,7 @@ public class WaypointScreen extends BaniraScreen {
     private final SafeWorldCoordinate lastPlayerPos = new SafeWorldCoordinate();
     private long lastUpdateTime = 0;
     private long observedWaypointDataGeneration;
+    private boolean initialDataLoaded;
 
     private final List<WaypointEntry> homeItemsAll = new ArrayList<>();
     private final List<WaypointEntry> stageItemsAll = new ArrayList<>();
@@ -129,8 +133,10 @@ public class WaypointScreen extends BaniraScreen {
     private WaypointEntry draggingItem;
     private long dragPressedAt;
     private double dragMouseY;
-    private int dragTargetIndex = -1;
-    private boolean dragInsertAfter;
+    private int dragInsertionIndex = -1;
+    private long lastDragFrameNanos;
+    private double dragAnimationFactor = 1.0D;
+    private final IdentityHashMap<WaypointEntry, Double> dragRowOffsets = new IdentityHashMap<>();
 
     private WaypointEntry lastDoubleClickEntry;
     private long lastDoubleClickTime;
@@ -162,8 +168,14 @@ public class WaypointScreen extends BaniraScreen {
             return;
         }
         observedWaypointDataGeneration = NarcissusClientSyncState.waypointDataGeneration();
+        WaypointEntry previousSelection = selectedItem;
         loadData();
-        selectInitialNonEmptyTab();
+        if (!initialDataLoaded) {
+            initialDataLoaded = true;
+            selectInitialNonEmptyTab();
+        } else {
+            selectedItem = selectionAfterRefresh(previousSelection, selectedItem, activeTabItems());
+        }
     }
 
     @Override
@@ -566,7 +578,7 @@ public class WaypointScreen extends BaniraScreen {
         journalPalette = NarcissusScreenChrome.palette(theme);
         int mouseX = (int) inputState.mouseX();
         int mouseY = (int) inputState.mouseY();
-
+        updateDragMotion(mouseY);
         if (deleteConfirmItem == null) {
             updateHoveredItem(mouseX, mouseY);
         } else {
@@ -681,9 +693,23 @@ public class WaypointScreen extends BaniraScreen {
         int viewportY = listAreaY + LIST_PADDING_V;
         AbstractGuiUtils.pushScissor(listX, viewportY, cw, listViewportHeight());
         try {
-            for (int idx = viewport.firstIndex(); idx < viewport.lastIndexExclusive(); idx++) {
+            int sourceIndex = draggingItem != null ? indexInList(items, draggingItem) : -1;
+            int firstIndex = draggingItem != null ? Math.max(0, viewport.firstIndex() - 1) : viewport.firstIndex();
+            int lastIndex = draggingItem != null
+                    ? Math.min(items.size(), viewport.lastIndexExclusive() + 1)
+                    : viewport.lastIndexExclusive();
+            for (int idx = firstIndex; idx < lastIndex; idx++) {
                 WaypointEntry item = items.get(idx);
-                int itemY = (int) Math.floor(viewport.rowY(idx));
+                if (item == draggingItem) {
+                    continue;
+                }
+                double targetOffset = 0.0D;
+                if (sourceIndex >= 0 && dragInsertionIndex >= 0) {
+                    int targetSlot = WaypointDragModel.targetSlot(idx, sourceIndex, dragInsertionIndex);
+                    targetOffset = (targetSlot - idx) * (double) ITEM_HEIGHT;
+                }
+                double animatedOffset = animateDragRowOffset(item, targetOffset);
+                int itemY = (int) Math.floor(viewport.rowY(idx) + animatedOffset);
                 int rowH = ITEM_HEIGHT;
 
                 int rowDrawH = Math.max(1, rowH - 1);
@@ -705,13 +731,9 @@ public class WaypointScreen extends BaniraScreen {
                         + "  " + formatItemDistanceMeters(item);
                 drawLimitedTextLine(stack, meta, listX + 7, itemY + 15, rowTextMaxW, metaColor);
 
-                if (reorderable) {
-                    int dragX = listX + cw - 33;
-                    int dragY = itemY + (rowH - 9) / 2;
-                    int dragColor = item == draggingItem ? journalPalette.selected() : journalPalette.secondary();
-                    AbstractGuiUtils.fill(stack, dragX, dragY, 9, 1, dragColor);
-                    AbstractGuiUtils.fill(stack, dragX, dragY + 4, 9, 1, dragColor);
-                    AbstractGuiUtils.fill(stack, dragX, dragY + 8, 9, 1, dragColor);
+                if (reorderable && hover) {
+                    drawDragHandle(stack, dragHandleX(listX, cw), itemY + (rowH - 7) / 2,
+                            hoveredDragHandle ? journalPalette.selected() : journalPalette.secondary());
                 }
 
                 if (reorderable && item.canTeleport) {
@@ -858,7 +880,8 @@ public class WaypointScreen extends BaniraScreen {
                 sortStates.remove(activeTab);
             }
             if (draggingItem != null) {
-                updateDragTarget(mouseY);
+                dragMouseY = mouseY;
+                updateDragInsertion(mouseY);
             }
             return true;
         }
@@ -924,19 +947,29 @@ public class WaypointScreen extends BaniraScreen {
     /** 同步完成后重建列表，并尽量保留玩家当前正在查看的条目。 */
     private void refreshFromSynchronizedPlayerData() {
         WaypointEntry previousSelection = selectedItem;
+        WaypointListTab previousTab = activeTab;
         deleteConfirmItem = null;
         hoveredItem = null;
         lastDoubleClickEntry = null;
         lastDoubleClickTime = 0L;
         selectedItem = null;
         lastSelectedItem = null;
+        clearDragState();
         loadData();
-        selectedItem = findMatchingWaypoint(previousSelection, activeTabItems());
+        activeTab = previousTab;
+        selectedItem = selectionAfterRefresh(previousSelection, selectedItem, activeTabItems());
     }
 
     static WaypointEntry findMatchingWaypoint(WaypointEntry previousSelection, List<WaypointEntry> candidates) {
         return WaypointSelectionState.findMatching(
                 selectionKey(previousSelection), candidates, WaypointScreen::selectionKey);
+    }
+
+    static WaypointEntry selectionAfterRefresh(WaypointEntry previousSelection,
+                                                WaypointEntry loadedDefault,
+                                                List<WaypointEntry> candidates) {
+        return WaypointSelectionState.afterRefresh(selectionKey(previousSelection), loadedDefault,
+                candidates, WaypointScreen::selectionKey);
     }
 
     private static WaypointSelectionState.Key selectionKey(WaypointEntry entry) {
@@ -1176,8 +1209,7 @@ public class WaypointScreen extends BaniraScreen {
         dragCandidate = item;
         dragPressedAt = System.currentTimeMillis();
         dragMouseY = mouseY;
-        dragTargetIndex = index;
-        dragInsertAfter = false;
+        dragInsertionIndex = index;
         return true;
     }
 
@@ -1185,37 +1217,78 @@ public class WaypointScreen extends BaniraScreen {
         if (item == null || (item.type != WaypointEntry.Type.HOME && item.type != WaypointEntry.Type.STAGE)) {
             return false;
         }
-        int handleX = listX + rowWidth - 36;
+        int handleX = dragHandleX(listX, rowWidth);
         return mouseX >= handleX && mouseX < handleX + DRAG_HANDLE_W;
     }
 
-    private void updateDragTarget(double mouseY) {
+    private static int dragHandleX(int listX, int rowWidth) {
+        return listX + rowWidth - 32;
+    }
+
+    private static void drawDragHandle(PoseStack stack, int x, int y, int color) {
+        for (int row = 0; row < 3; row++) {
+            AbstractGuiUtils.fill(stack, x + 2, y + row * 3, 1, 1, color);
+            AbstractGuiUtils.fill(stack, x + 5, y + row * 3, 1, 1, color);
+        }
+    }
+
+    private void updateDragMotion(double mouseY) {
+        if (draggingItem == null) {
+            lastDragFrameNanos = 0L;
+            dragAnimationFactor = 1.0D;
+            return;
+        }
+        dragMouseY = mouseY;
+        long now = System.nanoTime();
+        double elapsed = lastDragFrameNanos == 0L
+                ? 1.0D / 60.0D
+                : Math.min(0.05D, (now - lastDragFrameNanos) / 1_000_000_000.0D);
+        lastDragFrameNanos = now;
+        dragAnimationFactor = 1.0D - Math.exp(-DRAG_ROW_ANIMATION_RATE * elapsed);
+
+        int viewportY = listAreaY + LIST_PADDING_V;
+        int viewportBottom = viewportY + listViewportHeight();
+        if (activeScrollbar != null && activeScrollbar.maxValue() > 0.0D) {
+            double speed = WaypointDragModel.autoScrollSpeed(
+                    mouseY, viewportY, viewportBottom, DRAG_SCROLL_EDGE, DRAG_SCROLL_MAX_SPEED);
+            if (speed != 0.0D) {
+                double next = activeScrollbar.value() + speed * elapsed;
+                activeScrollbar.value(Math.max(0.0D, Math.min(activeScrollbar.maxValue(), next)));
+            }
+        }
+        updateDragInsertion(mouseY);
+    }
+
+    private void updateDragInsertion(double mouseY) {
         List<WaypointEntry> items = activeTabItems();
         if (items.isEmpty()) return;
         int viewportY = listAreaY + LIST_PADDING_V;
         int viewportBottom = viewportY + listViewportHeight();
-        if (activeScrollbar != null) {
-            if (mouseY < viewportY + 8) {
-                activeScrollbar.value(Math.max(0.0D, activeScrollbar.value() - ITEM_HEIGHT * 0.35D));
-            } else if (mouseY > viewportBottom - 8) {
-                activeScrollbar.value(Math.min(activeScrollbar.maxValue(), activeScrollbar.value() + ITEM_HEIGHT * 0.35D));
-            }
-        }
-        NarcissusScreenChrome.ListViewport viewport = activeViewport(items);
         double clampedY = Math.max(viewportY, Math.min(viewportBottom - 1, mouseY));
-        int index = viewport.itemIndexAt(clampedY);
-        if (index < 0) {
-            index = clampedY <= viewportY ? 0 : items.size() - 1;
+        double scroll = activeScrollbar != null ? activeScrollbar.value() : 0.0D;
+        double contentY = scroll + clampedY - viewportY;
+        int sourceIndex = indexInList(items, draggingItem);
+        dragInsertionIndex = WaypointDragModel.insertionIndex(items.size(), sourceIndex, contentY, ITEM_HEIGHT);
+    }
+
+    private double animateDragRowOffset(WaypointEntry item, double targetOffset) {
+        if (draggingItem == null) {
+            return 0.0D;
         }
-        dragMouseY = clampedY;
-        dragTargetIndex = Math.max(0, Math.min(items.size() - 1, index));
-        dragInsertAfter = clampedY >= viewport.rowY(dragTargetIndex) + ITEM_HEIGHT / 2.0D;
+        double current = dragRowOffsets.getOrDefault(item, 0.0D);
+        double next = current + (targetOffset - current) * dragAnimationFactor;
+        if (Math.abs(targetOffset - next) < 0.05D) {
+            next = targetOffset;
+        }
+        dragRowOffsets.put(item, next);
+        return next;
     }
 
     private void drawDragPreview(PoseStack stack, int listX, int rowWidth,
                                  NarcissusScreenChrome.ListViewport viewport) {
-        if (draggingItem == null || dragTargetIndex < 0 || dragTargetIndex >= activeTabItems().size()) return;
-        double targetY = viewport.rowY(dragTargetIndex) + (dragInsertAfter ? ITEM_HEIGHT : 0);
+        if (draggingItem == null || dragInsertionIndex < 0) return;
+        double targetY = listAreaY + LIST_PADDING_V
+                + dragInsertionIndex * (double) ITEM_HEIGHT - viewport.offset();
         int lineY = (int) Math.floor(targetY);
         AbstractGuiUtils.fill(stack, listX + 2, lineY - 1, rowWidth - 4, 2, journalPalette.selected());
 
@@ -1230,13 +1303,21 @@ public class WaypointScreen extends BaniraScreen {
 
     private void finishDrag() {
         List<WaypointEntry> visible = activeTabItems();
-        if (dragTargetIndex < 0 || dragTargetIndex >= visible.size()) return;
+        if (dragInsertionIndex < 0 || draggingItem == null) return;
+        List<WaypointEntry> remainingVisible = new ArrayList<>(visible);
+        remainingVisible.remove(draggingItem);
+        int insertion = Math.max(0, Math.min(remainingVisible.size(), dragInsertionIndex));
         List<WaypointEntry> all = activeTabAllItems();
-        WaypointEntry target = visible.get(dragTargetIndex);
         all.remove(draggingItem);
-        int targetIndex = all.indexOf(target);
+        int targetIndex;
+        if (remainingVisible.isEmpty()) {
+            targetIndex = 0;
+        } else if (insertion < remainingVisible.size()) {
+            targetIndex = all.indexOf(remainingVisible.get(insertion));
+        } else {
+            targetIndex = all.indexOf(remainingVisible.get(remainingVisible.size() - 1)) + 1;
+        }
         if (targetIndex < 0) targetIndex = all.size();
-        else if (dragInsertAfter) targetIndex++;
         all.add(Math.max(0, Math.min(all.size(), targetIndex)), draggingItem);
         applySearchFilter();
         selectedItem = draggingItem;
@@ -1248,8 +1329,10 @@ public class WaypointScreen extends BaniraScreen {
         draggingItem = null;
         dragPressedAt = 0L;
         dragMouseY = 0.0D;
-        dragTargetIndex = -1;
-        dragInsertAfter = false;
+        dragInsertionIndex = -1;
+        lastDragFrameNanos = 0L;
+        dragAnimationFactor = 1.0D;
+        dragRowOffsets.clear();
     }
 
     private List<WaypointEntry> activeTabAllItems() {
