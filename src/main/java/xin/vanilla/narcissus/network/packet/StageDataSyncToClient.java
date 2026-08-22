@@ -9,6 +9,7 @@ import xin.vanilla.banira.common.network.BaniraNetworkContext;
 import xin.vanilla.banira.common.network.BaniraPacketBuffer;
 import xin.vanilla.narcissus.data.SafeWorldCoordinate;
 import xin.vanilla.narcissus.data.client.ClientStageData;
+import xin.vanilla.narcissus.internal.client.NarcissusClientSyncState;
 import xin.vanilla.narcissus.network.NetworkPacket;
 
 import java.util.LinkedHashMap;
@@ -65,6 +66,7 @@ public class StageDataSyncToClient implements NetworkPacket {
     private static final class ClientSide {
         private static void handle(StageDataSyncToClient packet) {
             ClientStageData.setStageCoordinate(packet.stageCoordinate());
+            NarcissusClientSyncState.markStageDataReceived();
         }
     }
 }
