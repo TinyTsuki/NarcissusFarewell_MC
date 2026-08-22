@@ -38,7 +38,8 @@ public class StageDataSyncToClient implements NetworkPacket {
             double x = buf.readDouble();
             double y = buf.readDouble();
             double z = buf.readDouble();
-            SafeWorldCoordinate coord = new SafeWorldCoordinate(x, y, z, dimension);
+            long createdAt = buf.readLong();
+            SafeWorldCoordinate coord = new SafeWorldCoordinate(x, y, z, dimension).createdAt(createdAt);
             map.put(new KeyValue<>(dimension, name), coord);
         }
         this.stageCoordinate = map;
@@ -52,6 +53,7 @@ public class StageDataSyncToClient implements NetworkPacket {
             buf.writeDouble(entry.getValue().x());
             buf.writeDouble(entry.getValue().y());
             buf.writeDouble(entry.getValue().z());
+            buf.writeLong(entry.getValue().createdAt());
         }
     }
 
