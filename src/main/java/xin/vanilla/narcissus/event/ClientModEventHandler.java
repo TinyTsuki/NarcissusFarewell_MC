@@ -72,7 +72,9 @@ public final class ClientModEventHandler {
     }
 
     private static void registerNotificationType(String typeId, String descriptionKey) {
-        BaniraClientNotificationTypes.register(typeId, NarcissusComponent.get().transClientAuto(descriptionKey));
+        BaniraClientNotificationTypes.register(typeId,
+                NarcissusNotificationTypes.defaultDisplay(typeId),
+                NarcissusComponent.get().transClientAuto(descriptionKey));
     }
 
     private static void onClientTick(xin.vanilla.banira.api.client.event.BaniraClientTickEvent event) {
