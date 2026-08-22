@@ -29,6 +29,7 @@ import xin.vanilla.narcissus.internal.client.NarcissusClientSyncState;
 import xin.vanilla.narcissus.network.packet.WaypointAddHomeToServer;
 import xin.vanilla.narcissus.network.packet.WaypointAddStageToServer;
 import xin.vanilla.narcissus.network.packet.WaypointDelToServer;
+import xin.vanilla.narcissus.network.packet.WaypointReorderToServer;
 import xin.vanilla.narcissus.network.packet.WaypointTeleportToServer;
 import xin.vanilla.narcissus.util.ClientCostCalculator;
 import xin.vanilla.narcissus.util.NarcissusUtils;
@@ -56,6 +57,8 @@ public class WaypointScreen extends BaniraScreen {
     private static final int ADD_BTN_SIZE = 14;
     private static final int TELEPORT_BTN_W = 100;
     private static final int TELEPORT_BTN_H = 20;
+    private static final int DRAG_HANDLE_W = 15;
+    private static final long DRAG_HOLD_MS = 260L;
 
     // endregion Constants
 
@@ -65,6 +68,22 @@ public class WaypointScreen extends BaniraScreen {
         PRIVATE,
         PUBLIC,
         FOOTPRINTS
+    }
+
+    private enum SortMode {
+        NAME,
+        TIME,
+        DISTANCE
+    }
+
+    private static final class SortState {
+        private final SortMode mode;
+        private final boolean ascending;
+
+        private SortState(SortMode mode, boolean ascending) {
+            this.mode = mode;
+            this.ascending = ascending;
+        }
     }
 
     // endregion Types
@@ -103,6 +122,15 @@ public class WaypointScreen extends BaniraScreen {
 
     private WaypointEntry deleteConfirmItem;
     private WaypointEntry hoveredItem;
+    private boolean hoveredDragHandle;
+
+    private final EnumMap<WaypointListTab, SortState> sortStates = new EnumMap<>(WaypointListTab.class);
+    private WaypointEntry dragCandidate;
+    private WaypointEntry draggingItem;
+    private long dragPressedAt;
+    private double dragMouseY;
+    private int dragTargetIndex = -1;
+    private boolean dragInsertAfter;
 
     private WaypointEntry lastDoubleClickEntry;
     private long lastDoubleClickTime;
@@ -543,6 +571,7 @@ public class WaypointScreen extends BaniraScreen {
             updateHoveredItem(mouseX, mouseY);
         } else {
             hoveredItem = null;
+            hoveredDragHandle = false;
         }
 
         boolean dialogOpen = deleteConfirmItem != null;
@@ -576,7 +605,11 @@ public class WaypointScreen extends BaniraScreen {
         drawSelectedDetail(stack);
 
         if (hoveredItem != null && !dialogOpen) {
-            addDeferredTooltipRender(s -> drawCustomTooltip(s, theme, hoveredItem, mouseX, mouseY));
+            if (hoveredDragHandle) {
+                addDeferredTooltipRender(s -> drawDragTooltip(s, theme, mouseX, mouseY));
+            } else {
+                addDeferredTooltipRender(s -> drawCustomTooltip(s, theme, hoveredItem, mouseX, mouseY));
+            }
         }
 
         if (dialogOpen) {
@@ -665,13 +698,23 @@ public class WaypointScreen extends BaniraScreen {
                         new NarcissusScreenChrome.Rect(listX, itemY, cw, rowDrawH),
                         item.canTeleport, hover, selected);
 
-                int rowTextMaxW = Math.max(8, cw - 28);
+                boolean reorderable = item.type == WaypointEntry.Type.HOME || item.type == WaypointEntry.Type.STAGE;
+                int rowTextMaxW = Math.max(8, cw - (reorderable ? 44 : 28));
                 drawLimitedTextLine(stack, item.name, listX + 7, itemY + 3, rowTextMaxW, textColor);
                 String meta = item.getDimensionName() + "  " + item.getCoordinateName()
                         + "  " + formatItemDistanceMeters(item);
                 drawLimitedTextLine(stack, meta, listX + 7, itemY + 15, rowTextMaxW, metaColor);
 
-                if ((item.type == WaypointEntry.Type.HOME || item.type == WaypointEntry.Type.STAGE) && item.canTeleport) {
+                if (reorderable) {
+                    int dragX = listX + cw - 33;
+                    int dragY = itemY + (rowH - 9) / 2;
+                    int dragColor = item == draggingItem ? journalPalette.selected() : journalPalette.secondary();
+                    AbstractGuiUtils.fill(stack, dragX, dragY, 9, 1, dragColor);
+                    AbstractGuiUtils.fill(stack, dragX, dragY + 4, 9, 1, dragColor);
+                    AbstractGuiUtils.fill(stack, dragX, dragY + 8, 9, 1, dragColor);
+                }
+
+                if (reorderable && item.canTeleport) {
                     int delX = listX + cw - 16;
                     int delY = itemY + (rowH - 10) / 2;
                     boolean delHover = hover && mouseX >= delX && mouseX <= delX + 14
@@ -680,6 +723,7 @@ public class WaypointScreen extends BaniraScreen {
                             delHover ? journalPalette.danger() : journalPalette.secondary());
                 }
             }
+            drawDragPreview(stack, listX, cw, viewport);
         } finally {
             AbstractGuiUtils.popScissor();
         }
@@ -755,6 +799,18 @@ public class WaypointScreen extends BaniraScreen {
             return;
         }
 
+        if (eventArgs.button() == 1 && !eventArgs.consumed()) {
+            WaypointListTab[] tabs = WaypointListTab.values();
+            for (int i = 0; i < tabs.length; i++) {
+                if (contains(tabRect(i), eventArgs.mouseX(), eventArgs.mouseY())) {
+                    onTabSelected(tabs[i]);
+                    showSortMenu(eventArgs.mouseX(), eventArgs.mouseY());
+                    eventArgs.consumed(true);
+                    return;
+                }
+            }
+        }
+
         if (eventArgs.button() != 0 || eventArgs.consumed()) {
             super.onMouseClicked(eventArgs);
             return;
@@ -773,7 +829,9 @@ public class WaypointScreen extends BaniraScreen {
             }
         }
 
-        if (checkPanelClick(mouseX, mouseY, journalLayout.list().x() + PANEL_PADDING,
+        if (beginDragCandidate(mouseX, mouseY)) {
+            eventArgs.consumed(true);
+        } else if (checkPanelClick(mouseX, mouseY, journalLayout.list().x() + PANEL_PADDING,
                 listAreaY + LIST_PADDING_V, activeTabItems(), activeScrollbar)) {
             eventArgs.consumed(true);
         }
@@ -789,6 +847,37 @@ public class WaypointScreen extends BaniraScreen {
             return;
         }
         super.onKeyPressed(eventArgs);
+    }
+
+    @Override
+    public boolean mouseDragged(double mouseX, double mouseY, int button, double dragX, double dragY) {
+        if (button == 0 && dragCandidate != null) {
+            if (draggingItem == null && System.currentTimeMillis() - dragPressedAt >= DRAG_HOLD_MS) {
+                draggingItem = dragCandidate;
+                selectedItem = draggingItem;
+                sortStates.remove(activeTab);
+            }
+            if (draggingItem != null) {
+                updateDragTarget(mouseY);
+            }
+            return true;
+        }
+        return super.mouseDragged(mouseX, mouseY, button, dragX, dragY);
+    }
+
+    @Override
+    protected void onMouseReleased(MouseReleasedHandleArgs eventArgs) {
+        if (eventArgs.button() == 0 && dragCandidate != null) {
+            if (draggingItem != null) {
+                finishDrag();
+            } else {
+                selectedItem = dragCandidate;
+            }
+            clearDragState();
+            eventArgs.consumed(true);
+            return;
+        }
+        super.onMouseReleased(eventArgs);
     }
 
     private void loadData() {
@@ -826,6 +915,9 @@ public class WaypointScreen extends BaniraScreen {
         }
 
         ticketCount = data.getTeleportCard();
+        applyCurrentSort(homeItemsAll, WaypointListTab.PRIVATE);
+        applyCurrentSort(stageItemsAll, WaypointListTab.PUBLIC);
+        applyCurrentSort(backItemsAll, WaypointListTab.FOOTPRINTS);
         applySearchFilter();
     }
 
@@ -898,6 +990,7 @@ public class WaypointScreen extends BaniraScreen {
 
     private void updateHoveredItem(int mouseX, int mouseY) {
         hoveredItem = null;
+        hoveredDragHandle = false;
         int listY = listAreaY + LIST_PADDING_V;
         int listX = journalLayout.list().x() + PANEL_PADDING;
         List<WaypointEntry> items = activeTabItems();
@@ -907,7 +1000,15 @@ public class WaypointScreen extends BaniraScreen {
         int idx = viewport.itemIndexAt(mouseY);
         if (idx >= 0 && mouseX >= listX && mouseX < listX + cw) {
             hoveredItem = items.get(idx);
+            hoveredDragHandle = isDragHandle(hoveredItem, listX, cw, mouseX);
         }
+    }
+
+    private void drawDragTooltip(PoseStack stack, BaniraColorConfig theme, int mouseX, int mouseY) {
+        Text text = Text.literal(NarcissusComponent.get().transClientAuto("waypoint_drag_hint").toString())
+                .stack(stack).font(font).color(Color.argb(theme.textPrimary()));
+        TooltipWidget.drawPopupMessage(stack,
+                FontDrawArgs.ofPopo(text).x(mouseX).y(mouseY).inScreen(true), theme, season());
     }
 
     private void drawCustomTooltip(PoseStack stack, BaniraColorConfig theme, WaypointEntry item, int mouseX, int mouseY) {
@@ -953,7 +1054,7 @@ public class WaypointScreen extends BaniraScreen {
         int lineH = font.lineHeight + 1;
         int y0 = footerY + FOOTER_PAD_V;
         String sep = "  ";
-        String line1 = selectedItem.getDetailTypeName() + sep + selectedItem.name;
+        String line1 = selectedItem.name;
         drawLimitedTextLine(stack, line1, leftX, y0, leftZoneW, journalPalette.primary());
         y0 += lineH;
         String line2 = selectedItem.getDimensionName() + sep + selectedItem.getCoordinateName()
@@ -1060,6 +1161,170 @@ public class WaypointScreen extends BaniraScreen {
             return changed;
         }
         return false;
+    }
+
+    private boolean beginDragCandidate(double mouseX, double mouseY) {
+        List<WaypointEntry> items = activeTabItems();
+        int listX = journalLayout.list().x() + PANEL_PADDING;
+        NarcissusScreenChrome.ListViewport viewport = activeViewport(items);
+        boolean scrollNeeded = viewport.maxOffset() > 0.0D;
+        int cw = listBodyW - (scrollNeeded ? SCROLLBAR_WIDTH + SCROLLBAR_GAP : 0);
+        int index = viewport.itemIndexAt(mouseY);
+        if (index < 0 || index >= items.size()) return false;
+        WaypointEntry item = items.get(index);
+        if (!isDragHandle(item, listX, cw, mouseX)) return false;
+        dragCandidate = item;
+        dragPressedAt = System.currentTimeMillis();
+        dragMouseY = mouseY;
+        dragTargetIndex = index;
+        dragInsertAfter = false;
+        return true;
+    }
+
+    private static boolean isDragHandle(WaypointEntry item, int listX, int rowWidth, double mouseX) {
+        if (item == null || (item.type != WaypointEntry.Type.HOME && item.type != WaypointEntry.Type.STAGE)) {
+            return false;
+        }
+        int handleX = listX + rowWidth - 36;
+        return mouseX >= handleX && mouseX < handleX + DRAG_HANDLE_W;
+    }
+
+    private void updateDragTarget(double mouseY) {
+        List<WaypointEntry> items = activeTabItems();
+        if (items.isEmpty()) return;
+        int viewportY = listAreaY + LIST_PADDING_V;
+        int viewportBottom = viewportY + listViewportHeight();
+        if (activeScrollbar != null) {
+            if (mouseY < viewportY + 8) {
+                activeScrollbar.value(Math.max(0.0D, activeScrollbar.value() - ITEM_HEIGHT * 0.35D));
+            } else if (mouseY > viewportBottom - 8) {
+                activeScrollbar.value(Math.min(activeScrollbar.maxValue(), activeScrollbar.value() + ITEM_HEIGHT * 0.35D));
+            }
+        }
+        NarcissusScreenChrome.ListViewport viewport = activeViewport(items);
+        double clampedY = Math.max(viewportY, Math.min(viewportBottom - 1, mouseY));
+        int index = viewport.itemIndexAt(clampedY);
+        if (index < 0) {
+            index = clampedY <= viewportY ? 0 : items.size() - 1;
+        }
+        dragMouseY = clampedY;
+        dragTargetIndex = Math.max(0, Math.min(items.size() - 1, index));
+        dragInsertAfter = clampedY >= viewport.rowY(dragTargetIndex) + ITEM_HEIGHT / 2.0D;
+    }
+
+    private void drawDragPreview(PoseStack stack, int listX, int rowWidth,
+                                 NarcissusScreenChrome.ListViewport viewport) {
+        if (draggingItem == null || dragTargetIndex < 0 || dragTargetIndex >= activeTabItems().size()) return;
+        double targetY = viewport.rowY(dragTargetIndex) + (dragInsertAfter ? ITEM_HEIGHT : 0);
+        int lineY = (int) Math.floor(targetY);
+        AbstractGuiUtils.fill(stack, listX + 2, lineY - 1, rowWidth - 4, 2, journalPalette.selected());
+
+        int ghostY = (int) Math.round(dragMouseY - ITEM_HEIGHT / 2.0D);
+        ghostY = Math.max(listAreaY + LIST_PADDING_V,
+                Math.min(listAreaY + LIST_PADDING_V + listViewportHeight() - ITEM_HEIGHT, ghostY));
+        NarcissusScreenChrome.drawJournalListRow(stack, journalPalette,
+                new NarcissusScreenChrome.Rect(listX, ghostY, rowWidth, ITEM_HEIGHT - 1), true, true, true);
+        drawLimitedTextLine(stack, draggingItem.name, listX + 7, ghostY + 9,
+                Math.max(8, rowWidth - 20), journalPalette.primary());
+    }
+
+    private void finishDrag() {
+        List<WaypointEntry> visible = activeTabItems();
+        if (dragTargetIndex < 0 || dragTargetIndex >= visible.size()) return;
+        List<WaypointEntry> all = activeTabAllItems();
+        WaypointEntry target = visible.get(dragTargetIndex);
+        all.remove(draggingItem);
+        int targetIndex = all.indexOf(target);
+        if (targetIndex < 0) targetIndex = all.size();
+        else if (dragInsertAfter) targetIndex++;
+        all.add(Math.max(0, Math.min(all.size(), targetIndex)), draggingItem);
+        applySearchFilter();
+        selectedItem = draggingItem;
+        submitActiveOrder();
+    }
+
+    private void clearDragState() {
+        dragCandidate = null;
+        draggingItem = null;
+        dragPressedAt = 0L;
+        dragMouseY = 0.0D;
+        dragTargetIndex = -1;
+        dragInsertAfter = false;
+    }
+
+    private List<WaypointEntry> activeTabAllItems() {
+        switch (activeTab) {
+            case PUBLIC:
+                return stageItemsAll;
+            case FOOTPRINTS:
+                return backItemsAll;
+            default:
+                return homeItemsAll;
+        }
+    }
+
+    private void showSortMenu(double mouseX, double mouseY) {
+        popupOption.clear()
+                .addOptionWithId("name", sortMenuLabel(SortMode.NAME), null, e -> applySort(SortMode.NAME))
+                .addOptionWithId("time", sortMenuLabel(SortMode.TIME), null, e -> applySort(SortMode.TIME))
+                .addOptionWithId("distance", sortMenuLabel(SortMode.DISTANCE), null, e -> applySort(SortMode.DISTANCE))
+                .showAt(mouseX, mouseY, "waypoint_sort");
+    }
+
+    private String sortMenuLabel(SortMode mode) {
+        String key = mode == SortMode.NAME ? "waypoint_sort_name"
+                : mode == SortMode.TIME ? "waypoint_sort_time" : "waypoint_sort_distance";
+        String label = NarcissusComponent.get().transClientAuto(key).toString();
+        SortState state = sortStates.get(activeTab);
+        return state != null && state.mode == mode ? label + (state.ascending ? "  ↑" : "  ↓") : label;
+    }
+
+    private void applySort(SortMode mode) {
+        SortState previous = sortStates.get(activeTab);
+        boolean ascending = previous == null || previous.mode != mode || !previous.ascending;
+        sortStates.put(activeTab, new SortState(mode, ascending));
+        applyCurrentSort(activeTabAllItems(), activeTab);
+        applySearchFilter();
+        if (activeScrollbar != null) activeScrollbar.value(0.0D);
+        submitActiveOrder();
+    }
+
+    private void applyCurrentSort(List<WaypointEntry> items, WaypointListTab tab) {
+        SortState state = sortStates.get(tab);
+        if (state == null) return;
+        Comparator<WaypointEntry> comparator;
+        if (state.mode == SortMode.TIME) {
+            comparator = Comparator.comparingLong(e -> e.safeWorldCoordinate != null
+                    ? e.safeWorldCoordinate.createdAt()
+                    : e.recordTime != null ? e.recordTime.getTime() : 0L);
+        } else if (state.mode == SortMode.DISTANCE) {
+            comparator = Comparator.comparingDouble(this::distanceForSort);
+        } else {
+            comparator = Comparator.comparing(e -> e.name, String.CASE_INSENSITIVE_ORDER);
+        }
+        comparator = comparator.thenComparing(e -> e.name, String.CASE_INSENSITIVE_ORDER)
+                .thenComparing(e -> e.safeWorldCoordinate != null ? e.safeWorldCoordinate.getDimensionResourceId() : "");
+        if (!state.ascending) comparator = comparator.reversed();
+        items.sort(comparator);
+    }
+
+    private double distanceForSort(WaypointEntry entry) {
+        if (minecraft == null || minecraft.player == null || entry.safeWorldCoordinate == null
+                || entry.safeWorldCoordinate.dimension() != minecraft.player.level.dimension()) {
+            return Double.POSITIVE_INFINITY;
+        }
+        return entry.safeWorldCoordinate.distanceFrom(new SafeWorldCoordinate(minecraft.player));
+    }
+
+    private void submitActiveOrder() {
+        if (activeTab == WaypointListTab.FOOTPRINTS) return;
+        List<KeyValue<String, String>> keys = activeTabAllItems().stream()
+                .filter(e -> e.safeWorldCoordinate != null)
+                .map(e -> new KeyValue<>(e.safeWorldCoordinate.getDimensionResourceId(), e.name))
+                .collect(Collectors.toList());
+        WaypointReorderToServer.Type type = activeTab == WaypointListTab.PRIVATE
+                ? WaypointReorderToServer.Type.HOME : WaypointReorderToServer.Type.STAGE;
+        PacketUtils.sendPacketToServer(new WaypointReorderToServer(type, keys));
     }
 
     @Accessors(chain = true, fluent = true)
