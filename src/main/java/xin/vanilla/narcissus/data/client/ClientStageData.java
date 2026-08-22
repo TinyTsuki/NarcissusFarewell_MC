@@ -2,6 +2,7 @@ package xin.vanilla.narcissus.data.client;
 
 import xin.vanilla.banira.common.data.KeyValue;
 import xin.vanilla.narcissus.data.SafeWorldCoordinate;
+import xin.vanilla.narcissus.data.WaypointOrder;
 
 import javax.annotation.Nonnull;
 import java.util.Collections;
@@ -27,7 +28,13 @@ public final class ClientStageData {
      * 添加驿站
      */
     public static void addStage(String dimension, String name, SafeWorldCoordinate safeWorldCoordinate) {
-        STAGE_COORDINATE.put(new KeyValue<>(dimension, name), safeWorldCoordinate);
+        KeyValue<String, String> key = new KeyValue<>(dimension, name);
+        synchronized (STAGE_COORDINATE) {
+            LinkedHashMap<KeyValue<String, String>, SafeWorldCoordinate> reordered =
+                    WaypointOrder.prepend(key, safeWorldCoordinate, STAGE_COORDINATE);
+            STAGE_COORDINATE.clear();
+            STAGE_COORDINATE.putAll(reordered);
+        }
     }
 
     /**
