@@ -15,6 +15,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import xin.vanilla.banira.common.data.Component;
 import xin.vanilla.narcissus.NarcissusComponent;
 import xin.vanilla.narcissus.NarcissusFarewell;
+import xin.vanilla.narcissus.NarcissusLang;
 
 import java.util.List;
 import java.util.Random;
@@ -39,11 +40,12 @@ public abstract class CombatTrackerMixin {
         if (combatEntry == null) return;
 
 
+        String language = NarcissusLang.getServerPlayerLanguage(player);
         Component message = NarcissusComponent.get().transAuto("died_of_narcissus_" + (new Random().nextInt(4) + 1), player.getDisplayName().getString());
         Entity entity = combatEntry.source().getEntity();
 
         cir.setReturnValue(NarcissusComponent.get().literal("[%s] %s")
                 .appendArg(entity != null ? entity.getDisplayName().getString() : NarcissusComponent.get().literal("Server"))
-                .appendArg(message).toChat());
+                .appendArg(message).toChat(language));
     }
 }
