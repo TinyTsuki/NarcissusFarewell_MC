@@ -49,18 +49,25 @@ public class EventHandlerProxy {
 
     public static void onPlayerCloned(ServerPlayer original, ServerPlayer newPlayer, boolean wasDeath) {
         if (wasDeath) {
-            TeleportRecord record = new TeleportRecord();
-            record.setTeleportTime(new Date());
-            record.setTeleportType(EnumTeleportType.DEATH);
             SafeWorldCoordinate before = new SafeWorldCoordinate();
             before.x(original.getX()).y(original.getY()).z(original.getZ()).dimension(original.level.dimension());
-            record.setBefore(before);
-            SafeWorldCoordinate after = new SafeWorldCoordinate();
-            after.x(newPlayer.getX()).y(newPlayer.getY()).z(newPlayer.getZ()).dimension(newPlayer.level.dimension());
-            record.setAfter(after);
-            PlayerTeleportData.getData(newPlayer).addTeleportRecords(record);
-            PlayerTeleportData.syncPlayerData(newPlayer);
+            onPlayerRespawned(newPlayer, before);
         }
+    }
+
+    /**
+     * 在玩家完成复活后写入此前冻结的死亡坐标。
+     */
+    public static void onPlayerRespawned(ServerPlayer newPlayer, SafeWorldCoordinate deathPosition) {
+        TeleportRecord record = new TeleportRecord();
+        record.setTeleportTime(new Date());
+        record.setTeleportType(EnumTeleportType.DEATH);
+        record.setBefore(deathPosition);
+        SafeWorldCoordinate after = new SafeWorldCoordinate();
+        after.x(newPlayer.getX()).y(newPlayer.getY()).z(newPlayer.getZ()).dimension(newPlayer.level.dimension());
+        record.setAfter(after);
+        PlayerTeleportData.getData(newPlayer).addTeleportRecords(record);
+        PlayerTeleportData.syncPlayerData(newPlayer);
     }
 
     public static void onPlayerJoinWorld(ServerPlayer player) {
