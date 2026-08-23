@@ -36,9 +36,12 @@
 
 ## はじめに
 
-本プロジェクトは、Minecraft Forge
-サーバー向けに、プレイヤーへのテレポート、ホーム、バックなどのコマンドを実現するものです。
-この MOD はサーバー必須で、クライアントは任意です。
+本プロジェクトは Minecraft Forge、Fabric、NeoForge サーバー向けで、プレイヤー間のテレポート申請、個人ホーム、公共ステージ、死亡地点への帰還、多様な座標テレポートを提供します。
+この MOD はサーバー側に必須で、クライアント側は任意です。クライアント MOD を導入していないプレイヤーも、コマンドから主要なテレポートと地点管理機能を利用できます。
+クライアント MOD を導入すると、地点管理画面、設定エディター、テーマ通知、インベントリのクイック入口を利用できます。
+
+本プロジェクトは [Banira Codex](https://github.com/VanillaXin/BaniraCodex_MC)
+に依存し、設定、通知、画面、言語、権限、ローダー間の差異吸収を共通機能として利用します。
 
 ## 特徴
 
@@ -76,9 +79,8 @@
 
 ### 共通ファイル
 
-- テレポート地点、履歴、権限、プレイヤー設定などは Vanilla Xin シリーズのプレイヤーデータに保存されます：
-  `world/vanilla.xin/playerdata/*.nbt`
-- 言語設定などの Vanilla Xin シリーズ共通設定：`config/vanilla.xin/common_config.json`
+- Vanilla Xin シリーズ MOD 共通設定 `config/vanilla.xin/common_config.json`（既定言語、ヘルプのページ分割、仮想権限などの共通設定を保存）
+- Vanilla Xin シリーズ MOD プレイヤーデータ `world/vanilla.xin/playerdata/*.nbt`（テレポート地点、テレポート履歴、権限、プレイヤー設定などを保存）
 
 ### モジュールファイル
 
@@ -298,16 +300,17 @@
 
 ## ビルド
 
-docs ブランチには、保守対象の全ブランチを構築する共通スクリプトがあります。
+Minecraft の各バージョンとローダーは、`forge/*`、`fabric/*`、`neoforge/*` ブランチで個別に管理されます。docs
+ブランチには、保守対象の全ブランチを構築する共通バッチ入口があります。
 
 ```bat
 scripts\build-all.bat
 ```
 
-デフォルトでは、ローカルの `forge/*`、`fabric/*`、`neoforge/*` ブランチを動的にすべて構築します。`dev/*`、
-`maintenance/*` など他の名前空間は含みません。現在の作業ツリーを切り替えず、detached 一時 worktree で各ブランチを構築します。
+デフォルトではローカルの全ローダーブランチを構築し、`dev/*`、`maintenance/*` など他の名前空間は含みません。各ブランチは現在の作業ツリーを切り替えず、detached
+一時 worktree で構築されます。
 
-Gradle を実行せず、選択されたブランチと JDK 検出だけを確認します。
+ビルドを実行せず、選択されたブランチと JDK 検出だけを確認します。
 
 ```bat
 scripts\build-all.bat -ListOnly
@@ -323,6 +326,18 @@ scripts\build-all.bat -BranchExpression "fabric/18.2"
 ```
 
 `!` で始まる式は一致するブランチを除外します。以前のパラメーター名 `-Branches` も別名として利用できます。
+
+単一の対象ブランチへ切り替えた後は、直接ビルドすることもできます。
+
+```bat
+gradlew.bat clean test assemble
+```
+
+成果物は docs 作業ツリーの `builds/<MOD バージョン>/` に集約されます。通常の成果物では Banira Codex を別途導入する必要があり、ファイル名に
+`-all` が付く成果物には対応する Banira Codex が含まれます。
+
+現在は Minecraft 1.16.5、1.18.2、1.19.2、1.20.1、1.21.1 を保守しています。NeoForge は 1.21.1 から対応します。`maintenance/*`
+以下の旧バージョンブランチは通常の保守対象外です。
 
 ---
 

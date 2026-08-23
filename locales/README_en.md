@@ -37,9 +37,15 @@
 
 ## Introduction
 
-This project is designed for Minecraft Forge servers to implement commands such as teleporting to a player, going home,
-or returning.
-This mod is required on the server side, and optional on the client side.
+This project is for Minecraft Forge, Fabric, and NeoForge servers, providing player-to-player requests, private homes,
+public stages, death returns, and multiple coordinate-based teleport methods.
+The mod is required on the server and optional on the client. Players without the client mod can still use commands for
+the primary teleport and waypoint-management features.
+Installing the client mod adds a waypoint-management screen, configuration editors, themed notifications, and an
+inventory quick entry.
+
+This project depends on [Banira Codex](https://github.com/VanillaXin/BaniraCodex_MC), which provides shared
+configuration, notifications, screens, localization, permissions, and cross-loader adaptation.
 
 ## Features
 
@@ -85,9 +91,10 @@ to in-game tooltips and generated comments for the meaning and valid range of ea
 
 ### Shared Files
 
-- Teleport points, history, permissions, and player preferences are stored in shared Vanilla Xin player data:
-  `world/vanilla.xin/playerdata/*.nbt`
-- Shared Vanilla Xin settings such as language preferences: `config/vanilla.xin/common_config.json`
+- Vanilla Xin Series Common Config: `config/vanilla.xin/common_config.json` (stores shared defaults for language, help
+  pagination, and virtual permissions)
+- Vanilla Xin Series Player Data: `world/vanilla.xin/playerdata/*.nbt` (stores teleport points, teleport history,
+  permissions, and player preferences)
 
 ### Mod Files
 
@@ -308,17 +315,17 @@ Version 1.1.6 (same test):
 
 ## Building
 
-The docs branch provides one build entry for all maintained branches:
+Minecraft versions and loaders are maintained in separate `forge/*`, `fabric/*`, and `neoforge/*` branches. The docs
+branch provides one batch entry for all maintained branches:
 
 ```bat
 scripts\build-all.bat
 ```
 
-By default, it dynamically builds all local `forge/*`, `fabric/*`, and `neoforge/*` branches. Other namespaces such
-as `dev/*` and `maintenance/*` are excluded. Each branch is built in a detached temporary worktree without switching
-the current checkout.
+By default, the script builds every local loader branch and excludes other namespaces such as `dev/*` and
+`maintenance/*`. Each branch is built in a detached temporary worktree without switching the current checkout.
 
-List selected branches and validate JDK discovery without running Gradle:
+List selected branches and validate JDK discovery without running a build:
 
 ```bat
 scripts\build-all.bat -ListOnly
@@ -333,8 +340,20 @@ scripts\build-all.bat -BranchExpression "forge/*,!forge/16.5"
 scripts\build-all.bat -BranchExpression "fabric/18.2"
 ```
 
-Expressions beginning with `!` exclude matching branches. The previous parameter name `-Branches` remains available
-as an alias.
+Expressions beginning with `!` exclude matching branches. The previous parameter name `-Branches` remains available as
+an alias.
+
+After switching to a single target branch, it can also be built directly:
+
+```bat
+gradlew.bat clean test assemble
+```
+
+Artifacts are collected under `builds/<mod version>/` in the docs worktree. Regular artifacts require Banira Codex to be
+installed separately; artifacts with `-all` in the filename include the matching Banira Codex version.
+
+Minecraft 1.16.5, 1.18.2, 1.19.2, 1.20.1, and 1.21.1 are currently maintained. NeoForge support starts at 1.21.1. Legacy
+branches under `maintenance/*` are excluded from routine maintenance.
 
 ---
 
