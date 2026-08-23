@@ -732,7 +732,7 @@ public class WaypointScreen extends BaniraScreen {
                 drawLimitedTextLine(stack, meta, listX + 7, itemY + 15, rowTextMaxW, metaColor);
 
                 if (reorderable && hover) {
-                    drawDragHandle(stack, dragHandleX(listX, cw), itemY + (rowH - 7) / 2,
+                    drawDragHandle(stack, dragHandleX(listX, cw), itemY + (rowH - 7) / 2 - 1,
                             hoveredDragHandle ? journalPalette.selected() : journalPalette.secondary());
                 }
 
