@@ -130,6 +130,7 @@ public class WaypointScreen extends BaniraScreen {
     private boolean hoveredDragHandle;
 
     private final EnumMap<WaypointListTab, SortState> sortStates = new EnumMap<>(WaypointListTab.class);
+    private WaypointListTab pendingSortTab;
     private WaypointEntry dragCandidate;
     private WaypointEntry draggingItem;
     private long dragPressedAt;
@@ -822,11 +823,12 @@ public class WaypointScreen extends BaniraScreen {
         }
 
         if (eventArgs.button() == 1 && !eventArgs.consumed()) {
+            pendingSortTab = null;
             WaypointListTab[] tabs = WaypointListTab.values();
             for (int i = 0; i < tabs.length; i++) {
                 if (contains(tabRect(i), eventArgs.mouseX(), eventArgs.mouseY())) {
                     onTabSelected(tabs[i]);
-                    showSortMenu(eventArgs.mouseX(), eventArgs.mouseY());
+                    pendingSortTab = tabs[i];
                     eventArgs.consumed(true);
                     return;
                 }
@@ -890,6 +892,15 @@ public class WaypointScreen extends BaniraScreen {
 
     @Override
     protected void onMouseReleased(MouseReleasedHandleArgs eventArgs) {
+        if (eventArgs.button() == 1 && pendingSortTab != null) {
+            WaypointListTab tab = pendingSortTab;
+            pendingSortTab = null;
+            if (contains(tabRect(tab.ordinal()), eventArgs.mouseX(), eventArgs.mouseY())) {
+                showSortMenu(eventArgs.mouseX(), eventArgs.mouseY());
+                eventArgs.consumed(true);
+                return;
+            }
+        }
         if (eventArgs.button() == 0 && dragCandidate != null) {
             if (draggingItem != null) {
                 finishDrag();
@@ -1383,9 +1394,9 @@ public class WaypointScreen extends BaniraScreen {
         } else if (state.mode == SortMode.DISTANCE) {
             comparator = Comparator.comparingDouble(this::distanceForSort);
         } else {
-            comparator = Comparator.comparing(e -> e.name, String.CASE_INSENSITIVE_ORDER);
+            comparator = Comparator.comparing(e -> e.name, WaypointNameComparator.INSTANCE);
         }
-        comparator = comparator.thenComparing(e -> e.name, String.CASE_INSENSITIVE_ORDER)
+        comparator = comparator.thenComparing(e -> e.name, WaypointNameComparator.INSTANCE)
                 .thenComparing(e -> e.safeWorldCoordinate != null ? e.safeWorldCoordinate.getDimensionResourceId() : "");
         if (!state.ascending) comparator = comparator.reversed();
         items.sort(comparator);
