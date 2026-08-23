@@ -204,14 +204,12 @@ dependencies {
     //     jarJar.ranged(it, baniraArtifactVersionRange)
     // }
 
-    // implementation fg.deobf("curse.maven:apricityui-1470115:${apricityui_id}")
-    compileOnly fg.deobf("blank:apricityui:1.0.0")
+    compileOnly fg.deobf("curse.maven:apricityui-1470115:${apricityui_id}")
 
     compileOnly fg.deobf("curse.maven:gravestone-mod-238551:${gravestone_id}")
     compileOnly fg.deobf("curse.maven:corpse-316582:${corpse_id}")
     compileOnly fg.deobf("curse.maven:simple-tomb-399669:${simple_tomb_id}")
-    // compileOnly fg.deobf("curse.maven:corail-tombstone-243707:${corail_tomb_id}")
-    compileOnly fg.deobf("blank:tombstone-${minecraft_version}:${corail_tomb_version}")
+    compileOnly fg.deobf("curse.maven:corail-tombstone-243707:${corail_tomb_id}")
 
     compileOnly fg.deobf("curse.maven:xaeros-minimap-263420:${xaeros_minimap_id}")
     compileOnly fg.deobf("curse.maven:xaeros-world-map-317780:${xaeros_world_map_id}")

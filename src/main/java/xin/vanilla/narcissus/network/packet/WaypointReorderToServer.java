@@ -2,7 +2,7 @@ package xin.vanilla.narcissus.network.packet;
 
 import lombok.Getter;
 import lombok.experimental.Accessors;
-import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.entity.player.ServerPlayerEntity;
 import xin.vanilla.banira.common.data.KeyValue;
 import xin.vanilla.banira.common.network.BaniraNetworkContext;
 import xin.vanilla.banira.common.network.BaniraPacketBuffer;
@@ -62,7 +62,7 @@ public final class WaypointReorderToServer implements NetworkPacket {
     public static void handle(WaypointReorderToServer packet, BaniraNetworkContext ctx) {
         ctx.enqueueWork(() -> {
             if (!ctx.isServerSide()) return;
-            ServerPlayer sender = ctx.senderAs(ServerPlayer.class);
+            ServerPlayerEntity sender = ctx.senderAs(ServerPlayerEntity.class);
             if (sender == null) return;
             if (packet.type == Type.HOME) {
                 PlayerTeleportData data = PlayerTeleportData.getData(sender);

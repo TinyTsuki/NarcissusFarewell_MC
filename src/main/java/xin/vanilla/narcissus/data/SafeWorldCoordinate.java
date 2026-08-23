@@ -77,8 +77,8 @@ public class SafeWorldCoordinate extends WorldCoordinate implements Serializable
     }
 
     @Override
-    public CompoundTag toTag() {
-        CompoundTag tag = super.toTag();
+    public CompoundNBT toTag() {
+        CompoundNBT tag = super.toTag();
         tag.putLong("createdAt", createdAt);
         return tag;
     }
