@@ -206,11 +206,7 @@ dependencies {
         jarJar.ranged(it, baniraArtifactVersionRange)
     }
 
-    // compileOnly fg.deobf("curse.maven:apricityui-1470115:${apricityui_id}")
-    compileOnly "blank:apricityui:1.0.0"
-
-    // compileOnly fg.deobf("curse.maven:corail-tombstone-243707:${corail_tomb_id}")
-    compileOnly fg.deobf("blank:tombstone-${minecraft_version}:${corail_tomb_version}")
+    compileOnly fg.deobf("curse.maven:corail-tombstone-243707:${corail_tomb_id}")
 
     compileOnly fg.deobf("curse.maven:xaeros-minimap-263420:${xaeros_minimap_id}")
     compileOnly fg.deobf("curse.maven:journeymap-32274:${journeymap_id}")
