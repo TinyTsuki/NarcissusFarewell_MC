@@ -3,7 +3,7 @@
 | [中文](../README.md) | [English](README_en.md) | [日本語](README_ja.md) |
 |:------------------:|:-----------------------:|:-------------------:|
 
-<img src="../assets/logo.png" alt="Narcissus Farewell" width="160" />
+<img src="../assets/logo.png" alt="Narcissus Farewell" width="320" />
 
 # Narcissus Farewell（水仙辞）
 
