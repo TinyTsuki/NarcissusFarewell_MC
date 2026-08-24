@@ -414,6 +414,58 @@ public class AccessListScreen extends BaniraScreen {
         minecraft.setScreen(new InputFormScreen(args));
     }
 
+    private void openEditDialog(String currentUuid, Column column) {
+        if (minecraft == null || minecraft.player == null) return;
+        LinkedHashMap<String, String> nameToUuid = collectOnlinePlayerNameToUuid();
+        String currentName = playerNameForListUuid(currentUuid);
+        nameToUuid.put(currentName, currentUuid);
+
+        List<DropdownOption> options = new ArrayList<>();
+        nameToUuid.forEach((label, uuid) -> options.add(new DropdownOption(label,
+                PlayerSkinTextureUtils.headFaceTextures(UUID.fromString(uuid)),
+                NarcissusComponent.get().literal(uuid))));
+
+        InputFormScreen.Args args = new InputFormScreen.Args()
+                .setParentScreen(this)
+                .setTitle(Text.literal(NarcissusComponent.get().transClientAuto(
+                        column == Column.BLACK ? "access_list_edit_black_title"
+                                : "access_list_edit_white_title").toString()))
+                .addWidget(new InputFormScreen.Widget()
+                        .name("player_name")
+                        .type(InputFormScreen.WidgetType.DROPDOWN)
+                        .dropdownOptionEntries(options)
+                        .defaultValue(currentName)
+                        .title(Text.literal(NarcissusComponent.get()
+                                .transClientAuto("access_list_player_name").toString()))
+                        .hint(Text.literal(BaniraComponent.get().transClientAuto("choose_option").toString())));
+        if (column == Column.WHITE) {
+            args.addWidget(new InputFormScreen.Widget()
+                    .name("white_mode")
+                    .type(InputFormScreen.WidgetType.DROPDOWN)
+                    .dropdownOptions(EnumWhiteListMode.class)
+                    .title(Text.literal(NarcissusComponent.get()
+                            .transClientAuto("access_list_white_mode").toString()))
+                    .defaultValue(whiteModeValue(currentUuid))
+                    .hint(Text.literal(BaniraComponent.get().transClientAuto("choose_option").toString())));
+        }
+        args.setCallback(results -> {
+            String selectedUuid = nameToUuid.get(results.value("player_name").trim());
+            if (selectedUuid == null) return;
+            if (column == Column.BLACK) {
+                if (!currentUuid.equals(selectedUuid)) {
+                    PacketUtils.sendPacketToServer(new AccessListEditToServer(1, "", currentUuid));
+                    PacketUtils.sendPacketToServer(new AccessListEditToServer(0, "", selectedUuid));
+                }
+            } else {
+                String mode = results.value("white_mode").trim();
+                PacketUtils.sendPacketToServer(new AccessListEditToServer(
+                        3, EnumWhiteListMode.NONE.name(), currentUuid));
+                PacketUtils.sendPacketToServer(new AccessListEditToServer(2, mode, selectedUuid));
+            }
+        });
+        minecraft.setScreen(new InputFormScreen(args));
+    }
+
     private LinkedHashMap<String, String> collectOnlinePlayerNameToUuid() {
         LinkedHashMap<String, String> map = new LinkedHashMap<>();
         if (minecraft == null || minecraft.player == null || minecraft.player.connection == null) {
@@ -660,11 +712,11 @@ public class AccessListScreen extends BaniraScreen {
         lines.add(playerNameForListUuid(uuid));
         lines.add("UUID: " + uuid);
         if (column == Column.WHITE) {
-            lines.add(NarcissusComponent.get().transClientAuto("access_list_white_mode").toString()
-                    + ": " + whiteMode(uuid));
+            EnumWhiteListMode mode = whiteModeValue(uuid);
+            if (mode != EnumWhiteListMode.NONE) {
+                lines.add(mode.enumDescription().toString());
+            }
         }
-        lines.add(NarcissusComponent.get().transClientAuto(
-                column == Column.BLACK ? "blacklist_help" : "whitelist_help").toString());
         Text tooltipText = Text.literal(String.join("\n", lines)).stack(stack).font(font).color(Color.argb(theme.textPrimary()));
         FontDrawArgs args = FontDrawArgs.ofPopo(tooltipText)
                 .x(mouseX)
@@ -673,16 +725,24 @@ public class AccessListScreen extends BaniraScreen {
     }
 
     private String whiteMode(String uuid) {
+        EnumWhiteListMode mode = whiteModeValue(uuid);
+        if (mode == EnumWhiteListMode.BOTH) return "TPA + TPH";
+        if (mode == EnumWhiteListMode.AUTO_ACCEPT_TPA) return "TPA";
+        if (mode == EnumWhiteListMode.AUTO_ACCEPT_TPH) return "TPH";
+        return "NONE";
+    }
+
+    private EnumWhiteListMode whiteModeValue(String uuid) {
         if (minecraft == null || minecraft.player == null) {
-            return "NONE";
+            return EnumWhiteListMode.NONE;
         }
         PlayerAccess access = PlayerTeleportData.getData(minecraft.player).getAccess();
         boolean tpa = access.getAutoTpaList().contains(uuid);
         boolean tph = access.getAutoTphList().contains(uuid);
-        if (tpa && tph) return "TPA + TPH";
-        if (tpa) return "TPA";
-        if (tph) return "TPH";
-        return "NONE";
+        if (tpa && tph) return EnumWhiteListMode.BOTH;
+        if (tpa) return EnumWhiteListMode.AUTO_ACCEPT_TPA;
+        if (tph) return EnumWhiteListMode.AUTO_ACCEPT_TPH;
+        return EnumWhiteListMode.NONE;
     }
 
     private void drawDeleteConfirmOverlay(PoseStack stack, BaniraColorConfig theme) {
@@ -733,7 +793,8 @@ public class AccessListScreen extends BaniraScreen {
             }
         }
         if (checkPanelClick(mouseX, mouseY, accessListRect.x() + PANEL_PADDING,
-                listAreaY + LIST_PADDING_V, activeTabItems(), activeScrollbar, activeTabColumn())) {
+                listAreaY + LIST_PADDING_V, activeTabItems(), activeScrollbar, activeTabColumn(),
+                eventArgs.doubleClick())) {
             eventArgs.consumed(true);
         }
 
@@ -751,7 +812,9 @@ public class AccessListScreen extends BaniraScreen {
         super.onKeyPressed(eventArgs);
     }
 
-    private boolean checkPanelClick(double mouseX, double mouseY, int listX, int listY, List<String> items, ScrollbarWidget bar, Column column) {
+    private boolean checkPanelClick(double mouseX, double mouseY, int listX, int listY,
+                                    List<String> items, ScrollbarWidget bar, Column column,
+                                    boolean doubleClick) {
         NarcissusScreenChrome.ListViewport viewport = NarcissusScreenChrome.listViewport(
                 items.size(), ITEM_HEIGHT, listY, listViewportHeight(), bar != null ? bar.value() : 0.0D);
         boolean scrollNeeded = viewport.maxOffset() > 0.0D;
@@ -764,6 +827,10 @@ public class AccessListScreen extends BaniraScreen {
         if (mouseX >= delX) {
             deleteConfirmUuid = items.get(idx);
             deleteConfirmColumn = column;
+            return true;
+        }
+        if (doubleClick) {
+            openEditDialog(items.get(idx), column);
             return true;
         }
         return false;
