@@ -67,10 +67,21 @@ public class WaypointScreen extends BaniraScreen {
 
     // region Types
 
-    private enum WaypointListTab {
-        PRIVATE,
-        PUBLIC,
-        FOOTPRINTS
+    enum WaypointListTab {
+        PRIVATE(true),
+        PUBLIC(true),
+        FOOTPRINTS(false);
+
+        private final boolean supportsOrdering;
+
+        WaypointListTab(boolean supportsOrdering) {
+            this.supportsOrdering = supportsOrdering;
+        }
+
+        /** 足迹按记录时间固定展示，不参与地标的排序与手动重排。 */
+        boolean supportsOrdering() {
+            return supportsOrdering;
+        }
     }
 
     private enum SortMode {
@@ -725,7 +736,8 @@ public class WaypointScreen extends BaniraScreen {
                         new NarcissusScreenChrome.Rect(listX, itemY, cw, rowDrawH),
                         item.canTeleport, hover, selected);
 
-                boolean reorderable = item.type == WaypointEntry.Type.HOME || item.type == WaypointEntry.Type.STAGE;
+                boolean reorderable = activeTab.supportsOrdering()
+                        && (item.type == WaypointEntry.Type.HOME || item.type == WaypointEntry.Type.STAGE);
                 int rowTextMaxW = Math.max(8, cw - (reorderable ? 44 : 28));
                 drawLimitedTextLine(stack, item.name, listX + 7, itemY + 3, rowTextMaxW, textColor);
                 String meta = item.getDimensionName() + "  " + item.getCoordinateName()
@@ -828,7 +840,7 @@ public class WaypointScreen extends BaniraScreen {
             for (int i = 0; i < tabs.length; i++) {
                 if (contains(tabRect(i), eventArgs.mouseX(), eventArgs.mouseY())) {
                     onTabSelected(tabs[i]);
-                    pendingSortTab = tabs[i];
+                    pendingSortTab = tabs[i].supportsOrdering() ? tabs[i] : null;
                     eventArgs.consumed(true);
                     return;
                 }
@@ -875,7 +887,7 @@ public class WaypointScreen extends BaniraScreen {
 
     @Override
     public boolean mouseDragged(double mouseX, double mouseY, int button, double dragX, double dragY) {
-        if (button == 0 && dragCandidate != null) {
+        if (button == 0 && activeTab.supportsOrdering() && dragCandidate != null) {
             if (draggingItem == null && System.currentTimeMillis() - dragPressedAt >= DRAG_HOLD_MS) {
                 draggingItem = dragCandidate;
                 selectedItem = draggingItem;
@@ -895,7 +907,8 @@ public class WaypointScreen extends BaniraScreen {
         if (eventArgs.button() == 1 && pendingSortTab != null) {
             WaypointListTab tab = pendingSortTab;
             pendingSortTab = null;
-            if (contains(tabRect(tab.ordinal()), eventArgs.mouseX(), eventArgs.mouseY())) {
+            if (tab.supportsOrdering()
+                    && contains(tabRect(tab.ordinal()), eventArgs.mouseX(), eventArgs.mouseY())) {
                 showSortMenu(eventArgs.mouseX(), eventArgs.mouseY());
                 eventArgs.consumed(true);
                 return;
@@ -951,7 +964,6 @@ public class WaypointScreen extends BaniraScreen {
         ticketCount = data.getTeleportCard();
         applyCurrentSort(homeItemsAll, WaypointListTab.PRIVATE);
         applyCurrentSort(stageItemsAll, WaypointListTab.PUBLIC);
-        applyCurrentSort(backItemsAll, WaypointListTab.FOOTPRINTS);
         applySearchFilter();
     }
 
@@ -1208,6 +1220,7 @@ public class WaypointScreen extends BaniraScreen {
     }
 
     private boolean beginDragCandidate(double mouseX, double mouseY) {
+        if (!activeTab.supportsOrdering()) return false;
         List<WaypointEntry> items = activeTabItems();
         int listX = journalLayout.list().x() + PANEL_PADDING;
         NarcissusScreenChrome.ListViewport viewport = activeViewport(items);
@@ -1313,6 +1326,7 @@ public class WaypointScreen extends BaniraScreen {
     }
 
     private void finishDrag() {
+        if (!activeTab.supportsOrdering()) return;
         List<WaypointEntry> visible = activeTabItems();
         if (dragInsertionIndex < 0 || draggingItem == null) return;
         List<WaypointEntry> remainingVisible = new ArrayList<>(visible);
@@ -1358,6 +1372,7 @@ public class WaypointScreen extends BaniraScreen {
     }
 
     private void showSortMenu(double mouseX, double mouseY) {
+        if (!activeTab.supportsOrdering()) return;
         popupOption.clear()
                 .addOptionWithId("name", sortMenuLabel(SortMode.NAME), null, e -> applySort(SortMode.NAME))
                 .addOptionWithId("time", sortMenuLabel(SortMode.TIME), null, e -> applySort(SortMode.TIME))
@@ -1374,6 +1389,7 @@ public class WaypointScreen extends BaniraScreen {
     }
 
     private void applySort(SortMode mode) {
+        if (!activeTab.supportsOrdering()) return;
         SortState previous = sortStates.get(activeTab);
         boolean ascending = previous == null || previous.mode != mode || !previous.ascending;
         sortStates.put(activeTab, new SortState(mode, ascending));
@@ -1384,6 +1400,7 @@ public class WaypointScreen extends BaniraScreen {
     }
 
     private void applyCurrentSort(List<WaypointEntry> items, WaypointListTab tab) {
+        if (!tab.supportsOrdering()) return;
         SortState state = sortStates.get(tab);
         if (state == null) return;
         Comparator<WaypointEntry> comparator;
@@ -1411,7 +1428,7 @@ public class WaypointScreen extends BaniraScreen {
     }
 
     private void submitActiveOrder() {
-        if (activeTab == WaypointListTab.FOOTPRINTS) return;
+        if (!activeTab.supportsOrdering()) return;
         List<KeyValue<String, String>> keys = activeTabAllItems().stream()
                 .filter(e -> e.safeWorldCoordinate != null)
                 .map(e -> new KeyValue<>(e.safeWorldCoordinate.getDimensionResourceId(), e.name))
