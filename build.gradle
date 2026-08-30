@@ -123,6 +123,7 @@ repositories {
 }
 
 dependencies {
+    runtimeOnly "maven.modrinth:spark:v5qtqRQi"
     // Development runtime performance mod; not bundled into published artifacts.
     runtimeOnly "maven.modrinth:embeddium:J7b96IEd"
     // Specify the version of Minecraft to use.
