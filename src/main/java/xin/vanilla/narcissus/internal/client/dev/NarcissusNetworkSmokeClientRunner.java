@@ -25,7 +25,7 @@ import javax.annotation.Nonnull;
 public final class NarcissusNetworkSmokeClientRunner {
     private static final Logger LOGGER = LogManager.getLogger();
     private static final int TIMEOUT_TICKS = 1200;
-    private static final int SERVER_SETTLE_TICKS = 20;
+    private static final int SERVER_SETTLE_TICKS = 360;
 
     private static NarcissusNetworkSmokeClientRunner instance;
 

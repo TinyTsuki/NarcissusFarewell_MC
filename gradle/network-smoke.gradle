@@ -142,6 +142,9 @@ tasks.register('networkSmoke') {
                 "online-mode=false${System.lineSeparator()}server-port=${smokePort}${System.lineSeparator()}" +
                         "level-name=network-smoke-world${System.lineSeparator()}view-distance=4${System.lineSeparator()}",
                 'UTF-8')
+        File sparkConfig = new File(smokeServerDir, 'config/spark/config.json')
+        sparkConfig.parentFile.mkdirs()
+        sparkConfig.setText('{"backgroundProfiler":false}' + System.lineSeparator(), 'UTF-8')
 
         String runId = DateTimeFormatter.ofPattern('yyyyMMdd-HHmmss').format(LocalDateTime.now())
         File evidence = file("${smokeRoot}/evidence/${runId}")
@@ -176,6 +179,7 @@ tasks.register('networkSmoke') {
                            'PASS persisted-access-list-client', 'FINISHED phase-two'])
                 verifyMarkers(serverStatus, phase == 'phase-one'
                         ? ['PASS server-config-roundtrip', 'PASS server-access-list-roundtrip',
+                           'PASS random-safe-teleport', 'PASS view-end-teleport', 'PASS spark-profiler-window',
                            'FINISHED phase-one', 'PASS server-shutdown']
                         : ['PASS persisted-player-config', 'PASS persisted-access-list',
                            'FINISHED phase-two', 'PASS server-shutdown'])
