@@ -332,6 +332,12 @@ public final class NarcissusNetworkSmokeServerRunner {
      * 视线终点算法依赖可见碰撞体；环形低墙使测试不受玩家朝向或地形生成影响。
      */
     private static void prepareViewCollisionRing(ServerLevel level) {
+        // 新世界的生成地形可能恰好占用玩家眼前的方块；先留出稳定的视线路径。
+        for (int x = -1; x < 8; x++) {
+            for (int y = 65; y <= 75; y++) {
+                level.setBlock(new BlockPos(x, y, 0), Blocks.AIR.defaultBlockState(), 3);
+            }
+        }
         for (int x = -8; x <= 8; x++) {
             for (int z = -8; z <= 8; z++) {
                 if (Math.abs(x) != 8 && Math.abs(z) != 8) {

@@ -13,11 +13,13 @@ if (smokeChild) {
     layout.buildDirectory.set(file(project.property('narcissus.networkSmoke.buildDir')))
     String phase = project.property('narcissus.networkSmoke.phase').toString()
     String status = project.property('narcissus.networkSmoke.status').toString()
+    String sparkReport = project.property('narcissus.networkSmoke.sparkReport').toString()
     loom.runs {
         configureEach {
             property 'narcissus.networkSmoke', 'true'
             property 'narcissus.networkSmoke.phase', phase
             property 'narcissus.networkSmoke.status', status
+            property 'narcissus.networkSmoke.sparkReport', sparkReport
         }
         server {
             runDir project.relativePath(smokeServerDir)
@@ -33,6 +35,23 @@ if (smokeChild) {
 }
 
 def readUtf8 = { File file -> file.isFile() ? file.getText('UTF-8') : '' }
+
+def sparkRuntime = {
+    def candidates = configurations.findByName('modRuntimeOnly')?.files ?: []
+    candidates.find { candidate ->
+        if (!candidate.isFile() || !candidate.name.toLowerCase().startsWith('spark-')) {
+            false
+        } else {
+            def archive = new java.util.zip.ZipFile(candidate)
+            try {
+                archive.getEntry('me/lucko/spark/proto/SparkSamplerProtos$SamplerData.class') != null
+                        || archive.getEntry('me/lucko/spark/proto/SparkProtos$SamplerData.class') != null
+            } finally {
+                archive.close()
+            }
+        }
+    }
+}
 
 def tailUtf8 = { File file, int lines ->
     if (!file.isFile()) return ''
@@ -63,7 +82,7 @@ def waitForStatus = { Process process, File status, String marker, File log, int
     throw new GradleException("Timed out waiting for '${marker}':\n${tailUtf8(log, 120)}")
 }
 
-def gradleCommand = { String runTask, String phase, File status, File childBuildDir, File projectCacheDir,
+def gradleCommand = { String runTask, String phase, File status, File sparkReport, File childBuildDir, File projectCacheDir,
                       boolean refreshDependencies ->
     File wrapper = file("${projectDir}/${System.getProperty('os.name').toLowerCase().contains('windows') ? 'gradlew.bat' : 'gradlew'}")
     List<String> command = []
@@ -80,6 +99,7 @@ def gradleCommand = { String runTask, String phase, File status, File childBuild
             '-Pnarcissus.networkSmoke.child=true',
             "-Pnarcissus.networkSmoke.phase=${phase}".toString(),
             "-Pnarcissus.networkSmoke.status=${status.absolutePath}".toString(),
+            "-Pnarcissus.networkSmoke.sparkReport=${sparkReport.absolutePath}".toString(),
             "-Pnarcissus.networkSmoke.buildDir=${childBuildDir.absolutePath}".toString()
     ])
     if (refreshDependencies) {
@@ -88,7 +108,7 @@ def gradleCommand = { String runTask, String phase, File status, File childBuild
     return command
 }
 
-def startGradleRun = { String runTask, String phase, File status, File log, boolean refreshDependencies ->
+def startGradleRun = { String runTask, String phase, File status, File sparkReport, File log, boolean refreshDependencies ->
     File childRoot = new File(smokeRoot, runTask == 'runServer' ? 'server-gradle' : 'client-gradle')
     File childBuildDir = new File(childRoot, 'build')
     File projectCacheDir = new File(childRoot, 'project-cache')
@@ -96,7 +116,7 @@ def startGradleRun = { String runTask, String phase, File status, File log, bool
     projectCacheDir.mkdirs()
     log.parentFile.mkdirs()
     ProcessBuilder builder = new ProcessBuilder(gradleCommand(
-            runTask, phase, status, childBuildDir, projectCacheDir, refreshDependencies))
+            runTask, phase, status, sparkReport, childBuildDir, projectCacheDir, refreshDependencies))
     builder.directory(projectDir)
     builder.redirectErrorStream(true)
     builder.redirectOutput(log)
@@ -123,13 +143,13 @@ def verifyMarkers = { File status, List<String> markers ->
     }
 }
 
-def runNetworkSmokeServer = { String phase, File status, File log ->
+def runNetworkSmokeServer = { String phase, File status, File sparkReport, File log ->
     // 首个子进程刷新一次 Loom 的本地 Maven 重映射缓存，后续阶段复用同一结果。
-    startGradleRun('runServer', phase, status, log, phase == 'phase-one')
+    startGradleRun('runServer', phase, status, sparkReport, log, phase == 'phase-one')
 }
 
-def runNetworkSmokeClient = { String phase, File status, File log ->
-    startGradleRun('runClient', phase, status, log, false)
+def runNetworkSmokeClient = { String phase, File status, File sparkReport, File log ->
+    startGradleRun('runClient', phase, status, sparkReport, log, false)
 }
 
 tasks.register('networkSmoke') {
@@ -148,23 +168,40 @@ tasks.register('networkSmoke') {
                 "online-mode=false${System.lineSeparator()}server-port=${smokePort}${System.lineSeparator()}" +
                         "level-name=network-smoke-world${System.lineSeparator()}view-distance=4${System.lineSeparator()}",
                 'UTF-8')
+        File sparkConfig = new File(smokeServerDir, 'config/spark/config.json')
+        sparkConfig.parentFile.mkdirs()
+        sparkConfig.setText('{"backgroundProfiler":false}' + System.lineSeparator(), 'UTF-8')
 
         String runId = DateTimeFormatter.ofPattern('yyyyMMdd-HHmmss').format(LocalDateTime.now())
         File evidence = file("${smokeRoot}/evidence/${runId}")
         evidence.mkdirs()
+        def profilerJar = sparkRuntime()
+        if (profilerJar == null) throw new GradleException('Unable to resolve the Spark runtime jar for network smoke evidence.')
+        new File(evidence, 'spark-runtime-phase-one.txt').setText(profilerJar.absolutePath + System.lineSeparator(), 'UTF-8')
 
         ['phase-one', 'phase-two'].each { phase ->
             File serverStatus = new File(evidence, "server-${phase}.status")
             File clientStatus = new File(evidence, "client-${phase}.status")
+            File sparkReport = new File(evidence, "spark-report-${phase}.sparkprofile")
             File serverLog = new File(evidence, "server-${phase}.log")
             File clientLog = new File(evidence, "client-${phase}.log")
             Process server = null
             Process client = null
             try {
-                server = runNetworkSmokeServer(phase, serverStatus, serverLog)
+                server = runNetworkSmokeServer(phase, serverStatus, sparkReport, serverLog)
                 waitForStatus(server, serverStatus, 'PASS server-ready', serverLog, 180)
 
-                client = runNetworkSmokeClient(phase, clientStatus, clientLog)
+                client = runNetworkSmokeClient(phase, clientStatus, sparkReport, clientLog)
+                if (phase == 'phase-one') {
+                    waitForStatus(server, serverStatus, 'PASS spark-profiler-active', serverLog, 120)
+                    waitForStatus(server, serverStatus, 'PASS spark-report-written', serverLog, 80)
+                    if (!sparkReport.isFile() || sparkReport.length() == 0L) {
+                        throw new GradleException("Spark report was not written: ${sparkReport}")
+                    }
+                    new File(evidence, 'spark-report-phase-one.txt').setText(
+                            "file=${sparkReport.absolutePath}${System.lineSeparator()}bytes=${sparkReport.length()}${System.lineSeparator()}", 'UTF-8')
+                    logger.lifecycle("Narcissus Spark report: ${sparkReport}")
+                }
                 waitForStatus(client, clientStatus, "FINISHED ${phase}", clientLog, 180)
                 if (!client.waitFor(45, TimeUnit.SECONDS)) {
                     throw new GradleException("Client did not exit after ${phase}:\n${tailUtf8(clientLog, 120)}")
