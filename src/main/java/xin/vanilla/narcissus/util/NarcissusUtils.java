@@ -518,7 +518,6 @@ public class NarcissusUtils {
         int chunkX = safeWorldCoordinate.chunkX();
         int chunkZ = safeWorldCoordinate.chunkZ();
         SafeWorldCoordinate result = new SafeCoordinateFinder(world, player).searchInChunk(safeWorldCoordinate, chunkX, chunkZ, belowAllowAir);
-        LOGGER.debug("Target:{}, {}, {} | Safe:{}, {}, {}", safeWorldCoordinate.xInt(), safeWorldCoordinate.yInt(), safeWorldCoordinate.zInt(), result == null ? "null" : result.xInt(), result == null ? "null" : result.yInt(), result == null ? "null" : result.zInt());
         return result == null ? safeWorldCoordinate : result;
     }
 
