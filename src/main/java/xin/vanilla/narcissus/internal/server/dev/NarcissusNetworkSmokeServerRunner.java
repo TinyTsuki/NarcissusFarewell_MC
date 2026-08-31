@@ -4,6 +4,7 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.core.BlockPos;
+import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.level.block.Blocks;
 import xin.vanilla.banira.api.BaniraServer;
 import xin.vanilla.banira.api.event.BaniraEvents;
@@ -38,6 +39,7 @@ public final class NarcissusNetworkSmokeServerRunner {
     private static ReflectiveSparkProfile sparkProfile;
 
     private static final int GAMEPLAY_TIMEOUT_TICKS = 800;
+    private static final double PREPARED_GROUND_PLAYER_Y = 65.0D;
 
     private NarcissusNetworkSmokeServerRunner() {
     }
@@ -107,7 +109,10 @@ public final class NarcissusNetworkSmokeServerRunner {
                 player.teleportTo(level, 0.5D, 70.0D, 0.5D, -90.0F, 35.0F);
                 gameplayOriginX = player.getX();
                 gameplayOriginZ = player.getZ();
+                // 保留真实的随机横向坐标与异步安全搜索，但固定在烟测铺设地面的相邻高度。
+                // 默认 NONE 模式会跨完整世界高度做径向搜索，随机 Y 会让烟测偶发地变成无界性能测试。
                 SafeWorldCoordinate random = SafeWorldCoordinate.random(player, 8, level.dimension()).safe(true);
+                random.y(PREPARED_GROUND_PLAYER_Y);
                 NarcissusUtils.teleportTo(player, random, EnumTeleportType.TP_RANDOM, 8);
                 NarcissusNetworkSmokeStatus.append("START random-safe-teleport");
                 gameplayStep = GameplayStep.WAIT_RANDOM;
@@ -125,9 +130,16 @@ public final class NarcissusNetworkSmokeServerRunner {
                 player.teleportTo(level, 0.5D, 70.0D, 0.5D, -90.0F, 35.0F);
                 gameplayOriginX = player.getX();
                 gameplayOriginZ = player.getZ();
+                prepareViewCollisionRing(level);
+                gameplayStep = GameplayStep.PREPARE_VIEW;
+                return false;
+            case PREPARE_VIEW:
+                gameplayOriginX = player.getX();
+                gameplayOriginZ = player.getZ();
                 SafeWorldCoordinate viewTarget = NarcissusUtils.findViewEndCandidate(player, false, 16);
                 if (viewTarget == null) {
-                    throw new IllegalStateException("View-end candidate was not found on prepared terrain");
+                    throw new IllegalStateException("View-end candidate was not found on prepared terrain: "
+                            + describeView(player));
                 }
                 viewTarget.safe(false);
                 NarcissusUtils.teleportTo(player, viewTarget, EnumTeleportType.TP_VIEW);
@@ -157,10 +169,35 @@ public final class NarcissusNetworkSmokeServerRunner {
         }
     }
 
+    /**
+     * 视线终点算法依赖可见碰撞体；环形低墙使测试不受玩家朝向或地形生成影响。
+     */
+    private static void prepareViewCollisionRing(ServerLevel level) {
+        for (int x = -8; x <= 8; x++) {
+            for (int z = -8; z <= 8; z++) {
+                if (Math.abs(x) != 8 && Math.abs(z) != 8) {
+                    continue;
+                }
+                for (int y = 65; y <= 75; y++) {
+                    level.setBlock(new BlockPos(x, y, z), Blocks.STONE.defaultBlockState(), 3);
+                }
+            }
+        }
+    }
+
     private static boolean movedFromGameplayOrigin(ServerPlayer player) {
         double dx = player.getX() - gameplayOriginX;
         double dz = player.getZ() - gameplayOriginZ;
         return dx * dx + dz * dz >= 4.0D;
+    }
+
+    private static String describeView(ServerPlayer player) {
+        Vec3 eye = player.getEyePosition(1.0F);
+        Vec3 view = player.getViewVector(1.0F);
+        return "position=" + player.getX() + ',' + player.getY() + ',' + player.getZ()
+                + " rotation=" + player.getYRot() + ',' + player.getXRot()
+                + " eye=" + eye.x + ',' + eye.y + ',' + eye.z
+                + " view=" + view.x + ',' + view.y + ',' + view.z;
     }
 
     private static void assertSafeGround(ServerPlayer player) {
@@ -216,6 +253,7 @@ public final class NarcissusNetworkSmokeServerRunner {
     private enum GameplayStep {
         PREPARE_RANDOM,
         WAIT_RANDOM,
+        PREPARE_VIEW,
         WAIT_VIEW,
         COMPLETE
     }
