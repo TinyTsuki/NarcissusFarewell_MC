@@ -23,6 +23,7 @@ import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.TamableAnimal;
@@ -1246,7 +1247,7 @@ public class NarcissusUtils {
                         new ChunkPos(safeWorldCoordinate.chunkX(), safeWorldCoordinate.chunkZ()),
                         4,
                         entity.getId());
-                Entity moved = entity.changeDimension(level);
+                Entity moved = moveEntityAcrossDimensions(entity, level);
                 if (moved != null) {
                     moved.moveTo(safeWorldCoordinate.x(), safeWorldCoordinate.y(), safeWorldCoordinate.z(),
                             safeWorldCoordinate.yaw() == 0 ? moved.getYRot() : (float) safeWorldCoordinate.yaw(),
@@ -1256,6 +1257,26 @@ public class NarcissusUtils {
             }
         }
         return entity;
+    }
+
+    /**
+     * 坐标传送不应依赖原版传送门入口；保留实体 NBT 后在目标维度重建，避免跟随者跨维时被静默留在原世界。
+     */
+    @Nullable
+    private static Entity moveEntityAcrossDimensions(@NonNull Entity entity, @NonNull ServerLevel destination) {
+        CompoundTag tag = new CompoundTag();
+        if (!entity.save(tag)) {
+            LOGGER.warn("Unable to serialize follower {} for cross-dimension teleport", entity.getType());
+            return null;
+        }
+        Entity moved = EntityType.loadEntityRecursive(tag, destination, candidate -> candidate);
+        if (moved == null) {
+            LOGGER.warn("Unable to restore follower {} for cross-dimension teleport", entity.getType());
+            return null;
+        }
+        entity.remove(Entity.RemovalReason.CHANGED_DIMENSION);
+        destination.addDuringTeleport(moved);
+        return moved;
     }
 
     // endregion 传送相关
