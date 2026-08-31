@@ -4,7 +4,10 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.core.BlockPos;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.animal.Wolf;
 import net.minecraft.world.phys.Vec3;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Blocks;
 import xin.vanilla.banira.api.BaniraServer;
 import xin.vanilla.banira.api.event.BaniraEvents;
@@ -33,14 +36,17 @@ public final class NarcissusNetworkSmokeServerRunner {
     private static boolean finished;
     private static int shutdownTicks;
     private static int gameplayTicks;
+    private static int fakeTeleportTicks;
     private static double gameplayOriginX;
     private static double gameplayOriginZ;
     private static GameplayStep gameplayStep = GameplayStep.PREPARE_RANDOM;
     private static ReflectiveSparkProfile sparkProfile;
     private static NarcissusNetworkSmokeWorkload workload;
+    private static NarcissusCarpetFakePlayers fakePlayers;
     private static int workloadSearches;
 
     private static final int GAMEPLAY_TIMEOUT_TICKS = 800;
+    private static final int FAKE_TELEPORT_TIMEOUT_TICKS = 160;
     private static final double PREPARED_GROUND_PLAYER_Y = 65.0D;
     private static final int WORKLOAD_SEARCHES_PER_TICK = 4;
 
@@ -71,13 +77,17 @@ public final class NarcissusNetworkSmokeServerRunner {
                 NarcissusNetworkSmokeStatus.append("PASS server-ready");
             }
             List<ServerPlayer> players = server.getPlayerList().getPlayers();
-            if (players.isEmpty()) {
+            ServerPlayer player = players.stream()
+                    .filter(candidate -> fakePlayers == null
+                            || !fakePlayers.isFixturePlayerName(candidate.getGameProfile().getName()))
+                    .findFirst()
+                    .orElse(null);
+            if (player == null) {
                 return;
             }
-            ServerPlayer player = players.get(0);
             PlayerTeleportData data = PlayerTeleportData.getData(player);
             if ("phase-one".equals(NarcissusNetworkSmokeStatus.phase())
-                    && !runTeleportGameplaySmoke(player)) {
+                    && !runTeleportGameplaySmoke(server, player)) {
                 return;
             }
             if ("phase-one".equals(NarcissusNetworkSmokeStatus.phase())) {
@@ -97,7 +107,7 @@ public final class NarcissusNetworkSmokeServerRunner {
     /**
      * 在可控地面上经过真实异步安全搜索和传送流程，避免只对工具方法做脱离游戏的单测。
      */
-    private static boolean runTeleportGameplaySmoke(ServerPlayer player) {
+    private static boolean runTeleportGameplaySmoke(MinecraftServer server, ServerPlayer player) {
         if (++gameplayTicks > GAMEPLAY_TIMEOUT_TICKS) {
             throw new IllegalStateException("Teleport gameplay smoke timed out in " + gameplayStep);
         }
@@ -156,13 +166,49 @@ public final class NarcissusNetworkSmokeServerRunner {
                 }
                 NarcissusNetworkSmokeStatus.append("PASS view-end-teleport");
                 player.teleportTo(level, 0.5D, 70.0D, 0.5D, -90.0F, 0.0F);
+                fakePlayers = new NarcissusCarpetFakePlayers();
+                fakePlayers.spawn(server);
+                NarcissusNetworkSmokeStatus.append("START carpet-fake-player-fixture");
+                gameplayStep = GameplayStep.WAIT_FAKE_PLAYERS;
+                gameplayTicks = 0;
+                return false;
+            case WAIT_FAKE_PLAYERS:
+                if (!fakePlayers.allPresent(server)) {
+                    return false;
+                }
+                prepareFakeTeleportFixtures(server, fakePlayers.resolve(server));
+                NarcissusNetworkSmokeStatus.append("PASS carpet-fake-players-ready");
+                NarcissusNetworkSmokeStatus.append("START carpet-fake-player-teleports");
+                gameplayStep = GameplayStep.WAIT_FAKE_TELEPORTS;
+                gameplayTicks = 0;
+                fakeTeleportTicks = 0;
+                return false;
+            case WAIT_FAKE_TELEPORTS:
+                if (!fakeTeleportFixtureComplete(server)) {
+                    if (++fakeTeleportTicks >= FAKE_TELEPORT_TIMEOUT_TICKS) {
+                        throw new IllegalStateException("Carpet fake-player teleport fixture did not settle: "
+                                + describeFakeTeleportFixture(server));
+                    }
+                    return false;
+                }
+                NarcissusNetworkSmokeStatus.append("PASS carpet-fake-player-teleports");
                 workload = new NarcissusNetworkSmokeWorkload(gameplayTicks);
                 NarcissusNetworkSmokeStatus.append("START sustained-coordinate-workload");
                 gameplayStep = GameplayStep.SUSTAINED;
                 return false;
             case SUSTAINED:
-                if (!runSustainedCoordinateWorkload(player)) return false;
+                if (!runSustainedCoordinateWorkload(server, player)) return false;
                 NarcissusNetworkSmokeStatus.append("PASS sustained-coordinate-workload");
+                fakePlayers.cleanup(server);
+                NarcissusNetworkSmokeStatus.append("START carpet-fake-player-cleanup");
+                gameplayStep = GameplayStep.WAIT_FAKE_CLEANUP;
+                return false;
+            case WAIT_FAKE_CLEANUP:
+                if (!fakePlayers.allRemoved(server)) {
+                    return false;
+                }
+                NarcissusNetworkSmokeStatus.append("PASS carpet-fake-player-cleanup");
+                fakePlayers = null;
                 gameplayStep = GameplayStep.COMPLETE;
                 return true;
             case COMPLETE:
@@ -172,22 +218,106 @@ public final class NarcissusNetworkSmokeServerRunner {
         }
     }
 
-    private static boolean runSustainedCoordinateWorkload(ServerPlayer player) {
+    private static boolean runSustainedCoordinateWorkload(MinecraftServer server, ServerPlayer player) {
         if (workload == null) throw new IllegalStateException("Missing sustained coordinate workload");
+        runSustainedCoordinateSearches(player, true);
+        for (ServerPlayer fakePlayer : fakePlayers.resolve(server)) {
+            runSustainedCoordinateSearches(fakePlayer, false);
+        }
+        if (!workload.completeAt(gameplayTicks)) return false;
+        if (workloadSearches <= 0) throw new IllegalStateException("Sustained coordinate workload did not execute");
+        return true;
+    }
+
+    private static void runSustainedCoordinateSearches(ServerPlayer player, boolean includeViewSearch) {
         ServerLevel level = player.getLevel();
         SafeWorldCoordinate seed = new SafeWorldCoordinate(0.5D, PREPARED_GROUND_PLAYER_Y, 0.5D, level.dimension()).safe(true);
         for (int index = 0; index < WORKLOAD_SEARCHES_PER_TICK; index++) {
             if (NarcissusUtils.findSafeCoordinate(seed.clone(), false) == null) {
                 throw new IllegalStateException("Sustained safe-coordinate search found no result");
             }
-            if (NarcissusUtils.findViewEndCandidate(player, false, 16) == null) {
-                throw new IllegalStateException("Sustained view-end search found no result");
+            workloadSearches++;
+            if (includeViewSearch) {
+                player.setYRot(-90.0F);
+                player.setXRot(0.0F);
+                if (NarcissusUtils.findViewEndCandidate(player, false, 16) == null) {
+                    throw new IllegalStateException("Sustained view-end search found no result");
+                }
+                workloadSearches++;
             }
-            workloadSearches += 2;
         }
-        if (!workload.completeAt(gameplayTicks)) return false;
-        if (workloadSearches <= 0) throw new IllegalStateException("Sustained coordinate workload did not execute");
+    }
+
+    private static void prepareFakeTeleportFixtures(MinecraftServer server, List<ServerPlayer> players) {
+        ServerLevel overworld = server.overworld();
+        ServerLevel nether = server.getLevel(Level.NETHER);
+        if (nether == null) {
+            throw new IllegalStateException("Network smoke did not provide the Nether");
+        }
+        prepareSafeGround(nether);
+        prepareViewCollisionRing(nether);
+        for (int index = 0; index < players.size(); index++) {
+            ServerPlayer player = players.get(index);
+            double x = 2.5D + index * 4.0D;
+            player.teleportTo(overworld, x, 70.0D, 2.5D, -90.0F, 0.0F);
+            PlayerTeleportData.getData(player).setTeleportCountdownSeconds(EnumTeleportType.TP_COORDINATE, 0);
+
+            Wolf follower = new Wolf(EntityType.WOLF, overworld);
+            follower.tame(player);
+            follower.setOrderedToSit(false);
+            follower.moveTo(x + 1.0D, 70.0D, 2.5D, 0.0F, 0.0F);
+            overworld.addFreshEntity(follower);
+
+            SafeWorldCoordinate target = new SafeWorldCoordinate(x, 70.0D, 2.5D, nether.dimension()).safe(false);
+            NarcissusUtils.teleportTo(player, target, EnumTeleportType.TP_COORDINATE);
+        }
+    }
+
+    private static boolean fakeTeleportFixtureComplete(MinecraftServer server) {
+        ServerLevel nether = server.getLevel(Level.NETHER);
+        if (nether == null) return false;
+        List<ServerPlayer> players = fakePlayers.resolve(server);
+        if (players.size() != 2) return false;
+        for (ServerPlayer player : players) {
+            if (player.getLevel() != nether || !hasTeleportedFollower(nether, player)) {
+                return false;
+            }
+        }
         return true;
+    }
+
+    private static boolean hasTeleportedFollower(ServerLevel level, ServerPlayer player) {
+        for (Wolf wolf : level.getEntitiesOfClass(Wolf.class, player.getBoundingBox().inflate(8.0D))) {
+            if (player.getUUID().equals(wolf.getOwnerUUID())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static String describeFakeTeleportFixture(MinecraftServer server) {
+        ServerLevel nether = server.getLevel(Level.NETHER);
+        ServerLevel overworld = server.overworld();
+        StringBuilder result = new StringBuilder();
+        for (ServerPlayer player : fakePlayers.resolve(server)) {
+            if (result.length() > 0) result.append("; ");
+            int netherFollowers = countOwnedFollowers(nether, player);
+            int overworldFollowers = countOwnedFollowers(overworld, player);
+            result.append(player.getGameProfile().getName())
+                    .append(" dimension=").append(player.getLevel().dimension().location())
+                    .append(" followersInNether=").append(netherFollowers)
+                    .append(" followersInOverworld=").append(overworldFollowers);
+        }
+        return result.toString();
+    }
+
+    private static int countOwnedFollowers(ServerLevel level, ServerPlayer player) {
+        if (level == null) return 0;
+        int count = 0;
+        for (Wolf wolf : level.getEntitiesOfClass(Wolf.class, player.getBoundingBox().inflate(128.0D))) {
+            if (player.getUUID().equals(wolf.getOwnerUUID())) count++;
+        }
+        return count;
     }
 
     private static void prepareSafeGround(ServerLevel level) {
@@ -284,7 +414,10 @@ public final class NarcissusNetworkSmokeServerRunner {
         WAIT_RANDOM,
         PREPARE_VIEW,
         WAIT_VIEW,
+        WAIT_FAKE_PLAYERS,
+        WAIT_FAKE_TELEPORTS,
         SUSTAINED,
+        WAIT_FAKE_CLEANUP,
         COMPLETE
     }
 
