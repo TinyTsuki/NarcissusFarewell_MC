@@ -182,6 +182,10 @@ tasks.register('networkSmoke') {
                            'PASS persisted-access-list-client', 'FINISHED phase-two'])
                 verifyMarkers(serverStatus, phase == 'phase-one'
                         ? ['PASS server-config-roundtrip', 'PASS server-access-list-roundtrip',
+                           'PASS random-safe-teleport', 'PASS view-end-teleport',
+                           'PASS carpet-fake-players-ready', 'PASS carpet-fake-player-teleports',
+                           'START sustained-coordinate-workload', 'PASS sustained-coordinate-workload',
+                           'PASS carpet-fake-player-cleanup',
                            'FINISHED phase-one', 'PASS server-shutdown']
                         : ['PASS persisted-player-config', 'PASS persisted-access-list',
                            'FINISHED phase-two', 'PASS server-shutdown'])
