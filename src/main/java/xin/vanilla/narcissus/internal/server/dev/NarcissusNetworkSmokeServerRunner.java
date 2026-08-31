@@ -65,12 +65,12 @@ public final class NarcissusNetworkSmokeServerRunner {
             if (server == null || !server.isRunning()) {
                 return;
             }
-            if (sparkProfile != null && sparkProfile.writeWhenComplete()) {
-                NarcissusNetworkSmokeStatus.append("PASS spark-report-written");
-            }
             if (finished) {
                 shutdownWhenSaved(server);
                 return;
+            }
+            if (sparkProfile != null && sparkProfile.writeWhenComplete()) {
+                NarcissusNetworkSmokeStatus.append("PASS spark-report-written");
             }
             if (!ready) {
                 ready = true;
@@ -111,7 +111,7 @@ public final class NarcissusNetworkSmokeServerRunner {
         if (++gameplayTicks > GAMEPLAY_TIMEOUT_TICKS) {
             throw new IllegalStateException("Teleport gameplay smoke timed out in " + gameplayStep);
         }
-        ServerLevel level = player.getLevel();
+        ServerLevel level = player.serverLevel();
         switch (gameplayStep) {
             case PREPARE_RANDOM:
                 if (sparkProfile == null) {
@@ -135,7 +135,7 @@ public final class NarcissusNetworkSmokeServerRunner {
                 if (!movedFromGameplayOrigin(player)) {
                     return false;
                 }
-                if (!player.isOnGround()) {
+                if (!player.onGround()) {
                     return false;
                 }
                 assertSafeGround(player);
@@ -230,10 +230,10 @@ public final class NarcissusNetworkSmokeServerRunner {
     }
 
     private static void runSustainedCoordinateSearches(ServerPlayer player, boolean includeViewSearch) {
-        ServerLevel level = player.getLevel();
+        ServerLevel level = player.serverLevel();
         SafeWorldCoordinate seed = new SafeWorldCoordinate(0.5D, PREPARED_GROUND_PLAYER_Y, 0.5D, level.dimension()).safe(true);
         for (int index = 0; index < WORKLOAD_SEARCHES_PER_TICK; index++) {
-            if (NarcissusUtils.findSafeCoordinate(seed.clone(), false) == null) {
+            if (NarcissusUtils.findSafeCoordinate(seed.clone(), player, false) == null) {
                 throw new IllegalStateException("Sustained safe-coordinate search found no result");
             }
             workloadSearches++;
@@ -279,7 +279,7 @@ public final class NarcissusNetworkSmokeServerRunner {
         List<ServerPlayer> players = fakePlayers.resolve(server);
         if (players.size() != 2) return false;
         for (ServerPlayer player : players) {
-            if (player.getLevel() != nether || !hasTeleportedFollower(nether, player)) {
+            if (player.serverLevel() != nether || !hasTeleportedFollower(nether, player)) {
                 return false;
             }
         }
@@ -304,7 +304,7 @@ public final class NarcissusNetworkSmokeServerRunner {
             int netherFollowers = countOwnedFollowers(nether, player);
             int overworldFollowers = countOwnedFollowers(overworld, player);
             result.append(player.getGameProfile().getName())
-                    .append(" dimension=").append(player.getLevel().dimension().location())
+                    .append(" dimension=").append(player.serverLevel().dimension().location())
                     .append(" followersInNether=").append(netherFollowers)
                     .append(" followersInOverworld=").append(overworldFollowers);
         }
@@ -367,7 +367,7 @@ public final class NarcissusNetworkSmokeServerRunner {
 
     private static void assertSafeGround(ServerPlayer player) {
         BlockPos below = player.blockPosition().below();
-        if (!player.getLevel().getBlockState(below).getMaterial().blocksMotion()) {
+        if (!player.serverLevel().getBlockState(below).blocksMotion()) {
             throw new IllegalStateException("Teleport did not land on solid ground: " + below);
         }
     }
@@ -470,7 +470,7 @@ public final class NarcissusNetworkSmokeServerRunner {
                 builderType.getMethod("threadDumper", threadDumperType).invoke(builder, threadDumper);
                 Class<?> threadGrouperType = Class.forName("me.lucko.spark.common.sampler.ThreadGrouper", true, loader);
                 Object threadGrouper = threadGrouperType.getField("BY_POOL").get(null);
-                builderType.getMethod("threadGrouper", threadGrouperType).invoke(builder, threadGrouper);
+                builderType.getMethod("threadGrouper", Supplier.class).invoke(builder, threadGrouper);
                 Object sampler = findMethod(builderType, "start", 1).invoke(builder, platform);
                 Object samplerContainer = platform.getClass().getMethod("getSamplerContainer").invoke(platform);
                 findMethod(samplerContainer.getClass(), "setActiveSampler", 1).invoke(samplerContainer, sampler);
@@ -494,9 +494,17 @@ public final class NarcissusNetworkSmokeServerRunner {
                 Object creator = senderDataType.getConstructor(String.class, java.util.UUID.class)
                         .newInstance("Narcissus network smoke", null);
                 propsType.getMethod("creator", senderDataType).invoke(props, creator);
-                Supplier<Object> mergeMode = ReflectiveSparkProfile::newMergeMode;
                 Supplier<Object> classSourceLookup = () -> invokeClassSourceLookup(platform);
-                propsType.getMethod("mergeMode", Supplier.class).invoke(props, mergeMode);
+                Method mergeStrategy = findOptionalMethod(propsType, "mergeStrategy", 1);
+                if (mergeStrategy != null) {
+                    Class<?> mergeStrategyType = Class.forName(
+                            "me.lucko.spark.common.sampler.java.MergeStrategy", true, loader);
+                    Object sameMethod = mergeStrategyType.getField("SAME_METHOD").get(null);
+                    mergeStrategy.invoke(props, sameMethod);
+                } else {
+                    Supplier<Object> mergeMode = ReflectiveSparkProfile::newMergeMode;
+                    propsType.getMethod("mergeMode", Supplier.class).invoke(props, mergeMode);
+                }
                 propsType.getMethod("classSourceLookup", Supplier.class).invoke(props, classSourceLookup);
                 Object proto = findMethod(sampler.getClass(), "toProto", 2).invoke(sampler, platform, props);
                 byte[] data = (byte[]) proto.getClass().getMethod("toByteArray").invoke(proto);
@@ -536,6 +544,15 @@ public final class NarcissusNetworkSmokeServerRunner {
                 }
             }
             throw new IllegalStateException("Missing Spark method " + type.getName() + '#' + name);
+        }
+
+        private static Method findOptionalMethod(Class<?> type, String name, int parameterCount) {
+            for (Method method : type.getMethods()) {
+                if (method.getName().equals(name) && method.getParameterCount() == parameterCount) {
+                    return method;
+                }
+            }
+            return null;
         }
 
         private static Object newMergeMode() {

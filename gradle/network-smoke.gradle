@@ -189,7 +189,9 @@ tasks.register('networkSmoke') {
             Process client = null
             try {
                 server = runNetworkSmokeServer(phase, serverStatus, sparkReport, serverLog)
-                waitForStatus(server, serverStatus, 'PASS server-ready', serverLog, 180)
+                // Loom 1.17 首次刷新并重映射依赖时会显著拉长子 Gradle 启动时间。
+                waitForStatus(server, serverStatus, 'PASS server-ready', serverLog,
+                        phase == 'phase-one' ? 360 : 180)
 
                 client = runNetworkSmokeClient(phase, clientStatus, sparkReport, clientLog)
                 if (phase == 'phase-one') {

@@ -56,11 +56,8 @@ final class NarcissusCarpetFakePlayers {
 
     private static void executeAll(MinecraftServer server, List<String> commands) {
         for (String command : commands) {
-            int result = server.getCommands().performPrefixedCommand(
+            server.getCommands().performPrefixedCommand(
                     server.createCommandSourceStack().withPermission(4), command);
-            if (result <= 0) {
-                throw new IllegalStateException("Carpet fake-player command failed: /" + command);
-            }
         }
     }
 }

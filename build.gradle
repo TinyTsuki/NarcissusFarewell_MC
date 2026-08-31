@@ -1,5 +1,5 @@
 plugins {
-    id 'fabric-loom' version '1.15-SNAPSHOT'
+    id 'fabric-loom' version '1.17.13'
     id 'maven-publish'
 }
 
@@ -82,7 +82,8 @@ repositories {
 
 dependencies {
     modRuntimeOnly "maven.modrinth:fabric-permissions-api:62DUD085"
-    modRuntimeOnly "maven.modrinth:sodium-extra:M9kVcb0e"
+    // Sodium Extra 0.6.x targets the bundled Sodium 0.6 line for Minecraft 1.21.1.
+    modRuntimeOnly "maven.modrinth:sodium-extra:anDafurZ"
     modRuntimeOnly "maven.modrinth:spark:cALUj9l1"
     // Development runtime performance mod; not bundled into published artifacts.
     modRuntimeOnly "maven.modrinth:AANobbMI:u1OEbNKx"
