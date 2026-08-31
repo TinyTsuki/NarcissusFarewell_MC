@@ -118,7 +118,6 @@ public class SafeCoordinateFinder {
      */
     @Nullable
     public SafeWorldCoordinate findViewEndCandidate(ServerPlayer player, boolean safe, int range) {
-        LOGGER.debug("TimeMillis before findViewEndCandidate: {}", System.currentTimeMillis());
         final double stepScale = 0.75;
         final SafeWorldCoordinate start = new SafeWorldCoordinate(player);
         SafeWorldCoordinate result;
@@ -186,7 +185,6 @@ public class SafeCoordinateFinder {
         if (result != null && start.equalsInRange(result, 1)) {
             result = null;
         }
-        LOGGER.debug("TimeMillis after findViewEndCandidate: {}", System.currentTimeMillis());
         return result;
     }
 
@@ -260,7 +258,6 @@ public class SafeCoordinateFinder {
         }
 
         // 按 3D曼哈顿距离 放射状迭代
-        LOGGER.debug("TimeMillis before radial search: {}", System.currentTimeMillis());
         int rangeX = Math.max(Math.abs(chunkMaxX - cx), Math.abs(chunkMinX - cx));
         int rangeZ = Math.max(Math.abs(chunkMaxZ - cz), Math.abs(chunkMinZ - cz));
         int rangeY = Math.max(Math.abs(maxY - cy), Math.abs(minY - cy));
@@ -276,7 +273,6 @@ public class SafeCoordinateFinder {
                         if (x >= chunkMinX && x <= chunkMaxX && z >= chunkMinZ && z <= chunkMaxZ && y >= minY && y <= maxY) {
                             mutablePos.set(x, y, z);
                             if (checker.isSafeBlock(mutablePos.immutable(), belowAllowAir)) {
-                                LOGGER.debug("TimeMillis after radial search: {}", System.currentTimeMillis());
                                 return toResult(mutablePos);
                             }
                         }
@@ -287,7 +283,6 @@ public class SafeCoordinateFinder {
                             if (x >= chunkMinX && x <= chunkMaxX && z >= chunkMinZ && z <= chunkMaxZ && y >= minY && y <= maxY) {
                                 mutablePos.set(x, y, z);
                                 if (checker.isSafeBlock(mutablePos.immutable(), belowAllowAir)) {
-                                    LOGGER.debug("TimeMillis after radial search: {}", System.currentTimeMillis());
                                     return toResult(mutablePos);
                                 }
                             }
@@ -296,7 +291,6 @@ public class SafeCoordinateFinder {
                 }
             }
         }
-        LOGGER.debug("TimeMillis after radial search: {}", System.currentTimeMillis());
         return null;
     }
 
