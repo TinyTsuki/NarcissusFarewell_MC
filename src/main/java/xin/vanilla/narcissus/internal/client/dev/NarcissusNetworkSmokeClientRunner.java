@@ -120,7 +120,9 @@ public final class NarcissusNetworkSmokeClientRunner {
         }
         PlayerTeleportData data = PlayerTeleportData.getData(client.player);
         if (data.getTeleportCountdownSeconds(EnumTeleportType.TP_HOME) != NarcissusNetworkSmokeFixture.COUNTDOWN) {
-            throw new IllegalStateException("Player countdown did not round-trip");
+            // 远端登录初始同步与本次 C2S 配置回包可能相邻到达；只接受目标值，继续等待较早的同步包之后的回包。
+            syncGeneration = NarcissusClientSyncState.playerDataGeneration();
+            return;
         }
         NarcissusNetworkSmokeStatus.append("PASS config-roundtrip");
         syncGeneration = NarcissusClientSyncState.playerDataGeneration();

@@ -85,6 +85,8 @@ dependencies {
     modRuntimeOnly "maven.modrinth:spark:XGW2fviP"
     // Development runtime performance mod; not bundled into published artifacts.
     modRuntimeOnly "maven.modrinth:AANobbMI:OihdIimA"
+    // Dedicated-server smoke uses Carpet fake players for bounded multiplayer load.
+    modRuntimeOnly "maven.modrinth:carpet:K0Wj117C"
     minecraft "com.mojang:minecraft:${project.minecraft_version}"
     mappings loom.officialMojangMappings()
     modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
