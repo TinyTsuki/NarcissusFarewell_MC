@@ -37,9 +37,12 @@ public final class NarcissusNetworkSmokeServerRunner {
     private static double gameplayOriginZ;
     private static GameplayStep gameplayStep = GameplayStep.PREPARE_RANDOM;
     private static ReflectiveSparkProfile sparkProfile;
+    private static NarcissusNetworkSmokeWorkload workload;
+    private static int workloadSearches;
 
     private static final int GAMEPLAY_TIMEOUT_TICKS = 800;
     private static final double PREPARED_GROUND_PLAYER_Y = 65.0D;
+    private static final int WORKLOAD_SEARCHES_PER_TICK = 4;
 
     private NarcissusNetworkSmokeServerRunner() {
     }
@@ -106,7 +109,7 @@ public final class NarcissusNetworkSmokeServerRunner {
                     NarcissusNetworkSmokeStatus.append("PASS spark-profiler-active");
                 }
                 prepareSafeGround(level);
-                player.teleportTo(level, 0.5D, 70.0D, 0.5D, -90.0F, 35.0F);
+                player.teleportTo(level, 0.5D, 70.0D, 0.5D, -90.0F, 0.0F);
                 gameplayOriginX = player.getX();
                 gameplayOriginZ = player.getZ();
                 // 保留真实的随机横向坐标与异步安全搜索，但固定在烟测铺设地面的相邻高度。
@@ -127,7 +130,7 @@ public final class NarcissusNetworkSmokeServerRunner {
                 }
                 assertSafeGround(player);
                 NarcissusNetworkSmokeStatus.append("PASS random-safe-teleport");
-                player.teleportTo(level, 0.5D, 70.0D, 0.5D, -90.0F, 35.0F);
+                player.teleportTo(level, 0.5D, 70.0D, 0.5D, -90.0F, 0.0F);
                 gameplayOriginX = player.getX();
                 gameplayOriginZ = player.getZ();
                 prepareViewCollisionRing(level);
@@ -152,6 +155,14 @@ public final class NarcissusNetworkSmokeServerRunner {
                     return false;
                 }
                 NarcissusNetworkSmokeStatus.append("PASS view-end-teleport");
+                player.teleportTo(level, 0.5D, 70.0D, 0.5D, -90.0F, 0.0F);
+                workload = new NarcissusNetworkSmokeWorkload(gameplayTicks);
+                NarcissusNetworkSmokeStatus.append("START sustained-coordinate-workload");
+                gameplayStep = GameplayStep.SUSTAINED;
+                return false;
+            case SUSTAINED:
+                if (!runSustainedCoordinateWorkload(player)) return false;
+                NarcissusNetworkSmokeStatus.append("PASS sustained-coordinate-workload");
                 gameplayStep = GameplayStep.COMPLETE;
                 return true;
             case COMPLETE:
@@ -159,6 +170,24 @@ public final class NarcissusNetworkSmokeServerRunner {
             default:
                 throw new IllegalStateException("Unknown gameplay smoke step " + gameplayStep);
         }
+    }
+
+    private static boolean runSustainedCoordinateWorkload(ServerPlayer player) {
+        if (workload == null) throw new IllegalStateException("Missing sustained coordinate workload");
+        ServerLevel level = player.getLevel();
+        SafeWorldCoordinate seed = new SafeWorldCoordinate(0.5D, PREPARED_GROUND_PLAYER_Y, 0.5D, level.dimension()).safe(true);
+        for (int index = 0; index < WORKLOAD_SEARCHES_PER_TICK; index++) {
+            if (NarcissusUtils.findSafeCoordinate(seed.clone(), false) == null) {
+                throw new IllegalStateException("Sustained safe-coordinate search found no result");
+            }
+            if (NarcissusUtils.findViewEndCandidate(player, false, 16) == null) {
+                throw new IllegalStateException("Sustained view-end search found no result");
+            }
+            workloadSearches += 2;
+        }
+        if (!workload.completeAt(gameplayTicks)) return false;
+        if (workloadSearches <= 0) throw new IllegalStateException("Sustained coordinate workload did not execute");
+        return true;
     }
 
     private static void prepareSafeGround(ServerLevel level) {
@@ -255,6 +284,7 @@ public final class NarcissusNetworkSmokeServerRunner {
         WAIT_RANDOM,
         PREPARE_VIEW,
         WAIT_VIEW,
+        SUSTAINED,
         COMPLETE
     }
 
