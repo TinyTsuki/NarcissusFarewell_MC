@@ -18,6 +18,11 @@ import xin.vanilla.narcissus.network.packet.AccessListEditToServer;
 import xin.vanilla.narcissus.network.packet.PlayerConfigSyncToServer;
 
 import javax.annotation.Nonnull;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 /**
  * 自动连接独立服务端并验证玩家配置与访问名单的真实网络往返。
@@ -68,6 +73,9 @@ public final class NarcissusNetworkSmokeClientRunner {
                     break;
                 case ACCESS_ECHO:
                     waitForAccessEcho(client);
+                    break;
+                case SERVER_GAMEPLAY:
+                    waitForServerGameplay(client);
                     break;
                 case SERVER_SETTLE:
                     waitForServerSettle(client);
@@ -136,9 +144,27 @@ public final class NarcissusNetworkSmokeClientRunner {
         }
         NarcissusNetworkSmokeFixture.verifyAccess(PlayerTeleportData.getData(client.player).getAccess());
         NarcissusNetworkSmokeStatus.append("PASS access-list-roundtrip");
-        // 留出一个短窗口，让服务端 tick 在玩家离线前验证同一份数据。
-        state = State.SERVER_SETTLE;
+        state = State.SERVER_GAMEPLAY;
         ticks = 0;
+    }
+
+    private void waitForServerGameplay(Minecraft client) throws IOException {
+        String configured = System.getProperty(NarcissusNetworkSmokeStatus.STATUS_PROPERTY, "").trim();
+        if (configured.isEmpty()) {
+            throw new IllegalStateException("Missing " + NarcissusNetworkSmokeStatus.STATUS_PROPERTY);
+        }
+        Path serverStatus = NarcissusNetworkSmokeStatus.serverStatusPath(Paths.get(configured));
+        if (!Files.isRegularFile(serverStatus)) {
+            return;
+        }
+        String content = new String(Files.readAllBytes(serverStatus), StandardCharsets.UTF_8);
+        if (content.contains("FAIL ")) {
+            throw new IllegalStateException("Server gameplay workload failed: " + content);
+        }
+        if (content.contains("PASS cross-dimension-follower-teleport")) {
+            state = State.SERVER_SETTLE;
+            ticks = 0;
+        }
     }
 
     private void waitForServerSettle(Minecraft client) {
@@ -176,6 +202,7 @@ public final class NarcissusNetworkSmokeClientRunner {
         LOGIN_SYNC,
         CONFIG_ECHO,
         ACCESS_ECHO,
+        SERVER_GAMEPLAY,
         SERVER_SETTLE,
         FINISHED
     }

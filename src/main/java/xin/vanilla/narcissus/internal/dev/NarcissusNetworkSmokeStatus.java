@@ -18,6 +18,7 @@ public final class NarcissusNetworkSmokeStatus {
     public static final String ENABLE_PROPERTY = "narcissus.networkSmoke";
     public static final String PHASE_PROPERTY = "narcissus.networkSmoke.phase";
     public static final String STATUS_PROPERTY = "narcissus.networkSmoke.status";
+    public static final String SPARK_REPORT_PROPERTY = "narcissus.networkSmoke.sparkReport";
 
     private static final Logger LOGGER = LogManager.getLogger();
 
@@ -31,6 +32,11 @@ public final class NarcissusNetworkSmokeStatus {
     @Nonnull
     public static String phase() {
         return System.getProperty(PHASE_PROPERTY, "").trim();
+    }
+
+    @Nonnull
+    public static String sparkReport() {
+        return System.getProperty(SPARK_REPORT_PROPERTY, "").trim();
     }
 
     public static synchronized void append(@Nonnull String line) {
@@ -50,5 +56,14 @@ public final class NarcissusNetworkSmokeStatus {
         } catch (IOException error) {
             throw new IllegalStateException("Failed to write network smoke status " + path, error);
         }
+    }
+
+    @Nonnull
+    public static Path serverStatusPath(@Nonnull Path clientStatus) {
+        Path filename = clientStatus.getFileName();
+        if (filename == null || !filename.toString().startsWith("client-")) {
+            throw new IllegalArgumentException("Expected a client network smoke status path: " + clientStatus);
+        }
+        return clientStatus.resolveSibling("server-" + filename.toString().substring("client-".length()));
     }
 }
