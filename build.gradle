@@ -35,6 +35,7 @@ configurations.configureEach {
 
 repositories {
     maven { name = "CurseMaven"; url = "https://www.cursemaven.com" }
+    maven { name = 'Fabric'; url = 'https://maven.fabricmc.net/' }
     mavenLocal()
     maven {
         name = 'Terraformers Maven'
@@ -52,11 +53,31 @@ repositories {
     }
 }
 
+configurations {
+    networkSmokeFabricInstaller
+    networkSmokeFabricApiRuntime
+    networkSmokeCarpetRuntime
+    networkSmokeSparkRuntime
+    networkSmokeBaniraRuntime
+}
+
 dependencies {
     modRuntimeOnly "maven.modrinth:sodium-extra:Et3PybAh"
     modRuntimeOnly "curse.maven:spark-361579:3337642"
     // Development runtime performance mod; not bundled into published artifacts.
     modRuntimeOnly "maven.modrinth:AANobbMI:YAGZ1cCS"
+    // Dedicated-server smoke uses Carpet fake players for bounded multiplayer load.
+    modRuntimeOnly "maven.modrinth:carpet:WwXcEAQl"
+
+    // The 1.16.5 network smoke starts a real Fabric server so Carpet remains
+    // compatible with this project's official Mojang development mappings.
+    networkSmokeFabricInstaller "net.fabricmc:fabric-installer:0.11.2"
+    networkSmokeFabricApiRuntime "curse.maven:fabric-api-306612:3516413"
+    networkSmokeCarpetRuntime "maven.modrinth:carpet:WwXcEAQl"
+    networkSmokeSparkRuntime "curse.maven:spark-361579:3337642"
+    networkSmokeBaniraRuntime(baniraCodexCoords) {
+        changing = true
+    }
     minecraft "com.mojang:minecraft:${project.minecraft_version}"
     mappings loom.officialMojangMappings()
     modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
@@ -183,3 +204,4 @@ tasks.withType(PublishToMavenLocal).configureEach {
 }
 
 apply from: 'gradle/network-smoke.gradle'
+apply from: 'gradle/spark-profile-report.gradle'

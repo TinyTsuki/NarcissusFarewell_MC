@@ -17,6 +17,10 @@ import xin.vanilla.narcissus.network.packet.AccessListEditToServer;
 import xin.vanilla.narcissus.network.packet.PlayerConfigSyncToServer;
 
 import javax.annotation.Nonnull;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 
 /**
  * 自动连接独立服务端并验证玩家配置与访问名单的真实网络往返。
@@ -24,7 +28,8 @@ import javax.annotation.Nonnull;
 public final class NarcissusNetworkSmokeClientRunner {
     private static final Logger LOGGER = LogManager.getLogger();
     private static final int TIMEOUT_TICKS = 1200;
-    private static final int SERVER_SETTLE_TICKS = 20;
+    private static final String SERVER_STATUS_PROPERTY = "narcissus.networkSmoke.serverStatus";
+    private static final String PHASE_ONE_WORKLOAD_FINISHED = "PASS carpet-fake-player-cleanup";
 
     private static NarcissusNetworkSmokeClientRunner instance;
 
@@ -119,7 +124,10 @@ public final class NarcissusNetworkSmokeClientRunner {
         }
         PlayerTeleportData data = PlayerTeleportData.getData(client.player);
         if (data.getTeleportCountdownSeconds(EnumTeleportType.TP_HOME) != NarcissusNetworkSmokeFixture.COUNTDOWN) {
-            throw new IllegalStateException("Player countdown did not round-trip");
+            // The login packet and the C2S echo can arrive in either order. Keep waiting
+            // until the exact sentinel returns instead of treating the first packet as the echo.
+            syncGeneration = NarcissusClientSyncState.playerDataGeneration();
+            return;
         }
         NarcissusNetworkSmokeStatus.append("PASS config-roundtrip");
         syncGeneration = NarcissusClientSyncState.playerDataGeneration();
@@ -141,8 +149,23 @@ public final class NarcissusNetworkSmokeClientRunner {
     }
 
     private void waitForServerSettle(Minecraft client) {
-        if (ticks >= SERVER_SETTLE_TICKS) {
+        if (serverStatusContains("FAIL ")) {
+            throw new IllegalStateException("Server failed while running the phase-one gameplay workload");
+        }
+        if (serverStatusContains(PHASE_ONE_WORKLOAD_FINISHED)) {
             finish(client, "phase-one");
+        }
+    }
+
+    private static boolean serverStatusContains(String marker) {
+        String configured = System.getProperty(SERVER_STATUS_PROPERTY, "").trim();
+        if (configured.isEmpty()) {
+            throw new IllegalStateException("Missing " + SERVER_STATUS_PROPERTY);
+        }
+        try {
+            return new String(Files.readAllBytes(Paths.get(configured)), StandardCharsets.UTF_8).contains(marker);
+        } catch (IOException ignored) {
+            return false;
         }
     }
 
