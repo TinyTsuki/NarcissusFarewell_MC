@@ -13,12 +13,14 @@ if (smokeChild) {
     layout.buildDirectory.set(file(project.property('narcissus.networkSmoke.buildDir')))
     String phase = project.property('narcissus.networkSmoke.phase').toString()
     String status = project.property('narcissus.networkSmoke.status').toString()
+    String serverStatus = project.property('narcissus.networkSmoke.serverStatus').toString()
     String sparkReport = project.property('narcissus.networkSmoke.sparkReport').toString()
     loom.runs {
         configureEach {
             property 'narcissus.networkSmoke', 'true'
             property 'narcissus.networkSmoke.phase', phase
             property 'narcissus.networkSmoke.status', status
+            property 'narcissus.networkSmoke.serverStatus', serverStatus
             property 'narcissus.networkSmoke.sparkReport', sparkReport
         }
         server {
@@ -82,7 +84,7 @@ def waitForStatus = { Process process, File status, String marker, File log, int
     throw new GradleException("Timed out waiting for '${marker}':\n${tailUtf8(log, 120)}")
 }
 
-def gradleCommand = { String runTask, String phase, File status, File sparkReport, File childBuildDir, File projectCacheDir,
+def gradleCommand = { List<String> tasks, String phase, File status, File sparkReport, File childBuildDir, File projectCacheDir,
                       boolean refreshDependencies ->
     File wrapper = file("${projectDir}/${System.getProperty('os.name').toLowerCase().contains('windows') ? 'gradlew.bat' : 'gradlew'}")
     List<String> command = []
@@ -91,14 +93,15 @@ def gradleCommand = { String runTask, String phase, File status, File sparkRepor
     } else {
         command.add(wrapper.absolutePath)
     }
+    command.addAll(tasks)
     command.addAll([
-            runTask,
             '--no-daemon',
             '--console=plain',
             '--project-cache-dir', projectCacheDir.absolutePath,
             '-Pnarcissus.networkSmoke.child=true',
             "-Pnarcissus.networkSmoke.phase=${phase}".toString(),
             "-Pnarcissus.networkSmoke.status=${status.absolutePath}".toString(),
+            "-Pnarcissus.networkSmoke.serverStatus=${new File(status.parentFile, "server-${phase}.status").absolutePath}".toString(),
             "-Pnarcissus.networkSmoke.sparkReport=${sparkReport.absolutePath}".toString(),
             "-Pnarcissus.networkSmoke.buildDir=${childBuildDir.absolutePath}".toString()
     ])
@@ -116,11 +119,34 @@ def startGradleRun = { String runTask, String phase, File status, File sparkRepo
     projectCacheDir.mkdirs()
     log.parentFile.mkdirs()
     ProcessBuilder builder = new ProcessBuilder(gradleCommand(
-            runTask, phase, status, sparkReport, childBuildDir, projectCacheDir, refreshDependencies))
+            [runTask], phase, status, sparkReport, childBuildDir, projectCacheDir, refreshDependencies))
     builder.directory(projectDir)
     builder.redirectErrorStream(true)
     builder.redirectOutput(log)
     return builder.start()
+}
+
+def prepareNetworkSmokeRuntime = { String runTask, String phase, File status, File sparkReport, File log ->
+    File childRoot = new File(smokeRoot, runTask == 'runServer' ? 'server-gradle' : 'client-gradle')
+    File childBuildDir = new File(childRoot, 'build')
+    File projectCacheDir = new File(childRoot, 'project-cache')
+    childBuildDir.mkdirs()
+    projectCacheDir.mkdirs()
+    log.parentFile.mkdirs()
+    ProcessBuilder builder = new ProcessBuilder(gradleCommand(
+            ['classes', 'generateLog4jConfig', 'generateRemapClasspath', 'generateDLIConfig', 'configureLaunch'],
+            phase, status, sparkReport, childBuildDir, projectCacheDir, true))
+    builder.directory(projectDir)
+    builder.redirectErrorStream(true)
+    builder.redirectOutput(log)
+    Process preparation = builder.start()
+    if (!preparation.waitFor(8, TimeUnit.MINUTES)) {
+        destroyProcessTree(preparation)
+        throw new GradleException("Network smoke runtime preparation timed out for ${runTask}:\n${tailUtf8(log, 120)}")
+    }
+    if (preparation.exitValue() != 0) {
+        throw new GradleException("Network smoke runtime preparation failed for ${runTask} (exit ${preparation.exitValue()}):\n${tailUtf8(log, 120)}")
+    }
 }
 
 def stopServer = { Process server, File log ->
@@ -143,13 +169,12 @@ def verifyMarkers = { File status, List<String> markers ->
     }
 }
 
-def runNetworkSmokeServer = { String phase, File status, File sparkReport, File log ->
-    // 首个子进程刷新一次 Loom 的本地 Maven 重映射缓存，后续阶段复用同一结果。
-    startGradleRun('runServer', phase, status, sparkReport, log, phase == 'phase-one')
+def runNetworkSmokeServer = { String phase, File serverStatus, File sparkReport, File serverLog ->
+    startGradleRun('runServer', phase, serverStatus, sparkReport, serverLog, false)
 }
 
-def runNetworkSmokeClient = { String phase, File status, File sparkReport, File log ->
-    startGradleRun('runClient', phase, status, sparkReport, log, false)
+def runNetworkSmokeClient = { String phase, File clientStatus, File sparkReport, File clientLog ->
+    startGradleRun('runClient', phase, clientStatus, sparkReport, clientLog, false)
 }
 
 tasks.register('networkSmoke') {
@@ -188,6 +213,12 @@ tasks.register('networkSmoke') {
             Process server = null
             Process client = null
             try {
+                if (phase == 'phase-one') {
+                    prepareNetworkSmokeRuntime('runServer', phase, serverStatus, sparkReport,
+                            new File(evidence, 'server-runtime-preparation.log'))
+                    prepareNetworkSmokeRuntime('runClient', phase, clientStatus, sparkReport,
+                            new File(evidence, 'client-runtime-preparation.log'))
+                }
                 server = runNetworkSmokeServer(phase, serverStatus, sparkReport, serverLog)
                 waitForStatus(server, serverStatus, 'PASS server-ready', serverLog, 180)
 
