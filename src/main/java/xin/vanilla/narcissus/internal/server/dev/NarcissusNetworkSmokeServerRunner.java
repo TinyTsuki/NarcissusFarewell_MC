@@ -192,7 +192,7 @@ public final class NarcissusNetworkSmokeServerRunner {
             SafeWorldCoordinate target = SafeWorldCoordinate.random(player, SAFE_RANDOM_RANGE);
             target.y(FIXTURE_Y);
             target.safe(true);
-            preparePlatform((ServerLevel) player.level, target.xInt(), target.zInt());
+            preparePlatform(player.serverLevel(), target.xInt(), target.zInt());
             pendingBefore = new SafeWorldCoordinate(player);
             teleportPending = true;
             NarcissusUtils.teleportTo(player, target, EnumTeleportType.TP_RANDOM, SAFE_RANDOM_RANGE);
@@ -201,7 +201,7 @@ public final class NarcissusNetworkSmokeServerRunner {
         if (!movedFromPendingStart(player)) {
             return false;
         }
-        if (!new SafeBlockChecker(player.level).isSafeBlock(player.blockPosition(), false)) {
+        if (!new SafeBlockChecker(player.serverLevel()).isSafeBlock(player.blockPosition(), false)) {
             throw new IllegalStateException("Safe random teleport landed on an unsafe block: " + player.blockPosition());
         }
         teleportPending = false;
@@ -214,7 +214,7 @@ public final class NarcissusNetworkSmokeServerRunner {
 
     private static boolean runViewEndTeleport(ServerPlayer player) {
         if (!teleportPending) {
-            ServerLevel level = (ServerLevel) player.level;
+            ServerLevel level = player.serverLevel();
             int startX = player.blockPosition().getX();
             int startZ = player.blockPosition().getZ();
             prepareViewFixture(level, startX, startZ);
@@ -223,6 +223,8 @@ public final class NarcissusNetworkSmokeServerRunner {
             if (target == null) {
                 throw new IllegalStateException("View-end search did not find the prepared safe landing");
             }
+            target.y(FIXTURE_Y);
+            preparePlatform(level, target.xInt(), target.zInt());
             pendingBefore = new SafeWorldCoordinate(player);
             teleportPending = true;
             NarcissusUtils.teleportTo(player, target.safe(true), EnumTeleportType.TP_VIEW);
@@ -231,7 +233,7 @@ public final class NarcissusNetworkSmokeServerRunner {
         if (!movedFromPendingStart(player)) {
             return false;
         }
-        if (!new SafeBlockChecker(player.level).isSafeBlock(player.blockPosition(), false)) {
+        if (!new SafeBlockChecker(player.serverLevel()).isSafeBlock(player.blockPosition(), false)) {
             throw new IllegalStateException("View-end teleport landed on an unsafe block: " + player.blockPosition());
         }
         teleportPending = false;
@@ -250,22 +252,22 @@ public final class NarcissusNetworkSmokeServerRunner {
             CommonConfig.get().base().teleportLimit().teleportAcrossDimension(true);
             CommonConfig.get().base().teleportTogether().tpWithFollower(true).tpWithFollowerRange(32);
             preparePlatform(nether, 24, 24);
-            Wolf follower = EntityType.WOLF.create((ServerLevel) player.level);
+            Wolf follower = EntityType.WOLF.create(player.serverLevel());
             if (follower == null) {
                 throw new IllegalStateException("Could not create follower fixture");
             }
             follower.setOwnerUUID(player.getUUID());
             follower.moveTo(player.getX() + 1.0D, player.getY(), player.getZ() + 1.0D, 0.0F, 0.0F);
-            player.level.addFreshEntity(follower);
+            player.serverLevel().addFreshEntity(follower);
             followerId = follower.getUUID();
             pendingBefore = new SafeWorldCoordinate(player);
             teleportPending = true;
             NarcissusUtils.teleportTo(player,
-                    new SafeWorldCoordinate(24.5D, FIXTURE_Y, 24.5D, Level.NETHER), EnumTeleportType.TP_HOME);
+                    new SafeWorldCoordinate(24.5D, FIXTURE_Y, 24.5D, Level.NETHER), EnumTeleportType.OTHER);
             return false;
         }
         Entity follower = followerId == null ? null : nether.getEntity(followerId);
-        if (player.level != nether || !(follower instanceof Wolf)
+        if (player.serverLevel() != nether || !(follower instanceof Wolf)
                 || follower.distanceToSqr(player) > 16.0D) {
             return false;
         }
@@ -276,7 +278,7 @@ public final class NarcissusNetworkSmokeServerRunner {
     }
 
     private static boolean movedFromPendingStart(ServerPlayer player) {
-        return pendingBefore != null && (!player.level.dimension().equals(pendingBefore.dimension())
+        return pendingBefore != null && (!player.serverLevel().dimension().equals(pendingBefore.dimension())
                 || player.distanceToSqr(pendingBefore.x(), pendingBefore.y(), pendingBefore.z()) > 4.0D);
     }
 
@@ -285,12 +287,6 @@ public final class NarcissusNetworkSmokeServerRunner {
             sparkProfile = ReflectiveSparkProfile.start();
             NarcissusNetworkSmokeStatus.append("PASS spark-profiler-active");
         }
-        CommonConfig.get().base().randomTeleport().teleportRandomDistanceLimit(SAFE_RANDOM_RANGE);
-        CommonConfig.get().base().safeTeleport().safeChunkRange(1).setBlockWhenSafeNotFound(false);
-        PlayerTeleportData data = PlayerTeleportData.getData(player);
-        data.setTeleportCountdownSeconds(EnumTeleportType.TP_RANDOM, 0);
-        data.setTeleportCountdownSeconds(EnumTeleportType.TP_VIEW, 0);
-        data.setTeleportCountdownSeconds(EnumTeleportType.TP_HOME, 0);
     }
 
     private static void prepareViewFixture(ServerLevel level, int startX, int startZ) {
