@@ -10,6 +10,10 @@ def smokeChild = (project.findProperty('narcissus.networkSmoke.child') ?: 'false
 
 // 两个游戏进程使用独立输出和项目缓存，避免 ForgeGradle 并发争用文件。
 if (smokeChild) {
+    // Client-only renderer and HUD mods do not participate in the dedicated networking workload.
+    configurations.runtimeClasspath.exclude group: 'curse.maven', module: 'jade-324717'
+    configurations.runtimeClasspath.exclude group: 'maven.modrinth', module: 'embeddium'
+    configurations.runtimeClasspath.exclude group: 'curse.maven', module: 'rubidium-extra-654373'
     layout.buildDirectory.set(file(project.property('narcissus.networkSmoke.buildDir')))
     String phase = project.property('narcissus.networkSmoke.phase').toString()
     String status = project.property('narcissus.networkSmoke.status').toString()
