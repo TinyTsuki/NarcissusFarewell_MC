@@ -13,12 +13,14 @@ if (smokeChild) {
     layout.buildDirectory.set(file(project.property('narcissus.networkSmoke.buildDir')))
     String phase = project.property('narcissus.networkSmoke.phase').toString()
     String status = project.property('narcissus.networkSmoke.status').toString()
+    String serverStatus = project.property('narcissus.networkSmoke.serverStatus').toString()
     String sparkReport = project.property('narcissus.networkSmoke.sparkReport').toString()
     loom.runs {
         configureEach {
             property 'narcissus.networkSmoke', 'true'
             property 'narcissus.networkSmoke.phase', phase
             property 'narcissus.networkSmoke.status', status
+            property 'narcissus.networkSmoke.serverStatus', serverStatus
             property 'narcissus.networkSmoke.sparkReport', sparkReport
         }
         server {
@@ -98,6 +100,7 @@ def gradleCommand = { String runTask, String phase, File status, File sparkRepor
             '-Pnarcissus.networkSmoke.child=true',
             "-Pnarcissus.networkSmoke.phase=${phase}".toString(),
             "-Pnarcissus.networkSmoke.status=${status.absolutePath}".toString(),
+            "-Pnarcissus.networkSmoke.serverStatus=${new File(status.parentFile, "server-${phase}.status").absolutePath}".toString(),
             "-Pnarcissus.networkSmoke.sparkReport=${sparkReport.absolutePath}".toString(),
             "-Pnarcissus.networkSmoke.buildDir=${childBuildDir.absolutePath}".toString()
     ])
