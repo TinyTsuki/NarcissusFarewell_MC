@@ -231,7 +231,7 @@ public final class NarcissusNetworkSmokeServerRunner {
             pendingBefore = new SafeWorldCoordinate(player);
             teleportPending = true;
             NarcissusUtils.teleportTo(player,
-                    new SafeWorldCoordinate(24.5D, FIXTURE_Y, 24.5D, World.NETHER), EnumTeleportType.TP_HOME);
+                    new SafeWorldCoordinate(24.5D, FIXTURE_Y, 24.5D, World.NETHER), EnumTeleportType.OTHER);
             return false;
         }
         Entity follower = followerId == null ? null : nether.getEntity(followerId);
@@ -255,12 +255,6 @@ public final class NarcissusNetworkSmokeServerRunner {
             sparkProfile = ReflectiveSparkProfile.start();
             NarcissusNetworkSmokeStatus.append("PASS spark-profiler-active");
         }
-        CommonConfig.get().base().randomTeleport().teleportRandomDistanceLimit(SAFE_RANDOM_RANGE);
-        CommonConfig.get().base().safeTeleport().safeChunkRange(1).setBlockWhenSafeNotFound(false);
-        PlayerTeleportData data = PlayerTeleportData.getData(player);
-        data.setTeleportCountdownSeconds(EnumTeleportType.TP_RANDOM, 0);
-        data.setTeleportCountdownSeconds(EnumTeleportType.TP_VIEW, 0);
-        data.setTeleportCountdownSeconds(EnumTeleportType.TP_HOME, 0);
     }
 
     private static void prepareViewFixture(ServerWorld level, int startX, int startZ) {
