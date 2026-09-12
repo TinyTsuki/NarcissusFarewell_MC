@@ -53,6 +53,7 @@ public final class NarcissusNetworkSmokeClientRunner {
     private long uiStartedAt;
     private long lastUiCycleAt;
     private int uiCycles;
+    private final NarcissusNetworkSmokeNotificationsCheck notifications = new NarcissusNetworkSmokeNotificationsCheck();
 
     private NarcissusNetworkSmokeClientRunner() {
     }
@@ -146,6 +147,7 @@ public final class NarcissusNetworkSmokeClientRunner {
     private void waitForCustomChannel(Minecraft client) {
         if (client.player == null || !NarcissusNetworkSmokeClientPlan.isCustomChannelReady(
                 ticks, PlayerUtils.isRemoteServerModInstalled(client.player, NarcissusFarewell.MODID))) return;
+        if (!notifications.verifyWhenReceived(client, NarcissusNetworkSmokeStatus.phase())) return;
         if ("phase-one".equals(NarcissusNetworkSmokeStatus.phase())) {
             CompoundNBT countdowns = new CompoundNBT();
             countdowns.putInt(EnumTeleportType.TP_HOME.name(), NarcissusNetworkSmokeFixture.COUNTDOWN);
@@ -185,6 +187,7 @@ public final class NarcissusNetworkSmokeClientRunner {
     }
 
     private void waitForSustainedWorkload(Minecraft client) {
+        if (!notifications.verified()) return;
         if (!plan.readyForUi() || client.getOverlay() != null) return;
         // Status and packet delivery are independent. Do not sample an empty, not-yet-synchronized list.
         if (!NarcissusNetworkSmokeScreens.hasSyncedHomes(client)) return;
@@ -224,6 +227,7 @@ public final class NarcissusNetworkSmokeClientRunner {
     }
 
     private void waitForServerShutdown(Minecraft client) {
+        if (!notifications.verified()) return;
         if (!plan.canFinish(ui != null && ui.verified(), spark != null && spark.written)) return;
         if (!disconnectRequested && client.getConnection() != null) {
             disconnectRequested = true;

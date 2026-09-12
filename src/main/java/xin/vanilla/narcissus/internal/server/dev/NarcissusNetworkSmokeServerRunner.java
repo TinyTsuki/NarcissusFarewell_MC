@@ -8,11 +8,13 @@ import xin.vanilla.banira.api.BaniraServer;
 import xin.vanilla.narcissus.data.player.PlayerTeleportData;
 import xin.vanilla.narcissus.enums.EnumTeleportType;
 import xin.vanilla.narcissus.internal.dev.NarcissusNetworkSmokeFixture;
+import xin.vanilla.narcissus.internal.dev.NarcissusNetworkSmokeNotifications;
 import xin.vanilla.narcissus.internal.dev.NarcissusNetworkSmokeStatus;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.nio.file.Files;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Map;
@@ -29,6 +31,8 @@ public final class NarcissusNetworkSmokeServerRunner {
     private static long fixtureReadyAt;
     private static NarcissusMeasuredTeleports measured;
     private static ReflectiveSparkProfile sparkProfile;
+    private static NarcissusNetworkSmokeNotifications notifications;
+    private static boolean notificationsVerified;
 
     private NarcissusNetworkSmokeServerRunner() { }
 
@@ -57,6 +61,8 @@ public final class NarcissusNetworkSmokeServerRunner {
             }
             ServerPlayerEntity player = server.getPlayerList().getPlayerByName("NetworkSmoke");
             if (player == null) return;
+            if (notifications == null) notifications = new NarcissusNetworkSmokeNotifications(NarcissusNetworkSmokeStatus.phase());
+            if (!notifications.sendWhenReady(player) || !waitForNotificationCheck()) return;
             PlayerTeleportData data = PlayerTeleportData.getData(player);
             if ("phase-two".equals(NarcissusNetworkSmokeStatus.phase())) {
                 NarcissusMeasuredTeleports.verifyRestart(player);
@@ -115,7 +121,27 @@ public final class NarcissusNetworkSmokeServerRunner {
         NarcissusNetworkSmokeFixture.verifyAccess(data.getAccess());
     }
 
+    private static boolean waitForNotificationCheck() {
+        if (notificationsVerified) return true;
+        String phase = NarcissusNetworkSmokeStatus.phase();
+        Path status = Paths.get(System.getProperty(NarcissusNetworkSmokeStatus.STATUS_PROPERTY, "")).toAbsolutePath();
+        if (!status.getFileName().toString().equals("server-" + phase + ".status")) {
+            throw new IllegalStateException("Unexpected smoke server status path " + status);
+        }
+        Path clientStatus = status.resolveSibling("client-" + phase + ".status");
+        try {
+            if (!Files.isRegularFile(clientStatus) || !NarcissusNetworkSmokeNotifications.clientVerified(
+                    phase, Files.readAllLines(clientStatus, StandardCharsets.UTF_8))) return false;
+        } catch (java.io.IOException error) {
+            throw new IllegalStateException("Cannot read notification client acknowledgement", error);
+        }
+        notificationsVerified = true;
+        NarcissusNetworkSmokeStatus.append("PASS notification-client-verified phase=" + phase);
+        return true;
+    }
+
     private static void finish(String phase) {
+        if (!notificationsVerified) throw new IllegalStateException("Cannot finish before notification client check");
         finished = true;
         NarcissusNetworkSmokeStatus.append("FINISHED " + phase);
     }

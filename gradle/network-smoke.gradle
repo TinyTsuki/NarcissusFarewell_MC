@@ -248,6 +248,9 @@ tasks.register('networkSmoke') {
                 waitForStatus(server, serverStatus, 'PASS server-ready', serverLog, 300)
 
                 client = runNetworkSmokeClient(phase, clientStatus, report, clientLog, serverStatus)
+                String notificationsVerified = "PASS notification-regression phase=${phase} types=10 network=10 chat=5 overlay=5 factories=120"
+                waitForStatus(client, clientStatus, notificationsVerified, clientLog, 300)
+                waitForStatus(server, serverStatus, "PASS notification-client-verified phase=${phase}", serverLog, 300)
                 if (phase == 'phase-one') {
                     waitForStatus(client, clientStatus, 'PASS config-roundtrip', clientLog, 300)
                     waitForStatus(client, clientStatus, 'PASS access-list-roundtrip', clientLog, 300)
@@ -280,6 +283,23 @@ tasks.register('networkSmoke') {
                 }
                 if (client.exitValue() != 0) {
                     throw new GradleException("Client exited with ${client.exitValue()}:\n${tailUtf8(clientLog, 120)}")
+                }
+                List<String> runtimeMarkers = [
+                        'RUNTIME xin.vanilla.banira.common.data.Component',
+                        'RUNTIME xin.vanilla.banira.common.util.MessageUtils',
+                        'RUNTIME xin.vanilla.banira.common.notification.NotificationBudget']
+                verifyMarkers(clientStatus, runtimeMarkers + [notificationsVerified,
+                        "PASS notification-real-callers phase=${phase}",
+                        "PASS notification-coverage phase=${phase}", "FINISHED ${phase}"], true)
+                verifyMarkers(serverStatus, runtimeMarkers + [
+                        "PASS notification-routes-submitted phase=${phase} types=10 commands=2",
+                        "PASS notification-real-callers-submitted phase=${phase}",
+                        "PASS notification-client-verified phase=${phase}", "FINISHED ${phase}"], true)
+                ['teleport_request', 'teleport_guard', 'teleport_search', 'teleport_error', 'waypoint',
+                 'interactive_tp_flow', 'interactive_share', 'interactive_help',
+                 'interactive_coordinate_list', 'interactive_query'].each { type ->
+                    verifyMarkers(clientStatus, ["PASS notification-type phase=${phase} type=narcissus_farewell.${type}",
+                                                 "FINISHED ${phase}"], true)
                 }
                 verifyMarkers(clientStatus, phase == 'phase-one'
                         ? ['PASS remote-login-sync', 'PASS config-roundtrip', 'PASS access-list-roundtrip',
