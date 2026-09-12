@@ -295,6 +295,10 @@ tasks.register('networkSmoke') {
                         "PASS notification-routes-submitted phase=${phase} types=10 commands=2",
                         "PASS notification-real-callers-submitted phase=${phase}",
                         "PASS notification-client-verified phase=${phase}", "FINISHED ${phase}"], true)
+                String configMarker = phase == 'phase-one'
+                        ? 'PASS complete-config-snapshot' : 'PASS complete-config-restart'
+                verifyMarkers(clientStatus, [configMarker + ' scope=CLIENT', "FINISHED ${phase}"], true)
+                verifyMarkers(serverStatus, [configMarker + ' scope=COMMON', "FINISHED ${phase}"], true)
                 ['teleport_request', 'teleport_guard', 'teleport_search', 'teleport_error', 'waypoint',
                  'interactive_tp_flow', 'interactive_share', 'interactive_help',
                  'interactive_coordinate_list', 'interactive_query'].each { type ->

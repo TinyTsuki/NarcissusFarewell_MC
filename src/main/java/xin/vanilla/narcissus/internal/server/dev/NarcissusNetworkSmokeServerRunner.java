@@ -7,6 +7,7 @@ import net.minecraftforge.event.TickEvent;
 import xin.vanilla.banira.api.BaniraServer;
 import xin.vanilla.narcissus.data.player.PlayerTeleportData;
 import xin.vanilla.narcissus.enums.EnumTeleportType;
+import xin.vanilla.narcissus.internal.dev.NarcissusNetworkSmokeConfigs;
 import xin.vanilla.narcissus.internal.dev.NarcissusNetworkSmokeFixture;
 import xin.vanilla.narcissus.internal.dev.NarcissusNetworkSmokeNotifications;
 import xin.vanilla.narcissus.internal.dev.NarcissusNetworkSmokeStatus;
@@ -142,6 +143,7 @@ public final class NarcissusNetworkSmokeServerRunner {
 
     private static void finish(String phase) {
         if (!notificationsVerified) throw new IllegalStateException("Cannot finish before notification client check");
+        NarcissusNetworkSmokeConfigs.completeServer(phase);
         finished = true;
         NarcissusNetworkSmokeStatus.append("FINISHED " + phase);
     }

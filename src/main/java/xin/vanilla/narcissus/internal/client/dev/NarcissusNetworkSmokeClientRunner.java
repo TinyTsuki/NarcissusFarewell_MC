@@ -15,6 +15,7 @@ import xin.vanilla.narcissus.data.player.PlayerTeleportData;
 import xin.vanilla.narcissus.enums.EnumTeleportType;
 import xin.vanilla.narcissus.enums.EnumWhiteListMode;
 import xin.vanilla.narcissus.internal.client.NarcissusClientSyncState;
+import xin.vanilla.narcissus.internal.dev.NarcissusNetworkSmokeConfigs;
 import xin.vanilla.narcissus.internal.dev.NarcissusNetworkSmokeFixture;
 import xin.vanilla.narcissus.internal.dev.NarcissusNetworkSmokeStatus;
 import xin.vanilla.narcissus.network.packet.AccessListEditToServer;
@@ -47,6 +48,7 @@ public final class NarcissusNetworkSmokeClientRunner {
     private int ticks;
     private long syncGeneration;
     private boolean disconnectRequested;
+    private boolean configsVerified;
     private NarcissusNetworkSmokeClientPlan plan;
     private NarcissusNetworkSmokeScreens ui;
     private ReflectiveClientSparkProfile spark;
@@ -229,6 +231,10 @@ public final class NarcissusNetworkSmokeClientRunner {
     private void waitForServerShutdown(Minecraft client) {
         if (!notifications.verified()) return;
         if (!plan.canFinish(ui != null && ui.verified(), spark != null && spark.written)) return;
+        if (!configsVerified) {
+            NarcissusNetworkSmokeConfigs.completeClient(NarcissusNetworkSmokeStatus.phase());
+            configsVerified = true;
+        }
         if (!disconnectRequested && client.getConnection() != null) {
             disconnectRequested = true;
             client.getConnection().getConnection().disconnect(new StringTextComponent("Narcissus network smoke complete"));
