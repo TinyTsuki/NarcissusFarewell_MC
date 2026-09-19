@@ -7,7 +7,6 @@ import xin.vanilla.narcissus.data.PlayerAccess;
  */
 public final class NarcissusNetworkSmokeFixture {
     public static final int COUNTDOWN = 37;
-    public static final int TELEPORT_RECORD_LIMIT = 113;
     public static final String ACCESS_UUID = "00000000-0000-0000-0000-000000000002";
 
     private NarcissusNetworkSmokeFixture() {
