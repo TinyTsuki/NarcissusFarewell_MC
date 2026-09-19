@@ -302,6 +302,7 @@ tasks.named('jar', Jar).configure {
 }
 
 apply from: 'gradle/network-smoke.gradle'
+apply from: 'gradle/spark-profile-report.gradle'
 // region 将含 Jar-in-Jar 的 reobf 合并包同步到 builds
 afterEvaluate {
     tasks.named('reobfJarJar').configure {

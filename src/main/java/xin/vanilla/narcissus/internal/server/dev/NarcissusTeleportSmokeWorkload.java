@@ -6,10 +6,12 @@ package xin.vanilla.narcissus.internal.server.dev;
  * completion contract deterministic and unit-testable.
  */
 public final class NarcissusTeleportSmokeWorkload {
-    private static final int SAFE_RANDOM_TELEPORTS = 3;
+    static final int REQUIRED_CYCLES = 20;
 
     private Step current = Step.SAFE_RANDOM;
-    private int safeRandomTeleports;
+    private int cycles;
+
+    public int cycles() { return cycles; }
 
     public Step current() {
         return current;
@@ -18,15 +20,13 @@ public final class NarcissusTeleportSmokeWorkload {
     public void completeCurrent() {
         switch (current) {
             case SAFE_RANDOM:
-                if (++safeRandomTeleports >= SAFE_RANDOM_TELEPORTS) {
-                    current = Step.VIEW_END;
-                }
+                current = Step.VIEW_END;
                 return;
             case VIEW_END:
                 current = Step.CROSS_DIMENSION_FOLLOWER;
                 return;
             case CROSS_DIMENSION_FOLLOWER:
-                current = Step.COMPLETE;
+                current = ++cycles == REQUIRED_CYCLES ? Step.COMPLETE : Step.SAFE_RANDOM;
                 return;
             case COMPLETE:
                 return;
