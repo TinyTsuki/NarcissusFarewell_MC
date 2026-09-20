@@ -1,0 +1,40 @@
+{
+  "schema": {
+    "client.syncHomeMapWaypoint": {
+      "type": "BOOLEAN",
+      "default": true,
+      "min": null,
+      "max": null,
+      "precision": 2,
+      "enum": null,
+      "permission": "INHERIT",
+      "permissionLevel": null,
+      "permissionKey": null,
+      "keyChords": false
+    },
+    "client.syncStageMapWaypoint": {
+      "type": "BOOLEAN",
+      "default": true,
+      "min": null,
+      "max": null,
+      "precision": 2,
+      "enum": null,
+      "permission": "INHERIT",
+      "permissionLevel": null,
+      "permissionKey": null,
+      "keyChords": false
+    }
+  },
+  "unbound": {
+    "client.syncHomeMapWaypoint": true,
+    "client.syncStageMapWaypoint": true
+  },
+  "defaults": {
+    "client.syncHomeMapWaypoint": true,
+    "client.syncStageMapWaypoint": true
+  },
+  "changed": {
+    "client.syncHomeMapWaypoint": false,
+    "client.syncStageMapWaypoint": false
+  }
+}
