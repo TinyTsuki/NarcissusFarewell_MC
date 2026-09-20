@@ -299,6 +299,8 @@ tasks.register('networkSmoke') {
                         ? 'PASS complete-config-snapshot' : 'PASS complete-config-restart'
                 verifyMarkers(clientStatus, [configMarker + ' scope=CLIENT', "FINISHED ${phase}"], true)
                 verifyMarkers(serverStatus, [configMarker + ' scope=COMMON', "FINISHED ${phase}"], true)
+                verifyMarkers(clientStatus, ["PASS generated-config-reads scope=CLIENT phase=${phase} values=2", "FINISHED ${phase}"], true)
+                verifyMarkers(serverStatus, ["PASS generated-config-reads scope=COMMON phase=${phase} values=305", "FINISHED ${phase}"], true)
                 ['teleport_request', 'teleport_guard', 'teleport_search', 'teleport_error', 'waypoint',
                  'interactive_tp_flow', 'interactive_share', 'interactive_help',
                  'interactive_coordinate_list', 'interactive_query'].each { type ->

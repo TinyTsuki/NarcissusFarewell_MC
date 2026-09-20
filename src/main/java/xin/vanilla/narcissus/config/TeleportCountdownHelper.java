@@ -40,7 +40,7 @@ public final class TeleportCountdownHelper {
         if (type == null) {
             return 0;
         }
-        CommonConfig.ServerPerTypeTeleportCountdownView s = CommonConfig.get().teleportCountdown().server();
+        CommonConfigView.TeleportCountdownView.ServerView s = CommonConfig.get().teleportCountdown().server();
         switch (type) {
             case TP_COORDINATE:
                 return s.serverCountdownTpCoordinate();

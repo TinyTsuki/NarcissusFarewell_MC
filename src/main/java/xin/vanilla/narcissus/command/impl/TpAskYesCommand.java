@@ -44,7 +44,7 @@ public final class TpAskYesCommand {
     }
 
     public static LiteralArgumentBuilder<CommandSource> create() {
-        return Commands.literal(CommonConfig.get().command().commandTpAskYes())
+        return Commands.literal(CommonConfig.get().command().tpAsk().commandTpAskYes())
                 .requires(source -> NarcissusUtils.hasCommandPermission(source, EnumCommandType.TP_ASK_YES))
                 .executes(TpAskYesCommand::execute)
                 .then(Commands.argument("requestIndex", IntegerArgumentType.integer(1))

@@ -42,10 +42,10 @@ public final class NarcissusClientBootstrap {
         Consumer<QuickActionContext> action = ctx -> ScreenHelper.openScreen();
         QuickActionContextMenuItem editClientConfig = new QuickActionContextMenuItem(
                 NarcissusComponent.get().transClientAuto("edit_client_config"),
-                ctx -> ConfigEditorScreen.open(ClientConfig.get().holder(), ctx.currentScreen()));
+                ctx -> ConfigEditorScreen.open(xin.vanilla.banira.api.BaniraConfigs.holder(ClientConfig.class), ctx.currentScreen()));
         QuickActionContextMenuItem editCommonConfig = new QuickActionContextMenuItem(
                 NarcissusComponent.get().transClientAuto("edit_common_config"),
-                ctx -> ConfigEditorScreen.open(CommonConfig.get().holder(), ctx.currentScreen()));
+                ctx -> ConfigEditorScreen.open(xin.vanilla.banira.api.BaniraConfigs.holder(CommonConfig.class), ctx.currentScreen()));
         QuickActionContextMenuItem editPlayerConfig = new QuickActionContextMenuItem(
                 NarcissusComponent.get().transClientAuto("edit_player_config"),
                 ctx -> ScreenHelper.openPlayerTeleportPrefsScreen());

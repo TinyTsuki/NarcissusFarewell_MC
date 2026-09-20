@@ -1,7 +1,7 @@
 package xin.vanilla.narcissus.config;
 
 import org.junit.Test;
-import xin.vanilla.narcissus.config.access.CommonConfigAccess;
+import xin.vanilla.narcissus.config.preset.CommonConfigPresets;
 import xin.vanilla.banira.common.config.ConfigHolder;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -12,21 +12,21 @@ public class ConfigPresetBaselineTest {
     @Test public void presetDoesNotOverwriteAnUnrelatedExtensionValue() throws Exception {
         ConfigBaselineFixture fixture = new ConfigBaselineFixture(CommonConfig.class);
         fixture.values.put("extension.keep", "preserve,me");
-        CommonConfigAccess.resetConfig(fixture.holder);
+        CommonConfigPresets.resetConfig(fixture.holder);
         org.junit.Assert.assertEquals("preserve,me", fixture.values.get("extension.keep"));
         org.junit.Assert.assertFalse(fixture.written.contains("extension.keep"));
     }
     @Test public void defaultPresetKeepsItsOriginalCoverage() throws Exception {
-        capture("preset-default", CommonConfigAccess::resetConfig);
+        capture("preset-default", CommonConfigPresets::resetConfig);
     }
     @Test public void modeOneKeepsItsOriginalCoverage() throws Exception {
-        capture("preset-one", CommonConfigAccess::resetConfigWithMode1);
+        capture("preset-one", CommonConfigPresets::resetConfigWithMode1);
     }
     @Test public void modeTwoKeepsItsOriginalCoverageAndSaves() throws Exception {
-        capture("preset-two", CommonConfigAccess::resetConfigWithMode2);
+        capture("preset-two", CommonConfigPresets::resetConfigWithMode2);
     }
     @Test public void modeThreeKeepsItsOriginalCoverage() throws Exception {
-        capture("preset-three", CommonConfigAccess::resetConfigWithMode3);
+        capture("preset-three", CommonConfigPresets::resetConfigWithMode3);
     }
 
     private static void capture(String name, Consumer<ConfigHolder> preset) throws Exception {

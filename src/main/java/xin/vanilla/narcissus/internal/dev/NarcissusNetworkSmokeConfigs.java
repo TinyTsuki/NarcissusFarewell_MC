@@ -13,6 +13,8 @@ import xin.vanilla.banira.common.config.ConfigHolder;
 import xin.vanilla.banira.common.config.ConfigScope;
 import xin.vanilla.narcissus.config.ClientConfig;
 import xin.vanilla.narcissus.config.CommonConfig;
+import xin.vanilla.narcissus.config.CommonConfigView;
+import xin.vanilla.narcissus.config.ClientConfigView;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -25,6 +27,10 @@ import java.util.TreeSet;
 
 /** Dev-only full holder/TOML persistence proof, with separate local scope checkpoints. */
 public final class NarcissusNetworkSmokeConfigs {
+    private static final class RetainedViews {
+        static final CommonConfigView COMMON = CommonConfigView.get();
+        static final ClientConfigView CLIENT = ClientConfigView.get();
+    }
     private static final Gson GSON = new GsonBuilder()
             .registerTypeHierarchyAdapter(Enum.class, (JsonSerializer<Enum<?>>)
                     (value, type, context) -> new JsonPrimitive(value.name()))
@@ -43,10 +49,33 @@ public final class NarcissusNetworkSmokeConfigs {
     private static void completeLocal(Class<?> configClass, ConfigScope scope, String phase) {
         if (!NarcissusNetworkSmokeStatus.enabled()) throw new IllegalStateException("Smoke disabled");
         ConfigHolder holder = BaniraConfig.holder(configClass);
+        verifyGeneratedReads(holder, scope == ConfigScope.CLIENT ? RetainedViews.CLIENT : RetainedViews.COMMON, "");
+        NarcissusNetworkSmokeStatus.append("PASS generated-config-reads scope=" + scope.name()
+                + " phase=" + phase + " values=" + holder.getDescriptors().size());
         int count = complete(holder, scope, phase, Paths.get("config").toAbsolutePath());
         NarcissusNetworkSmokeStatus.append(("phase-one".equals(phase)
                 ? "PASS complete-config-snapshot" : "PASS complete-config-restart")
                 + " scope=" + scope.name() + " config=" + holder.getConfigName() + " values=" + count);
+    }
+
+    private static void verifyGeneratedReads(ConfigHolder holder, Object view, String prefix) {
+        for (java.lang.reflect.Method method : view.getClass().getDeclaredMethods()) {
+            if (!java.lang.reflect.Modifier.isPublic(method.getModifiers())
+                    || java.lang.reflect.Modifier.isStatic(method.getModifiers())
+                    || method.getParameterCount() != 0 || method.getName().equals("handle")) continue;
+            try {
+                Object value = method.invoke(view);
+                String path = prefix + method.getName();
+                if (method.getReturnType().getEnclosingClass() == view.getClass()) {
+                    verifyGeneratedReads(holder, value, path + ".");
+                } else {
+                    if (!holder.hasValue(path)) throw new IllegalStateException("Unknown generated path: " + path);
+                    requireEqual(normalize(holder.get(path)), normalize(value), "generated view " + path);
+                }
+            } catch (ReflectiveOperationException error) {
+                throw new IllegalStateException("Cannot inspect generated config", error);
+            }
+        }
     }
 
     static int complete(ConfigHolder holder, ConfigScope scope, String phase, Path directory) {

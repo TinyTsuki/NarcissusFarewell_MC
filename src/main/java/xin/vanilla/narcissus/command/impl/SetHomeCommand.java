@@ -85,7 +85,7 @@ public final class SetHomeCommand {
     }
 
     public static LiteralArgumentBuilder<CommandSource> create() {
-        return Commands.literal(CommonConfig.get().command().commandSetHome())
+        return Commands.literal(CommonConfig.get().command().tpHome().commandSetHome())
                 .requires(source -> NarcissusUtils.hasCommandPermission(source, EnumCommandType.TP_HOME))
                 .executes(SetHomeCommand::execute)
                 .then(Commands.argument("name", StringArgumentType.string())
