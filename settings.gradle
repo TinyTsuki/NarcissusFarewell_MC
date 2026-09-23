@@ -13,3 +13,5 @@ plugins {
 }
 
 rootProject.name = 'narcissus-farewell'
+
+apply from: 'gradle/config-view-processor-settings.gradle'

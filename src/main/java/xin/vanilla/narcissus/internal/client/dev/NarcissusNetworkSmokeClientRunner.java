@@ -53,6 +53,7 @@ public final class NarcissusNetworkSmokeClientRunner {
     }
 
     private void runTick(Minecraft client) {
+        if (client.getOverlay() != null) return;
         if (++ticks > TIMEOUT_TICKS) {
             fail(client, "Timed out in state " + state);
             return;
@@ -103,6 +104,11 @@ public final class NarcissusNetworkSmokeClientRunner {
             return;
         }
         NarcissusNetworkSmokeStatus.append("PASS remote-login-sync");
+        if ("phase-one".equals(NarcissusNetworkSmokeStatus.phase())) {
+            xin.vanilla.narcissus.config.ClientConfig.get().client().syncHomeMapWaypoint(false);
+            xin.vanilla.narcissus.config.ClientConfig.save();
+        }
+        xin.vanilla.narcissus.internal.dev.NarcissusNetworkSmokeConfigs.verify(true);
         if ("phase-one".equals(NarcissusNetworkSmokeStatus.phase())) {
             CompoundTag countdowns = new CompoundTag();
             countdowns.putInt(EnumTeleportType.TP_HOME.name(), NarcissusNetworkSmokeFixture.COUNTDOWN);

@@ -397,6 +397,8 @@ public final class NarcissusNetworkSmokeServerRunner {
             return;
         }
         data.save();
+        xin.vanilla.narcissus.config.CommonConfig.save();
+        xin.vanilla.narcissus.internal.dev.NarcissusNetworkSmokeConfigs.verify(false);
         NarcissusNetworkSmokeStatus.append("PASS server-config-roundtrip");
         NarcissusNetworkSmokeStatus.append("PASS server-access-list-roundtrip");
         NarcissusNetworkSmokeStatus.append("FINISHED phase-one");
@@ -411,6 +413,7 @@ public final class NarcissusNetworkSmokeServerRunner {
         NarcissusNetworkSmokeStatus.append("PASS persisted-player-config");
         NarcissusNetworkSmokeFixture.verifyAccess(data.getAccess());
         NarcissusNetworkSmokeStatus.append("PASS persisted-access-list");
+        xin.vanilla.narcissus.internal.dev.NarcissusNetworkSmokeConfigs.verify(false);
         NarcissusNetworkSmokeStatus.append("FINISHED phase-two");
         finished = true;
     }

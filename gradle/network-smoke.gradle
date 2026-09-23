@@ -102,7 +102,7 @@ def gradleCommand = { String runTask, String phase, File status, File sparkRepor
 
 def productionServerCommand = { String phase, File status, File sparkReport ->
     return [
-            javaExecutable(),
+            javaToolchains.launcherFor { languageVersion = JavaLanguageVersion.of(8) }.get().executablePath.asFile.absolutePath,
             '-Xmx2G',
             '-Dnarcissus.networkSmoke=true',
             "-Dnarcissus.networkSmoke.phase=${phase}".toString(),
@@ -212,7 +212,7 @@ tasks.register('networkSmoke') {
         if (smokeChild) {
             throw new GradleException('networkSmoke cannot run inside its child Gradle process')
         }
-        delete smokeRoot
+        delete smokeServerDir, smokeClientDir
         smokeServerDir.mkdirs()
         smokeClientDir.mkdirs()
         new File(smokeServerDir, 'eula.txt').setText('eula=true' + System.lineSeparator(), 'UTF-8')
@@ -229,6 +229,19 @@ tasks.register('networkSmoke') {
         evidence.mkdirs()
         File productionServerSetupLog = new File(evidence, 'production-server-setup.log')
         prepareProductionFabricServer(productionServerSetupLog)
+        def sha256 = { File path -> java.security.MessageDigest.getInstance('SHA-256').digest(path.bytes).encodeHex().toString() }
+        def inputs = [:]
+        (fileTree('src').files + fileTree('gradle').files
+                + [file('build.gradle'), file('settings.gradle'), file('gradle.properties')]).findAll { it.isFile() }.each {
+            inputs[project.relativePath(it).replace('\\', '/')] = sha256(it)
+        }
+        def jars = [:]
+        (configurations.runtimeClasspath.files + configurations.modRuntimeOnly.files
+                + fileTree(new File(smokeServerDir, 'mods')).files).findAll {
+            it.isFile() && it.name.endsWith('.jar')
+        }.each { jars[it.absolutePath] = sha256(it) }
+        new File(evidence, 'source-state.json').setText(groovy.json.JsonOutput.prettyPrint(
+                groovy.json.JsonOutput.toJson([files: inputs, runtimeJars: jars])), 'UTF-8')
         def profilerJar = configurations.networkSmokeSparkRuntime.singleFile
         if (profilerJar == null) throw new GradleException('Unable to resolve the Spark runtime jar for network smoke evidence.')
         new File(evidence, 'spark-runtime-phase-one.txt').setText(profilerJar.absolutePath + System.lineSeparator(), 'UTF-8')
@@ -267,18 +280,18 @@ tasks.register('networkSmoke') {
                 waitForStatus(server, serverStatus, "FINISHED ${phase}", serverLog, 30)
                 stopServer(server, serverLog)
                 verifyMarkers(clientStatus, phase == 'phase-one'
-                        ? ['PASS remote-login-sync', 'PASS config-roundtrip', 'PASS access-list-roundtrip',
+                        ? ['PASS complete-config-snapshot', 'PASS remote-login-sync', 'PASS config-roundtrip', 'PASS access-list-roundtrip',
                            'FINISHED phase-one']
-                        : ['PASS remote-login-sync', 'PASS persisted-player-config-client',
+                        : ['PASS complete-config-restart', 'PASS remote-login-sync', 'PASS persisted-player-config-client',
                            'PASS persisted-access-list-client', 'FINISHED phase-two'])
                 verifyMarkers(serverStatus, phase == 'phase-one'
-                        ? ['PASS server-config-roundtrip', 'PASS server-access-list-roundtrip',
+                        ? ['PASS complete-config-snapshot', 'PASS server-config-roundtrip', 'PASS server-access-list-roundtrip',
                            'PASS random-safe-teleport', 'PASS view-end-teleport',
                            'PASS carpet-fake-players-ready', 'PASS carpet-fake-player-teleports',
                            'START sustained-coordinate-workload', 'PASS sustained-coordinate-workload',
                            'PASS carpet-fake-player-cleanup',
                            'FINISHED phase-one', 'PASS server-shutdown']
-                        : ['PASS persisted-player-config', 'PASS persisted-access-list',
+                        : ['PASS complete-config-restart', 'PASS persisted-player-config', 'PASS persisted-access-list',
                            'FINISHED phase-two', 'PASS server-shutdown'])
             } finally {
                 destroyProcessTree(client)
