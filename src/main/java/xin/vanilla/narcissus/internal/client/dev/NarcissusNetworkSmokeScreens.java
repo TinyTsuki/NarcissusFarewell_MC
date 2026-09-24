@@ -285,7 +285,7 @@ public final class NarcissusNetworkSmokeScreens {
 
     private final class ClientConfigView extends ConfigEditorScreen {
         private ClientConfigView() {
-            super(ClientConfig.get().holder(), new ConfigEditorScreen.Args());
+            super(xin.vanilla.banira.api.BaniraConfigs.holder(ClientConfig.class), new ConfigEditorScreen.Args());
         }
 
         @Override

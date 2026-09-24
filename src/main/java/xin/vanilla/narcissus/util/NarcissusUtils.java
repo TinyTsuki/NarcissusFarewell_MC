@@ -124,8 +124,8 @@ public class NarcissusUtils {
         return switch (type) {
             case TP_COORDINATE -> CommonConfig.get().command().commandTpCoordinate();
             case TP_STRUCTURE -> CommonConfig.get().command().commandTpStructure();
-            case TP_ASK -> CommonConfig.get().command().commandTpAsk();
-            case TP_HERE -> CommonConfig.get().command().commandTpHere();
+            case TP_ASK -> CommonConfig.get().command().tpAsk().commandTpAsk();
+            case TP_HERE -> CommonConfig.get().command().tpHere().commandTpHere();
             case TP_RANDOM -> CommonConfig.get().command().commandTpRandom();
             case TP_SPAWN -> CommonConfig.get().command().commandTpSpawn();
             case TP_WORLD_SPAWN -> CommonConfig.get().command().commandTpWorldSpawn();
@@ -134,8 +134,8 @@ public class NarcissusUtils {
             case TP_UP -> CommonConfig.get().command().commandTpUp();
             case TP_DOWN -> CommonConfig.get().command().commandTpDown();
             case TP_VIEW -> CommonConfig.get().command().commandTpView();
-            case TP_HOME -> CommonConfig.get().command().commandTpHome();
-            case TP_STAGE -> CommonConfig.get().command().commandTpStage();
+            case TP_HOME -> CommonConfig.get().command().tpHome().commandTpHome();
+            case TP_STAGE -> CommonConfig.get().command().tpStage().commandTpStage();
             case TP_BACK -> CommonConfig.get().command().commandTpBack();
             case TP_GRAVE -> CommonConfig.get().command().commandTpGrave();
             default -> "";
@@ -180,37 +180,37 @@ public class NarcissusUtils {
             case TP_STRUCTURE_CONCISE:
                 return isConciseEnabled(type) ? CommonConfig.get().command().commandTpStructure() : "";
             case TP_ASK:
-                return prefix + " " + CommonConfig.get().command().commandTpAsk();
+                return prefix + " " + CommonConfig.get().command().tpAsk().commandTpAsk();
             case TP_ASK_CONCISE:
-                return isConciseEnabled(type) ? CommonConfig.get().command().commandTpAsk() : "";
+                return isConciseEnabled(type) ? CommonConfig.get().command().tpAsk().commandTpAsk() : "";
             case TP_ASK_YES:
-                return prefix + " " + CommonConfig.get().command().commandTpAskYes();
+                return prefix + " " + CommonConfig.get().command().tpAsk().commandTpAskYes();
             case TP_ASK_YES_CONCISE:
-                return isConciseEnabled(type) ? CommonConfig.get().command().commandTpAskYes() : "";
+                return isConciseEnabled(type) ? CommonConfig.get().command().tpAsk().commandTpAskYes() : "";
             case TP_ASK_NO:
-                return prefix + " " + CommonConfig.get().command().commandTpAskNo();
+                return prefix + " " + CommonConfig.get().command().tpAsk().commandTpAskNo();
             case TP_ASK_NO_CONCISE:
-                return isConciseEnabled(type) ? CommonConfig.get().command().commandTpAskNo() : "";
+                return isConciseEnabled(type) ? CommonConfig.get().command().tpAsk().commandTpAskNo() : "";
             case TP_ASK_CANCEL:
-                return prefix + " " + CommonConfig.get().command().commandTpAskCancel();
+                return prefix + " " + CommonConfig.get().command().tpAsk().commandTpAskCancel();
             case TP_ASK_CANCEL_CONCISE:
-                return isConciseEnabled(type) ? CommonConfig.get().command().commandTpAskCancel() : "";
+                return isConciseEnabled(type) ? CommonConfig.get().command().tpAsk().commandTpAskCancel() : "";
             case TP_HERE:
-                return prefix + " " + CommonConfig.get().command().commandTpHere();
+                return prefix + " " + CommonConfig.get().command().tpHere().commandTpHere();
             case TP_HERE_CONCISE:
-                return isConciseEnabled(type) ? CommonConfig.get().command().commandTpHere() : "";
+                return isConciseEnabled(type) ? CommonConfig.get().command().tpHere().commandTpHere() : "";
             case TP_HERE_YES:
-                return prefix + " " + CommonConfig.get().command().commandTpHereYes();
+                return prefix + " " + CommonConfig.get().command().tpHere().commandTpHereYes();
             case TP_HERE_YES_CONCISE:
-                return isConciseEnabled(type) ? CommonConfig.get().command().commandTpHereYes() : "";
+                return isConciseEnabled(type) ? CommonConfig.get().command().tpHere().commandTpHereYes() : "";
             case TP_HERE_NO:
-                return prefix + " " + CommonConfig.get().command().commandTpHereNo();
+                return prefix + " " + CommonConfig.get().command().tpHere().commandTpHereNo();
             case TP_HERE_NO_CONCISE:
-                return isConciseEnabled(type) ? CommonConfig.get().command().commandTpHereNo() : "";
+                return isConciseEnabled(type) ? CommonConfig.get().command().tpHere().commandTpHereNo() : "";
             case TP_HERE_CANCEL:
-                return prefix + " " + CommonConfig.get().command().commandTpHereCancel();
+                return prefix + " " + CommonConfig.get().command().tpHere().commandTpHereCancel();
             case TP_HERE_CANCEL_CONCISE:
-                return isConciseEnabled(type) ? CommonConfig.get().command().commandTpHereCancel() : "";
+                return isConciseEnabled(type) ? CommonConfig.get().command().tpHere().commandTpHereCancel() : "";
             case TP_RANDOM:
                 return prefix + " " + CommonConfig.get().command().commandTpRandom();
             case TP_RANDOM_CONCISE:
@@ -246,37 +246,37 @@ public class NarcissusUtils {
             case TP_VIEW_CONCISE:
                 return isConciseEnabled(type) ? CommonConfig.get().command().commandTpView() : "";
             case TP_HOME:
-                return prefix + " " + CommonConfig.get().command().commandTpHome();
+                return prefix + " " + CommonConfig.get().command().tpHome().commandTpHome();
             case TP_HOME_CONCISE:
-                return isConciseEnabled(type) ? CommonConfig.get().command().commandTpHome() : "";
+                return isConciseEnabled(type) ? CommonConfig.get().command().tpHome().commandTpHome() : "";
             case SET_HOME:
-                return prefix + " " + CommonConfig.get().command().commandSetHome();
+                return prefix + " " + CommonConfig.get().command().tpHome().commandSetHome();
             case SET_HOME_CONCISE:
-                return isConciseEnabled(type) ? CommonConfig.get().command().commandSetHome() : "";
+                return isConciseEnabled(type) ? CommonConfig.get().command().tpHome().commandSetHome() : "";
             case DEL_HOME:
-                return prefix + " " + CommonConfig.get().command().commandDelHome();
+                return prefix + " " + CommonConfig.get().command().tpHome().commandDelHome();
             case DEL_HOME_CONCISE:
-                return isConciseEnabled(type) ? CommonConfig.get().command().commandDelHome() : "";
+                return isConciseEnabled(type) ? CommonConfig.get().command().tpHome().commandDelHome() : "";
             case GET_HOME:
-                return prefix + " " + CommonConfig.get().command().commandGetHome();
+                return prefix + " " + CommonConfig.get().command().tpHome().commandGetHome();
             case GET_HOME_CONCISE:
-                return isConciseEnabled(type) ? CommonConfig.get().command().commandGetHome() : "";
+                return isConciseEnabled(type) ? CommonConfig.get().command().tpHome().commandGetHome() : "";
             case TP_STAGE:
-                return prefix + " " + CommonConfig.get().command().commandTpStage();
+                return prefix + " " + CommonConfig.get().command().tpStage().commandTpStage();
             case TP_STAGE_CONCISE:
-                return isConciseEnabled(type) ? CommonConfig.get().command().commandTpStage() : "";
+                return isConciseEnabled(type) ? CommonConfig.get().command().tpStage().commandTpStage() : "";
             case SET_STAGE:
-                return prefix + " " + CommonConfig.get().command().commandSetStage();
+                return prefix + " " + CommonConfig.get().command().tpStage().commandSetStage();
             case SET_STAGE_CONCISE:
-                return isConciseEnabled(type) ? CommonConfig.get().command().commandSetStage() : "";
+                return isConciseEnabled(type) ? CommonConfig.get().command().tpStage().commandSetStage() : "";
             case DEL_STAGE:
-                return prefix + " " + CommonConfig.get().command().commandDelStage();
+                return prefix + " " + CommonConfig.get().command().tpStage().commandDelStage();
             case DEL_STAGE_CONCISE:
-                return isConciseEnabled(type) ? CommonConfig.get().command().commandDelStage() : "";
+                return isConciseEnabled(type) ? CommonConfig.get().command().tpStage().commandDelStage() : "";
             case GET_STAGE:
-                return prefix + " " + CommonConfig.get().command().commandGetStage();
+                return prefix + " " + CommonConfig.get().command().tpStage().commandGetStage();
             case GET_STAGE_CONCISE:
-                return isConciseEnabled(type) ? CommonConfig.get().command().commandGetStage() : "";
+                return isConciseEnabled(type) ? CommonConfig.get().command().tpStage().commandGetStage() : "";
             case TP_BACK:
                 return prefix + " " + CommonConfig.get().command().commandTpBack();
             case TP_BACK_CONCISE:
@@ -304,16 +304,16 @@ public class NarcissusUtils {
         switch (type) {
             case SET_CARD:
             case SET_CARD_CONCISE:
-                return CommonConfig.get().permission().permissionSetCard();
+                return CommonConfig.get().permission().command().permissionSetCard();
             case FEED_OTHER:
             case FEED_OTHER_CONCISE:
-                return CommonConfig.get().permission().permissionFeedOther();
+                return CommonConfig.get().permission().command().permissionFeedOther();
             case TP_COORDINATE:
             case TP_COORDINATE_CONCISE:
-                return CommonConfig.get().permission().permissionTpCoordinate();
+                return CommonConfig.get().permission().command().permissionTpCoordinate();
             case TP_STRUCTURE:
             case TP_STRUCTURE_CONCISE:
-                return CommonConfig.get().permission().permissionTpStructure();
+                return CommonConfig.get().permission().command().permissionTpStructure();
             case TP_ASK:
             case TP_ASK_CANCEL:
                 // case TP_ASK_YES:
@@ -322,7 +322,7 @@ public class NarcissusUtils {
             case TP_ASK_CANCEL_CONCISE:
                 // case TP_ASK_YES_CONCISE:
                 // case TP_ASK_NO_CONCISE:
-                return CommonConfig.get().permission().permissionTpAsk();
+                return CommonConfig.get().permission().command().permissionTpAsk();
             case TP_HERE:
             case TP_HERE_CANCEL:
                 // case TP_HERE_YES:
@@ -331,34 +331,34 @@ public class NarcissusUtils {
             case TP_HERE_CANCEL_CONCISE:
                 // case TP_HERE_YES_CONCISE:
                 // case TP_HERE_NO_CONCISE:
-                return CommonConfig.get().permission().permissionTpHere();
+                return CommonConfig.get().permission().command().permissionTpHere();
             case TP_RANDOM:
             case TP_RANDOM_CONCISE:
-                return CommonConfig.get().permission().permissionTpRandom();
+                return CommonConfig.get().permission().command().permissionTpRandom();
             case TP_SPAWN:
             case TP_SPAWN_CONCISE:
-                return CommonConfig.get().permission().permissionTpSpawn();
+                return CommonConfig.get().permission().command().permissionTpSpawn();
             case TP_SPAWN_OTHER:
             case TP_SPAWN_OTHER_CONCISE:
-                return CommonConfig.get().permission().permissionTpSpawnOther();
+                return CommonConfig.get().permission().command().permissionTpSpawnOther();
             case TP_WORLD_SPAWN:
             case TP_WORLD_SPAWN_CONCISE:
-                return CommonConfig.get().permission().permissionTpWorldSpawn();
+                return CommonConfig.get().permission().command().permissionTpWorldSpawn();
             case TP_TOP:
             case TP_TOP_CONCISE:
-                return CommonConfig.get().permission().permissionTpTop();
+                return CommonConfig.get().permission().command().permissionTpTop();
             case TP_BOTTOM:
             case TP_BOTTOM_CONCISE:
-                return CommonConfig.get().permission().permissionTpBottom();
+                return CommonConfig.get().permission().command().permissionTpBottom();
             case TP_UP:
             case TP_UP_CONCISE:
-                return CommonConfig.get().permission().permissionTpUp();
+                return CommonConfig.get().permission().command().permissionTpUp();
             case TP_DOWN:
             case TP_DOWN_CONCISE:
-                return CommonConfig.get().permission().permissionTpDown();
+                return CommonConfig.get().permission().command().permissionTpDown();
             case TP_VIEW:
             case TP_VIEW_CONCISE:
-                return CommonConfig.get().permission().permissionTpView();
+                return CommonConfig.get().permission().command().permissionTpView();
             case TP_HOME:
             case SET_HOME:
             case DEL_HOME:
@@ -367,31 +367,31 @@ public class NarcissusUtils {
             case SET_HOME_CONCISE:
             case DEL_HOME_CONCISE:
             case GET_HOME_CONCISE:
-                return CommonConfig.get().permission().permissionTpHome();
+                return CommonConfig.get().permission().command().permissionTpHome();
             case TP_STAGE:
             case TP_STAGE_CONCISE:
-                return CommonConfig.get().permission().permissionTpStage();
+                return CommonConfig.get().permission().command().permissionTpStage();
             case SET_STAGE:
             case SET_STAGE_CONCISE:
-                return CommonConfig.get().permission().permissionTpStageSet();
+                return CommonConfig.get().permission().command().permissionTpStageSet();
             case DEL_STAGE:
             case DEL_STAGE_CONCISE:
-                return CommonConfig.get().permission().permissionTpStageDel();
+                return CommonConfig.get().permission().command().permissionTpStageDel();
             case GET_STAGE:
             case GET_STAGE_CONCISE:
-                return CommonConfig.get().permission().permissionTpStageGet();
+                return CommonConfig.get().permission().command().permissionTpStageGet();
             case TP_BACK:
             case TP_BACK_CONCISE:
-                return CommonConfig.get().permission().permissionTpBack();
+                return CommonConfig.get().permission().command().permissionTpBack();
             case TP_GRAVE:
             case TP_GRAVE_CONCISE:
-                return CommonConfig.get().permission().permissionTpGrave();
+                return CommonConfig.get().permission().command().permissionTpGrave();
             case FLY:
             case FLY_CONCISE:
-                return CommonConfig.get().permission().permissionFly();
+                return CommonConfig.get().permission().command().permissionFly();
             case VIRTUAL_OP:
             case VIRTUAL_OP_CONCISE:
-                return CommonConfig.get().permission().permissionVirtualOp();
+                return CommonConfig.get().permission().command().permissionVirtualOp();
             default:
                 return 0;
         }
@@ -400,35 +400,35 @@ public class NarcissusUtils {
     public static int getCommandPermissionLevel(EnumTeleportType type) {
         switch (type) {
             case TP_COORDINATE:
-                return CommonConfig.get().permission().permissionTpCoordinate();
+                return CommonConfig.get().permission().command().permissionTpCoordinate();
             case TP_STRUCTURE:
-                return CommonConfig.get().permission().permissionTpStructure();
+                return CommonConfig.get().permission().command().permissionTpStructure();
             case TP_ASK:
-                return CommonConfig.get().permission().permissionTpAsk();
+                return CommonConfig.get().permission().command().permissionTpAsk();
             case TP_HERE:
-                return CommonConfig.get().permission().permissionTpHere();
+                return CommonConfig.get().permission().command().permissionTpHere();
             case TP_RANDOM:
-                return CommonConfig.get().permission().permissionTpRandom();
+                return CommonConfig.get().permission().command().permissionTpRandom();
             case TP_SPAWN:
-                return CommonConfig.get().permission().permissionTpSpawn();
+                return CommonConfig.get().permission().command().permissionTpSpawn();
             case TP_WORLD_SPAWN:
-                return CommonConfig.get().permission().permissionTpWorldSpawn();
+                return CommonConfig.get().permission().command().permissionTpWorldSpawn();
             case TP_TOP:
-                return CommonConfig.get().permission().permissionTpTop();
+                return CommonConfig.get().permission().command().permissionTpTop();
             case TP_BOTTOM:
-                return CommonConfig.get().permission().permissionTpBottom();
+                return CommonConfig.get().permission().command().permissionTpBottom();
             case TP_UP:
-                return CommonConfig.get().permission().permissionTpUp();
+                return CommonConfig.get().permission().command().permissionTpUp();
             case TP_DOWN:
-                return CommonConfig.get().permission().permissionTpDown();
+                return CommonConfig.get().permission().command().permissionTpDown();
             case TP_VIEW:
-                return CommonConfig.get().permission().permissionTpView();
+                return CommonConfig.get().permission().command().permissionTpView();
             case TP_HOME:
-                return CommonConfig.get().permission().permissionTpHome();
+                return CommonConfig.get().permission().command().permissionTpHome();
             case TP_STAGE:
-                return CommonConfig.get().permission().permissionTpStage();
+                return CommonConfig.get().permission().command().permissionTpStage();
             case TP_BACK:
-                return CommonConfig.get().permission().permissionTpBack();
+                return CommonConfig.get().permission().command().permissionTpBack();
             default:
                 return 0;
         }
@@ -444,14 +444,14 @@ public class NarcissusUtils {
             case FEED, FEED_OTHER, FEED_CONCISE, FEED_OTHER_CONCISE -> CommonConfig.get().concise().conciseFeed();
             case TP_COORDINATE, TP_COORDINATE_CONCISE -> CommonConfig.get().concise().conciseTpCoordinate();
             case TP_STRUCTURE, TP_STRUCTURE_CONCISE -> CommonConfig.get().concise().conciseTpStructure();
-            case TP_ASK, TP_ASK_CONCISE -> CommonConfig.get().concise().conciseTpAsk();
-            case TP_ASK_YES, TP_ASK_YES_CONCISE -> CommonConfig.get().concise().conciseTpAskYes();
-            case TP_ASK_NO, TP_ASK_NO_CONCISE -> CommonConfig.get().concise().conciseTpAskNo();
-            case TP_ASK_CANCEL, TP_ASK_CANCEL_CONCISE -> CommonConfig.get().concise().conciseTpAskCancel();
-            case TP_HERE, TP_HERE_CONCISE -> CommonConfig.get().concise().conciseTpHere();
-            case TP_HERE_YES, TP_HERE_YES_CONCISE -> CommonConfig.get().concise().conciseTpHereYes();
-            case TP_HERE_NO, TP_HERE_NO_CONCISE -> CommonConfig.get().concise().conciseTpHereNo();
-            case TP_HERE_CANCEL, TP_HERE_CANCEL_CONCISE -> CommonConfig.get().concise().conciseTpHereCancel();
+            case TP_ASK, TP_ASK_CONCISE -> CommonConfig.get().concise().tpAsk().conciseTpAsk();
+            case TP_ASK_YES, TP_ASK_YES_CONCISE -> CommonConfig.get().concise().tpAsk().conciseTpAskYes();
+            case TP_ASK_NO, TP_ASK_NO_CONCISE -> CommonConfig.get().concise().tpAsk().conciseTpAskNo();
+            case TP_ASK_CANCEL, TP_ASK_CANCEL_CONCISE -> CommonConfig.get().concise().tpAsk().conciseTpAskCancel();
+            case TP_HERE, TP_HERE_CONCISE -> CommonConfig.get().concise().tpHere().conciseTpHere();
+            case TP_HERE_YES, TP_HERE_YES_CONCISE -> CommonConfig.get().concise().tpHere().conciseTpHereYes();
+            case TP_HERE_NO, TP_HERE_NO_CONCISE -> CommonConfig.get().concise().tpHere().conciseTpHereNo();
+            case TP_HERE_CANCEL, TP_HERE_CANCEL_CONCISE -> CommonConfig.get().concise().tpHere().conciseTpHereCancel();
             case TP_RANDOM, TP_RANDOM_CONCISE -> CommonConfig.get().concise().conciseTpRandom();
             case TP_SPAWN, TP_SPAWN_OTHER, TP_SPAWN_CONCISE, TP_SPAWN_OTHER_CONCISE ->
                     CommonConfig.get().concise().conciseTpSpawn();
@@ -461,14 +461,14 @@ public class NarcissusUtils {
             case TP_UP, TP_UP_CONCISE -> CommonConfig.get().concise().conciseTpUp();
             case TP_DOWN, TP_DOWN_CONCISE -> CommonConfig.get().concise().conciseTpDown();
             case TP_VIEW, TP_VIEW_CONCISE -> CommonConfig.get().concise().conciseTpView();
-            case TP_HOME, TP_HOME_CONCISE -> CommonConfig.get().concise().conciseTpHome();
-            case SET_HOME, SET_HOME_CONCISE -> CommonConfig.get().concise().conciseSetHome();
-            case DEL_HOME, DEL_HOME_CONCISE -> CommonConfig.get().concise().conciseDelHome();
-            case GET_HOME, GET_HOME_CONCISE -> CommonConfig.get().concise().conciseGetHome();
-            case TP_STAGE, TP_STAGE_CONCISE -> CommonConfig.get().concise().conciseTpStage();
-            case SET_STAGE, SET_STAGE_CONCISE -> CommonConfig.get().concise().conciseSetStage();
-            case DEL_STAGE, DEL_STAGE_CONCISE -> CommonConfig.get().concise().conciseDelStage();
-            case GET_STAGE, GET_STAGE_CONCISE -> CommonConfig.get().concise().conciseGetStage();
+            case TP_HOME, TP_HOME_CONCISE -> CommonConfig.get().concise().tpHome().conciseTpHome();
+            case SET_HOME, SET_HOME_CONCISE -> CommonConfig.get().concise().tpHome().conciseSetHome();
+            case DEL_HOME, DEL_HOME_CONCISE -> CommonConfig.get().concise().tpHome().conciseDelHome();
+            case GET_HOME, GET_HOME_CONCISE -> CommonConfig.get().concise().tpHome().conciseGetHome();
+            case TP_STAGE, TP_STAGE_CONCISE -> CommonConfig.get().concise().tpStage().conciseTpStage();
+            case SET_STAGE, SET_STAGE_CONCISE -> CommonConfig.get().concise().tpStage().conciseSetStage();
+            case DEL_STAGE, DEL_STAGE_CONCISE -> CommonConfig.get().concise().tpStage().conciseDelStage();
+            case GET_STAGE, GET_STAGE_CONCISE -> CommonConfig.get().concise().tpStage().conciseGetStage();
             case TP_BACK, TP_BACK_CONCISE -> CommonConfig.get().concise().conciseTpBack();
             case TP_GRAVE, TP_GRAVE_CONCISE -> CommonConfig.get().concise().conciseTpGrave();
             case FLY, FLY_CONCISE -> CommonConfig.get().concise().conciseFly();
@@ -1136,37 +1136,37 @@ public class NarcissusUtils {
         int permission;
         switch (type) {
             case TP_COORDINATE:
-                permission = CommonConfig.get().permission().permissionTpCoordinateAcrossDimension();
+                permission = CommonConfig.get().permission().across().permissionTpCoordinateAcrossDimension();
                 break;
             case TP_STRUCTURE:
-                permission = CommonConfig.get().permission().permissionTpStructureAcrossDimension();
+                permission = CommonConfig.get().permission().across().permissionTpStructureAcrossDimension();
                 break;
             case TP_ASK:
-                permission = CommonConfig.get().permission().permissionTpAskAcrossDimension();
+                permission = CommonConfig.get().permission().across().permissionTpAskAcrossDimension();
                 break;
             case TP_HERE:
-                permission = CommonConfig.get().permission().permissionTpHereAcrossDimension();
+                permission = CommonConfig.get().permission().across().permissionTpHereAcrossDimension();
                 break;
             case TP_RANDOM:
-                permission = CommonConfig.get().permission().permissionTpRandomAcrossDimension();
+                permission = CommonConfig.get().permission().across().permissionTpRandomAcrossDimension();
                 break;
             case TP_SPAWN:
-                permission = CommonConfig.get().permission().permissionTpSpawnAcrossDimension();
+                permission = CommonConfig.get().permission().across().permissionTpSpawnAcrossDimension();
                 break;
             case TP_WORLD_SPAWN:
-                permission = CommonConfig.get().permission().permissionTpWorldSpawnAcrossDimension();
+                permission = CommonConfig.get().permission().across().permissionTpWorldSpawnAcrossDimension();
                 break;
             case TP_HOME:
-                permission = CommonConfig.get().permission().permissionTpHomeAcrossDimension();
+                permission = CommonConfig.get().permission().across().permissionTpHomeAcrossDimension();
                 break;
             case TP_STAGE:
-                permission = CommonConfig.get().permission().permissionTpStageAcrossDimension();
+                permission = CommonConfig.get().permission().across().permissionTpStageAcrossDimension();
                 break;
             case TP_BACK:
-                permission = CommonConfig.get().permission().permissionTpBackAcrossDimension();
+                permission = CommonConfig.get().permission().across().permissionTpBackAcrossDimension();
                 break;
             case TP_GRAVE:
-                permission = CommonConfig.get().permission().permissionTpGraveAcrossDimension();
+                permission = CommonConfig.get().permission().across().permissionTpGraveAcrossDimension();
                 break;
             default:
                 permission = 0;
@@ -1513,148 +1513,148 @@ public class NarcissusUtils {
         TeleportCost cost = new TeleportCost();
         switch (type) {
             case TP_COORDINATE:
-                cost.setType(CommonConfig.get().cost().tpCoordinate().type());
-                cost.setNum(CommonConfig.get().cost().tpCoordinate().num());
-                cost.setRate(CommonConfig.get().cost().tpCoordinate().rate());
-                cost.setConf(CommonConfig.get().cost().tpCoordinate().conf());
-                cost.setLower(CommonConfig.get().cost().tpCoordinate().numLower());
-                cost.setUpper(CommonConfig.get().cost().tpCoordinate().numUpper());
-                cost.setExp(CommonConfig.get().cost().tpCoordinate().exp());
+                cost.setType(CommonConfig.get().cost().tpCoordinate().costTpCoordinateType());
+                cost.setNum(CommonConfig.get().cost().tpCoordinate().costTpCoordinateNum());
+                cost.setRate(CommonConfig.get().cost().tpCoordinate().costTpCoordinateRate());
+                cost.setConf(CommonConfig.get().cost().tpCoordinate().costTpCoordinateConf());
+                cost.setLower(CommonConfig.get().cost().tpCoordinate().costTpCoordinateNumLower());
+                cost.setUpper(CommonConfig.get().cost().tpCoordinate().costTpCoordinateNumUpper());
+                cost.setExp(CommonConfig.get().cost().tpCoordinate().costTpCoordinateExp());
                 break;
             case TP_STRUCTURE:
-                cost.setType(CommonConfig.get().cost().tpStructure().type());
-                cost.setNum(CommonConfig.get().cost().tpStructure().num());
-                cost.setRate(CommonConfig.get().cost().tpStructure().rate());
-                cost.setConf(CommonConfig.get().cost().tpStructure().conf());
-                cost.setLower(CommonConfig.get().cost().tpStructure().numLower());
-                cost.setUpper(CommonConfig.get().cost().tpStructure().numUpper());
-                cost.setExp(CommonConfig.get().cost().tpStructure().exp());
+                cost.setType(CommonConfig.get().cost().tpStructure().costTpStructureType());
+                cost.setNum(CommonConfig.get().cost().tpStructure().costTpStructureNum());
+                cost.setRate(CommonConfig.get().cost().tpStructure().costTpStructureRate());
+                cost.setConf(CommonConfig.get().cost().tpStructure().costTpStructureConf());
+                cost.setLower(CommonConfig.get().cost().tpStructure().costTpStructureNumLower());
+                cost.setUpper(CommonConfig.get().cost().tpStructure().costTpStructureNumUpper());
+                cost.setExp(CommonConfig.get().cost().tpStructure().costTpStructureExp());
                 break;
             case TP_ASK:
-                cost.setType(CommonConfig.get().cost().tpAsk().type());
-                cost.setNum(CommonConfig.get().cost().tpAsk().num());
-                cost.setRate(CommonConfig.get().cost().tpAsk().rate());
-                cost.setConf(CommonConfig.get().cost().tpAsk().conf());
-                cost.setLower(CommonConfig.get().cost().tpAsk().numLower());
-                cost.setUpper(CommonConfig.get().cost().tpAsk().numUpper());
-                cost.setExp(CommonConfig.get().cost().tpAsk().exp());
+                cost.setType(CommonConfig.get().cost().tpAsk().costTpAskType());
+                cost.setNum(CommonConfig.get().cost().tpAsk().costTpAskNum());
+                cost.setRate(CommonConfig.get().cost().tpAsk().costTpAskRate());
+                cost.setConf(CommonConfig.get().cost().tpAsk().costTpAskConf());
+                cost.setLower(CommonConfig.get().cost().tpAsk().costTpAskNumLower());
+                cost.setUpper(CommonConfig.get().cost().tpAsk().costTpAskNumUpper());
+                cost.setExp(CommonConfig.get().cost().tpAsk().costTpAskExp());
                 break;
             case TP_HERE:
-                cost.setType(CommonConfig.get().cost().tpHere().type());
-                cost.setNum(CommonConfig.get().cost().tpHere().num());
-                cost.setRate(CommonConfig.get().cost().tpHere().rate());
-                cost.setConf(CommonConfig.get().cost().tpHere().conf());
-                cost.setLower(CommonConfig.get().cost().tpHere().numLower());
-                cost.setUpper(CommonConfig.get().cost().tpHere().numUpper());
-                cost.setExp(CommonConfig.get().cost().tpHere().exp());
+                cost.setType(CommonConfig.get().cost().tpHere().costTpHereType());
+                cost.setNum(CommonConfig.get().cost().tpHere().costTpHereNum());
+                cost.setRate(CommonConfig.get().cost().tpHere().costTpHereRate());
+                cost.setConf(CommonConfig.get().cost().tpHere().costTpHereConf());
+                cost.setLower(CommonConfig.get().cost().tpHere().costTpHereNumLower());
+                cost.setUpper(CommonConfig.get().cost().tpHere().costTpHereNumUpper());
+                cost.setExp(CommonConfig.get().cost().tpHere().costTpHereExp());
                 break;
             case TP_RANDOM:
-                cost.setType(CommonConfig.get().cost().tpRandom().type());
-                cost.setNum(CommonConfig.get().cost().tpRandom().num());
-                cost.setRate(CommonConfig.get().cost().tpRandom().rate());
-                cost.setConf(CommonConfig.get().cost().tpRandom().conf());
-                cost.setLower(CommonConfig.get().cost().tpRandom().numLower());
-                cost.setUpper(CommonConfig.get().cost().tpRandom().numUpper());
-                cost.setExp(CommonConfig.get().cost().tpRandom().exp());
+                cost.setType(CommonConfig.get().cost().tpRandom().costTpRandomType());
+                cost.setNum(CommonConfig.get().cost().tpRandom().costTpRandomNum());
+                cost.setRate(CommonConfig.get().cost().tpRandom().costTpRandomRate());
+                cost.setConf(CommonConfig.get().cost().tpRandom().costTpRandomConf());
+                cost.setLower(CommonConfig.get().cost().tpRandom().costTpRandomNumLower());
+                cost.setUpper(CommonConfig.get().cost().tpRandom().costTpRandomNumUpper());
+                cost.setExp(CommonConfig.get().cost().tpRandom().costTpRandomExp());
                 break;
             case TP_SPAWN:
-                cost.setType(CommonConfig.get().cost().tpSpawn().type());
-                cost.setNum(CommonConfig.get().cost().tpSpawn().num());
-                cost.setRate(CommonConfig.get().cost().tpSpawn().rate());
-                cost.setConf(CommonConfig.get().cost().tpSpawn().conf());
-                cost.setLower(CommonConfig.get().cost().tpSpawn().numLower());
-                cost.setUpper(CommonConfig.get().cost().tpSpawn().numUpper());
-                cost.setExp(CommonConfig.get().cost().tpSpawn().exp());
+                cost.setType(CommonConfig.get().cost().tpSpawn().costTpSpawnType());
+                cost.setNum(CommonConfig.get().cost().tpSpawn().costTpSpawnNum());
+                cost.setRate(CommonConfig.get().cost().tpSpawn().costTpSpawnRate());
+                cost.setConf(CommonConfig.get().cost().tpSpawn().costTpSpawnConf());
+                cost.setLower(CommonConfig.get().cost().tpSpawn().costTpSpawnNumLower());
+                cost.setUpper(CommonConfig.get().cost().tpSpawn().costTpSpawnNumUpper());
+                cost.setExp(CommonConfig.get().cost().tpSpawn().costTpSpawnExp());
                 break;
             case TP_WORLD_SPAWN:
-                cost.setType(CommonConfig.get().cost().tpWorldSpawn().type());
-                cost.setNum(CommonConfig.get().cost().tpWorldSpawn().num());
-                cost.setRate(CommonConfig.get().cost().tpWorldSpawn().rate());
-                cost.setConf(CommonConfig.get().cost().tpWorldSpawn().conf());
-                cost.setLower(CommonConfig.get().cost().tpWorldSpawn().numLower());
-                cost.setUpper(CommonConfig.get().cost().tpWorldSpawn().numUpper());
-                cost.setExp(CommonConfig.get().cost().tpWorldSpawn().exp());
+                cost.setType(CommonConfig.get().cost().tpWorldSpawn().costTpWorldSpawnType());
+                cost.setNum(CommonConfig.get().cost().tpWorldSpawn().costTpWorldSpawnNum());
+                cost.setRate(CommonConfig.get().cost().tpWorldSpawn().costTpWorldSpawnRate());
+                cost.setConf(CommonConfig.get().cost().tpWorldSpawn().costTpWorldSpawnConf());
+                cost.setLower(CommonConfig.get().cost().tpWorldSpawn().costTpWorldSpawnNumLower());
+                cost.setUpper(CommonConfig.get().cost().tpWorldSpawn().costTpWorldSpawnNumUpper());
+                cost.setExp(CommonConfig.get().cost().tpWorldSpawn().costTpWorldSpawnExp());
                 break;
             case TP_TOP:
-                cost.setType(CommonConfig.get().cost().tpTop().type());
-                cost.setNum(CommonConfig.get().cost().tpTop().num());
-                cost.setRate(CommonConfig.get().cost().tpTop().rate());
-                cost.setConf(CommonConfig.get().cost().tpTop().conf());
-                cost.setLower(CommonConfig.get().cost().tpTop().numLower());
-                cost.setUpper(CommonConfig.get().cost().tpTop().numUpper());
-                cost.setExp(CommonConfig.get().cost().tpTop().exp());
+                cost.setType(CommonConfig.get().cost().tpTop().costTpTopType());
+                cost.setNum(CommonConfig.get().cost().tpTop().costTpTopNum());
+                cost.setRate(CommonConfig.get().cost().tpTop().costTpTopRate());
+                cost.setConf(CommonConfig.get().cost().tpTop().costTpTopConf());
+                cost.setLower(CommonConfig.get().cost().tpTop().costTpTopNumLower());
+                cost.setUpper(CommonConfig.get().cost().tpTop().costTpTopNumUpper());
+                cost.setExp(CommonConfig.get().cost().tpTop().costTpTopExp());
                 break;
             case TP_BOTTOM:
-                cost.setType(CommonConfig.get().cost().tpBottom().type());
-                cost.setNum(CommonConfig.get().cost().tpBottom().num());
-                cost.setRate(CommonConfig.get().cost().tpBottom().rate());
-                cost.setConf(CommonConfig.get().cost().tpBottom().conf());
-                cost.setLower(CommonConfig.get().cost().tpBottom().numLower());
-                cost.setUpper(CommonConfig.get().cost().tpBottom().numUpper());
-                cost.setExp(CommonConfig.get().cost().tpBottom().exp());
+                cost.setType(CommonConfig.get().cost().tpBottom().costTpBottomType());
+                cost.setNum(CommonConfig.get().cost().tpBottom().costTpBottomNum());
+                cost.setRate(CommonConfig.get().cost().tpBottom().costTpBottomRate());
+                cost.setConf(CommonConfig.get().cost().tpBottom().costTpBottomConf());
+                cost.setLower(CommonConfig.get().cost().tpBottom().costTpBottomNumLower());
+                cost.setUpper(CommonConfig.get().cost().tpBottom().costTpBottomNumUpper());
+                cost.setExp(CommonConfig.get().cost().tpBottom().costTpBottomExp());
                 break;
             case TP_UP:
-                cost.setType(CommonConfig.get().cost().tpUp().type());
-                cost.setNum(CommonConfig.get().cost().tpUp().num());
-                cost.setRate(CommonConfig.get().cost().tpUp().rate());
-                cost.setConf(CommonConfig.get().cost().tpUp().conf());
-                cost.setLower(CommonConfig.get().cost().tpUp().numLower());
-                cost.setUpper(CommonConfig.get().cost().tpUp().numUpper());
-                cost.setExp(CommonConfig.get().cost().tpUp().exp());
+                cost.setType(CommonConfig.get().cost().tpUp().costTpUpType());
+                cost.setNum(CommonConfig.get().cost().tpUp().costTpUpNum());
+                cost.setRate(CommonConfig.get().cost().tpUp().costTpUpRate());
+                cost.setConf(CommonConfig.get().cost().tpUp().costTpUpConf());
+                cost.setLower(CommonConfig.get().cost().tpUp().costTpUpNumLower());
+                cost.setUpper(CommonConfig.get().cost().tpUp().costTpUpNumUpper());
+                cost.setExp(CommonConfig.get().cost().tpUp().costTpUpExp());
                 break;
             case TP_DOWN:
-                cost.setType(CommonConfig.get().cost().tpDown().type());
-                cost.setNum(CommonConfig.get().cost().tpDown().num());
-                cost.setRate(CommonConfig.get().cost().tpDown().rate());
-                cost.setConf(CommonConfig.get().cost().tpDown().conf());
-                cost.setLower(CommonConfig.get().cost().tpDown().numLower());
-                cost.setUpper(CommonConfig.get().cost().tpDown().numUpper());
-                cost.setExp(CommonConfig.get().cost().tpDown().exp());
+                cost.setType(CommonConfig.get().cost().tpDown().costTpDownType());
+                cost.setNum(CommonConfig.get().cost().tpDown().costTpDownNum());
+                cost.setRate(CommonConfig.get().cost().tpDown().costTpDownRate());
+                cost.setConf(CommonConfig.get().cost().tpDown().costTpDownConf());
+                cost.setLower(CommonConfig.get().cost().tpDown().costTpDownNumLower());
+                cost.setUpper(CommonConfig.get().cost().tpDown().costTpDownNumUpper());
+                cost.setExp(CommonConfig.get().cost().tpDown().costTpDownExp());
                 break;
             case TP_VIEW:
-                cost.setType(CommonConfig.get().cost().tpView().type());
-                cost.setNum(CommonConfig.get().cost().tpView().num());
-                cost.setRate(CommonConfig.get().cost().tpView().rate());
-                cost.setConf(CommonConfig.get().cost().tpView().conf());
-                cost.setLower(CommonConfig.get().cost().tpView().numLower());
-                cost.setUpper(CommonConfig.get().cost().tpView().numUpper());
-                cost.setExp(CommonConfig.get().cost().tpView().exp());
+                cost.setType(CommonConfig.get().cost().tpView().costTpViewType());
+                cost.setNum(CommonConfig.get().cost().tpView().costTpViewNum());
+                cost.setRate(CommonConfig.get().cost().tpView().costTpViewRate());
+                cost.setConf(CommonConfig.get().cost().tpView().costTpViewConf());
+                cost.setLower(CommonConfig.get().cost().tpView().costTpViewNumLower());
+                cost.setUpper(CommonConfig.get().cost().tpView().costTpViewNumUpper());
+                cost.setExp(CommonConfig.get().cost().tpView().costTpViewExp());
                 break;
             case TP_HOME:
-                cost.setType(CommonConfig.get().cost().tpHome().type());
-                cost.setNum(CommonConfig.get().cost().tpHome().num());
-                cost.setRate(CommonConfig.get().cost().tpHome().rate());
-                cost.setConf(CommonConfig.get().cost().tpHome().conf());
-                cost.setLower(CommonConfig.get().cost().tpHome().numLower());
-                cost.setUpper(CommonConfig.get().cost().tpHome().numUpper());
-                cost.setExp(CommonConfig.get().cost().tpHome().exp());
+                cost.setType(CommonConfig.get().cost().tpHome().costTpHomeType());
+                cost.setNum(CommonConfig.get().cost().tpHome().costTpHomeNum());
+                cost.setRate(CommonConfig.get().cost().tpHome().costTpHomeRate());
+                cost.setConf(CommonConfig.get().cost().tpHome().costTpHomeConf());
+                cost.setLower(CommonConfig.get().cost().tpHome().costTpHomeNumLower());
+                cost.setUpper(CommonConfig.get().cost().tpHome().costTpHomeNumUpper());
+                cost.setExp(CommonConfig.get().cost().tpHome().costTpHomeExp());
                 break;
             case TP_STAGE:
-                cost.setType(CommonConfig.get().cost().tpStage().type());
-                cost.setNum(CommonConfig.get().cost().tpStage().num());
-                cost.setRate(CommonConfig.get().cost().tpStage().rate());
-                cost.setConf(CommonConfig.get().cost().tpStage().conf());
-                cost.setLower(CommonConfig.get().cost().tpStage().numLower());
-                cost.setUpper(CommonConfig.get().cost().tpStage().numUpper());
-                cost.setExp(CommonConfig.get().cost().tpStage().exp());
+                cost.setType(CommonConfig.get().cost().tpStage().costTpStageType());
+                cost.setNum(CommonConfig.get().cost().tpStage().costTpStageNum());
+                cost.setRate(CommonConfig.get().cost().tpStage().costTpStageRate());
+                cost.setConf(CommonConfig.get().cost().tpStage().costTpStageConf());
+                cost.setLower(CommonConfig.get().cost().tpStage().costTpStageNumLower());
+                cost.setUpper(CommonConfig.get().cost().tpStage().costTpStageNumUpper());
+                cost.setExp(CommonConfig.get().cost().tpStage().costTpStageExp());
                 break;
             case TP_BACK:
-                cost.setType(CommonConfig.get().cost().tpBack().type());
-                cost.setNum(CommonConfig.get().cost().tpBack().num());
-                cost.setRate(CommonConfig.get().cost().tpBack().rate());
-                cost.setConf(CommonConfig.get().cost().tpBack().conf());
-                cost.setLower(CommonConfig.get().cost().tpBack().numLower());
-                cost.setUpper(CommonConfig.get().cost().tpBack().numUpper());
-                cost.setExp(CommonConfig.get().cost().tpBack().exp());
+                cost.setType(CommonConfig.get().cost().tpBack().costTpBackType());
+                cost.setNum(CommonConfig.get().cost().tpBack().costTpBackNum());
+                cost.setRate(CommonConfig.get().cost().tpBack().costTpBackRate());
+                cost.setConf(CommonConfig.get().cost().tpBack().costTpBackConf());
+                cost.setLower(CommonConfig.get().cost().tpBack().costTpBackNumLower());
+                cost.setUpper(CommonConfig.get().cost().tpBack().costTpBackNumUpper());
+                cost.setExp(CommonConfig.get().cost().tpBack().costTpBackExp());
                 break;
             case TP_GRAVE:
-                cost.setType(CommonConfig.get().cost().tpGrave().type());
-                cost.setNum(CommonConfig.get().cost().tpGrave().num());
-                cost.setRate(CommonConfig.get().cost().tpGrave().rate());
-                cost.setConf(CommonConfig.get().cost().tpGrave().conf());
-                cost.setLower(CommonConfig.get().cost().tpGrave().numLower());
-                cost.setUpper(CommonConfig.get().cost().tpGrave().numUpper());
-                cost.setExp(CommonConfig.get().cost().tpGrave().exp());
+                cost.setType(CommonConfig.get().cost().tpGrave().costTpGraveType());
+                cost.setNum(CommonConfig.get().cost().tpGrave().costTpGraveNum());
+                cost.setRate(CommonConfig.get().cost().tpGrave().costTpGraveRate());
+                cost.setConf(CommonConfig.get().cost().tpGrave().costTpGraveConf());
+                cost.setLower(CommonConfig.get().cost().tpGrave().costTpGraveNumLower());
+                cost.setUpper(CommonConfig.get().cost().tpGrave().costTpGraveNumUpper());
+                cost.setExp(CommonConfig.get().cost().tpGrave().costTpGraveExp());
                 break;
             default:
                 break;
