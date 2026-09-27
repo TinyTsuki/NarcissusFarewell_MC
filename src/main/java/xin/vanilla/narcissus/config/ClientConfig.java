@@ -1,6 +1,5 @@
 package xin.vanilla.narcissus.config;
 
-import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
@@ -10,13 +9,13 @@ import xin.vanilla.banira.common.config.ConfigHolder;
 import xin.vanilla.banira.common.config.ConfigScope;
 import xin.vanilla.banira.common.config.annotation.Config;
 import xin.vanilla.banira.common.config.annotation.ConfigEntry;
-import xin.vanilla.narcissus.config.access.ClientConfigAccess;
 
 /**
- * 客户端配置：注解结构用于 ForgeConfigSpec；运行时通过 {@link #get()} 返回的 {@link RootView} 分层读取。
+ * 客户端配置：注解结构用于 ForgeConfigSpec；运行时通过 {@link #get()} 返回的 {@link ClientConfigView} 分层读取。
  * GUI 说明与项目根目录 {@code narcissus_farewell-client.toml} 中的注释一致。
  */
-@Config(name = "narcissus_farewell-client", type = ConfigScope.CLIENT)
+@Config(name = "narcissus_farewell-client", type = ConfigScope.CLIENT,
+        generateView = true, viewUnbound = Config.UnboundAccess.DEFAULTS)
 public class ClientConfig implements ConfigData {
 
     public ClientConfig() {
@@ -24,8 +23,6 @@ public class ClientConfig implements ConfigData {
 
     // region 配置结构
 
-    @Getter(AccessLevel.NONE)
-    @Setter(AccessLevel.NONE)
     @ConfigEntry.Gui.CollapsibleObject
     @ConfigEntry.Gui.Tooltip(zh_cn = "客户端设置", en_us = "Client settings")
     private ClientRootCategory client = new ClientRootCategory();
@@ -33,8 +30,8 @@ public class ClientConfig implements ConfigData {
     // endregion 配置结构
 
 
-    public static RootView get() {
-        return ClientConfigAccess.root(BaniraConfigs.holder(ClientConfig.class));
+    public static ClientConfigView get() {
+        return ClientConfigView.get();
     }
 
     public static void save() {
@@ -56,27 +53,4 @@ public class ClientConfig implements ConfigData {
         private boolean syncStageMapWaypoint = true;
 
     }
-
-    // region 运行时视图接口
-
-    public interface RootView {
-        ClientView client();
-
-        ConfigHolder holder();
-
-        void save();
-    }
-
-    public interface ClientView {
-        boolean syncHomeMapWaypoint();
-
-        ClientView syncHomeMapWaypoint(boolean value);
-
-        boolean syncStageMapWaypoint();
-
-        ClientView syncStageMapWaypoint(boolean value);
-
-    }
-
-    // endregion 运行时视图接口
 }

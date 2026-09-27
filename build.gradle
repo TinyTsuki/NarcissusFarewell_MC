@@ -168,6 +168,7 @@ repositories {
 }
 
 apply from: "gradle/banira-local-fingerprint.gradle"
+apply from: 'gradle/config-view-processor.gradle'
 
 repositories {
     maven {

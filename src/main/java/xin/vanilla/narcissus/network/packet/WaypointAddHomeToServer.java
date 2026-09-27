@@ -41,7 +41,7 @@ public class WaypointAddHomeToServer implements NetworkPacket {
                 return;
             }
             String prefix = NarcissusUtils.getCommandPrefix();
-            String cmd = prefix + " " + CommonConfig.get().command().commandSetHome();
+            String cmd = prefix + " " + CommonConfig.get().command().tpHome().commandSetHome();
             if (!packet.name().isEmpty()) {
                 cmd += " " + StringUtils.formatString(packet.name());
             }
