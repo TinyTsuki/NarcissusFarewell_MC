@@ -84,9 +84,9 @@ public final class NarcissusUiSmokeRunner {
                 new ScreenStep("player-preferences", true, client -> client.setScreen(
                         new PlayerConfigScreen(new PlayerConfigScreen.Args()))),
                 new ScreenStep("client-config", false, client -> client.setScreen(
-                        new ConfigEditorScreen(ClientConfig.get().holder(), new ConfigEditorScreen.Args()))),
+                        new ConfigEditorScreen(xin.vanilla.banira.api.BaniraConfigs.holder(ClientConfig.class), new ConfigEditorScreen.Args()))),
                 new ScreenStep("common-config", true, client -> client.setScreen(
-                        new ConfigEditorScreen(CommonConfig.get().holder(), new ConfigEditorScreen.Args()))),
+                        new ConfigEditorScreen(xin.vanilla.banira.api.BaniraConfigs.holder(CommonConfig.class), new ConfigEditorScreen.Args()))),
                 new ScreenStep("notification-type-config", true, client -> client.setScreen(
                         new NotificationTypeConfigScreen(new NotificationTypeConfigScreen.Args())),
                         NotificationTypeConfigScreen.class, NarcissusUiSmokeRunner::verifyCleanEscapeCloses)
@@ -178,7 +178,7 @@ public final class NarcissusUiSmokeRunner {
      * 先访问稳定 API，尽早发现配置或键位注册时序回归。
      */
     private static void validateIntegration() {
-        if (ClientConfig.get().holder() == null || CommonConfig.get().holder() == null) {
+        if (xin.vanilla.banira.api.BaniraConfigs.holder(ClientConfig.class) == null || xin.vanilla.banira.api.BaniraConfigs.holder(CommonConfig.class) == null) {
             throw new IllegalStateException("Narcissus config holder is not registered");
         }
         ClientModEventHandler.TP_HOME_KEY.currentKey();
