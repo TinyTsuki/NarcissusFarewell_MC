@@ -8,6 +8,7 @@ import net.minecraft.nbt.CompoundTag;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import xin.vanilla.banira.common.util.PacketUtils;
+import xin.vanilla.narcissus.data.PlayerAccess;
 import xin.vanilla.narcissus.data.player.PlayerTeleportData;
 import xin.vanilla.narcissus.enums.EnumTeleportType;
 import xin.vanilla.narcissus.enums.EnumWhiteListMode;
@@ -54,6 +55,7 @@ public final class NarcissusNetworkSmokeClientRunner {
     }
 
     private void runTick(Minecraft client) {
+        if (client.getOverlay() != null) return;
         if (++ticks > TIMEOUT_TICKS) {
             fail(client, "Timed out in state " + state);
             return;
@@ -105,6 +107,11 @@ public final class NarcissusNetworkSmokeClientRunner {
         }
         NarcissusNetworkSmokeStatus.append("PASS remote-login-sync");
         if ("phase-one".equals(NarcissusNetworkSmokeStatus.phase())) {
+            xin.vanilla.narcissus.config.ClientConfig.get().client().syncHomeMapWaypoint(false);
+            xin.vanilla.narcissus.config.ClientConfig.save();
+        }
+        xin.vanilla.narcissus.internal.dev.NarcissusNetworkSmokeConfigs.verify(true);
+        if ("phase-one".equals(NarcissusNetworkSmokeStatus.phase())) {
             CompoundTag countdowns = new CompoundTag();
             countdowns.putInt(EnumTeleportType.TP_HOME.name(), NarcissusNetworkSmokeFixture.COUNTDOWN);
             syncGeneration = NarcissusClientSyncState.playerDataGeneration();
@@ -141,7 +148,13 @@ public final class NarcissusNetworkSmokeClientRunner {
         if (NarcissusClientSyncState.playerDataGeneration() <= syncGeneration) {
             return;
         }
-        NarcissusNetworkSmokeFixture.verifyAccess(PlayerTeleportData.getData(client.player).getAccess());
+        PlayerAccess access = PlayerTeleportData.getData(client.player).getAccess();
+        if (!access.getWhiteList().contains(NarcissusNetworkSmokeFixture.ACCESS_UUID)
+                || !access.getAutoTpaList().contains(NarcissusNetworkSmokeFixture.ACCESS_UUID)) {
+            syncGeneration = NarcissusClientSyncState.playerDataGeneration();
+            return;
+        }
+        NarcissusNetworkSmokeFixture.verifyAccess(access);
         NarcissusNetworkSmokeStatus.append("PASS access-list-roundtrip");
         // 留出一个短窗口，让服务端 tick 在玩家离线前验证同一份数据。
         state = State.SERVER_SETTLE;

@@ -9,6 +9,7 @@ import net.minecraft.world.entity.animal.Wolf;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.state.BlockState;
 import xin.vanilla.banira.api.BaniraServer;
 import xin.vanilla.banira.api.event.BaniraEvents;
 import xin.vanilla.narcissus.data.SafeWorldCoordinate;
@@ -27,6 +28,7 @@ import java.util.List;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
+import java.util.function.BiConsumer;
 
 /**
  * 在独立服务端内复核网络往返，并在第二阶段验证重启后的玩家数据。
@@ -332,19 +334,16 @@ public final class NarcissusNetworkSmokeServerRunner {
      * 视线终点算法依赖可见碰撞体；环形低墙使测试不受玩家朝向或地形生成影响。
      */
     private static void prepareViewCollisionRing(ServerLevel level) {
-        // 新世界的生成地形可能恰好占用玩家眼前的方块；先留出稳定的视线路径。
-        for (int x = -1; x < 8; x++) {
-            for (int y = 65; y <= 75; y++) {
-                level.setBlock(new BlockPos(x, y, 0), Blocks.AIR.defaultBlockState(), 3);
-            }
-        }
+        prepareViewCollisionRing((position, block) -> level.setBlock(position, block, 3));
+    }
+
+    static void prepareViewCollisionRing(BiConsumer<BlockPos, BlockState> writer) {
         for (int x = -8; x <= 8; x++) {
             for (int z = -8; z <= 8; z++) {
-                if (Math.abs(x) != 8 && Math.abs(z) != 8) {
-                    continue;
-                }
+                BlockState block = (Math.abs(x) == 8 || Math.abs(z) == 8 ? Blocks.STONE : Blocks.AIR)
+                        .defaultBlockState();
                 for (int y = 65; y <= 75; y++) {
-                    level.setBlock(new BlockPos(x, y, z), Blocks.STONE.defaultBlockState(), 3);
+                    writer.accept(new BlockPos(x, y, z), block);
                 }
             }
         }
@@ -397,6 +396,8 @@ public final class NarcissusNetworkSmokeServerRunner {
             return;
         }
         data.save();
+        xin.vanilla.narcissus.config.CommonConfig.save();
+        xin.vanilla.narcissus.internal.dev.NarcissusNetworkSmokeConfigs.verify(false);
         NarcissusNetworkSmokeStatus.append("PASS server-config-roundtrip");
         NarcissusNetworkSmokeStatus.append("PASS server-access-list-roundtrip");
         NarcissusNetworkSmokeStatus.append("FINISHED phase-one");
@@ -411,6 +412,7 @@ public final class NarcissusNetworkSmokeServerRunner {
         NarcissusNetworkSmokeStatus.append("PASS persisted-player-config");
         NarcissusNetworkSmokeFixture.verifyAccess(data.getAccess());
         NarcissusNetworkSmokeStatus.append("PASS persisted-access-list");
+        xin.vanilla.narcissus.internal.dev.NarcissusNetworkSmokeConfigs.verify(false);
         NarcissusNetworkSmokeStatus.append("FINISHED phase-two");
         finished = true;
     }
