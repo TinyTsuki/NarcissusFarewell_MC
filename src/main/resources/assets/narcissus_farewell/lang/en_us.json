@@ -451,5 +451,20 @@
   "word.narcissus_farewell.enum_cost_failure_invalid_result": "Invalid calculated cost",
   "word.narcissus_farewell.enum_cost_failure_amount_overflow": "Cost exceeds the allowed range",
   "word.narcissus_farewell.enum_cost_failure_formula_failed": "Custom cost calculation failed",
-  "word.narcissus_farewell.enum_cost_failure_configuration_unavailable": "Cost configuration is not ready or has changed"
+  "word.narcissus_farewell.enum_cost_failure_configuration_unavailable": "Cost configuration is not ready or has changed",
+  "word.narcissus_farewell.enum_cost_failure_insufficient_cards": "Not enough teleport cards",
+  "word.narcissus_farewell.enum_cost_failure_insufficient_resource": "Not enough resources to teleport",
+  "word.narcissus_farewell.enum_cost_failure_cooldown": "Teleport is still on cooldown",
+  "word.narcissus_farewell.enum_cost_failure_invalid_operation": "Teleport ended or its target changed",
+  "word.narcissus_farewell.enum_cost_failure_actor_unavailable": "A player is offline or cannot teleport",
+  "word.narcissus_farewell.enum_cost_failure_request_unavailable": "Teleport request is no longer valid",
+  "word.narcissus_farewell.enum_cost_failure_unknown_target": "Destination is unknown or unavailable",
+  "word.narcissus_farewell.enum_cost_failure_invalid_payment": "Invalid payment item or command",
+  "word.narcissus_farewell.enum_cost_failure_command_failed": "Payment command failed",
+  "word.narcissus_farewell.enum_cost_failure_payment_failed": "Payment failed",
+  "word.narcissus_farewell.enum_cost_operation_state_pending": "Awaiting payment",
+  "word.narcissus_farewell.enum_cost_operation_state_committing": "Processing payment",
+  "word.narcissus_farewell.enum_cost_operation_state_paid": "Paid",
+  "word.narcissus_farewell.enum_cost_operation_state_failed": "Payment failed",
+  "word.narcissus_farewell.enum_cost_operation_state_cancelled": "Cancelled"
 }

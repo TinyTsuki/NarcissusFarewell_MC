@@ -451,5 +451,20 @@
   "word.narcissus_farewell.enum_cost_failure_invalid_result": "费用计算结果无效",
   "word.narcissus_farewell.enum_cost_failure_amount_overflow": "费用超过允许范围",
   "word.narcissus_farewell.enum_cost_failure_formula_failed": "自定义费用计算失败",
-  "word.narcissus_farewell.enum_cost_failure_configuration_unavailable": "费用配置尚未就绪或已变更"
+  "word.narcissus_farewell.enum_cost_failure_configuration_unavailable": "费用配置尚未就绪或已变更",
+  "word.narcissus_farewell.enum_cost_failure_insufficient_cards": "传送卡不足",
+  "word.narcissus_farewell.enum_cost_failure_insufficient_resource": "传送所需资源不足",
+  "word.narcissus_farewell.enum_cost_failure_cooldown": "传送尚在冷却中",
+  "word.narcissus_farewell.enum_cost_failure_invalid_operation": "传送操作已结束或目标已变更",
+  "word.narcissus_farewell.enum_cost_failure_actor_unavailable": "相关玩家已离线或无法传送",
+  "word.narcissus_farewell.enum_cost_failure_request_unavailable": "传送请求已失效",
+  "word.narcissus_farewell.enum_cost_failure_unknown_target": "目标位置尚未确定或不可用",
+  "word.narcissus_farewell.enum_cost_failure_invalid_payment": "扣费物品或指令配置无效",
+  "word.narcissus_farewell.enum_cost_failure_command_failed": "扣费指令执行失败",
+  "word.narcissus_farewell.enum_cost_failure_payment_failed": "费用支付失败",
+  "word.narcissus_farewell.enum_cost_operation_state_pending": "等待支付",
+  "word.narcissus_farewell.enum_cost_operation_state_committing": "正在支付",
+  "word.narcissus_farewell.enum_cost_operation_state_paid": "已支付",
+  "word.narcissus_farewell.enum_cost_operation_state_failed": "支付失败",
+  "word.narcissus_farewell.enum_cost_operation_state_cancelled": "已取消"
 }

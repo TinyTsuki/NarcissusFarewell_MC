@@ -401,6 +401,26 @@ public final class PlayerTeleportData implements IPlayerData<PlayerTeleportData>
         return this.teleportCard.get();
     }
 
+    /** Reserve cards for an owner-thread payment without persisting a half-completed transaction. */
+    public boolean tryConsumeTeleportCards(int amount) {
+        if (amount < 0) throw new IllegalArgumentException("Negative card debit");
+        if (amount == 0) return true;
+        for (;;) {
+            int balance = teleportCard.get();
+            if (balance < amount) return false;
+            if (teleportCard.compareAndSet(balance, balance - amount)) { setDirty(); return true; }
+        }
+    }
+
+    /** Restore only our reservation; preserve any changes made by an external command. */
+    public void refundTeleportCards(int amount) {
+        if (amount < 0) throw new IllegalArgumentException("Negative card refund");
+        if (amount > 0) {
+            teleportCard.updateAndGet(balance -> (int) Math.min(Integer.MAX_VALUE, (long) balance + amount));
+            setDirty();
+        }
+    }
+
     public void setTeleportCard(int num) {
         this.teleportCard.set(num);
         this.save();
