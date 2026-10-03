@@ -308,6 +308,14 @@ public final class PlayerTeleportData implements IPlayerData<PlayerTeleportData>
             return 0;
         }
         if (this.isDirty()) this.saveEx();
+        return peekTeleportCountdownSeconds(type);
+    }
+
+    /** Reads the preference without flushing player data during a cost preview. */
+    public int peekTeleportCountdownSeconds(EnumTeleportType type) {
+        if (type == null || !EnumTeleportType.countdownConfigurableTypes().contains(type)) {
+            return 0;
+        }
         if (teleportCountdownSeconds == null) {
             return 0;
         }
@@ -385,6 +393,11 @@ public final class PlayerTeleportData implements IPlayerData<PlayerTeleportData>
 
     public int getTeleportCard() {
         if (this.isDirty()) this.saveEx();
+        return this.teleportCard.get();
+    }
+
+    /** Reads the current balance without flushing player data during a cost preview. */
+    public int peekTeleportCard() {
         return this.teleportCard.get();
     }
 

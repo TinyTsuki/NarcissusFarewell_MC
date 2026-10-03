@@ -442,5 +442,13 @@
   "word.narcissus_farewell.enum_command_type_virtual_op_concise": "虚拟 OP（简短）",
   "word.narcissus_farewell.enum_command_type_config": "配置",
   "word.narcissus_farewell.enum_command_type_blacklist": "黑名单",
-  "word.narcissus_farewell.enum_command_type_whitelist": "白名单"
+  "word.narcissus_farewell.enum_command_type_whitelist": "白名单",
+  "word.narcissus_farewell.enum_cost_phase_preview": "费用预览",
+  "word.narcissus_farewell.enum_cost_phase_check": "费用检查",
+  "word.narcissus_farewell.enum_cost_phase_commit": "费用支付",
+  "word.narcissus_farewell.enum_cost_failure_none": "计算成功",
+  "word.narcissus_farewell.enum_cost_failure_invalid_distance": "计费距离无效",
+  "word.narcissus_farewell.enum_cost_failure_invalid_result": "费用计算结果无效",
+  "word.narcissus_farewell.enum_cost_failure_amount_overflow": "费用超过允许范围",
+  "word.narcissus_farewell.enum_cost_failure_formula_failed": "自定义费用计算失败"
 }
