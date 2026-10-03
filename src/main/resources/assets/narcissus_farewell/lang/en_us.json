@@ -450,5 +450,6 @@
   "word.narcissus_farewell.enum_cost_failure_invalid_distance": "Invalid charge distance",
   "word.narcissus_farewell.enum_cost_failure_invalid_result": "Invalid calculated cost",
   "word.narcissus_farewell.enum_cost_failure_amount_overflow": "Cost exceeds the allowed range",
-  "word.narcissus_farewell.enum_cost_failure_formula_failed": "Custom cost calculation failed"
+  "word.narcissus_farewell.enum_cost_failure_formula_failed": "Custom cost calculation failed",
+  "word.narcissus_farewell.enum_cost_failure_configuration_unavailable": "Cost configuration is not ready or has changed"
 }

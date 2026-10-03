@@ -450,5 +450,6 @@
   "word.narcissus_farewell.enum_cost_failure_invalid_distance": "计费距离无效",
   "word.narcissus_farewell.enum_cost_failure_invalid_result": "费用计算结果无效",
   "word.narcissus_farewell.enum_cost_failure_amount_overflow": "费用超过允许范围",
-  "word.narcissus_farewell.enum_cost_failure_formula_failed": "自定义费用计算失败"
+  "word.narcissus_farewell.enum_cost_failure_formula_failed": "自定义费用计算失败",
+  "word.narcissus_farewell.enum_cost_failure_configuration_unavailable": "费用配置尚未就绪或已变更"
 }

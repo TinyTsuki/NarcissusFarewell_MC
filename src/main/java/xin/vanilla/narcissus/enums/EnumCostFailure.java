@@ -6,7 +6,7 @@ import xin.vanilla.banira.common.util.EnumDescriptionHelper;
 import xin.vanilla.narcissus.NarcissusComponent;
 
 public enum EnumCostFailure implements IEnumDescribable {
-    NONE, INVALID_DISTANCE, INVALID_RESULT, AMOUNT_OVERFLOW, FORMULA_FAILED;
+    NONE, INVALID_DISTANCE, INVALID_RESULT, AMOUNT_OVERFLOW, FORMULA_FAILED, CONFIGURATION_UNAVAILABLE;
 
     @Override public Component enumDescription() {
         return EnumDescriptionHelper.describeEnum(NarcissusComponent.get(), this);
