@@ -10,7 +10,8 @@ import org.apache.logging.log4j.Logger;
 import xin.vanilla.banira.common.util.DimensionUtils;
 import xin.vanilla.narcissus.config.CommonConfig;
 import xin.vanilla.narcissus.data.SafeWorldCoordinate;
-import xin.vanilla.narcissus.enums.EnumSafeMode;
+import xin.vanilla.narcissus.search.SafeCandidateCursor;
+import xin.vanilla.narcissus.search.SearchBox;
 
 import javax.annotation.Nullable;
 
@@ -190,7 +191,7 @@ public class SafeCoordinateFinder {
     }
 
     /**
-     * 在区块范围内按安全模式搜索，使用螺旋迭代避免全量排序
+     * 在区块范围内按安全模式搜索
      */
     @Nullable
     public SafeWorldCoordinate searchInChunk(SafeWorldCoordinate safeWorldCoordinate, int chunkX, int chunkZ, boolean belowAllowAir) {
@@ -205,91 +206,13 @@ public class SafeCoordinateFinder {
         int cy = safeWorldCoordinate.yInt();
         int cz = safeWorldCoordinate.zInt();
 
-        EnumSafeMode mode = safeWorldCoordinate.safeMode();
-
-        // Y 轴单列模式：直接迭代，无需列表与排序
-        if (mode == EnumSafeMode.Y_C_TO_T) {
-            for (int y = cy; y <= maxY; y++) {
-                mutablePos.set(cx, y, cz);
-                if (checker.isSafeBlock(mutablePos.immutable(), belowAllowAir)) {
-                    return toResult(mutablePos);
-                }
-            }
-            return null;
-        }
-        if (mode == EnumSafeMode.Y_B_TO_C) {
-            for (int y = minY; y <= cy; y++) {
-                mutablePos.set(cx, y, cz);
-                if (checker.isSafeBlock(mutablePos.immutable(), belowAllowAir)) {
-                    return toResult(mutablePos);
-                }
-            }
-            return null;
-        }
-        if (mode == EnumSafeMode.Y_C_TO_B) {
-            for (int y = cy; y >= minY; y--) {
-                mutablePos.set(cx, y, cz);
-                if (checker.isSafeBlock(mutablePos.immutable(), belowAllowAir)) {
-                    return toResult(mutablePos);
-                }
-            }
-            return null;
-        }
-        if (mode == EnumSafeMode.Y_T_TO_C) {
-            for (int y = maxY; y >= cy; y--) {
-                mutablePos.set(cx, y, cz);
-                if (checker.isSafeBlock(mutablePos.immutable(), belowAllowAir)) {
-                    return toResult(mutablePos);
-                }
-            }
-            return null;
-        }
-        if (mode == EnumSafeMode.Y_C_OFFSET_3) {
-            int[] yOffsets = {0, -1, 1, -2, 2, -3};
-            for (int dy : yOffsets) {
-                int y = cy + dy;
-                if (y >= minY && y <= maxY) {
-                    mutablePos.set(cx, y, cz);
-                    if (checker.isSafeBlock(mutablePos.immutable(), belowAllowAir)) {
-                        return toResult(mutablePos);
-                    }
-                }
-            }
-            return null;
-        }
-
-        // 按 3D曼哈顿距离 放射状迭代
-        int rangeX = Math.max(Math.abs(chunkMaxX - cx), Math.abs(chunkMinX - cx));
-        int rangeZ = Math.max(Math.abs(chunkMaxZ - cz), Math.abs(chunkMinZ - cz));
-        int rangeY = Math.max(Math.abs(maxY - cy), Math.abs(minY - cy));
-        int maxManhattan = rangeX + rangeZ + rangeY;
-        for (int m = 0; m <= maxManhattan; m++) {
-            for (int dx = -m; dx <= m; dx++) {
-                int restDyDz = m - Math.abs(dx);
-                if (restDyDz < 0) continue;
-                for (int dy = -restDyDz; dy <= restDyDz; dy++) {
-                    int dzAbs = restDyDz - Math.abs(dy);
-                    if (dzAbs == 0) {
-                        int x = cx + dx, y = cy + dy, z = cz;
-                        if (x >= chunkMinX && x <= chunkMaxX && z >= chunkMinZ && z <= chunkMaxZ && y >= minY && y <= maxY) {
-                            mutablePos.set(x, y, z);
-                            if (checker.isSafeBlock(mutablePos.immutable(), belowAllowAir)) {
-                                return toResult(mutablePos);
-                            }
-                        }
-                    } else {
-                        for (int sign = 0; sign < 2; sign++) {
-                            int dz = sign == 0 ? dzAbs : -dzAbs;
-                            int x = cx + dx, y = cy + dy, z = cz + dz;
-                            if (x >= chunkMinX && x <= chunkMaxX && z >= chunkMinZ && z <= chunkMaxZ && y >= minY && y <= maxY) {
-                                mutablePos.set(x, y, z);
-                                if (checker.isSafeBlock(mutablePos.immutable(), belowAllowAir)) {
-                                    return toResult(mutablePos);
-                                }
-                            }
-                        }
-                    }
-                }
+        SafeCandidateCursor cursor = new SafeCandidateCursor(safeWorldCoordinate.safeMode(), cx, cy, cz,
+                new SearchBox(chunkMinX, chunkMaxX, minY, maxY, chunkMinZ, chunkMaxZ));
+        SafeCandidateCursor.Step step;
+        while ((step = cursor.advance()) != SafeCandidateCursor.Step.DONE) {
+            if (step == SafeCandidateCursor.Step.CANDIDATE) {
+                mutablePos.set(cursor.x(), cursor.y(), cursor.z());
+                if (checker.isSafeBlock(mutablePos.immutable(), belowAllowAir)) return toResult(mutablePos);
             }
         }
         return null;
