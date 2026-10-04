@@ -136,6 +136,58 @@ public class SafeCandidateCursorTest {
         assertThrows(IllegalStateException.class, cursor::y);
     }
 
+    @Test
+    public void sectionHeightFilterKeepsExactLegacyTieOrder() {
+        SearchBox box = new SearchBox(-17, 16, -8, 40, -5, 5);
+        SafeCandidateCursor.YFilter filter = (chunkX, min, max) -> {
+            for (long y = min; y <= max; y++) {
+                if (y == 0 || y >= 16 && y <= 19 || chunkX == -2 && y == -4) return y;
+            }
+            return Long.MAX_VALUE;
+        };
+        List<BlockPos> expected = new ArrayList<>();
+        for (BlockPos p : LegacyCandidateOrder.enumerate(EnumSafeMode.NONE, 1, 23, 0, box)) {
+            if (filter.next(p.getX() >> 4, p.getY(), p.getY()) != Long.MAX_VALUE) expected.add(p);
+        }
+        assertEquals(expected, drainFiltered(new SafeCandidateCursor(EnumSafeMode.NONE, 1, 23, 0, box, filter)));
+    }
+
+    @Test
+    public void unsupportedSingleChunkExhaustsWithoutWalkingEveryBlock() {
+        SafeCandidateCursor cursor = new SafeCandidateCursor(EnumSafeMode.NONE, 8, 90, 8,
+                new SearchBox(0, 15, 0, 255, 0, 15), (chunk, min, max) -> Long.MAX_VALUE);
+        assertEquals(DONE, cursor.advance());
+    }
+
+    @Test
+    public void sparseHeightBandsSkipWholeIntervalsAndReadCurrentFilter() {
+        boolean[] enabled = {false};
+        SafeCandidateCursor cursor = new SafeCandidateCursor(EnumSafeMode.NONE, 8, 90, 8,
+                new SearchBox(0, 15, 0, 255, 0, 15), (chunk, min, max) -> {
+                    long y = enabled[0] ? 90 : 16;
+                    return min <= y && y <= max ? y : Long.MAX_VALUE;
+                });
+        // No world metadata is captured by the constructor.
+        enabled[0] = true;
+        assertEquals(CANDIDATE, cursor.advance());
+        assertEquals(90, cursor.y());
+        enabled[0] = false;
+        List<BlockPos> rest = drainFiltered(cursor);
+        assertEquals(256, rest.size());
+        for (BlockPos p : rest) assertEquals(16, p.getY());
+    }
+
+    private static List<BlockPos> drainFiltered(SafeCandidateCursor cursor) {
+        List<BlockPos> points = new ArrayList<>();
+        for (int advances = 0; advances < 20000; advances++) {
+            SafeCandidateCursor.Step step = cursor.advance();
+            if (step == DONE) return points;
+            if (step == CANDIDATE) points.add(new BlockPos(cursor.x(), cursor.y(), cursor.z()));
+        }
+        fail("Filtered cursor spent too many advances on excluded heights");
+        return points;
+    }
+
     private static List<BlockPos> drain(EnumSafeMode mode, int cx, int cy, int cz, SearchBox box, int slice) {
         SafeCandidateCursor cursor = new SafeCandidateCursor(mode, cx, cy, cz, box);
         List<BlockPos> points = new ArrayList<>();

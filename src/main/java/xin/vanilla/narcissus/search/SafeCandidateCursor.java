@@ -8,6 +8,10 @@ import xin.vanilla.narcissus.enums.EnumSafeMode;
 import java.util.Objects;
 
 public final class SafeCandidateCursor {
+    /** Negative answers cover the whole X chunk and all Z positions in this search box. */
+    public interface YFilter {
+        long next(int chunkX, long minY, long maxY);
+    }
     public enum Step implements IEnumDescribable {
         CANDIDATE, SKIPPED, DONE;
 
@@ -21,6 +25,7 @@ public final class SafeCandidateCursor {
 
     private final EnumSafeMode mode;
     private final SearchBox box;
+    private final YFilter filter;
     private final int cx;
     private final int cy;
     private final int cz;
@@ -48,8 +53,13 @@ public final class SafeCandidateCursor {
     private Step last = Step.SKIPPED;
 
     public SafeCandidateCursor(EnumSafeMode mode, int cx, int cy, int cz, SearchBox box) {
+        this(mode, cx, cy, cz, box, null);
+    }
+
+    public SafeCandidateCursor(EnumSafeMode mode, int cx, int cy, int cz, SearchBox box, YFilter filter) {
         this.mode = Objects.requireNonNull(mode, "mode");
         this.box = Objects.requireNonNull(box, "box");
+        this.filter = filter;
         this.cx = cx;
         this.cy = cy;
         this.cz = cz;
@@ -104,6 +114,29 @@ public final class SafeCandidateCursor {
             dx++;
             startRow();
             return last = Step.SKIPPED;
+        }
+        if (filter != null) {
+            int chunkX = (int) (cx + dx) >> 4;
+            long from = (long) cy + dy;
+            long to = (long) cy + dyEnd;
+            long allowed = filter.next(chunkX, from, to);
+            if (allowed == Long.MAX_VALUE) {
+                if ((box.minX >> 4) == (box.maxX >> 4)
+                        && filter.next(chunkX, box.minY, box.maxY) == Long.MAX_VALUE) {
+                    return last = Step.DONE;
+                }
+                dy = dyEnd + 1;
+                sign = 0;
+                return last = Step.SKIPPED;
+            }
+            if (allowed < from || allowed > to) throw new IllegalStateException("Invalid height filter result");
+            long nextDy = allowed - cy;
+            if (nextDy != dy) { dy = nextDy; sign = 0; }
+            if (dy > -dyGap && dy < dyGap) {
+                dy = dyGap;
+                sign = 0;
+                return last = Step.SKIPPED;
+            }
         }
         long dzAbs = shell - Math.abs(dx) - Math.abs(dy);
         if (sign == 0 && ((long) cz + dzAbs < box.minZ || (long) cz + dzAbs > box.maxZ)) sign = 1;

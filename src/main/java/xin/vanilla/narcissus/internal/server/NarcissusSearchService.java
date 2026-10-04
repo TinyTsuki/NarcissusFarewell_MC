@@ -5,8 +5,11 @@ import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.ChunkPos;
 import net.minecraft.util.math.vector.Vector3d;
 import net.minecraft.world.server.ServerWorld;
+import net.minecraft.world.chunk.Chunk;
+import net.minecraft.world.chunk.ChunkSection;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import xin.vanilla.banira.api.BaniraConfigs;
@@ -19,6 +22,7 @@ import xin.vanilla.narcissus.config.CommonSearchConfiguration;
 import xin.vanilla.narcissus.data.SafeWorldCoordinate;
 import xin.vanilla.narcissus.enums.EnumTeleportType;
 import xin.vanilla.narcissus.internal.forge.search.ForgeSearchChunkBackend;
+import xin.vanilla.narcissus.internal.forge.search.SectionSearchPruner;
 import xin.vanilla.narcissus.internal.server.search.NarcissusSearchRequest;
 import xin.vanilla.narcissus.notification.NarcissusNotificationTypes;
 import xin.vanilla.narcissus.search.*;
@@ -154,6 +158,8 @@ public final class NarcissusSearchService implements AutoCloseable {
         private final CommonSearchConfiguration.Snapshot config;
         private final NarcissusCostService.Ticket ticket;
         private final SafeBlockChecker checker;
+        private final SectionSearchPruner pruner;
+        private final Map<Long, Chunk> sectionChunks = new HashMap<>();
         private final List<ItemStack> inventory;
         NativeAccess(ServerPlayerEntity player, ServerWorld world, CommonSearchConfiguration.Snapshot config, NarcissusCostService.Ticket ticket) {
             this.player = player;
@@ -162,6 +168,22 @@ public final class NarcissusSearchService implements AutoCloseable {
             this.config = config;
             this.ticket = ticket;
             checker = new SafeBlockChecker(world, config.policy());
+            pruner = new SectionSearchPruner(new SectionSearchPruner.ChunkAccess() {
+                public boolean ready(int x, int z) {
+                    long key = ChunkPos.asLong(x, z);
+                    if (sectionChunks.containsKey(key)) return true;
+                    Chunk chunk = world.getChunkSource().getChunkNow(x, z);
+                    if (chunk == null) return false;
+                    sectionChunks.put(key, chunk);
+                    return true;
+                }
+                public ChunkSection section(int x, int z, int y) {
+                    Chunk chunk = sectionChunks.get(ChunkPos.asLong(x, z));
+                    if (chunk == null) throw new IllegalStateException("Section requested without ready chunk");
+                    ChunkSection[] sections = chunk.getSections();
+                    return y < 0 || y >= sections.length ? null : sections[y];
+                }
+            }, config.policy());
             inventory = new ArrayList<>();
             if (config.getBlockFromInventory()) for (ItemStack item : ItemUtils.getAllPlayerItems(player)) inventory.add(item.copy());
         }
@@ -171,7 +193,11 @@ public final class NarcissusSearchService implements AutoCloseable {
                     && player.server == server && server.getLevel(world.dimension()) == world;
         }
         public boolean policyMatches() { return true; }
-        public void beginSlice() { checkOwner(); checker.beginSlice(); }
+        public void beginSlice() { checkOwner(); checker.beginSlice(); pruner.beginSlice(); sectionChunks.clear(); }
+        public SafeCandidateCursor.YFilter heightFilter(SearchBox box, boolean belowAir) {
+            checkOwner();
+            return world.isDebug() ? null : pruner.filter(box.minZ, box.maxZ, belowAir);
+        }
         public boolean safe(BlockPos pos, boolean belowAir) { checkOwner(); return checker.isSafeBlock(pos, belowAir); }
         public boolean blocksMotion(BlockPos pos) { checkOwner(); return world.getBlockState(pos).getMaterial().blocksMotion(); }
         public int minY() { return DimensionUtils.getWorldMinY(world); }

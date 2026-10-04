@@ -20,6 +20,7 @@ public final class NarcissusSearchRequest implements SearchTask {
         boolean live();
         boolean policyMatches();
         void beginSlice();
+        default SafeCandidateCursor.YFilter heightFilter(SearchBox box, boolean belowAir) { return null; }
         boolean safe(BlockPos pos, boolean belowAir);
         boolean blocksMotion(BlockPos pos);
         int minY();
@@ -81,8 +82,9 @@ public final class NarcissusSearchRequest implements SearchTask {
         int offset = (config.safeChunkRange() - 1) * 16;
         int minX = (working.chunkX() << 4) - offset;
         int minZ = (working.chunkZ() << 4) - offset;
+        SearchBox box = new SearchBox(minX, minX + 15 + offset, access.minY(), access.maxY(), minZ, minZ + 15 + offset);
         candidate = new SafeCandidateCursor(working.safeMode(), working.xInt(), working.yInt(), working.zInt(),
-                new SearchBox(minX, minX + 15 + offset, access.minY(), access.maxY(), minZ, minZ + 15 + offset));
+                box, working.safeMode() == EnumSafeMode.NONE ? access.heightFilter(box, belowAir) : null);
         state = State.READY;
     }
     public void view(double x, double y, double z, double dx, double dy, double dz, int range, boolean safe) {

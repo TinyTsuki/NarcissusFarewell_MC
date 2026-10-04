@@ -259,6 +259,22 @@ public class NarcissusSearchServiceTest {
         assertEquals(0, pool.leaseCount());
     }
 
+    @Test public void unsupportedRadialSearchResolvesInOneTickWithOriginalFallback() {
+        access.safe = false;
+        access.heightFilter = (chunk, min, max) -> Long.MAX_VALUE;
+        SafeWorldCoordinate target = point().safeMode(EnumSafeMode.NONE);
+        NarcissusSearchRequest r = new NarcissusSearchRequest(access.id, target, config.capture(EnumTeleportType.TP_HOME, false),
+                access, pool.open(World.OVERWORLD.location()), value -> { resolved = value; value.waitForCountdown(); });
+        r.destination(target, EnumTeleportType.TP_HOME, 0);
+        assertTrue(coordinator.submit(r)); tick();
+        assertNotNull("No-support proof must bypass the per-block tick floor", resolved);
+        assertEquals(NarcissusSearchRequest.ResultKind.EXHAUSTED_FALLBACK, resolved.kind());
+        assertEquals(target.xyzString(), resolved.destination().xyzString());
+        assertEquals(1, access.safeChecks);
+        assertTrue(resolved.complete(() -> { })); tick();
+        assertEquals(0, pool.leaseCount());
+    }
+
     private static final class Access implements NarcissusSearchRequest.Access {
         final UUID id = UUID.randomUUID();
         boolean live = true, matches = true, safe = true, air, hasItem = true, motion, throwCheck;
@@ -267,10 +283,14 @@ public class NarcissusSearchServiceTest {
         SafeWorldCoordinate randomOrigin;
         SearchTask.Failure failure;
         Runnable onCheck;
+        SafeCandidateCursor.YFilter heightFilter;
+        int safeChecks;
         public boolean live() { return live; }
         public boolean policyMatches() { return matches; }
         public void beginSlice() { }
+        public SafeCandidateCursor.YFilter heightFilter(SearchBox box, boolean belowAir) { return belowAir ? null : heightFilter; }
         public boolean safe(BlockPos pos, boolean belowAir) {
+            safeChecks++;
             if (throwCheck) throw new IllegalStateException("check failed");
             if (onCheck != null) onCheck.run();
             return belowAir ? air : safe;
