@@ -1,0 +1,45 @@
+title = "保留配置"
+
+[base.teleportCard]
+teleportCard = true
+teleportCardDaily = 3
+teleportCardType = "REFUND_COST_AND_COOLDOWN"
+
+[base.teleportLimit]
+teleportCostDistanceLimit = 12000
+teleportCostDistanceAcrossDimension = 5000
+teleportHomeLimit = 7
+
+[cost.tpHome]
+costTpHomeType = "EXP_POINT"
+costTpHomeNum = 2
+costTpHomeRate = 0.003
+costTpHomeNumUpper = 30
+costTpHomeNumLower = 1
+costTpHomeExp = "num * distance * rate"
+costTpHomeConf = ""
+
+[cost.tpStage]
+costTpStageType = "COMMAND"
+costTpStageNum = 1
+costTpStageRate = 0.002
+costTpStageNumUpper = 20
+costTpStageNumLower = 0
+costTpStageExp = "5"
+costTpStageConf = 'data merge entity @s {Tags:["a,b","[num]"]}'
+
+[cost.tpBack]
+costTpBackType = "HEALTH"
+costTpBackNum = 4
+costTpBackRate = 0.01
+costTpBackNumUpper = 20
+costTpBackNumLower = 0
+costTpBackExp = "max(num, sqrt(distance) * rate)"
+costTpBackConf = ""
+
+[cost.tpGrave]
+costTpGraveType = "NONE"
+costTpGraveExp = "unknown + '05'"
+
+[integration]
+entities = ['minecraft:arrow', 'tick, item -> tick >= 5']

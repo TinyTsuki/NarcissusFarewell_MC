@@ -32,7 +32,9 @@ import xin.vanilla.narcissus.network.packet.WaypointAddStageToServer;
 import xin.vanilla.narcissus.network.packet.WaypointDelToServer;
 import xin.vanilla.narcissus.network.packet.WaypointReorderToServer;
 import xin.vanilla.narcissus.network.packet.WaypointTeleportToServer;
-import xin.vanilla.narcissus.util.ClientCostCalculator;
+import xin.vanilla.narcissus.data.cost.CostQuoteTarget;
+import xin.vanilla.narcissus.data.cost.CostQuote;
+import xin.vanilla.narcissus.internal.client.ClientCostQuotes;
 import xin.vanilla.narcissus.util.NarcissusUtils;
 
 import javax.annotation.Nonnull;
@@ -933,6 +935,7 @@ public class WaypointScreen extends BaniraScreen {
         }
         PlayerTeleportData data = PlayerTeleportData.getData(minecraft.player);
 
+        NarcissusClientSyncState.costQuotes().closeView();
         homeItemsAll.clear();
         for (KeyValue<String, String> key : data.getHomeCoordinate().keySet()) {
             homeItemsAll.add(new WaypointEntry(WaypointEntry.Type.HOME, key.value(),
@@ -1187,11 +1190,27 @@ public class WaypointScreen extends BaniraScreen {
         if (selectedItem == null) lastSelectedItem = null;
     }
 
+    @Override public void removed() {
+        NarcissusClientSyncState.costQuotes().closeView();
+        super.removed();
+    }
+
     private String calculateCostDisplay(WaypointEntry item) {
         if (item == null || item.safeWorldCoordinate == null || minecraft == null || minecraft.player == null) {
             return "";
         }
-        return ClientCostCalculator.formatCostDisplay(minecraft.player, item.safeWorldCoordinate, itemTypeToEnum(item.type));
+        ClientCostQuotes quotes = NarcissusClientSyncState.costQuotes();
+        long now = System.nanoTime();
+        quotes.request(item.quoteTarget, now).ifPresent(request -> PacketUtils.sendPacketToServer(
+                new xin.vanilla.narcissus.network.packet.CostQuoteToServer(request)));
+        return quotes.cached(item.quoteTarget, now).map(quote -> {
+            if (quote.status() != CostQuote.Status.READY) return quote.status().enumDescription().toString();
+            if (quote.costType() == xin.vanilla.narcissus.enums.EnumCostType.NONE) return NarcissusComponent.get().transClientAuto("cost_free").toString();
+            String result = quote.resourceAmount() + " " + quote.costType().enumDescription().toString();
+            if (quote.cardAmount() > 0) result += " + " + quote.cardAmount() + " " + NarcissusComponent.get().transClientAuto("teleport_card");
+            if (quote.commandPending()) result += " (" + NarcissusComponent.get().transClientAuto("cost_command_pending") + ")";
+            return result;
+        }).orElseGet(() -> NarcissusComponent.get().transClientAuto("cost_unknown").toString());
     }
 
     private static EnumTeleportType itemTypeToEnum(WaypointEntry.Type type) {
@@ -1442,6 +1461,7 @@ public class WaypointScreen extends BaniraScreen {
     public static class WaypointEntry {
         public enum Type {HOME, STAGE, BACK}
 
+        public final CostQuoteTarget quoteTarget;
         public final Type type;
         public final String name;
         public final SafeWorldCoordinate safeWorldCoordinate;
@@ -1457,6 +1477,20 @@ public class WaypointScreen extends BaniraScreen {
             this.canTeleport = canTeleport;
             this.recordType = recordType;
             this.recordTime = recordTime;
+            UUID owner = net.minecraft.client.Minecraft.getInstance() == null || net.minecraft.client.Minecraft.getInstance().player == null ? new UUID(0, 0)
+                    : net.minecraft.client.Minecraft.getInstance().player.getUUID();
+            CostQuoteTarget target;
+            try {
+                target = type == Type.HOME ? CostQuoteTarget.home(owner, safeWorldCoordinate.dimensionId(), name)
+                        : type == Type.STAGE ? CostQuoteTarget.stage(safeWorldCoordinate.dimensionId(), name)
+                        : recordTime == null || EnumTeleportType.valueOfEx(recordType) == null ? CostQuoteTarget.unknown(EnumTeleportType.TP_BACK)
+                        : CostQuoteTarget.history(owner, EnumTeleportType.TP_BACK, recordTime.getTime(), EnumTeleportType.valueOfEx(recordType),
+                        safeWorldCoordinate.dimensionId(), safeWorldCoordinate.x(), safeWorldCoordinate.y(), safeWorldCoordinate.z());
+            } catch (IllegalArgumentException invalidQuote) {
+                // Stored waypoint identities can exceed the bounded quote protocol.
+                target = CostQuoteTarget.unknown(itemTypeToEnum(type));
+            }
+            this.quoteTarget = target;
         }
 
         public String getDetailTypeName() {
