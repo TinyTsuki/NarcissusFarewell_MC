@@ -3,6 +3,7 @@ package xin.vanilla.narcissus.search;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import xin.vanilla.banira.common.util.BlockUtils;
+import xin.vanilla.narcissus.data.SafeBlock;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -46,7 +47,7 @@ public final class SafeBlockPolicy {
     private static Set<BlockState> parse(List<String> entries) {
         Set<BlockState> states = new LinkedHashSet<>();
         for (String entry : Objects.requireNonNull(entries, "entries")) {
-            BlockState state = BlockUtils.deserializeBlockState(entry);
+            BlockState state = BlockUtils.deserializeBlockState(SafeBlock.normalizeBlockStateId(entry));
             if (state != null) states.add(state);
         }
         return Collections.unmodifiableSet(states);
