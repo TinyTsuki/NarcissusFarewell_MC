@@ -145,8 +145,9 @@ public final class NarcissusSearchRequest implements SearchTask {
         int consumed = 0;
         while (consumed < maxSteps && state == State.SEARCHING) {
             if (result != null) {
-                if (!ready(result.toBlockPos())) break;
-                lease.retainFinal(result.chunkX(), result.chunkZ());
+                BlockPos finalBlock = result.toBlockPos();
+                if (!ready(finalBlock)) break;
+                lease.retainFinal(finalBlock.getX() >> 4, finalBlock.getZ() >> 4);
                 state = State.RESOLVED;
                 callback.accept(this);
                 break;

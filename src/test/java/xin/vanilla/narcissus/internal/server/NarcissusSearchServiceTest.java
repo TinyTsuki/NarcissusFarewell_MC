@@ -34,6 +34,7 @@ public class NarcissusSearchServiceTest {
     private int callbacks;
     private NarcissusSearchRequest resolved;
     private Object previousPlatform;
+    private Set<String> retainedChunks;
 
     @Before public void setup() throws Exception {
         Bootstrap.bootStrap();
@@ -52,10 +53,11 @@ public class NarcissusSearchServiceTest {
         bind.invoke(null, CommonConfig.class, holder);
         config = new CommonSearchConfiguration(holder);
         ready = true;
+        retainedChunks = new HashSet<>();
         pool = new SearchChunkPool(new SearchChunkPool.Backend() {
             public boolean isReady(ResourceLocation d, int x, int z) { return ready; }
-            public void retain(ResourceLocation d, int x, int z) { }
-            public void release(ResourceLocation d, int x, int z) { }
+            public void retain(ResourceLocation d, int x, int z) { retainedChunks.add(x + "," + z); }
+            public void release(ResourceLocation d, int x, int z) { retainedChunks.remove(x + "," + z); }
         }, () -> true);
         coordinator = new SearchCoordinator(() -> true, () -> new SearchExecutionSettings(10, 32, 1), () -> clock);
         access = new Access();
@@ -205,6 +207,37 @@ public class NarcissusSearchServiceTest {
         assertNotNull(resolved);
         assertEquals(config.capture(EnumTeleportType.TP_RANDOM, false).randomRetries(), access.retries);
         assertEquals(point().xyzString(), access.randomOrigin.xyzString());
+    }
+
+    @Test public void negativeFractionFoundRetainsActualBlockChunk() {
+        for (int coordinate : new int[]{-1, -16, -17, -32}) {
+            resolved = null;
+            SafeWorldCoordinate target = point();
+            target.x(coordinate).z(coordinate);
+            NarcissusSearchRequest r = new NarcissusSearchRequest(access.id, point(), config.capture(EnumTeleportType.TP_HOME, false),
+                    access, pool.open(World.OVERWORLD.location()), value -> { resolved = value; value.waitForCountdown(); });
+            r.destination(target, EnumTeleportType.TP_HOME, 0);
+            assertTrue(coordinator.submit(r)); tick();
+            assertNull(access.failure);
+            assertNotNull("negative half-block destination must resolve", resolved);
+            assertEquals(coordinate + .5, resolved.destination().x(), 0);
+            assertEquals(coordinate + .5, resolved.destination().z(), 0);
+            assertTrue(resolved.complete(() -> { })); tick();
+            assertEquals(0, pool.leaseCount());
+            access.live = true;
+        }
+    }
+    @Test public void negativeFractionViewRetainsActualBlockChunk() {
+        NarcissusSearchRequest r = request(value -> { resolved = value; value.waitForCountdown(); });
+        r.view(.25, 65, .25, -.75, 0, -.75, 22, false);
+        assertTrue(coordinator.submit(r)); tick();
+        assertNull(access.failure);
+        assertNotNull(resolved);
+        assertEquals(-16.25, resolved.destination().x(), 0);
+        assertEquals(-16.25, resolved.destination().z(), 0);
+        assertEquals(Collections.singleton("-2,-2"), retainedChunks);
+        assertTrue(resolved.complete(() -> { })); tick();
+        assertEquals(0, pool.leaseCount());
     }
 
     private static final class Access implements NarcissusSearchRequest.Access {
