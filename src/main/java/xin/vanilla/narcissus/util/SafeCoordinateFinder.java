@@ -2,7 +2,6 @@ package xin.vanilla.narcissus.util;
 
 import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.vector.Vector3d;
 import net.minecraft.world.World;
 import org.apache.logging.log4j.LogManager;
@@ -12,6 +11,7 @@ import xin.vanilla.narcissus.config.CommonConfig;
 import xin.vanilla.narcissus.data.SafeWorldCoordinate;
 import xin.vanilla.narcissus.search.SafeCandidateCursor;
 import xin.vanilla.narcissus.search.SearchBox;
+import xin.vanilla.narcissus.search.ViewSearchCursor;
 
 import javax.annotation.Nullable;
 
@@ -122,72 +122,27 @@ public class SafeCoordinateFinder {
     public SafeWorldCoordinate findViewEndCandidate(ServerPlayerEntity player, boolean safe, int range) {
         final double stepScale = 0.75;
         final SafeWorldCoordinate start = new SafeWorldCoordinate(player);
-        SafeWorldCoordinate result;
-
         final Vector3d startPosition = player.getEyePosition(1.0F);
         final Vector3d stepVector = player.getViewVector(1.0F).normalize().scale(stepScale);
-        final double stepX = stepVector.x;
-        final double stepY = stepVector.y;
-        final double stepZ = stepVector.z;
-        final double startX = startPosition.x;
-        final double startY = startPosition.y;
-        final double startZ = startPosition.z;
-
-        // 从近到远寻找碰撞点
-        int collisionStep = -1;
-        for (int stepCount = 0; stepCount <= range; stepCount++) {
-            mutablePos.set(
-                    MathHelper.floor(startX + stepX * stepCount),
-                    MathHelper.floor(startY + stepY * stepCount),
-                    MathHelper.floor(startZ + stepZ * stepCount)
-            );
-            if (world.getBlockState(mutablePos).getMaterial().blocksMotion()) {
-                collisionStep = stepCount;
-                break;
+        ViewSearchCursor cursor = new ViewSearchCursor(startPosition.x, startPosition.y, startPosition.z,
+                stepVector.x, stepVector.y, stepVector.z, range, safe);
+        for (int advances = 0; ; advances++) {
+            if ((advances & 63) == 0) {
+                cursor.beginSlice();
+                checker.beginSlice();
+            }
+            ViewSearchCursor.Step step = cursor.advance();
+            if (step == ViewSearchCursor.Step.DONE) break;
+            if (step == ViewSearchCursor.Step.MOTION || step == ViewSearchCursor.Step.SAFETY) {
+                mutablePos.set(cursor.x(), cursor.y(), cursor.z());
+                cursor.accept(step == ViewSearchCursor.Step.MOTION
+                        ? world.getBlockState(mutablePos).getMaterial().blocksMotion()
+                        : checker.isSafeBlock(mutablePos, false));
             }
         }
-
-        // 确定碰撞点或射线终点
-        SafeWorldCoordinate clone = start.clone();
-        if (collisionStep > 0) {
-            clone.x(startX + stepX * (collisionStep - 1))
-                    .y(startY + stepY * (collisionStep - 1))
-                    .z(startZ + stepZ * (collisionStep - 1));
-        } else if (collisionStep == 0) {
-            clone.fromVector3d(startPosition);
-        } else {
-            clone.x(startX + stepX * range)
-                    .y(startY + stepY * range)
-                    .z(startZ + stepZ * range);
-        }
-        result = clone;
-
-        // 若需寻找安全坐标，则从碰撞点反向查找安全位置
-        if (safe) {
-            final double dist = Math.sqrt(
-                    Math.pow(result.x() - startX, 2) + Math.pow(result.y() - startY, 2) + Math.pow(result.z() - startZ, 2)
-            );
-            final int maxStep = (int) Math.ceil(dist / stepScale);
-            final int[] yOffsets = {0, -1, 1, -2, 2, -3};
-            boolean found = false;
-            for (int stepCount = maxStep; stepCount >= 0 && !found; stepCount--) {
-                final int blockX = MathHelper.floor(startX + stepX * stepCount);
-                final int blockY = MathHelper.floor(startY + stepY * stepCount);
-                final int blockZ = MathHelper.floor(startZ + stepZ * stepCount);
-                for (int yOffset : yOffsets) {
-                    mutablePos.set(blockX, blockY + yOffset, blockZ);
-                    if (checker.isSafeBlock(mutablePos.immutable(), false)) {
-                        clone.fromBlockPos(mutablePos).addX(0.5).addY(0.15).addZ(0.5);
-                        found = true;
-                        break;
-                    }
-                }
-            }
-        }
-        if (result != null && start.equalsInRange(result, 1)) {
-            result = null;
-        }
-        return result;
+        SafeWorldCoordinate result = start.clone();
+        result.x(cursor.resultX()).y(cursor.resultY()).z(cursor.resultZ());
+        return start.equalsInRange(result, 1) ? null : result;
     }
 
     /**
@@ -209,7 +164,9 @@ public class SafeCoordinateFinder {
         SafeCandidateCursor cursor = new SafeCandidateCursor(safeWorldCoordinate.safeMode(), cx, cy, cz,
                 new SearchBox(chunkMinX, chunkMaxX, minY, maxY, chunkMinZ, chunkMaxZ));
         SafeCandidateCursor.Step step;
+        int advances = 0;
         while ((step = cursor.advance()) != SafeCandidateCursor.Step.DONE) {
+            if ((advances++ & 63) == 0) checker.beginSlice();
             if (step == SafeCandidateCursor.Step.CANDIDATE) {
                 mutablePos.set(cursor.x(), cursor.y(), cursor.z());
                 if (checker.isSafeBlock(mutablePos.immutable(), belowAllowAir)) return toResult(mutablePos);
