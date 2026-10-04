@@ -51,4 +51,90 @@ public class CommonCostConfigurationTest {
         try { live.snapshot(); fail("Invalid cold snapshot accepted"); }
         catch (IllegalArgumentException expected) { }
     }
+
+    @Test public void unchangedSelectionReusesItsImmutableSnapshot() throws Exception {
+        ConfigBaselineFixture fixture = new ConfigBaselineFixture(CommonConfig.class);
+        fixture.bind(CommonConfig.class);
+        fixture.holder.set("cost.home.type", EnumCostType.EXP_POINT);
+        CommonCostConfiguration live = new CommonCostConfiguration(fixture.holder);
+        CostConfiguration first = live.selection(EnumTeleportType.TP_HOME);
+        assertSame(first, live.selection(EnumTeleportType.TP_HOME));
+        assertEquals(0, fixture.saves);
+    }
+
+    @Test public void everyUnsavedDependencyInvalidatesTheCachedSelection() throws Exception {
+        ConfigBaselineFixture fixture = new ConfigBaselineFixture(CommonConfig.class);
+        fixture.bind(CommonConfig.class);
+        fixture.holder.set("cost.home.type", EnumCostType.EXP_POINT);
+        CommonCostConfiguration live = new CommonCostConfiguration(fixture.holder);
+        java.util.Map<String, Object> edits = new java.util.LinkedHashMap<>();
+        edits.put("cost.home.type", EnumCostType.EXP_LEVEL);
+        edits.put("cost.home.fixedAmount", 3D);
+        edits.put("cost.home.perBlockAmount", .003D);
+        edits.put("cost.home.minAmount", 1);
+        edits.put("cost.home.maxAmount", 21);
+        edits.put("cost.home.item", "minecraft:stone");
+        edits.put("cost.home.command", "say {amount}");
+        edits.put("cost.home.custom.file", "Fee.java");
+        edits.put("cost.cards.enabled", true);
+        edits.put("cost.cards.dailyGrant", 1);
+        edits.put("cost.cards.mode", EnumCardType.OFFSET_COST);
+        edits.put("cost.distance.maxDistance", 9000);
+        edits.put("cost.distance.crossDimensionDistance", 8000);
+        for (java.util.Map.Entry<String, Object> edit : edits.entrySet()) {
+            CostConfiguration before = live.selection(EnumTeleportType.TP_HOME);
+            fixture.holder.set(edit.getKey(), edit.getValue());
+            CostConfiguration after = live.selection(EnumTeleportType.TP_HOME);
+            assertNotSame(edit.getKey(), before, after);
+            assertSame(edit.getKey(), after, live.selection(EnumTeleportType.TP_HOME));
+            assertEquals(live.parameters(EnumTeleportType.TP_HOME), after.parameters(EnumTeleportType.TP_HOME));
+            assertEquals(live.cards(), after.cards());
+        }
+        assertEquals(0, fixture.saves);
+    }
+
+    @Test public void freeSnapshotIgnoresBrokenUnrelatedCardsAndDistance() throws Exception {
+        ConfigBaselineFixture fixture = new ConfigBaselineFixture(CommonConfig.class);
+        fixture.bind(CommonConfig.class);
+        CommonCostConfiguration live = new CommonCostConfiguration(fixture.holder);
+        CostConfiguration free = live.selection(EnumTeleportType.TP_HOME);
+        fixture.values.put("cost.cards.dailyGrant", -1);
+        fixture.values.put("cost.distance.maxDistance", -1);
+        fixture.values.put("cost.stage.fixedAmount", Double.NaN);
+        assertSame(free, live.selection(EnumTeleportType.TP_HOME));
+        fixture.holder.set("cost.home.type", EnumCostType.EXP_POINT);
+        try { live.selection(EnumTeleportType.TP_HOME); fail("Charged selection accepted invalid dependencies"); }
+        catch (IllegalArgumentException expected) { }
+    }
+
+    @Test public void reboundHolderCannotUseAnOldCachedSnapshotOrLock() throws Exception {
+        ConfigBaselineFixture first = new ConfigBaselineFixture(CommonConfig.class);
+        first.bind(CommonConfig.class);
+        CommonCostConfiguration live = new CommonCostConfiguration(first.holder);
+        live.selection(EnumTeleportType.TP_HOME);
+        ConfigBaselineFixture second = new ConfigBaselineFixture(CommonConfig.class);
+        second.bind(CommonConfig.class);
+        try { live.selection(EnumTeleportType.TP_HOME); fail("Rebound holder was accepted by old runtime"); }
+        catch (IllegalStateException expected) { }
+        try { live.snapshot(); fail("Rebound holder was accepted by old publication"); }
+        catch (IllegalStateException expected) { }
+        assertEquals(0, new CommonCostConfiguration(second.holder).selection(EnumTeleportType.TP_HOME)
+                .parameters(EnumTeleportType.TP_HOME).fixedAmount(), 0);
+    }
+
+    @Test public void enumNamesInTheBackendMatchWithoutRebuildingAndBadNumbersFailClosed() throws Exception {
+        ConfigBaselineFixture fixture = new ConfigBaselineFixture(CommonConfig.class);
+        fixture.bind(CommonConfig.class);
+        fixture.holder.set("cost.home.type", EnumCostType.EXP_POINT);
+        CommonCostConfiguration live = new CommonCostConfiguration(fixture.holder);
+        CostConfiguration first = live.selection(EnumTeleportType.TP_HOME);
+        fixture.values.put("cost.home.type", "EXP_POINT");
+        fixture.values.put("cost.cards.mode", "WAIVE_COST");
+        assertSame(first, live.selection(EnumTeleportType.TP_HOME));
+        fixture.values.put("cost.home.fixedAmount", Double.NaN);
+        try { live.selection(EnumTeleportType.TP_HOME); fail("Cached selection hid invalid live amount"); }
+        catch (IllegalArgumentException expected) { }
+        fixture.values.put("cost.home.fixedAmount", 0D);
+        assertSame(first, live.selection(EnumTeleportType.TP_HOME));
+    }
 }
