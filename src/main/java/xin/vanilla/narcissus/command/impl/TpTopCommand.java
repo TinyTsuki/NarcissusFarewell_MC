@@ -32,7 +32,7 @@ public final class TpTopCommand {
             return 0;
         }
         safeWorldCoordinate.safe("safe".equalsIgnoreCase(xin.vanilla.banira.common.util.CommandUtils.getStringDefault(context, "safe", "safe"))).safeMode(EnumSafeMode.Y_T_TO_C);
-        if (CommandUtils.checkTeleportPost(player, safeWorldCoordinate, EnumTeleportType.TP_TOP, true)) return 0;
+        if (CommandUtils.checkTeleportPost(player, safeWorldCoordinate, EnumTeleportType.TP_TOP)) return 0;
         NarcissusUtils.teleportTo(player, safeWorldCoordinate, EnumTeleportType.TP_TOP);
         return 1;
     }

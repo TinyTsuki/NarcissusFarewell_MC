@@ -53,9 +53,10 @@ public final class TpBackCommand {
         }
         SafeWorldCoordinate safeWorldCoordinate = record.getBefore().clone();
         safeWorldCoordinate.safe("safe".equalsIgnoreCase(xin.vanilla.banira.common.util.CommandUtils.getStringEmpty(context, "safe")));
-        if (CommandUtils.checkTeleportPost(player, safeWorldCoordinate, EnumTeleportType.TP_BACK, true)) return 0;
-        NarcissusUtils.removeBackTeleportRecord(player, record);
-        NarcissusUtils.teleportTo(player, safeWorldCoordinate, EnumTeleportType.TP_BACK);
+        if (CommandUtils.checkTeleportPost(player, safeWorldCoordinate, EnumTeleportType.TP_BACK)) return 0;
+        NarcissusUtils.teleportTo(player, safeWorldCoordinate, EnumTeleportType.TP_BACK,
+                () -> NarcissusUtils.removeBackTeleportRecord(player, record),
+                () -> PlayerTeleportData.getData(player).peekTeleportRecords().contains(record));
         return 1;
     }
 
