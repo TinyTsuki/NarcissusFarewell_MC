@@ -184,12 +184,13 @@ public final class NeoForgeCostPayment implements CostPaymentService.PaymentAcce
     private static ItemStack item(String specification, ServerPlayer player) {
         try {
             StringReader reader = new StringReader(specification.trim());
+            net.minecraft.resources.ResourceLocation id = net.minecraft.resources.ResourceLocation.read(reader);
             ItemStack item;
-            if (specification.indexOf('[') >= 0) {
+            if (reader.canRead() && reader.peek() == '[') {
+                reader.setCursor(0);
                 ItemParser.ItemResult parsed = new ItemParser(player.registryAccess()).parse(reader);
                 item = new ItemInput(parsed.item(), parsed.components()).createItemStack(1, false);
             } else {
-                net.minecraft.resources.ResourceLocation id = net.minecraft.resources.ResourceLocation.read(reader);
                 item = new ItemStack(net.minecraft.core.registries.BuiltInRegistries.ITEM.getOptional(id)
                         .orElse(net.minecraft.world.item.Items.AIR));
                 if (reader.canRead() && reader.peek() == '{') {
