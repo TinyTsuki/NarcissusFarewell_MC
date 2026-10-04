@@ -74,14 +74,20 @@ public class CostConfigMigrationTest {
     }
 
     @Test public void generatedMathAndBooleanExpressionsRunWithFrozenParameters() throws Exception {
+        String integerProduct = "100000 * 100000 / 1000000000";
+        assertEquals(10d, new xin.vanilla.banira.common.util.SafeExpressionEvaluator(integerProduct)
+                .evaluateDouble(Collections.emptyMap()), 0);
+        // Migration intentionally uses Java int arithmetic; decimal literals opt into double arithmetic.
+        assertEquals(1, 100000 * 100000 / 1000000000);
         ExecutorService owner = Executors.newSingleThreadExecutor();
         ScriptSession<ScriptFactory<CostFormula>> session = BaniraScripts.openFactorySession(
                 "cost-migration-test", CostFormula.class, "1", ScriptLimits.defaults(), owner);
         try {
             String[] expressions = {"num * distance * rate", "max(num, sqrt(distance) * rate)", "-2^2 + 10",
                     "distance > 100 && num == 2", "distance > 100 ? num : rate", "1e2 + .5", "5 / 2", "pow(2, 3^2)",
-                    "true == distance > 100", "random(5, 5)", "Math.ceil(1.2)"};
-            double[] expected = {1.2, 2, 6, 1, 2, 100.5, 2, 512, 1, 5, 2};
+                    "true == distance > 100", "random(5, 5)", "Math.ceil(1.2)", integerProduct,
+                    "100000.0 * 100000 / 1000000000"};
+            double[] expected = {1.2, 2, 6, 1, 2, 100.5, 2, 512, 1, 5, 2, 1, 10};
             List<ScriptSource> sources = new ArrayList<>();
             for (int i = 0; i < expressions.length; i++) {
                 String name = "Formula" + i;

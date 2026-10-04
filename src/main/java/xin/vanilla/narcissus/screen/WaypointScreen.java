@@ -1479,11 +1479,18 @@ public class WaypointScreen extends BaniraScreen {
             this.recordTime = recordTime;
             UUID owner = net.minecraft.client.Minecraft.getInstance() == null || net.minecraft.client.Minecraft.getInstance().player == null ? new UUID(0, 0)
                     : net.minecraft.client.Minecraft.getInstance().player.getUUID();
-            this.quoteTarget = type == Type.HOME ? CostQuoteTarget.home(owner, safeWorldCoordinate.dimensionId(), name)
-                    : type == Type.STAGE ? CostQuoteTarget.stage(safeWorldCoordinate.dimensionId(), name)
-                    : recordTime == null || EnumTeleportType.valueOfEx(recordType) == null ? CostQuoteTarget.unknown(EnumTeleportType.TP_BACK)
-                    : CostQuoteTarget.history(owner, EnumTeleportType.TP_BACK, recordTime.getTime(), EnumTeleportType.valueOfEx(recordType),
-                    safeWorldCoordinate.dimensionId(), safeWorldCoordinate.x(), safeWorldCoordinate.y(), safeWorldCoordinate.z());
+            CostQuoteTarget target;
+            try {
+                target = type == Type.HOME ? CostQuoteTarget.home(owner, safeWorldCoordinate.dimensionId(), name)
+                        : type == Type.STAGE ? CostQuoteTarget.stage(safeWorldCoordinate.dimensionId(), name)
+                        : recordTime == null || EnumTeleportType.valueOfEx(recordType) == null ? CostQuoteTarget.unknown(EnumTeleportType.TP_BACK)
+                        : CostQuoteTarget.history(owner, EnumTeleportType.TP_BACK, recordTime.getTime(), EnumTeleportType.valueOfEx(recordType),
+                        safeWorldCoordinate.dimensionId(), safeWorldCoordinate.x(), safeWorldCoordinate.y(), safeWorldCoordinate.z());
+            } catch (IllegalArgumentException invalidQuote) {
+                // Stored waypoint identities can exceed the bounded quote protocol.
+                target = CostQuoteTarget.unknown(itemTypeToEnum(type));
+            }
+            this.quoteTarget = target;
         }
 
         public String getDetailTypeName() {
