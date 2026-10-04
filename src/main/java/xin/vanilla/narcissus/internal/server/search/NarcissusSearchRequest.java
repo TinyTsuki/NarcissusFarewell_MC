@@ -49,7 +49,7 @@ public final class NarcissusSearchRequest implements SearchTask {
     private ViewSearchCursor.Step viewStep;
     private EnumTeleportType type;
     private int range, retries;
-    private boolean belowAir, viewSafe, viewFound, closed, ticketCancelled;
+    private boolean belowAir, viewSafe, viewFound, closed, ticketCancelled, pendingFallback;
     private BlockState support;
     private ResultKind kind;
     private Runnable cleanup;
@@ -72,6 +72,7 @@ public final class NarcissusSearchRequest implements SearchTask {
         supportOrigin = null;
         view = null;
         pending = null;
+        pendingFallback = false;
         retries = 0;
         belowAir = false;
         beginDestination();
@@ -90,6 +91,7 @@ public final class NarcissusSearchRequest implements SearchTask {
         viewSafe = safe;
         viewFound = false;
         pending = null;
+        pendingFallback = false;
         result = null;
         state = State.READY;
     }
@@ -152,6 +154,10 @@ public final class NarcissusSearchRequest implements SearchTask {
                 callback.accept(this);
                 break;
             }
+            if (pendingFallback) {
+                exhausted();
+                continue;
+            }
             if (pending == null) {
                 consumed++;
                 if (view != null) {
@@ -209,7 +215,9 @@ public final class NarcissusSearchRequest implements SearchTask {
         }
         // Checking the original fallback itself also requires a ready lease.
         pending = working.toBlockPos();
+        pendingFallback = true;
         if (!ready(pending)) return;
+        pendingFallback = false;
         if (access.safe(pending, false)) { result = working.clone(); kind = ResultKind.FOUND; pending = null; return; }
         pending = null;
         if (type == EnumTeleportType.TP_RANDOM && retries < config.randomRetries()) {

@@ -118,6 +118,25 @@ public class NarcissusSearchServiceTest {
         assertEquals(point().xyzString(), resolved.destination().xyzString());
         assertTrue(resolved.complete(() -> { }));
     }
+    @Test public void waitingForOriginalFallbackKeepsFractionalCoordinates() {
+        SafeWorldCoordinate target = new SafeWorldCoordinate(-.25, 300.75, -.25, World.OVERWORLD)
+                .safe(true).safeMode(EnumSafeMode.Y_C_OFFSET_3);
+        ready = false;
+        NarcissusSearchRequest request = new NarcissusSearchRequest(access.id, point(),
+                config.capture(EnumTeleportType.TP_HOME, false), access, pool.open(World.OVERWORLD.location()),
+                value -> { resolved = value; value.waitForCountdown(); });
+        request.destination(target, EnumTeleportType.TP_HOME, 0);
+        assertTrue(coordinator.submit(request)); tick();
+        assertEquals(SearchTask.State.WAITING_CHUNK, request.state());
+        assertNull(resolved);
+        ready = true; tick();
+        assertNotNull(resolved);
+        assertEquals(target.xyzString(), resolved.destination().xyzString());
+        assertEquals(NarcissusSearchRequest.ResultKind.FOUND, resolved.kind());
+        assertEquals(Collections.singleton("-1,-1"), retainedChunks);
+        assertTrue(resolved.complete(() -> { })); tick();
+        assertEquals(0, pool.leaseCount());
+    }
     @Test public void supportMissingAtCommitCancelsWithoutPayment() {
         access.safe = false; access.air = true; access.support = Blocks.STONE.defaultBlockState(); start();
         assertEquals(NarcissusSearchRequest.ResultKind.SUPPORT_PLAN, resolved.kind());
