@@ -56,6 +56,7 @@ public final class ClientModEventHandler {
         BaniraClientEvents.Client.onClientTick(ClientModEventHandler::onClientTick);
         NarcissusUiSmokeRunner.register();
         NarcissusNetworkSmokeClientRunner.register();
+        xin.vanilla.narcissus.internal.client.dev.NarcissusCostSmokeClientRunner.register();
     }
 
     /**
@@ -84,6 +85,7 @@ public final class ClientModEventHandler {
     private static void onClientTick(xin.vanilla.banira.api.client.event.BaniraClientTickEvent event) {
         NarcissusUiSmokeRunner.tick(Minecraft.getInstance());
         NarcissusNetworkSmokeClientRunner.tick(Minecraft.getInstance());
+        xin.vanilla.narcissus.internal.client.dev.NarcissusCostSmokeClientRunner.tick(Minecraft.getInstance());
         if (Minecraft.getInstance().screen == null) {
             if (TP_HOME_KEY.consumeClick()) {
                 if (!keyDown) {

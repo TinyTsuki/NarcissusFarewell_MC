@@ -1,0 +1,111 @@
+import java.time.Duration
+import java.util.concurrent.TimeUnit
+import groovy.json.JsonOutput
+import java.security.MessageDigest
+
+def costChild = providers.gradleProperty('narcissus.costSmoke.child').map { it.toBoolean() }.getOrElse(false)
+def costTasks = gradle.startParameter.taskNames.collect { it.tokenize(':').last() }
+if (costTasks.contains('costSmoke') || (costChild && costTasks.contains('runServer'))) {
+    dependencies.add('runtimeOnly', fg.deobf('curse.maven:forge-carpet-547361:3527542'))
+}
+if (costChild) {
+    layout.buildDirectory.set(file(project.property('narcissus.costSmoke.buildDir')))
+    ['jade-324717', 'rubidium-extra-654373'].each { module -> configurations.runtimeClasspath.exclude group: 'curse.maven', module: module }
+    configurations.runtimeClasspath.exclude group: 'maven.modrinth', module: 'embeddium'
+    minecraft.runs {
+        configureEach {
+            workingDirectory file(project.property('narcissus.costSmoke.gameDir'))
+            property 'narcissus.costSmoke', 'true'
+            property 'file.encoding', 'UTF-8'
+            ['phase', 'status', 'peer', 'port'].each { name -> property "narcissus.costSmoke.${name}", project.property("narcissus.costSmoke.${name}").toString() }
+        }
+        server { args '--nogui', '--port', project.property('narcissus.costSmoke.port').toString() }
+        client { args '--username', 'CostSmoke' }
+    }
+}
+
+tasks.register('costSmoke') {
+    group = 'verification'
+    description = 'Runs only teleport cost migration, native payment and remote quote integration, then restart.'
+    timeout = Duration.ofMinutes(15)
+    doLast {
+        if (costChild) throw new GradleException('costSmoke cannot run recursively')
+        File root = new File(projectDir, "run-cost-smoke/${System.currentTimeMillis()}").canonicalFile
+        File allowed = new File(projectDir, 'run-cost-smoke').canonicalFile
+        if (root.parentFile != allowed) throw new GradleException('Non-isolated cost smoke root')
+        File serverDir = new File(root, 'server'), clientDir = new File(root, 'client')
+        serverDir.mkdirs(); clientDir.mkdirs()
+        int port
+        new ServerSocket(0).withCloseable { socket -> port = socket.localPort }
+        new File(serverDir, 'eula.txt').setText('eula=true\n', 'UTF-8')
+        new File(serverDir, 'server.properties').setText("online-mode=false\nserver-port=${port}\nlevel-name=cost-world\nview-distance=2\nlevel-type=flat\ngenerate-structures=false\nspawn-monsters=false\nspawn-animals=false\nop-permission-level=4\n", 'UTF-8')
+        File config = new File(serverDir, 'config/narcissus_farewell-common.toml')
+        config.parentFile.mkdirs()
+        config.setText('[cost.tpHome]\ncostTpHomeType="EXP_POINT"\ncostTpHomeExp="3"\ncostTpHomeNumUpper=20\ncostTpHomeNumLower=0\n', 'UTF-8')
+        new File(root, 'legacy-config.toml').setText(config.getText('UTF-8'), 'UTF-8')
+        [serverDir, clientDir].each { dir ->
+            File spark = new File(dir, 'config/spark/config.json'); spark.parentFile.mkdirs()
+            spark.setText('{"backgroundProfiler":false}\n', 'UTF-8')
+        }
+        def hash = { File f -> MessageDigest.getInstance('SHA-256').digest(f.bytes).encodeHex().toString() }
+        def sourceFiles = fileTree(projectDir) { include 'src/**', 'gradle/**', 'build.gradle', 'gradle.properties' }.files.sort { it.path }
+        new File(root, 'source-state.json').setText(JsonOutput.prettyPrint(JsonOutput.toJson([
+                commit: providers.exec { commandLine 'git', 'rev-parse', 'HEAD' }.standardOutput.asText.get().trim(),
+                files: sourceFiles.collectEntries { [(projectDir.toPath().relativize(it.toPath()).toString()): hash(it)] },
+                runtime: configurations.runtimeClasspath.files.findAll { it.name.contains('banira_codex') || it.name.contains('forge-carpet') }.collectEntries { [(it.absolutePath): hash(it)] }
+        ])), 'UTF-8')
+        def kill = { Process process ->
+            if (process != null && process.isAlive()) {
+                process.toHandle().descendants().forEach { it.destroyForcibly() }
+                process.destroyForcibly(); process.waitFor(15, TimeUnit.SECONDS)
+            }
+        }
+        def waitMarker = { Process process, File status, String marker, File log ->
+            long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(300)
+            while (System.nanoTime() < deadline) {
+                def lines = status.isFile() ? status.readLines('UTF-8') : []
+                if (lines.any { it.startsWith('FAIL ') }) throw new GradleException("Cost smoke failure: ${lines}")
+                if (lines.contains(marker)) return
+                if (!process.isAlive()) throw new GradleException("Exited before ${marker}:\n${log.readLines('UTF-8').takeRight(40).join('\n')}")
+                Thread.sleep(250)
+            }
+            throw new GradleException("Timed out before ${marker}:\n${log.readLines('UTF-8').takeRight(40).join('\n')}")
+        }
+        def start = { String side, String phase ->
+            File own = new File(root, "${side}-${phase}.status"), peer = new File(root, "${side == 'server' ? 'client' : 'server'}-${phase}.status")
+            File log = new File(root, "${side}-${phase}.log")
+            File work = side == 'server' ? serverDir : clientDir
+            File cache = new File(allowed, "${side}-gradle")
+            List<String> cmd = System.getProperty('os.name').toLowerCase().contains('windows')
+                    ? ['cmd.exe', '/d', '/c', new File(projectDir, 'gradlew.bat').absolutePath] : [new File(projectDir, 'gradlew').absolutePath]
+            cmd.addAll([side == 'server' ? 'runServer' : 'runClient', '--no-daemon', '--console=plain', '--project-cache-dir', new File(cache, 'cache').absolutePath,
+                    '-Pnarcissus.costSmoke.child=true', "-Pnarcissus.costSmoke.buildDir=${new File(cache, 'build')}", "-Pnarcissus.costSmoke.gameDir=${work}",
+                    "-Pnarcissus.costSmoke.phase=${phase}", "-Pnarcissus.costSmoke.status=${own}", "-Pnarcissus.costSmoke.peer=${peer}", "-Pnarcissus.costSmoke.port=${port}",
+                    '-Dorg.gradle.java.installations.paths=' + System.getProperty('org.gradle.java.installations.paths', '')].collect { it.toString() })
+            Process process = new ProcessBuilder(cmd).directory(projectDir).redirectErrorStream(true).redirectOutput(log).start()
+            return [process: process, status: own, log: log]
+        }
+        Map<String, String> backupHashes = null
+        ['integration', 'restart'].each { phase ->
+            def server = null, client = null
+            try {
+                server = start('server', phase)
+                waitMarker(server.process, server.status, 'PASS server-ready', server.log)
+                client = start('client', phase)
+                waitMarker(client.process, client.status, "FINISHED ${phase}", client.log)
+                waitMarker(server.process, server.status, 'PASS disconnect', server.log)
+                [client, server].each { child ->
+                    if (!child.process.waitFor(60, TimeUnit.SECONDS) || child.process.exitValue() != 0) throw new GradleException("Unclean cost smoke exit: ${child.log}")
+                }
+                if (!server.status.readLines('UTF-8').contains('PASS server-stopped')) throw new GradleException('Server stopped event was not observed')
+                def originals = fileTree(serverDir) { include '**/backups/cost-migration/**/original.toml' }.files
+                if (originals.size() != 1 || hash(originals.first()) != hash(new File(root, 'legacy-config.toml'))) throw new GradleException('Migration original bytes/count mismatch')
+                def hashes = fileTree(serverDir) { include '**/backups/cost-migration/**' }.files.collectEntries { [(it.absolutePath): hash(it)] }
+                if (phase == 'integration') backupHashes = hashes
+                else if (hashes != backupHashes) throw new GradleException('Restart modified or duplicated migration backups')
+                ['server', 'client'].each { side -> logger.lifecycle("Cost smoke ${phase} ${side}: " + new File(root, "${side}-${phase}.status").getText('UTF-8')) }
+            } finally { kill(client?.process); kill(server?.process) }
+        }
+        logger.lifecycle("Cost smoke evidence: ${root}")
+    }
+}

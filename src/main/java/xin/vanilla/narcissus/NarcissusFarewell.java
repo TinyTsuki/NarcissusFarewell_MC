@@ -88,6 +88,7 @@ public class NarcissusFarewell {
         });
         ForgeNarcissusGameEventAdapter.register();
         NarcissusNetworkSmokeServerRunner.register();
+        xin.vanilla.narcissus.internal.server.dev.NarcissusCostSmokeServerRunner.register();
 
         BaniraEvents.onCommonSetup(event -> {
             NarcissusNotificationTypes.registerAllOnServer();
