@@ -304,6 +304,14 @@ public final class PlayerTeleportData implements IPlayerData<PlayerTeleportData>
             return 0;
         }
         if (this.isDirty()) this.saveEx();
+        return peekTeleportCountdownSeconds(type);
+    }
+
+    /** Reads the preference without flushing player data during a cost preview. */
+    public int peekTeleportCountdownSeconds(EnumTeleportType type) {
+        if (type == null || !EnumTeleportType.countdownConfigurableTypes().contains(type)) {
+            return 0;
+        }
         if (teleportCountdownSeconds == null) {
             return 0;
         }
@@ -384,6 +392,31 @@ public final class PlayerTeleportData implements IPlayerData<PlayerTeleportData>
         return this.teleportCard.get();
     }
 
+    /** Reads the current balance without flushing player data during a cost preview. */
+    public int peekTeleportCard() {
+        return this.teleportCard.get();
+    }
+
+    /** Reserve cards for an owner-thread payment without persisting a half-completed transaction. */
+    public boolean tryConsumeTeleportCards(int amount) {
+        if (amount < 0) throw new IllegalArgumentException("Negative card debit");
+        if (amount == 0) return true;
+        for (;;) {
+            int balance = teleportCard.get();
+            if (balance < amount) return false;
+            if (teleportCard.compareAndSet(balance, balance - amount)) { setDirty(); return true; }
+        }
+    }
+
+    /** Restore only our reservation; preserve any changes made by an external command. */
+    public void refundTeleportCards(int amount) {
+        if (amount < 0) throw new IllegalArgumentException("Negative card refund");
+        if (amount > 0) {
+            teleportCard.updateAndGet(balance -> (int) Math.min(Integer.MAX_VALUE, (long) balance + amount));
+            setDirty();
+        }
+    }
+
     public void setTeleportCard(int num) {
         this.teleportCard.set(num);
         this.save();
@@ -400,6 +433,22 @@ public final class PlayerTeleportData implements IPlayerData<PlayerTeleportData>
     public @NonNull List<TeleportRecord> getTeleportRecords() {
         if (this.isDirty()) this.saveEx();
         return this.teleportRecords = CollectionUtils.isNullOrEmpty(this.teleportRecords) ? new ArrayList<>() : this.teleportRecords;
+    }
+
+    /** Readonly quote lookup; do not flush dirty data from a preview. */
+    public List<TeleportRecord> peekTeleportRecords() {
+        return this.teleportRecords == null ? Collections.emptyList() : Collections.unmodifiableList(this.teleportRecords);
+    }
+
+    public Map<KeyValue<String, String>, SafeWorldCoordinate> peekHomeCoordinates() {
+        return this.homeCoordinate == null ? Collections.emptyMap() : Collections.unmodifiableMap(this.homeCoordinate);
+    }
+
+    public boolean acceptsTeleportFrom(UUID requester) {
+        if (this.access == null) return true;
+        String id = requester.toString();
+        return !this.access.getBlackList().contains(id)
+                && (this.access.getWhiteList().isEmpty() || this.access.getWhiteList().contains(id));
     }
 
     public @NonNull List<TeleportRecord> getTeleportRecords(EnumTeleportType type) {
