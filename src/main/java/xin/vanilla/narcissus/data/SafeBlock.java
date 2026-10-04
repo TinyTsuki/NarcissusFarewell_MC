@@ -42,6 +42,7 @@ public class SafeBlock {
     public void init() {
         if (this.safeBlocksState == null) {
             this.safeBlocksState = CommonConfig.get().base().safeTeleport().safeBlocks().stream()
+                    .map(SafeBlock::normalizeBlockStateId)
                     .map(BlockUtils::deserializeBlockState)
                     .filter(Objects::nonNull)
                     .distinct()
@@ -56,6 +57,7 @@ public class SafeBlock {
         }
         if (this.unsafeBlocksState == null) {
             this.unsafeBlocksState = CommonConfig.get().base().safeTeleport().unsafeBlocks().stream()
+                    .map(SafeBlock::normalizeBlockStateId)
                     .map(BlockUtils::deserializeBlockState)
                     .filter(Objects::nonNull)
                     .distinct()
@@ -70,6 +72,7 @@ public class SafeBlock {
         }
         if (this.suffocatingBlocksState == null) {
             this.suffocatingBlocksState = CommonConfig.get().base().safeTeleport().suffocatingBlocks().stream()
+                    .map(SafeBlock::normalizeBlockStateId)
                     .map(BlockUtils::deserializeBlockState)
                     .filter(Objects::nonNull)
                     .distinct()
@@ -82,5 +85,9 @@ public class SafeBlock {
                     .distinct()
                     .collect(Collectors.toList());
         }
+    }
+    public static String normalizeBlockStateId(String value) {
+        if (value == null) return null;
+        return value.replaceFirst("^minecraft:grass_path(?=\\[|$)", "minecraft:dirt_path");
     }
 }

@@ -1,5 +1,6 @@
 package xin.vanilla.narcissus.command.impl;
 
+import xin.vanilla.narcissus.internal.server.NarcissusCostService;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
@@ -61,7 +62,10 @@ public final class TpStructureCommand {
         boolean isBiome = biome != null;
         String searchingKey = isBiome ? "tp_structure_searching_biome" : "tp_structure_searching_structure";
         MessageUtils.sendNotification(player, NarcissusComponent.get().transAuto(searchingKey, structId), NarcissusNotificationTypes.TELEPORT_SEARCH);
+        NarcissusCostService.Ticket ticket = NarcissusUtils.beginTeleport(player, EnumTeleportType.TP_STRUCTURE);
+        if (ticket == null) return 0;
         new Thread(() -> {
+            try {
             MinecraftServer server = BaniraServer.require(MinecraftServer.class);
             ServerLevel world = server.getLevel(targetLevel);
             SafeWorldCoordinate safeWorldCoordinate;
@@ -85,15 +89,29 @@ public final class TpStructureCommand {
                         : null;
             }
             if (safeWorldCoordinate == null) {
-                String notFoundKey = isBiome ? "biome_not_found_in_range" : "structure_not_found_in_range";
-                MessageUtils.sendNotification(player, NarcissusComponent.get().transAuto(notFoundKey, structId), NarcissusNotificationTypes.TELEPORT_ERROR);
+                player.server.execute(() -> {
+                    if (!ticket.live()) return;
+                    ticket.cancel();
+                    String notFoundKey = isBiome ? "biome_not_found_in_range" : "structure_not_found_in_range";
+                    MessageUtils.sendNotification(player, NarcissusComponent.get().transAuto(notFoundKey, structId), NarcissusNotificationTypes.TELEPORT_ERROR);
+                });
                 return;
             }
             safeWorldCoordinate.safe(safe);
-            if (CommandUtils.checkTeleportPost(player, safeWorldCoordinate, EnumTeleportType.TP_STRUCTURE, true))
-                return;
-            player.server.submit(() -> NarcissusUtils.teleportTo(player, safeWorldCoordinate, EnumTeleportType.TP_STRUCTURE));
-        }).start();
+            player.server.submit(() -> {
+                if (!ticket.live()) return;
+                if (CommandUtils.checkTeleportPost(player, safeWorldCoordinate, EnumTeleportType.TP_STRUCTURE)) { ticket.cancel(); return; }
+                NarcissusUtils.teleportTo(player, safeWorldCoordinate, EnumTeleportType.TP_STRUCTURE, ticket);
+            });
+            } catch (RuntimeException error) {
+                org.apache.logging.log4j.LogManager.getLogger(TpStructureCommand.class).error("Teleport destination search failed", error);
+                player.server.execute(() -> {
+                    if (!ticket.live()) return;
+                    ticket.cancel();
+                    MessageUtils.sendNotification(player, NarcissusComponent.get().transAuto("cost_unavailable"), NarcissusNotificationTypes.TELEPORT_ERROR);
+                });
+            }
+        }, "Narcissus structure search").start();
         return 1;
     }
 
