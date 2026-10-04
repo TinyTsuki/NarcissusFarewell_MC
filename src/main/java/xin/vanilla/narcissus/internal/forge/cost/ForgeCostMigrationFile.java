@@ -5,6 +5,8 @@ import com.electronwill.nightconfig.toml.*;
 import com.google.gson.*;
 import xin.vanilla.banira.common.util.JsonUtils;
 import xin.vanilla.narcissus.config.migration.*;
+import xin.vanilla.narcissus.data.cost.CostConfiguration;
+import xin.vanilla.narcissus.internal.server.NarcissusCostRuntime;
 
 import java.io.*;
 import java.nio.ByteBuffer;
@@ -26,6 +28,18 @@ public final class ForgeCostMigrationFile {
 
     public ForgeCostMigrationFile() { this(ignored -> { }); }
     ForgeCostMigrationFile(Consumer<Checkpoint> checkpoint) { this.checkpoint = Objects.requireNonNull(checkpoint); }
+
+    /** Complete before registering COMMON; failures must prevent Forge from correcting the old file. */
+    public synchronized CostConfiguration migrateBeforeRegistration(Path commonFile, Path modRoot) throws IOException {
+        Path common = absolute(commonFile), root = absolute(modRoot);
+        recover(common, root);
+        if (!Files.exists(common, LinkOption.NOFOLLOW_LINKS)) return CostConfiguration.defaults();
+        CostMigrationPlan plan = prepare(common, root);
+        NarcissusCostRuntime.SourceValidation validation = NarcissusCostRuntime.preflight(
+                plan.configuration(), local(root, "cost/sources"), plan.sources());
+        commit(plan, validation::verify);
+        return plan.configuration();
+    }
 
     public synchronized CostMigrationPlan prepare(Path commonFile, Path modRoot) throws IOException {
         pending = null;
@@ -71,9 +85,17 @@ public final class ForgeCostMigrationFile {
     public synchronized void commit(CostMigrationPlan plan) throws IOException {
         Pending candidate = pending;
         if (candidate == null || candidate.plan != plan) throw new IllegalStateException("Foreign or consumed cost migration plan");
+        NarcissusCostRuntime.SourceValidation validation = NarcissusCostRuntime.preflight(
+                plan.configuration(), local(candidate.root, "cost/sources"), plan.sources());
+        commit(plan, validation::verify);
+    }
+
+    private void commit(CostMigrationPlan plan, SourceCheck validation) throws IOException {
+        Pending candidate = pending;
+        if (candidate == null || candidate.plan != plan) throw new IllegalStateException("Foreign or consumed cost migration plan");
         pending = null;
         if (!Arrays.equals(candidate.original, read(candidate.common, MAX_CONFIG))) throw new IOException("Common configuration changed during migration");
-        if (!plan.migrationRequired()) return;
+        if (!plan.migrationRequired()) { validation.verify(); return; }
         verifyEvidence(candidate.root, candidate.journal);
         verifySources(candidate.root, candidate.journal, false);
         Path journal = local(candidate.root, JOURNAL);
@@ -83,7 +105,7 @@ public final class ForgeCostMigrationFile {
         }
         replace(journal, previous, json(candidate.journal), MAX_METADATA);
         checkpoint.accept(Checkpoint.AFTER_PREPARED);
-        complete(candidate.common, candidate.root, candidate.journal, true);
+        complete(candidate.common, candidate.root, candidate.journal, true, validation);
     }
 
     public synchronized void recover(Path commonFile, Path modRoot) throws IOException {
@@ -104,16 +126,31 @@ public final class ForgeCostMigrationFile {
             throw new IOException("Common configuration changed during interrupted migration; recovery blocked");
         }
         verifySources(root, metadata, false);
-        complete(common, root, metadata, false);
+        String backup = metadata.get("backup").getAsString();
+        CostMigrationPlan candidate;
+        try {
+            candidate = CostConfigMigration.plan(plain(new TomlParser().parse(
+                    utf8(read(local(root, backup + "/candidate.toml"), MAX_CONFIG)))));
+        }
+        catch (RuntimeException error) { throw new IOException("Invalid migration recovery candidate", error); }
+        Map<String, String> overlays = new LinkedHashMap<>();
+        for (Map.Entry<String, JsonElement> source : metadata.getAsJsonObject("sources").entrySet()) {
+            String file = source.getKey();
+            overlays.put(file, utf8(read(local(root, backup + "/sources/" + file), MAX_SOURCE)));
+        }
+        NarcissusCostRuntime.SourceValidation compiled = NarcissusCostRuntime.preflight(
+                candidate.configuration(), local(root, "cost/sources"), overlays);
+        complete(common, root, metadata, false, compiled::verify);
     }
 
-    private void complete(Path common, Path root, JsonObject metadata, boolean checkpoints) throws IOException {
+    private void complete(Path common, Path root, JsonObject metadata, boolean checkpoints, SourceCheck validation) throws IOException {
         verifyEvidence(root, metadata);
         verifySources(root, metadata, false);
         installSources(root, metadata);
         if (checkpoints) checkpoint.accept(Checkpoint.AFTER_SOURCES);
         verifyEvidence(root, metadata);
         verifySources(root, metadata, false);
+        validation.verify();
         byte[] current = read(common, MAX_CONFIG);
         String revision = hash(current);
         String backup = metadata.get("backup").getAsString();
@@ -133,6 +170,8 @@ public final class ForgeCostMigrationFile {
         metadata.addProperty("state", "COMMITTED");
         replace(journal, previous, json(metadata), MAX_METADATA);
     }
+
+    private interface SourceCheck { void verify() throws IOException; }
 
     private static void verifyEvidence(Path root, JsonObject metadata) throws IOException {
         String backup = metadata.get("backup").getAsString();

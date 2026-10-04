@@ -274,7 +274,7 @@ public final class NarcissusCostRuntime implements AutoCloseable {
     }
 
     /** Cold startup validation before Forge corrects the old TOML; never executes constructors. */
-    public static void preflight(CostConfiguration configuration, Path sourceRoot, Map<String, String> migratedSources) throws IOException {
+    public static SourceValidation preflight(CostConfiguration configuration, Path sourceRoot, Map<String, String> migratedSources) throws IOException {
         ThreadPoolExecutor preflight = new ThreadPoolExecutor(1, 1, 0, TimeUnit.MILLISECONDS,
                 new ArrayBlockingQueue<>(1), task -> new Thread(task, "narcissus-cost-preflight"));
         ScriptSession<ScriptFactory<CostFormula>> session = BaniraScripts.openFactorySession("narcissus_farewell",
@@ -282,6 +282,7 @@ public final class NarcissusCostRuntime implements AutoCloseable {
         try {
             Sources sources = Sources.load(sourceRoot.toAbsolutePath().normalize(), configuration, migratedSources);
             if (sources.group != null) session.prepareGroups(Collections.singletonList(sources.group)).get(30, TimeUnit.SECONDS);
+            return new SourceValidation(sourceRoot.toAbsolutePath().normalize(), sources.fingerprints, sources.helpers);
         } catch (InterruptedException interrupted) {
             Thread.currentThread().interrupt(); throw new IOException("Cost preflight interrupted", interrupted);
         } catch (ExecutionException | TimeoutException | RuntimeException failure) {
@@ -290,6 +291,25 @@ public final class NarcissusCostRuntime implements AutoCloseable {
             session.close(); preflight.shutdownNow();
             try { preflight.awaitTermination(5, TimeUnit.SECONDS); }
             catch (InterruptedException interrupted) { Thread.currentThread().interrupt(); }
+        }
+    }
+
+    /** Only hashes and filenames survive cold compilation, never code, factories or an executor. */
+    public static final class SourceValidation {
+        private final Path root;
+        private final Map<String, String> fingerprints;
+        private final Set<String> helpers;
+
+        private SourceValidation(Path root, Map<String, String> fingerprints, Set<String> helpers) {
+            this.root = root;
+            this.fingerprints = Collections.unmodifiableMap(new LinkedHashMap<>(fingerprints));
+            this.helpers = Collections.unmodifiableSet(new TreeSet<>(helpers));
+        }
+
+        /** Call after migrated sources are installed and immediately before configuration replacement. */
+        public void verify() throws IOException {
+            if (fingerprints.isEmpty()) return;
+            new Sources(null, fingerprints, helpers).verify(root);
         }
     }
 
