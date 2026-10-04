@@ -9,6 +9,9 @@
     "base.safeTeleport.getBlockFromInventory": false,
     "base.safeTeleport.safeBlocks": [],
     "base.safeTeleport.safeChunkRange": 7,
+    "base.safeTeleport.search.maxConcurrentSearches": 7,
+    "base.safeTeleport.search.timeBudgetMs": 0.125,
+    "base.safeTeleport.search.timeoutSeconds": 7,
     "base.safeTeleport.setBlockWhenSafeNotFound": true,
     "base.safeTeleport.suffocatingBlocks": [],
     "base.safeTeleport.unsafeBlocks": [],
@@ -321,6 +324,9 @@
       "minecraft:cobblestone"
     ],
     "base.safeTeleport.safeChunkRange": 1,
+    "base.safeTeleport.search.maxConcurrentSearches": 7,
+    "base.safeTeleport.search.timeBudgetMs": 0.125,
+    "base.safeTeleport.search.timeoutSeconds": 7,
     "base.safeTeleport.setBlockWhenSafeNotFound": false,
     "base.safeTeleport.suffocatingBlocks": [
       "minecraft:lava",

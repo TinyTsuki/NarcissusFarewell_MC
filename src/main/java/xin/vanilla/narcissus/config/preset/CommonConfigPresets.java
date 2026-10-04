@@ -15,6 +15,7 @@ public final class CommonConfigPresets {
     private static void applyDefaults(ConfigHolder holder) {
         // Only registered entries belong to this preset, not unrelated backend values.
         for (ConfigEntryDescriptor entry : holder.getDescriptors()) {
+            if (entry.getPath().startsWith("base.safeTeleport.search.")) continue;
             Object value = entry.getDefaultValue();
             holder.set(entry.getPath(), value instanceof List ? new ArrayList<>((List<?>) value) : value);
         }

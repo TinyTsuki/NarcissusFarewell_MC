@@ -390,6 +390,25 @@ public class CommonConfig implements ConfigData {
         @ConfigEntry.Gui.Tooltip(zh_cn = "当进行安全传送时，寻找安全坐标的半径，单位为区块", en_us = "The chunk range for finding a safe safeWorldCoordinate, in chunks.")
         @ConfigEntry.BoundedDiscrete(min = 1, max = 16)
         private int safeChunkRange = 1;
+
+        @ConfigEntry.Gui.CollapsibleObject
+        @ConfigEntry.Gui.Tooltip(zh_cn = "搜索执行", en_us = "Search Execution")
+        private SearchExecutionCategory search = new SearchExecutionCategory();
+    }
+
+    @Getter
+    @Setter
+    @Accessors(chain = true, fluent = true)
+    public static class SearchExecutionCategory {
+        @ConfigEntry.Gui.Tooltip(zh_cn = "每 tick 所有传送搜索共享的时间预算，单位为毫秒\n单次方块检查与原生区块生成可能超过预算", en_us = "Shared time budget for all teleport searches per tick, in milliseconds\nA single block check or native chunk generation may exceed the budget")
+        @ConfigEntry.BoundedDouble(min = .1, max = 10, decimalPlaces = 1)
+        private double timeBudgetMs = 2;
+        @ConfigEntry.Gui.Tooltip(zh_cn = "同时进行的搜索上限\n包含等待区块与传送前倒计时的请求", en_us = "Maximum concurrent searches\nIncludes requests waiting for chunks or teleport countdowns")
+        @ConfigEntry.BoundedDiscrete(min = 1, max = 256)
+        private int maxConcurrentSearches = 32;
+        @ConfigEntry.Gui.Tooltip(zh_cn = "搜索超时，单位为秒\n包含区块等待和随机重试，不包含搜索完成后的传送前倒计时", en_us = "Search timeout, in seconds\nIncludes chunk waiting and random retries, but excludes countdowns after search completion")
+        @ConfigEntry.BoundedDiscrete(min = 1, max = 300)
+        private int timeoutSeconds = 30;
     }
 
     @Getter

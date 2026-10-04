@@ -113,6 +113,42 @@
       "permissionKey": null,
       "keyChords": false
     },
+    "base.safeTeleport.search.maxConcurrentSearches": {
+      "type": "INTEGER",
+      "default": 32,
+      "min": 1,
+      "max": 256,
+      "precision": 2,
+      "enum": null,
+      "permission": "INHERIT",
+      "permissionLevel": null,
+      "permissionKey": null,
+      "keyChords": false
+    },
+    "base.safeTeleport.search.timeBudgetMs": {
+      "type": "DOUBLE",
+      "default": 2.0,
+      "min": 0.1,
+      "max": 10.0,
+      "precision": 1,
+      "enum": null,
+      "permission": "INHERIT",
+      "permissionLevel": null,
+      "permissionKey": null,
+      "keyChords": false
+    },
+    "base.safeTeleport.search.timeoutSeconds": {
+      "type": "INTEGER",
+      "default": 30,
+      "min": 1,
+      "max": 300,
+      "precision": 2,
+      "enum": null,
+      "permission": "INHERIT",
+      "permissionLevel": null,
+      "permissionKey": null,
+      "keyChords": false
+    },
     "base.safeTeleport.setBlockWhenSafeNotFound": {
       "type": "BOOLEAN",
       "default": false,
@@ -3695,6 +3731,9 @@
       "minecraft:cobblestone"
     ],
     "base.safeTeleport.safeChunkRange": 1,
+    "base.safeTeleport.search.maxConcurrentSearches": 32,
+    "base.safeTeleport.search.timeBudgetMs": 2.0,
+    "base.safeTeleport.search.timeoutSeconds": 30,
     "base.safeTeleport.setBlockWhenSafeNotFound": false,
     "base.safeTeleport.suffocatingBlocks": [
       "minecraft:lava",
@@ -4053,6 +4092,9 @@
       "minecraft:cobblestone"
     ],
     "base.safeTeleport.safeChunkRange": 1,
+    "base.safeTeleport.search.maxConcurrentSearches": 32,
+    "base.safeTeleport.search.timeBudgetMs": 2.0,
+    "base.safeTeleport.search.timeoutSeconds": 30,
     "base.safeTeleport.setBlockWhenSafeNotFound": false,
     "base.safeTeleport.suffocatingBlocks": [
       "minecraft:lava",
@@ -4406,6 +4448,9 @@
     "base.safeTeleport.getBlockFromInventory": false,
     "base.safeTeleport.safeBlocks": [],
     "base.safeTeleport.safeChunkRange": 7,
+    "base.safeTeleport.search.maxConcurrentSearches": 7,
+    "base.safeTeleport.search.timeBudgetMs": 0.125,
+    "base.safeTeleport.search.timeoutSeconds": 7,
     "base.safeTeleport.setBlockWhenSafeNotFound": true,
     "base.safeTeleport.suffocatingBlocks": [],
     "base.safeTeleport.unsafeBlocks": [],

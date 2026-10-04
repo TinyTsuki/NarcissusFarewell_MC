@@ -24,6 +24,28 @@ public class GeneratedConfigSchemaTest {
         assertEquals(fixture.defaults, ConfigBaselineFixture.readView(ClientConfigView.get(), ClientConfigView.class));
     }
 
+    @Test public void generatedSearchSettingsEnforceTheirRegisteredBounds() throws Exception {
+        ConfigBaselineFixture fixture = new ConfigBaselineFixture(CommonConfig.class);
+        fixture.bind(CommonConfig.class);
+        String prefix = "base.safeTeleport.search.";
+        for (String key : Arrays.asList("timeBudgetMs", "maxConcurrentSearches", "timeoutSeconds")) {
+            assertTrue("Missing search setting: " + key, fixture.defaults.containsKey(prefix + key));
+        }
+        assertEquals(Double.valueOf(2), fixture.holder.<Object>get(prefix + "timeBudgetMs"));
+        assertTrue(fixture.holder.validate(prefix + "timeBudgetMs", .1D));
+        assertTrue(fixture.holder.validate(prefix + "timeBudgetMs", 10D));
+        assertFalse(fixture.holder.validate(prefix + "timeBudgetMs", .09D));
+        assertFalse(fixture.holder.validate(prefix + "timeBudgetMs", 10.1D));
+        assertFalse(fixture.holder.validate(prefix + "maxConcurrentSearches", 0));
+        assertFalse(fixture.holder.validate(prefix + "maxConcurrentSearches", 257));
+        assertFalse(fixture.holder.validate(prefix + "timeoutSeconds", 0));
+        assertFalse(fixture.holder.validate(prefix + "timeoutSeconds", 301));
+        xin.vanilla.banira.common.config.ConfigEntryDescriptor budget = fixture.descriptors.stream()
+                .filter(d -> d.getPath().equals(prefix + "timeBudgetMs")).findFirst().get();
+        assertEquals(1, budget.getDecimalPlaces());
+        assertEquals(fixture.defaults, ConfigBaselineFixture.readView(CommonConfigView.get(), CommonConfigView.class));
+    }
+
     @Test public void ruleListsAreIndependentAndKeepCommas() throws Exception {
         ConfigBaselineFixture.bind(CommonConfig.class, null);
         List<String> original = new ArrayList<>(CommonConfigView.get().base().safeTeleport().unsafeBlocks());
