@@ -43,7 +43,7 @@ public final class TpCoordinateCommand {
             safeWorldCoordinate = new SafeWorldCoordinate(target.getX(), target.getY(), target.getZ(), target.yRot, target.xRot, target.getLevel().dimension());
         }
         safeWorldCoordinate.safe("safe".equalsIgnoreCase(xin.vanilla.banira.common.util.CommandUtils.getStringEmpty(context, "safe")));
-        if (CommandUtils.checkTeleportPost(player, safeWorldCoordinate, EnumTeleportType.TP_COORDINATE, true))
+        if (CommandUtils.checkTeleportPost(player, safeWorldCoordinate, EnumTeleportType.TP_COORDINATE))
             return 0;
         NarcissusUtils.teleportTo(player, safeWorldCoordinate, EnumTeleportType.TP_COORDINATE);
         return 1;

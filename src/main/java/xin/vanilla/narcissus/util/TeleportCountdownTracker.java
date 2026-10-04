@@ -27,14 +27,17 @@ public final class TeleportCountdownTracker {
 
     public static final class Session {
         private final AtomicBoolean cancelled = new AtomicBoolean(false);
+        private boolean completed;
         private final UUID playerId;
         private final double startX;
         private final double startY;
         private final double startZ;
         private final boolean watchMove;
         private final boolean watchDamage;
+        private final Runnable onCancel;
 
-        private Session(UUID playerId, double startX, double startY, double startZ, boolean watchMove, boolean watchDamage) {
+        private Session(UUID playerId, double startX, double startY, double startZ, boolean watchMove, boolean watchDamage, Runnable onCancel) {
+            this.onCancel = onCancel;
             this.playerId = playerId;
             this.startX = startX;
             this.startY = startY;
@@ -54,24 +57,29 @@ public final class TeleportCountdownTracker {
             if (cancelled.get()) {
                 return false;
             }
-            SESSIONS.remove(playerId, this);
+            if (!SESSIONS.remove(playerId, this)) return false;
+            completed = true;
             return true;
         }
 
         void markCancelledOnly() {
-            cancelled.set(true);
+            if (!cancelled.getAndSet(true)) onCancel.run();
         }
 
         private void cancelSilently() {
-            cancelled.set(true);
+            if (completed) return;
+            if (!cancelled.getAndSet(true)) onCancel.run();
             SESSIONS.remove(playerId, this);
         }
+
+        public void cancel() { cancelSilently(); }
 
         private void cancelWithNotify(ServerPlayer player, boolean damageReason) {
             if (cancelled.getAndSet(true)) {
                 return;
             }
             SESSIONS.remove(playerId, this);
+            onCancel.run();
             Component msg = damageReason
                     ? NarcissusComponent.get().transAuto("tp_countdown_cancelled_damage")
                     : NarcissusComponent.get().transAuto("tp_countdown_cancelled_move");
@@ -83,8 +91,12 @@ public final class TeleportCountdownTracker {
      * 开始新的传送倒计时会话；若该玩家已有会话则静默取消旧会话。
      */
     public static Session begin(ServerPlayer player, boolean watchMove, boolean watchDamage) {
+        return begin(player, watchMove, watchDamage, () -> { });
+    }
+
+    public static Session begin(ServerPlayer player, boolean watchMove, boolean watchDamage, Runnable onCancel) {
         UUID id = player.getUUID();
-        Session session = new Session(id, player.getX(), player.getY(), player.getZ(), watchMove, watchDamage);
+        Session session = new Session(id, player.getX(), player.getY(), player.getZ(), watchMove, watchDamage, java.util.Objects.requireNonNull(onCancel));
         Session old = SESSIONS.put(id, session);
         if (old != null) {
             old.cancelSilently();
@@ -97,6 +109,10 @@ public final class TeleportCountdownTracker {
         if (s != null) {
             s.markCancelledOnly();
         }
+    }
+
+    public static void clear() {
+        for (Session session : new ArrayList<>(SESSIONS.values())) session.cancelSilently();
     }
 
     public static void onPlayerHurt(ServerPlayer player) {

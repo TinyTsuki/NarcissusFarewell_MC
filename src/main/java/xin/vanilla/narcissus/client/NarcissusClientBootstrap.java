@@ -1,4 +1,5 @@
 package xin.vanilla.narcissus.client;
+import xin.vanilla.banira.api.client.event.BaniraClientEvents;
 
 import net.minecraft.resources.ResourceLocation;
 import xin.vanilla.banira.client.gui.ConfigEditorScreen;
@@ -30,6 +31,7 @@ public final class NarcissusClientBootstrap {
             return;
         }
         initialized = true;
+        BaniraClientEvents.Player.onClientLoggedOut(event -> xin.vanilla.narcissus.internal.client.NarcissusClientSyncState.clearCostQuotes());
 
         ClientModEventHandler.register();
         registerQuickAction();
