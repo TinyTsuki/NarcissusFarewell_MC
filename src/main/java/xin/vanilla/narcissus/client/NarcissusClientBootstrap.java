@@ -31,6 +31,7 @@ public final class NarcissusClientBootstrap {
             return;
         }
         initialized = true;
+        BaniraClientEvents.Player.onClientLoggedOut(event -> xin.vanilla.narcissus.internal.client.NarcissusClientSyncState.clearCostQuotes());
 
         ClientModEventHandler.register();
         BaniraClientEvents.ModLifecycle.onClientSetup(event -> registerQuickAction());

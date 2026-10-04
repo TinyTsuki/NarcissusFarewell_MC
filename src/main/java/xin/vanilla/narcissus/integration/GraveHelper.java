@@ -121,7 +121,7 @@ public final class GraveHelper {
     public static boolean isCoordinateSafe(SafeWorldCoordinate coord) {
         ServerLevel world = DimensionUtils.getLevel(coord.dimension());
         if (world == null) return false;
-        SafeBlockChecker checker = new SafeBlockChecker(world, null);
+        SafeBlockChecker checker = new SafeBlockChecker(world);
         BlockPos pos = coord.toBlockPos();
         return checker.isSafeBlock(pos, false);
     }

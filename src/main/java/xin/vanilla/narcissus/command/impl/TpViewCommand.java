@@ -1,5 +1,7 @@
 package xin.vanilla.narcissus.command.impl;
 
+import xin.vanilla.narcissus.internal.server.NarcissusCostService;
+import xin.vanilla.narcissus.internal.server.NarcissusSearchService;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
@@ -13,7 +15,6 @@ import xin.vanilla.narcissus.NarcissusComponent;
 import xin.vanilla.narcissus.config.CommonConfig;
 import xin.vanilla.narcissus.data.SafeWorldCoordinate;
 import xin.vanilla.narcissus.enums.EnumCommandType;
-import xin.vanilla.narcissus.enums.EnumSafeMode;
 import xin.vanilla.narcissus.enums.EnumTeleportType;
 import xin.vanilla.narcissus.notification.NarcissusNotificationTypes;
 import xin.vanilla.narcissus.util.CommandUtils;
@@ -32,17 +33,19 @@ public final class TpViewCommand {
         range = NarcissusUtils.checkRange(player, EnumTeleportType.TP_VIEW, range);
         MessageUtils.sendNotification(player, NarcissusComponent.get().transAuto("tp_view_searching"), NarcissusNotificationTypes.TELEPORT_SEARCH);
         int finalRange = range;
-        new Thread(() -> {
-            SafeWorldCoordinate safeWorldCoordinate = NarcissusUtils.findViewEndCandidate(player, safe, finalRange);
-            if (safeWorldCoordinate == null) {
-                MessageUtils.sendNotification(player, NarcissusComponent.get().transAuto(safe ? "tp_view_safe_not_found" : "tp_view_not_found"), NarcissusNotificationTypes.TELEPORT_ERROR);
-                return;
-            }
-            safeWorldCoordinate.safeMode(EnumSafeMode.Y_C_OFFSET_3);
-            if (CommandUtils.checkTeleportPost(player, safeWorldCoordinate, EnumTeleportType.TP_VIEW, true)) return;
-            player.server.submit(() -> NarcissusUtils.teleportTo(player, safeWorldCoordinate, EnumTeleportType.TP_VIEW));
-        }).start();
-        return 1;
+        NarcissusCostService.Ticket ticket = NarcissusUtils.beginTeleport(player, EnumTeleportType.TP_VIEW);
+        if (ticket == null) return 0;
+        NarcissusSearchService search = NarcissusSearchService.get();
+        if (search == null) {
+            ticket.cancel();
+            MessageUtils.sendNotification(player, NarcissusComponent.get().transAuto("search_failed"), NarcissusNotificationTypes.TELEPORT_ERROR);
+            return 0;
+        }
+        return search.searchView(player, safe, finalRange, ticket, session -> {
+            SafeWorldCoordinate safeWorldCoordinate = session.destination();
+            if (CommandUtils.checkTeleportPost(player, safeWorldCoordinate, EnumTeleportType.TP_VIEW)) { session.cancel(); return; }
+            NarcissusUtils.teleportSearched(player, session, EnumTeleportType.TP_VIEW, ticket);
+        }) ? 1 : 0;
     }
 
     public static LiteralArgumentBuilder<CommandSourceStack> create() {

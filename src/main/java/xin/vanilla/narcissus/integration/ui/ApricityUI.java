@@ -22,7 +22,10 @@ import xin.vanilla.narcissus.data.player.PlayerTeleportData;
 import xin.vanilla.narcissus.enums.EnumTeleportType;
 import xin.vanilla.narcissus.network.packet.WaypointDelToServer;
 import xin.vanilla.narcissus.network.packet.WaypointTeleportToServer;
-import xin.vanilla.narcissus.util.ClientCostCalculator;
+import xin.vanilla.narcissus.internal.client.NarcissusClientSyncState;
+import xin.vanilla.narcissus.internal.client.ClientCostQuotes;
+import xin.vanilla.narcissus.data.cost.CostQuote;
+import xin.vanilla.narcissus.screen.WaypointScreen;
 
 import javax.annotation.Nonnull;
 import java.util.ArrayList;
@@ -54,6 +57,7 @@ public class ApricityUI extends Screen {
             return;
         }
         super.init();
+        NarcissusClientSyncState.costQuotes().closeView();
         if (this.document != null) return;
         this.document = Document.create(path);
 
@@ -83,7 +87,7 @@ public class ApricityUI extends Screen {
             boolean canTp = !seenRecordTypes.contains(recordTypeName);
             if (canTp) seenRecordTypes.add(recordTypeName);
             backItems.add(new WaypointItem().type(WaypointItem.Type.BACK).name(recordTypeName).safeWorldCoordinate(record.getBefore())
-                    .canTeleport(canTp).recordType(recordTypeName));
+                    .canTeleport(canTp).recordType(recordTypeName).recordTime(record.getTeleportTime()));
         }
 
         // 默认选中第一个可用项
@@ -309,10 +313,30 @@ public class ApricityUI extends Screen {
         }
     }
 
+    @Override public void removed() {
+        NarcissusClientSyncState.costQuotes().closeView();
+        super.removed();
+    }
+
     private String calculateCostDisplay(WaypointItem item) {
         if (item == null || item.safeWorldCoordinate() == null || minecraft == null || minecraft.player == null)
             return "";
-        return ClientCostCalculator.formatCostDisplay(minecraft.player, item.safeWorldCoordinate(), itemTypeToEnum(item.type()));
+        WaypointScreen.WaypointEntry entry = new WaypointScreen.WaypointEntry(
+                WaypointScreen.WaypointEntry.Type.valueOf(item.type().name()), item.name(),
+                item.safeWorldCoordinate(), item.canTeleport(), item.recordType(), item.recordTime());
+        ClientCostQuotes quotes = NarcissusClientSyncState.costQuotes();
+        long now = System.nanoTime();
+        quotes.request(entry.quoteTarget, now).ifPresent(request -> PacketUtils.sendPacketToServer(
+                new xin.vanilla.narcissus.network.packet.CostQuoteToServer(request)));
+        return quotes.cached(entry.quoteTarget, now).map(quote -> {
+            if (quote.status() != CostQuote.Status.READY) return quote.status().enumDescription().toString();
+            if (quote.costType() == xin.vanilla.narcissus.enums.EnumCostType.NONE) return NarcissusComponent.get().transClientAuto("cost_free").toString();
+            String result = quote.resourceAmount() + " " + quote.costType().enumDescription().toString();
+            if (quote.cardAmount() > 0) result += " + " + quote.cardAmount() + " " + NarcissusComponent.get().transClientAuto("teleport_card");
+            if (quote.commandPending()) result += " (" + NarcissusComponent.get().transClientAuto("cost_command_pending") + ")";
+            return result;
+        }).orElseGet(() -> NarcissusComponent.get().transClientAuto("cost_unknown").toString());
+
     }
 
     private static EnumTeleportType itemTypeToEnum(WaypointItem.Type type) {
@@ -381,6 +405,7 @@ public class ApricityUI extends Screen {
         private boolean selected;
         private boolean canTeleport = true;
         private String recordType;
+        private java.util.Date recordTime;
 
         public enum Type {
             HOME,

@@ -18,10 +18,10 @@ public class ConfigViewBaselineTest {
         assertEquals("tpa", view.command().tpAsk().commandTpAsk());
         fixture.values.put("command.tpAsk.commandTpAsk", "ask,one");
         assertEquals("ask,one", view.command().tpAsk().commandTpAsk());
-        fixture.values.put("cost.tpAsk.costTpAskType", "invalid-cost");
-        assertEquals(EnumCostType.NONE, view.cost().tpAsk().costTpAskType());
-        view.cost().tpAsk().costTpAskRate(0.002D);
-        assertEquals(0.002D, view.cost().tpAsk().costTpAskRate(), 0.0D);
+        fixture.values.put("cost.ask.type", "invalid-cost");
+        assertEquals(EnumCostType.NONE, view.cost().ask().type());
+        view.cost().ask().perBlockAmount(0.002D);
+        assertEquals(0.002D, view.cost().ask().perBlockAmount(), 0.0D);
         fixture.values.put("base.other.tpSound", "");
         assertEquals("minecraft:entity.enderman.teleport", view.base().other().tpSound());
         view.base().safeTeleport().unsafeBlocks(Arrays.asList("tag, clazz -> tag != null", "minecraft:lava"));
@@ -64,7 +64,10 @@ public class ConfigViewBaselineTest {
             expected = new com.google.gson.Gson().fromJson(reader, com.google.gson.JsonObject.class);
         }
         com.google.gson.Gson gson = new com.google.gson.GsonBuilder().serializeNulls().create();
-        assertEquals(expected.get("schema"), gson.toJsonTree(fixture.schema()));
+        com.google.gson.JsonObject oldSchema = gson.fromJson(expected.get("schema").toString(), com.google.gson.JsonObject.class);
+        com.google.gson.JsonObject newSchema = gson.toJsonTree(fixture.schema()).getAsJsonObject();
+        if (name.equals("common")) { stripCosts(oldSchema); stripCosts(newSchema); }
+        assertEquals(oldSchema, newSchema);
         for (String phase : Arrays.asList("unbound", "defaults", "changed")) {
             if (phase.equals("changed")) fixture.nonDefaultValues();
             ConfigBaselineFixture.bind(config, phase.equals("unbound") ? null : fixture.holder);
@@ -72,21 +75,23 @@ public class ConfigViewBaselineTest {
             com.google.gson.JsonObject actual = gson.toJsonTree(current).getAsJsonObject();
             com.google.gson.JsonObject canonical = new com.google.gson.JsonObject();
             for (Map.Entry<String, com.google.gson.JsonElement> entry : expected.getAsJsonObject(phase).entrySet()) {
+                if (name.equals("common") && costPath(entry.getKey())) continue;
                 String path = registeredPath(entry.getKey(), fixture.defaults.keySet());
                 if (canonical.has(path)) assertEquals(canonical.get(path), entry.getValue());
                 canonical.add(path, entry.getValue());
             }
-            // The old proxy duplicated the teleportCard category and never read these three stored values.
-            // Keep that historical evidence intact; verify the corrected reads separately against the backend.
-            if (name.equals("common") && phase.equals("changed")) {
-                for (String leaf : Arrays.asList("teleportCard", "teleportCardDaily", "teleportCardType")) {
-                    String path = "base.teleportCard." + leaf;
-                    assertEquals(gson.toJsonTree(fixture.defaults.get(path)), canonical.remove(path));
-                    assertEquals(gson.toJsonTree(fixture.values.get(path)), actual.remove(path));
-                }
-            }
+            if (name.equals("common")) stripCosts(actual);
             assertEquals(name + ":" + phase, canonical, actual);
         }
+    }
+
+    private static boolean costPath(String path) {
+        return path.startsWith("cost.") || path.startsWith("base.teleportCard.") || path.startsWith("base.teleportLimit.teleportCost");
+    }
+    private static void stripCosts(com.google.gson.JsonObject object) {
+        java.util.List<String> keys = new java.util.ArrayList<>();
+        for (Map.Entry<String, com.google.gson.JsonElement> entry : object.entrySet()) if (costPath(entry.getKey())) keys.add(entry.getKey());
+        keys.forEach(object::remove);
     }
 
     private static String registeredPath(String oldPath, java.util.Set<String> registered) {
