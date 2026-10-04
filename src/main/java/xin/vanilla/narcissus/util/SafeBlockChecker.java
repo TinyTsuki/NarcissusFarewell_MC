@@ -6,18 +6,47 @@ import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import xin.vanilla.narcissus.NarcissusFarewell;
 import xin.vanilla.narcissus.data.SafeBlock;
+import xin.vanilla.narcissus.config.CommonConfig;
+import xin.vanilla.narcissus.config.CommonConfigView;
+import xin.vanilla.narcissus.search.SafeBlockPolicy;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 
 public class SafeBlockChecker {
-    private final Level level;
-    private final SafeBlock safeBlock;
+    public interface BlockAccess {
+        BlockState state(BlockPos pos);
+        boolean suffocates(BlockState state, BlockPos pos);
+    }
+
+    private final BlockAccess access;
+    private final SafeBlockPolicy policy;
 
     public SafeBlockChecker(Level level) {
-        this.level = level;
-        safeBlock = NarcissusFarewell.getSafeBlock();
-        safeBlock.init();
+        this(level, currentPolicy());
+    }
+
+    public SafeBlockChecker(Level level, SafeBlockPolicy policy) {
+        this(new BlockAccess() {
+            @Override public BlockState state(BlockPos pos) { return level.getBlockState(pos); }
+            @Override public boolean suffocates(BlockState state, BlockPos pos) { return state.isSuffocating(level, pos); }
+        }, policy);
+    }
+
+    public SafeBlockChecker(BlockAccess access, SafeBlockPolicy policy) {
+        this.access = Objects.requireNonNull(access, "access");
+        this.policy = Objects.requireNonNull(policy, "policy");
+    }
+
+    private static SafeBlockPolicy currentPolicy() {
+        CommonConfigView.BaseView.SafeTeleportView config = CommonConfig.get().base().safeTeleport();
+        return SafeBlockPolicy.from(config.safeBlocks(), config.unsafeBlocks(), config.suffocatingBlocks());
+    }
+
+    public void beginSlice() {
+        blockStateCaches.clear();
+        fluidStateCaches.clear();
     }
 
     private final Map<BlockPos, BlockState> blockStateCaches = new HashMap<>();
@@ -28,61 +57,37 @@ public class SafeBlockChecker {
      */
     public boolean isSafeBlock(BlockPos pos, boolean belowAllowAir) {
 
-        // 可穿过判断
         BlockState block = getCachedBlockState(pos);
+        if (block.getMaterial().blocksMotion() || policy.unsafe(block)) return false;
         BlockState fluid = getCachedFluidLegacyState(pos);
-        boolean isCurrentPassable = !block.getMaterial().blocksMotion()
-                && !safeBlock.getUnsafeBlocksState().contains(block)
-                && !safeBlock.getUnsafeBlocks().contains(block.getBlock())
+        if (fluid.getMaterial().blocksMotion() || policy.unsafe(fluid)) return false;
 
-                && !fluid.getMaterial().blocksMotion()
-                && !safeBlock.getUnsafeBlocksState().contains(fluid)
-                && !safeBlock.getUnsafeBlocks().contains(fluid.getBlock());
-
-        // 可呼吸判断
         BlockPos above = pos.above();
         BlockState blockAbove = getCachedBlockState(above);
+        if (access.suffocates(blockAbove, above) || blockAbove.getMaterial().blocksMotion()
+                || policy.unsafe(blockAbove) || policy.suffocating(blockAbove)) return false;
         BlockState fluidAbove = getCachedFluidLegacyState(above);
-        boolean isHeadSafe = !blockAbove.isSuffocating(level, above)
-                && !blockAbove.getMaterial().blocksMotion()
-                && !safeBlock.getUnsafeBlocksState().contains(blockAbove)
-                && !safeBlock.getUnsafeBlocks().contains(blockAbove.getBlock())
-                && !safeBlock.getSuffocatingBlocksState().contains(blockAbove)
-                && !safeBlock.getSuffocatingBlocks().contains(blockAbove.getBlock())
+        if (access.suffocates(fluidAbove, above) || policy.unsafe(fluidAbove)
+                || policy.suffocating(fluidAbove)) return false;
 
-                && !fluidAbove.isSuffocating(level, above)
-                && !safeBlock.getUnsafeBlocksState().contains(fluidAbove)
-                && !safeBlock.getUnsafeBlocks().contains(fluidAbove.getBlock())
-                && !safeBlock.getSuffocatingBlocksState().contains(fluidAbove)
-                && !safeBlock.getSuffocatingBlocks().contains(fluidAbove.getBlock());
-
-        // 可站立判断
         BlockPos below = pos.below();
         BlockState blockBelow = getCachedBlockState(below);
-        BlockState fluidBelow = getCachedFluidLegacyState(below);
-        boolean isBelowValid;
+        if (belowAllowAir && (blockBelow.is(Blocks.AIR) || blockBelow.is(Blocks.CAVE_AIR))) return true;
         if (blockBelow.getMaterial().isLiquid()) {
-            isBelowValid = !safeBlock.getUnsafeBlocksState().contains(blockBelow)
-                    && !safeBlock.getUnsafeBlocks().contains(blockBelow.getBlock());
-        } else {
-            isBelowValid = blockBelow.getMaterial().isSolid()
-                    && !safeBlock.getUnsafeBlocksState().contains(blockBelow)
-                    && !safeBlock.getUnsafeBlocks().contains(blockBelow.getBlock())
-
-                    && !safeBlock.getUnsafeBlocksState().contains(fluidBelow)
-                    && !safeBlock.getUnsafeBlocks().contains(fluidBelow.getBlock());
+            return !policy.unsafe(blockBelow);
         }
-
-        if (belowAllowAir) isBelowValid = isBelowValid || blockBelow.is(Blocks.AIR) || blockBelow.is(Blocks.CAVE_AIR);
-
-        return isCurrentPassable && isHeadSafe && isBelowValid;
+        return blockBelow.getMaterial().isSolid() && !policy.unsafe(blockBelow)
+                && !policy.unsafe(getCachedFluidLegacyState(below));
     }
 
     private BlockState getCachedBlockState(BlockPos pos) {
-        return blockStateCaches.computeIfAbsent(pos, level::getBlockState);
+        BlockState cached = blockStateCaches.get(pos);
+        return cached != null ? cached : blockStateCaches.computeIfAbsent(pos.immutable(), access::state);
     }
 
     private BlockState getCachedFluidLegacyState(BlockPos pos) {
-        return fluidStateCaches.computeIfAbsent(pos, p -> getCachedBlockState(p).getFluidState().createLegacyBlock());
+        BlockState cached = fluidStateCaches.get(pos);
+        return cached != null ? cached : fluidStateCaches.computeIfAbsent(pos.immutable(),
+                p -> getCachedBlockState(p).getFluidState().createLegacyBlock());
     }
 }

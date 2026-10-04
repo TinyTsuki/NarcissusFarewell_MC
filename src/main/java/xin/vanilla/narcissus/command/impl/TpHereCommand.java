@@ -82,7 +82,7 @@ public final class TpHereCommand {
         MessageUtils.sendNotification(player, NarcissusComponent.get().transAuto("tp_here_request_sent", target.getDisplayName().getString(), cancelButton), NarcissusNotificationTypes.INTERACTIVE_TP_FLOW);
         if (autoAccept) {
             ServerPlayer finalTarget = target;
-            new Thread(() -> xin.vanilla.banira.common.util.CommandUtils.executeCommand(finalTarget, NarcissusUtils.getCommand(EnumCommandType.TP_HERE_YES) + " " + request.getRequestId())).start();
+            player.server.execute(() -> xin.vanilla.banira.common.util.CommandUtils.executeCommand(finalTarget, NarcissusUtils.getCommand(EnumCommandType.TP_HERE_YES) + " " + request.getRequestId()));
         }
         return 1;
     }
