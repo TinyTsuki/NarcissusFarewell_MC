@@ -8,13 +8,15 @@ import xin.vanilla.narcissus.network.packet.*;
 public final class NetworkInit {
 
     private static final NetworkHandler HANDLER = NetworkHandler.create("main_network",
-            BaniraIdentifier.of(Identifier.id().modId(), "main_network"));
+            BaniraIdentifier.of(Identifier.id().modId(), "main_network"), "cost-quotes-2", true);
 
     public static void registerPackets() {
         HANDLER.registerSplit(PlayerDataSyncToClient.class, PlayerDataSyncToClient::toBytes, PlayerDataSyncToClient::new, PlayerDataSyncToClient::handle);
         HANDLER.register(WaypointSyncToClient.class, WaypointSyncToClient::toBytes, WaypointSyncToClient::new, WaypointSyncToClient::handle);
         HANDLER.register(StageDataSyncToClient.class, StageDataSyncToClient::toBytes, StageDataSyncToClient::new, StageDataSyncToClient::handle);
-        HANDLER.register(CostConfigSyncToClient.class, CostConfigSyncToClient::toBytes, CostConfigSyncToClient::new, CostConfigSyncToClient::handle);
+        HANDLER.register(CostCapabilitiesToClient.class, CostCapabilitiesToClient::toBytes, CostCapabilitiesToClient::new, CostCapabilitiesToClient::handle);
+        HANDLER.register(CostQuoteToServer.class, CostQuoteToServer::toBytes, CostQuoteToServer::new, CostQuoteToServer::handle);
+        HANDLER.register(CostQuoteToClient.class, CostQuoteToClient::toBytes, CostQuoteToClient::new, CostQuoteToClient::handle);
 
         HANDLER.register(WaypointTeleportToServer.class, WaypointTeleportToServer::toBytes, WaypointTeleportToServer::new, WaypointTeleportToServer::handle);
         HANDLER.register(WaypointDelToServer.class, WaypointDelToServer::toBytes, WaypointDelToServer::new, WaypointDelToServer::handle);

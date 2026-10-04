@@ -9,13 +9,13 @@ import xin.vanilla.narcissus.NarcissusComponent;
  * 传送卡应用方式
  */
 public enum EnumCardType implements IEnumDescribable {
-    NONE,
-    LIKE_COST,
-    REFUND_COST,
-    REFUND_ALL_COST,
-    REFUND_COOLDOWN,
-    REFUND_COST_AND_COOLDOWN,
-    REFUND_ALL_COST_AND_COOLDOWN,
+    REQUIRE_ONE_WITH_COST,
+    REQUIRE_MATCHING_WITH_COST,
+    OFFSET_COST,
+    WAIVE_COST,
+    BYPASS_COOLDOWN,
+    OFFSET_COST_AND_BYPASS_COOLDOWN,
+    WAIVE_COST_AND_BYPASS_COOLDOWN,
     ;
 
     public static EnumCardType valueOfEx(Object obj) {
@@ -32,7 +32,7 @@ public enum EnumCardType implements IEnumDescribable {
 
     public static EnumCardType valueOfDefault(Object obj) {
         EnumCardType value = valueOfEx(obj);
-        return value == null ? NONE : value;
+        return value == null ? REQUIRE_ONE_WITH_COST : value;
     }
 
     @Override

@@ -48,7 +48,7 @@ public final class TpSpawnCommand {
         }
         safeWorldCoordinate.fromBlockPos(respawnPosition);
         safeWorldCoordinate.safe("safe".equalsIgnoreCase(xin.vanilla.banira.common.util.CommandUtils.getStringDefault(context, "safe", "safe")));
-        if (CommandUtils.checkTeleportPost(player, safeWorldCoordinate, EnumTeleportType.TP_SPAWN, true)) return 0;
+        if (CommandUtils.checkTeleportPost(player, safeWorldCoordinate, EnumTeleportType.TP_SPAWN)) return 0;
         NarcissusUtils.teleportTo(player, safeWorldCoordinate, EnumTeleportType.TP_SPAWN);
         return 1;
     }
