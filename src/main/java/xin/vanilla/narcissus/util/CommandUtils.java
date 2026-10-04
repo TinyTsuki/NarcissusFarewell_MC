@@ -1,5 +1,7 @@
 package xin.vanilla.narcissus.util;
 
+import xin.vanilla.narcissus.data.cost.CostPaymentPlan;
+import xin.vanilla.narcissus.internal.server.NarcissusCostService;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.context.CommandContext;
@@ -61,14 +63,6 @@ public final class CommandUtils {
                 MessageUtils.sendDefaultNotification(player, NarcissusComponent.get().transAuto("command_disabled"), EnumPosition.TOP_CENTER, EnumMoveType.AUTO);
                 return true;
             }
-            EnumTeleportType type = teleportType.toTeleportType();
-            if (type != null) {
-                int teleportCoolDown = NarcissusUtils.getTeleportCoolDown(player, type);
-                if (teleportCoolDown > 0) {
-                    MessageUtils.sendNotification(player, NarcissusComponent.get().transAuto("command_cooldown", teleportCoolDown), NarcissusNotificationTypes.TELEPORT_GUARD);
-                    return true;
-                }
-            }
             if (CommonConfig.get().base().teleportTogether().tpWithEnemy() && NarcissusUtils.isTargetedByHostile(player)) {
                 MessageUtils.sendNotification(player, NarcissusComponent.get().transAuto("locked_by_mob"), NarcissusNotificationTypes.TELEPORT_GUARD);
                 return true;
@@ -81,26 +75,16 @@ public final class CommandUtils {
     }
 
     public static boolean checkTeleportPost(TeleportRequest request) {
-        return checkTeleportPost(request, false);
-    }
-
-    public static boolean checkTeleportPost(TeleportRequest request, boolean submit) {
-        boolean result = NarcissusUtils.isTeleportAcrossDimensionEnabled(request.getRequester(), request.getTarget().level().dimension(), request.getTeleportType());
-        result = result && NarcissusUtils.validTeleportCost(request, submit);
-        if (CommonConfig.get().base().teleportTogether().tpWithEnemy() && NarcissusUtils.isTargetedByHostile(request.getRequester())) {
-            MessageUtils.sendNotification(request.getRequester(), NarcissusComponent.get().transAuto("locked_by_mob"), NarcissusNotificationTypes.TELEPORT_GUARD);
-            result = false;
-        }
-        return !result;
+        NarcissusCostService service = NarcissusCostService.get();
+        CostPaymentPlan plan = service == null ? null : service.checkRequest(request);
+        if (plan != null && plan.isSuccess()) return false;
+        MessageUtils.sendNotification(request.getRequester(), plan == null ? NarcissusComponent.get().transAuto("cost_unavailable")
+                : NarcissusComponent.get().transAuto("cost_failure", plan.failure().enumDescription()), NarcissusNotificationTypes.TELEPORT_ERROR);
+        return true;
     }
 
     public static boolean checkTeleportPost(ServerPlayer player, SafeWorldCoordinate target, EnumTeleportType type) {
-        return checkTeleportPost(player, target, type, false);
-    }
-
-    public static boolean checkTeleportPost(ServerPlayer player, SafeWorldCoordinate target, EnumTeleportType type, boolean submit) {
         boolean result = NarcissusUtils.isTeleportAcrossDimensionEnabled(player, target.dimension(), type);
-        result = result && NarcissusUtils.validTeleportCost(player, target, type, submit);
         if (CommonConfig.get().base().teleportTogether().tpWithEnemy() && NarcissusUtils.isTargetedByHostile(player)) {
             MessageUtils.sendNotification(player, NarcissusComponent.get().transAuto("locked_by_mob"), NarcissusNotificationTypes.TELEPORT_GUARD);
             result = false;
@@ -146,6 +130,11 @@ public final class CommandUtils {
                         if (entry1 != null) result = entry1.getKey();
                     }
                 }
+            }
+            TeleportRequest selected = result == null ? null : NarcissusFarewell.getTeleportRequest().get(result);
+            if (selected == null || selected.getTeleportType() != teleportType
+                    || !(isTarget ? selected.getTarget() : selected.getRequester()).getUUID().equals(player.getUUID())) {
+                result = null;
             }
         } catch (CommandSyntaxException ignored) {
         }

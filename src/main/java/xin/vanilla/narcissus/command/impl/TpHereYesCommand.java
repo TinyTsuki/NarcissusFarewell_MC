@@ -34,8 +34,8 @@ public final class TpHereYesCommand {
             MessageUtils.sendNotification(player, NarcissusComponent.get().transAuto("tp_here_not_found"), NarcissusNotificationTypes.TELEPORT_REQUEST);
             return 0;
         }
-        TeleportRequest request = NarcissusFarewell.getTeleportRequest().remove(id);
-        if (CommandUtils.checkTeleportPost(request, true)) {
+        TeleportRequest request = NarcissusFarewell.getTeleportRequest().get(id);
+        if (CommandUtils.checkTeleportPost(request)) {
             MessageUtils.sendNotification(player, NarcissusComponent.get().transAuto("tp_here_invalid"), NarcissusNotificationTypes.TELEPORT_ERROR);
             return 0;
         }

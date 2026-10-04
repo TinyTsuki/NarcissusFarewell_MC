@@ -83,6 +83,8 @@ repositories {
 }
 
 dependencies {
+    implementation include('com.electronwill.night-config:core:3.6.4')
+    implementation include('com.electronwill.night-config:toml:3.6.4')
     modRuntimeOnly "maven.modrinth:fabric-permissions-api:62DUD085"
     // Sodium Extra 0.6.x targets the bundled Sodium 0.6 line for Minecraft 1.21.1.
     modRuntimeOnly "maven.modrinth:sodium-extra:anDafurZ"

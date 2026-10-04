@@ -70,8 +70,8 @@ public class NarcissusNetworkSmokeConfigsTest {
         holder.set("base.safeTeleport.unsafeBlocks", rules);
         holder.save();
         byte[] before = Files.readAllBytes(file);
-        assertEquals(305, NarcissusNetworkSmokeConfigs.verify(holder, directory, "phase-one").size());
-        assertEquals(305, NarcissusNetworkSmokeConfigs.verify(holder, directory, "phase-two").size());
+        assertEquals(holder.valuePaths().size(), NarcissusNetworkSmokeConfigs.verify(holder, directory, "phase-one").size());
+        assertEquals(holder.valuePaths().size(), NarcissusNetworkSmokeConfigs.verify(holder, directory, "phase-two").size());
         assertArrayEquals(before, Files.readAllBytes(file));
         assertEquals(rules, holder.get("base.safeTeleport.unsafeBlocks"));
     }

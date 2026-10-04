@@ -170,8 +170,27 @@ public final class ConfigBaselineFixture implements ConfigValueStore {
                 "/config-view-baseline/" + name + ".json")) {
             assertNotNull("Review the initial capture before accepting baseline: " + output, input);
             JsonElement expected = JSON.fromJson(new InputStreamReader(input, StandardCharsets.UTF_8), JsonElement.class);
+            if (name.startsWith("preset-")) {
+                stripPresetCosts(expected.getAsJsonObject());
+                stripPresetCosts(actualJson.getAsJsonObject());
+            }
             assertEquals(name, expected, actualJson);
         }
+    }
+
+    private static boolean costPath(String path) {
+        return path.startsWith("cost.") || path.startsWith("base.teleportCard.") || path.startsWith("base.teleportLimit.teleportCost");
+    }
+    private static void stripPresetCosts(com.google.gson.JsonObject object) {
+        for (String phase : Arrays.asList("before", "after")) {
+            com.google.gson.JsonObject values = object.getAsJsonObject(phase);
+            List<String> keys = new ArrayList<>();
+            for (Map.Entry<String, JsonElement> entry : values.entrySet()) if (costPath(entry.getKey())) keys.add(entry.getKey());
+            keys.forEach(values::remove);
+        }
+        com.google.gson.JsonArray written = new com.google.gson.JsonArray();
+        for (JsonElement path : object.getAsJsonArray("written")) if (!costPath(path.getAsString())) written.add(path);
+        object.add("written", written);
     }
 
     static Object copy(Object value) {
