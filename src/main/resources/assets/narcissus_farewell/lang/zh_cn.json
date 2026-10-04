@@ -466,5 +466,16 @@
   "word.narcissus_farewell.enum_cost_operation_state_committing": "正在支付",
   "word.narcissus_farewell.enum_cost_operation_state_paid": "已支付",
   "word.narcissus_farewell.enum_cost_operation_state_failed": "支付失败",
-  "word.narcissus_farewell.enum_cost_operation_state_cancelled": "已取消"
+  "word.narcissus_farewell.enum_cost_operation_state_cancelled": "已取消",
+  "word.narcissus_farewell.enum_cost_quote_target_home": "私人坐标",
+  "word.narcissus_farewell.enum_cost_quote_target_stage": "公共坐标",
+  "word.narcissus_farewell.enum_cost_quote_target_history": "足迹",
+  "word.narcissus_farewell.enum_cost_quote_target_player": "玩家",
+  "word.narcissus_farewell.enum_cost_quote_target_coordinate": "指定坐标",
+  "word.narcissus_farewell.enum_cost_quote_target_unknown": "未确定的目标",
+  "word.narcissus_farewell.enum_cost_quote_status_ready": "费用已获取",
+  "word.narcissus_farewell.enum_cost_quote_status_unknown": "目标位置尚未确定",
+  "word.narcissus_farewell.enum_cost_quote_status_unavailable": "费用暂不可用",
+  "word.narcissus_farewell.enum_cost_quote_status_rejected": "无法查询该目标",
+  "word.narcissus_farewell.enum_cost_quote_status_rate_limited": "查询过于频繁"
 }

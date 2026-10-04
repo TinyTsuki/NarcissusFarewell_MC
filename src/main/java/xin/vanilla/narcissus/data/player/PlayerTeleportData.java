@@ -439,6 +439,22 @@ public final class PlayerTeleportData implements IPlayerData<PlayerTeleportData>
         return this.teleportRecords = CollectionUtils.isNullOrEmpty(this.teleportRecords) ? new ArrayList<>() : this.teleportRecords;
     }
 
+    /** Readonly quote lookup; do not flush dirty data from a preview. */
+    public List<TeleportRecord> peekTeleportRecords() {
+        return this.teleportRecords == null ? Collections.emptyList() : Collections.unmodifiableList(this.teleportRecords);
+    }
+
+    public Map<KeyValue<String, String>, SafeWorldCoordinate> peekHomeCoordinates() {
+        return this.homeCoordinate == null ? Collections.emptyMap() : Collections.unmodifiableMap(this.homeCoordinate);
+    }
+
+    public boolean acceptsTeleportFrom(UUID requester) {
+        if (this.access == null) return true;
+        String id = requester.toString();
+        return !this.access.getBlackList().contains(id)
+                && (this.access.getWhiteList().isEmpty() || this.access.getWhiteList().contains(id));
+    }
+
     public @NonNull List<TeleportRecord> getTeleportRecords(EnumTeleportType type) {
         if (this.isDirty()) this.saveEx();
         return CollectionUtils.isNullOrEmpty(this.teleportRecords) ? this.teleportRecords = new ArrayList<>() :

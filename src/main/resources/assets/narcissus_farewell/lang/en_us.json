@@ -466,5 +466,16 @@
   "word.narcissus_farewell.enum_cost_operation_state_committing": "Processing payment",
   "word.narcissus_farewell.enum_cost_operation_state_paid": "Paid",
   "word.narcissus_farewell.enum_cost_operation_state_failed": "Payment failed",
-  "word.narcissus_farewell.enum_cost_operation_state_cancelled": "Cancelled"
+  "word.narcissus_farewell.enum_cost_operation_state_cancelled": "Cancelled",
+  "word.narcissus_farewell.enum_cost_quote_target_home": "Private waypoint",
+  "word.narcissus_farewell.enum_cost_quote_target_stage": "Public waypoint",
+  "word.narcissus_farewell.enum_cost_quote_target_history": "History",
+  "word.narcissus_farewell.enum_cost_quote_target_player": "Player",
+  "word.narcissus_farewell.enum_cost_quote_target_coordinate": "Specified coordinates",
+  "word.narcissus_farewell.enum_cost_quote_target_unknown": "Undetermined destination",
+  "word.narcissus_farewell.enum_cost_quote_status_ready": "Cost available",
+  "word.narcissus_farewell.enum_cost_quote_status_unknown": "Destination not determined yet",
+  "word.narcissus_farewell.enum_cost_quote_status_unavailable": "Cost temporarily unavailable",
+  "word.narcissus_farewell.enum_cost_quote_status_rejected": "Cannot query this destination",
+  "word.narcissus_farewell.enum_cost_quote_status_rate_limited": "Too many quote requests"
 }
