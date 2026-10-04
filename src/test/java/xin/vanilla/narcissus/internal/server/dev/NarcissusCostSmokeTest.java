@@ -71,6 +71,25 @@ public class NarcissusCostSmokeTest {
         values.setProperty("narcissus.costSmoke.peer", temporary.getRoot().toPath().resolve("peer.status").toString());
         return values;
     }
+
+    @Test public void nativeHelperSourcesCompileThroughTheRealScriptSession() throws Exception {
+        java.util.Map<String, String> files = NarcissusCostSmokeServerRunner.formulaSources("getY");
+        assertEquals(2, files.size());
+        java.util.concurrent.ExecutorService owner = java.util.concurrent.Executors.newSingleThreadExecutor();
+        xin.vanilla.banira.api.script.ScriptSession<xin.vanilla.banira.api.script.ScriptFactory<xin.vanilla.narcissus.api.cost.CostFormula>> session =
+                xin.vanilla.banira.api.script.BaniraScripts.openFactorySession("narcissus_farewell",
+                        xin.vanilla.narcissus.api.cost.CostFormula.class, "1",
+                        new xin.vanilla.banira.api.script.ScriptLimits(262144, 8388608, 128), owner);
+        try {
+            xin.vanilla.banira.api.script.PreparedScripts<xin.vanilla.banira.api.script.ScriptFactory<xin.vanilla.narcissus.api.cost.CostFormula>> prepared =
+                    session.prepareGroups(java.util.Collections.singletonList(new xin.vanilla.banira.api.script.ScriptSourceGroup(
+                            "native-helper", "xin.vanilla.banira.generated.cost.SmokeFee", files))).get(15, java.util.concurrent.TimeUnit.SECONDS);
+            xin.vanilla.narcissus.api.cost.CostFormula formula = owner.submit(() -> prepared.scripts().get("native-helper").create()).get(15, java.util.concurrent.TimeUnit.SECONDS);
+            Class<?> helper = formula.getClass().getClassLoader().loadClass("xin.vanilla.banira.generated.cost.helpers.SmokeNative");
+            assertEquals(double.class, helper.getMethod("value", xin.vanilla.narcissus.api.cost.CostContext.class).getReturnType());
+        } finally { session.close(); owner.shutdownNow(); assertTrue(owner.awaitTermination(15, java.util.concurrent.TimeUnit.SECONDS)); }
+        rejected(() -> NarcissusCostSmokeServerRunner.formulaSources("notAMethod();"));
+    }
     private static void rejected(Runnable action) {
         try { action.run(); fail("Expected rejection"); }
         catch (IllegalArgumentException | IllegalStateException expected) { }

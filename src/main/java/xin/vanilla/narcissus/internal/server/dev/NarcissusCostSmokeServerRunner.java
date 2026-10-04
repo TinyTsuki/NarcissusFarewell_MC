@@ -212,10 +212,31 @@ public final class NarcissusCostSmokeServerRunner {
     private void writeFormula(boolean broken) throws java.io.IOException {
         Path source = BaniraDataPaths.configPath().resolve(NarcissusFarewell.MODID + "/cost/sources/SmokeFee.java");
         Files.createDirectories(source.getParent());
-        String text = broken ? "invalid Java" : "package xin.vanilla.banira.generated.cost; public class SmokeFee implements xin.vanilla.narcissus.api.cost.CostFormula { "
+        if (broken) { Files.write(source, "invalid Java".getBytes(StandardCharsets.UTF_8)); return; }
+        String nativeY;
+        try { net.minecraft.entity.Entity.class.getMethod("func_226278_cu_"); nativeY = "func_226278_cu_"; }
+        catch (NoSuchMethodException mappedDevelopment) { nativeY = "getY"; }
+        for (java.util.Map.Entry<String, String> file : formulaSources(nativeY).entrySet()) {
+            Path destination = source.getParent().resolve(file.getKey());
+            Files.createDirectories(destination.getParent());
+            Files.write(destination, file.getValue().getBytes(StandardCharsets.UTF_8));
+        }
+        state.append("PASS native-helper-source " + nativeY);
+    }
+    static java.util.Map<String, String> formulaSources(String nativeY) {
+        require(nativeY.equals("getY") || nativeY.equals("func_226278_cu_"), "Unknown native Y accessor");
+        String text = "package xin.vanilla.banira.generated.cost; public class SmokeFee implements xin.vanilla.narcissus.api.cost.CostFormula { "
                 + "public double calculate(xin.vanilla.narcissus.api.cost.CostContext ctx) { "
                 + "if (ctx.nativePlayer(net.minecraft.entity.player.ServerPlayerEntity.class) == null || ctx.nativeServer(net.minecraft.server.MinecraftServer.class) == null "
-                + "|| !ctx.destination().isPresent() || !ctx.targetWorld().isPresent() || !ctx.payer().alive()) throw new IllegalStateException(\"native context\"); return 7; } }";
-        Files.write(source, text.getBytes(StandardCharsets.UTF_8));
+                + "|| !ctx.destination().isPresent() || !ctx.targetWorld().isPresent() || !ctx.payer().alive()) throw new IllegalStateException(\"native context\"); "
+                + "return xin.vanilla.banira.generated.cost.helpers.SmokeNative.value(ctx); } }";
+        String helper = "package xin.vanilla.banira.generated.cost.helpers; public final class SmokeNative { "
+                + "public static double value(xin.vanilla.narcissus.api.cost.CostContext ctx) { "
+                + "net.minecraft.entity.Entity entity = (net.minecraft.entity.Entity) ctx.nativePlayer(net.minecraft.entity.Entity.class); "
+                + "double nativeY = entity." + nativeY + "(); "
+                + "if (nativeY != ctx.source().y()) throw new IllegalStateException(\"native helper mismatch\"); return 7; } }";
+        java.util.Map<String, String> files = new java.util.LinkedHashMap<>();
+        files.put("SmokeFee.java", text); files.put("helpers/SmokeNative.java", helper);
+        return files;
     }
 }
