@@ -42,6 +42,7 @@ import xin.vanilla.narcissus.Identifier;
 import xin.vanilla.narcissus.NarcissusComponent;
 import xin.vanilla.narcissus.NarcissusFarewell;
 import xin.vanilla.narcissus.internal.server.NarcissusCostService;
+import xin.vanilla.narcissus.internal.server.NarcissusSearchService;
 import xin.vanilla.narcissus.data.cost.CostPaymentPlan;
 import xin.vanilla.narcissus.config.CommonConfig;
 import xin.vanilla.narcissus.config.TeleportCountdownHelper;
@@ -915,12 +916,12 @@ public class NarcissusUtils {
     /**
      * 在真正执行传送前按玩家配置进行倒计时；{@code teleportAction} 在倒计时结束时于服务端主线程执行（调用方应自行解析在线玩家等）。
      */
-    private static void executeTeleportWithCountdown(ServerPlayerEntity player, EnumTeleportType type, Runnable teleportAction, Runnable cancelAction) {
+    private static TeleportCountdownTracker.Session executeTeleportWithCountdown(ServerPlayerEntity player, EnumTeleportType type, Runnable teleportAction, Runnable cancelAction) {
         MinecraftServer server = player.getServer();
         int sec = TeleportCountdownHelper.getEffectiveCountdownSeconds(player, type);
         if (sec <= 0 || server == null) {
             teleportAction.run();
-            return;
+            return null;
         }
         TeleportCountdownTracker.Session countdownSession = TeleportCountdownTracker.begin(player,
                 CommonConfig.get().teleportCountdown().cancelCountdownOnPlayerMove(),
@@ -950,6 +951,7 @@ public class NarcissusUtils {
             }
             teleportAction.run();
         });
+        return countdownSession;
     }
 
     /**
@@ -1064,88 +1066,14 @@ public class NarcissusUtils {
             if (level != null) {
                 if (after.safe()) {
                     MessageUtils.sendNotification(player, NarcissusComponent.get().transAuto("safe_searching"), NarcissusNotificationTypes.TELEPORT_SEARCH);
-                    final int tpRandomRangeArg = tprHorizontalRange;
-                    List<ItemStack> inventorySnapshot = ItemUtils.getAllPlayerItems(player).stream().map(ItemStack::copy).collect(Collectors.toList());
-                    new Thread(() -> {
-                        try {
-                        SafeBlockChecker checker = new SafeBlockChecker(level);
-                        SafeWorldCoordinate finalAfter;
-                        if (type == EnumTeleportType.TP_RANDOM) {
-                            int extra = CommonConfig.get().base().randomTeleport().tpRandomSafeNotFoundRetries();
-                            int totalAttempts = 1 + Math.max(0, extra);
-                            int useRange = tpRandomRangeArg > 0 ? tpRandomRangeArg : CommonConfig.get().base().randomTeleport().teleportRandomDistanceLimit();
-                            SafeWorldCoordinate working = after.clone();
-                            finalAfter = working;
-                            for (int attempt = 0; attempt < totalAttempts; attempt++) {
-                                SafeWorldCoordinate resolved = findSafeCoordinate(working.clone(), false);
-                                finalAfter = resolved;
-                                if (checker.isSafeBlock(resolved.toBlockPos(), false)) {
-                                    break;
-                                }
-                                if (attempt < totalAttempts - 1) {
-                                    working = SafeWorldCoordinate.random(player, useRange, after.dimension()).safe(true);
-                                }
-                            }
-                        } else {
-                            finalAfter = findSafeCoordinate(after.clone(), false);
-                        }
-                        Runnable runnable;
-                        ItemStack supportItem = null;
-                        // 判断是否需要在脚下放置方块
-                        if (CommonConfig.get().base().safeTeleport().setBlockWhenSafeNotFound() && !checker.isSafeBlock(finalAfter.toBlockPos(), false)) {
-                            BlockState blockState;
-                            List<ItemStack> playerItemList = inventorySnapshot;
-                            if (CollectionUtils.isNotNullOrEmpty(NarcissusFarewell.getSafeBlock().getSafeBlocksState())) {
-                                if (CommonConfig.get().base().safeTeleport().getBlockFromInventory()) {
-                                    blockState = NarcissusFarewell.getSafeBlock().getSafeBlocksState().stream()
-                                            .filter(block -> playerItemList.stream().map(ItemStack::getItem).anyMatch(item -> new ItemStack(block.getBlock()).getItem().equals(item)))
-                                            .findFirst().orElse(null);
-                                } else {
-                                    blockState = NarcissusFarewell.getSafeBlock().getSafeBlocksState().get(0);
-                                }
-                            } else {
-                                blockState = null;
-                            }
-                            if (blockState != null) {
-                                SafeWorldCoordinate airSafeWorldCoordinate = findSafeCoordinate(finalAfter, true);
-                                if (!airSafeWorldCoordinate.xyzString().equals(finalAfter.xyzString())) {
-                                    finalAfter = airSafeWorldCoordinate;
-                                    boolean consumeBlock = CommonConfig.get().base().safeTeleport().getBlockFromInventory();
-                                    if (consumeBlock) supportItem = new ItemStack(blockState.getBlock());
-                                    runnable = () -> {
-                                        Item blockItem = new ItemStack(blockState.getBlock()).getItem();
-                                        if (consumeBlock && !ItemUtils.removePlayerItem(player, new ItemStack(blockItem))) {
-                                            throw new IllegalStateException("Teleport support item disappeared after payment");
-                                        }
-                                        if (!level.setBlockAndUpdate(airSafeWorldCoordinate.toBlockPos().below(), blockState.getBlock().defaultBlockState())) {
-                                            throw new IllegalStateException("Teleport support block could not be placed");
-                                        }
-                                    };
-                                } else {
-                                    runnable = null;
-                                }
-                            } else {
-                                runnable = null;
-                            }
-                        } else {
-                            runnable = null;
-                        }
-                        SafeWorldCoordinate finalAfter1 = finalAfter;
-                        ItemStack finalSupportItem = supportItem;
-                        MinecraftServer srv = player.server;
-                        UUID pid = player.getUUID();
-                        player.server.submit(() -> {
-                            ServerPlayerEntity online = srv.getPlayerList().getPlayer(pid);
-                            if (finalSupportItem != null) ticket.requireSupportItem(finalSupportItem);
-                            if (online == null || !ticket.resolve(finalAfter1)) { ticket.cancel(); return; }
-                            executeTeleportWithCountdown(online, type,
-                                    () -> finishTeleport(ticket, online, payer, type, before, level, runnable, onSuccess), ticket::cancel);
-                        });
-                        } catch (RuntimeException error) {
-                            LOGGER.error("Teleport destination search failed", error);
-                            player.server.execute(ticket::cancel);
-                        }
-                    }, "Narcissus destination search").start();
+                    NarcissusSearchService search = NarcissusSearchService.get();
+                    if (search == null) {
+                        ticket.cancel();
+                        MessageUtils.sendNotification(player, NarcissusComponent.get().transAuto("search_failed"), NarcissusNotificationTypes.TELEPORT_ERROR);
+                        return;
+                    }
+                    search.searchDestination(player, after, type, tprHorizontalRange, ticket,
+                            session -> finishSearch(search, session, ticket, player, payer, type, before, level, onSuccess));
                 } else {
                     if (!ticket.resolve(after)) { ticket.cancel(); return; }
                     executeTeleportWithCountdown(player, type,
@@ -1153,6 +1081,41 @@ public class NarcissusUtils {
                 }
             } else ticket.cancel();
         } else ticket.cancel();
+    }
+
+    public static void teleportSearched(ServerPlayerEntity player, NarcissusSearchService.Session session,
+                                        EnumTeleportType type, NarcissusCostService.Ticket ticket) {
+        NarcissusSearchService search = NarcissusSearchService.get();
+        if (search == null || !ticket.live()) { session.cancel(); return; }
+        SafeWorldCoordinate after = session.destination();
+        SafeWorldCoordinate before = new SafeWorldCoordinate(player);
+        ServerWorld level = player.server.getLevel(after.dimension());
+        if (level == null) { session.cancel(); return; }
+        if (after.safe()) {
+            search.continueDestination(session, after, type, -1,
+                    next -> finishSearch(search, next, ticket, player, player, type, before, level, () -> { }));
+        } else finishSearch(search, session, ticket, player, player, type, before, level, () -> { });
+    }
+
+    private static void finishSearch(NarcissusSearchService search, NarcissusSearchService.Session session,
+                                      NarcissusCostService.Ticket ticket, ServerPlayerEntity player, ServerPlayerEntity payer,
+                                      EnumTeleportType type, SafeWorldCoordinate before, ServerWorld level, Runnable onSuccess) {
+        ItemStack supportItem = session.supportItem();
+        if (!supportItem.isEmpty()) ticket.requireSupportItem(supportItem);
+        if (!ticket.resolve(session.destination())) { session.cancel(); return; }
+        BlockState supportState = session.supportState();
+        Runnable supportBlock = supportState == null ? null : () -> {
+            if (!supportItem.isEmpty() && !ItemUtils.removePlayerItem(player, supportItem.copy())) {
+                throw new IllegalStateException("Teleport support item disappeared after payment");
+            }
+            if (!level.setBlockAndUpdate(session.destination().toBlockPos().below(), supportState.getBlock().defaultBlockState())) {
+                throw new IllegalStateException("Teleport support block could not be placed");
+            }
+        };
+        session.waitForCountdown();
+        TeleportCountdownTracker.Session countdown = executeTeleportWithCountdown(player, type,
+                () -> search.complete(session, () -> finishTeleport(ticket, player, payer, type, before, level, supportBlock, onSuccess)), session::cancel);
+        session.attachCountdown(countdown);
     }
 
     private static void finishTeleport(NarcissusCostService.Ticket ticket, ServerPlayerEntity player,

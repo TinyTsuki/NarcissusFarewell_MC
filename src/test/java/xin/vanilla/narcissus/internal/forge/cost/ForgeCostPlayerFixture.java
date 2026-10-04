@@ -29,7 +29,7 @@ public class ForgeCostPlayerFixture {
     private RecordingPlayer player;
     private Object previousPlatform;
     private ConfigHolder holder;
-    RecordingPlayer player() { return player; }
+    public RecordingPlayer player() { return player; }
 
     @Before public void setup() throws Exception {
         Field platform = BaniraPlatforms.class.getDeclaredField("platform");
@@ -79,18 +79,18 @@ public class ForgeCostPlayerFixture {
         return null;
     }
 
-    static <T> T allocate(Class<T> type) throws Exception {
+    public static <T> T allocate(Class<T> type) throws Exception {
         Class<?> unsafeType = Class.forName("sun.misc.Unsafe");
         Field field = unsafeType.getDeclaredField("theUnsafe");
         field.setAccessible(true);
         return type.cast(unsafeType.getMethod("allocateInstance", Class.class).invoke(field.get(null), type));
     }
 
-    static class RecordingPlayer extends ServerPlayerEntity {
-        UUID id;
+    public static class RecordingPlayer extends ServerPlayerEntity {
+        public UUID id;
         FoodStats food;
         float health;
-        ServerWorld world;
+        public ServerWorld world;
         boolean cancelExperience;
         int experienceFactor;
         private RecordingPlayer() { super(null, null, null, null); }

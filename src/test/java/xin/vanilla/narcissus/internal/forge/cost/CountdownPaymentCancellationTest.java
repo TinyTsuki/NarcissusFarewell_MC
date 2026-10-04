@@ -37,4 +37,19 @@ public class CountdownPaymentCancellationTest {
         TeleportCountdownTracker.clear();
         assertEquals(0, cancelled.get());
     }
+    @Test public void cancellingSpecificCountdownDoesNotRemoveReplacement() {
+        AtomicInteger cancelled = new AtomicInteger();
+        TeleportCountdownTracker.Session old = TeleportCountdownTracker.begin(fixture.player(), false, false, cancelled::incrementAndGet);
+        TeleportCountdownTracker.Session replacement = TeleportCountdownTracker.begin(fixture.player(), false, false, () -> { });
+        old.cancel();
+        assertEquals(1, cancelled.get());
+        assertTrue(replacement.tryMarkCompleteAndRemove());
+    }
+    @Test public void releasingCompletedCountdownDoesNotInvokeCancellation() {
+        AtomicInteger cancelled = new AtomicInteger();
+        TeleportCountdownTracker.Session session = TeleportCountdownTracker.begin(fixture.player(), false, false, cancelled::incrementAndGet);
+        assertTrue(session.tryMarkCompleteAndRemove());
+        session.cancel();
+        assertEquals(0, cancelled.get());
+    }
 }

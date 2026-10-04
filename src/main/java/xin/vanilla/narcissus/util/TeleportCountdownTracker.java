@@ -27,6 +27,7 @@ public final class TeleportCountdownTracker {
 
     public static final class Session {
         private final AtomicBoolean cancelled = new AtomicBoolean(false);
+        private boolean completed;
         private final UUID playerId;
         private final double startX;
         private final double startY;
@@ -56,7 +57,9 @@ public final class TeleportCountdownTracker {
             if (cancelled.get()) {
                 return false;
             }
-            return SESSIONS.remove(playerId, this);
+            if (!SESSIONS.remove(playerId, this)) return false;
+            completed = true;
+            return true;
         }
 
         void markCancelledOnly() {
@@ -64,9 +67,12 @@ public final class TeleportCountdownTracker {
         }
 
         private void cancelSilently() {
+            if (completed) return;
             if (!cancelled.getAndSet(true)) onCancel.run();
             SESSIONS.remove(playerId, this);
         }
+
+        public void cancel() { cancelSilently(); }
 
         private void cancelWithNotify(ServerPlayerEntity player, boolean damageReason) {
             if (cancelled.getAndSet(true)) {

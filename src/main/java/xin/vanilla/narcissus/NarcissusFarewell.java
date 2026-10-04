@@ -3,6 +3,7 @@ package xin.vanilla.narcissus;
 import java.io.IOException;
 import xin.vanilla.narcissus.util.TeleportCountdownTracker;
 import xin.vanilla.narcissus.internal.server.NarcissusCostService;
+import xin.vanilla.narcissus.internal.server.NarcissusSearchService;
 import xin.vanilla.narcissus.internal.forge.cost.ForgeCostMigrationFile;
 import xin.vanilla.banira.api.BaniraDataPaths;
 import net.minecraft.server.MinecraftServer;
@@ -68,10 +69,14 @@ public class NarcissusFarewell {
         // 注册网络通道
         NetworkInit.registerPackets();
 
-        BaniraEvents.Server.onStarting(event -> NarcissusCostService.start(
-                event.serverAs(MinecraftServer.class)));
+        BaniraEvents.Server.onStarting(event -> {
+            MinecraftServer server = event.serverAs(MinecraftServer.class);
+            NarcissusCostService.start(server);
+            NarcissusSearchService.start(server);
+        });
         BaniraEvents.Server.onStopping(event -> {
             TeleportCountdownTracker.clear();
+            NarcissusSearchService.stop();
             NarcissusCostService.stop();
             getTeleportRequest().clear();
             getLastTeleportRequest().clear();
@@ -80,11 +85,15 @@ public class NarcissusFarewell {
         BaniraEvents.Player.onLoggedOut(event -> {
             NarcissusCostService service = NarcissusCostService.get();
             if (service != null && event.uuid() != null) service.disconnect(event.uuid());
+            NarcissusSearchService search = NarcissusSearchService.get();
+            if (search != null && event.uuid() != null) search.disconnect(event.uuid());
         });
         BaniraEvents.Server.onTick(event -> {
             EventHandlerProxy.onServerTick();
             NarcissusCostService service = NarcissusCostService.get();
             if (service != null) service.tick();
+            NarcissusSearchService search = NarcissusSearchService.get();
+            if (search != null) search.tick();
         });
         ForgeNarcissusGameEventAdapter.register();
         NarcissusNetworkSmokeServerRunner.register();

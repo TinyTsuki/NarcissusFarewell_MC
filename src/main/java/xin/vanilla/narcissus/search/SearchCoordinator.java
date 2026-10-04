@@ -138,6 +138,19 @@ public final class SearchCoordinator implements AutoCloseable {
         return active.size();
     }
 
+    /** Lifecycle-event cleanup, without spending another tick's search budget. */
+    public void pruneInvalid() {
+        checkOwner();
+        for (Entry entry : new ArrayList<>(active.values())) {
+            if (active.get(entry.id) != entry) continue;
+            try {
+                if (!entry.task.live()) terminate(entry, SearchTask.Failure.PLAYER_CHANGED, null);
+            } catch (RuntimeException | Error error) {
+                terminate(entry, SearchTask.Failure.ERROR, error);
+            }
+        }
+    }
+
     @Override public void close() {
         checkOwner();
         if (closed) return;

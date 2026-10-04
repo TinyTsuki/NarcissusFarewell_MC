@@ -419,6 +419,19 @@ public class SearchCoordinatorTest {
         return new SearchCoordinator(() -> true, () -> new SearchExecutionSettings(2, 32, 30), () -> clock.now);
     }
 
+    @Test public void logoutPrunesRelatedInvalidTicketsWithoutAdvancingOtherSearches() {
+        Clock clock = new Clock();
+        SearchCoordinator coordinator = coordinator(clock);
+        Task moving = new Task(clock), related = new Task(clock), other = new Task(clock);
+        coordinator.submit(moving); coordinator.submit(related); coordinator.submit(other);
+        moving.live = false; related.live = false;
+        coordinator.pruneInvalid();
+        assertEquals(1, coordinator.activeCount());
+        assertEquals(1, moving.closes); assertEquals(1, related.closes);
+        assertEquals(0, other.calls); assertEquals(0, other.closes);
+        coordinator.close();
+    }
+
     private static final class Clock { long now; }
     private static final class Task implements SearchTask {
         UUID id = UUID.randomUUID();

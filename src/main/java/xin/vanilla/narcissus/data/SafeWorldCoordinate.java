@@ -55,11 +55,17 @@ public class SafeWorldCoordinate extends WorldCoordinate implements Serializable
 
     public static SafeWorldCoordinate random(ServerPlayerEntity player, int range, RegistryKey<World> dimension) {
         ServerWorld world = DimensionUtils.getLevel(dimension);
-        range = Math.min(Math.max(range, 1), CommonConfig.get().base().randomTeleport().teleportRandomDistanceLimit());
-        double x = player.getX() + (Math.random() * 2 - 1) * range;
-        double y = randomWithWeight(DimensionUtils.getWorldMinY(world), DimensionUtils.getWorldMaxY(world), (int) player.getY(), 0.75);
-        double z = player.getZ() + (Math.random() * 2 - 1) * range;
-        return new SafeWorldCoordinate(x, y, z, player.yRot, player.xRot, dimension);
+        return random(new SafeWorldCoordinate(player), range, dimension, DimensionUtils.getWorldMinY(world),
+                DimensionUtils.getWorldMaxY(world), CommonConfig.get().base().randomTeleport().teleportRandomDistanceLimit());
+    }
+
+    public static SafeWorldCoordinate random(SafeWorldCoordinate origin, int range, RegistryKey<World> dimension,
+                                              int minY, int maxY, int distanceLimit) {
+        range = Math.min(Math.max(range, 1), distanceLimit);
+        double x = origin.x() + (Math.random() * 2 - 1) * range;
+        double y = randomWithWeight(minY, maxY, (int) origin.y(), 0.75);
+        double z = origin.z() + (Math.random() * 2 - 1) * range;
+        return new SafeWorldCoordinate(x, y, z, origin.yaw(), origin.pitch(), dimension);
     }
 
     @Override
