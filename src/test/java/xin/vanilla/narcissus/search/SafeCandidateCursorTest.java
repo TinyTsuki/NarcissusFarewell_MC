@@ -48,10 +48,13 @@ public class SafeCandidateCursorTest {
     }
 
     @Test
-    public void outsideShellsYieldBeforeReachingTheFirstCandidate() {
+    public void outsideShellsJumpToFirstPossibleCandidate() {
         SafeCandidateCursor cursor = new SafeCandidateCursor(EnumSafeMode.NONE, 100, 0, 0,
                 new SearchBox(0, 15, 0, 1, 0, 1));
-        for (int i = 0; i < 64; i++) assertEquals("step=" + i, SKIPPED, cursor.advance());
+        assertEquals(CANDIDATE, cursor.advance());
+        assertEquals(15, cursor.x());
+        assertEquals(0, cursor.y());
+        assertEquals(0, cursor.z());
     }
 
     @Test
@@ -77,7 +80,36 @@ public class SafeCandidateCursorTest {
     public void largeDistanceArithmeticDoesNotExhaustAfterIntegerOverflow() {
         SafeCandidateCursor cursor = new SafeCandidateCursor(EnumSafeMode.NONE, Integer.MIN_VALUE, 0, 0,
                 new SearchBox(Integer.MAX_VALUE - 1, Integer.MAX_VALUE, 0, 0, 0, 0));
-        for (int i = 0; i < 64; i++) assertEquals(SKIPPED, cursor.advance());
+        assertEquals(CANDIDATE, cursor.advance());
+        assertEquals(Integer.MAX_VALUE - 1, cursor.x());
+        assertEquals(0, cursor.y());
+        assertEquals(0, cursor.z());
+    }
+
+    @Test
+    public void fullHeightBoxDoesNotSpendItsBudgetOnImpossibleZRanges() {
+        for (int y : new int[]{0, 64, 90, 128, 255}) {
+            SafeCandidateCursor cursor = new SafeCandidateCursor(EnumSafeMode.NONE, 8, y, 8,
+                    new SearchBox(0, 15, 0, 255, 0, 15));
+            int candidates = 0, skipped = 0;
+            SafeCandidateCursor.Step step;
+            while ((step = cursor.advance()) != DONE) {
+                if (step == CANDIDATE) candidates++; else skipped++;
+            }
+            assertEquals(65536, candidates);
+            assertTrue("Y=" + y + ", empty advances=" + skipped, skipped < 6000);
+        }
+    }
+
+    @Test
+    public void oneSidedZRangesAndDisjointYIntervalsKeepLegacyOrder() {
+        for (SearchBox box : new SearchBox[]{new SearchBox(-4, 2, -8, 6, 3, 6),
+                new SearchBox(-4, 2, -8, 6, -7, -3), new SearchBox(-4, 2, -8, 6, -2, 3)}) {
+            for (int y : new int[]{-12, -3, 0, 5, 10}) {
+                assertEquals(LegacyCandidateOrder.enumerate(EnumSafeMode.NONE, 0, y, 0, box),
+                        drain(EnumSafeMode.NONE, 0, y, 0, box, 7));
+            }
+        }
     }
 
     @Test
