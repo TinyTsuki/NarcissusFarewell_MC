@@ -184,6 +184,19 @@ public class FabricCostPaymentTest {
         assertEquals(1, data.peekTeleportCard()); assertEquals(1, syncs);
     }
 
+    @Test public void legacyNbtListsAreNotComponentSyntax() {
+        type = EnumCostType.ITEM; item = "minecraft:stone{labels:[\"[item]\"]}"; amount = 1; enabled = false;
+        ItemStack matching = new ItemStack(Items.STONE, 2);
+        CompoundTag tag = new CompoundTag();
+        net.minecraft.nbt.ListTag labels = new net.minecraft.nbt.ListTag();
+        labels.add(net.minecraft.nbt.StringTag.valueOf("[item]")); tag.put("labels", labels);
+        net.minecraft.world.item.component.CustomData.set(net.minecraft.core.component.DataComponents.CUSTOM_DATA, matching, tag);
+        payer.getInventory().setItem(0, matching);
+        assertTrue(commit().isCommitted());
+        assertEquals(1, payer.getInventory().getItem(0).getCount());
+        assertEquals(2, data.peekTeleportCard());
+    }
+
     @Test public void insufficientOrInvalidItemsDoNotPartiallyRemoveInventory() {
         type = EnumCostType.ITEM; payer.getInventory().setItem(0, new ItemStack(Items.STONE, 2));
         assertEquals(EnumCostFailure.INSUFFICIENT_RESOURCE, commit().failure());
