@@ -15,9 +15,9 @@ public class CostPaymentServiceTest {
     @Test public void allSevenModesHaveExactDebitsAndCooldownMeaning() {
         int[][] expected = {{1, 5, 0}, {5, 5, 0}, {5, 0, 0}, {1, 0, 0},
                 {1, 5, 1}, {5, 0, 1}, {1, 0, 1}};
-        EnumCardType[] modes = {EnumCardType.NONE, EnumCardType.LIKE_COST, EnumCardType.REFUND_COST,
-                EnumCardType.REFUND_ALL_COST, EnumCardType.REFUND_COOLDOWN,
-                EnumCardType.REFUND_COST_AND_COOLDOWN, EnumCardType.REFUND_ALL_COST_AND_COOLDOWN};
+        EnumCardType[] modes = {EnumCardType.REQUIRE_ONE_WITH_COST, EnumCardType.REQUIRE_MATCHING_WITH_COST, EnumCardType.OFFSET_COST,
+                EnumCardType.WAIVE_COST, EnumCardType.BYPASS_COOLDOWN,
+                EnumCardType.OFFSET_COST_AND_BYPASS_COOLDOWN, EnumCardType.WAIVE_COST_AND_BYPASS_COOLDOWN};
         for (int i = 0; i < modes.length; i++) {
             Fixture f = new Fixture(); f.mode = modes[i]; f.cards = 10;
             CostPaymentPlan plan = f.preview();
@@ -35,7 +35,7 @@ public class CostPaymentServiceTest {
     @Test public void insufficientRequiredCardsNeverCreditAnyResource() {
         for (EnumCostType type : EnumCostType.values()) {
             if (type == EnumCostType.NONE) continue;
-            for (EnumCardType mode : Arrays.asList(EnumCardType.NONE, EnumCardType.LIKE_COST)) {
+            for (EnumCardType mode : Arrays.asList(EnumCardType.REQUIRE_ONE_WITH_COST, EnumCardType.REQUIRE_MATCHING_WITH_COST)) {
                 Fixture f = new Fixture(); f.type = type; f.cards = 0; f.mode = mode;
                 assertEquals(EnumCostFailure.INSUFFICIENT_CARDS, f.commit().failure());
                 assertEquals(10, f.resource); assertEquals(0, f.cards); assertEquals(0, f.payments);
@@ -44,7 +44,7 @@ public class CostPaymentServiceTest {
     }
 
     @Test public void partialOffsetCannotMakeAmountsNegative() {
-        Fixture f = new Fixture(); f.cards = 2; f.mode = EnumCardType.REFUND_COST_AND_COOLDOWN; f.cooldown = 30;
+        Fixture f = new Fixture(); f.cards = 2; f.mode = EnumCardType.OFFSET_COST_AND_BYPASS_COOLDOWN; f.cooldown = 30;
         CostPaymentPlan result = f.commit();
         assertTrue(result.isCommitted()); assertEquals(2, result.cardAmount());
         assertEquals(3, result.resourceAmount()); assertEquals(7, f.resource); assertEquals(0, f.cards);
@@ -54,7 +54,7 @@ public class CostPaymentServiceTest {
         for (boolean enabled : new boolean[]{false, true}) {
             for (int cards : new int[]{0, 2}) {
                 Fixture f = new Fixture(); f.enabled = enabled; f.cards = cards;
-                f.mode = EnumCardType.REFUND_COST_AND_COOLDOWN; f.cooldown = 30;
+                f.mode = EnumCardType.OFFSET_COST_AND_BYPASS_COOLDOWN; f.cooldown = 30;
                 assertEquals(enabled && cards > 0, f.preview().isSuccess());
                 assertEquals(0, f.payments);
             }
@@ -64,9 +64,9 @@ public class CostPaymentServiceTest {
     @Test public void noneAndZeroAreDifferentAndZeroCannotBypassWithQuantityOffset() {
         Fixture f = new Fixture(); f.type = EnumCostType.NONE; f.cooldown = 0;
         assertTrue(f.commit().isCommitted()); assertEquals(2, f.cards); assertEquals(10, f.resource);
-        f = new Fixture(); f.amount = 0; f.mode = EnumCardType.REFUND_COST_AND_COOLDOWN; f.cooldown = 30;
+        f = new Fixture(); f.amount = 0; f.mode = EnumCardType.OFFSET_COST_AND_BYPASS_COOLDOWN; f.cooldown = 30;
         assertEquals(EnumCostFailure.COOLDOWN, f.commit().failure()); assertEquals(2, f.cards);
-        f = new Fixture(); f.amount = 0; f.mode = EnumCardType.NONE;
+        f = new Fixture(); f.amount = 0; f.mode = EnumCardType.REQUIRE_ONE_WITH_COST;
         assertTrue(f.commit().isCommitted()); assertEquals(1, f.cards);
     }
 
@@ -166,7 +166,7 @@ public class CostPaymentServiceTest {
         int cards = 2, resource = 10, amount = 5, cooldown, payments;
         boolean enabled = true;
         EnumCostType type = EnumCostType.EXP_POINT;
-        EnumCardType mode = EnumCardType.NONE;
+        EnumCardType mode = EnumCardType.REQUIRE_ONE_WITH_COST;
         EnumCostFailure validity = EnumCostFailure.NONE, payFailure = EnumCostFailure.NONE, calcFailure = EnumCostFailure.NONE;
         CostPosition destination = position("minecraft:overworld", 10);
         Runnable onPay, afterPayment;

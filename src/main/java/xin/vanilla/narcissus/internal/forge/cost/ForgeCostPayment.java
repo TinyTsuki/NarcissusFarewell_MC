@@ -53,9 +53,26 @@ public final class ForgeCostPayment implements CostPaymentService.PaymentAccess 
                 || !context.destination().get().dimensionId().equals(context.targetWorld().get().dimensionId())) {
             return EnumCostFailure.UNKNOWN_TARGET;
         }
+        if (context.targetPlayer().isPresent()) {
+            ServerPlayerEntity endpoint = context.teleportType() == EnumTeleportType.TP_HERE ? paying
+                    : context.targetPlayer().get().nativePlayer(ServerPlayerEntity.class);
+            if (!context.destination().get().dimensionId().equals(endpoint.getLevel().dimension().location().toString())) {
+                return EnumCostFailure.UNKNOWN_TARGET;
+            }
+        }
         if (context.request().isPresent()) {
             CostRequestInfo info = context.request().get();
             TeleportRequest request = requests.apply(info.id());
+            // A prospective request has not been registered yet; CHECK never authorizes a payment.
+            if (request == null && context.phase() == CostPhase.CHECK && info.expiresAt() > clock.getAsLong()
+                    && context.requester().isPresent() && context.targetPlayer().isPresent()) {
+                ServerPlayerEntity requester = context.requester().get().nativePlayer(ServerPlayerEntity.class);
+                ServerPlayerEntity target = context.targetPlayer().get().nativePlayer(ServerPlayerEntity.class);
+                if (requester == paying && (context.teleportType() == EnumTeleportType.TP_HERE ? target : requester) == moving
+                        && (context.teleportType() == EnumTeleportType.TP_ASK || context.teleportType() == EnumTeleportType.TP_HERE)) {
+                    return EnumCostFailure.NONE;
+                }
+            }
             if (request == null || request.getRequestTime() == null || request.getExpireTime() <= clock.getAsLong()
                     || info.createdAt() != request.getRequestTime().getTime() || info.expiresAt() != request.getExpireTime()
                     || request.getTeleportType() != context.teleportType() || request.getRequester() != paying
@@ -150,6 +167,18 @@ public final class ForgeCostPayment implements CostPaymentService.PaymentAccess 
             catch (RuntimeException error) { data.setDirty(); throw error; }
             sync.accept(player);
         }
+    }
+
+    public static boolean hasSupportItemAfterPayment(CostContext context, CostPaymentPlan plan, ItemStack support) {
+        ServerPlayerEntity moving = context.player().nativePlayer(ServerPlayerEntity.class);
+        long remaining = count(moving.inventory, support);
+        if (context.payer().nativePlayer(ServerPlayerEntity.class) == moving && context.costType() == EnumCostType.ITEM
+                && plan.resourceAmount() > 0) {
+            ItemStack fee = item(context.parameters().item());
+            if (fee == null) return false;
+            if (matches(support, fee)) remaining -= plan.resourceAmount();
+        }
+        return remaining >= 1;
     }
 
     private static ItemStack item(String specification) {

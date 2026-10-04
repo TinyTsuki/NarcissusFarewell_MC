@@ -30,7 +30,7 @@ public class CostQuoteServiceTest {
                     return CostEvaluation.open(CostContextInput.builder().operationId(request.requestId())
                             .generationId(request.generationId()).phase(CostPhase.PREVIEW)
                             .teleportType(request.target().teleportType()).parameters(CostParameters.free())
-                            .cardSettings(new CostCardSettings(false, 0, EnumCardType.NONE))
+                            .cardSettings(new CostCardSettings(false, 0, EnumCardType.REQUIRE_ONE_WITH_COST))
                             .player(view).payer(view).source(new CostPosition("minecraft:overworld", 0, 0, 0, 0, 0, false, EnumSafeMode.NONE))
                             .sourceWorld(proxy(CostWorldView.class)).server(proxy(CostServerView.class)).build());
                 }

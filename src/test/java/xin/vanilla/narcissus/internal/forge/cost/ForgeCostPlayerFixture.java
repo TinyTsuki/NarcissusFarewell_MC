@@ -10,7 +10,6 @@ import net.minecraft.world.World;
 import net.minecraft.world.server.ServerWorld;
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Test;
 import xin.vanilla.banira.common.config.ConfigHolder;
 import xin.vanilla.banira.internal.config.CustomConfig;
 import xin.vanilla.banira.platform.*;
@@ -25,8 +24,8 @@ import java.util.*;
 
 import static org.junit.Assert.*;
 
-/** Characterizes the legacy bugs until the coordinated T6 cutover; correct behavior lives in ForgeCostPaymentTest. */
-public class LegacyCostPaymentTest {
+/** Native player fixture shared by payment and quote regressions. */
+public class ForgeCostPlayerFixture {
     private RecordingPlayer player;
     private Object previousPlatform;
     private ConfigHolder holder;
@@ -48,6 +47,9 @@ public class LegacyCostPaymentTest {
         player.totalExperience = 10;
         player.experienceLevel = 10;
         player.world = allocate(ServerWorld.class);
+        Field position = net.minecraft.entity.Entity.class.getDeclaredField("position");
+        position.setAccessible(true);
+        position.set(player, net.minecraft.util.math.vector.Vector3d.ZERO);
         Field dimension = World.class.getDeclaredField("dimension");
         dimension.setAccessible(true);
         dimension.set(player.world, World.OVERWORLD);
@@ -66,85 +68,6 @@ public class LegacyCostPaymentTest {
         Field platform = BaniraPlatforms.class.getDeclaredField("platform");
         platform.setAccessible(true);
         platform.set(null, previousPlatform);
-    }
-
-    private void configure(EnumCostType type) throws Exception {
-        Map<String, Object> values = new HashMap<>();
-        values.put("base.teleportCard.teleportCard", true);
-        values.put("base.teleportCard.teleportCardType", EnumCardType.NONE);
-        values.put("cost.tpHome.costTpHomeType", type);
-        values.put("cost.tpHome.costTpHomeNum", 5);
-        values.put("cost.tpHome.costTpHomeExp", "5");
-        values.put("cost.tpHome.costTpHomeConf", "test [num]");
-        holder = ConfigBaselineFixture.holderWithValues(CommonConfig.class, values);
-        BaniraConfigService configs = new BaniraConfigService() {
-            public <T> void register(Class<T> config, String modId) { throw new UnsupportedOperationException(); }
-            public <T> T view(Class<?> config, Class<T> view) { throw new UnsupportedOperationException(); }
-            public BaniraConfigHandle handle(Class<?> config) { return config == CommonConfig.class ? holder : null; }
-        };
-        BaniraPlatforms.install((BaniraPlatform) Proxy.newProxyInstance(getClass().getClassLoader(),
-                new Class<?>[]{BaniraPlatform.class}, (proxy, method, args) -> {
-                    if (method.getName().equals("configService")) return configs;
-                    if (method.getName().equals("networkService")) return Proxy.newProxyInstance(getClass().getClassLoader(),
-                            new Class<?>[]{BaniraNetworkService.class}, (p, m, a) -> defaultValue(m.getReturnType()));
-                    return defaultValue(method.getReturnType());
-                }));
-    }
-
-    private boolean pay() throws Exception {
-        Method method = NarcissusUtils.class.getDeclaredMethod("validateCost", ServerPlayerEntity.class,
-                RegistryKey.class, double.class, EnumTeleportType.class, boolean.class);
-        method.setAccessible(true);
-        return (boolean) method.invoke(null, player, World.OVERWORLD, 10D, EnumTeleportType.TP_HOME, true);
-    }
-
-    @Test public void legacyMissingCardsIncorrectlyCreditExperiencePoints() throws Exception {
-        configure(EnumCostType.EXP_POINT);
-        assertTrue(pay());
-        assertEquals(11, player.totalExperience);
-    }
-
-    @Test public void legacyMissingCardsIncorrectlyCreditExperienceLevels() throws Exception {
-        configure(EnumCostType.EXP_LEVEL);
-        assertTrue(pay());
-        assertEquals(11, player.experienceLevel);
-    }
-
-    @Test public void legacyMissingCardsIncorrectlyCreditHealth() throws Exception {
-        configure(EnumCostType.HEALTH);
-        assertTrue(pay());
-        assertEquals(11, player.health, 0);
-    }
-
-    @Test public void legacyMissingCardsIncorrectlyCreditFood() throws Exception {
-        configure(EnumCostType.HUNGER);
-        assertTrue(pay());
-        assertEquals(11, player.food.getFoodLevel());
-    }
-
-    @Test public void legacyPositiveCommandFeeIsIncorrectlyRejected() throws Exception {
-        configure(EnumCostType.COMMAND);
-        PlayerTeleportData.getData(player).setTeleportCard(1);
-        assertFalse(pay());
-    }
-
-    @Test public void legacyDisabledCardsIncorrectlyBypassCooldown() throws Exception {
-        configure(EnumCostType.EXP_POINT);
-        holder.set("base.teleportCard.teleportCard", false);
-        holder.set("base.teleportCard.teleportCardType", EnumCardType.REFUND_COOLDOWN);
-        PlayerTeleportData.getData(player).setTeleportCard(1);
-        PlayerTeleportData.getData(player).setTeleportRecords(Collections.singletonList(
-                new xin.vanilla.narcissus.data.TeleportRecord().setTeleportType(EnumTeleportType.TP_HOME)));
-        assertEquals(0, NarcissusUtils.getTeleportCoolDown(player, EnumTeleportType.TP_HOME));
-    }
-
-    @Test public void legacyOffsetAndCooldownModeIsOmitted() throws Exception {
-        configure(EnumCostType.EXP_POINT);
-        holder.set("base.teleportCard.teleportCardType", EnumCardType.REFUND_COST_AND_COOLDOWN);
-        PlayerTeleportData.getData(player).setTeleportCard(1);
-        PlayerTeleportData.getData(player).setTeleportRecords(Collections.singletonList(
-                new xin.vanilla.narcissus.data.TeleportRecord().setTeleportType(EnumTeleportType.TP_HOME)));
-        assertTrue(NarcissusUtils.getTeleportCoolDown(player, EnumTeleportType.TP_HOME) > 0);
     }
 
     static Object defaultValue(Class<?> type) {

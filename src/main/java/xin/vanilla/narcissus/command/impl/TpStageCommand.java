@@ -53,8 +53,11 @@ public final class TpStageCommand {
             return 0;
         }
         safeWorldCoordinate.safe("safe".equalsIgnoreCase(xin.vanilla.banira.common.util.CommandUtils.getStringEmpty(context, "safe")));
-        if (CommandUtils.checkTeleportPost(player, safeWorldCoordinate, EnumTeleportType.TP_STAGE, true)) return 0;
-        NarcissusUtils.teleportTo(player, safeWorldCoordinate, EnumTeleportType.TP_STAGE);
+        if (CommandUtils.checkTeleportPost(player, safeWorldCoordinate, EnumTeleportType.TP_STAGE)) return 0;
+        xin.vanilla.banira.common.data.KeyValue<String, String> selected = NarcissusUtils.getStageKey(player, targetLevel, name);
+        SafeWorldCoordinate stored = xin.vanilla.narcissus.data.world.WorldStageData.get().getStageCoordinate().get(selected);
+        NarcissusUtils.teleportTo(player, safeWorldCoordinate.clone(), EnumTeleportType.TP_STAGE, () -> { },
+                () -> xin.vanilla.narcissus.data.world.WorldStageData.get().getStageCoordinate().get(selected) == stored);
         return 1;
     }
 

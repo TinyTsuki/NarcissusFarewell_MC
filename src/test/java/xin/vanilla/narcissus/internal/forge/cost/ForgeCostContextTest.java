@@ -227,7 +227,7 @@ public class ForgeCostContextTest {
         CostContextInput.CostContextInputBuilder inputBuilder() {
             return CostContextInput.builder().operationId(7).generationId(1).phase(CostPhase.PREVIEW)
                     .teleportType(EnumTeleportType.TP_HERE).parameters(PARAMETERS)
-                    .cardSettings(new CostCardSettings(true, 0, EnumCardType.REFUND_ALL_COST))
+                    .cardSettings(new CostCardSettings(true, 0, EnumCardType.WAIVE_COST))
                     .player(moving).payer(paying).requester(paying).targetPlayer(moving)
                     .source(moving.position()).destination(paying.position()).rawDistance(500).distance(10000)
                     .sourceWorld(source).targetWorld(destination).server(server).cooldownSeconds(30).countdownSeconds(3)

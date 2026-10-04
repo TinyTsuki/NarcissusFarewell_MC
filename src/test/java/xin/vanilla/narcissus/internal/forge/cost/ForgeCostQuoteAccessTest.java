@@ -13,7 +13,7 @@ import java.util.*;
 import static org.junit.Assert.*;
 
 public class ForgeCostQuoteAccessTest {
-    private final LegacyCostPaymentTest fixture = new LegacyCostPaymentTest();
+    private final ForgeCostPlayerFixture fixture = new ForgeCostPlayerFixture();
     private PlayerTeleportData data;
     private UUID player;
     private final WorldStageData stages = new WorldStageData();

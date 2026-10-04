@@ -84,7 +84,9 @@ public final class CostConfigMigration {
         if (!(enabled instanceof Boolean)) throw new IllegalArgumentException("Invalid teleportCard flag");
         int grant = integer(oldCards, "teleportCardDaily", 0);
         String oldMode = text(oldCards, "teleportCardType", "REFUND_ALL_COST");
-        EnumCardType mode = EnumCardType.valueOf(oldMode);
+        String mappedMode = CARD_MODES.get(oldMode);
+        if (mappedMode == null) throw new IllegalArgumentException("Invalid legacy card mode: " + oldMode);
+        EnumCardType mode = EnumCardType.valueOf(mappedMode);
         Map<String, Object> cards = new LinkedHashMap<>();
         cards.put("enabled", enabled); cards.put("dailyGrant", grant); cards.put("mode", CARD_MODES.get(oldMode)); cost.put("cards", cards);
         limits.remove("teleportCostDistanceLimit"); limits.remove("teleportCostDistanceAcrossDimension");
@@ -116,11 +118,9 @@ public final class CostConfigMigration {
         Map<String, Object> cards = table(cost, "cards"), distance = table(cost, "distance");
         Object enabled = cards.getOrDefault("enabled", false);
         if (!(enabled instanceof Boolean)) throw new IllegalArgumentException("Invalid cost.cards.enabled flag");
-        String mode = text(cards, "mode", "WAIVE_COST"), oldMode = null;
-        for (Map.Entry<String, String> entry : CARD_MODES.entrySet()) if (entry.getValue().equals(mode)) oldMode = entry.getKey();
-        if (oldMode == null) throw new IllegalArgumentException("Invalid cost.cards.mode");
+        String mode = text(cards, "mode", "WAIVE_COST");
         return new CostConfiguration(groups, new CostCardSettings((boolean) enabled, integer(cards, "dailyGrant", 0),
-                EnumCardType.valueOf(oldMode)), integer(distance, "maxDistance", 10000), integer(distance, "crossDimensionDistance", 10000));
+                EnumCardType.valueOf(mode)), integer(distance, "maxDistance", 10000), integer(distance, "crossDimensionDistance", 10000));
     }
 
     private static String source(String file, String original, String body, boolean blocked) {

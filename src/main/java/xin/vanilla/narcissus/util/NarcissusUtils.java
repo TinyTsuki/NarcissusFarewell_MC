@@ -1,11 +1,9 @@
 package xin.vanilla.narcissus.util;
 
-import com.mojang.brigadier.StringReader;
+import java.util.function.BooleanSupplier;
 import lombok.NonNull;
 import net.minecraft.block.BlockState;
 import net.minecraft.command.CommandSource;
-import net.minecraft.command.arguments.ItemInput;
-import net.minecraft.command.arguments.ItemParser;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.MobEntity;
@@ -17,7 +15,6 @@ import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.CompoundNBT;
-import net.minecraft.network.datasync.DataParameter;
 import net.minecraft.network.play.server.SPlayerAbilitiesPacket;
 import net.minecraft.network.play.server.SSetPassengersPacket;
 import net.minecraft.server.MinecraftServer;
@@ -44,17 +41,16 @@ import xin.vanilla.banira.common.util.StringUtils;
 import xin.vanilla.narcissus.Identifier;
 import xin.vanilla.narcissus.NarcissusComponent;
 import xin.vanilla.narcissus.NarcissusFarewell;
+import xin.vanilla.narcissus.internal.server.NarcissusCostService;
+import xin.vanilla.narcissus.data.cost.CostPaymentPlan;
 import xin.vanilla.narcissus.config.CommonConfig;
 import xin.vanilla.narcissus.config.TeleportCountdownHelper;
 import xin.vanilla.narcissus.data.SafeWorldCoordinate;
-import xin.vanilla.narcissus.data.TeleportCost;
 import xin.vanilla.narcissus.data.TeleportRecord;
 import xin.vanilla.narcissus.data.TeleportRequest;
 import xin.vanilla.narcissus.data.player.PlayerTeleportData;
 import xin.vanilla.narcissus.data.world.WorldStageData;
-import xin.vanilla.narcissus.enums.EnumCardType;
 import xin.vanilla.narcissus.enums.EnumCommandType;
-import xin.vanilla.narcissus.enums.EnumCostType;
 import xin.vanilla.narcissus.enums.EnumTeleportType;
 import xin.vanilla.narcissus.internal.forge.network.ForgeNativePacketSender;
 import xin.vanilla.narcissus.mixin.LivingEntityInvoker;
@@ -95,7 +91,7 @@ public class NarcissusUtils {
             case SET_CARD:
             case CARD_CONCISE:
             case SET_CARD_CONCISE:
-                return CommonConfig.get().base().teleportCard().teleportCard();
+                return CommonConfig.get().cost().cards().enabled();
             case SHARE:
             case SHARE_CONCISE:
                 return CommonConfig.get().featureSwitch().switchShare();
@@ -919,7 +915,7 @@ public class NarcissusUtils {
     /**
      * 在真正执行传送前按玩家配置进行倒计时；{@code teleportAction} 在倒计时结束时于服务端主线程执行（调用方应自行解析在线玩家等）。
      */
-    private static void executeTeleportWithCountdown(ServerPlayerEntity player, EnumTeleportType type, Runnable teleportAction) {
+    private static void executeTeleportWithCountdown(ServerPlayerEntity player, EnumTeleportType type, Runnable teleportAction, Runnable cancelAction) {
         MinecraftServer server = player.getServer();
         int sec = TeleportCountdownHelper.getEffectiveCountdownSeconds(player, type);
         if (sec <= 0 || server == null) {
@@ -928,7 +924,7 @@ public class NarcissusUtils {
         }
         TeleportCountdownTracker.Session countdownSession = TeleportCountdownTracker.begin(player,
                 CommonConfig.get().teleportCountdown().cancelCountdownOnPlayerMove(),
-                CommonConfig.get().teleportCountdown().cancelCountdownOnPlayerDamage());
+                CommonConfig.get().teleportCountdown().cancelCountdownOnPlayerDamage(), cancelAction);
         UUID uuid = player.getUUID();
         for (int i = 0; i < sec; i++) {
             final int display = sec - i;
@@ -981,7 +977,10 @@ public class NarcissusUtils {
      * 执行传送请求
      */
     public static void teleportTo(@NonNull TeleportRequest request) {
-        teleportTo(request.getRequester(), request.getTarget(), request.getTeleportType(), request.isSafe());
+        ServerPlayerEntity moving = request.getTeleportType() == EnumTeleportType.TP_HERE ? request.getTarget() : request.getRequester();
+        ServerPlayerEntity endpoint = request.getTeleportType() == EnumTeleportType.TP_HERE ? request.getRequester() : request.getTarget();
+        teleportTo(moving, new SafeWorldCoordinate(endpoint).safe(request.isSafe()), request.getTeleportType(), -1,
+                request.getRequester(), request.getTarget(), request, () -> { }, () -> true, null);
     }
 
     /**
@@ -991,11 +990,9 @@ public class NarcissusUtils {
      * @param to   目标玩家
      */
     public static void teleportTo(@NonNull ServerPlayerEntity from, @NonNull ServerPlayerEntity to, EnumTeleportType type, boolean safe) {
-        if (EnumTeleportType.TP_HERE == type) {
-            teleportTo(to, new SafeWorldCoordinate(from).safe(safe), type);
-        } else {
-            teleportTo(from, new SafeWorldCoordinate(to).safe(safe), type);
-        }
+        teleportTo(type == EnumTeleportType.TP_HERE ? to : from,
+                new SafeWorldCoordinate(type == EnumTeleportType.TP_HERE ? from : to).safe(safe), type, -1,
+                from, to, null, () -> { }, () -> true, null);
     }
 
     /**
@@ -1012,6 +1009,54 @@ public class NarcissusUtils {
      * @param tprHorizontalRange 仅用于随机传送安全搜索失败时的重试
      */
     public static void teleportTo(@NonNull ServerPlayerEntity player, @NonNull SafeWorldCoordinate after, EnumTeleportType type, int tprHorizontalRange) {
+        teleportTo(player, after, type, tprHorizontalRange, player, null, null, () -> { }, () -> true, null);
+    }
+
+    public static void teleportTo(ServerPlayerEntity player, SafeWorldCoordinate after, EnumTeleportType type, Runnable onSuccess) {
+        teleportTo(player, after, type, onSuccess, () -> true);
+    }
+
+    public static void teleportTo(ServerPlayerEntity player, SafeWorldCoordinate after, EnumTeleportType type,
+                                  Runnable onSuccess, BooleanSupplier targetValid) {
+        teleportTo(player, after, type, -1, player, null, null, onSuccess, targetValid, null);
+    }
+
+    public static NarcissusCostService.Ticket beginTeleport(ServerPlayerEntity player, EnumTeleportType type) {
+        NarcissusCostService service = NarcissusCostService.get();
+        if (service == null) {
+            MessageUtils.sendNotification(player, NarcissusComponent.get().transAuto("cost_unavailable"), NarcissusNotificationTypes.TELEPORT_ERROR);
+            return null;
+        }
+        try { return service.begin(player, player, null, null, type); }
+        catch (RuntimeException error) {
+            LOGGER.error("Teleport configuration unavailable", error);
+            MessageUtils.sendNotification(player, NarcissusComponent.get().transAuto("cost_unavailable"), NarcissusNotificationTypes.TELEPORT_ERROR);
+            return null;
+        }
+    }
+
+    public static void teleportTo(ServerPlayerEntity player, SafeWorldCoordinate after, EnumTeleportType type,
+                                  NarcissusCostService.Ticket prepared) {
+        teleportTo(player, after, type, -1, player, null, null, () -> { }, () -> true, prepared);
+    }
+
+    private static void teleportTo(ServerPlayerEntity player, SafeWorldCoordinate after, EnumTeleportType type,
+                                   int tprHorizontalRange, ServerPlayerEntity payer, ServerPlayerEntity targetPlayer,
+                                   TeleportRequest request, Runnable onSuccess, BooleanSupplier targetValid, NarcissusCostService.Ticket prepared) {
+        NarcissusCostService service = NarcissusCostService.get();
+        if (service == null) {
+            MessageUtils.sendNotification(payer, NarcissusComponent.get().transAuto("cost_unavailable"), NarcissusNotificationTypes.TELEPORT_ERROR);
+            return;
+        }
+        NarcissusCostService.Ticket ticket;
+        try { ticket = prepared != null ? prepared : service.begin(player, payer, targetPlayer, request, type); }
+        catch (RuntimeException error) {
+            LOGGER.error("Teleport configuration unavailable", error);
+            MessageUtils.sendNotification(payer, NarcissusComponent.get().transAuto("cost_unavailable"), NarcissusNotificationTypes.TELEPORT_ERROR);
+            return;
+        }
+        if (ticket == null || !ticket.live()) return;
+        ticket.targetGuard(targetValid);
         SafeWorldCoordinate before = new SafeWorldCoordinate(player);
         World world = player.level;
         if (world != null) {
@@ -1020,7 +1065,9 @@ public class NarcissusUtils {
                 if (after.safe()) {
                     MessageUtils.sendNotification(player, NarcissusComponent.get().transAuto("safe_searching"), NarcissusNotificationTypes.TELEPORT_SEARCH);
                     final int tpRandomRangeArg = tprHorizontalRange;
+                    List<ItemStack> inventorySnapshot = ItemUtils.getAllPlayerItems(player).stream().map(ItemStack::copy).collect(Collectors.toList());
                     new Thread(() -> {
+                        try {
                         SafeBlockChecker checker = new SafeBlockChecker(level);
                         SafeWorldCoordinate finalAfter;
                         if (type == EnumTeleportType.TP_RANDOM) {
@@ -1043,10 +1090,11 @@ public class NarcissusUtils {
                             finalAfter = findSafeCoordinate(after.clone(), false);
                         }
                         Runnable runnable;
+                        ItemStack supportItem = null;
                         // 判断是否需要在脚下放置方块
                         if (CommonConfig.get().base().safeTeleport().setBlockWhenSafeNotFound() && !checker.isSafeBlock(finalAfter.toBlockPos(), false)) {
                             BlockState blockState;
-                            List<ItemStack> playerItemList = ItemUtils.getAllPlayerItems(player);
+                            List<ItemStack> playerItemList = inventorySnapshot;
                             if (CollectionUtils.isNotNullOrEmpty(NarcissusFarewell.getSafeBlock().getSafeBlocksState())) {
                                 if (CommonConfig.get().base().safeTeleport().getBlockFromInventory()) {
                                     blockState = NarcissusFarewell.getSafeBlock().getSafeBlocksState().stream()
@@ -1062,15 +1110,15 @@ public class NarcissusUtils {
                                 SafeWorldCoordinate airSafeWorldCoordinate = findSafeCoordinate(finalAfter, true);
                                 if (!airSafeWorldCoordinate.xyzString().equals(finalAfter.xyzString())) {
                                     finalAfter = airSafeWorldCoordinate;
+                                    boolean consumeBlock = CommonConfig.get().base().safeTeleport().getBlockFromInventory();
+                                    if (consumeBlock) supportItem = new ItemStack(blockState.getBlock());
                                     runnable = () -> {
                                         Item blockItem = new ItemStack(blockState.getBlock()).getItem();
-                                        Item remove = playerItemList.stream().map(ItemStack::getItem).filter(blockItem::equals).findFirst().orElse(null);
-                                        if (remove != null) {
-                                            ItemStack itemStack = new ItemStack(remove);
-                                            itemStack.setCount(1);
-                                            if (ItemUtils.removePlayerItem(player, itemStack)) {
-                                                level.setBlockAndUpdate(airSafeWorldCoordinate.toBlockPos().below(), blockState.getBlock().defaultBlockState());
-                                            }
+                                        if (consumeBlock && !ItemUtils.removePlayerItem(player, new ItemStack(blockItem))) {
+                                            throw new IllegalStateException("Teleport support item disappeared after payment");
+                                        }
+                                        if (!level.setBlockAndUpdate(airSafeWorldCoordinate.toBlockPos().below(), blockState.getBlock().defaultBlockState())) {
+                                            throw new IllegalStateException("Teleport support block could not be placed");
                                         }
                                     };
                                 } else {
@@ -1083,34 +1131,43 @@ public class NarcissusUtils {
                             runnable = null;
                         }
                         SafeWorldCoordinate finalAfter1 = finalAfter;
+                        ItemStack finalSupportItem = supportItem;
                         MinecraftServer srv = player.server;
                         UUID pid = player.getUUID();
                         player.server.submit(() -> {
-                            if (runnable != null) runnable.run();
                             ServerPlayerEntity online = srv.getPlayerList().getPlayer(pid);
-                            if (online == null) {
-                                return;
-                            }
-                            executeTeleportWithCountdown(online, type, () -> {
-                                ServerPlayerEntity pl = srv.getPlayerList().getPlayer(pid);
-                                if (pl != null) {
-                                    teleportPlayer(pl, finalAfter1, type, before, level);
-                                }
-                            });
+                            if (finalSupportItem != null) ticket.requireSupportItem(finalSupportItem);
+                            if (online == null || !ticket.resolve(finalAfter1)) { ticket.cancel(); return; }
+                            executeTeleportWithCountdown(online, type,
+                                    () -> finishTeleport(ticket, online, payer, type, before, level, runnable, onSuccess), ticket::cancel);
                         });
-                    }).start();
-                } else {
-                    MinecraftServer srv = player.getServer();
-                    UUID pid = player.getUUID();
-                    executeTeleportWithCountdown(player, type, () -> {
-                        ServerPlayerEntity pl = srv != null ? srv.getPlayerList().getPlayer(pid) : null;
-                        if (pl != null) {
-                            teleportPlayer(pl, after, type, before, level);
+                        } catch (RuntimeException error) {
+                            LOGGER.error("Teleport destination search failed", error);
+                            player.server.execute(ticket::cancel);
                         }
-                    });
+                    }, "Narcissus destination search").start();
+                } else {
+                    if (!ticket.resolve(after)) { ticket.cancel(); return; }
+                    executeTeleportWithCountdown(player, type,
+                            () -> finishTeleport(ticket, player, payer, type, before, level, null, onSuccess), ticket::cancel);
                 }
-            }
+            } else ticket.cancel();
+        } else ticket.cancel();
+    }
+
+    private static void finishTeleport(NarcissusCostService.Ticket ticket, ServerPlayerEntity player,
+                                       ServerPlayerEntity payer, EnumTeleportType type, SafeWorldCoordinate before,
+                                       ServerWorld level, Runnable supportBlock, Runnable onSuccess) {
+        CostPaymentPlan plan = ticket.commit();
+        if (!plan.isCommitted()) {
+            MessageUtils.sendNotification(payer, NarcissusComponent.get().transAuto("cost_failure",
+                    plan.failure().enumDescription()), NarcissusNotificationTypes.TELEPORT_ERROR);
+            return;
         }
+        if (supportBlock != null) supportBlock.run();
+        teleportPlayer(player, ticket.destination(), type, before, level);
+        ticket.completed();
+        onSuccess.run();
     }
 
     private static void teleportPlayer(@NonNull ServerPlayerEntity player, @NonNull SafeWorldCoordinate after, EnumTeleportType type, SafeWorldCoordinate before, ServerWorld level) {
@@ -1340,33 +1397,35 @@ public class NarcissusUtils {
      * @param type   传送类型
      */
     public static int getTeleportCoolDown(ServerPlayerEntity player, EnumTeleportType type) {
-        // 如果传送卡类型为抵消冷却时间，则不计算冷却时间
-        if (EnumCardType.REFUND_COOLDOWN.name().equalsIgnoreCase(CommonConfig.get().base().teleportCard().teleportCardType().name())
-                || EnumCardType.REFUND_ALL_COST_AND_COOLDOWN.name().equalsIgnoreCase(CommonConfig.get().base().teleportCard().teleportCardType().name())
-        ) {
-            if (PlayerTeleportData.getData(player).getTeleportCard() > 0) {
-                return 0;
-            }
-        }
+        return getTeleportCoolDown(player, type, null);
+    }
+
+    public static int getTeleportCoolDown(ServerPlayerEntity player, EnumTeleportType type, TeleportRequest excluded) {
         Instant current = Instant.now();
         int commandCoolDown = getCommandCoolDown(type);
-        Instant lastTpTime = PlayerTeleportData.getData(player).getTeleportRecords(type).stream()
+        List<TeleportRecord> records = PlayerTeleportData.getData(player).peekTeleportRecords();
+        Instant lastTpTime = records.stream().filter(record -> record.getTeleportType() == type)
                 .map(TeleportRecord::getTeleportTime)
                 .max(Comparator.comparing(Date::toInstant))
                 .orElse(new Date(0)).toInstant();
         switch (CommonConfig.get().base().teleportRequest().teleportRequestCooldownType()) {
             case COMMON:
-                return calculateCooldown(player.getUUID(), current, lastTpTime, CommonConfig.get().base().teleportRequest().teleportRequestCooldown(), null);
+                return calculateCooldown(player.getUUID(), current, latestTeleportTime(records), CommonConfig.get().base().teleportRequest().teleportRequestCooldown(), null, excluded);
             case INDIVIDUAL:
-                return calculateCooldown(player.getUUID(), current, lastTpTime, commandCoolDown, type);
+                return calculateCooldown(player.getUUID(), current, lastTpTime, commandCoolDown, type, excluded);
             case MIXED:
                 int globalCommandCoolDown = CommonConfig.get().base().teleportRequest().teleportRequestCooldown();
-                int individualCooldown = calculateCooldown(player.getUUID(), current, lastTpTime, commandCoolDown, type);
-                int globalCooldown = calculateCooldown(player.getUUID(), current, lastTpTime, globalCommandCoolDown, null);
+                int individualCooldown = calculateCooldown(player.getUUID(), current, lastTpTime, commandCoolDown, type, excluded);
+                int globalCooldown = calculateCooldown(player.getUUID(), current, latestTeleportTime(records), globalCommandCoolDown, null, excluded);
                 return Math.max(individualCooldown, globalCooldown);
             default:
                 return 0;
         }
+    }
+
+    private static Instant latestTeleportTime(List<TeleportRecord> records) {
+        return records.stream().map(TeleportRecord::getTeleportTime).max(Comparator.comparing(Date::toInstant))
+                .orElse(new Date(0)).toInstant();
     }
 
     /**
@@ -1413,8 +1472,9 @@ public class NarcissusUtils {
         }
     }
 
-    private static int calculateCooldown(UUID uuid, Instant current, Instant lastTpTime, int cooldown, EnumTeleportType type) {
+    private static int calculateCooldown(UUID uuid, Instant current, Instant lastTpTime, int cooldown, EnumTeleportType type, TeleportRequest excluded) {
         Optional<TeleportRequest> latestRequest = NarcissusFarewell.getTeleportRequest().values().stream()
+                .filter(request -> request != excluded)
                 .filter(request -> request.getRequester().getUUID().equals(uuid))
                 .filter(request -> type == null || request.getTeleportType() == type)
                 .max(Comparator.comparing(TeleportRequest::getRequestTime));
@@ -1425,411 +1485,7 @@ public class NarcissusUtils {
 
     // endregion 传送冷却
 
-    // region 传送代价
 
-    /**
-     * 验证传送代价
-     *
-     * @param player 请求传送的玩家
-     * @param target 目标坐标
-     * @param type   传送类型
-     * @param submit 是否收取代价
-     * @return 是否验证通过
-     */
-    public static boolean validTeleportCost(ServerPlayerEntity player, SafeWorldCoordinate target, EnumTeleportType type, boolean submit) {
-        return validateCost(player, target.dimension(), calculateDistance(new SafeWorldCoordinate(player), target), type, submit);
-    }
-
-    /**
-     * 验证并收取传送代价
-     *
-     * @param request 传送请求
-     * @param submit  是否收取代价
-     * @return 是否验证通过
-     */
-    public static boolean validTeleportCost(TeleportRequest request, boolean submit) {
-        SafeWorldCoordinate requesterSafeWorldCoordinate = new SafeWorldCoordinate(request.getRequester());
-        SafeWorldCoordinate targetSafeWorldCoordinate = new SafeWorldCoordinate(request.getTarget());
-        return validateCost(request.getRequester(), request.getTarget().getLevel().dimension(), calculateDistance(requesterSafeWorldCoordinate, targetSafeWorldCoordinate), request.getTeleportType(), submit);
-    }
-
-    /**
-     * 通用的传送代价验证逻辑
-     *
-     * @param player       请求传送的玩家
-     * @param targetDim    目标维度
-     * @param distance     计算的距离
-     * @param teleportType 传送类型
-     * @param submit       是否收取代价
-     * @return 是否验证通过
-     */
-    private static boolean validateCost(ServerPlayerEntity player, RegistryKey<World> targetDim, double distance, EnumTeleportType teleportType, boolean submit) {
-        TeleportCost teleportCost = NarcissusUtils.getCommandCost(teleportType);
-        if (teleportCost.getType() == EnumCostType.NONE) return true;
-        PlayerTeleportData data = PlayerTeleportData.getData(player);
-
-        double adjustedDistance;
-        if (player.getLevel().dimension() == targetDim) {
-            int limit = CommonConfig.get().base().teleportLimit().teleportCostDistanceLimit();
-            adjustedDistance = limit == 0 ? distance : Math.min(limit, distance);
-        } else {
-            adjustedDistance = CommonConfig.get().base().teleportLimit().teleportCostDistanceAcrossDimension();
-        }
-
-        Map<String, Object> vars = new HashMap<>();
-        vars.put("distance", adjustedDistance);
-        vars.put("num", (double) teleportCost.getNum());
-        vars.put("rate", teleportCost.getRate());
-
-        double need;
-        try {
-            need = new SafeExpressionEvaluator(teleportCost.getExp()).evaluateDouble(vars);
-        } catch (Exception e) {
-            LOGGER.error("Failed to calculate cost with expression: {}", teleportCost.getExp(), e);
-            need = teleportCost.getNum() * adjustedDistance * teleportCost.getRate();
-        }
-        need = Math.min(need, teleportCost.getUpper());
-        need = Math.max(need, teleportCost.getLower());
-
-        int cardNeed = getTeleportCardNeed(need);
-        int costNeed = getTeleportCostNeed(data, cardNeed, (int) Math.ceil(need));
-        boolean result = false;
-
-        if (costNeed < 0) {
-            MessageUtils.sendNotification(player
-                    , NarcissusComponent.get().transAuto("cost_not_enough"
-                            , NarcissusComponent.get().transAuto("teleport_card")
-                            , cardNeed
-                    ), NarcissusNotificationTypes.TELEPORT_ERROR);
-        }
-
-        switch (teleportCost.getType()) {
-            case EXP_POINT:
-                result = player.totalExperience >= costNeed;
-                if (!result) {
-                    MessageUtils.sendNotification(player
-                            , NarcissusComponent.get().transAuto("cost_not_enough"
-                                    , NarcissusComponent.get().transAuto("exp_point")
-                                    , costNeed
-                            ), NarcissusNotificationTypes.TELEPORT_ERROR);
-                } else if (submit) {
-                    player.giveExperiencePoints(-costNeed);
-                    data.subTeleportCard(Math.min(data.getTeleportCard(), cardNeed));
-                }
-                break;
-            case EXP_LEVEL:
-                result = player.experienceLevel >= costNeed;
-                if (!result) {
-                    MessageUtils.sendNotification(player
-                            , NarcissusComponent.get().transAuto("cost_not_enough"
-                                    , NarcissusComponent.get().transAuto("exp_level")
-                                    , costNeed
-                            ), NarcissusNotificationTypes.TELEPORT_ERROR);
-                } else if (submit) {
-                    player.giveExperienceLevels(-costNeed);
-                    data.subTeleportCard(Math.min(data.getTeleportCard(), cardNeed));
-                }
-                break;
-            case HEALTH:
-                result = player.getHealth() > costNeed;
-                if (!result) {
-                    MessageUtils.sendNotification(player
-                            , NarcissusComponent.get().transAuto("cost_not_enough"
-                                    , NarcissusComponent.get().transAuto("health")
-                                    , costNeed
-                            ), NarcissusNotificationTypes.TELEPORT_ERROR);
-                } else if (submit) {
-                    try {
-                        DataParameter<? super Float> DATA_HEALTH_ID = ((LivingEntityInvoker) player).narcissus$dataHealthId();
-                        Float health = (Float) player.getEntityData().get(DATA_HEALTH_ID);
-                        player.getEntityData().set(DATA_HEALTH_ID, health - costNeed);
-                    } catch (Exception e) {
-                        player.hurt(DamageSource.MAGIC, costNeed);
-                    }
-                    data.subTeleportCard(Math.min(data.getTeleportCard(), cardNeed));
-                }
-                break;
-            case HUNGER:
-                result = player.getFoodData().getFoodLevel() >= costNeed;
-                if (!result) {
-                    MessageUtils.sendNotification(player
-                            , NarcissusComponent.get().transAuto("cost_not_enough"
-                                    , NarcissusComponent.get().transAuto("hunger")
-                                    , costNeed
-                            ), NarcissusNotificationTypes.TELEPORT_ERROR);
-                } else if (submit) {
-                    player.getFoodData().setFoodLevel(player.getFoodData().getFoodLevel() - costNeed);
-                    data.subTeleportCard(Math.min(data.getTeleportCard(), cardNeed));
-                }
-                break;
-            case ITEM:
-                try {
-                    ItemParser parse = new ItemParser(new StringReader(teleportCost.getConf()), false).parse();
-                    ItemStack itemStack = new ItemInput(parse.getItem(), parse.getNbt()).createItemStack(1, false);
-                    result = getItemCount(player.inventory.items, itemStack) >= costNeed;
-                    itemStack.setCount(costNeed);
-                    if (!result) {
-                        MessageUtils.sendNotification(player
-                                , NarcissusComponent.get().transAuto("cost_not_enough"
-                                        , NarcissusComponent.get().literal(ItemUtils.getItemHoverNameString(itemStack))
-                                                .hoverEvent(new HoverEvent(HoverEvent.Action.SHOW_ITEM, new HoverEvent.ItemHover(itemStack)))
-                                        , costNeed
-                                ), NarcissusNotificationTypes.TELEPORT_ERROR);
-                    } else if (submit) {
-                        result = ItemUtils.removePlayerItem(player, itemStack);
-                        // 代价不足
-                        if (result) {
-                            data.subTeleportCard(Math.min(data.getTeleportCard(), cardNeed));
-                        } else {
-                            MessageUtils.sendNotification(player
-                                    , NarcissusComponent.get().transAuto("cost_not_enough"
-                                            , NarcissusComponent.get().literal(ItemUtils.getItemHoverNameString(itemStack))
-                                                    .hoverEvent(new HoverEvent(HoverEvent.Action.SHOW_ITEM, new HoverEvent.ItemHover(itemStack)))
-                                            , costNeed
-                                    ), NarcissusNotificationTypes.TELEPORT_ERROR);
-                        }
-                    }
-                } catch (Exception e) {
-                    result = false;
-                    LOGGER.error("Failed to teleport with item cost:", e);
-                }
-                break;
-            case COMMAND:
-                try {
-                    result = costNeed == 0;
-                    if (result && submit) {
-                        String command = teleportCost.getConf().replaceAll("\\[num]", String.valueOf(costNeed));
-                        result = CommandUtils.executeCommand(player, command);
-                        if (result) {
-                            data.subTeleportCard(Math.min(data.getTeleportCard(), cardNeed));
-                        }
-                    }
-                } catch (Exception e) {
-                    result = false;
-                    LOGGER.error("Failed to teleport with command cost:", e);
-                }
-                break;
-        }
-        if (submit && result) {
-            PlayerTeleportData.syncPlayerData(player);
-        }
-        return result;
-    }
-
-    /**
-     * 须支付多少传送卡
-     */
-    public static int getTeleportCardNeed(double need) {
-        int ceil = (int) Math.ceil(need);
-        if (!CommonConfig.get().base().teleportCard().teleportCard()) return 0;
-        switch (CommonConfig.get().base().teleportCard().teleportCardType()) {
-            case LIKE_COST:
-            case REFUND_COST:
-            case REFUND_COST_AND_COOLDOWN:
-                return ceil;
-            case NONE:
-            case REFUND_ALL_COST:
-            case REFUND_COOLDOWN:
-            case REFUND_ALL_COST_AND_COOLDOWN:
-            default:
-                return 1;
-        }
-    }
-
-    /**
-     * 使用传送卡后还须支付多少代价
-     *
-     * @return -1：传送卡不足    0：传送卡足以抵消代价    >0：还须支付多少代价
-     */
-    public static int getTeleportCostNeed(PlayerTeleportData data, int card, int need) {
-        if (!CommonConfig.get().base().teleportCard().teleportCard()) return need;
-        switch (CommonConfig.get().base().teleportCard().teleportCardType()) {
-            case NONE:
-                // card = 1
-                return data.getTeleportCard() >= card ? need : -1;
-            case LIKE_COST:
-                // card = need
-                return data.getTeleportCard() >= card ? card : -1;
-            case REFUND_COOLDOWN:
-                return need;
-            case REFUND_ALL_COST:
-            case REFUND_ALL_COST_AND_COOLDOWN:
-                // card = 1
-                return data.getTeleportCard() >= card ? 0 : need;
-            case REFUND_COST:
-            case REFUND_COST_AND_COOLDOWN:
-                // card = need
-            default:
-                return Math.max(0, card - data.getTeleportCard());
-        }
-    }
-
-    public static TeleportCost getCommandCost(EnumTeleportType type) {
-        TeleportCost cost = new TeleportCost();
-        switch (type) {
-            case TP_COORDINATE:
-                cost.setType(CommonConfig.get().cost().tpCoordinate().costTpCoordinateType());
-                cost.setNum(CommonConfig.get().cost().tpCoordinate().costTpCoordinateNum());
-                cost.setRate(CommonConfig.get().cost().tpCoordinate().costTpCoordinateRate());
-                cost.setConf(CommonConfig.get().cost().tpCoordinate().costTpCoordinateConf());
-                cost.setLower(CommonConfig.get().cost().tpCoordinate().costTpCoordinateNumLower());
-                cost.setUpper(CommonConfig.get().cost().tpCoordinate().costTpCoordinateNumUpper());
-                cost.setExp(CommonConfig.get().cost().tpCoordinate().costTpCoordinateExp());
-                break;
-            case TP_STRUCTURE:
-                cost.setType(CommonConfig.get().cost().tpStructure().costTpStructureType());
-                cost.setNum(CommonConfig.get().cost().tpStructure().costTpStructureNum());
-                cost.setRate(CommonConfig.get().cost().tpStructure().costTpStructureRate());
-                cost.setConf(CommonConfig.get().cost().tpStructure().costTpStructureConf());
-                cost.setLower(CommonConfig.get().cost().tpStructure().costTpStructureNumLower());
-                cost.setUpper(CommonConfig.get().cost().tpStructure().costTpStructureNumUpper());
-                cost.setExp(CommonConfig.get().cost().tpStructure().costTpStructureExp());
-                break;
-            case TP_ASK:
-                cost.setType(CommonConfig.get().cost().tpAsk().costTpAskType());
-                cost.setNum(CommonConfig.get().cost().tpAsk().costTpAskNum());
-                cost.setRate(CommonConfig.get().cost().tpAsk().costTpAskRate());
-                cost.setConf(CommonConfig.get().cost().tpAsk().costTpAskConf());
-                cost.setLower(CommonConfig.get().cost().tpAsk().costTpAskNumLower());
-                cost.setUpper(CommonConfig.get().cost().tpAsk().costTpAskNumUpper());
-                cost.setExp(CommonConfig.get().cost().tpAsk().costTpAskExp());
-                break;
-            case TP_HERE:
-                cost.setType(CommonConfig.get().cost().tpHere().costTpHereType());
-                cost.setNum(CommonConfig.get().cost().tpHere().costTpHereNum());
-                cost.setRate(CommonConfig.get().cost().tpHere().costTpHereRate());
-                cost.setConf(CommonConfig.get().cost().tpHere().costTpHereConf());
-                cost.setLower(CommonConfig.get().cost().tpHere().costTpHereNumLower());
-                cost.setUpper(CommonConfig.get().cost().tpHere().costTpHereNumUpper());
-                cost.setExp(CommonConfig.get().cost().tpHere().costTpHereExp());
-                break;
-            case TP_RANDOM:
-                cost.setType(CommonConfig.get().cost().tpRandom().costTpRandomType());
-                cost.setNum(CommonConfig.get().cost().tpRandom().costTpRandomNum());
-                cost.setRate(CommonConfig.get().cost().tpRandom().costTpRandomRate());
-                cost.setConf(CommonConfig.get().cost().tpRandom().costTpRandomConf());
-                cost.setLower(CommonConfig.get().cost().tpRandom().costTpRandomNumLower());
-                cost.setUpper(CommonConfig.get().cost().tpRandom().costTpRandomNumUpper());
-                cost.setExp(CommonConfig.get().cost().tpRandom().costTpRandomExp());
-                break;
-            case TP_SPAWN:
-                cost.setType(CommonConfig.get().cost().tpSpawn().costTpSpawnType());
-                cost.setNum(CommonConfig.get().cost().tpSpawn().costTpSpawnNum());
-                cost.setRate(CommonConfig.get().cost().tpSpawn().costTpSpawnRate());
-                cost.setConf(CommonConfig.get().cost().tpSpawn().costTpSpawnConf());
-                cost.setLower(CommonConfig.get().cost().tpSpawn().costTpSpawnNumLower());
-                cost.setUpper(CommonConfig.get().cost().tpSpawn().costTpSpawnNumUpper());
-                cost.setExp(CommonConfig.get().cost().tpSpawn().costTpSpawnExp());
-                break;
-            case TP_WORLD_SPAWN:
-                cost.setType(CommonConfig.get().cost().tpWorldSpawn().costTpWorldSpawnType());
-                cost.setNum(CommonConfig.get().cost().tpWorldSpawn().costTpWorldSpawnNum());
-                cost.setRate(CommonConfig.get().cost().tpWorldSpawn().costTpWorldSpawnRate());
-                cost.setConf(CommonConfig.get().cost().tpWorldSpawn().costTpWorldSpawnConf());
-                cost.setLower(CommonConfig.get().cost().tpWorldSpawn().costTpWorldSpawnNumLower());
-                cost.setUpper(CommonConfig.get().cost().tpWorldSpawn().costTpWorldSpawnNumUpper());
-                cost.setExp(CommonConfig.get().cost().tpWorldSpawn().costTpWorldSpawnExp());
-                break;
-            case TP_TOP:
-                cost.setType(CommonConfig.get().cost().tpTop().costTpTopType());
-                cost.setNum(CommonConfig.get().cost().tpTop().costTpTopNum());
-                cost.setRate(CommonConfig.get().cost().tpTop().costTpTopRate());
-                cost.setConf(CommonConfig.get().cost().tpTop().costTpTopConf());
-                cost.setLower(CommonConfig.get().cost().tpTop().costTpTopNumLower());
-                cost.setUpper(CommonConfig.get().cost().tpTop().costTpTopNumUpper());
-                cost.setExp(CommonConfig.get().cost().tpTop().costTpTopExp());
-                break;
-            case TP_BOTTOM:
-                cost.setType(CommonConfig.get().cost().tpBottom().costTpBottomType());
-                cost.setNum(CommonConfig.get().cost().tpBottom().costTpBottomNum());
-                cost.setRate(CommonConfig.get().cost().tpBottom().costTpBottomRate());
-                cost.setConf(CommonConfig.get().cost().tpBottom().costTpBottomConf());
-                cost.setLower(CommonConfig.get().cost().tpBottom().costTpBottomNumLower());
-                cost.setUpper(CommonConfig.get().cost().tpBottom().costTpBottomNumUpper());
-                cost.setExp(CommonConfig.get().cost().tpBottom().costTpBottomExp());
-                break;
-            case TP_UP:
-                cost.setType(CommonConfig.get().cost().tpUp().costTpUpType());
-                cost.setNum(CommonConfig.get().cost().tpUp().costTpUpNum());
-                cost.setRate(CommonConfig.get().cost().tpUp().costTpUpRate());
-                cost.setConf(CommonConfig.get().cost().tpUp().costTpUpConf());
-                cost.setLower(CommonConfig.get().cost().tpUp().costTpUpNumLower());
-                cost.setUpper(CommonConfig.get().cost().tpUp().costTpUpNumUpper());
-                cost.setExp(CommonConfig.get().cost().tpUp().costTpUpExp());
-                break;
-            case TP_DOWN:
-                cost.setType(CommonConfig.get().cost().tpDown().costTpDownType());
-                cost.setNum(CommonConfig.get().cost().tpDown().costTpDownNum());
-                cost.setRate(CommonConfig.get().cost().tpDown().costTpDownRate());
-                cost.setConf(CommonConfig.get().cost().tpDown().costTpDownConf());
-                cost.setLower(CommonConfig.get().cost().tpDown().costTpDownNumLower());
-                cost.setUpper(CommonConfig.get().cost().tpDown().costTpDownNumUpper());
-                cost.setExp(CommonConfig.get().cost().tpDown().costTpDownExp());
-                break;
-            case TP_VIEW:
-                cost.setType(CommonConfig.get().cost().tpView().costTpViewType());
-                cost.setNum(CommonConfig.get().cost().tpView().costTpViewNum());
-                cost.setRate(CommonConfig.get().cost().tpView().costTpViewRate());
-                cost.setConf(CommonConfig.get().cost().tpView().costTpViewConf());
-                cost.setLower(CommonConfig.get().cost().tpView().costTpViewNumLower());
-                cost.setUpper(CommonConfig.get().cost().tpView().costTpViewNumUpper());
-                cost.setExp(CommonConfig.get().cost().tpView().costTpViewExp());
-                break;
-            case TP_HOME:
-                cost.setType(CommonConfig.get().cost().tpHome().costTpHomeType());
-                cost.setNum(CommonConfig.get().cost().tpHome().costTpHomeNum());
-                cost.setRate(CommonConfig.get().cost().tpHome().costTpHomeRate());
-                cost.setConf(CommonConfig.get().cost().tpHome().costTpHomeConf());
-                cost.setLower(CommonConfig.get().cost().tpHome().costTpHomeNumLower());
-                cost.setUpper(CommonConfig.get().cost().tpHome().costTpHomeNumUpper());
-                cost.setExp(CommonConfig.get().cost().tpHome().costTpHomeExp());
-                break;
-            case TP_STAGE:
-                cost.setType(CommonConfig.get().cost().tpStage().costTpStageType());
-                cost.setNum(CommonConfig.get().cost().tpStage().costTpStageNum());
-                cost.setRate(CommonConfig.get().cost().tpStage().costTpStageRate());
-                cost.setConf(CommonConfig.get().cost().tpStage().costTpStageConf());
-                cost.setLower(CommonConfig.get().cost().tpStage().costTpStageNumLower());
-                cost.setUpper(CommonConfig.get().cost().tpStage().costTpStageNumUpper());
-                cost.setExp(CommonConfig.get().cost().tpStage().costTpStageExp());
-                break;
-            case TP_BACK:
-                cost.setType(CommonConfig.get().cost().tpBack().costTpBackType());
-                cost.setNum(CommonConfig.get().cost().tpBack().costTpBackNum());
-                cost.setRate(CommonConfig.get().cost().tpBack().costTpBackRate());
-                cost.setConf(CommonConfig.get().cost().tpBack().costTpBackConf());
-                cost.setLower(CommonConfig.get().cost().tpBack().costTpBackNumLower());
-                cost.setUpper(CommonConfig.get().cost().tpBack().costTpBackNumUpper());
-                cost.setExp(CommonConfig.get().cost().tpBack().costTpBackExp());
-                break;
-            case TP_GRAVE:
-                cost.setType(CommonConfig.get().cost().tpGrave().costTpGraveType());
-                cost.setNum(CommonConfig.get().cost().tpGrave().costTpGraveNum());
-                cost.setRate(CommonConfig.get().cost().tpGrave().costTpGraveRate());
-                cost.setConf(CommonConfig.get().cost().tpGrave().costTpGraveConf());
-                cost.setLower(CommonConfig.get().cost().tpGrave().costTpGraveNumLower());
-                cost.setUpper(CommonConfig.get().cost().tpGrave().costTpGraveNumUpper());
-                cost.setExp(CommonConfig.get().cost().tpGrave().costTpGraveExp());
-                break;
-            default:
-                break;
-        }
-        return cost;
-    }
-
-    public static int getItemCount(List<ItemStack> items, ItemStack itemStack) {
-        ItemStack copy = itemStack.copy();
-        return items.stream().filter(item -> {
-            copy.setCount(item.getCount());
-            return item.equals(copy, false);
-        }).mapToInt(ItemStack::getCount).sum();
-    }
-
-    public static double calculateDistance(SafeWorldCoordinate safeWorldCoordinate1, SafeWorldCoordinate safeWorldCoordinate2) {
-        return safeWorldCoordinate1.distanceFrom(safeWorldCoordinate2);
-    }
-
-    // endregion 传送代价
 
     // region 杂项
 

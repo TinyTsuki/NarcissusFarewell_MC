@@ -1,5 +1,7 @@
 package xin.vanilla.narcissus.network.packet;
 
+import xin.vanilla.narcissus.internal.client.NarcissusClientSyncState;
+import xin.vanilla.banira.common.network.BaniraNetworkContext;
 import lombok.Value;
 import lombok.experimental.Accessors;
 import xin.vanilla.banira.common.network.BaniraPacketBuffer;
@@ -23,4 +25,13 @@ public class CostCapabilitiesToClient implements NetworkPacket {
         this.sessionId = identity.sessionId(); this.generationId = identity.generationId();
     }
     public void toBytes(BaniraPacketBuffer buffer) { CostQuoteCodec.writeCapabilities(buffer, sessionId, generationId); }
+    public static void handle(CostCapabilitiesToClient packet, BaniraNetworkContext context) {
+        context.enqueueWork(() -> {
+            if (context.isClientSide()) {
+                net.minecraftforge.fml.DistExecutor.unsafeRunWhenOn(net.minecraftforge.api.distmarker.Dist.CLIENT,
+                        () -> () -> NarcissusClientSyncState.costQuotes().capabilities(packet.sessionId(), packet.generationId()));
+            }
+        });
+        context.markHandled();
+    }
 }

@@ -47,6 +47,7 @@ public class NarcissusCommand {
 
         // 主指令直接执行显示帮助
         mainCommand.executes(HelpCommand.create().getCommand());
+        mainCommand.then(xin.vanilla.narcissus.command.impl.CostReloadCommand.create());
 
         for (EnumCommandType type : EnumCommandType.values()) {
             if (type.getInstance() != null) {

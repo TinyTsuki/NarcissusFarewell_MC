@@ -34,8 +34,8 @@ public final class TpAskYesCommand {
             MessageUtils.sendNotification(player, NarcissusComponent.get().transAuto("tp_ask_not_found"), NarcissusNotificationTypes.TELEPORT_REQUEST);
             return 0;
         }
-        TeleportRequest request = NarcissusFarewell.getTeleportRequest().remove(id);
-        if (CommandUtils.checkTeleportPost(request, true)) {
+        TeleportRequest request = NarcissusFarewell.getTeleportRequest().get(id);
+        if (CommandUtils.checkTeleportPost(request)) {
             MessageUtils.sendNotification(player, NarcissusComponent.get().transAuto("tp_ask_invalid"), NarcissusNotificationTypes.TELEPORT_ERROR);
             return 0;
         }

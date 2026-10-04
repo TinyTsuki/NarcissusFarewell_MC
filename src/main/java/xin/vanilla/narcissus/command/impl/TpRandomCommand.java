@@ -30,7 +30,7 @@ public final class TpRandomCommand {
         range = NarcissusUtils.checkRange(player, EnumTeleportType.TP_RANDOM, range);
         RegistryKey<World> targetLevel = xin.vanilla.banira.common.util.CommandUtils.getDimensionKeyDefault(context, "dimension", player.getLevel().dimension());
         SafeWorldCoordinate safeWorldCoordinate = SafeWorldCoordinate.random(player, range, targetLevel).safe(true);
-        if (CommandUtils.checkTeleportPost(player, safeWorldCoordinate, EnumTeleportType.TP_RANDOM, true)) return 0;
+        if (CommandUtils.checkTeleportPost(player, safeWorldCoordinate, EnumTeleportType.TP_RANDOM)) return 0;
         NarcissusUtils.teleportTo(player, safeWorldCoordinate, EnumTeleportType.TP_RANDOM, range);
         return 1;
     }

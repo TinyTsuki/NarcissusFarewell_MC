@@ -125,12 +125,6 @@ public class CommonConfig implements ConfigData {
         @Getter(AccessLevel.NONE)
         @Setter(AccessLevel.NONE)
         @ConfigEntry.Gui.CollapsibleObject
-        @ConfigEntry.Gui.Tooltip(zh_cn = "传送卡", en_us = "Teleport Card")
-        private TeleportCardCategory teleportCard = new TeleportCardCategory();
-
-        @Getter(AccessLevel.NONE)
-        @Setter(AccessLevel.NONE)
-        @ConfigEntry.Gui.CollapsibleObject
         @ConfigEntry.Gui.Tooltip(zh_cn = "传送限制", en_us = "Teleport Limit")
         private TeleportLimitCategory teleportLimit = new TeleportLimitCategory();
 
@@ -307,19 +301,6 @@ public class CommonConfig implements ConfigData {
     @Getter
     @Setter
     @Accessors(chain = true, fluent = true)
-    public static class TeleportCardCategory {
-        @ConfigEntry.Gui.Tooltip(zh_cn = "启用传送卡", en_us = "Enable or disable the option to 'Teleport Card'.")
-        private boolean teleportCard = false;
-        @ConfigEntry.Gui.Tooltip(zh_cn = "每日可获得的传送卡数量", en_us = "The number of Teleport Card that can be obtained daily.")
-        @ConfigEntry.BoundedDiscrete(max = 9999)
-        private int teleportCardDaily = 0;
-        @ConfigEntry.Gui.Tooltip(zh_cn = "传送卡的使用方式：", en_us = "Teleport Card Usage Modes:")
-        private EnumCardType teleportCardType = EnumCardType.REFUND_ALL_COST;
-    }
-
-    @Getter
-    @Setter
-    @Accessors(chain = true, fluent = true)
     public static class TeleportLimitCategory {
         @ConfigEntry.Gui.Tooltip(zh_cn = "传送回时忽略的传送类型", en_us = "The teleport back skip type.")
         private List<String> teleportBackSkipType = new ArrayList<String>() {{
@@ -343,12 +324,6 @@ public class CommonConfig implements ConfigData {
         private String tpSpawnNoBedWorldDimension = "minecraft:overworld";
         @ConfigEntry.Gui.Tooltip(zh_cn = "启用跨维度传送", en_us = "Is the teleport across dimensions enabled?")
         private boolean teleportAcrossDimension = true;
-        @ConfigEntry.Gui.Tooltip(zh_cn = "传送代价的距离计算上限，0 表示不限制\n该值不限制实际传送距离，仅限制代价计算使用的距离乘数", en_us = "The distance calculation limit for teleport cost, 0 means no limit. (This config item is not the limit of teleport distance, but the limit of the distance multiplier used when calculating teleport cost.)")
-        @ConfigEntry.BoundedDiscrete()
-        private int teleportCostDistanceLimit = 10000;
-        @ConfigEntry.Gui.Tooltip(zh_cn = "跨维度传送时传送代价中传送距离取值，值为0表示不限制", en_us = "The distance value for teleport cost when teleport across dimensions, 0 means no limit.")
-        @ConfigEntry.BoundedDiscrete()
-        private int teleportCostDistanceAcrossDimension = 10000;
     }
 
     @Getter
@@ -697,86 +672,60 @@ public class CommonConfig implements ConfigData {
     @Setter
     @Accessors(chain = true, fluent = true)
     public static class CostCategory {
-        @Getter(AccessLevel.NONE)
-        @Setter(AccessLevel.NONE)
         @ConfigEntry.Gui.CollapsibleObject
-        @ConfigEntry.Gui.Tooltip(zh_cn = "传送到指定坐标", en_us = "Teleport to the specified coordinates")
-        private TpCoordinateCostGroup tpCoordinate = new TpCoordinateCostGroup();
-        @Getter(AccessLevel.NONE)
-        @Setter(AccessLevel.NONE)
+        @ConfigEntry.Gui.Tooltip(zh_cn = "坐标传送", en_us = "coordinate teleport cost")
+        private CostSettings coordinate = new CostSettings();
         @ConfigEntry.Gui.CollapsibleObject
-        @ConfigEntry.Gui.Tooltip(zh_cn = "传送到指定结构", en_us = "Teleport to the specified structure")
-        private TpStructureCostGroup tpStructure = new TpStructureCostGroup();
-        @Getter(AccessLevel.NONE)
-        @Setter(AccessLevel.NONE)
+        @ConfigEntry.Gui.Tooltip(zh_cn = "结构传送", en_us = "structure teleport cost")
+        private CostSettings structure = new CostSettings();
         @ConfigEntry.Gui.CollapsibleObject
-        @ConfigEntry.Gui.Tooltip(zh_cn = "请求传送至玩家", en_us = "Request to teleport oneself to other players")
-        private TpAskCostGroup tpAsk = new TpAskCostGroup();
-        @Getter(AccessLevel.NONE)
-        @Setter(AccessLevel.NONE)
+        @ConfigEntry.Gui.Tooltip(zh_cn = "传送至玩家", en_us = "ask teleport cost")
+        private CostSettings ask = new CostSettings();
         @ConfigEntry.Gui.CollapsibleObject
-        @ConfigEntry.Gui.Tooltip(zh_cn = "请求将玩家传送至当前位置", en_us = "Request the transfer of other players to oneself")
-        private TpHereCostGroup tpHere = new TpHereCostGroup();
-        @Getter(AccessLevel.NONE)
-        @Setter(AccessLevel.NONE)
+        @ConfigEntry.Gui.Tooltip(zh_cn = "将玩家传送至当前位置", en_us = "here teleport cost")
+        private CostSettings here = new CostSettings();
         @ConfigEntry.Gui.CollapsibleObject
-        @ConfigEntry.Gui.Tooltip(zh_cn = "随机传送", en_us = "Teleport to a random location")
-        private TpRandomCostGroup tpRandom = new TpRandomCostGroup();
-        @Getter(AccessLevel.NONE)
-        @Setter(AccessLevel.NONE)
+        @ConfigEntry.Gui.Tooltip(zh_cn = "随机传送", en_us = "random teleport cost")
+        private CostSettings random = new CostSettings();
         @ConfigEntry.Gui.CollapsibleObject
-        @ConfigEntry.Gui.Tooltip(zh_cn = "传送到玩家重生点", en_us = "Teleport to the spawn of the player")
-        private TpSpawnCostGroup tpSpawn = new TpSpawnCostGroup();
-        @Getter(AccessLevel.NONE)
-        @Setter(AccessLevel.NONE)
+        @ConfigEntry.Gui.Tooltip(zh_cn = "个人重生点", en_us = "spawn teleport cost")
+        private CostSettings spawn = new CostSettings();
         @ConfigEntry.Gui.CollapsibleObject
-        @ConfigEntry.Gui.Tooltip(zh_cn = "传送到世界重生点", en_us = "Teleport to the spawn of the world")
-        private TpWorldSpawnCostGroup tpWorldSpawn = new TpWorldSpawnCostGroup();
-        @Getter(AccessLevel.NONE)
-        @Setter(AccessLevel.NONE)
+        @ConfigEntry.Gui.Tooltip(zh_cn = "世界重生点", en_us = "worldSpawn teleport cost")
+        private CostSettings worldSpawn = new CostSettings();
         @ConfigEntry.Gui.CollapsibleObject
-        @ConfigEntry.Gui.Tooltip(zh_cn = "传送到顶部", en_us = "Teleport to the top of current position")
-        private TpTopCostGroup tpTop = new TpTopCostGroup();
-        @Getter(AccessLevel.NONE)
-        @Setter(AccessLevel.NONE)
+        @ConfigEntry.Gui.Tooltip(zh_cn = "顶部", en_us = "top teleport cost")
+        private CostSettings top = new CostSettings();
         @ConfigEntry.Gui.CollapsibleObject
-        @ConfigEntry.Gui.Tooltip(zh_cn = "传送到底部", en_us = "Teleport to the bottom of current position")
-        private TpBottomCostGroup tpBottom = new TpBottomCostGroup();
-        @Getter(AccessLevel.NONE)
-        @Setter(AccessLevel.NONE)
+        @ConfigEntry.Gui.Tooltip(zh_cn = "底部", en_us = "bottom teleport cost")
+        private CostSettings bottom = new CostSettings();
         @ConfigEntry.Gui.CollapsibleObject
-        @ConfigEntry.Gui.Tooltip(zh_cn = "传送到上方", en_us = "Teleport to the upper of current position")
-        private TpUpCostGroup tpUp = new TpUpCostGroup();
-        @Getter(AccessLevel.NONE)
-        @Setter(AccessLevel.NONE)
+        @ConfigEntry.Gui.Tooltip(zh_cn = "上方", en_us = "up teleport cost")
+        private CostSettings up = new CostSettings();
         @ConfigEntry.Gui.CollapsibleObject
-        @ConfigEntry.Gui.Tooltip(zh_cn = "传送到下方", en_us = "Teleport to the lower of current position")
-        private TpDownCostGroup tpDown = new TpDownCostGroup();
-        @Getter(AccessLevel.NONE)
-        @Setter(AccessLevel.NONE)
+        @ConfigEntry.Gui.Tooltip(zh_cn = "下方", en_us = "down teleport cost")
+        private CostSettings down = new CostSettings();
         @ConfigEntry.Gui.CollapsibleObject
-        @ConfigEntry.Gui.Tooltip(zh_cn = "传送至视线尽头", en_us = "Teleport to the end of the line of sight")
-        private TpViewCostGroup tpView = new TpViewCostGroup();
-        @Getter(AccessLevel.NONE)
-        @Setter(AccessLevel.NONE)
+        @ConfigEntry.Gui.Tooltip(zh_cn = "视线尽头", en_us = "view teleport cost")
+        private CostSettings view = new CostSettings();
         @ConfigEntry.Gui.CollapsibleObject
-        @ConfigEntry.Gui.Tooltip(zh_cn = "传送到家", en_us = "Teleport to the home")
-        private TpHomeCostGroup tpHome = new TpHomeCostGroup();
-        @Getter(AccessLevel.NONE)
-        @Setter(AccessLevel.NONE)
+        @ConfigEntry.Gui.Tooltip(zh_cn = "家", en_us = "home teleport cost")
+        private CostSettings home = new CostSettings();
         @ConfigEntry.Gui.CollapsibleObject
-        @ConfigEntry.Gui.Tooltip(zh_cn = "传送到驿站", en_us = "Teleport to the stage")
-        private TpStageCostGroup tpStage = new TpStageCostGroup();
-        @Getter(AccessLevel.NONE)
-        @Setter(AccessLevel.NONE)
+        @ConfigEntry.Gui.Tooltip(zh_cn = "驿站", en_us = "stage teleport cost")
+        private CostSettings stage = new CostSettings();
         @ConfigEntry.Gui.CollapsibleObject
-        @ConfigEntry.Gui.Tooltip(zh_cn = "传送到上次传送点", en_us = "Teleport to the previous location")
-        private TpBackCostGroup tpBack = new TpBackCostGroup();
-        @Getter(AccessLevel.NONE)
-        @Setter(AccessLevel.NONE)
+        @ConfigEntry.Gui.Tooltip(zh_cn = "返回", en_us = "back teleport cost")
+        private CostSettings back = new CostSettings();
         @ConfigEntry.Gui.CollapsibleObject
-        @ConfigEntry.Gui.Tooltip(zh_cn = "坟墓传送", en_us = "Teleport to the grave")
-        private TpGraveCostGroup tpGrave = new TpGraveCostGroup();
+        @ConfigEntry.Gui.Tooltip(zh_cn = "坟墓", en_us = "grave teleport cost")
+        private CostSettings grave = new CostSettings();
+        @ConfigEntry.Gui.CollapsibleObject
+        @ConfigEntry.Gui.Tooltip(zh_cn = "费用计算距离", en_us = "Cost distance")
+        private CostDistanceSettings distance = new CostDistanceSettings();
+        @ConfigEntry.Gui.CollapsibleObject
+        @ConfigEntry.Gui.Tooltip(zh_cn = "传送卡", en_us = "Teleport cards")
+        private CostCardSettings cards = new CostCardSettings();
     }
 
     @Getter
@@ -976,384 +925,60 @@ public class CommonConfig implements ConfigData {
     @Getter
     @Setter
     @Accessors(chain = true, fluent = true)
-    public static class TpCoordinateCostGroup {
-        @ConfigEntry.Gui.Tooltip(zh_cn = "传送到指定坐标的代价类型", en_us = "The cost type for 'Teleport to the specified coordinates'")
-        private EnumCostType costTpCoordinateType = EnumCostType.NONE;
-        @ConfigEntry.Gui.Tooltip(zh_cn = "传送到指定坐标的代价数量", en_us = "The number of cost for 'Teleport to the specified coordinates'")
-        @ConfigEntry.BoundedDiscrete(max = 9999)
-        private int costTpCoordinateNum = 1;
-        @ConfigEntry.Gui.Tooltip(zh_cn = "传送到指定坐标的代价配置：", en_us = "The configuration for 'Teleport to the specified coordinates'.")
-        private String costTpCoordinateConf = "";
-        @ConfigEntry.Gui.Tooltip(zh_cn = "传送到指定坐标的代价倍率，代价会乘以传送前后坐标之间的距离", en_us = "The cost rate for 'Teleport to the specified coordinates', the cost will be multiplied by the distance between the two coordinates.")
-        @ConfigEntry.BoundedDouble(max = 9999, decimalPlaces = 4)
-        private double costTpCoordinateRate = 0.002;
-        @ConfigEntry.Gui.Tooltip(zh_cn = "计算后代价上限（与其它传送代价子表同义）", en_us = "Upper cap of computed cost after formula (same meaning as other Tp* cost groups).")
-        @ConfigEntry.BoundedDiscrete()
-        private int costTpCoordinateNumUpper = 20;
-        @ConfigEntry.Gui.Tooltip(zh_cn = "计算后代价下限（与其它传送代价子表同义）", en_us = "Lower cap of computed cost after formula (same meaning as other Tp* cost groups).")
-        @ConfigEntry.BoundedDiscrete()
-        private int costTpCoordinateNumLower = 0;
-        @ConfigEntry.Gui.Tooltip(zh_cn = "代价计算公式字符串（变量以模组说明为准；\n默认使用 num、distance、rate 等）", en_us = "Cost expression string (variables depend on mod documentation; default uses num, distance, rate).")
-        private String costTpCoordinateExp = "num * distance * rate";
+    public static class CostSettings {
+        @ConfigEntry.Gui.Tooltip(zh_cn = "费用类型，NONE 表示免费", en_us = "Resource charged; NONE means free")
+        private EnumCostType type = EnumCostType.NONE;
+        @ConfigEntry.BoundedDouble(min = 0, max = Integer.MAX_VALUE, decimalPlaces = 4)
+        @ConfigEntry.Gui.Tooltip(zh_cn = "固定费用\n默认费用 = 固定费用 + 每格费用 × 计算距离", en_us = "Fixed fee\nDefault fee = fixed amount + per-block amount * cost distance")
+        private double fixedAmount = 0;
+        @ConfigEntry.BoundedDouble(min = 0, max = Integer.MAX_VALUE, decimalPlaces = 6)
+        @ConfigEntry.Gui.Tooltip(zh_cn = "每格距离的费用", en_us = "Fee per block of cost distance")
+        private double perBlockAmount = .002;
+        @ConfigEntry.BoundedDiscrete(min = 0)
+        @ConfigEntry.Gui.Tooltip(zh_cn = "计算后费用下限", en_us = "Minimum calculated fee")
+        private int minAmount = 0;
+        @ConfigEntry.BoundedDiscrete(min = -1)
+        @ConfigEntry.Gui.Tooltip(zh_cn = "计算后费用上限\n-1 表示不限制，0 表示费用为零", en_us = "Maximum calculated fee\n-1 means unlimited; 0 caps the fee at zero")
+        private int maxAmount = 20;
+        @ConfigEntry.Gui.Tooltip(zh_cn = "ITEM 类型使用的物品 ID，可附带 SNBT\n最多 8192 个字符", en_us = "Item ID with optional SNBT for ITEM fees\nUp to 8192 characters")
+        private String item = "";
+        @ConfigEntry.Gui.Tooltip(zh_cn = "COMMAND 类型执行的指令，{amount} 替换为实际费用\n最多 8192 个字符", en_us = "Command for COMMAND fees; {amount} is the payable fee\nUp to 8192 characters")
+        private String command = "";
+        @ConfigEntry.Gui.CollapsibleObject
+        @ConfigEntry.Gui.Tooltip(zh_cn = "自定义费用公式", en_us = "Custom cost formula")
+        private CustomCostSettings custom = new CustomCostSettings();
     }
 
     @Getter
     @Setter
     @Accessors(chain = true, fluent = true)
-    public static class TpStructureCostGroup {
-        @ConfigEntry.Gui.Tooltip(zh_cn = "传送到指定结构的代价类型", en_us = "The cost type for 'Teleport to the specified structure'")
-        private EnumCostType costTpStructureType = EnumCostType.NONE;
-        @ConfigEntry.Gui.Tooltip(zh_cn = "传送到指定结构的代价数量", en_us = "The number of cost for 'Teleport to the specified structure'")
-        @ConfigEntry.BoundedDiscrete(max = 9999)
-        private int costTpStructureNum = 1;
-        @ConfigEntry.Gui.Tooltip(zh_cn = "传送到指定结构的代价配置：", en_us = "The configuration for 'Teleport to the specified structure'.")
-        private String costTpStructureConf = "";
-        @ConfigEntry.Gui.Tooltip(zh_cn = "传送到指定结构的代价倍率，代价会乘以传送前后坐标之间的距离", en_us = "The cost rate for 'Teleport to the specified structure', the cost will be multiplied by the distance between the two coordinates.")
-        @ConfigEntry.BoundedDouble(max = 9999, decimalPlaces = 4)
-        private double costTpStructureRate = 0.002;
-        @ConfigEntry.Gui.Tooltip(zh_cn = "计算后代价上限（与其它传送代价子表同义）", en_us = "Upper cap of computed cost after formula (same meaning as other Tp* cost groups).")
-        @ConfigEntry.BoundedDiscrete()
-        private int costTpStructureNumUpper = 20;
-        @ConfigEntry.Gui.Tooltip(zh_cn = "计算后代价下限（与其它传送代价子表同义）", en_us = "Lower cap of computed cost after formula (same meaning as other Tp* cost groups).")
-        @ConfigEntry.BoundedDiscrete()
-        private int costTpStructureNumLower = 0;
-        @ConfigEntry.Gui.Tooltip(zh_cn = "代价计算公式字符串（变量以模组说明为准；\n默认使用 num、distance、rate 等）", en_us = "Cost expression string (variables depend on mod documentation; default uses num, distance, rate).")
-        private String costTpStructureExp = "num * distance * rate";
+    public static class CustomCostSettings {
+        @ConfigEntry.Gui.Tooltip(zh_cn = "cost/sources 下的 Java 文件相对路径，留空使用默认计算\n最多 128 个字符，修改源码后使用 cost reload", en_us = "Relative Java file under cost/sources; blank uses default arithmetic\nUp to 128 characters; use cost reload after editing code")
+        private String file = "";
     }
 
     @Getter
     @Setter
     @Accessors(chain = true, fluent = true)
-    public static class TpAskCostGroup {
-        @ConfigEntry.Gui.Tooltip(zh_cn = "请求传送至玩家的代价类型", en_us = "The cost type for 'Request to teleport oneself to other players'")
-        private EnumCostType costTpAskType = EnumCostType.NONE;
-        @ConfigEntry.Gui.Tooltip(zh_cn = "请求传送至玩家的代价数量", en_us = "The number of cost for 'Request to teleport oneself to other players'")
-        @ConfigEntry.BoundedDiscrete(max = 9999)
-        private int costTpAskNum = 1;
-        @ConfigEntry.Gui.Tooltip(zh_cn = "请求传送至玩家的代价配置：", en_us = "The configuration for 'Request to teleport oneself to other players'.")
-        private String costTpAskConf = "";
-        @ConfigEntry.Gui.Tooltip(zh_cn = "请求传送至玩家的代价倍率，代价会乘以两个玩家之间的距离", en_us = "The cost rate for 'Request to teleport oneself to other players', the cost will be multiplied by the distance between the two players")
-        @ConfigEntry.BoundedDouble(max = 9999, decimalPlaces = 4)
-        private double costTpAskRate = 0.002;
-        @ConfigEntry.Gui.Tooltip(zh_cn = "计算后代价上限（与其它传送代价子表同义）", en_us = "Upper cap of computed cost after formula (same meaning as other Tp* cost groups).")
-        @ConfigEntry.BoundedDiscrete()
-        private int costTpAskNumUpper = 20;
-        @ConfigEntry.Gui.Tooltip(zh_cn = "计算后代价下限（与其它传送代价子表同义）", en_us = "Lower cap of computed cost after formula (same meaning as other Tp* cost groups).")
-        @ConfigEntry.BoundedDiscrete()
-        private int costTpAskNumLower = 0;
-        @ConfigEntry.Gui.Tooltip(zh_cn = "代价计算公式字符串（变量以模组说明为准；\n默认使用 num、distance、rate 等）", en_us = "Cost expression string (variables depend on mod documentation; default uses num, distance, rate).")
-        private String costTpAskExp = "num * distance * rate";
+    public static class CostDistanceSettings {
+        @ConfigEntry.BoundedDiscrete(min = 0)
+        @ConfigEntry.Gui.Tooltip(zh_cn = "同维度计算距离上限，0 表示不限制\n不限制实际传送距离", en_us = "Same-dimension cost distance cap; 0 means unlimited\nDoes not restrict teleport distance")
+        private int maxDistance = 10000;
+        @ConfigEntry.BoundedDiscrete(min = 0)
+        @ConfigEntry.Gui.Tooltip(zh_cn = "跨维度传送使用的计算距离，0 表示距离为零", en_us = "Cost distance for cross-dimension teleports; 0 means zero distance")
+        private int crossDimensionDistance = 10000;
     }
 
     @Getter
     @Setter
     @Accessors(chain = true, fluent = true)
-    public static class TpHereCostGroup {
-        @ConfigEntry.Gui.Tooltip(zh_cn = "请求将玩家传送至当前位置的代价类型", en_us = "The cost type for 'Request the transfer of other players to oneself'")
-        private EnumCostType costTpHereType = EnumCostType.NONE;
-        @ConfigEntry.Gui.Tooltip(zh_cn = "请求将玩家传送至当前位置的代价数量", en_us = "The number of cost for 'Request the transfer of other players to oneself'")
-        @ConfigEntry.BoundedDiscrete(max = 9999)
-        private int costTpHereNum = 1;
-        @ConfigEntry.Gui.Tooltip(zh_cn = "请求将玩家传送至当前位置的代价配置：", en_us = "The configuration for 'Request the transfer of other players to oneself'.")
-        private String costTpHereConf = "";
-        @ConfigEntry.Gui.Tooltip(zh_cn = "请求将玩家传送至当前位置的代价倍率，代价会乘以两个玩家之间的距离", en_us = "The cost rate for 'Request the transfer of other players to oneself', the cost will be multiplied by the distance between the two players")
-        @ConfigEntry.BoundedDouble(max = 9999, decimalPlaces = 4)
-        private double costTpHereRate = 0.002;
-        @ConfigEntry.Gui.Tooltip(zh_cn = "计算后代价上限（与其它传送代价子表同义）", en_us = "Upper cap of computed cost after formula (same meaning as other Tp* cost groups).")
-        @ConfigEntry.BoundedDiscrete()
-        private int costTpHereNumUpper = 20;
-        @ConfigEntry.Gui.Tooltip(zh_cn = "计算后代价下限（与其它传送代价子表同义）", en_us = "Lower cap of computed cost after formula (same meaning as other Tp* cost groups).")
-        @ConfigEntry.BoundedDiscrete()
-        private int costTpHereNumLower = 0;
-        @ConfigEntry.Gui.Tooltip(zh_cn = "代价计算公式字符串（变量以模组说明为准；\n默认使用 num、distance、rate 等）", en_us = "Cost expression string (variables depend on mod documentation; default uses num, distance, rate).")
-        private String costTpHereExp = "num * distance * rate";
-    }
-
-    @Getter
-    @Setter
-    @Accessors(chain = true, fluent = true)
-    public static class TpRandomCostGroup {
-        @ConfigEntry.Gui.Tooltip(zh_cn = "随机传送的代价类型", en_us = "The cost type for 'Teleport to a random location'")
-        private EnumCostType costTpRandomType = EnumCostType.NONE;
-        @ConfigEntry.Gui.Tooltip(zh_cn = "随机传送的代价数量", en_us = "The number of cost for 'Teleport to a random location'")
-        @ConfigEntry.BoundedDiscrete(max = 9999)
-        private int costTpRandomNum = 1;
-        @ConfigEntry.Gui.Tooltip(zh_cn = "随机传送的代价配置：", en_us = "The configuration for 'Teleport to a random location'.")
-        private String costTpRandomConf = "";
-        @ConfigEntry.Gui.Tooltip(zh_cn = "随机传送的代价倍率，代价会乘以传送前后坐标之间的距离", en_us = "The cost rate for 'Teleport to a random location', the cost will be multiplied by the distance between the two coordinates.")
-        @ConfigEntry.BoundedDouble(max = 9999, decimalPlaces = 4)
-        private double costTpRandomRate = 0.002;
-        @ConfigEntry.Gui.Tooltip(zh_cn = "计算后代价上限（与其它传送代价子表同义）", en_us = "Upper cap of computed cost after formula (same meaning as other Tp* cost groups).")
-        @ConfigEntry.BoundedDiscrete()
-        private int costTpRandomNumUpper = 20;
-        @ConfigEntry.Gui.Tooltip(zh_cn = "计算后代价下限（与其它传送代价子表同义）", en_us = "Lower cap of computed cost after formula (same meaning as other Tp* cost groups).")
-        @ConfigEntry.BoundedDiscrete()
-        private int costTpRandomNumLower = 0;
-        @ConfigEntry.Gui.Tooltip(zh_cn = "代价计算公式字符串（变量以模组说明为准；\n默认使用 num、distance、rate 等）", en_us = "Cost expression string (variables depend on mod documentation; default uses num, distance, rate).")
-        private String costTpRandomExp = "num * distance * rate";
-    }
-
-    @Getter
-    @Setter
-    @Accessors(chain = true, fluent = true)
-    public static class TpSpawnCostGroup {
-        @ConfigEntry.Gui.Tooltip(zh_cn = "传送到玩家重生点的代价类型", en_us = "The cost type for 'Teleport to the spawn of the player'")
-        private EnumCostType costTpSpawnType = EnumCostType.NONE;
-        @ConfigEntry.Gui.Tooltip(zh_cn = "传送到玩家重生点的代价数量", en_us = "The number of cost for 'Teleport to the spawn of the player'")
-        @ConfigEntry.BoundedDiscrete(max = 9999)
-        private int costTpSpawnNum = 1;
-        @ConfigEntry.Gui.Tooltip(zh_cn = "传送到玩家重生点的代价配置：", en_us = "The configuration for 'Teleport to the spawn of the player'.")
-        private String costTpSpawnConf = "";
-        @ConfigEntry.Gui.Tooltip(zh_cn = "传送到玩家重生点的代价倍率，代价会乘以传送前后坐标之间的距离", en_us = "The cost rate for 'Teleport to the spawn of the player', the cost will be multiplied by the distance between the two coordinates.")
-        @ConfigEntry.BoundedDouble(max = 9999, decimalPlaces = 4)
-        private double costTpSpawnRate = 0.002;
-        @ConfigEntry.Gui.Tooltip(zh_cn = "计算后代价上限（与其它传送代价子表同义）", en_us = "Upper cap of computed cost after formula (same meaning as other Tp* cost groups).")
-        @ConfigEntry.BoundedDiscrete()
-        private int costTpSpawnNumUpper = 20;
-        @ConfigEntry.Gui.Tooltip(zh_cn = "计算后代价下限（与其它传送代价子表同义）", en_us = "Lower cap of computed cost after formula (same meaning as other Tp* cost groups).")
-        @ConfigEntry.BoundedDiscrete()
-        private int costTpSpawnNumLower = 0;
-        @ConfigEntry.Gui.Tooltip(zh_cn = "代价计算公式字符串（变量以模组说明为准；\n默认使用 num、distance、rate 等）", en_us = "Cost expression string (variables depend on mod documentation; default uses num, distance, rate).")
-        private String costTpSpawnExp = "num * distance * rate";
-    }
-
-    @Getter
-    @Setter
-    @Accessors(chain = true, fluent = true)
-    public static class TpWorldSpawnCostGroup {
-        @ConfigEntry.Gui.Tooltip(zh_cn = "传送到世界重生点的代价类型", en_us = "The cost type for 'Teleport to the spawn of the world'")
-        private EnumCostType costTpWorldSpawnType = EnumCostType.NONE;
-        @ConfigEntry.Gui.Tooltip(zh_cn = "传送到世界重生点的代价数量", en_us = "The number of cost for 'Teleport to the spawn of the world'")
-        @ConfigEntry.BoundedDiscrete(max = 9999)
-        private int costTpWorldSpawnNum = 1;
-        @ConfigEntry.Gui.Tooltip(zh_cn = "传送到世界重生点的代价配置：", en_us = "The configuration for 'Teleport to the spawn of the world'.")
-        private String costTpWorldSpawnConf = "";
-        @ConfigEntry.Gui.Tooltip(zh_cn = "传送到世界重生点的代价倍率，代价会乘以传送前后坐标之间的距离", en_us = "The cost rate for 'Teleport to the spawn of the world', the cost will be multiplied by the distance between the two coordinates.")
-        @ConfigEntry.BoundedDouble(max = 9999, decimalPlaces = 4)
-        private double costTpWorldSpawnRate = 0.002;
-        @ConfigEntry.Gui.Tooltip(zh_cn = "计算后代价上限（与其它传送代价子表同义）", en_us = "Upper cap of computed cost after formula (same meaning as other Tp* cost groups).")
-        @ConfigEntry.BoundedDiscrete()
-        private int costTpWorldSpawnNumUpper = 20;
-        @ConfigEntry.Gui.Tooltip(zh_cn = "计算后代价下限（与其它传送代价子表同义）", en_us = "Lower cap of computed cost after formula (same meaning as other Tp* cost groups).")
-        @ConfigEntry.BoundedDiscrete()
-        private int costTpWorldSpawnNumLower = 0;
-        @ConfigEntry.Gui.Tooltip(zh_cn = "代价计算公式字符串（变量以模组说明为准；\n默认使用 num、distance、rate 等）", en_us = "Cost expression string (variables depend on mod documentation; default uses num, distance, rate).")
-        private String costTpWorldSpawnExp = "num * distance * rate";
-    }
-
-    @Getter
-    @Setter
-    @Accessors(chain = true, fluent = true)
-    public static class TpTopCostGroup {
-        @ConfigEntry.Gui.Tooltip(zh_cn = "传送到顶部的代价类型", en_us = "The cost type for 'Teleport to the top of current position'")
-        private EnumCostType costTpTopType = EnumCostType.NONE;
-        @ConfigEntry.Gui.Tooltip(zh_cn = "传送到顶部的代价数量", en_us = "The number of cost for 'Teleport to the top of current position'")
-        @ConfigEntry.BoundedDiscrete(max = 9999)
-        private int costTpTopNum = 1;
-        @ConfigEntry.Gui.Tooltip(zh_cn = "传送到顶部的代价配置：", en_us = "The configuration for 'Teleport to the top of current position'.")
-        private String costTpTopConf = "";
-        @ConfigEntry.Gui.Tooltip(zh_cn = "传送到顶部的代价倍率，代价会乘以传送前后坐标之间的距离", en_us = "The cost rate for 'Teleport to the top of current position', the cost will be multiplied by the distance between the two coordinates.")
-        @ConfigEntry.BoundedDouble(max = 9999, decimalPlaces = 4)
-        private double costTpTopRate = 0.002;
-        @ConfigEntry.Gui.Tooltip(zh_cn = "计算后代价上限（与其它传送代价子表同义）", en_us = "Upper cap of computed cost after formula (same meaning as other Tp* cost groups).")
-        @ConfigEntry.BoundedDiscrete()
-        private int costTpTopNumUpper = 20;
-        @ConfigEntry.Gui.Tooltip(zh_cn = "计算后代价下限（与其它传送代价子表同义）", en_us = "Lower cap of computed cost after formula (same meaning as other Tp* cost groups).")
-        @ConfigEntry.BoundedDiscrete()
-        private int costTpTopNumLower = 0;
-        @ConfigEntry.Gui.Tooltip(zh_cn = "代价计算公式字符串（变量以模组说明为准；\n默认使用 num、distance、rate 等）", en_us = "Cost expression string (variables depend on mod documentation; default uses num, distance, rate).")
-        private String costTpTopExp = "num * distance * rate";
-    }
-
-    @Getter
-    @Setter
-    @Accessors(chain = true, fluent = true)
-    public static class TpBottomCostGroup {
-        @ConfigEntry.Gui.Tooltip(zh_cn = "传送到底部的代价类型", en_us = "The cost type for 'Teleport to the bottom of current position'")
-        private EnumCostType costTpBottomType = EnumCostType.NONE;
-        @ConfigEntry.Gui.Tooltip(zh_cn = "传送到底部的代价数量", en_us = "The number of cost for 'Teleport to the bottom of current position'")
-        @ConfigEntry.BoundedDiscrete(max = 9999)
-        private int costTpBottomNum = 1;
-        @ConfigEntry.Gui.Tooltip(zh_cn = "传送到底部的代价配置：", en_us = "The configuration for 'Teleport to the bottom of current position'.")
-        private String costTpBottomConf = "";
-        @ConfigEntry.Gui.Tooltip(zh_cn = "传送到底部的代价倍率，代价会乘以传送前后坐标之间的距离", en_us = "The cost rate for 'Teleport to the bottom of current position', the cost will be multiplied by the distance between the two coordinates.")
-        @ConfigEntry.BoundedDouble(max = 9999, decimalPlaces = 4)
-        private double costTpBottomRate = 0.002;
-        @ConfigEntry.Gui.Tooltip(zh_cn = "计算后代价上限（与其它传送代价子表同义）", en_us = "Upper cap of computed cost after formula (same meaning as other Tp* cost groups).")
-        @ConfigEntry.BoundedDiscrete()
-        private int costTpBottomNumUpper = 20;
-        @ConfigEntry.Gui.Tooltip(zh_cn = "计算后代价下限（与其它传送代价子表同义）", en_us = "Lower cap of computed cost after formula (same meaning as other Tp* cost groups).")
-        @ConfigEntry.BoundedDiscrete()
-        private int costTpBottomNumLower = 0;
-        @ConfigEntry.Gui.Tooltip(zh_cn = "代价计算公式字符串（变量以模组说明为准；\n默认使用 num、distance、rate 等）", en_us = "Cost expression string (variables depend on mod documentation; default uses num, distance, rate).")
-        private String costTpBottomExp = "num * distance * rate";
-    }
-
-    @Getter
-    @Setter
-    @Accessors(chain = true, fluent = true)
-    public static class TpUpCostGroup {
-        @ConfigEntry.Gui.Tooltip(zh_cn = "传送到上方的代价类型", en_us = "The cost type for 'Teleport to the upper of current position'")
-        private EnumCostType costTpUpType = EnumCostType.NONE;
-        @ConfigEntry.Gui.Tooltip(zh_cn = "传送到上方的代价数量", en_us = "The number of cost for 'Teleport to the upper of current position'")
-        @ConfigEntry.BoundedDiscrete(max = 9999)
-        private int costTpUpNum = 1;
-        @ConfigEntry.Gui.Tooltip(zh_cn = "传送到上方的代价配置：", en_us = "The configuration for 'Teleport to the upper of current position'.")
-        private String costTpUpConf = "";
-        @ConfigEntry.Gui.Tooltip(zh_cn = "传送到上方的代价倍率，代价会乘以传送前后坐标之间的距离", en_us = "The cost rate for 'Teleport to the upper of current position', the cost will be multiplied by the distance between the two coordinates.")
-        @ConfigEntry.BoundedDouble(max = 9999, decimalPlaces = 4)
-        private double costTpUpRate = 0.002;
-        @ConfigEntry.Gui.Tooltip(zh_cn = "计算后代价上限（与其它传送代价子表同义）", en_us = "Upper cap of computed cost after formula (same meaning as other Tp* cost groups).")
-        @ConfigEntry.BoundedDiscrete()
-        private int costTpUpNumUpper = 20;
-        @ConfigEntry.Gui.Tooltip(zh_cn = "计算后代价下限（与其它传送代价子表同义）", en_us = "Lower cap of computed cost after formula (same meaning as other Tp* cost groups).")
-        @ConfigEntry.BoundedDiscrete()
-        private int costTpUpNumLower = 0;
-        @ConfigEntry.Gui.Tooltip(zh_cn = "代价计算公式字符串（变量以模组说明为准；\n默认使用 num、distance、rate 等）", en_us = "Cost expression string (variables depend on mod documentation; default uses num, distance, rate).")
-        private String costTpUpExp = "num * distance * rate";
-    }
-
-    @Getter
-    @Setter
-    @Accessors(chain = true, fluent = true)
-    public static class TpDownCostGroup {
-        @ConfigEntry.Gui.Tooltip(zh_cn = "传送到下方的代价类型", en_us = "The cost type for 'Teleport to the lower of current position'")
-        private EnumCostType costTpDownType = EnumCostType.NONE;
-        @ConfigEntry.Gui.Tooltip(zh_cn = "传送到下方的代价数量", en_us = "The number of cost for 'Teleport to the lower of current position'")
-        @ConfigEntry.BoundedDiscrete(max = 9999)
-        private int costTpDownNum = 1;
-        @ConfigEntry.Gui.Tooltip(zh_cn = "传送到下方的代价配置：", en_us = "The configuration for 'Teleport to the lower of current position'.")
-        private String costTpDownConf = "";
-        @ConfigEntry.Gui.Tooltip(zh_cn = "传送到下方的代价倍率，代价会乘以传送前后坐标之间的距离", en_us = "The cost rate for 'Teleport to the lower of current position', the cost will be multiplied by the distance between the two coordinates.")
-        @ConfigEntry.BoundedDouble(max = 9999, decimalPlaces = 4)
-        private double costTpDownRate = 0.002;
-        @ConfigEntry.Gui.Tooltip(zh_cn = "计算后代价上限（与其它传送代价子表同义）", en_us = "Upper cap of computed cost after formula (same meaning as other Tp* cost groups).")
-        @ConfigEntry.BoundedDiscrete()
-        private int costTpDownNumUpper = 20;
-        @ConfigEntry.Gui.Tooltip(zh_cn = "计算后代价下限（与其它传送代价子表同义）", en_us = "Lower cap of computed cost after formula (same meaning as other Tp* cost groups).")
-        @ConfigEntry.BoundedDiscrete()
-        private int costTpDownNumLower = 0;
-        @ConfigEntry.Gui.Tooltip(zh_cn = "代价计算公式字符串（变量以模组说明为准；\n默认使用 num、distance、rate 等）", en_us = "Cost expression string (variables depend on mod documentation; default uses num, distance, rate).")
-        private String costTpDownExp = "num * distance * rate";
-    }
-
-    @Getter
-    @Setter
-    @Accessors(chain = true, fluent = true)
-    public static class TpViewCostGroup {
-        @ConfigEntry.Gui.Tooltip(zh_cn = "传送至视线尽头的代价类型\n该功能与玩家设置的视距无关", en_us = "The cost type for 'Teleport to the end of the line of sight'. This function is independent of the player's render distance setting.")
-        private EnumCostType costTpViewType = EnumCostType.NONE;
-        @ConfigEntry.Gui.Tooltip(zh_cn = "传送至视线尽头的代价数量\n该功能与玩家设置的视距无关", en_us = "The number of cost for 'Teleport to the end of the line of sight'. This function is independent of the player's render distance setting.")
-        @ConfigEntry.BoundedDiscrete(max = 9999)
-        private int costTpViewNum = 1;
-        @ConfigEntry.Gui.Tooltip(zh_cn = "传送至视线尽头的代价配置：该功能与玩家设置的视距无关", en_us = "The configuration for 'Teleport to the end of the line of sight'. This function is independent of the player's render distance setting.")
-        private String costTpViewConf = "";
-        @ConfigEntry.Gui.Tooltip(zh_cn = "传送至视线尽头的代价倍率，代价会乘以传送前后坐标之间的距离\n该功能与玩家设置的视距无关", en_us = "The cost rate for 'Teleport to the end of the line of sight', the cost will be multiplied by the distance between the two coordinates. This function is independent of the player's render distance setting.")
-        @ConfigEntry.BoundedDouble(max = 9999, decimalPlaces = 4)
-        private double costTpViewRate = 0.002;
-        @ConfigEntry.Gui.Tooltip(zh_cn = "计算后代价上限（与其它传送代价子表同义）", en_us = "Upper cap of computed cost after formula (same meaning as other Tp* cost groups).")
-        @ConfigEntry.BoundedDiscrete()
-        private int costTpViewNumUpper = 20;
-        @ConfigEntry.Gui.Tooltip(zh_cn = "计算后代价下限（与其它传送代价子表同义）", en_us = "Lower cap of computed cost after formula (same meaning as other Tp* cost groups).")
-        @ConfigEntry.BoundedDiscrete()
-        private int costTpViewNumLower = 0;
-        @ConfigEntry.Gui.Tooltip(zh_cn = "代价计算公式字符串（变量以模组说明为准；\n默认使用 num、distance、rate 等）", en_us = "Cost expression string (variables depend on mod documentation; default uses num, distance, rate).")
-        private String costTpViewExp = "num * distance * rate";
-    }
-
-    @Getter
-    @Setter
-    @Accessors(chain = true, fluent = true)
-    public static class TpHomeCostGroup {
-        @ConfigEntry.Gui.Tooltip(zh_cn = "传送到家的代价类型", en_us = "The cost type for 'Teleport to the home'")
-        private EnumCostType costTpHomeType = EnumCostType.NONE;
-        @ConfigEntry.Gui.Tooltip(zh_cn = "传送到家的代价数量", en_us = "The number of cost for 'Teleport to the home'")
-        @ConfigEntry.BoundedDiscrete(max = 9999)
-        private int costTpHomeNum = 1;
-        @ConfigEntry.Gui.Tooltip(zh_cn = "传送到家的代价配置：", en_us = "The configuration for 'Teleport to the home'.")
-        private String costTpHomeConf = "";
-        @ConfigEntry.Gui.Tooltip(zh_cn = "传送到家的代价倍率，代价会乘以传送前后坐标之间的距离", en_us = "The cost rate for 'Teleport to the home', the cost will be multiplied by the distance between the two coordinates.")
-        @ConfigEntry.BoundedDouble(max = 9999, decimalPlaces = 4)
-        private double costTpHomeRate = 0.002;
-        @ConfigEntry.Gui.Tooltip(zh_cn = "计算后代价上限（与其它传送代价子表同义）", en_us = "Upper cap of computed cost after formula (same meaning as other Tp* cost groups).")
-        @ConfigEntry.BoundedDiscrete()
-        private int costTpHomeNumUpper = 20;
-        @ConfigEntry.Gui.Tooltip(zh_cn = "计算后代价下限（与其它传送代价子表同义）", en_us = "Lower cap of computed cost after formula (same meaning as other Tp* cost groups).")
-        @ConfigEntry.BoundedDiscrete()
-        private int costTpHomeNumLower = 0;
-        @ConfigEntry.Gui.Tooltip(zh_cn = "代价计算公式字符串（变量以模组说明为准；\n默认使用 num、distance、rate 等）", en_us = "Cost expression string (variables depend on mod documentation; default uses num, distance, rate).")
-        private String costTpHomeExp = "num * distance * rate";
-    }
-
-    @Getter
-    @Setter
-    @Accessors(chain = true, fluent = true)
-    public static class TpStageCostGroup {
-        @ConfigEntry.Gui.Tooltip(zh_cn = "传送到驿站的代价类型", en_us = "The cost type for 'Teleport to the stage'")
-        private EnumCostType costTpStageType = EnumCostType.NONE;
-        @ConfigEntry.Gui.Tooltip(zh_cn = "传送到驿站的代价数量", en_us = "The number of cost for 'Teleport to the stage'")
-        @ConfigEntry.BoundedDiscrete(max = 9999)
-        private int costTpStageNum = 1;
-        @ConfigEntry.Gui.Tooltip(zh_cn = "传送到驿站的代价配置：", en_us = "The configuration for 'Teleport to the stage'.")
-        private String costTpStageConf = "";
-        @ConfigEntry.Gui.Tooltip(zh_cn = "传送到驿站的代价倍率，代价会乘以传送前后坐标之间的距离", en_us = "The cost rate for 'Teleport to the stage', the cost will be multiplied by the distance between the two coordinates.")
-        @ConfigEntry.BoundedDouble(max = 9999, decimalPlaces = 4)
-        private double costTpStageRate = 0.002;
-        @ConfigEntry.Gui.Tooltip(zh_cn = "计算后代价上限（与其它传送代价子表同义）", en_us = "Upper cap of computed cost after formula (same meaning as other Tp* cost groups).")
-        @ConfigEntry.BoundedDiscrete()
-        private int costTpStageNumUpper = 20;
-        @ConfigEntry.Gui.Tooltip(zh_cn = "计算后代价下限（与其它传送代价子表同义）", en_us = "Lower cap of computed cost after formula (same meaning as other Tp* cost groups).")
-        @ConfigEntry.BoundedDiscrete()
-        private int costTpStageNumLower = 0;
-        @ConfigEntry.Gui.Tooltip(zh_cn = "代价计算公式字符串（变量以模组说明为准；\n默认使用 num、distance、rate 等）", en_us = "Cost expression string (variables depend on mod documentation; default uses num, distance, rate).")
-        private String costTpStageExp = "num * distance * rate";
-    }
-
-    @Getter
-    @Setter
-    @Accessors(chain = true, fluent = true)
-    public static class TpBackCostGroup {
-        @ConfigEntry.Gui.Tooltip(zh_cn = "传送到上次传送点的代价类型", en_us = "The cost type for 'Teleport to the previous location'")
-        private EnumCostType costTpBackType = EnumCostType.NONE;
-        @ConfigEntry.Gui.Tooltip(zh_cn = "传送到上次传送点的代价数量", en_us = "The number of cost for 'Teleport to the previous location'")
-        @ConfigEntry.BoundedDiscrete(max = 9999)
-        private int costTpBackNum = 1;
-        @ConfigEntry.Gui.Tooltip(zh_cn = "传送到上次传送点的代价配置：", en_us = "The configuration for 'Teleport to the previous location'.")
-        private String costTpBackConf = "";
-        @ConfigEntry.Gui.Tooltip(zh_cn = "传送到上次传送点的代价倍率，代价会乘以传送前后坐标之间的距离", en_us = "The cost rate for 'Teleport to the previous location', the cost will be multiplied by the distance between the two coordinates.")
-        @ConfigEntry.BoundedDouble(max = 9999, decimalPlaces = 4)
-        private double costTpBackRate = 0.002;
-        @ConfigEntry.Gui.Tooltip(zh_cn = "计算后代价上限（与其它传送代价子表同义）", en_us = "Upper cap of computed cost after formula (same meaning as other Tp* cost groups).")
-        @ConfigEntry.BoundedDiscrete()
-        private int costTpBackNumUpper = 20;
-        @ConfigEntry.Gui.Tooltip(zh_cn = "计算后代价下限（与其它传送代价子表同义）", en_us = "Lower cap of computed cost after formula (same meaning as other Tp* cost groups).")
-        @ConfigEntry.BoundedDiscrete()
-        private int costTpBackNumLower = 0;
-        @ConfigEntry.Gui.Tooltip(zh_cn = "代价计算公式字符串（变量以模组说明为准；\n默认使用 num、distance、rate 等）", en_us = "Cost expression string (variables depend on mod documentation; default uses num, distance, rate).")
-        private String costTpBackExp = "num * distance * rate";
-    }
-
-    @Getter
-    @Setter
-    @Accessors(chain = true, fluent = true)
-    public static class TpGraveCostGroup {
-        @ConfigEntry.Gui.Tooltip(zh_cn = "坟墓传送的代价类型", en_us = "The cost type for 'Teleport to the grave'")
-        private EnumCostType costTpGraveType = EnumCostType.NONE;
-        @ConfigEntry.Gui.Tooltip(zh_cn = "坟墓传送的代价数量", en_us = "The number of cost for 'Teleport to the grave'")
-        @ConfigEntry.BoundedDiscrete(max = 9999)
-        private int costTpGraveNum = 1;
-        @ConfigEntry.Gui.Tooltip(zh_cn = "坟墓传送的代价配置：", en_us = "The configuration for 'Teleport to the grave'.")
-        private String costTpGraveConf = "";
-        @ConfigEntry.Gui.Tooltip(zh_cn = "坟墓传送的代价倍率，代价会乘以传送前后坐标之间的距离", en_us = "The cost rate for 'Teleport to the grave', the cost will be multiplied by the distance between the two coordinates.")
-        @ConfigEntry.BoundedDouble(max = 9999, decimalPlaces = 4)
-        private double costTpGraveRate = 0.002;
-        @ConfigEntry.Gui.Tooltip(zh_cn = "计算后代价上限（与其它传送代价子表同义）", en_us = "Upper cap of computed cost after formula (same meaning as other Tp* cost groups).")
-        @ConfigEntry.BoundedDiscrete()
-        private int costTpGraveNumUpper = 20;
-        @ConfigEntry.Gui.Tooltip(zh_cn = "计算后代价下限（与其它传送代价子表同义）", en_us = "Lower cap of computed cost after formula (same meaning as other Tp* cost groups).")
-        @ConfigEntry.BoundedDiscrete()
-        private int costTpGraveNumLower = 0;
-        @ConfigEntry.Gui.Tooltip(zh_cn = "代价计算公式字符串（变量以模组说明为准；\n默认使用 num、distance、rate 等）", en_us = "Cost expression string (variables depend on mod documentation; default uses num, distance, rate).")
-        private String costTpGraveExp = "num * distance * rate";
+    public static class CostCardSettings {
+        @ConfigEntry.Gui.Tooltip(zh_cn = "启用传送卡", en_us = "Enable teleport cards")
+        private boolean enabled = false;
+        @ConfigEntry.BoundedDiscrete(min = 0)
+        @ConfigEntry.Gui.Tooltip(zh_cn = "每日首次上线发放的传送卡数量", en_us = "Cards granted on the first login of each day")
+        private int dailyGrant = 0;
+        @ConfigEntry.Gui.Tooltip(zh_cn = "传送卡的使用方式\n免费传送不会消耗传送卡", en_us = "How cards affect payable costs\nFree teleports do not consume cards")
+        private EnumCardType mode = EnumCardType.WAIVE_COST;
     }
 }

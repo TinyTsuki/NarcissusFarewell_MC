@@ -20,11 +20,11 @@ import java.util.*;
 import static org.junit.Assert.*;
 
 public class ForgeCostPaymentTest {
-    private LegacyCostPaymentTest fixture;
-    private LegacyCostPaymentTest.RecordingPlayer payer, moving;
+    private ForgeCostPlayerFixture fixture;
+    private ForgeCostPlayerFixture.RecordingPlayer payer, moving;
     private PlayerTeleportData data;
     private EnumCostType type = EnumCostType.EXP_POINT;
-    private EnumCardType mode = EnumCardType.NONE;
+    private EnumCardType mode = EnumCardType.REQUIRE_ONE_WITH_COST;
     private boolean enabled = true, connected = true, commandResult = true, omitRequestRoles;
     private int amount = 5, commands, syncs;
     private long now = 100;
@@ -35,7 +35,7 @@ public class ForgeCostPaymentTest {
     private CostPaymentService service;
 
     @Before public void setup() throws Exception {
-        fixture = new LegacyCostPaymentTest(); fixture.setup();
+        fixture = new ForgeCostPlayerFixture(); fixture.setup();
         payer = fixture.player(); moving = payer; data = PlayerTeleportData.getData(payer);
         data.setTeleportCard(2);
         nativePayment = new ForgeCostPayment(() -> now, p -> connected && (p == payer || p == moving),
@@ -86,6 +86,39 @@ public class ForgeCostPaymentTest {
     }
 
     private CostPaymentPlan commit() { return service.commit(CostOperation.create(context(CostPhase.CHECK)), context(CostPhase.COMMIT)); }
+
+    @Test public void supportBlockMustRemainAvailableAfterTheSameItemFee() {
+        type = EnumCostType.ITEM;
+        payer.inventory.setItem(0, new ItemStack(Items.STONE, 5));
+        CostPaymentPlan fee = CostPaymentPlan.ready(5, 0, 5, false, false);
+        assertFalse(ForgeCostPayment.hasSupportItemAfterPayment(context(CostPhase.COMMIT), fee, new ItemStack(Items.STONE)));
+        payer.inventory.setItem(0, new ItemStack(Items.STONE, 6));
+        assertTrue(ForgeCostPayment.hasSupportItemAfterPayment(context(CostPhase.COMMIT), fee, new ItemStack(Items.STONE)));
+        assertEquals(6, payer.inventory.getItem(0).getCount());
+    }
+
+    @Test public void prospectiveRequestCheckHasRolesButCannotCommitWithoutRegistration() throws Exception {
+        liveRequest(EnumTeleportType.TP_ASK);
+        assertEquals(EnumCostFailure.NONE, nativePayment.validate(context(CostPhase.CHECK)));
+        assertEquals(EnumCostFailure.REQUEST_UNAVAILABLE, nativePayment.validate(context(CostPhase.COMMIT)));
+        assertEquals(EnumCostFailure.REQUEST_UNAVAILABLE, nativePayment.validate(context(CostPhase.PREVIEW)));
+        omitRequestRoles = true;
+        assertEquals(EnumCostFailure.REQUEST_UNAVAILABLE, nativePayment.validate(context(CostPhase.CHECK)));
+        assertEquals(10, payer.totalExperience);
+        assertEquals(2, data.peekTeleportCard());
+    }
+
+    @Test public void supportBlockCanComeFromAnotherStackWithoutMatchingFeeTags() {
+        type = EnumCostType.ITEM;
+        item = "minecraft:stone{fee:1}";
+        ItemStack tagged = new ItemStack(Items.STONE, 5);
+        CompoundNBT tag = new CompoundNBT(); tag.putInt("fee", 1); tagged.setTag(tag);
+        payer.inventory.setItem(0, tagged);
+        payer.inventory.setItem(1, new ItemStack(Items.STONE));
+        assertTrue(ForgeCostPayment.hasSupportItemAfterPayment(context(CostPhase.COMMIT),
+                CostPaymentPlan.ready(5, 0, 5, false, false), new ItemStack(Items.STONE)));
+        assertEquals(5, payer.inventory.getItem(0).getCount());
+    }
 
     @Test public void missingCardsCannotChangeNativeExperienceHealthFoodOrItems() {
         data.setTeleportCard(0);
@@ -174,7 +207,7 @@ public class ForgeCostPaymentTest {
     }
 
     @Test public void waivedCommandHasNoExternalSideEffects() {
-        type = EnumCostType.COMMAND; mode = EnumCardType.REFUND_ALL_COST;
+        type = EnumCostType.COMMAND; mode = EnumCardType.WAIVE_COST;
         assertFalse(service.plan(CostCalculation.success(5, 5), context(CostPhase.PREVIEW)).commandPending());
         assertTrue(commit().isCommitted()); assertEquals(0, commands); assertEquals(1, data.peekTeleportCard());
     }
@@ -222,7 +255,7 @@ public class ForgeCostPaymentTest {
     }
 
     @Test public void hereRequestMovesTheTargetButDebitsTheRequester() throws Exception {
-        LegacyCostPaymentTest other = new LegacyCostPaymentTest(); other.setup();
+        ForgeCostPlayerFixture other = new ForgeCostPlayerFixture(); other.setup();
         try {
             moving = other.player();
             liveRequest(EnumTeleportType.TP_HERE); requests.put(request.getRequestId(), request);
@@ -230,6 +263,17 @@ public class ForgeCostPaymentTest {
             assertEquals(5, payer.totalExperience); assertEquals(10, moving.totalExperience);
             assertEquals(1, data.peekTeleportCard());
         } finally { other.cleanup(); }
+    }
+
+    @Test public void hereEndpointChangingDimensionCannotChargeForTheOldDestination() throws Exception {
+        liveRequest(EnumTeleportType.TP_HERE);
+        requests.put(request.getRequestId(), request);
+        Field dimension = net.minecraft.world.World.class.getDeclaredField("dimension");
+        dimension.setAccessible(true);
+        dimension.set(payer.world, net.minecraft.world.World.NETHER);
+        assertEquals(EnumCostFailure.UNKNOWN_TARGET, commit().failure());
+        assertEquals(10, payer.totalExperience);
+        assertEquals(2, data.peekTeleportCard());
     }
 
     @Test public void paidCardsWriteOneActualNbtSnapshotAfterCommit() throws Exception {

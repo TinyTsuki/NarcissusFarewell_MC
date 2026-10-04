@@ -81,7 +81,7 @@ public final class TpAskCommand {
         MessageUtils.sendNotification(player, NarcissusComponent.get().transAuto("tp_ask_request_sent", target.getDisplayName().getString(), cancelButton), NarcissusNotificationTypes.INTERACTIVE_TP_FLOW);
         if (autoAccept) {
             ServerPlayerEntity finalTarget = target;
-            new Thread(() -> xin.vanilla.banira.common.util.CommandUtils.executeCommand(finalTarget, NarcissusUtils.getCommand(EnumCommandType.TP_ASK_YES) + " " + request.getRequestId())).start();
+            player.server.execute(() -> xin.vanilla.banira.common.util.CommandUtils.executeCommand(finalTarget, NarcissusUtils.getCommand(EnumCommandType.TP_ASK_YES) + " " + request.getRequestId()));
         }
         return 1;
     }

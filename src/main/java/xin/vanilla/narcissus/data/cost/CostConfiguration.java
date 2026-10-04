@@ -12,6 +12,7 @@ import java.util.*;
 @Getter
 @Accessors(fluent = true)
 public final class CostConfiguration {
+    private static final CostCardSettings NO_CARDS = new CostCardSettings(false, 0, EnumCardType.WAIVE_COST);
     private final Map<EnumTeleportType, CostParameters> groups;
     private final CostCardSettings cards;
     private final int maxDistance;
@@ -19,14 +20,28 @@ public final class CostConfiguration {
 
     public CostConfiguration(Map<EnumTeleportType, CostParameters> groups, CostCardSettings cards,
                              int maxDistance, int crossDimensionDistance) {
+        this(groups, cards, maxDistance, crossDimensionDistance, true);
+    }
+
+    private CostConfiguration(Map<EnumTeleportType, CostParameters> groups, CostCardSettings cards,
+                              int maxDistance, int crossDimensionDistance, boolean complete) {
         if (maxDistance < 0 || crossDimensionDistance < 0) throw new IllegalArgumentException("Invalid distance limits");
         EnumMap<EnumTeleportType, CostParameters> copy = new EnumMap<>(EnumTeleportType.class);
-        for (EnumTeleportType type : EnumTeleportType.countdownConfigurableTypes()) {
+        for (EnumTeleportType type : complete ? EnumTeleportType.countdownConfigurableTypes() : groups.keySet()) {
             copy.put(type, Objects.requireNonNull(groups.get(type), "Missing cost group " + type));
         }
         this.groups = Collections.unmodifiableMap(copy);
         this.cards = Objects.requireNonNull(cards, "cards");
         this.maxDistance = maxDistance; this.crossDimensionDistance = crossDimensionDistance;
+    }
+
+    public static CostConfiguration selection(EnumTeleportType type, CostParameters parameters,
+                                               CostCardSettings cards, int maxDistance, int crossDimensionDistance) {
+        return new CostConfiguration(Collections.singletonMap(type, parameters), cards, maxDistance, crossDimensionDistance, false);
+    }
+
+    public static CostConfiguration freeSelection(EnumTeleportType type, CostParameters parameters) {
+        return selection(type, parameters, NO_CARDS, 0, 0);
     }
 
     public CostParameters parameters(EnumTeleportType type) {
@@ -42,6 +57,6 @@ public final class CostConfiguration {
     public static CostConfiguration defaults() {
         EnumMap<EnumTeleportType, CostParameters> groups = new EnumMap<>(EnumTeleportType.class);
         for (EnumTeleportType type : EnumTeleportType.countdownConfigurableTypes()) groups.put(type, CostParameters.free());
-        return new CostConfiguration(groups, new CostCardSettings(false, 0, EnumCardType.REFUND_ALL_COST), 10000, 10000);
+        return new CostConfiguration(groups, new CostCardSettings(false, 0, EnumCardType.WAIVE_COST), 10000, 10000);
     }
 }

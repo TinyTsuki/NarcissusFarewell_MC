@@ -47,6 +47,12 @@ public final class NarcissusCostRuntime implements AutoCloseable {
         int maxDistance();
         int crossDimensionDistance();
 
+        default CostConfiguration selection(EnumTeleportType type) {
+            CostParameters parameters = parameters(type);
+            return parameters.type() == EnumCostType.NONE ? CostConfiguration.freeSelection(type, parameters)
+                    : CostConfiguration.selection(type, parameters, cards(), maxDistance(), crossDimensionDistance());
+        }
+
         default CostConfiguration snapshot() {
             EnumMap<EnumTeleportType, CostParameters> groups = new EnumMap<>(EnumTeleportType.class);
             for (EnumTeleportType type : EnumTeleportType.countdownConfigurableTypes()) groups.put(type, parameters(type));
@@ -157,12 +163,13 @@ public final class NarcissusCostRuntime implements AutoCloseable {
     public CostCalculation calculate(EnumTeleportType type, long generationId, double rawDistance, boolean crossDimension) {
         checkOwner();
         if (closed) return unavailable();
-        CostParameters parameters = currentParameters(type);
+        CostConfiguration selection = currentSelection(type);
+        CostParameters parameters = selection == null ? null : selection.parameters(type);
         if (parameters == null || closed) return unavailable();
         if (parameters.type() == EnumCostType.NONE) return CostCalculation.FREE;
         Generation generation = active;
         if (generation == null || generation.id != generationId || !parameters.customFile().isEmpty()
-                || !selectionMatches(generation, type, parameters)) return unavailable();
+                || !selectionMatches(generation, type, selection)) return unavailable();
         if (!Double.isFinite(rawDistance) || rawDistance < 0) return CostCalculation.failed(EnumCostFailure.INVALID_DISTANCE);
         return calculator.calculate(parameters, generation.configuration.distance(rawDistance, crossDimension));
     }
@@ -176,41 +183,40 @@ public final class NarcissusCostRuntime implements AutoCloseable {
         checkOwner();
         if (closed) return unavailable();
         EnumTeleportType type = context.teleportType();
-        CostParameters parameters = currentParameters(type);
+        CostConfiguration selection = currentSelection(type);
+        CostParameters parameters = selection == null ? null : selection.parameters(type);
         if (parameters == null || closed) return unavailable();
         if (parameters.type() == EnumCostType.NONE) return CostCalculation.FREE;
         Generation generation = active;
-        if (!matches(generation, context, parameters)) return unavailable();
+        if (!matches(generation, context, selection)) return unavailable();
         generation.leases++;
         try {
             CostCalculation result = calculator.calculate(parameters, context,
                     parameters.customFile().isEmpty() ? null : generation.formula);
             // Trusted code can re-enter, stop the world, or change configuration while evaluating.
-            if (!parameters.customFile().isEmpty() && !matches(generation, context, currentParameters(type))) return unavailable();
+            if (!parameters.customFile().isEmpty() && !matches(generation, context, currentSelection(type))) return unavailable();
             return result;
         } finally { generation.release(); }
     }
 
-    private boolean matches(Generation generation, CostContext context, CostParameters parameters) {
-        if (closed || generation == null || generation != active || generation.retired
-                || generation.id != context.generationId() || !selectionMatches(generation, context.teleportType(), parameters)
-                || !parameters.equals(context.parameters())
-                || !generation.configuration.cards().equals(context.cardSettings())) return false;
+    private boolean matches(Generation generation, CostContext context, CostConfiguration selection) {
+        if (closed || generation == null || generation != active || generation.retired || selection == null
+                || generation.id != context.generationId() || !selectionMatches(generation, context.teleportType(), selection)
+                || !selection.parameters(context.teleportType()).equals(context.parameters())
+                || !selection.cards().equals(context.cardSettings())) return false;
         return Double.compare(context.distance(), generation.configuration.distance(context.rawDistance(), context.crossDimension())) == 0;
     }
 
-    private boolean selectionMatches(Generation generation, EnumTeleportType type, CostParameters parameters) {
-        try {
-            return generation.configuration.parameters(type).equals(parameters) && generation.configuration.cards().equals(live.cards())
-                    && generation.configuration.maxDistance() == live.maxDistance()
-                    && generation.configuration.crossDimensionDistance() == live.crossDimensionDistance();
-        } catch (RuntimeException failure) { configurationFailure(failure); return false; }
+    private boolean selectionMatches(Generation generation, EnumTeleportType type, CostConfiguration selection) {
+        return selection != null && generation.configuration.parameters(type).equals(selection.parameters(type))
+                && generation.configuration.cards().equals(selection.cards())
+                && generation.configuration.maxDistance() == selection.maxDistance()
+                && generation.configuration.crossDimensionDistance() == selection.crossDimensionDistance();
     }
 
-    private CostParameters currentParameters(EnumTeleportType type) {
+    private CostConfiguration currentSelection(EnumTeleportType type) {
         Objects.requireNonNull(type, "type");
-        if (type == EnumTeleportType.DEATH || type == EnumTeleportType.OTHER) return CostParameters.free();
-        try { return Objects.requireNonNull(live.parameters(type), "Current cost parameters"); }
+        try { return Objects.requireNonNull(live.selection(type), "Current cost selection"); }
         catch (RuntimeException failure) { configurationFailure(failure); return null; }
     }
 

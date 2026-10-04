@@ -1,5 +1,7 @@
 package xin.vanilla.narcissus.network.packet;
 
+import xin.vanilla.narcissus.internal.client.NarcissusClientSyncState;
+import xin.vanilla.banira.common.network.BaniraNetworkContext;
 import lombok.Value;
 import lombok.experimental.Accessors;
 import xin.vanilla.banira.common.network.BaniraPacketBuffer;
@@ -15,4 +17,13 @@ public class CostQuoteToClient implements NetworkPacket {
     public CostQuoteToClient(CostQuote quote) { this.quote = Objects.requireNonNull(quote); }
     public CostQuoteToClient(BaniraPacketBuffer buffer) { this(CostQuoteCodec.readQuote(buffer)); }
     public void toBytes(BaniraPacketBuffer buffer) { CostQuoteCodec.writeQuote(buffer, quote); }
+    public static void handle(CostQuoteToClient packet, BaniraNetworkContext context) {
+        context.enqueueWork(() -> {
+            if (context.isClientSide()) {
+                net.minecraftforge.fml.DistExecutor.unsafeRunWhenOn(net.minecraftforge.api.distmarker.Dist.CLIENT,
+                        () -> () -> NarcissusClientSyncState.costQuotes().accept(packet.quote(), System.nanoTime()));
+            }
+        });
+        context.markHandled();
+    }
 }

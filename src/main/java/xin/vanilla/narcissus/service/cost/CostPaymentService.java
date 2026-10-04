@@ -36,23 +36,23 @@ public final class CostPaymentService {
             int balance = context.payer().teleportCards();
             if (balance < 0) return CostPaymentPlan.failed(EnumCostFailure.INSUFFICIENT_CARDS);
             switch (context.cardSettings().mode()) {
-                case NONE:
+                case REQUIRE_ONE_WITH_COST:
                     if (balance < 1) return CostPaymentPlan.failed(EnumCostFailure.INSUFFICIENT_CARDS);
                     cards = 1; break;
-                case LIKE_COST:
+                case REQUIRE_MATCHING_WITH_COST:
                     if (balance < amount) return CostPaymentPlan.failed(EnumCostFailure.INSUFFICIENT_CARDS);
                     cards = amount; break;
-                case REFUND_COST:
-                case REFUND_COST_AND_COOLDOWN:
+                case OFFSET_COST:
+                case OFFSET_COST_AND_BYPASS_COOLDOWN:
                     cards = Math.min(balance, amount); resources = amount - cards;
-                    bypass = context.cardSettings().mode() == EnumCardType.REFUND_COST_AND_COOLDOWN && cards > 0;
+                    bypass = context.cardSettings().mode() == EnumCardType.OFFSET_COST_AND_BYPASS_COOLDOWN && cards > 0;
                     break;
-                case REFUND_ALL_COST:
-                case REFUND_ALL_COST_AND_COOLDOWN:
+                case WAIVE_COST:
+                case WAIVE_COST_AND_BYPASS_COOLDOWN:
                     if (balance > 0) { cards = 1; resources = 0; }
-                    bypass = context.cardSettings().mode() == EnumCardType.REFUND_ALL_COST_AND_COOLDOWN && cards > 0;
+                    bypass = context.cardSettings().mode() == EnumCardType.WAIVE_COST_AND_BYPASS_COOLDOWN && cards > 0;
                     break;
-                case REFUND_COOLDOWN:
+                case BYPASS_COOLDOWN:
                     cards = balance > 0 ? 1 : 0; bypass = cards > 0; break;
                 default: throw new IllegalStateException("Unknown card mode");
             }

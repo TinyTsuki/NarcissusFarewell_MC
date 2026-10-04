@@ -59,11 +59,11 @@ public final class TpGraveCommand {
             return 0;
         }
 
-        if (CommandUtils.checkTeleportPost(player, target, EnumTeleportType.TP_GRAVE, true)) return 0;
-        if (record != null) {
-            NarcissusUtils.removeBackTeleportRecord(player, record);
-        }
-        NarcissusUtils.teleportTo(player, target, EnumTeleportType.TP_GRAVE);
+        if (CommandUtils.checkTeleportPost(player, target, EnumTeleportType.TP_GRAVE)) return 0;
+        TeleportRecord consumed = record;
+        NarcissusUtils.teleportTo(player, target, EnumTeleportType.TP_GRAVE,
+                () -> { if (consumed != null) NarcissusUtils.removeBackTeleportRecord(player, consumed); },
+                () -> consumed == null || xin.vanilla.narcissus.data.player.PlayerTeleportData.getData(player).peekTeleportRecords().contains(consumed));
         return 1;
     }
 
@@ -85,7 +85,7 @@ public final class TpGraveCommand {
         }
 
         SafeWorldCoordinate target = resolveTeleportTarget(null, coord2);
-        if (CommandUtils.checkTeleportPost(player, target, EnumTeleportType.TP_GRAVE, true)) return 0;
+        if (CommandUtils.checkTeleportPost(player, target, EnumTeleportType.TP_GRAVE)) return 0;
         NarcissusUtils.teleportTo(player, target, EnumTeleportType.TP_GRAVE);
         return 1;
     }
@@ -105,9 +105,10 @@ public final class TpGraveCommand {
         SafeWorldCoordinate coord2 = GraveHelper.findCorpseGravestoneNearDeath(player, record);
         SafeWorldCoordinate target = resolveTeleportTarget(coord1, coord2);
 
-        if (CommandUtils.checkTeleportPost(player, target, EnumTeleportType.TP_GRAVE, true)) return 0;
-        NarcissusUtils.removeBackTeleportRecord(player, record);
-        NarcissusUtils.teleportTo(player, target, EnumTeleportType.TP_GRAVE);
+        if (CommandUtils.checkTeleportPost(player, target, EnumTeleportType.TP_GRAVE)) return 0;
+        NarcissusUtils.teleportTo(player, target, EnumTeleportType.TP_GRAVE,
+                () -> NarcissusUtils.removeBackTeleportRecord(player, record),
+                () -> xin.vanilla.narcissus.data.player.PlayerTeleportData.getData(player).peekTeleportRecords().contains(record));
         return 1;
     }
 

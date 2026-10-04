@@ -107,7 +107,7 @@ public class NarcissusCostRuntimeTest {
             f.values.put(EnumTeleportType.TP_STAGE, parameters(4, ""));
             assertEquals(2, f.calculate(EnumTeleportType.TP_HOME).amount());
             assertFalse(f.calculate(EnumTeleportType.TP_STAGE).isSuccess());
-            f.cards = new CostCardSettings(true, 2, EnumCardType.REFUND_COST);
+            f.cards = new CostCardSettings(true, 2, EnumCardType.OFFSET_COST);
             assertFalse(f.calculate(EnumTeleportType.TP_HOME).isSuccess());
             assertEquals(0, f.calculate(EnumTeleportType.TP_BACK).amount());
         }
@@ -121,7 +121,7 @@ public class NarcissusCostRuntimeTest {
             assertFalse(f.runtime.calculate(f.input(EnumTeleportType.TP_HOME).parameters(parameters(3, "")).build()).isSuccess());
             assertFalse(f.runtime.calculate(f.input(EnumTeleportType.TP_HOME).distance(101).build()).isSuccess());
             assertFalse(f.runtime.calculate(f.input(EnumTeleportType.TP_HOME)
-                    .cardSettings(new CostCardSettings(true, 0, EnumCardType.NONE)).build()).isSuccess());
+                    .cardSettings(new CostCardSettings(true, 0, EnumCardType.REQUIRE_ONE_WITH_COST)).build()).isSuccess());
         }
     }
 

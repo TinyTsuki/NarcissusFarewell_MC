@@ -3,6 +3,8 @@ package xin.vanilla.narcissus.config.preset;
 import xin.vanilla.banira.common.config.ConfigEntryDescriptor;
 import xin.vanilla.banira.common.config.ConfigHolder;
 import xin.vanilla.narcissus.enums.EnumCostType;
+import xin.vanilla.narcissus.enums.EnumTeleportType;
+import xin.vanilla.narcissus.config.migration.CostConfigMigration;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -79,15 +81,10 @@ public final class CommonConfigPresets {
         h.set("concise.conciseTpBottom", false);
         h.set("concise.conciseTpDown", false);
         h.set("concise.conciseTpView", false);
-        String[] subs = {"tpCoordinate", "tpStructure", "tpAsk", "tpHere", "tpRandom", "tpSpawn", "tpWorldSpawn",
-                "tpTop", "tpBottom", "tpUp", "tpDown", "tpView", "tpHome", "tpStage", "tpBack", "tpGrave"};
-        String[] stems = {"costTpCoordinate", "costTpStructure", "costTpAsk", "costTpHere", "costTpRandom", "costTpSpawn",
-                "costTpWorldSpawn", "costTpTop", "costTpBottom", "costTpUp", "costTpDown", "costTpView", "costTpHome",
-                "costTpStage", "costTpBack", "costTpGrave"};
-        for (int i = 0; i < subs.length; i++) {
-            h.set("cost." + subs[i] + "." + stems[i] + "Type", EnumCostType.EXP_POINT);
+        for (EnumTeleportType type : EnumTeleportType.countdownConfigurableTypes()) {
+            h.set("cost." + CostConfigMigration.groupName(type) + ".type", EnumCostType.EXP_POINT);
         }
-        h.set("cost.tpGrave.costTpGraveType", EnumCostType.HUNGER);
+        h.set("cost.grave.type", EnumCostType.HUNGER);
         h.save();
     }
 

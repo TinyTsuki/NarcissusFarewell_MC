@@ -39,7 +39,7 @@ public final class ConfigCommand {
     private static int executeTeleportCard(CommandContext<CommandSource> context) throws CommandSyntaxException {
         ServerPlayerEntity player = context.getSource().getPlayerOrException();
         Component msg = NarcissusComponent.get().transAuto("server_config_status"
-                , NarcissusLang.get().enabled(CommonConfig.get().base().teleportCard().teleportCard())
+                , NarcissusLang.get().enabled(CommonConfig.get().cost().cards().enabled())
                 , NarcissusComponent.get().transAuto("teleport_card"));
         MessageUtils.sendDefaultNotification(player, msg, EnumPosition.TOP_RIGHT, EnumMoveType.AUTO);
         return 1;
@@ -47,10 +47,10 @@ public final class ConfigCommand {
 
     private static int executeTeleportCardSet(CommandContext<CommandSource> context) throws CommandSyntaxException {
         boolean bool = BoolArgumentType.getBool(context, "bool");
-        CommonConfig.get().base().teleportCard().teleportCard(bool);
+        CommonConfig.get().cost().cards().enabled(bool);
         ServerPlayerEntity player = context.getSource().getPlayerOrException();
         Component msg = NarcissusComponent.get().transAuto("server_config_status"
-                , NarcissusLang.get().enabled(CommonConfig.get().base().teleportCard().teleportCard())
+                , NarcissusLang.get().enabled(CommonConfig.get().cost().cards().enabled())
                 , NarcissusComponent.get().transAuto("teleport_card"));
         MessageUtils.broadcastNotification(msg, NarcissusNotificationTypes.INTERACTIVE_QUERY);
         return 1;

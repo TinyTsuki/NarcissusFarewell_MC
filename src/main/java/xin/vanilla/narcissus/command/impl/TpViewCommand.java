@@ -1,5 +1,6 @@
 package xin.vanilla.narcissus.command.impl;
 
+import xin.vanilla.narcissus.internal.server.NarcissusCostService;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
@@ -32,16 +33,34 @@ public final class TpViewCommand {
         range = NarcissusUtils.checkRange(player, EnumTeleportType.TP_VIEW, range);
         MessageUtils.sendNotification(player, NarcissusComponent.get().transAuto("tp_view_searching"), NarcissusNotificationTypes.TELEPORT_SEARCH);
         int finalRange = range;
+        NarcissusCostService.Ticket ticket = NarcissusUtils.beginTeleport(player, EnumTeleportType.TP_VIEW);
+        if (ticket == null) return 0;
         new Thread(() -> {
+            try {
             SafeWorldCoordinate safeWorldCoordinate = NarcissusUtils.findViewEndCandidate(player, safe, finalRange);
             if (safeWorldCoordinate == null) {
-                MessageUtils.sendNotification(player, NarcissusComponent.get().transAuto(safe ? "tp_view_safe_not_found" : "tp_view_not_found"), NarcissusNotificationTypes.TELEPORT_ERROR);
+                player.server.execute(() -> {
+                    if (!ticket.live()) return;
+                    ticket.cancel();
+                    MessageUtils.sendNotification(player, NarcissusComponent.get().transAuto(safe ? "tp_view_safe_not_found" : "tp_view_not_found"), NarcissusNotificationTypes.TELEPORT_ERROR);
+                });
                 return;
             }
             safeWorldCoordinate.safeMode(EnumSafeMode.Y_C_OFFSET_3);
-            if (CommandUtils.checkTeleportPost(player, safeWorldCoordinate, EnumTeleportType.TP_VIEW, true)) return;
-            player.server.submit(() -> NarcissusUtils.teleportTo(player, safeWorldCoordinate, EnumTeleportType.TP_VIEW));
-        }).start();
+            player.server.submit(() -> {
+                if (!ticket.live()) return;
+                if (CommandUtils.checkTeleportPost(player, safeWorldCoordinate, EnumTeleportType.TP_VIEW)) { ticket.cancel(); return; }
+                NarcissusUtils.teleportTo(player, safeWorldCoordinate, EnumTeleportType.TP_VIEW, ticket);
+            });
+            } catch (RuntimeException error) {
+                org.apache.logging.log4j.LogManager.getLogger(TpViewCommand.class).error("Teleport destination search failed", error);
+                player.server.execute(() -> {
+                    if (!ticket.live()) return;
+                    ticket.cancel();
+                    MessageUtils.sendNotification(player, NarcissusComponent.get().transAuto("cost_unavailable"), NarcissusNotificationTypes.TELEPORT_ERROR);
+                });
+            }
+        }, "Narcissus view search").start();
         return 1;
     }
 

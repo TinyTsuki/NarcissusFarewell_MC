@@ -17,14 +17,19 @@ import xin.vanilla.narcissus.service.cost.CostQuoteService;
 import xin.vanilla.narcissus.util.NarcissusUtils;
 import java.util.*;
 import java.util.function.Supplier;
+import java.util.function.Function;
 import java.util.function.ToIntBiFunction;
 
 public final class ForgeCostQuoteAccess implements CostQuoteService.QuoteAccess {
     private final Supplier<MinecraftServer> server;
-    private final Supplier<CostConfiguration> configuration;
+    private final Function<EnumTeleportType, CostConfiguration> configuration;
     private final ToIntBiFunction<ServerPlayerEntity, EnumTeleportType> cooldown;
 
     public ForgeCostQuoteAccess(Supplier<MinecraftServer> server, Supplier<CostConfiguration> configuration,
+                                 ToIntBiFunction<ServerPlayerEntity, EnumTeleportType> cooldown) {
+        this(server, type -> configuration.get(), cooldown);
+    }
+    public ForgeCostQuoteAccess(Supplier<MinecraftServer> server, Function<EnumTeleportType, CostConfiguration> configuration,
                                  ToIntBiFunction<ServerPlayerEntity, EnumTeleportType> cooldown) {
         this.server = Objects.requireNonNull(server); this.configuration = Objects.requireNonNull(configuration);
         this.cooldown = Objects.requireNonNull(cooldown);
@@ -77,7 +82,7 @@ public final class ForgeCostQuoteAccess implements CostQuoteService.QuoteAccess 
             throw new SecurityException("Cross-dimension quote not permitted");
         }
         return ForgeCostContext.open(request.requestId(), request.generationId(), CostPhase.PREVIEW, target.teleportType(),
-                configuration.get(), moving, paying, other == null ? null : paying, other,
+                configuration.apply(target.teleportType()), moving, paying, other == null ? null : paying, other,
                 destination, null, cooldown.applyAsInt(paying, target.teleportType()));
     }
 
