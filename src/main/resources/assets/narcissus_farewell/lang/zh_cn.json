@@ -115,6 +115,7 @@
   "word.narcissus_farewell.search_timeout": "落脚点搜索超时，传送已取消",
   "word.narcissus_farewell.search_changed": "搜索条件已变化，传送已取消",
   "word.narcissus_farewell.search_failed": "落脚点搜索失败，传送已取消",
+  "word.narcissus_farewell.teleport_failed": "传送未完成，实体迁移或骑乘关系恢复被拒绝",
   "word.narcissus_farewell.set_home": "将玩家当前坐标加入私人传送点列表，可以指定是否默认传送点",
   "word.narcissus_farewell.set_home_detail": "将玩家当前坐标加入私人传送点列表，若不指定名称将使用默认名称『home』\n参数列表：\n [<传送点名称>] [<是否默认传送点>]",
   "word.narcissus_farewell.set_stage": "将当前或指定坐标加入驿站(公共传送点)，可以指定目标维度",
