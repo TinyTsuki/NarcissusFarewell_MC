@@ -115,6 +115,7 @@
   "word.narcissus_farewell.search_timeout": "Landing search timed out; teleport cancelled",
   "word.narcissus_farewell.search_changed": "Search conditions changed; teleport cancelled",
   "word.narcissus_farewell.search_failed": "Landing search failed; teleport cancelled",
+  "word.narcissus_farewell.teleport_failed": "Teleport incomplete: entity migration or riding restoration was rejected",
   "word.narcissus_farewell.set_home": "Add the current location as a personal waypoint, optionally setting it as the default",
   "word.narcissus_farewell.set_home_detail": "Add the player's current coordinates to the personal waypoint list. If no name is specified, the default name 'home' will be used.\nParameters:\n [<waypoint name>] [<set as default>]",
   "word.narcissus_farewell.set_stage": "Add the current or specified location as a stage (public waypoint), with optional target dimension",
