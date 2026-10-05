@@ -11,12 +11,12 @@ import net.minecraft.entity.ai.brain.memory.MemoryModuleType;
 import net.minecraft.entity.ai.goal.TemptGoal;
 import net.minecraft.entity.monster.MonsterEntity;
 import net.minecraft.entity.passive.TameableEntity;
+import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.network.play.server.SPlayerAbilitiesPacket;
-import net.minecraft.network.play.server.SSetPassengersPacket;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.*;
 import net.minecraft.util.math.ChunkPos;
@@ -53,7 +53,7 @@ import xin.vanilla.narcissus.data.player.PlayerTeleportData;
 import xin.vanilla.narcissus.data.world.WorldStageData;
 import xin.vanilla.narcissus.enums.EnumCommandType;
 import xin.vanilla.narcissus.enums.EnumTeleportType;
-import xin.vanilla.narcissus.internal.forge.network.ForgeNativePacketSender;
+import xin.vanilla.narcissus.internal.server.teleport.RidingTransfer;
 import xin.vanilla.narcissus.mixin.LivingEntityInvoker;
 import xin.vanilla.narcissus.mixin.TemptGoalAccessor;
 import xin.vanilla.narcissus.notification.NarcissusNotificationTypes;
@@ -1128,27 +1128,65 @@ public class NarcissusUtils {
             return;
         }
         if (supportBlock != null) supportBlock.run();
-        teleportPlayer(player, ticket.destination(), type, before, level);
+        if (!teleportPlayer(player, ticket.destination(), type, before, level)) return;
         ticket.completed();
         onSuccess.run();
     }
 
-    private static void teleportPlayer(@NonNull ServerPlayerEntity player, @NonNull SafeWorldCoordinate after, EnumTeleportType type, SafeWorldCoordinate before, ServerWorld level) {
+    private static boolean teleportPlayer(@NonNull ServerPlayerEntity player, @NonNull SafeWorldCoordinate after, EnumTeleportType type, SafeWorldCoordinate before, ServerWorld level) {
         ResourceLocation sound = Identifier.id().parse(CommonConfig.get().base().other().tpSound());
         NarcissusUtils.playSound(player, sound, 1.0f, 1.0f);
         after.y(Math.floor(after.y()) + 0.1);
 
-        // 传送跟随者
-        teleportFollowers(player, after, level);
-        // 传送载体与乘客
-        Entity vehicle = teleportPassengers(player, null, player.getRootVehicle(), after, level);
-        // 传送玩家
-        doTeleport(player, after, level);
-        // 使玩家重新坐上载体
-        if (vehicle != null) {
-            player.startRiding(vehicle, true);
-            // 同步客户端状态
-            ForgeNativePacketSender.broadcast(new SSetPassengersPacket(vehicle));
+        List<Entity> followers = collectFollowers(player);
+        boolean withVehicle = CommonConfig.get().base().teleportTogether().tpWithVehicle();
+        Entity root = withVehicle ? player.getRootVehicle() : player;
+        Set<Entity> transferred = Collections.newSetFromMap(new IdentityHashMap<>());
+        boolean moved;
+        try {
+            moved = RidingTransfer.transfer(root, player, new RidingTransfer.Backend<Entity>() {
+                public List<Entity> passengers(Entity entity) { return withVehicle ? entity.getPassengers() : Collections.emptyList(); }
+                public List<Entity> attachmentOrder(Entity vehicle, List<Entity> passengers) {
+                    if (vehicle.getControllingPassenger() instanceof PlayerEntity) return passengers;
+                    // Native addPassenger prepends players on vehicles without a player controller.
+                    List<Entity> order = new ArrayList<>(passengers.size());
+                    for (Entity passenger : passengers) {
+                        if (passenger instanceof PlayerEntity) order.add(0, passenger);
+                        else order.add(passenger);
+                    }
+                    return order;
+                }
+                public Entity vehicle(Entity entity) { return entity.getVehicle(); }
+                public void detach(Entity entity) { entity.stopRiding(); }
+                public Entity move(Entity entity) {
+                    transferred.add(entity);
+                    return doTeleport(entity, after, level);
+                }
+                public boolean alive(Entity entity) { return entity != null && !entity.removed; }
+                public boolean atDestination(Entity entity) {
+                    return entity.level == level && Math.abs(entity.getX() - after.x()) < 0.001
+                            && Math.abs(entity.getY() - after.y()) < 0.001 && Math.abs(entity.getZ() - after.z()) < 0.001;
+                }
+                public boolean sameWorld(Entity first, Entity second) { return first.level == second.level; }
+                public boolean attach(Entity entity, Entity vehicle) { return entity.startRiding(vehicle, true); }
+            });
+        } catch (RuntimeException error) {
+            LOGGER.error("Teleport riding transfer failed for {}", player.getUUID(), error);
+            moved = false;
+        }
+        if (!moved) {
+            MessageUtils.sendNotification(player, NarcissusComponent.get().transAuto("teleport_failed"), NarcissusNotificationTypes.TELEPORT_ERROR);
+            return false;
+        }
+        for (Entity follower : followers) {
+            if (transferred.add(follower) && !follower.removed) {
+                try {
+                    Entity result = doTeleport(follower, after, level);
+                    if (result == null || result.removed || result.level != level) LOGGER.warn("Follower transfer failed for {}", follower.getUUID());
+                } catch (RuntimeException error) {
+                    LOGGER.warn("Follower transfer failed for {}", follower.getUUID(), error);
+                }
+            }
         }
 
         NarcissusUtils.playSound(player, sound, 1.0f, 1.0f);
@@ -1159,77 +1197,29 @@ public class NarcissusUtils {
         record.setAfter(after);
         PlayerTeleportData.getData(player).addTeleportRecords(record);
         PlayerTeleportData.syncPlayerData(player);
-    }
-
-    /**
-     * 传送载具及其所有乘客
-     *
-     * @param parent              载具
-     * @param passenger           乘客
-     * @param safeWorldCoordinate 目标坐标
-     * @param level               目标世界
-     * @return 玩家的坐骑
-     */
-    private static @Nullable Entity teleportPassengers(ServerPlayerEntity player, Entity parent, Entity passenger, @NonNull SafeWorldCoordinate safeWorldCoordinate, ServerWorld level) {
-        if (!CommonConfig.get().base().teleportTogether().tpWithVehicle() || passenger == null) return null;
-
-        Entity playerVehicle = null;
-        List<Entity> passengers = new ArrayList<>(passenger.getPassengers());
-
-        // 递归传送所有乘客
-        for (Entity entity : passengers) {
-            if (CollectionUtils.isNotNullOrEmpty(entity.getPassengers())) {
-                Entity value = teleportPassengers(player, passenger, entity, safeWorldCoordinate, level);
-                if (value != null) {
-                    playerVehicle = value;
-                }
-            }
-        }
-
-        passengers.forEach(Entity::stopRiding);
-
-        // 传送载具
-        if (parent == null) {
-            passenger = doTeleport(passenger, safeWorldCoordinate, level);
-        }
-        // 传送所有乘客
-        for (Entity entity : passengers) {
-            if (entity == player) {
-                playerVehicle = passenger;
-            } else if (entity.getVehicle() == null) {
-                int oldId = entity.getId();
-                entity = doTeleport(entity, safeWorldCoordinate, level);
-                entity.startRiding(passenger, true);
-                // 更新玩家乘坐的实体对象
-                if (playerVehicle != null && oldId == playerVehicle.getId()) {
-                    playerVehicle = entity;
-                }
-            }
-        }
-        // 同步客户端状态
-        ForgeNativePacketSender.broadcast(new SSetPassengersPacket(passenger));
-        return playerVehicle;
+        return true;
     }
 
     /**
      * 传送跟随的实体
      */
-    private static void teleportFollowers(@NonNull ServerPlayerEntity player, @NonNull SafeWorldCoordinate safeWorldCoordinate, ServerWorld level) {
-        if (!CommonConfig.get().base().teleportTogether().tpWithFollower()) return;
+    private static List<Entity> collectFollowers(@NonNull ServerPlayerEntity player) {
+        if (!CommonConfig.get().base().teleportTogether().tpWithFollower()) return Collections.emptyList();
+        Set<Entity> followers = new LinkedHashSet<>();
 
         int followerRange = CommonConfig.get().base().teleportTogether().tpWithFollowerRange();
 
         // 传送主动跟随的实体
         for (TameableEntity entity : player.level.getEntitiesOfClass(TameableEntity.class, player.getBoundingBox().inflate(followerRange))) {
             if (entity.getOwnerUUID() != null && entity.getOwnerUUID().equals(player.getUUID()) && !entity.isOrderedToSit()) {
-                doTeleport(entity, safeWorldCoordinate, level);
+                followers.add(entity);
             }
         }
 
         // 传送拴绳实体
         for (MobEntity entity : player.level.getEntitiesOfClass(MobEntity.class, player.getBoundingBox().inflate(followerRange))) {
             if (entity.getLeashHolder() == player) {
-                doTeleport(entity, safeWorldCoordinate, level);
+                followers.add(entity);
             }
         }
 
@@ -1243,9 +1233,10 @@ public class NarcissusUtils {
                             && (goal.getGoal() instanceof TemptGoal)
                             && ((TemptGoalAccessor) goal.getGoal()).narcissus$player() == player
                     )) {
-                doTeleport(entity, safeWorldCoordinate, level);
+                followers.add(entity);
             }
         }
+        return new ArrayList<>(followers);
     }
 
     private static Entity doTeleport(@NonNull Entity entity, @NonNull SafeWorldCoordinate safeWorldCoordinate, ServerWorld level) {
@@ -1273,6 +1264,7 @@ public class NarcissusUtils {
                         );
                         // 复制实体，并且不生成传送门
                         Entity newEntity = repositionEntity.apply(false);
+                        if (newEntity == null) return null;
                         newEntity.moveTo(safeWorldCoordinate.x(), safeWorldCoordinate.y(), safeWorldCoordinate.z(), yaw, newEntity.xRot);
                         return newEntity;
                     }
