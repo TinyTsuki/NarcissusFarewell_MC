@@ -1,11 +1,12 @@
 package xin.vanilla.narcissus.internal.forge.search;
 
-import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.ChunkPos;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.chunk.LevelChunkSection;
 import xin.vanilla.narcissus.search.SafeBlockPolicy;
 import xin.vanilla.narcissus.search.SafeCandidateCursor;
+
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
@@ -13,6 +14,7 @@ import java.util.Objects;
 public final class SectionSearchPruner {
     public interface ChunkAccess {
         boolean ready(int chunkX, int chunkZ);
+
         LevelChunkSection section(int chunkX, int chunkZ, int sectionY);
     }
 
@@ -25,7 +27,11 @@ public final class SectionSearchPruner {
         this.access = Objects.requireNonNull(access);
         this.policy = Objects.requireNonNull(policy);
     }
-    public void beginSlice() { flags.clear(); }
+
+    public void beginSlice() {
+        flags.clear();
+    }
+
     public SafeCandidateCursor.YFilter filter(int minZ, int maxZ, boolean belowAir) {
         int firstZ = minZ >> 4, lastZ = maxZ >> 4;
         return (chunkX, minY, maxY) -> next(chunkX, firstZ, lastZ, minY, maxY, belowAir);
@@ -35,7 +41,7 @@ public final class SectionSearchPruner {
         // Missing chunks cannot prove absence. This never requests or generates terrain.
         for (int z = firstZ; z <= lastZ; z++) if (!access.ready(x, z)) return minY;
         int supports = SUPPORT | (air ? AIR_SUPPORT : 0);
-        for (long y = minY; y <= maxY;) {
+        for (long y = minY; y <= maxY; ) {
             int sectionY = (int) (y >> 4);
             long bottom = (long) sectionY << 4;
             long end = Math.min(maxY, bottom + 15);
@@ -74,6 +80,7 @@ public final class SectionSearchPruner {
     private boolean canStandIn(BlockState state) {
         return !policy.unsafe(state);
     }
+
     private boolean canSupport(BlockState state) {
         // Shape and entity-specific support is rechecked at the actual candidate.
         return !state.isAir() && !policy.unsafe(state);

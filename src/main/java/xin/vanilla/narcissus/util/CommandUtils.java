@@ -1,7 +1,5 @@
 package xin.vanilla.narcissus.util;
 
-import xin.vanilla.narcissus.data.cost.CostPaymentPlan;
-import xin.vanilla.narcissus.internal.server.NarcissusCostService;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.context.CommandContext;
@@ -26,10 +24,12 @@ import xin.vanilla.narcissus.config.CommonConfig;
 import xin.vanilla.narcissus.data.PlayerAccess;
 import xin.vanilla.narcissus.data.SafeWorldCoordinate;
 import xin.vanilla.narcissus.data.TeleportRequest;
+import xin.vanilla.narcissus.data.cost.CostPaymentPlan;
 import xin.vanilla.narcissus.data.player.PlayerTeleportData;
 import xin.vanilla.narcissus.data.world.WorldStageData;
 import xin.vanilla.narcissus.enums.EnumCommandType;
 import xin.vanilla.narcissus.enums.EnumTeleportType;
+import xin.vanilla.narcissus.internal.server.NarcissusCostService;
 import xin.vanilla.narcissus.notification.NarcissusNotificationTypes;
 
 import java.util.Comparator;

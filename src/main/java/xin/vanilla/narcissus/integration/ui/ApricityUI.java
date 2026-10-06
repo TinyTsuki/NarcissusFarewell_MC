@@ -18,13 +18,13 @@ import xin.vanilla.narcissus.NarcissusLang;
 import xin.vanilla.narcissus.data.SafeWorldCoordinate;
 import xin.vanilla.narcissus.data.TeleportRecord;
 import xin.vanilla.narcissus.data.client.ClientStageData;
+import xin.vanilla.narcissus.data.cost.CostQuote;
 import xin.vanilla.narcissus.data.player.PlayerTeleportData;
 import xin.vanilla.narcissus.enums.EnumTeleportType;
+import xin.vanilla.narcissus.internal.client.ClientCostQuotes;
+import xin.vanilla.narcissus.internal.client.NarcissusClientSyncState;
 import xin.vanilla.narcissus.network.packet.WaypointDelToServer;
 import xin.vanilla.narcissus.network.packet.WaypointTeleportToServer;
-import xin.vanilla.narcissus.internal.client.NarcissusClientSyncState;
-import xin.vanilla.narcissus.internal.client.ClientCostQuotes;
-import xin.vanilla.narcissus.data.cost.CostQuote;
 import xin.vanilla.narcissus.screen.WaypointScreen;
 
 import javax.annotation.Nonnull;
@@ -313,7 +313,8 @@ public class ApricityUI extends Screen {
         }
     }
 
-    @Override public void removed() {
+    @Override
+    public void removed() {
         NarcissusClientSyncState.costQuotes().closeView();
         super.removed();
     }
@@ -330,10 +331,13 @@ public class ApricityUI extends Screen {
                 new xin.vanilla.narcissus.network.packet.CostQuoteToServer(request)));
         return quotes.cached(entry.quoteTarget, now).map(quote -> {
             if (quote.status() != CostQuote.Status.READY) return quote.status().enumDescription().toString();
-            if (quote.costType() == xin.vanilla.narcissus.enums.EnumCostType.NONE) return NarcissusComponent.get().transClientAuto("cost_free").toString();
+            if (quote.costType() == xin.vanilla.narcissus.enums.EnumCostType.NONE)
+                return NarcissusComponent.get().transClientAuto("cost_free").toString();
             String result = quote.resourceAmount() + " " + quote.costType().enumDescription().toString();
-            if (quote.cardAmount() > 0) result += " + " + quote.cardAmount() + " " + NarcissusComponent.get().transClientAuto("teleport_card");
-            if (quote.commandPending()) result += " (" + NarcissusComponent.get().transClientAuto("cost_command_pending") + ")";
+            if (quote.cardAmount() > 0)
+                result += " + " + quote.cardAmount() + " " + NarcissusComponent.get().transClientAuto("teleport_card");
+            if (quote.commandPending())
+                result += " (" + NarcissusComponent.get().transClientAuto("cost_command_pending") + ")";
             return result;
         }).orElseGet(() -> NarcissusComponent.get().transClientAuto("cost_unknown").toString());
 

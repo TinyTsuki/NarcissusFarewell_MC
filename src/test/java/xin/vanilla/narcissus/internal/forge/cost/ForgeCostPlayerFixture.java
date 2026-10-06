@@ -1,41 +1,44 @@
 package xin.vanilla.narcissus.internal.forge.cost;
 
-import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.network.protocol.Packet;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.network.ServerGamePacketListenerImpl;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.food.FoodData;
-import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.level.Level;
-import net.minecraft.server.level.ServerLevel;
 import org.junit.After;
 import org.junit.Before;
 import xin.vanilla.banira.common.config.ConfigHolder;
 import xin.vanilla.banira.internal.config.CustomConfig;
-import xin.vanilla.banira.platform.*;
-import xin.vanilla.narcissus.config.CommonConfig;
-import xin.vanilla.narcissus.config.ConfigBaselineFixture;
+import xin.vanilla.banira.platform.BaniraPlatforms;
 import xin.vanilla.narcissus.data.player.PlayerTeleportData;
-import xin.vanilla.narcissus.enums.*;
-import xin.vanilla.narcissus.util.NarcissusUtils;
 
-import java.lang.reflect.*;
-import java.util.*;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.Field;
+import java.util.Map;
+import java.util.Optional;
+import java.util.UUID;
 
-import static org.junit.Assert.*;
-
-/** Native player fixture shared by payment and quote regressions. */
+/**
+ * Native player fixture shared by payment and quote regressions.
+ */
 public class ForgeCostPlayerFixture {
     private RecordingPlayer player;
     private Object previousPlatform;
     private ConfigHolder holder;
-    public RecordingPlayer player() { return player; }
 
-    @Before public void setup() throws Exception {
+    public RecordingPlayer player() {
+        return player;
+    }
+
+    @Before
+    public void setup() throws Exception {
         Field platform = BaniraPlatforms.class.getDeclaredField("platform");
         platform.setAccessible(true);
         previousPlatform = platform.get(null);
-        net.minecraft.SharedConstants.tryDetectVersion(); net.minecraft.server.Bootstrap.bootStrap();
+        net.minecraft.SharedConstants.tryDetectVersion();
+        net.minecraft.server.Bootstrap.bootStrap();
         player = allocate(RecordingPlayer.class);
         player.id = UUID.randomUUID();
         player.food = new FoodData();
@@ -63,7 +66,8 @@ public class ForgeCostPlayerFixture {
         CustomConfig.setPlayerLanguage(player.id.toString(), "en_us");
     }
 
-    @After public void cleanup() throws Exception {
+    @After
+    public void cleanup() throws Exception {
         PlayerTeleportData.clear();
         Field platform = BaniraPlatforms.class.getDeclaredField("platform");
         platform.setAccessible(true);
@@ -93,22 +97,74 @@ public class ForgeCostPlayerFixture {
         public ServerLevel world;
         boolean cancelExperience;
         int experienceFactor;
-        private RecordingPlayer() { super(null, null, null); }
-        @Override public UUID getUUID() { return id; }
-        @Override public ServerLevel serverLevel() { return world; }
-        @Override public FoodData getFoodData() { return food; }
-        @Override public float getHealth() { return health; }
-        @Override public boolean isAlive() { return health > 0 && !isRemoved(); }
-        @Override public void setHealth(float value) { health = value; }
-        @Override public boolean isLocalPlayer() { return false; }
-        @Override public void sendSystemMessage(net.minecraft.network.chat.Component message) { }
-        @Override public void giveExperiencePoints(int amount) { if (!cancelExperience) totalExperience += amount * (experienceFactor == 0 ? 1 : experienceFactor); }
-        @Override public void giveExperienceLevels(int amount) { if (!cancelExperience) experienceLevel += amount * (experienceFactor == 0 ? 1 : experienceFactor); }
-        @Override public boolean hurt(DamageSource source, float amount) { health -= amount; return true; }
+
+        private RecordingPlayer() {
+            super(null, null, null);
+        }
+
+        @Override
+        public UUID getUUID() {
+            return id;
+        }
+
+        @Override
+        public ServerLevel serverLevel() {
+            return world;
+        }
+
+        @Override
+        public FoodData getFoodData() {
+            return food;
+        }
+
+        @Override
+        public float getHealth() {
+            return health;
+        }
+
+        @Override
+        public boolean isAlive() {
+            return health > 0 && !isRemoved();
+        }
+
+        @Override
+        public void setHealth(float value) {
+            health = value;
+        }
+
+        @Override
+        public boolean isLocalPlayer() {
+            return false;
+        }
+
+        @Override
+        public void sendSystemMessage(net.minecraft.network.chat.Component message) {
+        }
+
+        @Override
+        public void giveExperiencePoints(int amount) {
+            if (!cancelExperience) totalExperience += amount * (experienceFactor == 0 ? 1 : experienceFactor);
+        }
+
+        @Override
+        public void giveExperienceLevels(int amount) {
+            if (!cancelExperience) experienceLevel += amount * (experienceFactor == 0 ? 1 : experienceFactor);
+        }
+
+        @Override
+        public boolean hurt(DamageSource source, float amount) {
+            health -= amount;
+            return true;
+        }
     }
 
     static class SilentConnection extends ServerGamePacketListenerImpl {
-        private SilentConnection() { super(null, null, null); }
-        @Override public void send(Packet<?> packet) { }
+        private SilentConnection() {
+            super(null, null, null);
+        }
+
+        @Override
+        public void send(Packet<?> packet) {
+        }
     }
 }

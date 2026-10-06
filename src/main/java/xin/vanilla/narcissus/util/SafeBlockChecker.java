@@ -6,8 +6,6 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
-import xin.vanilla.narcissus.NarcissusFarewell;
-import xin.vanilla.narcissus.data.SafeBlock;
 import xin.vanilla.narcissus.config.CommonConfig;
 import xin.vanilla.narcissus.config.CommonConfigView;
 import xin.vanilla.narcissus.search.SafeBlockPolicy;
@@ -19,9 +17,16 @@ import java.util.Objects;
 public class SafeBlockChecker {
     public interface BlockAccess {
         BlockState state(BlockPos pos);
+
         boolean suffocates(BlockState state, BlockPos pos);
-        default boolean blocksMotion(BlockState state, BlockPos pos) { return state.blocksMotion(); }
-        default boolean supports(BlockState state, BlockPos pos) { return state.isSolid(); }
+
+        default boolean blocksMotion(BlockState state, BlockPos pos) {
+            return state.blocksMotion();
+        }
+
+        default boolean supports(BlockState state, BlockPos pos) {
+            return state.isSolid();
+        }
     }
 
     private final BlockAccess access;
@@ -41,10 +46,23 @@ public class SafeBlockChecker {
 
     public SafeBlockChecker(Level level, Entity entity, SafeBlockPolicy policy) {
         this(new BlockAccess() {
-            @Override public BlockState state(BlockPos pos) { return level.getBlockState(pos); }
-            @Override public boolean suffocates(BlockState state, BlockPos pos) { return state.isSuffocating(level, pos); }
-            @Override public boolean blocksMotion(BlockState state, BlockPos pos) { return state.isCollisionShapeFullBlock(level, pos); }
-            @Override public boolean supports(BlockState state, BlockPos pos) {
+            @Override
+            public BlockState state(BlockPos pos) {
+                return level.getBlockState(pos);
+            }
+
+            @Override
+            public boolean suffocates(BlockState state, BlockPos pos) {
+                return state.isSuffocating(level, pos);
+            }
+
+            @Override
+            public boolean blocksMotion(BlockState state, BlockPos pos) {
+                return state.isCollisionShapeFullBlock(level, pos);
+            }
+
+            @Override
+            public boolean supports(BlockState state, BlockPos pos) {
                 return entity == null ? state.isFaceSturdy(level, pos, Direction.UP) : state.entityCanStandOn(level, pos, entity);
             }
         }, policy);
