@@ -6,15 +6,22 @@ import xin.vanilla.banira.common.config.ConfigEntryDescriptor;
 import xin.vanilla.narcissus.config.migration.CostConfigMigration;
 import xin.vanilla.narcissus.enums.EnumTeleportType;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import static org.junit.Assert.*;
 
 public class CostSchemaTest {
-    @BeforeClass public static void bootstrap() { net.minecraft.SharedConstants.tryDetectVersion(); net.minecraft.server.Bootstrap.bootStrap(); }
+    @BeforeClass
+    public static void bootstrap() {
+        net.minecraft.SharedConstants.tryDetectVersion();
+        net.minecraft.server.Bootstrap.bootStrap();
+    }
 
-    @Test public void everyCostGroupHasTheSameRegisteredFields() throws Exception {
+    @Test
+    public void everyCostGroupHasTheSameRegisteredFields() throws Exception {
         ConfigBaselineFixture fixture = new ConfigBaselineFixture(CommonConfig.class);
         Set<String> paths = fixture.defaults.keySet();
         Set<String> fields = new HashSet<>(Arrays.asList("type", "fixedAmount", "perBlockAmount", "minAmount",
@@ -28,7 +35,8 @@ public class CostSchemaTest {
             assertEquals(.002D, fixture.defaults.get(prefix + "perBlockAmount"));
             assertEquals(0, fixture.defaults.get(prefix + "minAmount"));
             assertEquals(20, fixture.defaults.get(prefix + "maxAmount"));
-            for (String field : Arrays.asList("item", "command", "custom.file")) assertEquals("", fixture.defaults.get(prefix + field));
+            for (String field : Arrays.asList("item", "command", "custom.file"))
+                assertEquals("", fixture.defaults.get(prefix + field));
         }
         assertFalse(paths.stream().anyMatch(p -> p.startsWith("cost.tp") || p.startsWith("base.teleportCard.")
                 || p.startsWith("base.teleportLimit.teleportCost")));
@@ -36,7 +44,8 @@ public class CostSchemaTest {
         assertEquals(10000, fixture.defaults.get("cost.distance.maxDistance"));
     }
 
-    @Test public void smallRatesAndUnlimitedCapsAreRepresentable() throws Exception {
+    @Test
+    public void smallRatesAndUnlimitedCapsAreRepresentable() throws Exception {
         ConfigBaselineFixture fixture = new ConfigBaselineFixture(CommonConfig.class);
         ConfigEntryDescriptor rate = fixture.holder.getDescriptors().stream()
                 .filter(d -> d.getPath().equals("cost.home.perBlockAmount")).findFirst().get();

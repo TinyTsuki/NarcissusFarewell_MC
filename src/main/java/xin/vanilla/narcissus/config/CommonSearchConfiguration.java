@@ -1,7 +1,7 @@
 package xin.vanilla.narcissus.config;
 
-import xin.vanilla.banira.common.config.ConfigHolder;
 import xin.vanilla.banira.api.BaniraConfigs;
+import xin.vanilla.banira.common.config.ConfigHolder;
 import xin.vanilla.narcissus.enums.EnumTeleportType;
 import xin.vanilla.narcissus.search.SafeBlockPolicy;
 import xin.vanilla.narcissus.search.SearchExecutionSettings;
@@ -55,7 +55,8 @@ public final class CommonSearchConfiguration {
             Snapshot previous = pair[index];
             if (previous != null && previous.matches()) return previous;
             for (String name : Arrays.asList("safeBlocks", "unsafeBlocks", "suffocatingBlocks", "safeChunkRange",
-                    "setBlockWhenSafeNotFound", "getBlockFromInventory")) validate(SAFE + name);
+                    "setBlockWhenSafeNotFound", "getBlockFromInventory"))
+                validate(SAFE + name);
             if (type == EnumTeleportType.TP_RANDOM) {
                 validate(RANDOM + "teleportRandomDistanceLimit");
                 validate(RANDOM + "tpRandomSafeNotFoundRetries");
@@ -106,12 +107,14 @@ public final class CommonSearchConfiguration {
 
     private void validate(String path) {
         Object value = holder.get(path);
-        if (value == null || !holder.validate(path, value)) throw new IllegalArgumentException("Invalid search configuration: " + path);
+        if (value == null || !holder.validate(path, value))
+            throw new IllegalArgumentException("Invalid search configuration: " + path);
     }
 
     private BooleanSupplier prepare(Map<String, Object> expected) {
         BooleanSupplier stored = holder.prepareStoredMatch(expected, true);
-        if (!stored.getAsBoolean()) throw new IllegalArgumentException("Search configuration does not match its runtime values");
+        if (!stored.getAsBoolean())
+            throw new IllegalArgumentException("Search configuration does not match its runtime values");
         return () -> {
             synchronized (holder) {
                 return BaniraConfigs.handle(CommonConfig.class) == holder && stored.getAsBoolean();
@@ -142,13 +145,36 @@ public final class CommonSearchConfiguration {
             this.matches = matches;
         }
 
-        public SafeBlockPolicy policy() { return policy; }
-        public int safeChunkRange() { return safeChunkRange; }
-        public int randomDistanceLimit() { return randomDistanceLimit; }
-        public int randomRetries() { return randomRetries; }
-        public int viewDistanceLimit() { return viewDistanceLimit; }
-        public boolean setBlockWhenSafeNotFound() { return setBlockWhenSafeNotFound; }
-        public boolean getBlockFromInventory() { return getBlockFromInventory; }
-        public boolean matches() { return matches.getAsBoolean(); }
+        public SafeBlockPolicy policy() {
+            return policy;
+        }
+
+        public int safeChunkRange() {
+            return safeChunkRange;
+        }
+
+        public int randomDistanceLimit() {
+            return randomDistanceLimit;
+        }
+
+        public int randomRetries() {
+            return randomRetries;
+        }
+
+        public int viewDistanceLimit() {
+            return viewDistanceLimit;
+        }
+
+        public boolean setBlockWhenSafeNotFound() {
+            return setBlockWhenSafeNotFound;
+        }
+
+        public boolean getBlockFromInventory() {
+            return getBlockFromInventory;
+        }
+
+        public boolean matches() {
+            return matches.getAsBoolean();
+        }
     }
 }

@@ -72,7 +72,9 @@ public final class TeleportCountdownTracker {
             SESSIONS.remove(playerId, this);
         }
 
-        public void cancel() { cancelSilently(); }
+        public void cancel() {
+            cancelSilently();
+        }
 
         private void cancelWithNotify(ServerPlayer player, boolean damageReason) {
             if (cancelled.getAndSet(true)) {
@@ -91,7 +93,8 @@ public final class TeleportCountdownTracker {
      * 开始新的传送倒计时会话；若该玩家已有会话则静默取消旧会话。
      */
     public static Session begin(ServerPlayer player, boolean watchMove, boolean watchDamage) {
-        return begin(player, watchMove, watchDamage, () -> { });
+        return begin(player, watchMove, watchDamage, () -> {
+        });
     }
 
     public static Session begin(ServerPlayer player, boolean watchMove, boolean watchDamage, Runnable onCancel) {

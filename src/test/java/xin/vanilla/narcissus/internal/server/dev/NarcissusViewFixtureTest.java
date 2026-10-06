@@ -12,12 +12,14 @@ import java.util.Map;
 import static org.junit.Assert.*;
 
 public class NarcissusViewFixtureTest {
-    @BeforeClass public static void bootstrap() {
+    @BeforeClass
+    public static void bootstrap() {
         net.minecraft.SharedConstants.tryDetectVersion();
         net.minecraft.server.Bootstrap.bootStrap();
     }
 
-    @Test public void clearsRandomTerrainInsideTheCollisionRing() {
+    @Test
+    public void clearsRandomTerrainInsideTheCollisionRing() {
         Map<BlockPos, BlockState> blocks = new HashMap<>();
         blocks.put(new BlockPos(0, 71, 0), Blocks.GRASS_BLOCK.defaultBlockState());
         blocks.put(new BlockPos(1, 71, 0), Blocks.DIRT.defaultBlockState());

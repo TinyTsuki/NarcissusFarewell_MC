@@ -2,7 +2,9 @@ package xin.vanilla.narcissus.screen;
 
 import java.util.Comparator;
 
-/** 地标名称自然排序，使名称中的连续数字按数值顺序排列。 */
+/**
+ * 地标名称自然排序，使名称中的连续数字按数值顺序排列。
+ */
 final class WaypointNameComparator implements Comparator<String> {
     static final WaypointNameComparator INSTANCE = new WaypointNameComparator();
 

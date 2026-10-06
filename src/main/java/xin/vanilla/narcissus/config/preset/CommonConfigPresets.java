@@ -2,15 +2,19 @@ package xin.vanilla.narcissus.config.preset;
 
 import xin.vanilla.banira.common.config.ConfigEntryDescriptor;
 import xin.vanilla.banira.common.config.ConfigHolder;
+import xin.vanilla.narcissus.config.migration.CostConfigMigration;
 import xin.vanilla.narcissus.enums.EnumCostType;
 import xin.vanilla.narcissus.enums.EnumTeleportType;
-import xin.vanilla.narcissus.config.migration.CostConfigMigration;
+
 import java.util.ArrayList;
 import java.util.List;
 
-/** Business presets; configuration access is generated from the declarations. */
+/**
+ * Business presets; configuration access is generated from the declarations.
+ */
 public final class CommonConfigPresets {
-    private CommonConfigPresets() {}
+    private CommonConfigPresets() {
+    }
 
     private static void applyDefaults(ConfigHolder holder) {
         // Only registered entries belong to this preset, not unrelated backend values.

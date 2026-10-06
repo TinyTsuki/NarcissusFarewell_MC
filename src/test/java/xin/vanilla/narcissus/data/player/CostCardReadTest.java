@@ -6,10 +6,12 @@ import xin.vanilla.narcissus.enums.EnumTeleportType;
 
 import java.lang.reflect.Constructor;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 public class CostCardReadTest {
-    @Test public void readingCardsForACostDoesNotFlushDirtyPlayerData() throws Exception {
+    @Test
+    public void readingCardsForACostDoesNotFlushDirtyPlayerData() throws Exception {
         Constructor<PlayerTeleportData> constructor = PlayerTeleportData.class.getDeclaredConstructor(Player.class);
         constructor.setAccessible(true);
         PlayerTeleportData data = constructor.newInstance((Object) null);
@@ -18,7 +20,8 @@ public class CostCardReadTest {
         assertTrue(data.isDirty());
     }
 
-    @Test public void readingCountdownForACostDoesNotFlushDirtyPlayerData() throws Exception {
+    @Test
+    public void readingCountdownForACostDoesNotFlushDirtyPlayerData() throws Exception {
         Constructor<PlayerTeleportData> constructor = PlayerTeleportData.class.getDeclaredConstructor(Player.class);
         constructor.setAccessible(true);
         PlayerTeleportData data = constructor.newInstance((Object) null);

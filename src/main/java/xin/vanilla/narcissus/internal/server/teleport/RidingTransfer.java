@@ -5,19 +5,32 @@ import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 
-/** Internal riding-graph transfer shared by loader-specific entity adapters. */
+/**
+ * Internal riding-graph transfer shared by loader-specific entity adapters.
+ */
 public final class RidingTransfer {
-    private RidingTransfer() { }
+    private RidingTransfer() {
+    }
 
     public interface Backend<E> {
         List<E> passengers(E entity);
-        default List<E> attachmentOrder(E vehicle, List<E> passengers) { return passengers; }
+
+        default List<E> attachmentOrder(E vehicle, List<E> passengers) {
+            return passengers;
+        }
+
         E vehicle(E entity);
+
         void detach(E entity);
+
         E move(E entity);
+
         boolean alive(E entity);
+
         boolean atDestination(E entity);
+
         boolean sameWorld(E first, E second);
+
         boolean attach(E entity, E vehicle);
     }
 

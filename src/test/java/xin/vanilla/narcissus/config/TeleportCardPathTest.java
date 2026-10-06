@@ -1,10 +1,13 @@
 package xin.vanilla.narcissus.config;
 
 import org.junit.Test;
-import static org.junit.Assert.*;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 public class TeleportCardPathTest {
-    @Test public void configuredCardValuesUseRegisteredPaths() throws Exception {
+    @Test
+    public void configuredCardValuesUseRegisteredPaths() throws Exception {
         ConfigBaselineFixture fixture = new ConfigBaselineFixture(CommonConfig.class);
         fixture.bind(CommonConfig.class);
         fixture.holder.set("cost.cards.enabled", true);
