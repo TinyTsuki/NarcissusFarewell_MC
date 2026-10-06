@@ -16,6 +16,7 @@ import xin.vanilla.narcissus.data.TeleportRecord;
 import xin.vanilla.narcissus.data.TeleportRequest;
 import xin.vanilla.narcissus.data.player.PlayerTeleportData;
 import xin.vanilla.narcissus.enums.EnumTeleportType;
+import xin.vanilla.narcissus.internal.server.teleport.TeleportHistoryScope;
 import xin.vanilla.narcissus.notification.NarcissusNotificationTypes;
 import xin.vanilla.narcissus.util.TeleportCountdownTracker;
 
@@ -77,6 +78,11 @@ public class EventHandlerProxy {
     }
 
     public static void onPlayerTeleport(ServerPlayerEntity player, Vector3d previous, Vector3d target) {
+        onPlayerTeleport(player, previous, target, null);
+    }
+
+    public static void onPlayerTeleport(ServerPlayerEntity player, Vector3d previous, Vector3d target, Object destinationDimension) {
+        if (TeleportHistoryScope.owns(player, destinationDimension, target.x, target.y, target.z)) return;
         TeleportRecord record = new TeleportRecord();
         record.setTeleportTime(new Date());
         record.setTeleportType(EnumTeleportType.OTHER);
@@ -91,9 +97,11 @@ public class EventHandlerProxy {
         if (otherRecord != null && otherRecord.getTeleportType() == EnumTeleportType.OTHER && otherRecord.getBefore().xyzString().equals(record.getBefore().xyzString())) {
             otherRecord.setAfter(record.getAfter());
             data.save();
+            TeleportHistoryScope.noteRecorded(player, destinationDimension == null ? after.dimension() : destinationDimension, target.x, target.y, target.z);
             PlayerTeleportData.syncPlayerData(player);
         } else {
             data.addTeleportRecords(record);
+            TeleportHistoryScope.noteRecorded(player, destinationDimension == null ? after.dimension() : destinationDimension, target.x, target.y, target.z);
             PlayerTeleportData.syncPlayerData(player);
         }
     }
