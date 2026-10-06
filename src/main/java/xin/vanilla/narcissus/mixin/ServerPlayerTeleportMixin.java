@@ -18,6 +18,6 @@ public abstract class ServerPlayerTeleportMixin {
     private void narcissus$beforeTeleport(ServerLevel targetLevel, double x, double y, double z,
                                           float yaw, float pitch, CallbackInfo ci) {
         ServerPlayer player = (ServerPlayer) (Object) this;
-        EventHandlerProxy.onPlayerTeleport(player, player.position(), new Vec3(x, y, z));
+        EventHandlerProxy.onPlayerTeleport(player, player.position(), new Vec3(x, y, z), targetLevel.dimension());
     }
 }
