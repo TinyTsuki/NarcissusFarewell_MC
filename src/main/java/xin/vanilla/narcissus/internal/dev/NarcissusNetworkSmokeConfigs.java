@@ -1,17 +1,12 @@
 package xin.vanilla.narcissus.internal.dev;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonPrimitive;
+import com.google.gson.*;
+import xin.vanilla.banira.api.BaniraConfigs;
+import xin.vanilla.banira.api.BaniraDataPaths;
+import xin.vanilla.banira.common.config.ConfigEntryDescriptor;
+import xin.vanilla.banira.common.config.ConfigHolder;
 import xin.vanilla.narcissus.config.ClientConfig;
 import xin.vanilla.narcissus.config.CommonConfig;
-import xin.vanilla.banira.api.BaniraDataPaths;
-import xin.vanilla.banira.api.BaniraConfigs;
-import xin.vanilla.banira.common.config.ConfigHolder;
-import xin.vanilla.banira.common.config.ConfigEntryDescriptor;
 
 import java.io.IOException;
 import java.io.Reader;
@@ -20,16 +15,19 @@ import java.lang.reflect.Method;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Map;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 
-/** Read-only config comparison; only the separate dev checkpoint is written. */
+/**
+ * Read-only config comparison; only the separate dev checkpoint is written.
+ */
 public final class NarcissusNetworkSmokeConfigs {
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
 
-    private NarcissusNetworkSmokeConfigs() { }
+    private NarcissusNetworkSmokeConfigs() {
+    }
 
     public static void verify(boolean client) {
         if (!NarcissusNetworkSmokeStatus.enabled()) throw new IllegalStateException("Smoke disabled");
@@ -149,7 +147,9 @@ public final class NarcissusNetworkSmokeConfigs {
                     requireEqual("generated", path, normalize(holder.get(path)), normalize(value));
                 }
             }
-        } catch (ReflectiveOperationException error) { throw new IllegalStateException(error); }
+        } catch (ReflectiveOperationException error) {
+            throw new IllegalStateException(error);
+        }
     }
 
     private static Set<String> paths(JsonObject object) {

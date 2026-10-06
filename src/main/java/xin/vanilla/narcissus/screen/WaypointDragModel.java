@@ -1,6 +1,8 @@
 package xin.vanilla.narcissus.screen;
 
-/** 地标拖动的插入槽位与边缘滚动计算，保持视觉位置和最终顺序一致。 */
+/**
+ * 地标拖动的插入槽位与边缘滚动计算，保持视觉位置和最终顺序一致。
+ */
 final class WaypointDragModel {
     private WaypointDragModel() {
     }
