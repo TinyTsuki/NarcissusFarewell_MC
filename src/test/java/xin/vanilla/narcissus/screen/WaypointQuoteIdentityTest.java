@@ -1,7 +1,7 @@
 package xin.vanilla.narcissus.screen;
 
-import org.junit.Test;
 import org.junit.BeforeClass;
+import org.junit.Test;
 import xin.vanilla.narcissus.data.SafeWorldCoordinate;
 import xin.vanilla.narcissus.data.cost.CostQuoteTarget;
 import xin.vanilla.narcissus.enums.EnumTeleportType;

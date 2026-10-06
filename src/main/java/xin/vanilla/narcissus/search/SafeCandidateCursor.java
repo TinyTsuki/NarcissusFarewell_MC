@@ -8,10 +8,13 @@ import xin.vanilla.narcissus.enums.EnumSafeMode;
 import java.util.Objects;
 
 public final class SafeCandidateCursor {
-    /** Negative answers cover the whole X chunk and all Z positions in this search box. */
+    /**
+     * Negative answers cover the whole X chunk and all Z positions in this search box.
+     */
     public interface YFilter {
         long next(int chunkX, long minY, long maxY);
     }
+
     public enum Step implements IEnumDescribable {
         CANDIDATE, SKIPPED, DONE;
 
@@ -131,7 +134,10 @@ public final class SafeCandidateCursor {
             }
             if (allowed < from || allowed > to) throw new IllegalStateException("Invalid height filter result");
             long nextDy = allowed - cy;
-            if (nextDy != dy) { dy = nextDy; sign = 0; }
+            if (nextDy != dy) {
+                dy = nextDy;
+                sign = 0;
+            }
             if (dy > -dyGap && dy < dyGap) {
                 dy = dyGap;
                 sign = 0;

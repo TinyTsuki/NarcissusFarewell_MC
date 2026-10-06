@@ -4,8 +4,6 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
-import xin.vanilla.narcissus.NarcissusFarewell;
-import xin.vanilla.narcissus.data.SafeBlock;
 import xin.vanilla.narcissus.config.CommonConfig;
 import xin.vanilla.narcissus.config.CommonConfigView;
 import xin.vanilla.narcissus.search.SafeBlockPolicy;
@@ -17,6 +15,7 @@ import java.util.Objects;
 public class SafeBlockChecker {
     public interface BlockAccess {
         BlockState state(BlockPos pos);
+
         boolean suffocates(BlockState state, BlockPos pos);
     }
 
@@ -29,8 +28,15 @@ public class SafeBlockChecker {
 
     public SafeBlockChecker(Level level, SafeBlockPolicy policy) {
         this(new BlockAccess() {
-            @Override public BlockState state(BlockPos pos) { return level.getBlockState(pos); }
-            @Override public boolean suffocates(BlockState state, BlockPos pos) { return state.isSuffocating(level, pos); }
+            @Override
+            public BlockState state(BlockPos pos) {
+                return level.getBlockState(pos);
+            }
+
+            @Override
+            public boolean suffocates(BlockState state, BlockPos pos) {
+                return state.isSuffocating(level, pos);
+            }
         }, policy);
     }
 

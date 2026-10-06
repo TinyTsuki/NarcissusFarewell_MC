@@ -1,9 +1,9 @@
 package xin.vanilla.narcissus.util;
 
-import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.block.Blocks;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.Bootstrap;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.state.BlockState;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import xin.vanilla.narcissus.search.SafeBlockPolicy;

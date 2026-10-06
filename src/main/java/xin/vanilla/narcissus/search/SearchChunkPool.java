@@ -21,7 +21,9 @@ public final class SearchChunkPool implements AutoCloseable {
 
     public interface Backend {
         boolean isReady(ResourceLocation dimension, int cx, int cz);
+
         void retain(ResourceLocation dimension, int cx, int cz);
+
         void release(ResourceLocation dimension, int cx, int cz);
     }
 

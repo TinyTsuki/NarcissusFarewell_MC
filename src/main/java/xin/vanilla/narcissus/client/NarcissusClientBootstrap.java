@@ -1,7 +1,7 @@
 package xin.vanilla.narcissus.client;
-import xin.vanilla.banira.api.client.event.BaniraClientEvents;
 
 import net.minecraft.resources.ResourceLocation;
+import xin.vanilla.banira.api.client.event.BaniraClientEvents;
 import xin.vanilla.banira.client.gui.ConfigEditorScreen;
 import xin.vanilla.banira.client.gui.quickaction.QuickActionContext;
 import xin.vanilla.banira.client.gui.quickaction.QuickActionContextMenuItem;

@@ -1,15 +1,15 @@
 package xin.vanilla.narcissus.internal.server.dev;
 
-import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.server.level.ServerLevel;
-import net.minecraft.util.Mth;
 import net.minecraft.core.BlockPos;
+import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.util.Mth;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.animal.Wolf;
-import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.phys.Vec3;
 import xin.vanilla.banira.api.BaniraServer;
 import xin.vanilla.banira.api.event.BaniraEvents;
 import xin.vanilla.narcissus.data.SafeWorldCoordinate;
@@ -493,7 +493,9 @@ public final class NarcissusNetworkSmokeServerRunner {
             }
         }
 
-        /** Spark 1.6 predates the plugin-owned sampler API used by newer releases. */
+        /**
+         * Spark 1.6 predates the plugin-owned sampler API used by newer releases.
+         */
         private static ReflectiveSparkProfile startLegacySparkProfile() {
             try {
                 String configuredReport = System.getProperty(REPORT_PROPERTY, "").trim();

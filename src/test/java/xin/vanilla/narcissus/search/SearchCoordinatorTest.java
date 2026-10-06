@@ -9,11 +9,12 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static org.junit.Assert.*;
-import static xin.vanilla.narcissus.search.SearchTask.State.*;
 import static xin.vanilla.narcissus.search.SearchTask.Failure.*;
+import static xin.vanilla.narcissus.search.SearchTask.State.*;
 
 public class SearchCoordinatorTest {
-    @Test public void hardStepLimitAndSliceLimitApplyEvenWhenClockDoesNotAdvance() {
+    @Test
+    public void hardStepLimitAndSliceLimitApplyEvenWhenClockDoesNotAdvance() {
         Clock clock = new Clock();
         SearchCoordinator coordinator = coordinator(clock);
         List<Task> tasks = new ArrayList<>();
@@ -33,7 +34,8 @@ public class SearchCoordinatorTest {
         for (Task task : tasks) assertEquals(1, task.closes);
     }
 
-    @Test public void softBudgetAllowsAtMostOneSliceOverrun() {
+    @Test
+    public void softBudgetAllowsAtMostOneSliceOverrun() {
         Clock clock = new Clock();
         Task task = new Task(clock);
         task.nanosPerStep = 1000;
@@ -46,7 +48,8 @@ public class SearchCoordinatorTest {
         coordinator.close();
     }
 
-    @Test public void waitingAndZeroProgressTasksDoNotBlockAReadyPeerOrBusyPoll() {
+    @Test
+    public void waitingAndZeroProgressTasksDoNotBlockAReadyPeerOrBusyPoll() {
         Clock clock = new Clock();
         SearchCoordinator coordinator = coordinator(clock);
         Task waiting = new Task(clock);
@@ -68,7 +71,8 @@ public class SearchCoordinatorTest {
         coordinator.close();
     }
 
-    @Test public void exhaustedBudgetResumesAfterPreviousTaskInsteadOfStarvingTheTail() {
+    @Test
+    public void exhaustedBudgetResumesAfterPreviousTaskInsteadOfStarvingTheTail() {
         Clock clock = new Clock();
         SearchCoordinator coordinator = coordinator(clock);
         List<Task> tasks = new ArrayList<>();
@@ -83,7 +87,8 @@ public class SearchCoordinatorTest {
         coordinator.close();
     }
 
-    @Test public void countdownUsesAdmissionSlotAndRejectedTaskIsClosedOnce() {
+    @Test
+    public void countdownUsesAdmissionSlotAndRejectedTaskIsClosedOnce() {
         Clock clock = new Clock();
         SearchCoordinator coordinator = coordinator(clock);
         for (int i = 0; i < 32; i++) {
@@ -102,7 +107,8 @@ public class SearchCoordinatorTest {
         assertEquals(1, rejected.closes);
     }
 
-    @Test public void staleSamePlayerIsRemovedBeforeCapacityCheck() {
+    @Test
+    public void staleSamePlayerIsRemovedBeforeCapacityCheck() {
         Clock clock = new Clock();
         AtomicReference<SearchExecutionSettings> settings = new AtomicReference<>(new SearchExecutionSettings(2, 1, 30));
         SearchCoordinator coordinator = new SearchCoordinator(() -> true, settings::get, () -> clock.now);
@@ -118,7 +124,8 @@ public class SearchCoordinatorTest {
         coordinator.close();
     }
 
-    @Test public void validSamePlayerRequestIsNotSilentlyReplaced() {
+    @Test
+    public void validSamePlayerRequestIsNotSilentlyReplaced() {
         Clock clock = new Clock();
         SearchCoordinator coordinator = coordinator(clock);
         Task old = new Task(clock);
@@ -131,7 +138,8 @@ public class SearchCoordinatorTest {
         coordinator.close();
     }
 
-    @Test public void searchTimeoutUsesAdmissionValueButDoesNotExpireCountdown() {
+    @Test
+    public void searchTimeoutUsesAdmissionValueButDoesNotExpireCountdown() {
         Clock clock = new Clock();
         AtomicReference<SearchExecutionSettings> settings = new AtomicReference<>(new SearchExecutionSettings(2, 32, 30));
         SearchCoordinator coordinator = new SearchCoordinator(() -> true, settings::get, () -> clock.now);
@@ -158,7 +166,8 @@ public class SearchCoordinatorTest {
         coordinator.close();
     }
 
-    @Test public void liveAndPolicyChangesCancelWithoutAdvancing() {
+    @Test
+    public void liveAndPolicyChangesCancelWithoutAdvancing() {
         Clock clock = new Clock();
         SearchCoordinator coordinator = coordinator(clock);
         Task player = new Task(clock);
@@ -176,7 +185,8 @@ public class SearchCoordinatorTest {
         assertEquals(1, policy.closes);
     }
 
-    @Test public void terminalTaskAndExplicitCancellationReleaseOnlyOnce() {
+    @Test
+    public void terminalTaskAndExplicitCancellationReleaseOnlyOnce() {
         Clock clock = new Clock();
         SearchCoordinator coordinator = coordinator(clock);
         Task success = new Task(clock);
@@ -197,7 +207,8 @@ public class SearchCoordinatorTest {
         assertEquals(1, cancelled.closes);
     }
 
-    @Test public void taskFailureAndCleanupFailureCannotStrandOtherTasks() {
+    @Test
+    public void taskFailureAndCleanupFailureCannotStrandOtherTasks() {
         Clock clock = new Clock();
         SearchCoordinator coordinator = coordinator(clock);
         Task broken = new Task(clock);
@@ -217,7 +228,8 @@ public class SearchCoordinatorTest {
         coordinator.close();
     }
 
-    @Test public void badStepAccountingFailsRequestInsteadOfBypassingBound() {
+    @Test
+    public void badStepAccountingFailsRequestInsteadOfBypassingBound() {
         Clock clock = new Clock();
         SearchCoordinator coordinator = coordinator(clock);
         Task broken = new Task(clock);
@@ -229,7 +241,8 @@ public class SearchCoordinatorTest {
         assertEquals(0, coordinator.activeCount());
     }
 
-    @Test public void lowerLimitBlocksNewAdmissionWithoutCancellingExistingTasks() {
+    @Test
+    public void lowerLimitBlocksNewAdmissionWithoutCancellingExistingTasks() {
         Clock clock = new Clock();
         AtomicReference<SearchExecutionSettings> settings = new AtomicReference<>(new SearchExecutionSettings(2, 32, 30));
         SearchCoordinator coordinator = new SearchCoordinator(() -> true, settings::get, () -> clock.now);
@@ -248,7 +261,8 @@ public class SearchCoordinatorTest {
         coordinator.close();
     }
 
-    @Test public void badLiveSettingsReleaseAllTasksAndRefuseNewAdmission() {
+    @Test
+    public void badLiveSettingsReleaseAllTasksAndRefuseNewAdmission() {
         Clock clock = new Clock();
         AtomicBoolean bad = new AtomicBoolean();
         SearchCoordinator coordinator = new SearchCoordinator(() -> true, () -> {
@@ -270,7 +284,8 @@ public class SearchCoordinatorTest {
         coordinator.close();
     }
 
-    @Test public void ownerGuardAndServerStopPreventLateMutation() {
+    @Test
+    public void ownerGuardAndServerStopPreventLateMutation() {
         Clock clock = new Clock();
         AtomicBoolean owner = new AtomicBoolean(true);
         SearchCoordinator coordinator = new SearchCoordinator(owner::get, () -> new SearchExecutionSettings(2, 32, 30), () -> clock.now);
@@ -291,7 +306,8 @@ public class SearchCoordinatorTest {
         assertEquals(1, late.closes);
     }
 
-    @Test public void settingsRejectInvalidRangesAndNonFiniteBudgets() {
+    @Test
+    public void settingsRejectInvalidRangesAndNonFiniteBudgets() {
         for (double value : new double[]{0, .09, 10.01, Double.NaN, Double.POSITIVE_INFINITY}) {
             assertThrows(IllegalArgumentException.class, () -> new SearchExecutionSettings(value, 32, 30));
         }
@@ -301,7 +317,8 @@ public class SearchCoordinatorTest {
         assertThrows(IllegalArgumentException.class, () -> new SearchExecutionSettings(2, 32, 301));
     }
 
-    @Test public void expensiveMaintenanceCannotKeepTheTailFromRunning() {
+    @Test
+    public void expensiveMaintenanceCannotKeepTheTailFromRunning() {
         Clock clock = new Clock();
         SearchCoordinator coordinator = coordinator(clock);
         Task slow = new Task(clock);
@@ -318,7 +335,8 @@ public class SearchCoordinatorTest {
         coordinator.close();
     }
 
-    @Test public void settingsReadIsIncludedInTheSharedBudget() {
+    @Test
+    public void settingsReadIsIncludedInTheSharedBudget() {
         Clock clock = new Clock();
         AtomicBoolean chargeRead = new AtomicBoolean();
         SearchCoordinator coordinator = new SearchCoordinator(() -> true, () -> {
@@ -334,7 +352,8 @@ public class SearchCoordinatorTest {
         coordinator.close();
     }
 
-    @Test public void cancellationDuringPolicyCheckCannotAdvanceTheClosedRequest() {
+    @Test
+    public void cancellationDuringPolicyCheckCannotAdvanceTheClosedRequest() {
         Clock clock = new Clock();
         SearchCoordinator coordinator = coordinator(clock);
         Task task = new Task(clock);
@@ -346,7 +365,8 @@ public class SearchCoordinatorTest {
         assertEquals(0, coordinator.activeCount());
     }
 
-    @Test public void replacementDuringAdmissionValidationCannotBeOverwrittenOrLeaked() {
+    @Test
+    public void replacementDuringAdmissionValidationCannotBeOverwrittenOrLeaked() {
         Clock clock = new Clock();
         SearchCoordinator coordinator = coordinator(clock);
         Task old = new Task(clock);
@@ -369,7 +389,8 @@ public class SearchCoordinatorTest {
         assertEquals(1, inserted.closes);
     }
 
-    @Test public void cancellationDuringStepAndDuplicateSubmissionAreIdempotent() {
+    @Test
+    public void cancellationDuringStepAndDuplicateSubmissionAreIdempotent() {
         Clock clock = new Clock();
         SearchCoordinator coordinator = coordinator(clock);
         Task task = new Task(clock);
@@ -384,7 +405,8 @@ public class SearchCoordinatorTest {
         assertEquals(0, coordinator.activeCount());
     }
 
-    @Test public void recursiveTickCannotGrantAnotherGlobalStepBudget() {
+    @Test
+    public void recursiveTickCannotGrantAnotherGlobalStepBudget() {
         Clock clock = new Clock();
         SearchCoordinator coordinator = coordinator(clock);
         Task first = new Task(clock);
@@ -402,7 +424,8 @@ public class SearchCoordinatorTest {
         assertEquals(1, peer.closes);
     }
 
-    @Test public void zeroStepStateFlipsCannotSpinForeverOrBypassVisitLimit() {
+    @Test
+    public void zeroStepStateFlipsCannotSpinForeverOrBypassVisitLimit() {
         Clock clock = new Clock();
         SearchCoordinator coordinator = coordinator(clock);
         Task task = new Task(clock);
@@ -419,20 +442,29 @@ public class SearchCoordinatorTest {
         return new SearchCoordinator(() -> true, () -> new SearchExecutionSettings(2, 32, 30), () -> clock.now);
     }
 
-    @Test public void logoutPrunesRelatedInvalidTicketsWithoutAdvancingOtherSearches() {
+    @Test
+    public void logoutPrunesRelatedInvalidTicketsWithoutAdvancingOtherSearches() {
         Clock clock = new Clock();
         SearchCoordinator coordinator = coordinator(clock);
         Task moving = new Task(clock), related = new Task(clock), other = new Task(clock);
-        coordinator.submit(moving); coordinator.submit(related); coordinator.submit(other);
-        moving.live = false; related.live = false;
+        coordinator.submit(moving);
+        coordinator.submit(related);
+        coordinator.submit(other);
+        moving.live = false;
+        related.live = false;
         coordinator.pruneInvalid();
         assertEquals(1, coordinator.activeCount());
-        assertEquals(1, moving.closes); assertEquals(1, related.closes);
-        assertEquals(0, other.calls); assertEquals(0, other.closes);
+        assertEquals(1, moving.closes);
+        assertEquals(1, related.closes);
+        assertEquals(0, other.calls);
+        assertEquals(0, other.closes);
         coordinator.close();
     }
 
-    private static final class Clock { long now; }
+    private static final class Clock {
+        long now;
+    }
+
     private static final class Task implements SearchTask {
         UUID id = UUID.randomUUID();
         final Clock clock;
@@ -443,12 +475,35 @@ public class SearchCoordinatorTest {
         long nanosPerStep;
         boolean live = true, matches = true, throwStep, throwCancel, throwClose;
         Runnable onLive, onPolicy, onStep;
-        Task(Clock clock) { this.clock = clock; }
-        @Override public UUID playerId() { return id; }
-        @Override public boolean live() { if (onLive != null) onLive.run(); return live; }
-        @Override public boolean policyMatches() { if (onPolicy != null) onPolicy.run(); return matches; }
-        @Override public State state() { return state; }
-        @Override public int step(int maxSteps) {
+
+        Task(Clock clock) {
+            this.clock = clock;
+        }
+
+        @Override
+        public UUID playerId() {
+            return id;
+        }
+
+        @Override
+        public boolean live() {
+            if (onLive != null) onLive.run();
+            return live;
+        }
+
+        @Override
+        public boolean policyMatches() {
+            if (onPolicy != null) onPolicy.run();
+            return matches;
+        }
+
+        @Override
+        public State state() {
+            return state;
+        }
+
+        @Override
+        public int step(int maxSteps) {
             calls++;
             if (onStep != null) onStep.run();
             largestSlice = Math.max(largestSlice, maxSteps);
@@ -459,13 +514,17 @@ public class SearchCoordinatorTest {
             if (nextState != null) state = nextState;
             return count;
         }
-        @Override public void cancel(Failure reason) {
+
+        @Override
+        public void cancel(Failure reason) {
             this.reason = reason;
             cancels++;
             state = State.CANCELLED;
             if (throwCancel) throw new IllegalStateException("cancel failed");
         }
-        @Override public void close() {
+
+        @Override
+        public void close() {
             closes++;
             if (throwClose) throw new IllegalStateException("close failed");
         }
