@@ -3,13 +3,20 @@ package xin.vanilla.narcissus.internal.fabric.cost;
 import org.junit.Test;
 import xin.vanilla.banira.api.script.*;
 import xin.vanilla.narcissus.api.cost.*;
-import xin.vanilla.narcissus.data.cost.*;
-import xin.vanilla.narcissus.enums.*;
+import xin.vanilla.narcissus.data.cost.CostCalculation;
+import xin.vanilla.narcissus.data.cost.CostContextInput;
+import xin.vanilla.narcissus.enums.EnumCardType;
+import xin.vanilla.narcissus.enums.EnumCostType;
+import xin.vanilla.narcissus.enums.EnumSafeMode;
+import xin.vanilla.narcissus.enums.EnumTeleportType;
 import xin.vanilla.narcissus.internal.server.cost.CostEvaluation;
 import xin.vanilla.narcissus.service.cost.CostCalculator;
 
 import java.util.*;
-import java.util.concurrent.*;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static org.junit.Assert.*;
@@ -17,7 +24,8 @@ import static org.junit.Assert.*;
 public class FabricCostContextTest {
     private static final CostParameters PARAMETERS = new CostParameters(EnumCostType.EXP_POINT, 2, .002, 0, 20, "", "", "custom.java");
 
-    @Test public void distinguishesMovingPlayerFromPayerAndUsesActualSource() {
+    @Test
+    public void distinguishesMovingPlayerFromPayerAndUsesActualSource() {
         Fixture fixture = new Fixture();
         try (CostEvaluation evaluation = CostEvaluation.open(fixture.input())) {
             CostContext context = evaluation.context();
@@ -34,12 +42,14 @@ public class FabricCostContextTest {
         }
     }
 
-    @Test public void borrowedViewsExpireAndCannotReadTheNextPlayer() {
+    @Test
+    public void borrowedViewsExpireAndCannotReadTheNextPlayer() {
         Fixture fixture = new Fixture();
         CostContext expired;
         CostPlayerView player;
         try (CostEvaluation first = CostEvaluation.open(fixture.input())) {
-            expired = first.context(); player = expired.player();
+            expired = first.context();
+            player = expired.player();
         }
         try (CostEvaluation second = CostEvaluation.open(fixture.input())) {
             rejected(expired::phase);
@@ -48,7 +58,8 @@ public class FabricCostContextTest {
         }
     }
 
-    @Test public void nestedEvaluationSuspendsOuterViewsAndRestoresThem() {
+    @Test
+    public void nestedEvaluationSuspendsOuterViewsAndRestoresThem() {
         Fixture fixture = new Fixture();
         CostContext inner;
         try (CostEvaluation outer = CostEvaluation.open(fixture.input())) {
@@ -63,7 +74,8 @@ public class FabricCostContextTest {
         }
     }
 
-    @Test public void exceptionInNestedEvaluationRestoresTheOuterContext() {
+    @Test
+    public void exceptionInNestedEvaluationRestoresTheOuterContext() {
         Fixture fixture = new Fixture();
         CostContext inner = null;
         try (CostEvaluation outer = CostEvaluation.open(fixture.input())) {
@@ -77,16 +89,21 @@ public class FabricCostContextTest {
         }
     }
 
-    @Test public void invalidNestedInputDoesNotSuspendTheOuterContext() {
+    @Test
+    public void invalidNestedInputDoesNotSuspendTheOuterContext() {
         Fixture fixture = new Fixture();
         try (CostEvaluation outer = CostEvaluation.open(fixture.input())) {
-            try { CostEvaluation.open(fixture.inputBuilder().operationId(0).build()); fail("Invalid operation"); }
-            catch (IllegalArgumentException expected) { }
+            try {
+                CostEvaluation.open(fixture.inputBuilder().operationId(0).build());
+                fail("Invalid operation");
+            } catch (IllegalArgumentException expected) {
+            }
             assertEquals("moving", outer.context().player().name());
         }
     }
 
-    @Test public void unknownDestinationHasNoArtificialWorldAndSnapshotsSurviveClosure() {
+    @Test
+    public void unknownDestinationHasNoArtificialWorldAndSnapshotsSurviveClosure() {
         Fixture fixture = new Fixture();
         CostPosition position;
         CostParameters parameters;
@@ -100,36 +117,48 @@ public class FabricCostContextTest {
             assertFalse(context.requester().isPresent());
             assertFalse(context.request().isPresent());
             assertEquals(0, fixture.worldQueries);
-            position = context.source(); parameters = context.parameters(); world = context.sourceWorld();
+            position = context.source();
+            parameters = context.parameters();
+            world = context.sourceWorld();
         }
         assertEquals("minecraft:the_nether", position.dimensionId());
         assertEquals(2, parameters.fixedAmount(), 0);
         rejected(world::dimensionId);
     }
 
-    @Test public void crossThreadAccessAndOutOfOrderCloseAreRejected() throws Exception {
+    @Test
+    public void crossThreadAccessAndOutOfOrderCloseAreRejected() throws Exception {
         Fixture fixture = new Fixture();
         try (CostEvaluation outer = CostEvaluation.open(fixture.input())) {
             CostContext context = outer.context();
             AtomicReference<Throwable> failure = new AtomicReference<>();
             Thread reader = new Thread(() -> {
-                try { context.phase(); } catch (Throwable error) { failure.set(error); }
+                try {
+                    context.phase();
+                } catch (Throwable error) {
+                    failure.set(error);
+                }
             });
-            reader.start(); reader.join();
+            reader.start();
+            reader.join();
             assertTrue(failure.get() instanceof IllegalStateException);
-            try (CostEvaluation inner = CostEvaluation.open(fixture.input())) { rejected(outer::close); }
+            try (CostEvaluation inner = CostEvaluation.open(fixture.input())) {
+                rejected(outer::close);
+            }
             assertEquals("moving", context.player().name());
         }
     }
 
-    @Test public void defaultCalculationDoesNotQueryAnyWorldOrPlayer() {
+    @Test
+    public void defaultCalculationDoesNotQueryAnyWorldOrPlayer() {
         Fixture fixture = new Fixture();
         assertEquals(5, new CostCalculator().calculate(PARAMETERS, 1500).amount());
         assertEquals(0, fixture.worldQueries);
         assertEquals(0, fixture.playerQueries);
     }
 
-    @Test public void listsAreLazyReadOnlyAndTheirElementsExpire() {
+    @Test
+    public void listsAreLazyReadOnlyAndTheirElementsExpire() {
         Fixture fixture = new Fixture();
         CostPlayerView element;
         try (CostEvaluation evaluation = CostEvaluation.open(fixture.input())) {
@@ -137,7 +166,11 @@ public class FabricCostContextTest {
             assertEquals(0, fixture.worldQueries);
             List<CostPlayerView> players = context.sourceWorld().players();
             assertEquals(1, fixture.worldQueries);
-            try { players.clear(); fail("Mutable list"); } catch (UnsupportedOperationException expected) { }
+            try {
+                players.clear();
+                fail("Mutable list");
+            } catch (UnsupportedOperationException expected) {
+            }
             element = players.get(0);
             assertEquals("moving", element.name());
             assertFalse(context.server().world("missing:world").isPresent());
@@ -146,7 +179,8 @@ public class FabricCostContextTest {
         rejected(element::name);
     }
 
-    @Test public void nativeAccessChecksTypeAndExpiresButCannotRevokeReturnedReferences() {
+    @Test
+    public void nativeAccessChecksTypeAndExpiresButCannotRevokeReturnedReferences() {
         Fixture fixture = new Fixture();
         CostPlayerView player;
         Object nativeObject;
@@ -154,18 +188,25 @@ public class FabricCostContextTest {
             player = evaluation.context().player();
             nativeObject = player.nativePlayer(Object.class);
             assertSame(fixture.moving, nativeObject);
-            try { player.nativePlayer(String.class); fail("Wrong native type"); } catch (ClassCastException expected) { }
+            try {
+                player.nativePlayer(String.class);
+                fail("Wrong native type");
+            } catch (ClassCastException expected) {
+            }
         }
         rejected(() -> player.nativePlayer(Object.class));
         assertSame(fixture.moving, nativeObject);
     }
 
-    @Test public void formulaFailuresBecomeFailuresAndEvaluationStillCloses() {
+    @Test
+    public void formulaFailuresBecomeFailuresAndEvaluationStillCloses() {
         Fixture fixture = new Fixture();
         CostContext saved;
         try (CostEvaluation evaluation = CostEvaluation.open(fixture.input())) {
             saved = evaluation.context();
-            CostCalculation result = new CostCalculator().calculate(PARAMETERS, saved, ctx -> { throw new IllegalArgumentException("bad formula"); });
+            CostCalculation result = new CostCalculator().calculate(PARAMETERS, saved, ctx -> {
+                throw new IllegalArgumentException("bad formula");
+            });
             assertFalse(result.isSuccess());
             for (double invalid : new double[]{Double.NaN, Double.POSITIVE_INFINITY, -1}) {
                 assertFalse(new CostCalculator().calculate(PARAMETERS, saved, ctx -> invalid).isSuccess());
@@ -174,7 +215,8 @@ public class FabricCostContextTest {
         rejected(saved::phase);
     }
 
-    @Test public void actualJaninoFormulaUsesRichPublicContext() throws Exception {
+    @Test
+    public void actualJaninoFormulaUsesRichPublicContext() throws Exception {
         Fixture fixture = new Fixture();
         ExecutorService owner = Executors.newSingleThreadExecutor();
         ScriptSession<ScriptFactory<CostFormula>> session = BaniraScripts.openFactorySession(
@@ -195,13 +237,18 @@ public class FabricCostContextTest {
             });
             assertEquals(Integer.valueOf(14), result.get(15, TimeUnit.SECONDS));
         } finally {
-            session.close(); owner.shutdownNow(); assertTrue(owner.awaitTermination(15, TimeUnit.SECONDS));
+            session.close();
+            owner.shutdownNow();
+            assertTrue(owner.awaitTermination(15, TimeUnit.SECONDS));
         }
     }
 
     private static void rejected(Runnable read) {
-        try { read.run(); fail("Expected expired or suspended access rejection"); }
-        catch (IllegalStateException expected) { }
+        try {
+            read.run();
+            fail("Expected expired or suspended access rejection");
+        } catch (IllegalStateException expected) {
+        }
     }
 
     private static final class Fixture {
@@ -212,12 +259,30 @@ public class FabricCostContextTest {
         final CostWorldView source = world("minecraft:the_nether");
         final CostWorldView destination = world("minecraft:overworld");
         final CostServerView server = new CostServerView() {
-            public long tick() { return 50; }
-            public int onlinePlayerCount() { return 2; }
-            public Optional<CostPlayerView> player(UUID id) { return moving.uuid().equals(id) ? Optional.of(moving) : Optional.empty(); }
-            public List<CostPlayerView> players() { playerQueries++; return Arrays.asList(moving, paying); }
-            public Optional<CostWorldView> world(String id) { return id.equals(destination.dimensionId()) ? Optional.of(destination) : Optional.empty(); }
-            public <T> T nativeServer(Class<T> type) { return type.cast(this); }
+            public long tick() {
+                return 50;
+            }
+
+            public int onlinePlayerCount() {
+                return 2;
+            }
+
+            public Optional<CostPlayerView> player(UUID id) {
+                return moving.uuid().equals(id) ? Optional.of(moving) : Optional.empty();
+            }
+
+            public List<CostPlayerView> players() {
+                playerQueries++;
+                return Arrays.asList(moving, paying);
+            }
+
+            public Optional<CostWorldView> world(String id) {
+                return id.equals(destination.dimensionId()) ? Optional.of(destination) : Optional.empty();
+            }
+
+            public <T> T nativeServer(Class<T> type) {
+                return type.cast(this);
+            }
         };
 
         CostContextInput input() {
@@ -236,15 +301,44 @@ public class FabricCostContextTest {
 
         CostWorldView world(String id) {
             return new CostWorldView() {
-                public String dimensionId() { return id; }
-                public long gameTime() { return 100; }
-                public long dayTime() { return 100; }
-                public boolean raining() { return false; }
-                public boolean thundering() { return false; }
-                public boolean chunkLoaded(int x, int z) { worldQueries++; return false; }
-                public Optional<String> blockId(int x, int y, int z) { worldQueries++; return Optional.empty(); }
-                public List<CostPlayerView> players() { worldQueries++; return Collections.singletonList(moving); }
-                public <T> T nativeWorld(Class<T> type) { return type.cast(this); }
+                public String dimensionId() {
+                    return id;
+                }
+
+                public long gameTime() {
+                    return 100;
+                }
+
+                public long dayTime() {
+                    return 100;
+                }
+
+                public boolean raining() {
+                    return false;
+                }
+
+                public boolean thundering() {
+                    return false;
+                }
+
+                public boolean chunkLoaded(int x, int z) {
+                    worldQueries++;
+                    return false;
+                }
+
+                public Optional<String> blockId(int x, int y, int z) {
+                    worldQueries++;
+                    return Optional.empty();
+                }
+
+                public List<CostPlayerView> players() {
+                    worldQueries++;
+                    return Collections.singletonList(moving);
+                }
+
+                public <T> T nativeWorld(Class<T> type) {
+                    return type.cast(this);
+                }
             };
         }
     }
@@ -252,21 +346,70 @@ public class FabricCostContextTest {
     private static final class FakePlayer implements CostPlayerView {
         private final String name;
         private final String dimension;
-        FakePlayer(String name, String dimension) { this.name = name; this.dimension = dimension; }
-        public UUID uuid() { return UUID.nameUUIDFromBytes(name.getBytes(java.nio.charset.StandardCharsets.UTF_8)); }
-        public String name() { return name; }
-        public CostPosition position() { return new CostPosition(dimension, 0, 64, 0, 0, 0, false, EnumSafeMode.NONE); }
-        public int experiencePoints() { return 20; }
-        public int experienceLevels() { return 2; }
-        public float health() { return 10; }
-        public float maxHealth() { return 20; }
-        public int foodLevel() { return 10; }
-        public int teleportCards() { return 2; }
-        public boolean alive() { return true; }
-        public boolean removed() { return false; }
-        public boolean creative() { return false; }
-        public boolean spectator() { return false; }
-        public <T> T nativePlayer(Class<T> type) { return type.cast(this); }
-        public <T> T nativeTeleportData(Class<T> type) { return type.cast(this); }
+
+        FakePlayer(String name, String dimension) {
+            this.name = name;
+            this.dimension = dimension;
+        }
+
+        public UUID uuid() {
+            return UUID.nameUUIDFromBytes(name.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+        }
+
+        public String name() {
+            return name;
+        }
+
+        public CostPosition position() {
+            return new CostPosition(dimension, 0, 64, 0, 0, 0, false, EnumSafeMode.NONE);
+        }
+
+        public int experiencePoints() {
+            return 20;
+        }
+
+        public int experienceLevels() {
+            return 2;
+        }
+
+        public float health() {
+            return 10;
+        }
+
+        public float maxHealth() {
+            return 20;
+        }
+
+        public int foodLevel() {
+            return 10;
+        }
+
+        public int teleportCards() {
+            return 2;
+        }
+
+        public boolean alive() {
+            return true;
+        }
+
+        public boolean removed() {
+            return false;
+        }
+
+        public boolean creative() {
+            return false;
+        }
+
+        public boolean spectator() {
+            return false;
+        }
+
+        public <T> T nativePlayer(Class<T> type) {
+            return type.cast(this);
+        }
+
+        public <T> T nativeTeleportData(Class<T> type) {
+            return type.cast(this);
+        }
     }
 }

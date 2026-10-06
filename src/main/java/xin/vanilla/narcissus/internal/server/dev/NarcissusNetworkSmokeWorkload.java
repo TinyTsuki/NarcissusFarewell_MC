@@ -1,6 +1,8 @@
 package xin.vanilla.narcissus.internal.server.dev;
 
-/** Controls the bounded sustained coordinate-search segment of the dev-only smoke. */
+/**
+ * Controls the bounded sustained coordinate-search segment of the dev-only smoke.
+ */
 final class NarcissusNetworkSmokeWorkload {
     static final int DURATION_TICKS = 320;
 

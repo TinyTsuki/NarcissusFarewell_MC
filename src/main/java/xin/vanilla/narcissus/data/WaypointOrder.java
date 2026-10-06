@@ -5,7 +5,9 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-/** 传送点顺序操作，不接触坐标内容本身。 */
+/**
+ * 传送点顺序操作，不接触坐标内容本身。
+ */
 public final class WaypointOrder {
     private WaypointOrder() {
     }

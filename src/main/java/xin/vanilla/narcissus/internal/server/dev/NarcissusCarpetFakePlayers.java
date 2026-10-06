@@ -8,7 +8,9 @@ import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
-/** Development-only Carpet fake players used by the dedicated-server smoke. */
+/**
+ * Development-only Carpet fake players used by the dedicated-server smoke.
+ */
 final class NarcissusCarpetFakePlayers {
     private static final List<String> NAMES = Collections.unmodifiableList(Arrays.asList(
             "NarcissusA", "NarcissusB"));
