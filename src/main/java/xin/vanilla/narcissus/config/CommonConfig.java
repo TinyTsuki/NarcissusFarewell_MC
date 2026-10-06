@@ -1,9 +1,5 @@
 package xin.vanilla.narcissus.config;
 
-import lombok.AccessLevel;
-import lombok.Getter;
-import lombok.Setter;
-import lombok.experimental.Accessors;
 import xin.vanilla.banira.api.BaniraConfigs;
 import xin.vanilla.banira.common.config.ConfigData;
 import xin.vanilla.banira.common.config.ConfigHolder;
@@ -96,56 +92,36 @@ public class CommonConfig implements ConfigData {
     }
 
 
-    @Getter
-    @Setter
-    @Accessors(chain = true, fluent = true)
     public static class BaseCategory {
-        @Getter(AccessLevel.NONE)
-        @Setter(AccessLevel.NONE)
         @ConfigEntry.Gui.CollapsibleObject
         @ConfigEntry.Gui.Tooltip(zh_cn = "其他设置", en_us = "Other Settings")
         private OtherCategory other = new OtherCategory();
 
-        @Getter(AccessLevel.NONE)
-        @Setter(AccessLevel.NONE)
         @ConfigEntry.Gui.CollapsibleObject
         @ConfigEntry.Gui.Tooltip(zh_cn = "传送限制", en_us = "Teleport Limit")
         private TeleportLimitCategory teleportLimit = new TeleportLimitCategory();
 
-        @Getter(AccessLevel.NONE)
-        @Setter(AccessLevel.NONE)
         @ConfigEntry.Gui.CollapsibleObject
         @ConfigEntry.Gui.Tooltip(zh_cn = "传送跟随", en_us = "Teleport Together")
         private TeleportTogetherCategory teleportTogether = new TeleportTogetherCategory();
 
-        @Getter(AccessLevel.NONE)
-        @Setter(AccessLevel.NONE)
         @ConfigEntry.Gui.CollapsibleObject
         @ConfigEntry.Gui.Tooltip(zh_cn = "传送请求", en_us = "Teleport Request")
         private TeleportRequestCategory teleportRequest = new TeleportRequestCategory();
 
-        @Getter(AccessLevel.NONE)
-        @Setter(AccessLevel.NONE)
         @ConfigEntry.Gui.CollapsibleObject
         @ConfigEntry.Gui.Tooltip(zh_cn = "安全传送", en_us = "Safe Teleport")
         private SafeTeleportCategory safeTeleport = new SafeTeleportCategory();
 
-        @Getter(AccessLevel.NONE)
-        @Setter(AccessLevel.NONE)
         @ConfigEntry.Gui.CollapsibleObject
         @ConfigEntry.Gui.Tooltip(zh_cn = "随机传送", en_us = "Random Teleport")
         private RandomTeleportCategory randomTeleport = new RandomTeleportCategory();
 
-        @Getter(AccessLevel.NONE)
-        @Setter(AccessLevel.NONE)
         @ConfigEntry.Gui.CollapsibleObject
         @ConfigEntry.Gui.Tooltip(zh_cn = "创造模式飞行", en_us = "Creative Flight")
         private CreativeFlightCategory creativeFlight = new CreativeFlightCategory();
     }
 
-    @Getter
-    @Setter
-    @Accessors(chain = true, fluent = true)
     public static class FeatureSwitchCategory {
         @ConfigEntry.Gui.Tooltip(zh_cn = "启用坐标分享", en_us = "Enable or disable the option to 'Share safeWorldCoordinate'.")
         private boolean switchShare = true;
@@ -187,9 +163,6 @@ public class CommonConfig implements ConfigData {
         private boolean switchFly = true;
     }
 
-    @Getter
-    @Setter
-    @Accessors(chain = true, fluent = true)
     public static class CommandCategory {
         @ConfigEntry.Gui.Tooltip(zh_cn = "指令前缀，请仅使用英文字母及下划线，否则可能会出现问题", en_us = "The prefix of the command, please only use English characters and underscores, otherwise it may cause problems.")
         @ConfigEntry.Access(emptyString = ConfigEntry.Access.EmptyPolicy.DEFAULT)
@@ -215,13 +188,9 @@ public class CommonConfig implements ConfigData {
         @ConfigEntry.Gui.Tooltip(zh_cn = "传送到指定结构的指令", en_us = "This command is used to teleport to the specified structure.")
         @ConfigEntry.Access(emptyString = ConfigEntry.Access.EmptyPolicy.DEFAULT)
         private String commandTpStructure = "tpst";
-        @Getter(AccessLevel.NONE)
-        @Setter(AccessLevel.NONE)
         @ConfigEntry.Gui.CollapsibleObject
         @ConfigEntry.Gui.Tooltip(zh_cn = "请求传送至玩家", en_us = "Request to teleport oneself to other players")
         private CommandTpAskNames tpAsk = new CommandTpAskNames();
-        @Getter(AccessLevel.NONE)
-        @Setter(AccessLevel.NONE)
         @ConfigEntry.Gui.CollapsibleObject
         @ConfigEntry.Gui.Tooltip(zh_cn = "请求将玩家传送至当前位置", en_us = "Request the transfer of other players to oneself")
         private CommandTpHereNames tpHere = new CommandTpHereNames();
@@ -249,13 +218,9 @@ public class CommonConfig implements ConfigData {
         @ConfigEntry.Gui.Tooltip(zh_cn = "传送至视线尽头的指令\n该功能与玩家设置的视距无关", en_us = "The command to teleport to the end of the line of sight. This function is independent of the player's render distance setting.")
         @ConfigEntry.Access(emptyString = ConfigEntry.Access.EmptyPolicy.DEFAULT)
         private String commandTpView = "tpv";
-        @Getter(AccessLevel.NONE)
-        @Setter(AccessLevel.NONE)
         @ConfigEntry.Gui.CollapsibleObject
         @ConfigEntry.Gui.Tooltip(zh_cn = "传送到家", en_us = "Teleport to the home")
         private CommandTpHomeNames tpHome = new CommandTpHomeNames();
-        @Getter(AccessLevel.NONE)
-        @Setter(AccessLevel.NONE)
         @ConfigEntry.Gui.CollapsibleObject
         @ConfigEntry.Gui.Tooltip(zh_cn = "传送到驿站", en_us = "Teleport to the stage")
         private CommandTpStageNames tpStage = new CommandTpStageNames();
@@ -270,9 +235,6 @@ public class CommonConfig implements ConfigData {
         private String commandFly = "fly";
     }
 
-    @Getter
-    @Setter
-    @Accessors(chain = true, fluent = true)
     public static class OtherCategory {
         @ConfigEntry.Gui.Tooltip(zh_cn = "是否禁用原版TP指令", en_us = "Whether to disable the original TP command.")
         private boolean removeOriginalTp = false;
@@ -282,9 +244,6 @@ public class CommonConfig implements ConfigData {
         private String tpSound = "minecraft:entity.enderman.teleport";
     }
 
-    @Getter
-    @Setter
-    @Accessors(chain = true, fluent = true)
     public static class TeleportLimitCategory {
         @ConfigEntry.Gui.Tooltip(zh_cn = "传送回时忽略的传送类型", en_us = "The teleport back skip type.")
         private List<String> teleportBackSkipType = new ArrayList<String>() {{
@@ -310,9 +269,6 @@ public class CommonConfig implements ConfigData {
         private boolean teleportAcrossDimension = true;
     }
 
-    @Getter
-    @Setter
-    @Accessors(chain = true, fluent = true)
     public static class TeleportTogetherCategory {
         @ConfigEntry.Gui.Tooltip(zh_cn = "允许载具一起传送", en_us = "Whether to allow vehicles to be teleported together.")
         private boolean tpWithVehicle = true;
@@ -325,9 +281,6 @@ public class CommonConfig implements ConfigData {
         private boolean tpWithEnemy = false;
     }
 
-    @Getter
-    @Setter
-    @Accessors(chain = true, fluent = true)
     public static class TeleportRequestCategory {
         @ConfigEntry.Gui.Tooltip(zh_cn = "传送请求过期时间，单位为秒", en_us = "The expire time for teleport request, in seconds.")
         @ConfigEntry.BoundedDiscrete(max = 3600)
@@ -339,9 +292,6 @@ public class CommonConfig implements ConfigData {
         private int teleportRequestCooldown = 10;
     }
 
-    @Getter
-    @Setter
-    @Accessors(chain = true, fluent = true)
     public static class RandomTeleportCategory {
         @ConfigEntry.Gui.Tooltip(zh_cn = "随机传送与传送至指定结构的最大距离限制", en_us = "The maximum distance limit for random teleportation or teleportation to a specified structure.")
         @ConfigEntry.BoundedDiscrete(min = 5)
@@ -351,9 +301,6 @@ public class CommonConfig implements ConfigData {
         private int tpRandomSafeNotFoundRetries = 0;
     }
 
-    @Getter
-    @Setter
-    @Accessors(chain = true, fluent = true)
     public static class SafeTeleportCategory {
         @ConfigEntry.Gui.Tooltip(zh_cn = "不安全的方块列表，玩家不会传送到这些方块上", en_us = "The list of unsafe blocks, players will not be teleported to these blocks.")
         private List<String> unsafeBlocks = new ArrayList<>(Arrays.asList(
@@ -379,9 +326,6 @@ public class CommonConfig implements ConfigData {
         private SearchExecutionCategory search = new SearchExecutionCategory();
     }
 
-    @Getter
-    @Setter
-    @Accessors(chain = true, fluent = true)
     public static class SearchExecutionCategory {
         @ConfigEntry.Gui.Tooltip(zh_cn = "每 tick 所有传送搜索共享的时间预算，单位为毫秒\n单次方块检查与原生区块生成可能超过预算", en_us = "Shared time budget for all teleport searches per tick, in milliseconds\nA single block check or native chunk generation may exceed the budget")
         @ConfigEntry.BoundedDouble(min = .1, max = 10, decimalPlaces = 1)
@@ -394,9 +338,6 @@ public class CommonConfig implements ConfigData {
         private int timeoutSeconds = 30;
     }
 
-    @Getter
-    @Setter
-    @Accessors(chain = true, fluent = true)
     public static class CreativeFlightCategory {
         @ConfigEntry.Gui.Tooltip(zh_cn = "创造模式飞行最低速度", en_us = "Minimum creative flight speed (GUI / config unit).")
         @ConfigEntry.BoundedDouble(min = -1.0d * Integer.MAX_VALUE, max = 1.0d * Integer.MAX_VALUE, decimalPlaces = 3)
@@ -406,25 +347,15 @@ public class CommonConfig implements ConfigData {
         private double flySpeedMax = 5d;
     }
 
-    @Getter
-    @Setter
-    @Accessors(chain = true, fluent = true)
     public static class PermissionCategory {
-        @Getter(AccessLevel.NONE)
-        @Setter(AccessLevel.NONE)
         @ConfigEntry.Gui.CollapsibleObject
         @ConfigEntry.Gui.Tooltip(zh_cn = "指令权限", en_us = "Command Permission")
         private PermissionCommandCategory command = new PermissionCommandCategory();
-        @Getter(AccessLevel.NONE)
-        @Setter(AccessLevel.NONE)
         @ConfigEntry.Gui.CollapsibleObject
         @ConfigEntry.Gui.Tooltip(zh_cn = "跨维度权限", en_us = "Across dimensions Switch")
         private PermissionAcrossCategory across = new PermissionAcrossCategory();
     }
 
-    @Getter
-    @Setter
-    @Accessors(chain = true, fluent = true)
     public static class PermissionCommandCategory {
         @ConfigEntry.Gui.Tooltip(zh_cn = "毒杀指令所需的权限等级", en_us = "The permission level required to use the 'Poisoning others' command.")
         @ConfigEntry.BoundedDiscrete(max = 4)
@@ -500,9 +431,6 @@ public class CommonConfig implements ConfigData {
         private int permissionSetCard = 2;
     }
 
-    @Getter
-    @Setter
-    @Accessors(chain = true, fluent = true)
     public static class PermissionAcrossCategory {
         @ConfigEntry.Gui.Tooltip(zh_cn = "跨维度传送到指定坐标指令所需的权限等级，若为-1则禁用跨维度传送", en_us = "The permission level required to use the 'Teleport to the specified coordinates' command across dimensions, -1 means disabled.")
         @ConfigEntry.BoundedDiscrete(min = -1, max = 4)
@@ -539,9 +467,6 @@ public class CommonConfig implements ConfigData {
         private int permissionTpGraveAcrossDimension = 0;
     }
 
-    @Getter
-    @Setter
-    @Accessors(chain = true, fluent = true)
     public static class CooldownCategory {
         @ConfigEntry.Gui.Tooltip(zh_cn = "传送到指定坐标的冷却时间，单位为秒", en_us = "The cooldown time for 'Teleport to the specified coordinates', in seconds.")
         @ConfigEntry.BoundedDiscrete(max = 86400)
@@ -593,12 +518,7 @@ public class CommonConfig implements ConfigData {
         private int cooldownTpGrave = 10;
     }
 
-    @Getter
-    @Setter
-    @Accessors(chain = true, fluent = true)
     public static class TeleportCountdownCategory {
-        @Getter(AccessLevel.NONE)
-        @Setter(AccessLevel.NONE)
         @ConfigEntry.Gui.CollapsibleObject
         @ConfigEntry.Gui.Tooltip(zh_cn = "各传送类型服务端倒计时（秒）", en_us = "Server countdown seconds per teleport type.")
         private ServerPerTypeTeleportCountdownGroup server = new ServerPerTypeTeleportCountdownGroup();
@@ -616,9 +536,6 @@ public class CommonConfig implements ConfigData {
         private boolean cancelCountdownOnPlayerDamage = false;
     }
 
-    @Getter
-    @Setter
-    @Accessors(chain = true, fluent = true)
     public static class ServerPerTypeTeleportCountdownGroup {
         @ConfigEntry.Gui.Tooltip(zh_cn = "传送到指定坐标", en_us = "Teleport to coordinates.")
         @ConfigEntry.BoundedDiscrete(max = 86400)
@@ -670,9 +587,6 @@ public class CommonConfig implements ConfigData {
         private int serverCountdownTpGrave = 0;
     }
 
-    @Getter
-    @Setter
-    @Accessors(chain = true, fluent = true)
     public static class CostCategory {
         @ConfigEntry.Gui.CollapsibleObject
         @ConfigEntry.Gui.Tooltip(zh_cn = "坐标传送", en_us = "coordinate teleport cost")
@@ -730,9 +644,6 @@ public class CommonConfig implements ConfigData {
         private CostCardSettings cards = new CostCardSettings();
     }
 
-    @Getter
-    @Setter
-    @Accessors(chain = true, fluent = true)
     public static class CommandTpAskNames {
         @ConfigEntry.Gui.Tooltip(zh_cn = "请求传送至玩家的指令", en_us = "This command is used to request to teleport oneself to other players.")
         @ConfigEntry.Access(emptyString = ConfigEntry.Access.EmptyPolicy.DEFAULT)
@@ -748,9 +659,6 @@ public class CommonConfig implements ConfigData {
         private String commandTpAskCancel = "tpac";
     }
 
-    @Getter
-    @Setter
-    @Accessors(chain = true, fluent = true)
     public static class CommandTpHereNames {
         @ConfigEntry.Gui.Tooltip(zh_cn = "请求将玩家传送至当前位置的指令", en_us = "This command is used to request the transfer of other players to oneself.")
         @ConfigEntry.Access(emptyString = ConfigEntry.Access.EmptyPolicy.DEFAULT)
@@ -766,9 +674,6 @@ public class CommonConfig implements ConfigData {
         private String commandTpHereCancel = "tphc";
     }
 
-    @Getter
-    @Setter
-    @Accessors(chain = true, fluent = true)
     public static class CommandTpHomeNames {
         @ConfigEntry.Gui.Tooltip(zh_cn = "传送到家的指令", en_us = "The command to teleport to the home.")
         @ConfigEntry.Access(emptyString = ConfigEntry.Access.EmptyPolicy.DEFAULT)
@@ -784,9 +689,6 @@ public class CommonConfig implements ConfigData {
         private String commandGetHome = "gethome";
     }
 
-    @Getter
-    @Setter
-    @Accessors(chain = true, fluent = true)
     public static class CommandTpStageNames {
         @ConfigEntry.Gui.Tooltip(zh_cn = "传送到驿站的指令", en_us = "The command to teleport to the stage.")
         @ConfigEntry.Access(emptyString = ConfigEntry.Access.EmptyPolicy.DEFAULT)
@@ -802,9 +704,6 @@ public class CommonConfig implements ConfigData {
         private String commandGetStage = "getstage";
     }
 
-    @Getter
-    @Setter
-    @Accessors(chain = true, fluent = true)
     public static class ConciseCategory {
         @ConfigEntry.Gui.Tooltip(zh_cn = "启用无前缀版本的 '设置语言' 指令", en_us = "Enable or disable the concise version of the 'Set the language' command.")
         private boolean conciseLanguage = false;
@@ -846,31 +745,20 @@ public class CommonConfig implements ConfigData {
         private boolean conciseFly = true;
         @ConfigEntry.Gui.Tooltip(zh_cn = "启用无前缀版本的 '设置虚拟权限' 指令", en_us = "Enable or disable the concise version of the 'Set virtual permission' command.")
         private boolean conciseVirtualOp = false;
-        @Getter(AccessLevel.NONE)
-        @Setter(AccessLevel.NONE)
         @ConfigEntry.Gui.CollapsibleObject
         @ConfigEntry.Gui.Tooltip(zh_cn = "请求传送至玩家", en_us = "Request to teleport oneself to other players")
         private ConciseTpAskNames tpAsk = new ConciseTpAskNames();
-        @Getter(AccessLevel.NONE)
-        @Setter(AccessLevel.NONE)
         @ConfigEntry.Gui.CollapsibleObject
         @ConfigEntry.Gui.Tooltip(zh_cn = "请求将玩家传送至当前位置", en_us = "Request the transfer of other players to oneself")
         private ConciseTpHereNames tpHere = new ConciseTpHereNames();
-        @Getter(AccessLevel.NONE)
-        @Setter(AccessLevel.NONE)
         @ConfigEntry.Gui.CollapsibleObject
         @ConfigEntry.Gui.Tooltip(zh_cn = "传送到家", en_us = "Teleport to the home")
         private ConciseTpHomeNames tpHome = new ConciseTpHomeNames();
-        @Getter(AccessLevel.NONE)
-        @Setter(AccessLevel.NONE)
         @ConfigEntry.Gui.CollapsibleObject
         @ConfigEntry.Gui.Tooltip(zh_cn = "传送到驿站", en_us = "Teleport to the stage")
         private ConciseTpStageNames tpStage = new ConciseTpStageNames();
     }
 
-    @Getter
-    @Setter
-    @Accessors(chain = true, fluent = true)
     public static class ConciseTpAskNames {
         @ConfigEntry.Gui.Tooltip(zh_cn = "启用无前缀版本的 '请求传送至玩家' 指令", en_us = "Enable or disable the concise version of the 'Request to teleport oneself to other players' command.")
         private boolean conciseTpAsk = true;
@@ -882,9 +770,6 @@ public class CommonConfig implements ConfigData {
         private boolean conciseTpAskCancel = true;
     }
 
-    @Getter
-    @Setter
-    @Accessors(chain = true, fluent = true)
     public static class ConciseTpHereNames {
         @ConfigEntry.Gui.Tooltip(zh_cn = "启用无前缀版本的 '请求将玩家传送至当前位置' 指令", en_us = "Enable or disable the concise version of the 'Request the transfer of other players to oneself' command.")
         private boolean conciseTpHere = true;
@@ -896,9 +781,6 @@ public class CommonConfig implements ConfigData {
         private boolean conciseTpHereCancel = true;
     }
 
-    @Getter
-    @Setter
-    @Accessors(chain = true, fluent = true)
     public static class ConciseTpHomeNames {
         @ConfigEntry.Gui.Tooltip(zh_cn = "启用无前缀版本的 '传送到家' 指令", en_us = "Enable or disable the concise version of the 'Teleport to the home' command.")
         private boolean conciseTpHome = true;
@@ -910,9 +792,6 @@ public class CommonConfig implements ConfigData {
         private boolean conciseGetHome = true;
     }
 
-    @Getter
-    @Setter
-    @Accessors(chain = true, fluent = true)
     public static class ConciseTpStageNames {
         @ConfigEntry.Gui.Tooltip(zh_cn = "启用无前缀版本的 '传送到驿站' 指令", en_us = "Enable or disable the concise version of the 'Teleport to the stage' command.")
         private boolean conciseTpStage = true;
@@ -924,9 +803,6 @@ public class CommonConfig implements ConfigData {
         private boolean conciseGetStage = true;
     }
 
-    @Getter
-    @Setter
-    @Accessors(chain = true, fluent = true)
     public static class CostSettings {
         @ConfigEntry.Gui.Tooltip(zh_cn = "费用类型，NONE 表示免费", en_us = "Resource charged; NONE means free")
         private EnumCostType type = EnumCostType.NONE;
@@ -951,17 +827,11 @@ public class CommonConfig implements ConfigData {
         private CustomCostSettings custom = new CustomCostSettings();
     }
 
-    @Getter
-    @Setter
-    @Accessors(chain = true, fluent = true)
     public static class CustomCostSettings {
         @ConfigEntry.Gui.Tooltip(zh_cn = "cost/sources 下的 Java 文件相对路径，留空使用默认计算\n最多 128 个字符，修改源码后使用 cost reload", en_us = "Relative Java file under cost/sources; blank uses default arithmetic\nUp to 128 characters; use cost reload after editing code")
         private String file = "";
     }
 
-    @Getter
-    @Setter
-    @Accessors(chain = true, fluent = true)
     public static class CostDistanceSettings {
         @ConfigEntry.BoundedDiscrete(min = 0)
         @ConfigEntry.Gui.Tooltip(zh_cn = "同维度计算距离上限，0 表示不限制\n不限制实际传送距离", en_us = "Same-dimension cost distance cap; 0 means unlimited\nDoes not restrict teleport distance")
@@ -971,9 +841,6 @@ public class CommonConfig implements ConfigData {
         private int crossDimensionDistance = 10000;
     }
 
-    @Getter
-    @Setter
-    @Accessors(chain = true, fluent = true)
     public static class CostCardSettings {
         @ConfigEntry.Gui.Tooltip(zh_cn = "启用传送卡", en_us = "Enable teleport cards")
         private boolean enabled = false;
