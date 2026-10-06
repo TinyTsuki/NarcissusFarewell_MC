@@ -1,6 +1,5 @@
 package xin.vanilla.narcissus.command.impl;
 
-import xin.vanilla.narcissus.internal.server.NarcissusCostService;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
@@ -33,6 +32,7 @@ import xin.vanilla.narcissus.config.CommonConfig;
 import xin.vanilla.narcissus.data.SafeWorldCoordinate;
 import xin.vanilla.narcissus.enums.EnumCommandType;
 import xin.vanilla.narcissus.enums.EnumTeleportType;
+import xin.vanilla.narcissus.internal.server.NarcissusCostService;
 import xin.vanilla.narcissus.notification.NarcissusNotificationTypes;
 import xin.vanilla.narcissus.util.CommandUtils;
 import xin.vanilla.narcissus.util.NarcissusUtils;
@@ -66,43 +66,46 @@ public final class TpStructureCommand {
         if (ticket == null) return 0;
         new Thread(() -> {
             try {
-            MinecraftServer server = BaniraServer.require(MinecraftServer.class);
-            ServerLevel world = server.getLevel(targetLevel);
-            SafeWorldCoordinate safeWorldCoordinate;
-            if (biome != null) {
-                Biome biomeFromWorld = BiomeUtils.getBiome(world, structId);
-                if (biomeFromWorld != null) {
-                    WorldCoordinate start = new WorldCoordinate(player).dimension(targetLevel);
-                    WorldCoordinate found = BiomeUtils.findNearestBiome(world, start, biomeFromWorld, finalRange, 8);
-                    safeWorldCoordinate = found != null
-                            ? new SafeWorldCoordinate(found.x(), found.y(), found.z(), found.yaw(), found.pitch(), found.dimension()).safe(true)
-                            : null;
+                MinecraftServer server = BaniraServer.require(MinecraftServer.class);
+                ServerLevel world = server.getLevel(targetLevel);
+                SafeWorldCoordinate safeWorldCoordinate;
+                if (biome != null) {
+                    Biome biomeFromWorld = BiomeUtils.getBiome(world, structId);
+                    if (biomeFromWorld != null) {
+                        WorldCoordinate start = new WorldCoordinate(player).dimension(targetLevel);
+                        WorldCoordinate found = BiomeUtils.findNearestBiome(world, start, biomeFromWorld, finalRange, 8);
+                        safeWorldCoordinate = found != null
+                                ? new SafeWorldCoordinate(found.x(), found.y(), found.z(), found.yaw(), found.pitch(), found.dimension()).safe(true)
+                                : null;
+                    } else {
+                        safeWorldCoordinate = null;
+                    }
                 } else {
-                    safeWorldCoordinate = null;
+                    ServerLevel structureWorld = server.getLevel(targetLevel);
+                    WorldCoordinate structStart = new WorldCoordinate(player).dimension(targetLevel);
+                    WorldCoordinate foundStruct = StructureUtils.findNearestStructure(structureWorld, structStart, structId, finalRange);
+                    safeWorldCoordinate = foundStruct != null
+                            ? new SafeWorldCoordinate(foundStruct.x(), foundStruct.y(), foundStruct.z(), foundStruct.yaw(), foundStruct.pitch(), foundStruct.dimension()).safe(true)
+                            : null;
                 }
-            } else {
-                ServerLevel structureWorld = server.getLevel(targetLevel);
-                WorldCoordinate structStart = new WorldCoordinate(player).dimension(targetLevel);
-                WorldCoordinate foundStruct = StructureUtils.findNearestStructure(structureWorld, structStart, structId, finalRange);
-                safeWorldCoordinate = foundStruct != null
-                        ? new SafeWorldCoordinate(foundStruct.x(), foundStruct.y(), foundStruct.z(), foundStruct.yaw(), foundStruct.pitch(), foundStruct.dimension()).safe(true)
-                        : null;
-            }
-            if (safeWorldCoordinate == null) {
-                player.server.execute(() -> {
+                if (safeWorldCoordinate == null) {
+                    player.server.execute(() -> {
+                        if (!ticket.live()) return;
+                        ticket.cancel();
+                        String notFoundKey = isBiome ? "biome_not_found_in_range" : "structure_not_found_in_range";
+                        MessageUtils.sendNotification(player, NarcissusComponent.get().transAuto(notFoundKey, structId), NarcissusNotificationTypes.TELEPORT_ERROR);
+                    });
+                    return;
+                }
+                safeWorldCoordinate.safe(safe);
+                player.server.submit(() -> {
                     if (!ticket.live()) return;
-                    ticket.cancel();
-                    String notFoundKey = isBiome ? "biome_not_found_in_range" : "structure_not_found_in_range";
-                    MessageUtils.sendNotification(player, NarcissusComponent.get().transAuto(notFoundKey, structId), NarcissusNotificationTypes.TELEPORT_ERROR);
+                    if (CommandUtils.checkTeleportPost(player, safeWorldCoordinate, EnumTeleportType.TP_STRUCTURE)) {
+                        ticket.cancel();
+                        return;
+                    }
+                    NarcissusUtils.teleportTo(player, safeWorldCoordinate, EnumTeleportType.TP_STRUCTURE, ticket);
                 });
-                return;
-            }
-            safeWorldCoordinate.safe(safe);
-            player.server.submit(() -> {
-                if (!ticket.live()) return;
-                if (CommandUtils.checkTeleportPost(player, safeWorldCoordinate, EnumTeleportType.TP_STRUCTURE)) { ticket.cancel(); return; }
-                NarcissusUtils.teleportTo(player, safeWorldCoordinate, EnumTeleportType.TP_STRUCTURE, ticket);
-            });
             } catch (RuntimeException error) {
                 org.apache.logging.log4j.LogManager.getLogger(TpStructureCommand.class).error("Teleport destination search failed", error);
                 player.server.execute(() -> {

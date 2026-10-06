@@ -15,7 +15,8 @@ public class CostCardSettings {
 
     public CostCardSettings(boolean enabled, int dailyGrant, EnumCardType mode) {
         if (dailyGrant < 0) throw new IllegalArgumentException("Negative daily card grant");
-        this.enabled = enabled; this.dailyGrant = dailyGrant;
+        this.enabled = enabled;
+        this.dailyGrant = dailyGrant;
         this.mode = Objects.requireNonNull(mode, "mode");
     }
 }

@@ -3,7 +3,9 @@ package xin.vanilla.narcissus.internal.client.dev;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-/** Pure wall-clock and server-phase gates used by the real client runner. */
+/**
+ * Pure wall-clock and server-phase gates used by the real client runner.
+ */
 final class NarcissusNetworkSmokeClientPlan {
     private static final long TIMEOUT_NANOS = TimeUnit.SECONDS.toNanos(300);
     private static final long STATE_TIMEOUT_NANOS = TimeUnit.SECONDS.toNanos(120);
@@ -76,7 +78,8 @@ final class NarcissusNetworkSmokeClientPlan {
     boolean canFinish(boolean uiVerified, boolean rawWritten) {
         if (!finished) return false;
         if ("phase-one".equals(phase)) {
-            if (!checkpointReady) throw new IllegalStateException("Server finished phase-one without PASS final-checkpoint");
+            if (!checkpointReady)
+                throw new IllegalStateException("Server finished phase-one without PASS final-checkpoint");
             return uiVerified && rawWritten;
         }
         return true;

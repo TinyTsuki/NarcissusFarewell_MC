@@ -17,17 +17,14 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.LinkedHashMap;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import static org.junit.Assert.*;
 
 public class NarcissusNetworkSmokeConfigsTest {
     private static final Gson GSON = new Gson();
-    @Rule public TemporaryFolder temporary = new TemporaryFolder();
+    @Rule
+    public TemporaryFolder temporary = new TemporaryFolder();
 
     @Test
     public void snapshotsEveryPathAndRestartsWithCommaExpressionsEnumsAndNumbers() throws IOException {
@@ -245,7 +242,9 @@ public class NarcissusNetworkSmokeConfigsTest {
                     Collections.emptyList(), Collections.emptyMap(), Collections.emptyMap());
         }
 
-        private int complete(String phase) { return complete(store, phase); }
+        private int complete(String phase) {
+            return complete(store, phase);
+        }
 
         private int complete(Store values, String phase) {
             return NarcissusNetworkSmokeConfigs.complete(holder(values), scope, phase, directory);
@@ -267,14 +266,38 @@ public class NarcissusNetworkSmokeConfigsTest {
         private final Map<String, Object> values = initialValues();
         private int saves;
 
-        @Override public Set<String> paths() { return values.keySet(); }
-        @Override public Object get(String path) { return values.get(path); }
-        @Override public void set(String path, Object value) { values.put(path, value); }
-        @Override public Class<?> valueClass(String path) { return values.get(path).getClass(); }
-        @Override public Object defaultValue(String path) { return initialValues().get(path); }
-        @Override public boolean validate(String path, Object value) { return values.containsKey(path); }
+        @Override
+        public Set<String> paths() {
+            return values.keySet();
+        }
 
-        @Override public void save() {
+        @Override
+        public Object get(String path) {
+            return values.get(path);
+        }
+
+        @Override
+        public void set(String path, Object value) {
+            values.put(path, value);
+        }
+
+        @Override
+        public Class<?> valueClass(String path) {
+            return values.get(path).getClass();
+        }
+
+        @Override
+        public Object defaultValue(String path) {
+            return initialValues().get(path);
+        }
+
+        @Override
+        public boolean validate(String path, Object value) {
+            return values.containsKey(path);
+        }
+
+        @Override
+        public void save() {
             saves++;
             throw new AssertionError("Config verification must not save in either phase");
         }
@@ -282,7 +305,11 @@ public class NarcissusNetworkSmokeConfigsTest {
 
     private enum Mode {
         @SerializedName("not-the-toml-name") ACTIVE, DISABLED;
-        @Override public String toString() { return "not-the-enum-name"; }
+
+        @Override
+        public String toString() {
+            return "not-the-enum-name";
+        }
     }
 
     private static Map<String, Object> initialValues() {

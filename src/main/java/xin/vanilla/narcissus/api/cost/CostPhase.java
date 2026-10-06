@@ -8,7 +8,8 @@ import xin.vanilla.narcissus.NarcissusComponent;
 public enum CostPhase implements IEnumDescribable {
     PREVIEW, CHECK, COMMIT;
 
-    @Override public Component enumDescription() {
+    @Override
+    public Component enumDescription() {
         return EnumDescriptionHelper.describeEnum(NarcissusComponent.get(), this);
     }
 }

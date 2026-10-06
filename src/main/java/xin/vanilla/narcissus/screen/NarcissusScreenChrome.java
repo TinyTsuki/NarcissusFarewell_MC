@@ -163,17 +163,49 @@ final class NarcissusScreenChrome {
             this.disabled = disabled;
         }
 
-        int paper() { return paper; }
-        int content() { return content; }
-        int sidebar() { return sidebar; }
-        int primary() { return primary; }
-        int secondary() { return secondary; }
-        int accent() { return accent; }
-        int selected() { return selected; }
-        int strongLine() { return strongLine; }
-        int softLine() { return softLine; }
-        int danger() { return danger; }
-        int disabled() { return disabled; }
+        int paper() {
+            return paper;
+        }
+
+        int content() {
+            return content;
+        }
+
+        int sidebar() {
+            return sidebar;
+        }
+
+        int primary() {
+            return primary;
+        }
+
+        int secondary() {
+            return secondary;
+        }
+
+        int accent() {
+            return accent;
+        }
+
+        int selected() {
+            return selected;
+        }
+
+        int strongLine() {
+            return strongLine;
+        }
+
+        int softLine() {
+            return softLine;
+        }
+
+        int danger() {
+            return danger;
+        }
+
+        int disabled() {
+            return disabled;
+        }
     }
 
     static final class Rect {
@@ -189,10 +221,21 @@ final class NarcissusScreenChrome {
             this.height = height;
         }
 
-        int x() { return x; }
-        int y() { return y; }
-        int width() { return width; }
-        int height() { return height; }
+        int x() {
+            return x;
+        }
+
+        int y() {
+            return y;
+        }
+
+        int width() {
+            return width;
+        }
+
+        int height() {
+            return height;
+        }
     }
 
     static final class Layout {
@@ -210,11 +253,25 @@ final class NarcissusScreenChrome {
             this.detail = detail;
         }
 
-        Rect outer() { return outer; }
-        Rect content() { return content; }
-        Rect top() { return top; }
-        Rect list() { return list; }
-        Rect detail() { return detail; }
+        Rect outer() {
+            return outer;
+        }
+
+        Rect content() {
+            return content;
+        }
+
+        Rect top() {
+            return top;
+        }
+
+        Rect list() {
+            return list;
+        }
+
+        Rect detail() {
+            return detail;
+        }
     }
 
     static final class ListViewport {
@@ -240,10 +297,21 @@ final class NarcissusScreenChrome {
                     (int) Math.ceil((this.offset + this.viewportHeight) / this.itemHeight));
         }
 
-        double offset() { return offset; }
-        double maxOffset() { return maxOffset; }
-        int firstIndex() { return firstIndex; }
-        int lastIndexExclusive() { return lastIndexExclusive; }
+        double offset() {
+            return offset;
+        }
+
+        double maxOffset() {
+            return maxOffset;
+        }
+
+        int firstIndex() {
+            return firstIndex;
+        }
+
+        int lastIndexExclusive() {
+            return lastIndexExclusive;
+        }
 
         double rowY(int index) {
             return viewportY + index * (double) itemHeight - offset;

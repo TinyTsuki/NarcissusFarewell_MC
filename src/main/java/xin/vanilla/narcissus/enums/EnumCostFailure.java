@@ -10,7 +10,8 @@ public enum EnumCostFailure implements IEnumDescribable {
     INSUFFICIENT_CARDS, INSUFFICIENT_RESOURCE, COOLDOWN, INVALID_OPERATION, ACTOR_UNAVAILABLE,
     REQUEST_UNAVAILABLE, UNKNOWN_TARGET, INVALID_PAYMENT, COMMAND_FAILED, PAYMENT_FAILED;
 
-    @Override public Component enumDescription() {
+    @Override
+    public Component enumDescription() {
         return EnumDescriptionHelper.describeEnum(NarcissusComponent.get(), this);
     }
 }

@@ -19,9 +19,13 @@ public class CostPaymentPlan {
 
     private CostPaymentPlan(int originalAmount, int cardAmount, int resourceAmount, boolean bypassCooldown,
                             boolean commandPending, boolean committed, EnumCostFailure failure) {
-        this.originalAmount = originalAmount; this.cardAmount = cardAmount; this.resourceAmount = resourceAmount;
-        this.bypassCooldown = bypassCooldown; this.commandPending = commandPending;
-        this.committed = committed; this.failure = failure;
+        this.originalAmount = originalAmount;
+        this.cardAmount = cardAmount;
+        this.resourceAmount = resourceAmount;
+        this.bypassCooldown = bypassCooldown;
+        this.commandPending = commandPending;
+        this.committed = committed;
+        this.failure = failure;
     }
 
     public static CostPaymentPlan ready(int amount, int cards, int resources, boolean bypass, boolean commandPending) {
@@ -30,12 +34,19 @@ public class CostPaymentPlan {
     }
 
     public static CostPaymentPlan failed(EnumCostFailure failure) {
-        if (Objects.requireNonNull(failure, "failure") == EnumCostFailure.NONE) throw new IllegalArgumentException("Failure required");
+        if (Objects.requireNonNull(failure, "failure") == EnumCostFailure.NONE)
+            throw new IllegalArgumentException("Failure required");
         return new CostPaymentPlan(0, 0, 0, false, false, false, failure);
     }
 
-    public boolean isSuccess() { return failure == EnumCostFailure.NONE; }
-    public boolean isCommitted() { return committed; }
+    public boolean isSuccess() {
+        return failure == EnumCostFailure.NONE;
+    }
+
+    public boolean isCommitted() {
+        return committed;
+    }
+
     public CostPaymentPlan paid() {
         if (!isSuccess() || committed) throw new IllegalStateException("Payment is not pending");
         return new CostPaymentPlan(originalAmount, cardAmount, resourceAmount, bypassCooldown, false, true, failure);

@@ -2,20 +2,14 @@ package xin.vanilla.narcissus.internal.dev;
 
 import com.electronwill.nightconfig.core.CommentedConfig;
 import com.electronwill.nightconfig.toml.TomlParser;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonArray;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonPrimitive;
-import com.google.gson.JsonSerializer;
+import com.google.gson.*;
 import xin.vanilla.banira.api.BaniraConfigs;
 import xin.vanilla.banira.common.config.ConfigHolder;
 import xin.vanilla.banira.common.config.ConfigScope;
 import xin.vanilla.narcissus.config.ClientConfig;
+import xin.vanilla.narcissus.config.ClientConfigView;
 import xin.vanilla.narcissus.config.CommonConfig;
 import xin.vanilla.narcissus.config.CommonConfigView;
-import xin.vanilla.narcissus.config.ClientConfigView;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -26,18 +20,22 @@ import java.nio.file.StandardOpenOption;
 import java.util.Map;
 import java.util.TreeSet;
 
-/** Dev-only full holder/TOML persistence proof, with separate local scope checkpoints. */
+/**
+ * Dev-only full holder/TOML persistence proof, with separate local scope checkpoints.
+ */
 public final class NarcissusNetworkSmokeConfigs {
     private static final class RetainedViews {
         static final CommonConfigView COMMON = CommonConfigView.get();
         static final ClientConfigView CLIENT = ClientConfigView.get();
     }
+
     private static final Gson GSON = new GsonBuilder()
             .registerTypeHierarchyAdapter(Enum.class, (JsonSerializer<Enum<?>>)
                     (value, type, context) -> new JsonPrimitive(value.name()))
             .setPrettyPrinting().create();
 
-    private NarcissusNetworkSmokeConfigs() { }
+    private NarcissusNetworkSmokeConfigs() {
+    }
 
     public static void completeClient(String phase) {
         completeLocal(ClientConfig.class, ConfigScope.CLIENT, phase);
@@ -92,7 +90,8 @@ public final class NarcissusNetworkSmokeConfigs {
         JsonObject current = snapshot(holder);
         try {
             if ("phase-one".equals(phase)) {
-                if (Files.exists(checkpoint)) throw new IllegalStateException("Config checkpoint already exists: " + checkpoint);
+                if (Files.exists(checkpoint))
+                    throw new IllegalStateException("Config checkpoint already exists: " + checkpoint);
                 // Inspect persisted evidence without flushing or repairing it first.
                 compareToml(current.getAsJsonObject("values"), toml);
                 Files.write(checkpoint, GSON.toJson(current).getBytes(StandardCharsets.UTF_8),

@@ -1,11 +1,10 @@
 package xin.vanilla.narcissus.internal.forge.cost;
 
-import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.server.MinecraftServer;
 import net.minecraft.core.BlockPos;
-import net.minecraft.world.level.Level;
-import net.minecraft.world.level.chunk.LevelChunk;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.level.chunk.LevelChunk;
 import xin.vanilla.banira.common.util.DimensionUtils;
 import xin.vanilla.narcissus.api.cost.*;
 import xin.vanilla.narcissus.data.SafeWorldCoordinate;
@@ -20,7 +19,8 @@ import xin.vanilla.narcissus.internal.server.cost.CostEvaluation;
 import java.util.*;
 
 public final class ForgeCostContext {
-    private ForgeCostContext() { }
+    private ForgeCostContext() {
+    }
 
     public static CostEvaluation open(long operationId, long generationId, CostPhase phase, EnumTeleportType type,
                                       CostConfiguration configuration, ServerPlayer moving, ServerPlayer paying,
@@ -79,33 +79,103 @@ public final class ForgeCostContext {
 
     private static final class NativePlayer implements CostPlayerView {
         private final ServerPlayer player;
-        NativePlayer(ServerPlayer player) { this.player = player; }
-        public UUID uuid() { return player.getUUID(); }
-        public String name() { return player.getName().getString(); }
-        public CostPosition position() { return ForgeCostContext.position(player); }
-        public int experiencePoints() { return player.totalExperience; }
-        public int experienceLevels() { return player.experienceLevel; }
-        public float health() { return player.getHealth(); }
-        public float maxHealth() { return player.getMaxHealth(); }
-        public int foodLevel() { return player.getFoodData().getFoodLevel(); }
-        public int teleportCards() { return PlayerTeleportData.getData(player).peekTeleportCard(); }
-        public boolean alive() { return player.isAlive(); }
-        public boolean removed() { return player.isRemoved(); }
-        public boolean creative() { return player.isCreative(); }
-        public boolean spectator() { return player.isSpectator(); }
-        public <T> T nativePlayer(Class<T> type) { return type.cast(player); }
-        public <T> T nativeTeleportData(Class<T> type) { return type.cast(PlayerTeleportData.getData(player)); }
+
+        NativePlayer(ServerPlayer player) {
+            this.player = player;
+        }
+
+        public UUID uuid() {
+            return player.getUUID();
+        }
+
+        public String name() {
+            return player.getName().getString();
+        }
+
+        public CostPosition position() {
+            return ForgeCostContext.position(player);
+        }
+
+        public int experiencePoints() {
+            return player.totalExperience;
+        }
+
+        public int experienceLevels() {
+            return player.experienceLevel;
+        }
+
+        public float health() {
+            return player.getHealth();
+        }
+
+        public float maxHealth() {
+            return player.getMaxHealth();
+        }
+
+        public int foodLevel() {
+            return player.getFoodData().getFoodLevel();
+        }
+
+        public int teleportCards() {
+            return PlayerTeleportData.getData(player).peekTeleportCard();
+        }
+
+        public boolean alive() {
+            return player.isAlive();
+        }
+
+        public boolean removed() {
+            return player.isRemoved();
+        }
+
+        public boolean creative() {
+            return player.isCreative();
+        }
+
+        public boolean spectator() {
+            return player.isSpectator();
+        }
+
+        public <T> T nativePlayer(Class<T> type) {
+            return type.cast(player);
+        }
+
+        public <T> T nativeTeleportData(Class<T> type) {
+            return type.cast(PlayerTeleportData.getData(player));
+        }
     }
 
     private static final class NativeWorld implements CostWorldView {
         private final ServerLevel world;
-        NativeWorld(ServerLevel world) { this.world = world; }
-        public String dimensionId() { return world.dimension().location().toString(); }
-        public long gameTime() { return world.getGameTime(); }
-        public long dayTime() { return world.getDayTime(); }
-        public boolean raining() { return world.isRaining(); }
-        public boolean thundering() { return world.isThundering(); }
-        public boolean chunkLoaded(int x, int z) { return world.getChunkSource().getChunkNow(x, z) != null; }
+
+        NativeWorld(ServerLevel world) {
+            this.world = world;
+        }
+
+        public String dimensionId() {
+            return world.dimension().location().toString();
+        }
+
+        public long gameTime() {
+            return world.getGameTime();
+        }
+
+        public long dayTime() {
+            return world.getDayTime();
+        }
+
+        public boolean raining() {
+            return world.isRaining();
+        }
+
+        public boolean thundering() {
+            return world.isThundering();
+        }
+
+        public boolean chunkLoaded(int x, int z) {
+            return world.getChunkSource().getChunkNow(x, z) != null;
+        }
+
         public Optional<String> blockId(int x, int y, int z) {
             BlockPos pos = new BlockPos(x, y, z);
             if (!world.isInWorldBounds(pos)) return Optional.empty();
@@ -113,18 +183,45 @@ public final class ForgeCostContext {
             if (chunk == null) return Optional.empty();
             return Optional.of(Objects.requireNonNull(net.minecraft.core.Registry.BLOCK.getKey(chunk.getBlockState(pos).getBlock())).toString());
         }
-        public List<CostPlayerView> players() { return ForgeCostContext.players(world.players()); }
-        public <T> T nativeWorld(Class<T> type) { return type.cast(world); }
+
+        public List<CostPlayerView> players() {
+            return ForgeCostContext.players(world.players());
+        }
+
+        public <T> T nativeWorld(Class<T> type) {
+            return type.cast(world);
+        }
     }
 
     private static final class NativeServer implements CostServerView {
         private final MinecraftServer server;
-        NativeServer(MinecraftServer server) { this.server = server; }
-        public long tick() { return server.getTickCount(); }
-        public int onlinePlayerCount() { return server.getPlayerList().getPlayerCount(); }
-        public Optional<CostPlayerView> player(UUID id) { return Optional.ofNullable(server.getPlayerList().getPlayer(id)).map(NativePlayer::new); }
-        public List<CostPlayerView> players() { return ForgeCostContext.players(server.getPlayerList().getPlayers()); }
-        public Optional<CostWorldView> world(String id) { return Optional.ofNullable(ForgeCostContext.world(server, id)); }
-        public <T> T nativeServer(Class<T> type) { return type.cast(server); }
+
+        NativeServer(MinecraftServer server) {
+            this.server = server;
+        }
+
+        public long tick() {
+            return server.getTickCount();
+        }
+
+        public int onlinePlayerCount() {
+            return server.getPlayerList().getPlayerCount();
+        }
+
+        public Optional<CostPlayerView> player(UUID id) {
+            return Optional.ofNullable(server.getPlayerList().getPlayer(id)).map(NativePlayer::new);
+        }
+
+        public List<CostPlayerView> players() {
+            return ForgeCostContext.players(server.getPlayerList().getPlayers());
+        }
+
+        public Optional<CostWorldView> world(String id) {
+            return Optional.ofNullable(ForgeCostContext.world(server, id));
+        }
+
+        public <T> T nativeServer(Class<T> type) {
+            return type.cast(server);
+        }
     }
 }
