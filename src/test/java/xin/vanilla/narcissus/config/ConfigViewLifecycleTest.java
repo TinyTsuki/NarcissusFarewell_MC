@@ -66,14 +66,20 @@ public class ConfigViewLifecycleTest {
         assertEquals(saved, read.get());
     }
 
-    @Test public void declarationBeansRetainFluentAccessorsWithoutExposingRootFields() throws Exception {
-        CommonConfig.SafeTeleportCategory safe = new CommonConfig.SafeTeleportCategory();
+    @Test public void generatedViewsRetainFluentAccessorsWithoutExposingRootFields() throws Exception {
+        ConfigBaselineFixture common = new ConfigBaselineFixture(CommonConfig.class);
+        common.bind(CommonConfig.class);
+        CommonConfigView.BaseView.SafeTeleportView safe = CommonConfigView.get().base().safeTeleport();
         List<String> rules = Collections.singletonList("a, b -> true");
         assertSame(safe, safe.unsafeBlocks(rules));
         assertEquals(rules, safe.unsafeBlocks());
-        ClientConfig.ClientRootCategory client = new ClientConfig.ClientRootCategory();
+        assertEquals(rules, common.holder.get("base.safeTeleport.unsafeBlocks"));
+        ConfigBaselineFixture local = new ConfigBaselineFixture(ClientConfig.class);
+        local.bind(ClientConfig.class);
+        ClientConfigView.ClientView client = ClientConfigView.get().client();
         assertSame(client, client.syncHomeMapWaypoint(false));
         assertFalse(client.syncHomeMapWaypoint());
+        assertEquals(Boolean.FALSE, local.holder.get("client.syncHomeMapWaypoint"));
         for (Class<?> root : Arrays.asList(CommonConfig.class, ClientConfig.class)) {
             for (Field field : root.getDeclaredFields()) {
                 if (Modifier.isStatic(field.getModifiers())) continue;
