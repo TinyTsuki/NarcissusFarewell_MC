@@ -86,6 +86,7 @@ public class SafeBlock {
                     .collect(Collectors.toList());
         }
     }
+
     public static String normalizeBlockStateId(String value) {
         if (value == null) return null;
         return value.replaceFirst("^minecraft:grass_path(?=\\[|$)", "minecraft:dirt_path");

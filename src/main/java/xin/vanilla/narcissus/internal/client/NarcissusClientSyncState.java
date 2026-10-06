@@ -5,11 +5,15 @@ package xin.vanilla.narcissus.internal.client;
  */
 public final class NarcissusClientSyncState {
     private static ClientCostQuotes quotes;
+
     public static ClientCostQuotes costQuotes() {
         if (quotes == null) quotes = new ClientCostQuotes();
         return quotes;
     }
-    public static void clearCostQuotes() { if (quotes != null) quotes.clear(); }
+
+    public static void clearCostQuotes() {
+        if (quotes != null) quotes.clear();
+    }
 
     private static volatile long playerDataGeneration;
     private static volatile long waypointDataGeneration;
@@ -23,7 +27,9 @@ public final class NarcissusClientSyncState {
         if (quotes != null) quotes.closeView();
     }
 
-    /** 公共驿站同步只刷新地标视图，不伪装成完整玩家数据同步。 */
+    /**
+     * 公共驿站同步只刷新地标视图，不伪装成完整玩家数据同步。
+     */
     public static void markStageDataReceived() {
         waypointDataGeneration++;
         if (quotes != null) quotes.closeView();

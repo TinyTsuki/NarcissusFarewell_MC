@@ -2,16 +2,20 @@ package xin.vanilla.narcissus.config.migration;
 
 import org.junit.Test;
 import xin.vanilla.banira.api.script.*;
-import xin.vanilla.narcissus.api.cost.*;
+import xin.vanilla.narcissus.api.cost.CostFormula;
+import xin.vanilla.narcissus.api.cost.CostParameters;
 import xin.vanilla.narcissus.enums.EnumTeleportType;
 
 import java.util.*;
-import java.util.concurrent.*;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 import static org.junit.Assert.*;
 
 public class CostConfigMigrationTest {
-    @Test public void standardAndConstantCostsDoNotAcquireAnExtraDistanceFee() {
+    @Test
+    public void standardAndConstantCostsDoNotAcquireAnExtraDistanceFee() {
         Map<String, Object> legacy = legacy("num * distance * rate");
         CostMigrationPlan plan = CostConfigMigration.plan(legacy);
         CostParameters home = plan.configuration().parameters(EnumTeleportType.TP_HOME);
@@ -26,16 +30,21 @@ public class CostConfigMigrationTest {
         assertEquals(0, constant.perBlockAmount(), 0);
     }
 
-    @Test public void migrationMovesCardsAndDistanceAndRemovesOnlyTheirLegacyKeys() {
+    @Test
+    public void migrationMovesCardsAndDistanceAndRemovesOnlyTheirLegacyKeys() {
         Map<String, Object> legacy = legacy("num");
         Map<String, Object> limits = new LinkedHashMap<>();
         limits.put("teleportHomeLimit", 8);
         limits.put("teleportCostDistanceLimit", 7000);
         limits.put("teleportCostDistanceAcrossDimension", 500);
         Map<String, Object> card = new LinkedHashMap<>();
-        card.put("teleportCard", true); card.put("teleportCardDaily", 3); card.put("teleportCardType", "REFUND_COST");
+        card.put("teleportCard", true);
+        card.put("teleportCardDaily", 3);
+        card.put("teleportCardType", "REFUND_COST");
         Map<String, Object> base = new LinkedHashMap<>();
-        base.put("teleportLimit", limits); base.put("teleportCard", card); legacy.put("base", base);
+        base.put("teleportLimit", limits);
+        base.put("teleportCard", card);
+        legacy.put("base", base);
         CostMigrationPlan plan = CostConfigMigration.plan(legacy);
         assertEquals(7000, plan.configuration().maxDistance());
         assertEquals(500, plan.configuration().crossDimensionDistance());
@@ -49,7 +58,8 @@ public class CostConfigMigrationTest {
         assertEquals("OFFSET_COST", ((Map<?, ?>) migratedCost.get("cards")).get("mode"));
     }
 
-    @Test public void commandPlaceholderMigrationPreservesCommasAndOtherPayload() {
+    @Test
+    public void commandPlaceholderMigrationPreservesCommasAndOtherPayload() {
         Map<String, Object> legacy = legacy("num");
         Map<String, Object> home = home(legacy);
         home.put("costTpHomeType", "COMMAND");
@@ -62,18 +72,24 @@ public class CostConfigMigrationTest {
                 CostConfigMigration.plan(legacy).configuration().parameters(EnumTeleportType.TP_HOME).item());
     }
 
-    @Test public void disabledInvalidFormulaIsArchivedWithoutBlockingEnabledGroups() {
+    @Test
+    public void disabledInvalidFormulaIsArchivedWithoutBlockingEnabledGroups() {
         Map<String, Object> legacy = legacy("unknown + '05'");
         home(legacy).put("costTpHomeType", "NONE");
         CostMigrationPlan plan = CostConfigMigration.plan(legacy);
         assertEquals("NONE", plan.configuration().parameters(EnumTeleportType.TP_HOME).type().name());
         assertEquals(1, plan.disabledExpressions().size());
         home(legacy).put("costTpHomeType", "EXP_POINT");
-        try { CostConfigMigration.plan(legacy); fail("Unknown active variable"); }
-        catch (IllegalArgumentException expected) { assertTrue(expected.getMessage().contains("tpHome")); }
+        try {
+            CostConfigMigration.plan(legacy);
+            fail("Unknown active variable");
+        } catch (IllegalArgumentException expected) {
+            assertTrue(expected.getMessage().contains("tpHome"));
+        }
     }
 
-    @Test public void generatedMathAndBooleanExpressionsRunWithFrozenParameters() throws Exception {
+    @Test
+    public void generatedMathAndBooleanExpressionsRunWithFrozenParameters() throws Exception {
         String integerProduct = "100000 * 100000 / 1000000000";
         assertEquals(10d, new xin.vanilla.banira.common.util.SafeExpressionEvaluator(integerProduct)
                 .evaluateDouble(Collections.emptyMap()), 0);
@@ -106,20 +122,33 @@ public class CostConfigMigrationTest {
                 }
                 return null;
             }).get(15, TimeUnit.SECONDS);
-        } finally { session.close(); owner.shutdownNow(); assertTrue(owner.awaitTermination(15, TimeUnit.SECONDS)); }
-    }
-
-    @Test public void rejectsUnknownInputsStringCoercionAndUnboundedSyntax() {
-        for (String expression : Arrays.asList("'05' == 5", "health + 1", "sqrt()", "distance.class", "null", "1; System.exit(0)", "distance && true")) {
-            try { LegacyCostExpression.toJava(expression, 2, .003); fail(expression); }
-            catch (IllegalArgumentException expected) { }
+        } finally {
+            session.close();
+            owner.shutdownNow();
+            assertTrue(owner.awaitTermination(15, TimeUnit.SECONDS));
         }
-        char[] deep = new char[130]; Arrays.fill(deep, '(');
-        try { LegacyCostExpression.toJava(new String(deep) + "num", 2, .003); fail("Unbounded nesting"); }
-        catch (IllegalArgumentException expected) { }
     }
 
-    @Test public void secondPlanningRetainsMigratedSettingsAndNeedsNoNewMigration() {
+    @Test
+    public void rejectsUnknownInputsStringCoercionAndUnboundedSyntax() {
+        for (String expression : Arrays.asList("'05' == 5", "health + 1", "sqrt()", "distance.class", "null", "1; System.exit(0)", "distance && true")) {
+            try {
+                LegacyCostExpression.toJava(expression, 2, .003);
+                fail(expression);
+            } catch (IllegalArgumentException expected) {
+            }
+        }
+        char[] deep = new char[130];
+        Arrays.fill(deep, '(');
+        try {
+            LegacyCostExpression.toJava(new String(deep) + "num", 2, .003);
+            fail("Unbounded nesting");
+        } catch (IllegalArgumentException expected) {
+        }
+    }
+
+    @Test
+    public void secondPlanningRetainsMigratedSettingsAndNeedsNoNewMigration() {
         Map<String, Object> legacy = legacy("max(num, sqrt(distance) * rate)");
         CostMigrationPlan first = CostConfigMigration.plan(legacy);
         CostMigrationPlan second = CostConfigMigration.plan(first.configurationValues());
@@ -128,33 +157,42 @@ public class CostConfigMigrationTest {
         assertTrue(second.sources().isEmpty());
     }
 
-    @Test public void unrelatedCostTablesDoNotTriggerAnotherMigration() {
+    @Test
+    public void unrelatedCostTablesDoNotTriggerAnotherMigration() {
         Map<String, Object> values = new LinkedHashMap<>();
         values.put("cost", Collections.singletonMap("tpsIntegration", Collections.singletonMap("enabled", true)));
         assertFalse(CostConfigMigration.plan(values).migrationRequired());
     }
 
-    @Test public void allSixteenLegacyGroupsRetainTheirOwnParameters() {
+    @Test
+    public void allSixteenLegacyGroupsRetainTheirOwnParameters() {
         String[] names = {"Coordinate", "Structure", "Ask", "Here", "Random", "Spawn", "WorldSpawn", "Top",
                 "Bottom", "Up", "Down", "View", "Home", "Stage", "Back", "Grave"};
         Map<String, Object> cost = new LinkedHashMap<>();
         for (int i = 0; i < names.length; i++) {
-            Map<String, Object> group = new LinkedHashMap<>(); String prefix = "costTp" + names[i];
-            group.put(prefix + "Type", "EXP_POINT"); group.put(prefix + "Num", i + 1); group.put(prefix + "Exp", "num");
+            Map<String, Object> group = new LinkedHashMap<>();
+            String prefix = "costTp" + names[i];
+            group.put(prefix + "Type", "EXP_POINT");
+            group.put(prefix + "Num", i + 1);
+            group.put(prefix + "Exp", "num");
             cost.put("tp" + names[i], group);
         }
         CostMigrationPlan plan = CostConfigMigration.plan(Collections.singletonMap("cost", cost));
         for (int i = 0; i < names.length; i++) {
             CostParameters group = plan.configuration().parameters(EnumTeleportType.countdownConfigurableTypes().get(i));
-            assertEquals(i + 1, group.fixedAmount(), 0); assertEquals(0, group.perBlockAmount(), 0);
+            assertEquals(i + 1, group.fixedAmount(), 0);
+            assertEquals(0, group.perBlockAmount(), 0);
         }
     }
 
-    @Test public void generatedFilesCompileAndAnUnconvertedDisabledFormulaCannotBeEnabled() throws Exception {
+    @Test
+    public void generatedFilesCompileAndAnUnconvertedDisabledFormulaCannotBeEnabled() throws Exception {
         Map<String, Object> values = legacy("max(num, sqrt(distance) * rate)");
         @SuppressWarnings("unchecked") Map<String, Object> cost = (Map<String, Object>) values.get("cost");
         Map<String, Object> disabled = new LinkedHashMap<>();
-        disabled.put("costTpGraveType", "NONE"); disabled.put("costTpGraveExp", "unknown + '05'"); cost.put("tpGrave", disabled);
+        disabled.put("costTpGraveType", "NONE");
+        disabled.put("costTpGraveExp", "unknown + '05'");
+        cost.put("tpGrave", disabled);
         CostMigrationPlan plan = CostConfigMigration.plan(values);
         ExecutorService owner = Executors.newSingleThreadExecutor();
         ScriptSession<ScriptFactory<CostFormula>> session = BaniraScripts.openFactorySession(
@@ -166,24 +204,39 @@ public class CostConfigMigrationTest {
             PreparedScripts<ScriptFactory<CostFormula>> prepared = session.prepare(sources).get(15, TimeUnit.SECONDS);
             owner.submit(() -> {
                 assertNotNull(prepared.scripts().get("LegacyHomeCost").create());
-                try { prepared.scripts().get("LegacyGraveCost").create(); fail("Unconverted formula enabled"); }
-                catch (RuntimeException expected) { }
+                try {
+                    prepared.scripts().get("LegacyGraveCost").create();
+                    fail("Unconverted formula enabled");
+                } catch (RuntimeException expected) {
+                }
                 return null;
             }).get(15, TimeUnit.SECONDS);
-        } finally { session.close(); owner.shutdownNow(); assertTrue(owner.awaitTermination(15, TimeUnit.SECONDS)); }
+        } finally {
+            session.close();
+            owner.shutdownNow();
+            assertTrue(owner.awaitTermination(15, TimeUnit.SECONDS));
+        }
     }
 
     public static Map<String, Object> legacy(String expression) {
         Map<String, Object> group = new LinkedHashMap<>();
-        group.put("costTpHomeType", "EXP_POINT"); group.put("costTpHomeNum", 2);
-        group.put("costTpHomeRate", .003); group.put("costTpHomeNumUpper", 30);
-        group.put("costTpHomeNumLower", 1); group.put("costTpHomeExp", expression); group.put("costTpHomeConf", "");
-        Map<String, Object> cost = new LinkedHashMap<>(); cost.put("tpHome", group);
-        Map<String, Object> root = new LinkedHashMap<>(); root.put("unrelated", "unchanged"); root.put("cost", cost);
+        group.put("costTpHomeType", "EXP_POINT");
+        group.put("costTpHomeNum", 2);
+        group.put("costTpHomeRate", .003);
+        group.put("costTpHomeNumUpper", 30);
+        group.put("costTpHomeNumLower", 1);
+        group.put("costTpHomeExp", expression);
+        group.put("costTpHomeConf", "");
+        Map<String, Object> cost = new LinkedHashMap<>();
+        cost.put("tpHome", group);
+        Map<String, Object> root = new LinkedHashMap<>();
+        root.put("unrelated", "unchanged");
+        root.put("cost", cost);
         return root;
     }
 
-    @SuppressWarnings("unchecked") private static Map<String, Object> home(Map<String, Object> legacy) {
+    @SuppressWarnings("unchecked")
+    private static Map<String, Object> home(Map<String, Object> legacy) {
         return (Map<String, Object>) ((Map<?, ?>) legacy.get("cost")).get("tpHome");
     }
 }

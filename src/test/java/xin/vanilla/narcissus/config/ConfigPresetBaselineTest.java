@@ -1,15 +1,17 @@
 package xin.vanilla.narcissus.config;
 
 import org.junit.Test;
-import xin.vanilla.narcissus.config.preset.CommonConfigPresets;
 import xin.vanilla.banira.common.config.ConfigHolder;
+import xin.vanilla.narcissus.config.preset.CommonConfigPresets;
+
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.function.Consumer;
 
 public class ConfigPresetBaselineTest {
-    @Test public void presetsKeepSearchExecutionOverridesAndExtensionValues() throws Exception {
+    @Test
+    public void presetsKeepSearchExecutionOverridesAndExtensionValues() throws Exception {
         for (Consumer<ConfigHolder> preset : java.util.Arrays.<Consumer<ConfigHolder>>asList(
                 CommonConfigPresets::resetConfig, CommonConfigPresets::resetConfigWithMode1,
                 CommonConfigPresets::resetConfigWithMode2, CommonConfigPresets::resetConfigWithMode3)) {
@@ -26,23 +28,33 @@ public class ConfigPresetBaselineTest {
             org.junit.Assert.assertFalse(fixture.written.contains("extension.keep"));
         }
     }
-    @Test public void presetDoesNotOverwriteAnUnrelatedExtensionValue() throws Exception {
+
+    @Test
+    public void presetDoesNotOverwriteAnUnrelatedExtensionValue() throws Exception {
         ConfigBaselineFixture fixture = new ConfigBaselineFixture(CommonConfig.class);
         fixture.values.put("extension.keep", "preserve,me");
         CommonConfigPresets.resetConfig(fixture.holder);
         org.junit.Assert.assertEquals("preserve,me", fixture.values.get("extension.keep"));
         org.junit.Assert.assertFalse(fixture.written.contains("extension.keep"));
     }
-    @Test public void defaultPresetKeepsItsOriginalCoverage() throws Exception {
+
+    @Test
+    public void defaultPresetKeepsItsOriginalCoverage() throws Exception {
         capture("preset-default", CommonConfigPresets::resetConfig);
     }
-    @Test public void modeOneKeepsItsOriginalCoverage() throws Exception {
+
+    @Test
+    public void modeOneKeepsItsOriginalCoverage() throws Exception {
         capture("preset-one", CommonConfigPresets::resetConfigWithMode1);
     }
-    @Test public void modeTwoKeepsItsOriginalCoverageAndSaves() throws Exception {
+
+    @Test
+    public void modeTwoKeepsItsOriginalCoverageAndSaves() throws Exception {
         capture("preset-two", CommonConfigPresets::resetConfigWithMode2);
     }
-    @Test public void modeThreeKeepsItsOriginalCoverage() throws Exception {
+
+    @Test
+    public void modeThreeKeepsItsOriginalCoverage() throws Exception {
         capture("preset-three", CommonConfigPresets::resetConfigWithMode3);
     }
 

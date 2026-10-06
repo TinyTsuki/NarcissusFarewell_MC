@@ -14,11 +14,7 @@ import xin.vanilla.banira.client.gui.BaniraScreen;
 import xin.vanilla.banira.client.gui.component.Notification;
 import xin.vanilla.banira.client.gui.component.Text;
 import xin.vanilla.banira.client.gui.event.MouseEvent;
-import xin.vanilla.banira.client.gui.widget.BaseWidget;
-import xin.vanilla.banira.client.gui.widget.CollapsiblePanelWidget;
-import xin.vanilla.banira.client.gui.widget.IWidget;
-import xin.vanilla.banira.client.gui.widget.LabelWidget;
-import xin.vanilla.banira.client.gui.widget.SliderWidget;
+import xin.vanilla.banira.client.gui.widget.*;
 import xin.vanilla.banira.client.util.NotificationManager;
 import xin.vanilla.banira.common.data.Component;
 import xin.vanilla.banira.common.enums.EnumPosition;
@@ -58,9 +54,12 @@ public class PlayerConfigScreen extends xin.vanilla.banira.client.gui.PlayerConf
     @Data
     @Accessors(chain = true, fluent = true)
     public static class Args {
-        @Nullable private Screen parentScreen;
-        @Nullable private BaniraColorConfig theme;
-        @Nullable private EnumSeason season;
+        @Nullable
+        private Screen parentScreen;
+        @Nullable
+        private BaniraColorConfig theme;
+        @Nullable
+        private EnumSeason season;
     }
 
     @Override

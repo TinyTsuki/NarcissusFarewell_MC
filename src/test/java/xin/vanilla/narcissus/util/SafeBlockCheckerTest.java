@@ -1,9 +1,8 @@
 package xin.vanilla.narcissus.util;
 
-import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.block.Blocks;
 import net.minecraft.core.BlockPos;
-import net.minecraft.server.Bootstrap;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.state.BlockState;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import xin.vanilla.narcissus.search.SafeBlockPolicy;
@@ -17,7 +16,8 @@ public class SafeBlockCheckerTest {
 
     @BeforeClass
     public static void bootstrap() {
-        net.minecraft.SharedConstants.tryDetectVersion(); net.minecraft.server.Bootstrap.bootStrap();
+        net.minecraft.SharedConstants.tryDetectVersion();
+        net.minecraft.server.Bootstrap.bootStrap();
         Blocks.STONE.getStateDefinition().getPossibleStates().forEach(BlockState::initCache);
         Blocks.WATER.getStateDefinition().getPossibleStates().forEach(BlockState::initCache);
         Blocks.LAVA.getStateDefinition().getPossibleStates().forEach(BlockState::initCache);

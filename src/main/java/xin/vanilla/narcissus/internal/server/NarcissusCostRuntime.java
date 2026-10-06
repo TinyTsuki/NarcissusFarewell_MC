@@ -2,9 +2,16 @@ package xin.vanilla.narcissus.internal.server;
 
 import xin.vanilla.banira.api.script.*;
 import xin.vanilla.banira.common.config.ConfigHolder;
-import xin.vanilla.narcissus.api.cost.*;
-import xin.vanilla.narcissus.data.cost.*;
-import xin.vanilla.narcissus.enums.*;
+import xin.vanilla.narcissus.api.cost.CostCardSettings;
+import xin.vanilla.narcissus.api.cost.CostContext;
+import xin.vanilla.narcissus.api.cost.CostFormula;
+import xin.vanilla.narcissus.api.cost.CostParameters;
+import xin.vanilla.narcissus.data.cost.CostCalculation;
+import xin.vanilla.narcissus.data.cost.CostConfiguration;
+import xin.vanilla.narcissus.data.cost.CostContextInput;
+import xin.vanilla.narcissus.enums.EnumCostFailure;
+import xin.vanilla.narcissus.enums.EnumCostType;
+import xin.vanilla.narcissus.enums.EnumTeleportType;
 import xin.vanilla.narcissus.internal.server.cost.CostEvaluation;
 import xin.vanilla.narcissus.service.cost.CostCalculator;
 
@@ -22,7 +29,9 @@ import java.util.*;
 import java.util.concurrent.*;
 import java.util.function.Consumer;
 
-/** Server-owned generations of trusted local code; this is not a Java sandbox. */
+/**
+ * Server-owned generations of trusted local code; this is not a Java sandbox.
+ */
 public final class NarcissusCostRuntime implements AutoCloseable {
     private static final int SOURCE_BYTES = 262144, BATCH_BYTES = 8388608, SOURCE_COUNT = 128;
     private static final String NAMESPACE = "xin.vanilla.banira.generated.cost.";
@@ -40,11 +49,16 @@ public final class NarcissusCostRuntime implements AutoCloseable {
     private long sequence;
     private boolean reportedConfigurationFailure;
 
-    /** Implement with generated views: each charged operation reads just one group. */
+    /**
+     * Implement with generated views: each charged operation reads just one group.
+     */
     public interface LiveConfiguration {
         CostParameters parameters(EnumTeleportType type);
+
         CostCardSettings cards();
+
         int maxDistance();
+
         int crossDimensionDistance();
 
         default CostConfiguration selection(EnumTeleportType type) {
@@ -55,7 +69,8 @@ public final class NarcissusCostRuntime implements AutoCloseable {
 
         default CostConfiguration snapshot() {
             EnumMap<EnumTeleportType, CostParameters> groups = new EnumMap<>(EnumTeleportType.class);
-            for (EnumTeleportType type : EnumTeleportType.countdownConfigurableTypes()) groups.put(type, parameters(type));
+            for (EnumTeleportType type : EnumTeleportType.countdownConfigurableTypes())
+                groups.put(type, parameters(type));
             return new CostConfiguration(groups, cards(), maxDistance(), crossDimensionDistance());
         }
     }
@@ -76,8 +91,12 @@ public final class NarcissusCostRuntime implements AutoCloseable {
             if (closed || paths.stream().noneMatch(path -> path.startsWith("cost."))) return;
             dispatch(() -> {
                 if (!closed) {
-                    try { prepare(live.snapshot()); }
-                    catch (RuntimeException error) { invalidate(); report(error); }
+                    try {
+                        prepare(live.snapshot());
+                    } catch (RuntimeException error) {
+                        invalidate();
+                        report(error);
+                    }
                 }
             }, null);
         };
@@ -89,18 +108,25 @@ public final class NarcissusCostRuntime implements AutoCloseable {
         checkOwner();
         Objects.requireNonNull(configuration, "configuration");
         if (closed) return CompletableFuture.completedFuture(false);
-        if (pending != null && !pending.result.isDone() && same(pending.configuration, configuration)) return pending.result;
+        if (pending != null && !pending.result.isDone() && same(pending.configuration, configuration))
+            return pending.result;
         Request previous = pending;
         Request request = new Request(configuration);
         pending = request;
         reportedConfigurationFailure = false;
         request.result.whenComplete((result, failure) -> {
             if (request.result.isCancelled()) dispatch(() -> {
-                if (pending == request) { pending = null; request.release(); }
+                if (pending == request) {
+                    pending = null;
+                    request.release();
+                }
             }, request);
         });
         invalidate();
-        if (previous != null) { previous.release(); previous.result.complete(false); }
+        if (previous != null) {
+            previous.release();
+            previous.result.complete(false);
+        }
         try {
             worker.execute(() -> {
                 try {
@@ -108,9 +134,13 @@ public final class NarcissusCostRuntime implements AutoCloseable {
                     Sources sources = Sources.load(sourceRoot, configuration, Collections.emptyMap());
                     if (closed || request.result.isDone()) return;
                     dispatch(() -> compile(request, sources), request);
-                } catch (Exception | LinkageError error) { reject(request, error); }
+                } catch (Exception | LinkageError error) {
+                    reject(request, error);
+                }
             });
-        } catch (RuntimeException error) { reject(request, error); }
+        } catch (RuntimeException error) {
+            reject(request, error);
+        }
         return request.result;
     }
 
@@ -118,27 +148,42 @@ public final class NarcissusCostRuntime implements AutoCloseable {
         checkOwner();
         if (!current(request)) return;
         request.sources = sources;
-        if (sources.group == null) { finish(request, null); return; }
+        if (sources.group == null) {
+            finish(request, null);
+            return;
+        }
         request.session = BaniraScripts.openFactorySession("narcissus_farewell", CostFormula.class, "1",
                 new ScriptLimits(SOURCE_BYTES, BATCH_BYTES, SOURCE_COUNT), owner);
         request.session.prepareGroups(Collections.singletonList(sources.group)).whenComplete((prepared, error) -> {
             dispatch(() -> {
                 if (!current(request)) return;
                 sources.group = null;
-                if (error != null) { fail(request, error); return; }
+                if (error != null) {
+                    fail(request, error);
+                    return;
+                }
                 CostFormula formula;
-                try { formula = prepared.scripts().get("cost").create(); }
-                catch (RuntimeException | LinkageError failure) { fail(request, failure); return; }
-                finally { request.closeSession(); }
+                try {
+                    formula = prepared.scripts().get("cost").create();
+                } catch (RuntimeException | LinkageError failure) {
+                    fail(request, failure);
+                    return;
+                } finally {
+                    request.closeSession();
+                }
                 if (!current(request)) return;
                 try {
                     worker.execute(() -> {
                         try {
                             sources.verify(sourceRoot);
                             dispatch(() -> finish(request, formula), request);
-                        } catch (Exception | LinkageError failure) { reject(request, failure); }
+                        } catch (Exception | LinkageError failure) {
+                            reject(request, failure);
+                        }
                     });
-                } catch (RuntimeException failure) { fail(request, failure); }
+                } catch (RuntimeException failure) {
+                    fail(request, failure);
+                }
             }, request);
         });
     }
@@ -147,19 +192,28 @@ public final class NarcissusCostRuntime implements AutoCloseable {
         checkOwner();
         if (!current(request)) return;
         try {
-            if (!same(request.configuration, live.snapshot())) throw new IllegalStateException("Cost configuration changed during preparation");
+            if (!same(request.configuration, live.snapshot()))
+                throw new IllegalStateException("Cost configuration changed during preparation");
             if (!request.sources.fingerprints.isEmpty()) request.sources.verify(sourceRoot);
-            if (!same(request.configuration, live.snapshot())) throw new IllegalStateException("Cost configuration changed before publication");
+            if (!same(request.configuration, live.snapshot()))
+                throw new IllegalStateException("Cost configuration changed before publication");
             active = new Generation(++sequence, request.configuration, formula);
             pending = null;
             request.release();
             request.result.complete(true);
-        } catch (IOException | RuntimeException error) { fail(request, error); }
+        } catch (IOException | RuntimeException error) {
+            fail(request, error);
+        }
     }
 
-    public long generationId() { checkOwner(); return active == null ? 0 : active.id; }
+    public long generationId() {
+        checkOwner();
+        return active == null ? 0 : active.id;
+    }
 
-    /** Default arithmetic does not need player/world views or an invocation context. */
+    /**
+     * Default arithmetic does not need player/world views or an invocation context.
+     */
     public CostCalculation calculate(EnumTeleportType type, long generationId, double rawDistance, boolean crossDimension) {
         checkOwner();
         if (closed) return unavailable();
@@ -170,13 +224,16 @@ public final class NarcissusCostRuntime implements AutoCloseable {
         Generation generation = active;
         if (generation == null || generation.id != generationId || !parameters.customFile().isEmpty()
                 || !selectionMatches(generation, type, selection)) return unavailable();
-        if (!Double.isFinite(rawDistance) || rawDistance < 0) return CostCalculation.failed(EnumCostFailure.INVALID_DISTANCE);
+        if (!Double.isFinite(rawDistance) || rawDistance < 0)
+            return CostCalculation.failed(EnumCostFailure.INVALID_DISTANCE);
         return calculator.calculate(parameters, generation.configuration.distance(rawDistance, crossDimension));
     }
 
     public CostCalculation calculate(CostContextInput input) {
         checkOwner();
-        try (CostEvaluation evaluation = CostEvaluation.open(input)) { return calculate(evaluation.context()); }
+        try (CostEvaluation evaluation = CostEvaluation.open(input)) {
+            return calculate(evaluation.context());
+        }
     }
 
     public CostCalculation calculate(CostContext context) {
@@ -194,9 +251,12 @@ public final class NarcissusCostRuntime implements AutoCloseable {
             CostCalculation result = calculator.calculate(parameters, context,
                     parameters.customFile().isEmpty() ? null : generation.formula);
             // Trusted code can re-enter, stop the world, or change configuration while evaluating.
-            if (!parameters.customFile().isEmpty() && !matches(generation, context, currentSelection(type))) return unavailable();
+            if (!parameters.customFile().isEmpty() && !matches(generation, context, currentSelection(type)))
+                return unavailable();
             return result;
-        } finally { generation.release(); }
+        } finally {
+            generation.release();
+        }
     }
 
     private boolean matches(Generation generation, CostContext context, CostConfiguration selection) {
@@ -216,15 +276,23 @@ public final class NarcissusCostRuntime implements AutoCloseable {
 
     private CostConfiguration currentSelection(EnumTeleportType type) {
         Objects.requireNonNull(type, "type");
-        try { return Objects.requireNonNull(live.selection(type), "Current cost selection"); }
-        catch (RuntimeException failure) { configurationFailure(failure); return null; }
+        try {
+            return Objects.requireNonNull(live.selection(type), "Current cost selection");
+        } catch (RuntimeException failure) {
+            configurationFailure(failure);
+            return null;
+        }
     }
 
     private void configurationFailure(RuntimeException failure) {
-        if (!reportedConfigurationFailure) { reportedConfigurationFailure = true; report(failure); }
+        if (!reportedConfigurationFailure) {
+            reportedConfigurationFailure = true;
+            report(failure);
+        }
     }
 
-    @Override public void close() {
+    @Override
+    public void close() {
         checkOwner();
         if (closed) return;
         closed = true;
@@ -233,18 +301,28 @@ public final class NarcissusCostRuntime implements AutoCloseable {
         invalidate();
         Request request = pending;
         pending = null;
-        if (request != null) { request.release(); request.result.complete(false); }
+        if (request != null) {
+            request.release();
+            request.result.complete(false);
+        }
     }
 
     private void invalidate() {
         Generation previous = active;
         active = null;
-        if (previous != null) { previous.retired = true; previous.clearIfUnused(); }
+        if (previous != null) {
+            previous.retired = true;
+            previous.clearIfUnused();
+        }
     }
 
-    private boolean current(Request request) { return !closed && pending == request && !request.result.isDone(); }
+    private boolean current(Request request) {
+        return !closed && pending == request && !request.result.isDone();
+    }
 
-    private void reject(Request request, Throwable error) { dispatch(() -> fail(request, error), request); }
+    private void reject(Request request, Throwable error) {
+        dispatch(() -> fail(request, error), request);
+    }
 
     private void fail(Request request, Throwable error) {
         checkOwner();
@@ -256,30 +334,42 @@ public final class NarcissusCostRuntime implements AutoCloseable {
     }
 
     private void dispatch(Runnable action, Request request) {
-        try { owner.execute(action); }
-        catch (RuntimeException rejected) {
+        try {
+            owner.execute(action);
+        } catch (RuntimeException rejected) {
             // A stopped owner cannot accept cleanup; completion still must not hang the caller.
-            if (request != null) { request.release(); request.result.complete(false); }
+            if (request != null) {
+                request.release();
+                request.result.complete(false);
+            }
         }
     }
 
     private void report(Throwable error) {
         while (error instanceof CompletionException && error.getCause() != null) error = error.getCause();
-        try { diagnostics.accept(error); } catch (RuntimeException ignored) { }
+        try {
+            diagnostics.accept(error);
+        } catch (RuntimeException ignored) {
+        }
     }
 
     private void checkOwner() {
-        if (Thread.currentThread() != ownerThread) throw new IllegalStateException("Cost runtime must run on its server owner");
+        if (Thread.currentThread() != ownerThread)
+            throw new IllegalStateException("Cost runtime must run on its server owner");
     }
 
-    private static CostCalculation unavailable() { return CostCalculation.failed(EnumCostFailure.CONFIGURATION_UNAVAILABLE); }
+    private static CostCalculation unavailable() {
+        return CostCalculation.failed(EnumCostFailure.CONFIGURATION_UNAVAILABLE);
+    }
 
     private static boolean same(CostConfiguration left, CostConfiguration right) {
         return left.groups().equals(right.groups()) && left.cards().equals(right.cards())
                 && left.maxDistance() == right.maxDistance() && left.crossDimensionDistance() == right.crossDimensionDistance();
     }
 
-    /** Cold startup validation before Forge corrects the old TOML; never executes constructors. */
+    /**
+     * Cold startup validation before Forge corrects the old TOML; never executes constructors.
+     */
     public static SourceValidation preflight(CostConfiguration configuration, Path sourceRoot, Map<String, String> migratedSources) throws IOException {
         ThreadPoolExecutor preflight = new ThreadPoolExecutor(1, 1, 0, TimeUnit.MILLISECONDS,
                 new ArrayBlockingQueue<>(1), task -> new Thread(task, "narcissus-cost-preflight"));
@@ -287,20 +377,28 @@ public final class NarcissusCostRuntime implements AutoCloseable {
                 CostFormula.class, "1", new ScriptLimits(SOURCE_BYTES, BATCH_BYTES, SOURCE_COUNT), preflight);
         try {
             Sources sources = Sources.load(sourceRoot.toAbsolutePath().normalize(), configuration, migratedSources);
-            if (sources.group != null) session.prepareGroups(Collections.singletonList(sources.group)).get(30, TimeUnit.SECONDS);
+            if (sources.group != null)
+                session.prepareGroups(Collections.singletonList(sources.group)).get(30, TimeUnit.SECONDS);
             return new SourceValidation(sourceRoot.toAbsolutePath().normalize(), sources.fingerprints, sources.helpers);
         } catch (InterruptedException interrupted) {
-            Thread.currentThread().interrupt(); throw new IOException("Cost preflight interrupted", interrupted);
+            Thread.currentThread().interrupt();
+            throw new IOException("Cost preflight interrupted", interrupted);
         } catch (ExecutionException | TimeoutException | RuntimeException failure) {
             throw new IOException("Cost preflight failed", failure);
         } finally {
-            session.close(); preflight.shutdownNow();
-            try { preflight.awaitTermination(5, TimeUnit.SECONDS); }
-            catch (InterruptedException interrupted) { Thread.currentThread().interrupt(); }
+            session.close();
+            preflight.shutdownNow();
+            try {
+                preflight.awaitTermination(5, TimeUnit.SECONDS);
+            } catch (InterruptedException interrupted) {
+                Thread.currentThread().interrupt();
+            }
         }
     }
 
-    /** Only hashes and filenames survive cold compilation, never code, factories or an executor. */
+    /**
+     * Only hashes and filenames survive cold compilation, never code, factories or an executor.
+     */
     public static final class SourceValidation {
         private final Path root;
         private final Map<String, String> fingerprints;
@@ -312,7 +410,9 @@ public final class NarcissusCostRuntime implements AutoCloseable {
             this.helpers = Collections.unmodifiableSet(new TreeSet<>(helpers));
         }
 
-        /** Call after migrated sources are installed and immediately before configuration replacement. */
+        /**
+         * Call after migrated sources are installed and immediately before configuration replacement.
+         */
         public void verify() throws IOException {
             if (fingerprints.isEmpty()) return;
             new Sources(null, fingerprints, helpers).verify(root);
@@ -324,9 +424,22 @@ public final class NarcissusCostRuntime implements AutoCloseable {
         final CompletableFuture<Boolean> result = new CompletableFuture<>();
         volatile Sources sources;
         private volatile ScriptSession<ScriptFactory<CostFormula>> session;
-        Request(CostConfiguration configuration) { this.configuration = configuration; }
-        synchronized void closeSession() { if (session != null) { session.close(); session = null; } }
-        void release() { sources = null; closeSession(); }
+
+        Request(CostConfiguration configuration) {
+            this.configuration = configuration;
+        }
+
+        synchronized void closeSession() {
+            if (session != null) {
+                session.close();
+                session = null;
+            }
+        }
+
+        void release() {
+            sources = null;
+            closeSession();
+        }
     }
 
     private final class Generation {
@@ -336,26 +449,45 @@ public final class NarcissusCostRuntime implements AutoCloseable {
         int leases;
         boolean retired;
         boolean reportedFailure;
+
         Generation(long id, CostConfiguration configuration, CostFormula compiled) {
-            this.id = id; this.configuration = configuration;
+            this.id = id;
+            this.configuration = configuration;
             if (compiled != null) formula = context -> {
-                try { return compiled.calculate(context); }
-                catch (RuntimeException | LinkageError failure) {
-                    if (!reportedFailure) { reportedFailure = true; report(failure); }
+                try {
+                    return compiled.calculate(context);
+                } catch (RuntimeException | LinkageError failure) {
+                    if (!reportedFailure) {
+                        reportedFailure = true;
+                        report(failure);
+                    }
                     throw new IllegalStateException("Cost formula failed", failure);
                 }
             };
         }
-        void release() { leases--; clearIfUnused(); }
-        void clearIfUnused() { if (retired && leases == 0) { configuration = null; formula = null; } }
+
+        void release() {
+            leases--;
+            clearIfUnused();
+        }
+
+        void clearIfUnused() {
+            if (retired && leases == 0) {
+                configuration = null;
+                formula = null;
+            }
+        }
     }
 
     private static final class Sources {
         ScriptSourceGroup group;
         final Map<String, String> fingerprints;
         final Set<String> helpers;
+
         Sources(ScriptSourceGroup group, Map<String, String> fingerprints, Set<String> helpers) {
-            this.group = group; this.fingerprints = fingerprints; this.helpers = helpers;
+            this.group = group;
+            this.fingerprints = fingerprints;
+            this.helpers = helpers;
         }
 
         static Sources load(Path root, CostConfiguration configuration, Map<String, String> overlays) throws IOException {
@@ -367,13 +499,15 @@ public final class NarcissusCostRuntime implements AutoCloseable {
             if (entries.isEmpty()) return new Sources(null, Collections.emptyMap(), Collections.emptySet());
             Set<String> helpers = helpers(root);
             Map<String, String> files = new LinkedHashMap<>(), fingerprints = new LinkedHashMap<>();
-            Set<String> names = new TreeSet<>(helpers); names.addAll(entries.keySet());
+            Set<String> names = new TreeSet<>(helpers);
+            names.addAll(entries.keySet());
             int bytes = 0;
             for (String name : names) {
                 if (name.equals(BUNDLE + ".java")) throw new IOException("Reserved cost filename");
                 className(name);
                 byte[] code = overlays.containsKey(name) ? overlays.get(name).getBytes(StandardCharsets.UTF_8) : read(local(root, name));
-                if (code.length > SOURCE_BYTES || (bytes += code.length) > BATCH_BYTES) throw new IOException("Cost sources exceed byte limits");
+                if (code.length > SOURCE_BYTES || (bytes += code.length) > BATCH_BYTES)
+                    throw new IOException("Cost sources exceed byte limits");
                 files.put(name, StandardCharsets.UTF_8.newDecoder().onMalformedInput(CodingErrorAction.REPORT)
                         .onUnmappableCharacter(CodingErrorAction.REPORT).decode(ByteBuffer.wrap(code)).toString());
                 fingerprints.put(name, hash(code));
@@ -385,7 +519,8 @@ public final class NarcissusCostRuntime implements AutoCloseable {
         }
 
         void verify(Path root) throws IOException {
-            if (!helpers.equals(helpers(root))) throw new IOException("Cost helper file selection changed during preparation");
+            if (!helpers.equals(helpers(root)))
+                throw new IOException("Cost helper file selection changed during preparation");
             for (Map.Entry<String, String> file : fingerprints.entrySet()) {
                 if (!file.getValue().equals(hash(read(local(root, file.getKey())))))
                     throw new IOException("Cost source changed during preparation: " + file.getKey());
@@ -412,7 +547,8 @@ public final class NarcissusCostRuntime implements AutoCloseable {
         private static String className(String file) throws IOException {
             if (!file.endsWith(".java")) throw new IOException("Expected Java cost source");
             String suffix = file.substring(0, file.length() - 5).replace('/', '.');
-            if (!suffix.matches("[A-Za-z_$][A-Za-z0-9_$]*(\\.[A-Za-z_$][A-Za-z0-9_$]*)*")) throw new IOException("Invalid cost Java class path: " + file);
+            if (!suffix.matches("[A-Za-z_$][A-Za-z0-9_$]*(\\.[A-Za-z_$][A-Za-z0-9_$]*)*"))
+                throw new IOException("Invalid cost Java class path: " + file);
             return NAMESPACE + suffix;
         }
 
@@ -422,14 +558,20 @@ public final class NarcissusCostRuntime implements AutoCloseable {
             if (!Files.exists(directory, LinkOption.NOFOLLOW_LINKS)) return files;
             Files.walkFileTree(directory, Collections.emptySet(), 16, new SimpleFileVisitor<Path>() {
                 int visited;
+
                 private void inspect(Path path) throws IOException {
                     if (++visited > 512) throw new IOException("Cost helper tree exceeds limit");
                     checkAncestors(path);
                 }
-                @Override public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attributes) throws IOException {
-                    inspect(dir); return FileVisitResult.CONTINUE;
+
+                @Override
+                public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attributes) throws IOException {
+                    inspect(dir);
+                    return FileVisitResult.CONTINUE;
                 }
-                @Override public FileVisitResult visitFile(Path file, BasicFileAttributes attributes) throws IOException {
+
+                @Override
+                public FileVisitResult visitFile(Path file, BasicFileAttributes attributes) throws IOException {
                     inspect(file);
                     if (attributes.isDirectory()) throw new IOException("Cost helper tree exceeds depth limit");
                     if (file.getFileName().toString().endsWith(".java")) {
@@ -443,11 +585,15 @@ public final class NarcissusCostRuntime implements AutoCloseable {
         }
 
         private static Path local(Path root, String name) throws IOException {
-            if (name.isEmpty() || name.startsWith("/") || name.contains("\\") || name.contains(":")) throw new IOException("Invalid cost source path");
-            for (String part : name.split("/", -1)) if (part.isEmpty() || part.equals(".") || part.equals("..")) throw new IOException("Invalid cost source path");
+            if (name.isEmpty() || name.startsWith("/") || name.contains("\\") || name.contains(":"))
+                throw new IOException("Invalid cost source path");
+            for (String part : name.split("/", -1))
+                if (part.isEmpty() || part.equals(".") || part.equals(".."))
+                    throw new IOException("Invalid cost source path");
             Path path = root.resolve(name).normalize();
             if (!path.startsWith(root)) throw new IOException("Cost source leaves its root");
-            checkAncestors(path); return path;
+            checkAncestors(path);
+            return path;
         }
 
         private static void checkAncestors(Path path) throws IOException {
@@ -463,22 +609,29 @@ public final class NarcissusCostRuntime implements AutoCloseable {
 
         private static byte[] read(Path file) throws IOException {
             checkAncestors(file);
-            if (!Files.isRegularFile(file, LinkOption.NOFOLLOW_LINKS)) throw new IOException("Missing cost source: " + file);
+            if (!Files.isRegularFile(file, LinkOption.NOFOLLOW_LINKS))
+                throw new IOException("Missing cost source: " + file);
             try (FileChannel channel = FileChannel.open(file, StandardOpenOption.READ, LinkOption.NOFOLLOW_LINKS)) {
                 if (channel.size() > SOURCE_BYTES) throw new IOException("Cost source exceeds byte limit");
-                ByteArrayOutputStream result = new ByteArrayOutputStream(); ByteBuffer buffer = ByteBuffer.allocate(8192);
+                ByteArrayOutputStream result = new ByteArrayOutputStream();
+                ByteBuffer buffer = ByteBuffer.allocate(8192);
                 while (channel.read(buffer) != -1) {
                     buffer.flip();
-                    if (result.size() + buffer.remaining() > SOURCE_BYTES) throw new IOException("Cost source grew beyond limit");
-                    result.write(buffer.array(), 0, buffer.remaining()); buffer.clear();
+                    if (result.size() + buffer.remaining() > SOURCE_BYTES)
+                        throw new IOException("Cost source grew beyond limit");
+                    result.write(buffer.array(), 0, buffer.remaining());
+                    buffer.clear();
                 }
                 return result.toByteArray();
             }
         }
 
         private static String hash(byte[] bytes) {
-            try { return Base64.getEncoder().encodeToString(MessageDigest.getInstance("SHA-256").digest(bytes)); }
-            catch (NoSuchAlgorithmException impossible) { throw new IllegalStateException(impossible); }
+            try {
+                return Base64.getEncoder().encodeToString(MessageDigest.getInstance("SHA-256").digest(bytes));
+            } catch (NoSuchAlgorithmException impossible) {
+                throw new IllegalStateException(impossible);
+            }
         }
     }
 }
