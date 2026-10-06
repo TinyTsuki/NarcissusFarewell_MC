@@ -14,28 +14,34 @@ import java.util.Properties;
 import static org.junit.Assert.*;
 
 public class NarcissusCostSmokeTest {
-    @Rule public TemporaryFolder temporary = new TemporaryFolder();
+    @Rule
+    public TemporaryFolder temporary = new TemporaryFolder();
 
-    @Test public void rejectsUnknownPhasesAndMissingOrAmbiguousPaths() {
+    @Test
+    public void rejectsUnknownPhasesAndMissingOrAmbiguousPaths() {
         Properties values = settings();
         values.setProperty("narcissus.costSmoke.phase", "other");
         Properties unknown = values;
         rejected(() -> NarcissusCostSmokeState.from(unknown, "server", 0));
-        values = settings(); values.remove("narcissus.costSmoke.status");
+        values = settings();
+        values.remove("narcissus.costSmoke.status");
         Properties missing = values;
         rejected(() -> NarcissusCostSmokeState.from(missing, "server", 0));
-        values = settings(); values.setProperty("narcissus.costSmoke.peer", values.getProperty("narcissus.costSmoke.status"));
+        values = settings();
+        values.setProperty("narcissus.costSmoke.peer", values.getProperty("narcissus.costSmoke.status"));
         Properties ambiguous = values;
         rejected(() -> NarcissusCostSmokeState.from(ambiguous, "server", 0));
     }
 
-    @Test public void timeoutIsWallClockAndCannotBeExtendedByProgress() {
+    @Test
+    public void timeoutIsWallClockAndCannotBeExtendedByProgress() {
         NarcissusCostSmokeState state = NarcissusCostSmokeState.from(settings(), "client", 10);
         state.checkDeadline(10 + 299_999_999_999L);
         rejected(() -> state.checkDeadline(10 + 300_000_000_000L));
     }
 
-    @Test public void requiresExactMarkersAndPropagatesPeerFailure() throws Exception {
+    @Test
+    public void requiresExactMarkersAndPropagatesPeerFailure() throws Exception {
         Properties values = settings();
         Path status = temporary.getRoot().toPath().resolve("client.status");
         Path peer = status.resolveSibling("server.status");
@@ -54,7 +60,8 @@ public class NarcissusCostSmokeTest {
         rejected(() -> state.append("PASS first\nPASS forged"));
     }
 
-    @Test public void waitsForNativeLogoutEvenAfterThePeerAcknowledgement() throws Exception {
+    @Test
+    public void waitsForNativeLogoutEvenAfterThePeerAcknowledgement() throws Exception {
         Properties values = settings();
         NarcissusCostSmokeState state = NarcissusCostSmokeState.from(values, "server", 0);
         Path peer = java.nio.file.Paths.get(values.getProperty("narcissus.costSmoke.peer"));
@@ -72,7 +79,8 @@ public class NarcissusCostSmokeTest {
         return values;
     }
 
-    @Test public void nativeHelperSourcesCompileThroughTheRealScriptSession() throws Exception {
+    @Test
+    public void nativeHelperSourcesCompileThroughTheRealScriptSession() throws Exception {
         java.util.Map<String, String> files = NarcissusCostSmokeServerRunner.formulaSources("getY");
         assertEquals(2, files.size());
         java.util.concurrent.ExecutorService owner = java.util.concurrent.Executors.newSingleThreadExecutor();
@@ -87,11 +95,19 @@ public class NarcissusCostSmokeTest {
             xin.vanilla.narcissus.api.cost.CostFormula formula = owner.submit(() -> prepared.scripts().get("native-helper").create()).get(15, java.util.concurrent.TimeUnit.SECONDS);
             Class<?> helper = formula.getClass().getClassLoader().loadClass("xin.vanilla.banira.generated.cost.helpers.SmokeNative");
             assertEquals(double.class, helper.getMethod("value", xin.vanilla.narcissus.api.cost.CostContext.class).getReturnType());
-        } finally { session.close(); owner.shutdownNow(); assertTrue(owner.awaitTermination(15, java.util.concurrent.TimeUnit.SECONDS)); }
+        } finally {
+            session.close();
+            owner.shutdownNow();
+            assertTrue(owner.awaitTermination(15, java.util.concurrent.TimeUnit.SECONDS));
+        }
         rejected(() -> NarcissusCostSmokeServerRunner.formulaSources("notAMethod();"));
     }
+
     private static void rejected(Runnable action) {
-        try { action.run(); fail("Expected rejection"); }
-        catch (IllegalArgumentException | IllegalStateException expected) { }
+        try {
+            action.run();
+            fail("Expected rejection");
+        } catch (IllegalArgumentException | IllegalStateException expected) {
+        }
     }
 }

@@ -7,35 +7,58 @@ import xin.vanilla.banira.common.data.Component;
 import xin.vanilla.banira.common.enums.IEnumDescribable;
 import xin.vanilla.narcissus.config.CommonSearchConfiguration;
 import xin.vanilla.narcissus.data.SafeWorldCoordinate;
-import xin.vanilla.narcissus.enums.EnumTeleportType;
 import xin.vanilla.narcissus.enums.EnumSafeMode;
+import xin.vanilla.narcissus.enums.EnumTeleportType;
 import xin.vanilla.narcissus.search.*;
-import java.util.UUID;
+
 import java.util.Objects;
+import java.util.UUID;
 import java.util.function.Consumer;
 
-/** Internal owner-thread search and completion boundary. */
+/**
+ * Internal owner-thread search and completion boundary.
+ */
 public final class NarcissusSearchRequest implements SearchTask {
     public interface Access {
         boolean live();
+
         boolean policyMatches();
+
         void beginSlice();
-        default SafeCandidateCursor.YFilter heightFilter(SearchBox box, boolean belowAir) { return null; }
+
+        default SafeCandidateCursor.YFilter heightFilter(SearchBox box, boolean belowAir) {
+            return null;
+        }
+
         boolean safe(BlockPos pos, boolean belowAir);
+
         boolean blocksMotion(BlockPos pos);
+
         int minY();
+
         int maxY();
+
         BlockState supportState();
+
         boolean hasSupportItem(ItemStack item);
+
         SafeWorldCoordinate random(SafeWorldCoordinate origin, int range);
+
         void cancelTicket();
+
         void failed(Failure reason);
+
         void viewNotFound(boolean safe);
     }
+
     public enum ResultKind implements IEnumDescribable {
         FOUND, EXHAUSTED_FALLBACK, SUPPORT_PLAN, VIEW_ENDPOINT;
-        public Component enumDescription() { return xin.vanilla.narcissus.NarcissusComponent.get().literal(name()); }
+
+        public Component enumDescription() {
+            return xin.vanilla.narcissus.NarcissusComponent.get().literal(name());
+        }
     }
+
     private final UUID id;
     private final SafeWorldCoordinate origin;
     private final CommonSearchConfiguration.Snapshot config;
@@ -54,8 +77,9 @@ public final class NarcissusSearchRequest implements SearchTask {
     private BlockState support;
     private ResultKind kind;
     private Runnable cleanup;
+
     public NarcissusSearchRequest(UUID id, SafeWorldCoordinate origin, CommonSearchConfiguration.Snapshot config,
-                                 Access access, SearchChunkPool.Lease lease, Consumer<NarcissusSearchRequest> callback) {
+                                  Access access, SearchChunkPool.Lease lease, Consumer<NarcissusSearchRequest> callback) {
         this.id = Objects.requireNonNull(id);
         this.origin = origin.clone();
         this.config = Objects.requireNonNull(config);
@@ -63,6 +87,7 @@ public final class NarcissusSearchRequest implements SearchTask {
         this.lease = Objects.requireNonNull(lease);
         this.callback = Objects.requireNonNull(callback);
     }
+
     public void destination(SafeWorldCoordinate destination, EnumTeleportType type, int range) {
         if (closed) throw new IllegalStateException("Search is closed");
         this.type = type;
@@ -78,6 +103,7 @@ public final class NarcissusSearchRequest implements SearchTask {
         belowAir = false;
         beginDestination();
     }
+
     private void beginDestination() {
         int offset = (config.safeChunkRange() - 1) * 16;
         int minX = (working.chunkX() << 4) - offset;
@@ -87,6 +113,7 @@ public final class NarcissusSearchRequest implements SearchTask {
                 box, working.safeMode() == EnumSafeMode.NONE ? access.heightFilter(box, belowAir) : null);
         state = State.READY;
     }
+
     public void view(double x, double y, double z, double dx, double dy, double dz, int range, boolean safe) {
         if (closed) throw new IllegalStateException("Search is closed");
         view = new ViewSearchCursor(x, y, z, dx, dy, dz, range, safe);
@@ -97,10 +124,12 @@ public final class NarcissusSearchRequest implements SearchTask {
         result = null;
         state = State.READY;
     }
+
     public void waitForCountdown() {
         if (state != State.RESOLVED) throw new IllegalStateException("Search is not resolved");
         state = State.WAITING_COUNTDOWN;
     }
+
     public boolean complete(Runnable action) {
         if (closed || state != State.RESOLVED && state != State.WAITING_COUNTDOWN) return false;
         try {
@@ -111,7 +140,8 @@ public final class NarcissusSearchRequest implements SearchTask {
             if (kind == ResultKind.FOUND || kind == ResultKind.VIEW_ENDPOINT && viewFound) {
                 if (!access.safe(result.toBlockPos(), false)) return abort(Failure.POLICY_CHANGED);
             } else if (kind == ResultKind.SUPPORT_PLAN) {
-                if (!access.safe(result.toBlockPos(), true) || !access.hasSupportItem(supportItem())) return abort(Failure.POLICY_CHANGED);
+                if (!access.safe(result.toBlockPos(), true) || !access.hasSupportItem(supportItem()))
+                    return abort(Failure.POLICY_CHANGED);
             }
             if (!live()) return abort(Failure.PLAYER_CHANGED);
             if (!policyMatches()) return abort(Failure.POLICY_CHANGED);
@@ -126,21 +156,54 @@ public final class NarcissusSearchRequest implements SearchTask {
             close();
         }
     }
-    private boolean abort(Failure reason) { cancel(reason); return false; }
-    public SafeWorldCoordinate destination() { return result == null ? null : result.clone(); }
-    public ResultKind kind() { return kind; }
-    public BlockState supportState() { return support; }
-    public ItemStack supportItem() { return support != null && config.getBlockFromInventory() ? new ItemStack(support.getBlock()) : ItemStack.EMPTY; }
-    public void callback(Consumer<NarcissusSearchRequest> callback) { this.callback = Objects.requireNonNull(callback); }
+
+    private boolean abort(Failure reason) {
+        cancel(reason);
+        return false;
+    }
+
+    public SafeWorldCoordinate destination() {
+        return result == null ? null : result.clone();
+    }
+
+    public ResultKind kind() {
+        return kind;
+    }
+
+    public BlockState supportState() {
+        return support;
+    }
+
+    public ItemStack supportItem() {
+        return support != null && config.getBlockFromInventory() ? new ItemStack(support.getBlock()) : ItemStack.EMPTY;
+    }
+
+    public void callback(Consumer<NarcissusSearchRequest> callback) {
+        this.callback = Objects.requireNonNull(callback);
+    }
+
     public void onClose(Runnable action) {
         if (cleanup != null) throw new IllegalStateException("Countdown already attached");
         if (closed) action.run();
         else cleanup = Objects.requireNonNull(action);
     }
-    public UUID playerId() { return id; }
-    public boolean live() { return !closed && access.live(); }
-    public boolean policyMatches() { return config.matches() && access.policyMatches(); }
-    public State state() { return state; }
+
+    public UUID playerId() {
+        return id;
+    }
+
+    public boolean live() {
+        return !closed && access.live();
+    }
+
+    public boolean policyMatches() {
+        return config.matches() && access.policyMatches();
+    }
+
+    public State state() {
+        return state;
+    }
+
     public int step(int maxSteps) {
         if (closed || state == State.WAITING_COUNTDOWN || state == State.RESOLVED) return 0;
         access.beginSlice();
@@ -172,14 +235,20 @@ public final class NarcissusSearchRequest implements SearchTask {
                         if (origin.equalsInRange(end, 1)) {
                             cancel(Failure.CANCELLED);
                             access.viewNotFound(viewSafe);
-                        } else { result = end; kind = ResultKind.VIEW_ENDPOINT; }
+                        } else {
+                            result = end;
+                            kind = ResultKind.VIEW_ENDPOINT;
+                        }
                         continue;
                     }
                     if (viewStep == ViewSearchCursor.Step.SKIPPED) continue;
                     pending = new BlockPos(view.x(), view.y(), view.z());
                 } else {
                     SafeCandidateCursor.Step next = candidate.advance();
-                    if (next == SafeCandidateCursor.Step.DONE) { exhausted(); continue; }
+                    if (next == SafeCandidateCursor.Step.DONE) {
+                        exhausted();
+                        continue;
+                    }
                     if (next == SafeCandidateCursor.Step.SKIPPED) continue;
                     pending = new BlockPos(candidate.x(), candidate.y(), candidate.z());
                 }
@@ -193,14 +262,24 @@ public final class NarcissusSearchRequest implements SearchTask {
                 SafeWorldCoordinate found = new SafeWorldCoordinate(pending.getX() + .5, pending.getY() + .15,
                         pending.getZ() + .5, working.dimension());
                 if (belowAir) {
-                    if (!found.xyzString().equals(supportOrigin.xyzString())) { result = found; kind = ResultKind.SUPPORT_PLAN; }
-                    else { result = supportOrigin; support = null; kind = ResultKind.EXHAUSTED_FALLBACK; }
-                } else { result = found; kind = ResultKind.FOUND; }
+                    if (!found.xyzString().equals(supportOrigin.xyzString())) {
+                        result = found;
+                        kind = ResultKind.SUPPORT_PLAN;
+                    } else {
+                        result = supportOrigin;
+                        support = null;
+                        kind = ResultKind.EXHAUSTED_FALLBACK;
+                    }
+                } else {
+                    result = found;
+                    kind = ResultKind.FOUND;
+                }
             }
             pending = null;
         }
         return consumed;
     }
+
     private boolean ready(BlockPos pos) {
         if (lease.require(pos.getX() >> 4, pos.getZ() >> 4) != SearchChunkPool.Availability.READY) {
             state = State.WAITING_CHUNK;
@@ -208,6 +287,7 @@ public final class NarcissusSearchRequest implements SearchTask {
         }
         return true;
     }
+
     private void exhausted() {
         if (belowAir) {
             result = supportOrigin;
@@ -220,7 +300,12 @@ public final class NarcissusSearchRequest implements SearchTask {
         pendingFallback = true;
         if (!ready(pending)) return;
         pendingFallback = false;
-        if (access.safe(pending, false)) { result = working.clone(); kind = ResultKind.FOUND; pending = null; return; }
+        if (access.safe(pending, false)) {
+            result = working.clone();
+            kind = ResultKind.FOUND;
+            pending = null;
+            return;
+        }
         pending = null;
         if (type == EnumTeleportType.TP_RANDOM && retries < config.randomRetries()) {
             retries++;
@@ -232,28 +317,42 @@ public final class NarcissusSearchRequest implements SearchTask {
             belowAir = true;
             beginDestination();
             state = State.SEARCHING;
-        } else { result = working.clone(); kind = ResultKind.EXHAUSTED_FALLBACK; }
+        } else {
+            result = working.clone();
+            kind = ResultKind.EXHAUSTED_FALLBACK;
+        }
     }
+
     public void cancel(Failure reason) {
         if (closed || state == State.COMMITTED || state == State.CANCELLED || state == State.FAILED) return;
         state = reason == Failure.CANCELLED || reason == Failure.SERVER_STOPPED || reason == Failure.PLAYER_CHANGED ? State.CANCELLED : State.FAILED;
-        try { cancelTicket(); }
-        finally {
-            if (reason != Failure.CANCELLED && reason != Failure.SERVER_STOPPED && reason != Failure.PLAYER_CHANGED) access.failed(reason);
+        try {
+            cancelTicket();
+        } finally {
+            if (reason != Failure.CANCELLED && reason != Failure.SERVER_STOPPED && reason != Failure.PLAYER_CHANGED)
+                access.failed(reason);
         }
     }
+
     public void close() {
-        if (closed) { lease.close(); return; }
+        if (closed) {
+            lease.close();
+            return;
+        }
         closed = true;
-        try { cancelTicket(); }
-        finally {
+        try {
+            cancelTicket();
+        } finally {
             try {
                 Runnable release = cleanup;
                 cleanup = null;
                 if (release != null) release.run();
-            } finally { lease.close(); }
+            } finally {
+                lease.close();
+            }
         }
     }
+
     private void cancelTicket() {
         if (!ticketCancelled) {
             ticketCancelled = true;

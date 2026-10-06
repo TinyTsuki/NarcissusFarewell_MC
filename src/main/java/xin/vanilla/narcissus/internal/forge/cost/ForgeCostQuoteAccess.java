@@ -8,16 +8,20 @@ import xin.vanilla.narcissus.api.cost.CostPhase;
 import xin.vanilla.narcissus.config.CommonConfig;
 import xin.vanilla.narcissus.data.SafeWorldCoordinate;
 import xin.vanilla.narcissus.data.TeleportRecord;
-import xin.vanilla.narcissus.data.cost.*;
+import xin.vanilla.narcissus.data.cost.CostConfiguration;
+import xin.vanilla.narcissus.data.cost.CostQuoteRequest;
+import xin.vanilla.narcissus.data.cost.CostQuoteTarget;
 import xin.vanilla.narcissus.data.player.PlayerTeleportData;
 import xin.vanilla.narcissus.data.world.WorldStageData;
 import xin.vanilla.narcissus.enums.EnumTeleportType;
 import xin.vanilla.narcissus.internal.server.cost.CostEvaluation;
 import xin.vanilla.narcissus.service.cost.CostQuoteService;
 import xin.vanilla.narcissus.util.NarcissusUtils;
-import java.util.*;
-import java.util.function.Supplier;
+
+import java.util.Objects;
+import java.util.UUID;
 import java.util.function.Function;
+import java.util.function.Supplier;
 import java.util.function.ToIntBiFunction;
 
 public final class ForgeCostQuoteAccess implements CostQuoteService.QuoteAccess {
@@ -26,30 +30,45 @@ public final class ForgeCostQuoteAccess implements CostQuoteService.QuoteAccess 
     private final ToIntBiFunction<ServerPlayerEntity, EnumTeleportType> cooldown;
 
     public ForgeCostQuoteAccess(Supplier<MinecraftServer> server, Supplier<CostConfiguration> configuration,
-                                 ToIntBiFunction<ServerPlayerEntity, EnumTeleportType> cooldown) {
+                                ToIntBiFunction<ServerPlayerEntity, EnumTeleportType> cooldown) {
         this(server, type -> configuration.get(), cooldown);
     }
+
     public ForgeCostQuoteAccess(Supplier<MinecraftServer> server, Function<EnumTeleportType, CostConfiguration> configuration,
-                                 ToIntBiFunction<ServerPlayerEntity, EnumTeleportType> cooldown) {
-        this.server = Objects.requireNonNull(server); this.configuration = Objects.requireNonNull(configuration);
+                                ToIntBiFunction<ServerPlayerEntity, EnumTeleportType> cooldown) {
+        this.server = Objects.requireNonNull(server);
+        this.configuration = Objects.requireNonNull(configuration);
         this.cooldown = Objects.requireNonNull(cooldown);
     }
+
     private MinecraftServer currentServer() {
         MinecraftServer current = Objects.requireNonNull(server.get(), "server");
         if (!current.isSameThread()) throw new IllegalStateException("Quote resolution requires server owner thread");
         return current;
     }
-    private ServerPlayerEntity player(UUID id) { return currentServer().getPlayerList().getPlayer(id); }
+
+    private ServerPlayerEntity player(UUID id) {
+        return currentServer().getPlayerList().getPlayer(id);
+    }
+
     private boolean live(ServerPlayerEntity player) {
         return player != null && player.server == currentServer() && !player.hasDisconnected() && !player.removed && player.isAlive();
     }
-    @Override public boolean connected(UUID id) { return live(player(id)); }
-    @Override public boolean permitted(UUID id, CostQuoteTarget target) {
+
+    @Override
+    public boolean connected(UUID id) {
+        return live(player(id));
+    }
+
+    @Override
+    public boolean permitted(UUID id, CostQuoteTarget target) {
         ServerPlayerEntity player = player(id);
         return live(player) && NarcissusUtils.isCommandEnabled(target.teleportType().toCommandType())
                 && NarcissusUtils.hasCommandPermission(player.createCommandSourceStack(), target.teleportType().toCommandType());
     }
-    @Override public CostEvaluation open(UUID id, CostQuoteRequest request) {
+
+    @Override
+    public CostEvaluation open(UUID id, CostQuoteRequest request) {
         CostQuoteTarget target = request.target();
         if (!permitted(id, target)) throw new SecurityException("Quote permission revoked");
         ServerPlayerEntity paying = player(id), moving = paying, other = null;
@@ -90,13 +109,16 @@ public final class ForgeCostQuoteAccess implements CostQuoteService.QuoteAccess 
         SafeWorldCoordinate result = null;
         switch (target.kind()) {
             case HOME:
-                if (connectionPlayer.equals(target.owner())) result = playerData.peekHomeCoordinates().get(new KeyValue<>(target.dimension(), target.name()));
+                if (connectionPlayer.equals(target.owner()))
+                    result = playerData.peekHomeCoordinates().get(new KeyValue<>(target.dimension(), target.name()));
                 break;
             case STAGE:
-                if (stages != null) result = stages.getStageCoordinate().get(new KeyValue<>(target.dimension(), target.name()));
+                if (stages != null)
+                    result = stages.getStageCoordinate().get(new KeyValue<>(target.dimension(), target.name()));
                 break;
             case HISTORY:
-                if (!connectionPlayer.equals(target.owner()) || target.teleportType() == EnumTeleportType.TP_GRAVE && target.historyType() != EnumTeleportType.DEATH) break;
+                if (!connectionPlayer.equals(target.owner()) || target.teleportType() == EnumTeleportType.TP_GRAVE && target.historyType() != EnumTeleportType.DEATH)
+                    break;
                 // Existing NBT and player sync use second precision; no new persistence IDs.
                 for (TeleportRecord record : playerData.peekTeleportRecords()) {
                     SafeWorldCoordinate before = record.getBefore();
@@ -104,11 +126,13 @@ public final class ForgeCostQuoteAccess implements CostQuoteService.QuoteAccess 
                             && before.dimensionId().equals(target.dimension())
                             && before.x() == target.x() && before.y() == target.y() && before.z() == target.z()
                             && DateUtils.toDateTimeString(record.getTeleportTime()).equals(target.historyTime())) {
-                        result = before; break;
+                        result = before;
+                        break;
                     }
                 }
                 break;
-            default: break;
+            default:
+                break;
         }
         return result == null ? null : result.clone();
     }

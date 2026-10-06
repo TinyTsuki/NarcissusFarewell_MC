@@ -7,7 +7,10 @@ import xin.vanilla.narcissus.api.cost.CostParameters;
 import xin.vanilla.narcissus.enums.EnumCardType;
 import xin.vanilla.narcissus.enums.EnumTeleportType;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.EnumMap;
+import java.util.Map;
+import java.util.Objects;
 
 @Getter
 @Accessors(fluent = true)
@@ -25,18 +28,20 @@ public final class CostConfiguration {
 
     private CostConfiguration(Map<EnumTeleportType, CostParameters> groups, CostCardSettings cards,
                               int maxDistance, int crossDimensionDistance, boolean complete) {
-        if (maxDistance < 0 || crossDimensionDistance < 0) throw new IllegalArgumentException("Invalid distance limits");
+        if (maxDistance < 0 || crossDimensionDistance < 0)
+            throw new IllegalArgumentException("Invalid distance limits");
         EnumMap<EnumTeleportType, CostParameters> copy = new EnumMap<>(EnumTeleportType.class);
         for (EnumTeleportType type : complete ? EnumTeleportType.countdownConfigurableTypes() : groups.keySet()) {
             copy.put(type, Objects.requireNonNull(groups.get(type), "Missing cost group " + type));
         }
         this.groups = Collections.unmodifiableMap(copy);
         this.cards = Objects.requireNonNull(cards, "cards");
-        this.maxDistance = maxDistance; this.crossDimensionDistance = crossDimensionDistance;
+        this.maxDistance = maxDistance;
+        this.crossDimensionDistance = crossDimensionDistance;
     }
 
     public static CostConfiguration selection(EnumTeleportType type, CostParameters parameters,
-                                               CostCardSettings cards, int maxDistance, int crossDimensionDistance) {
+                                              CostCardSettings cards, int maxDistance, int crossDimensionDistance) {
         return new CostConfiguration(Collections.singletonMap(type, parameters), cards, maxDistance, crossDimensionDistance, false);
     }
 
@@ -56,7 +61,8 @@ public final class CostConfiguration {
 
     public static CostConfiguration defaults() {
         EnumMap<EnumTeleportType, CostParameters> groups = new EnumMap<>(EnumTeleportType.class);
-        for (EnumTeleportType type : EnumTeleportType.countdownConfigurableTypes()) groups.put(type, CostParameters.free());
+        for (EnumTeleportType type : EnumTeleportType.countdownConfigurableTypes())
+            groups.put(type, CostParameters.free());
         return new CostConfiguration(groups, new CostCardSettings(false, 0, EnumCardType.WAIVE_COST), 10000, 10000);
     }
 }

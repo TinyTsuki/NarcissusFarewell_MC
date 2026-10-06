@@ -1,8 +1,10 @@
 package xin.vanilla.narcissus.config;
 
 import net.minecraft.block.Blocks;
-import org.junit.*;
-import xin.vanilla.narcissus.enums.EnumTeleportType;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.BeforeClass;
+import org.junit.Test;
 import xin.vanilla.narcissus.search.SearchExecutionSettings;
 
 import java.util.ArrayList;
@@ -16,8 +18,14 @@ public class CommonSearchConfigurationTest {
     private Object previousPlatform;
     private ConfigBaselineFixture fixture;
     private CommonSearchConfiguration live;
-    @BeforeClass public static void bootstrap() { net.minecraft.util.registry.Bootstrap.bootStrap(); }
-    @Before public void setup() throws Exception {
+
+    @BeforeClass
+    public static void bootstrap() {
+        net.minecraft.util.registry.Bootstrap.bootStrap();
+    }
+
+    @Before
+    public void setup() throws Exception {
         java.lang.reflect.Field field = xin.vanilla.banira.platform.BaniraPlatforms.class.getDeclaredField("platform");
         field.setAccessible(true);
         previousPlatform = field.get(null);
@@ -25,13 +33,16 @@ public class CommonSearchConfigurationTest {
         fixture.bind(CommonConfig.class);
         live = new CommonSearchConfiguration(fixture.holder);
     }
-    @After public void restorePlatform() throws Exception {
+
+    @After
+    public void restorePlatform() throws Exception {
         java.lang.reflect.Field field = xin.vanilla.banira.platform.BaniraPlatforms.class.getDeclaredField("platform");
         field.setAccessible(true);
         field.set(null, previousPlatform);
     }
 
-    @Test public void defaultsAndUnchangedInputsReuseSnapshotsAndPolicy() {
+    @Test
+    public void defaultsAndUnchangedInputsReuseSnapshotsAndPolicy() {
         SearchExecutionSettings execution = live.execution();
         assertEquals(2, execution.timeBudgetMs(), 0);
         assertEquals(32, execution.maxConcurrentSearches());
@@ -47,7 +58,8 @@ public class CommonSearchConfigurationTest {
         assertEquals(0, fixture.saves);
     }
 
-    @Test public void unsavedChangesInvalidateEachSafetyDependency() {
+    @Test
+    public void unsavedChangesInvalidateEachSafetyDependency() {
         List<String> paths = Arrays.asList("unsafeBlocks", "suffocatingBlocks", "safeBlocks", "safeChunkRange",
                 "setBlockWhenSafeNotFound", "getBlockFromInventory");
         List<Object> edits = Arrays.asList(Arrays.asList("minecraft:stone"), Arrays.asList("minecraft:stone"),
@@ -64,7 +76,8 @@ public class CommonSearchConfigurationTest {
         assertEquals(0, fixture.saves);
     }
 
-    @Test public void externallyMutableListInvalidatesMatchButCannotMutateCapturedPolicy() {
+    @Test
+    public void externallyMutableListInvalidatesMatchButCannotMutateCapturedPolicy() {
         List<String> unsafe = new ArrayList<>(Arrays.asList("minecraft:lava"));
         fixture.values.put("base.safeTeleport.unsafeBlocks", unsafe);
         CommonSearchConfiguration.Snapshot first = live.capture(TP_HOME, false);
@@ -78,7 +91,8 @@ public class CommonSearchConfigurationTest {
         assertThrows(UnsupportedOperationException.class, () -> second.policy().supportStates().clear());
     }
 
-    @Test public void onlyRelevantRandomAndViewFieldsInvalidateSnapshots() {
+    @Test
+    public void onlyRelevantRandomAndViewFieldsInvalidateSnapshots() {
         CommonSearchConfiguration.Snapshot home = live.capture(TP_HOME, false);
         CommonSearchConfiguration.Snapshot random = live.capture(TP_RANDOM, false);
         CommonSearchConfiguration.Snapshot view = live.capture(TP_VIEW, true);
@@ -99,7 +113,8 @@ public class CommonSearchConfigurationTest {
         assertSame(home.policy(), random.policy());
     }
 
-    @Test public void executionEditsDoNotCancelSafetySnapshotsOrReparsePolicy() {
+    @Test
+    public void executionEditsDoNotCancelSafetySnapshotsOrReparsePolicy() {
         CommonSearchConfiguration.Snapshot safety = live.capture(TP_RANDOM, true);
         SearchExecutionSettings old = live.execution();
         fixture.holder.set("base.safeTeleport.search.timeBudgetMs", .5D);
@@ -115,7 +130,8 @@ public class CommonSearchConfigurationTest {
         assertSame(current, live.execution());
     }
 
-    @Test public void reboundHolderRejectsOldSnapshotsAndRuntime() throws Exception {
+    @Test
+    public void reboundHolderRejectsOldSnapshotsAndRuntime() throws Exception {
         CommonSearchConfiguration.Snapshot before = live.capture(TP_HOME, false);
         live.execution();
         ConfigBaselineFixture other = new ConfigBaselineFixture(CommonConfig.class);
@@ -126,7 +142,8 @@ public class CommonSearchConfigurationTest {
         assertTrue(new CommonSearchConfiguration(other.holder).capture(TP_HOME, false).matches());
     }
 
-    @Test public void invalidStoredValuesCannotHideBehindGeneratedDefaultsOrCachedSnapshot() {
+    @Test
+    public void invalidStoredValuesCannotHideBehindGeneratedDefaultsOrCachedSnapshot() {
         CommonSearchConfiguration.Snapshot before = live.capture(TP_HOME, false);
         fixture.values.put("base.safeTeleport.safeChunkRange", 0);
         assertFalse(before.matches());
@@ -143,7 +160,8 @@ public class CommonSearchConfigurationTest {
         assertThrows(IllegalArgumentException.class, () -> live.capture(TP_HOME, false));
     }
 
-    @Test public void invalidUnrelatedInputsDoNotCancelHomeSearch() {
+    @Test
+    public void invalidUnrelatedInputsDoNotCancelHomeSearch() {
         CommonSearchConfiguration.Snapshot home = live.capture(TP_HOME, false);
         fixture.values.put("base.randomTeleport.teleportRandomDistanceLimit", -1);
         fixture.values.put("base.teleportLimit.teleportViewDistanceLimit", -1);

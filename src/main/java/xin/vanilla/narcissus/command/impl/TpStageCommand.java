@@ -56,7 +56,8 @@ public final class TpStageCommand {
         if (CommandUtils.checkTeleportPost(player, safeWorldCoordinate, EnumTeleportType.TP_STAGE)) return 0;
         xin.vanilla.banira.common.data.KeyValue<String, String> selected = NarcissusUtils.getStageKey(player, targetLevel, name);
         SafeWorldCoordinate stored = xin.vanilla.narcissus.data.world.WorldStageData.get().getStageCoordinate().get(selected);
-        NarcissusUtils.teleportTo(player, safeWorldCoordinate.clone(), EnumTeleportType.TP_STAGE, () -> { },
+        NarcissusUtils.teleportTo(player, safeWorldCoordinate.clone(), EnumTeleportType.TP_STAGE, () -> {
+                },
                 () -> xin.vanilla.narcissus.data.world.WorldStageData.get().getStageCoordinate().get(selected) == stored);
         return 1;
     }

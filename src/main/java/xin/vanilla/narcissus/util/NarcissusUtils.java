@@ -1,6 +1,5 @@
 package xin.vanilla.narcissus.util;
 
-import java.util.function.BooleanSupplier;
 import lombok.NonNull;
 import net.minecraft.block.BlockState;
 import net.minecraft.command.CommandSource;
@@ -13,7 +12,6 @@ import net.minecraft.entity.monster.MonsterEntity;
 import net.minecraft.entity.passive.TameableEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.ServerPlayerEntity;
-import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.network.play.server.SPlayerAbilitiesPacket;
@@ -22,7 +20,6 @@ import net.minecraft.util.*;
 import net.minecraft.util.math.ChunkPos;
 import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.StringTextComponent;
-import net.minecraft.util.text.event.HoverEvent;
 import net.minecraft.world.World;
 import net.minecraft.world.server.ServerWorld;
 import net.minecraft.world.server.TicketType;
@@ -41,18 +38,18 @@ import xin.vanilla.banira.common.util.StringUtils;
 import xin.vanilla.narcissus.Identifier;
 import xin.vanilla.narcissus.NarcissusComponent;
 import xin.vanilla.narcissus.NarcissusFarewell;
-import xin.vanilla.narcissus.internal.server.NarcissusCostService;
-import xin.vanilla.narcissus.internal.server.NarcissusSearchService;
-import xin.vanilla.narcissus.data.cost.CostPaymentPlan;
 import xin.vanilla.narcissus.config.CommonConfig;
 import xin.vanilla.narcissus.config.TeleportCountdownHelper;
 import xin.vanilla.narcissus.data.SafeWorldCoordinate;
 import xin.vanilla.narcissus.data.TeleportRecord;
 import xin.vanilla.narcissus.data.TeleportRequest;
+import xin.vanilla.narcissus.data.cost.CostPaymentPlan;
 import xin.vanilla.narcissus.data.player.PlayerTeleportData;
 import xin.vanilla.narcissus.data.world.WorldStageData;
 import xin.vanilla.narcissus.enums.EnumCommandType;
 import xin.vanilla.narcissus.enums.EnumTeleportType;
+import xin.vanilla.narcissus.internal.server.NarcissusCostService;
+import xin.vanilla.narcissus.internal.server.NarcissusSearchService;
 import xin.vanilla.narcissus.internal.server.teleport.RidingTransfer;
 import xin.vanilla.narcissus.mixin.LivingEntityInvoker;
 import xin.vanilla.narcissus.mixin.TemptGoalAccessor;
@@ -63,6 +60,7 @@ import javax.annotation.Nullable;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.*;
+import java.util.function.BooleanSupplier;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -982,7 +980,8 @@ public class NarcissusUtils {
         ServerPlayerEntity moving = request.getTeleportType() == EnumTeleportType.TP_HERE ? request.getTarget() : request.getRequester();
         ServerPlayerEntity endpoint = request.getTeleportType() == EnumTeleportType.TP_HERE ? request.getRequester() : request.getTarget();
         teleportTo(moving, new SafeWorldCoordinate(endpoint).safe(request.isSafe()), request.getTeleportType(), -1,
-                request.getRequester(), request.getTarget(), request, () -> { }, () -> true, null);
+                request.getRequester(), request.getTarget(), request, () -> {
+                }, () -> true, null);
     }
 
     /**
@@ -994,7 +993,8 @@ public class NarcissusUtils {
     public static void teleportTo(@NonNull ServerPlayerEntity from, @NonNull ServerPlayerEntity to, EnumTeleportType type, boolean safe) {
         teleportTo(type == EnumTeleportType.TP_HERE ? to : from,
                 new SafeWorldCoordinate(type == EnumTeleportType.TP_HERE ? from : to).safe(safe), type, -1,
-                from, to, null, () -> { }, () -> true, null);
+                from, to, null, () -> {
+                }, () -> true, null);
     }
 
     /**
@@ -1011,7 +1011,8 @@ public class NarcissusUtils {
      * @param tprHorizontalRange 仅用于随机传送安全搜索失败时的重试
      */
     public static void teleportTo(@NonNull ServerPlayerEntity player, @NonNull SafeWorldCoordinate after, EnumTeleportType type, int tprHorizontalRange) {
-        teleportTo(player, after, type, tprHorizontalRange, player, null, null, () -> { }, () -> true, null);
+        teleportTo(player, after, type, tprHorizontalRange, player, null, null, () -> {
+        }, () -> true, null);
     }
 
     public static void teleportTo(ServerPlayerEntity player, SafeWorldCoordinate after, EnumTeleportType type, Runnable onSuccess) {
@@ -1029,8 +1030,9 @@ public class NarcissusUtils {
             MessageUtils.sendNotification(player, NarcissusComponent.get().transAuto("cost_unavailable"), NarcissusNotificationTypes.TELEPORT_ERROR);
             return null;
         }
-        try { return service.begin(player, player, null, null, type); }
-        catch (RuntimeException error) {
+        try {
+            return service.begin(player, player, null, null, type);
+        } catch (RuntimeException error) {
             LOGGER.error("Teleport configuration unavailable", error);
             MessageUtils.sendNotification(player, NarcissusComponent.get().transAuto("cost_unavailable"), NarcissusNotificationTypes.TELEPORT_ERROR);
             return null;
@@ -1039,7 +1041,8 @@ public class NarcissusUtils {
 
     public static void teleportTo(ServerPlayerEntity player, SafeWorldCoordinate after, EnumTeleportType type,
                                   NarcissusCostService.Ticket prepared) {
-        teleportTo(player, after, type, -1, player, null, null, () -> { }, () -> true, prepared);
+        teleportTo(player, after, type, -1, player, null, null, () -> {
+        }, () -> true, prepared);
     }
 
     private static void teleportTo(ServerPlayerEntity player, SafeWorldCoordinate after, EnumTeleportType type,
@@ -1051,8 +1054,9 @@ public class NarcissusUtils {
             return;
         }
         NarcissusCostService.Ticket ticket;
-        try { ticket = prepared != null ? prepared : service.begin(player, payer, targetPlayer, request, type); }
-        catch (RuntimeException error) {
+        try {
+            ticket = prepared != null ? prepared : service.begin(player, payer, targetPlayer, request, type);
+        } catch (RuntimeException error) {
             LOGGER.error("Teleport configuration unavailable", error);
             MessageUtils.sendNotification(payer, NarcissusComponent.get().transAuto("cost_unavailable"), NarcissusNotificationTypes.TELEPORT_ERROR);
             return;
@@ -1075,7 +1079,10 @@ public class NarcissusUtils {
                     search.searchDestination(player, after, type, tprHorizontalRange, ticket,
                             session -> finishSearch(search, session, ticket, player, payer, type, before, level, onSuccess));
                 } else {
-                    if (!ticket.resolve(after)) { ticket.cancel(); return; }
+                    if (!ticket.resolve(after)) {
+                        ticket.cancel();
+                        return;
+                    }
                     executeTeleportWithCountdown(player, type,
                             () -> finishTeleport(ticket, player, payer, type, before, level, null, onSuccess), ticket::cancel);
                 }
@@ -1086,23 +1093,34 @@ public class NarcissusUtils {
     public static void teleportSearched(ServerPlayerEntity player, NarcissusSearchService.Session session,
                                         EnumTeleportType type, NarcissusCostService.Ticket ticket) {
         NarcissusSearchService search = NarcissusSearchService.get();
-        if (search == null || !ticket.live()) { session.cancel(); return; }
+        if (search == null || !ticket.live()) {
+            session.cancel();
+            return;
+        }
         SafeWorldCoordinate after = session.destination();
         SafeWorldCoordinate before = new SafeWorldCoordinate(player);
         ServerWorld level = player.server.getLevel(after.dimension());
-        if (level == null) { session.cancel(); return; }
+        if (level == null) {
+            session.cancel();
+            return;
+        }
         if (after.safe()) {
             search.continueDestination(session, after, type, -1,
-                    next -> finishSearch(search, next, ticket, player, player, type, before, level, () -> { }));
-        } else finishSearch(search, session, ticket, player, player, type, before, level, () -> { });
+                    next -> finishSearch(search, next, ticket, player, player, type, before, level, () -> {
+                    }));
+        } else finishSearch(search, session, ticket, player, player, type, before, level, () -> {
+        });
     }
 
     private static void finishSearch(NarcissusSearchService search, NarcissusSearchService.Session session,
-                                      NarcissusCostService.Ticket ticket, ServerPlayerEntity player, ServerPlayerEntity payer,
-                                      EnumTeleportType type, SafeWorldCoordinate before, ServerWorld level, Runnable onSuccess) {
+                                     NarcissusCostService.Ticket ticket, ServerPlayerEntity player, ServerPlayerEntity payer,
+                                     EnumTeleportType type, SafeWorldCoordinate before, ServerWorld level, Runnable onSuccess) {
         ItemStack supportItem = session.supportItem();
         if (!supportItem.isEmpty()) ticket.requireSupportItem(supportItem);
-        if (!ticket.resolve(session.destination())) { session.cancel(); return; }
+        if (!ticket.resolve(session.destination())) {
+            session.cancel();
+            return;
+        }
         BlockState supportState = session.supportState();
         Runnable supportBlock = supportState == null ? null : () -> {
             if (!supportItem.isEmpty() && !ItemUtils.removePlayerItem(player, supportItem.copy())) {
@@ -1145,7 +1163,10 @@ public class NarcissusUtils {
         boolean moved;
         try {
             moved = RidingTransfer.transfer(root, player, new RidingTransfer.Backend<Entity>() {
-                public List<Entity> passengers(Entity entity) { return withVehicle ? entity.getPassengers() : Collections.emptyList(); }
+                public List<Entity> passengers(Entity entity) {
+                    return withVehicle ? entity.getPassengers() : Collections.emptyList();
+                }
+
                 public List<Entity> attachmentOrder(Entity vehicle, List<Entity> passengers) {
                     if (vehicle.getControllingPassenger() instanceof PlayerEntity) return passengers;
                     // Native addPassenger prepends players on vehicles without a player controller.
@@ -1156,19 +1177,36 @@ public class NarcissusUtils {
                     }
                     return order;
                 }
-                public Entity vehicle(Entity entity) { return entity.getVehicle(); }
-                public void detach(Entity entity) { entity.stopRiding(); }
+
+                public Entity vehicle(Entity entity) {
+                    return entity.getVehicle();
+                }
+
+                public void detach(Entity entity) {
+                    entity.stopRiding();
+                }
+
                 public Entity move(Entity entity) {
                     transferred.add(entity);
                     return doTeleport(entity, after, level);
                 }
-                public boolean alive(Entity entity) { return entity != null && !entity.removed; }
+
+                public boolean alive(Entity entity) {
+                    return entity != null && !entity.removed;
+                }
+
                 public boolean atDestination(Entity entity) {
                     return entity.level == level && Math.abs(entity.getX() - after.x()) < 0.001
                             && Math.abs(entity.getY() - after.y()) < 0.001 && Math.abs(entity.getZ() - after.z()) < 0.001;
                 }
-                public boolean sameWorld(Entity first, Entity second) { return first.level == second.level; }
-                public boolean attach(Entity entity, Entity vehicle) { return entity.startRiding(vehicle, true); }
+
+                public boolean sameWorld(Entity first, Entity second) {
+                    return first.level == second.level;
+                }
+
+                public boolean attach(Entity entity, Entity vehicle) {
+                    return entity.startRiding(vehicle, true);
+                }
             });
         } catch (RuntimeException error) {
             LOGGER.error("Teleport riding transfer failed for {}", player.getUUID(), error);
@@ -1182,7 +1220,8 @@ public class NarcissusUtils {
             if (transferred.add(follower) && !follower.removed) {
                 try {
                     Entity result = doTeleport(follower, after, level);
-                    if (result == null || result.removed || result.level != level) LOGGER.warn("Follower transfer failed for {}", follower.getUUID());
+                    if (result == null || result.removed || result.level != level)
+                        LOGGER.warn("Follower transfer failed for {}", follower.getUUID());
                 } catch (RuntimeException error) {
                     LOGGER.warn("Follower transfer failed for {}", follower.getUUID(), error);
                 }
@@ -1439,7 +1478,6 @@ public class NarcissusUtils {
     }
 
     // endregion 传送冷却
-
 
 
     // region 杂项

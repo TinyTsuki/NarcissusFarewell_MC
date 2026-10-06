@@ -146,12 +146,35 @@ public final class ViewSearchCursor {
         unsafeCandidates.clear();
     }
 
-    public int x() { requirePending(); return x; }
-    public int y() { requirePending(); return y; }
-    public int z() { requirePending(); return z; }
-    public double resultX() { requireDone(); return resultX; }
-    public double resultY() { requireDone(); return resultY; }
-    public double resultZ() { requireDone(); return resultZ; }
+    public int x() {
+        requirePending();
+        return x;
+    }
+
+    public int y() {
+        requirePending();
+        return y;
+    }
+
+    public int z() {
+        requirePending();
+        return z;
+    }
+
+    public double resultX() {
+        requireDone();
+        return resultX;
+    }
+
+    public double resultY() {
+        requireDone();
+        return resultY;
+    }
+
+    public double resultZ() {
+        requireDone();
+        return resultZ;
+    }
 
     private void requirePending() {
         if (pending == null) throw new IllegalStateException("No pending world read");

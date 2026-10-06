@@ -9,7 +9,8 @@ import java.util.Arrays;
 import java.util.List;
 
 import static org.junit.Assert.*;
-import static xin.vanilla.narcissus.search.SafeCandidateCursor.Step.*;
+import static xin.vanilla.narcissus.search.SafeCandidateCursor.Step.CANDIDATE;
+import static xin.vanilla.narcissus.search.SafeCandidateCursor.Step.DONE;
 
 public class SafeCandidateCursorTest {
     @Test
@@ -94,7 +95,8 @@ public class SafeCandidateCursorTest {
             int candidates = 0, skipped = 0;
             SafeCandidateCursor.Step step;
             while ((step = cursor.advance()) != DONE) {
-                if (step == CANDIDATE) candidates++; else skipped++;
+                if (step == CANDIDATE) candidates++;
+                else skipped++;
             }
             assertEquals(65536, candidates);
             assertTrue("Y=" + y + ", empty advances=" + skipped, skipped < 6000);
@@ -131,7 +133,8 @@ public class SafeCandidateCursorTest {
         assertThrows(IllegalStateException.class, cursor::x);
         assertEquals(CANDIDATE, cursor.advance());
         assertEquals(0, cursor.x());
-        while (cursor.advance() != DONE) { }
+        while (cursor.advance() != DONE) {
+        }
         assertEquals(DONE, cursor.advance());
         assertThrows(IllegalStateException.class, cursor::y);
     }
@@ -164,9 +167,9 @@ public class SafeCandidateCursorTest {
         boolean[] enabled = {false};
         SafeCandidateCursor cursor = new SafeCandidateCursor(EnumSafeMode.NONE, 8, 90, 8,
                 new SearchBox(0, 15, 0, 255, 0, 15), (chunk, min, max) -> {
-                    long y = enabled[0] ? 90 : 16;
-                    return min <= y && y <= max ? y : Long.MAX_VALUE;
-                });
+            long y = enabled[0] ? 90 : 16;
+            return min <= y && y <= max ? y : Long.MAX_VALUE;
+        });
         // No world metadata is captured by the constructor.
         enabled[0] = true;
         assertEquals(CANDIDATE, cursor.advance());
@@ -197,7 +200,8 @@ public class SafeCandidateCursorTest {
                 if (++advances > 2000000) fail("Cursor did not terminate within the fixture bound");
                 SafeCandidateCursor.Step step = cursor.advance();
                 if (step == DONE) {
-                    if (points.size() == 65536) System.out.println("slice=" + slice + ", candidates=65536, advances=" + advances);
+                    if (points.size() == 65536)
+                        System.out.println("slice=" + slice + ", candidates=65536, advances=" + advances);
                     return points;
                 }
                 if (step == CANDIDATE) points.add(new BlockPos(cursor.x(), cursor.y(), cursor.z()));

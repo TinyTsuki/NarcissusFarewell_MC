@@ -26,7 +26,9 @@ import java.io.Serializable;
 public class SafeWorldCoordinate extends WorldCoordinate implements Serializable, Cloneable {
     private boolean safe = false;
     private EnumSafeMode safeMode = EnumSafeMode.NONE;
-    /** 创建传送点的时间；旧数据没有该字段时为 0。 */
+    /**
+     * 创建传送点的时间；旧数据没有该字段时为 0。
+     */
     private long createdAt = System.currentTimeMillis();
 
     public SafeWorldCoordinate(PlayerEntity player) {
@@ -60,7 +62,7 @@ public class SafeWorldCoordinate extends WorldCoordinate implements Serializable
     }
 
     public static SafeWorldCoordinate random(SafeWorldCoordinate origin, int range, RegistryKey<World> dimension,
-                                              int minY, int maxY, int distanceLimit) {
+                                             int minY, int maxY, int distanceLimit) {
         range = Math.min(Math.max(range, 1), distanceLimit);
         double x = origin.x() + (Math.random() * 2 - 1) * range;
         double y = randomWithWeight(minY, maxY, (int) origin.y(), 0.75);

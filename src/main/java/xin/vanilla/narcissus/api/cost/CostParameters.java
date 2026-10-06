@@ -27,9 +27,12 @@ public class CostParameters {
             throw new IllegalArgumentException("Invalid cost parameters");
         }
         this.type = Objects.requireNonNull(type, "type");
-        this.fixedAmount = fixedAmount; this.perBlockAmount = perBlockAmount;
-        this.minAmount = minAmount; this.maxAmount = maxAmount;
-        this.item = text(item, 8192); this.command = text(command, 8192);
+        this.fixedAmount = fixedAmount;
+        this.perBlockAmount = perBlockAmount;
+        this.minAmount = minAmount;
+        this.maxAmount = maxAmount;
+        this.item = text(item, 8192);
+        this.command = text(command, 8192);
         this.customFile = text(customFile, 128);
         if (!customFile.isEmpty() && (!customFile.endsWith(".java") || customFile.startsWith("/")
                 || customFile.contains("\\") || customFile.contains(":")
@@ -40,9 +43,12 @@ public class CostParameters {
     }
 
     private static String text(String value, int limit) {
-        if (Objects.requireNonNull(value, "text").length() > limit) throw new IllegalArgumentException("Cost text too long");
+        if (Objects.requireNonNull(value, "text").length() > limit)
+            throw new IllegalArgumentException("Cost text too long");
         return value;
     }
 
-    public static CostParameters free() { return FREE; }
+    public static CostParameters free() {
+        return FREE;
+    }
 }

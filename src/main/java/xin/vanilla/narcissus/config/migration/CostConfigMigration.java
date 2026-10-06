@@ -1,14 +1,18 @@
 package xin.vanilla.narcissus.config.migration;
 
 import xin.vanilla.banira.common.util.JsonUtils;
-import xin.vanilla.narcissus.api.cost.*;
+import xin.vanilla.narcissus.api.cost.CostCardSettings;
+import xin.vanilla.narcissus.api.cost.CostParameters;
 import xin.vanilla.narcissus.data.cost.CostConfiguration;
-import xin.vanilla.narcissus.enums.*;
+import xin.vanilla.narcissus.enums.EnumCardType;
+import xin.vanilla.narcissus.enums.EnumCostType;
+import xin.vanilla.narcissus.enums.EnumTeleportType;
 
 import java.util.*;
 
 public final class CostConfigMigration {
     private static final Map<String, String> CARD_MODES = new LinkedHashMap<>();
+
     static {
         CARD_MODES.put("NONE", "REQUIRE_ONE_WITH_COST");
         CARD_MODES.put("LIKE_COST", "REQUIRE_MATCHING_WITH_COST");
@@ -18,7 +22,9 @@ public final class CostConfigMigration {
         CARD_MODES.put("REFUND_COST_AND_COOLDOWN", "OFFSET_COST_AND_BYPASS_COOLDOWN");
         CARD_MODES.put("REFUND_ALL_COST_AND_COOLDOWN", "WAIVE_COST_AND_BYPASS_COOLDOWN");
     }
-    private CostConfigMigration() { }
+
+    private CostConfigMigration() {
+    }
 
     public static CostMigrationPlan plan(Map<String, Object> legacy) {
         Map<String, Object> root = copy(Objects.requireNonNull(legacy, "legacy"));
@@ -51,8 +57,10 @@ public final class CostConfigMigration {
                 try {
                     if (!LegacyCostExpression.standard(expression)) {
                         OptionalDouble constant = LegacyCostExpression.constant(expression, num, rate);
-                        if (constant.isPresent()) { fixed = constant.getAsDouble(); perBlock = 0; }
-                        else {
+                        if (constant.isPresent()) {
+                            fixed = constant.getAsDouble();
+                            perBlock = 0;
+                        } else {
                             file = "Legacy" + suffix + "Cost.java";
                             sources.put(file, source(file, expression, LegacyCostExpression.toJava(expression, num, rate), false));
                         }
@@ -67,19 +75,30 @@ public final class CostConfigMigration {
                         kind == EnumCostType.ITEM ? conf : "", kind == EnumCostType.COMMAND ? conf.replace("[num]", "{amount}") : "", file);
                 groups.put(type, params);
                 Map<String, Object> target = copy(old);
-                for (String ending : Arrays.asList("Type", "Num", "Rate", "NumUpper", "NumLower", "Exp", "Conf")) target.remove(prefix + ending);
-                target.put("type", kind.name()); target.put("fixedAmount", fixed); target.put("perBlockAmount", perBlock);
-                target.put("minAmount", min); target.put("maxAmount", max);
-                target.put("item", params.item()); target.put("command", params.command());
+                for (String ending : Arrays.asList("Type", "Num", "Rate", "NumUpper", "NumLower", "Exp", "Conf"))
+                    target.remove(prefix + ending);
+                target.put("type", kind.name());
+                target.put("fixedAmount", fixed);
+                target.put("perBlockAmount", perBlock);
+                target.put("minAmount", min);
+                target.put("maxAmount", max);
+                target.put("item", params.item());
+                target.put("command", params.command());
                 target.put("custom", Collections.singletonMap("file", file));
-                cost.remove(oldName); cost.put(name, target);
-            } catch (RuntimeException error) { throw new IllegalArgumentException("cost." + oldName + ": " + error.getMessage(), error); }
+                cost.remove(oldName);
+                cost.put(name, target);
+            } catch (RuntimeException error) {
+                throw new IllegalArgumentException("cost." + oldName + ": " + error.getMessage(), error);
+            }
         }
         int maxDistance = integer(limits, "teleportCostDistanceLimit", 10000);
         int crossDistance = integer(limits, "teleportCostDistanceAcrossDimension", 10000);
-        if (cost.containsKey("distance") || cost.containsKey("cards")) throw new IllegalArgumentException("Conflicting old/new distance or card settings");
+        if (cost.containsKey("distance") || cost.containsKey("cards"))
+            throw new IllegalArgumentException("Conflicting old/new distance or card settings");
         Map<String, Object> distance = new LinkedHashMap<>();
-        distance.put("maxDistance", maxDistance); distance.put("crossDimensionDistance", crossDistance); cost.put("distance", distance);
+        distance.put("maxDistance", maxDistance);
+        distance.put("crossDimensionDistance", crossDistance);
+        cost.put("distance", distance);
         Object enabled = oldCards.getOrDefault("teleportCard", false);
         if (!(enabled instanceof Boolean)) throw new IllegalArgumentException("Invalid teleportCard flag");
         int grant = integer(oldCards, "teleportCardDaily", 0);
@@ -88,21 +107,32 @@ public final class CostConfigMigration {
         if (mappedMode == null) throw new IllegalArgumentException("Invalid legacy card mode: " + oldMode);
         EnumCardType mode = EnumCardType.valueOf(mappedMode);
         Map<String, Object> cards = new LinkedHashMap<>();
-        cards.put("enabled", enabled); cards.put("dailyGrant", grant); cards.put("mode", CARD_MODES.get(oldMode)); cost.put("cards", cards);
-        limits.remove("teleportCostDistanceLimit"); limits.remove("teleportCostDistanceAcrossDimension");
-        oldCards.remove("teleportCard"); oldCards.remove("teleportCardDaily"); oldCards.remove("teleportCardType");
-        if (!limits.isEmpty()) base.put("teleportLimit", limits); else base.remove("teleportLimit");
-        if (oldCards.isEmpty()) base.remove("teleportCard"); else base.put("teleportCard", oldCards);
-        root.put("base", base); root.put("cost", cost);
+        cards.put("enabled", enabled);
+        cards.put("dailyGrant", grant);
+        cards.put("mode", CARD_MODES.get(oldMode));
+        cost.put("cards", cards);
+        limits.remove("teleportCostDistanceLimit");
+        limits.remove("teleportCostDistanceAcrossDimension");
+        oldCards.remove("teleportCard");
+        oldCards.remove("teleportCardDaily");
+        oldCards.remove("teleportCardType");
+        if (!limits.isEmpty()) base.put("teleportLimit", limits);
+        else base.remove("teleportLimit");
+        if (oldCards.isEmpty()) base.remove("teleportCard");
+        else base.put("teleportCard", oldCards);
+        root.put("base", base);
+        root.put("cost", cost);
         return new CostMigrationPlan(true, new CostConfiguration(groups, new CostCardSettings((boolean) enabled, grant, mode),
                 maxDistance, crossDistance), root, sources, disabled);
     }
 
     public static String groupName(EnumTeleportType type) {
-        if (!EnumTeleportType.countdownConfigurableTypes().contains(type)) throw new IllegalArgumentException("Not a cost type: " + type);
+        if (!EnumTeleportType.countdownConfigurableTypes().contains(type))
+            throw new IllegalArgumentException("Not a cost type: " + type);
         StringJoiner result = new StringJoiner("");
         String[] parts = type.name().substring(3).toLowerCase(Locale.ROOT).split("_");
-        for (int i = 0; i < parts.length; i++) result.add(i == 0 ? parts[i] : Character.toUpperCase(parts[i].charAt(0)) + parts[i].substring(1));
+        for (int i = 0; i < parts.length; i++)
+            result.add(i == 0 ? parts[i] : Character.toUpperCase(parts[i].charAt(0)) + parts[i].substring(1));
         return result.toString();
     }
 
@@ -135,7 +165,8 @@ public final class CostConfigMigration {
                 + "}\n" + LegacyCostExpression.helpers() + "}\n";
     }
 
-    @SuppressWarnings("unchecked") private static Map<String, Object> copy(Map<String, Object> map) {
+    @SuppressWarnings("unchecked")
+    private static Map<String, Object> copy(Map<String, Object> map) {
         Map<String, Object> result = new LinkedHashMap<>();
         map.forEach((key, value) -> {
             if (value instanceof Map) result.put(key, copy((Map<String, Object>) value));
@@ -145,7 +176,8 @@ public final class CostConfigMigration {
         return result;
     }
 
-    @SuppressWarnings("unchecked") private static Map<String, Object> table(Map<String, Object> map, String name) {
+    @SuppressWarnings("unchecked")
+    private static Map<String, Object> table(Map<String, Object> map, String name) {
         Object value = map.get(name);
         if (value == null) return new LinkedHashMap<>();
         if (!(value instanceof Map)) throw new IllegalArgumentException("Expected table: " + name);
@@ -157,14 +189,18 @@ public final class CostConfigMigration {
         if (!(value instanceof String)) throw new IllegalArgumentException("Expected string: " + key);
         return (String) value;
     }
+
     private static double number(Map<String, Object> map, String key, double fallback) {
         Object value = map.getOrDefault(key, fallback);
-        if (!(value instanceof Number) || !Double.isFinite(((Number) value).doubleValue())) throw new IllegalArgumentException("Expected finite number: " + key);
+        if (!(value instanceof Number) || !Double.isFinite(((Number) value).doubleValue()))
+            throw new IllegalArgumentException("Expected finite number: " + key);
         return ((Number) value).doubleValue();
     }
+
     private static int integer(Map<String, Object> map, String key, int fallback) {
         double value = number(map, key, fallback);
-        if (value < Integer.MIN_VALUE || value > Integer.MAX_VALUE || value != Math.rint(value)) throw new IllegalArgumentException("Expected integer: " + key);
+        if (value < Integer.MIN_VALUE || value > Integer.MAX_VALUE || value != Math.rint(value))
+            throw new IllegalArgumentException("Expected integer: " + key);
         return (int) value;
     }
 }

@@ -369,7 +369,7 @@ public class CommonConfig implements ConfigData {
 
     @Getter
     @Setter
-        @Accessors(chain = true, fluent = true)
+    @Accessors(chain = true, fluent = true)
     public static class SafeTeleportCategory {
         @ConfigEntry.Gui.Tooltip(zh_cn = "不安全的方块列表，玩家不会传送到这些方块上", en_us = "The list of unsafe blocks, players will not be teleported to these blocks.")
         private List<String> unsafeBlocks = new ArrayList<>(Arrays.asList(

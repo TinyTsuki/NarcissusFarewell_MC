@@ -15,6 +15,7 @@ import java.util.Objects;
 public class SafeBlockChecker {
     public interface BlockAccess {
         BlockState state(BlockPos pos);
+
         boolean suffocates(BlockState state, BlockPos pos);
     }
 
@@ -27,8 +28,15 @@ public class SafeBlockChecker {
 
     public SafeBlockChecker(World level, SafeBlockPolicy policy) {
         this(new BlockAccess() {
-            @Override public BlockState state(BlockPos pos) { return level.getBlockState(pos); }
-            @Override public boolean suffocates(BlockState state, BlockPos pos) { return state.isSuffocating(level, pos); }
+            @Override
+            public BlockState state(BlockPos pos) {
+                return level.getBlockState(pos);
+            }
+
+            @Override
+            public boolean suffocates(BlockState state, BlockPos pos) {
+                return state.isSuffocating(level, pos);
+            }
         }, policy);
     }
 

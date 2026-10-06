@@ -439,8 +439,16 @@ public class SearchChunkPoolTest {
             live.remove(key);
         }
 
-        private int retains(ResourceLocation dimension, int cx, int cz) { return retainCalls.getOrDefault(key(dimension, cx, cz), 0); }
-        private int releases(ResourceLocation dimension, int cx, int cz) { return releaseCalls.getOrDefault(key(dimension, cx, cz), 0); }
-        private int checks(ResourceLocation dimension, int cx, int cz) { return readinessCalls.getOrDefault(key(dimension, cx, cz), 0); }
+        private int retains(ResourceLocation dimension, int cx, int cz) {
+            return retainCalls.getOrDefault(key(dimension, cx, cz), 0);
+        }
+
+        private int releases(ResourceLocation dimension, int cx, int cz) {
+            return releaseCalls.getOrDefault(key(dimension, cx, cz), 0);
+        }
+
+        private int checks(ResourceLocation dimension, int cx, int cz) {
+            return readinessCalls.getOrDefault(key(dimension, cx, cz), 0);
+        }
     }
 }

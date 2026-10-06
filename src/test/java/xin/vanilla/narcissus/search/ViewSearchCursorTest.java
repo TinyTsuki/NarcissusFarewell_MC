@@ -180,7 +180,8 @@ public class ViewSearchCursorTest {
             for (int step = (int) Math.ceil(dist / .75); step >= 0; step--) {
                 for (int offset : new int[]{0, -1, 1, -2, 2, -3}) {
                     BlockPos point = at(ray, step, offset);
-                    if (safety.test(point)) return new double[]{point.getX() + .5, point.getY() + .15, point.getZ() + .5};
+                    if (safety.test(point))
+                        return new double[]{point.getX() + .5, point.getY() + .15, point.getZ() + .5};
                 }
             }
         }

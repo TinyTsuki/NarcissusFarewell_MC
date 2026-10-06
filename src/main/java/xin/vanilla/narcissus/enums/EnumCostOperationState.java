@@ -8,7 +8,8 @@ import xin.vanilla.narcissus.NarcissusComponent;
 public enum EnumCostOperationState implements IEnumDescribable {
     PENDING, COMMITTING, PAID, FAILED, CANCELLED;
 
-    @Override public Component enumDescription() {
+    @Override
+    public Component enumDescription() {
         return EnumDescriptionHelper.describeEnum(NarcissusComponent.get(), this);
     }
 }

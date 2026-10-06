@@ -1,7 +1,5 @@
 package xin.vanilla.narcissus.command.impl;
 
-import xin.vanilla.narcissus.internal.server.NarcissusCostService;
-import xin.vanilla.narcissus.internal.server.NarcissusSearchService;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
@@ -16,6 +14,8 @@ import xin.vanilla.narcissus.config.CommonConfig;
 import xin.vanilla.narcissus.data.SafeWorldCoordinate;
 import xin.vanilla.narcissus.enums.EnumCommandType;
 import xin.vanilla.narcissus.enums.EnumTeleportType;
+import xin.vanilla.narcissus.internal.server.NarcissusCostService;
+import xin.vanilla.narcissus.internal.server.NarcissusSearchService;
 import xin.vanilla.narcissus.notification.NarcissusNotificationTypes;
 import xin.vanilla.narcissus.util.CommandUtils;
 import xin.vanilla.narcissus.util.NarcissusUtils;
@@ -43,7 +43,10 @@ public final class TpViewCommand {
         }
         return search.searchView(player, safe, finalRange, ticket, session -> {
             SafeWorldCoordinate safeWorldCoordinate = session.destination();
-            if (CommandUtils.checkTeleportPost(player, safeWorldCoordinate, EnumTeleportType.TP_VIEW)) { session.cancel(); return; }
+            if (CommandUtils.checkTeleportPost(player, safeWorldCoordinate, EnumTeleportType.TP_VIEW)) {
+                session.cancel();
+                return;
+            }
             NarcissusUtils.teleportSearched(player, session, EnumTeleportType.TP_VIEW, ticket);
         }) ? 1 : 0;
     }

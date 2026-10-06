@@ -30,7 +30,9 @@ import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
-/** Dev-only wrappers measure the actual production renderers, never synthetic screenshots. */
+/**
+ * Dev-only wrappers measure the actual production renderers, never synthetic screenshots.
+ */
 public final class NarcissusNetworkSmokeScreens {
     private final BooleanSupplier sampling;
     private final Metrics waypoints;
@@ -62,7 +64,8 @@ public final class NarcissusNetworkSmokeScreens {
     }
 
     void open(Minecraft client) {
-        if (!hasSyncedHomes(client)) throw new IllegalStateException("UI workload requires 48 synchronized player homes");
+        if (!hasSyncedHomes(client))
+            throw new IllegalStateException("UI workload requires 48 synchronized player homes");
         MinecraftForge.EVENT_BUS.register(this);
         registered = true;
         NarcissusNetworkSmokeStatus.append("INFO client-ui-data waypoints=server-sync homes=48"
@@ -76,7 +79,8 @@ public final class NarcissusNetworkSmokeScreens {
     }
 
     void runCycle(Minecraft client, int cycle) {
-        if (!hasSyncedHomes(client)) throw new IllegalStateException("Synchronized player homes changed during UI workload");
+        if (!hasSyncedHomes(client))
+            throw new IllegalStateException("Synchronized player homes changed during UI workload");
         pending = null;
         int view = (cycle - 1) % 4;
         if (view == 0) {
@@ -301,7 +305,8 @@ public final class NarcissusNetworkSmokeScreens {
             boolean visible = widget.bounds().width() > 0 && widget.bounds().height() > 0
                     && x > 0 && x < screen.width && y > 40 && y < screen.height - 40;
             for (IWidget parent = widget.parent(); visible && parent != null; parent = parent.parent()) {
-                if (parent instanceof CollapsiblePanelWidget && !((CollapsiblePanelWidget) parent).expanded()) visible = false;
+                if (parent instanceof CollapsiblePanelWidget && !((CollapsiblePanelWidget) parent).expanded())
+                    visible = false;
                 if (!parent.visible() || parent.bounds() == null || x < parent.absoluteX() || y < parent.absoluteY()
                         || x >= parent.absoluteX() + parent.bounds().width()
                         || y >= parent.absoluteY() + parent.bounds().height()) visible = false;

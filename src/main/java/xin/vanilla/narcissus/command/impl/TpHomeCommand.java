@@ -67,7 +67,8 @@ public final class TpHomeCommand {
         if (CommandUtils.checkTeleportPost(player, safeWorldCoordinate, EnumTeleportType.TP_HOME)) return 0;
         xin.vanilla.banira.common.data.KeyValue<String, String> selected = NarcissusUtils.getPlayerHomeKey(player, targetLevel, name);
         SafeWorldCoordinate stored = PlayerTeleportData.getData(player).peekHomeCoordinates().get(selected);
-        NarcissusUtils.teleportTo(player, safeWorldCoordinate.clone(), EnumTeleportType.TP_HOME, () -> { },
+        NarcissusUtils.teleportTo(player, safeWorldCoordinate.clone(), EnumTeleportType.TP_HOME, () -> {
+                },
                 () -> PlayerTeleportData.getData(player).peekHomeCoordinates().get(selected) == stored);
         return 1;
     }

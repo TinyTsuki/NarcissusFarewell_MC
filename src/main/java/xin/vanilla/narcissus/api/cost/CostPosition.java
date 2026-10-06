@@ -26,7 +26,11 @@ public class CostPosition {
             throw new IllegalArgumentException("Invalid cost position");
         }
         this.dimensionId = dimensionId;
-        this.x = x; this.y = y; this.z = z; this.yaw = yaw; this.pitch = pitch;
+        this.x = x;
+        this.y = y;
+        this.z = z;
+        this.yaw = yaw;
+        this.pitch = pitch;
         this.safe = safe;
         this.safeMode = Objects.requireNonNull(safeMode, "safeMode");
     }
