@@ -62,7 +62,9 @@ public final class TpGraveCommand {
         if (CommandUtils.checkTeleportPost(player, target, EnumTeleportType.TP_GRAVE)) return 0;
         TeleportRecord consumed = record;
         NarcissusUtils.teleportTo(player, target, EnumTeleportType.TP_GRAVE,
-                () -> { if (consumed != null) NarcissusUtils.removeBackTeleportRecord(player, consumed); },
+                () -> {
+                    if (consumed != null) NarcissusUtils.removeBackTeleportRecord(player, consumed);
+                },
                 () -> consumed == null || xin.vanilla.narcissus.data.player.PlayerTeleportData.getData(player).peekTeleportRecords().contains(consumed));
         return 1;
     }

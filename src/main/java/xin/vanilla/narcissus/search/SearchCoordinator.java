@@ -138,7 +138,9 @@ public final class SearchCoordinator implements AutoCloseable {
         return active.size();
     }
 
-    /** Lifecycle-event cleanup, without spending another tick's search budget. */
+    /**
+     * Lifecycle-event cleanup, without spending another tick's search budget.
+     */
     public void pruneInvalid() {
         checkOwner();
         for (Entry entry : new ArrayList<>(active.values())) {
@@ -151,7 +153,8 @@ public final class SearchCoordinator implements AutoCloseable {
         }
     }
 
-    @Override public void close() {
+    @Override
+    public void close() {
         checkOwner();
         if (closed) return;
         closed = true;
@@ -213,6 +216,7 @@ public final class SearchCoordinator implements AutoCloseable {
         final long start;
         final long timeoutNanos;
         long suspendedTick = Long.MIN_VALUE;
+
         Entry(UUID id, SearchTask task, long start, int timeoutSeconds) {
             this.id = id;
             this.task = task;

@@ -31,10 +31,10 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Map;
-import java.util.function.Supplier;
 import java.util.UUID;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Supplier;
 
 /**
  * 自动连接独立服务端并验证玩家配置与访问名单的真实网络往返。
@@ -309,7 +309,9 @@ public final class NarcissusNetworkSmokeClientRunner {
         FINISHED
     }
 
-    /** Spark 1.9 client plugin, Render thread only, native legacy protobuf export. */
+    /**
+     * Spark 1.9 client plugin, Render thread only, native legacy protobuf export.
+     */
     private static final class ReflectiveClientSparkProfile {
         private final Object sampler;
         private final Future<?> future;
@@ -413,7 +415,8 @@ public final class NarcissusNetworkSmokeClientRunner {
 
         private static Class<?> base(Object plugin) {
             Class<?> type = plugin.getClass();
-            while (type != null && !type.getName().equals("me.lucko.spark.forge.plugin.ForgeSparkPlugin")) type = type.getSuperclass();
+            while (type != null && !type.getName().equals("me.lucko.spark.forge.plugin.ForgeSparkPlugin"))
+                type = type.getSuperclass();
             if (type == null) throw new IllegalStateException("Spark base plugin was not found");
             return type;
         }

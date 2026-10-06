@@ -30,7 +30,8 @@ public class NarcissusNetworkSmokeClientPlanTest {
         try {
             plan.requireSampleInterval(start, end);
             org.junit.Assert.fail("Invalid sample interval accepted");
-        } catch (IllegalStateException expected) { }
+        } catch (IllegalStateException expected) {
+        }
     }
 
     @Test

@@ -4,7 +4,9 @@ import java.util.List;
 import java.util.Objects;
 import java.util.function.Function;
 
-/** 只保存界面选择的稳定身份，不持有会在同步后失效的数据对象。 */
+/**
+ * 只保存界面选择的稳定身份，不持有会在同步后失效的数据对象。
+ */
 final class WaypointSelectionState {
     private WaypointSelectionState() {
     }
