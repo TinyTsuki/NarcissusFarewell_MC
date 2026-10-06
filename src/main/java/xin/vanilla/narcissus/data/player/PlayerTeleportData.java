@@ -307,7 +307,9 @@ public final class PlayerTeleportData implements IPlayerData<PlayerTeleportData>
         return peekTeleportCountdownSeconds(type);
     }
 
-    /** Reads the preference without flushing player data during a cost preview. */
+    /**
+     * Reads the preference without flushing player data during a cost preview.
+     */
     public int peekTeleportCountdownSeconds(EnumTeleportType type) {
         if (type == null || !EnumTeleportType.countdownConfigurableTypes().contains(type)) {
             return 0;
@@ -392,23 +394,32 @@ public final class PlayerTeleportData implements IPlayerData<PlayerTeleportData>
         return this.teleportCard.get();
     }
 
-    /** Reads the current balance without flushing player data during a cost preview. */
+    /**
+     * Reads the current balance without flushing player data during a cost preview.
+     */
     public int peekTeleportCard() {
         return this.teleportCard.get();
     }
 
-    /** Reserve cards for an owner-thread payment without persisting a half-completed transaction. */
+    /**
+     * Reserve cards for an owner-thread payment without persisting a half-completed transaction.
+     */
     public boolean tryConsumeTeleportCards(int amount) {
         if (amount < 0) throw new IllegalArgumentException("Negative card debit");
         if (amount == 0) return true;
-        for (;;) {
+        for (; ; ) {
             int balance = teleportCard.get();
             if (balance < amount) return false;
-            if (teleportCard.compareAndSet(balance, balance - amount)) { setDirty(); return true; }
+            if (teleportCard.compareAndSet(balance, balance - amount)) {
+                setDirty();
+                return true;
+            }
         }
     }
 
-    /** Restore only our reservation; preserve any changes made by an external command. */
+    /**
+     * Restore only our reservation; preserve any changes made by an external command.
+     */
     public void refundTeleportCards(int amount) {
         if (amount < 0) throw new IllegalArgumentException("Negative card refund");
         if (amount > 0) {
@@ -435,7 +446,9 @@ public final class PlayerTeleportData implements IPlayerData<PlayerTeleportData>
         return this.teleportRecords = CollectionUtils.isNullOrEmpty(this.teleportRecords) ? new ArrayList<>() : this.teleportRecords;
     }
 
-    /** Readonly quote lookup; do not flush dirty data from a preview. */
+    /**
+     * Readonly quote lookup; do not flush dirty data from a preview.
+     */
     public List<TeleportRecord> peekTeleportRecords() {
         return this.teleportRecords == null ? Collections.emptyList() : Collections.unmodifiableList(this.teleportRecords);
     }

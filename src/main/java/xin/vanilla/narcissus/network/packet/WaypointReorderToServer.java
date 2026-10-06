@@ -18,9 +18,10 @@ import xin.vanilla.narcissus.util.NarcissusUtils;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 
-/** 客户端只提交键顺序，坐标值始终取服务端权威数据。 */
+/**
+ * 客户端只提交键顺序，坐标值始终取服务端权威数据。
+ */
 @Getter
 @Accessors(fluent = true)
 public final class WaypointReorderToServer implements NetworkPacket {
@@ -28,7 +29,7 @@ public final class WaypointReorderToServer implements NetworkPacket {
     private static final int MAX_NAME_LEN = 64;
     private static final int MAX_DIMENSION_LEN = 256;
 
-    public enum Type { HOME, STAGE }
+    public enum Type {HOME, STAGE}
 
     private final Type type;
     private final List<KeyValue<String, String>> orderedKeys;

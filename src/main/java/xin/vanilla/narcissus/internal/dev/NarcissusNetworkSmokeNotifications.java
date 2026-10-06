@@ -1,8 +1,8 @@
 package xin.vanilla.narcissus.internal.dev;
 
-import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.network.chat.ClickEvent;
 import net.minecraft.network.chat.HoverEvent;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.fml.ModList;
 import xin.vanilla.banira.BaniraCodex;
@@ -26,7 +26,9 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.function.BiConsumer;
 
-/** Synthetic rich routes plus read-only HELP and guarded missing-request feedback. */
+/**
+ * Synthetic rich routes plus read-only HELP and guarded missing-request feedback.
+ */
 public final class NarcissusNetworkSmokeNotifications {
     public static final int EXPLICIT_COLOR = 0xFF55FF55;
     private final String phase;
@@ -93,7 +95,8 @@ public final class NarcissusNetworkSmokeNotifications {
             if (!Files.isRegularFile(path)) throw new IllegalStateException("Banira mod file unavailable: " + path);
             byte[] bytes = Files.readAllBytes(path);
             StringBuilder hash = new StringBuilder();
-            for (byte b : MessageDigest.getInstance("SHA-256").digest(bytes)) hash.append(String.format("%02x", b & 255));
+            for (byte b : MessageDigest.getInstance("SHA-256").digest(bytes))
+                hash.append(String.format("%02x", b & 255));
             for (Class<?> type : new Class<?>[]{Component.class, MessageUtils.class, NotificationBudget.class}) {
                 // Forge's modjar URL is evidence, not a filesystem URI; bind it to the registered Banira entrypoint.
                 String source = type.getProtectionDomain().getCodeSource().getLocation().toExternalForm();
@@ -123,13 +126,14 @@ public final class NarcissusNetworkSmokeNotifications {
             Object mod = container.getMod();
             String source = type.getProtectionDomain().getCodeSource().getLocation().toExternalForm();
             requireProvider(mod != null && type.getClassLoader() == mod.getClass().getClassLoader()
-                    && source.equals(mod.getClass().getProtectionDomain().getCodeSource().getLocation().toExternalForm()),
+                            && source.equals(mod.getClass().getProtectionDomain().getCodeSource().getLocation().toExternalForm()),
                     "Advanced Fake Players actor does not belong to the loaded Advanced Fake Players mod");
             Path path = ModList.get().getModFileById("advancedfakeplayers").getFile().getFilePath().toAbsolutePath();
             requireProvider(Files.isRegularFile(path), "Advanced Fake Players mod file unavailable");
             byte[] bytes = Files.readAllBytes(path);
             StringBuilder hash = new StringBuilder();
-            for (byte b : MessageDigest.getInstance("SHA-256").digest(bytes)) hash.append(String.format("%02x", b & 255));
+            for (byte b : MessageDigest.getInstance("SHA-256").digest(bytes))
+                hash.append(String.format("%02x", b & 255));
             String expectedHash = System.getProperty("narcissus.networkSmoke.fakePlayerSha256", "");
             requireProvider(expectedHash.equals(hash.toString()), "Loaded Advanced Fake Players JAR differs from parent runtime fingerprint");
             NarcissusNetworkSmokeStatus.append("RUNTIME " + FAKE_CLASS + " provider=advancedfakeplayers coordinate=" + FAKE_PLAYER_COORDINATE
@@ -186,7 +190,9 @@ public final class NarcissusNetworkSmokeNotifications {
         for (Component child : component.getChildren()) bindLanguage(child, language);
     }
 
-    /** Independent approved routing expectation, not an echo of defaultDisplay(). */
+    /**
+     * Independent approved routing expectation, not an echo of defaultDisplay().
+     */
     public static EnumNotificationTypeDisplayMode expectedDisplay(String type) {
         switch (type) {
             case NarcissusNotificationTypes.INTERACTIVE_TP_FLOW:

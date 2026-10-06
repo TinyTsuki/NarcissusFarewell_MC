@@ -5,9 +5,9 @@ import org.junit.Test;
 import xin.vanilla.banira.client.data.NotificationLogEntry;
 import xin.vanilla.banira.client.notification.NotificationTypeSettingsStore.TypeSettings;
 import xin.vanilla.banira.common.enums.EnumNotificationTypeDisplayMode;
+import xin.vanilla.narcissus.NarcissusComponent;
 import xin.vanilla.narcissus.internal.dev.NarcissusNetworkSmokeNotifications;
 import xin.vanilla.narcissus.notification.NarcissusNotificationTypes;
-import xin.vanilla.narcissus.NarcissusComponent;
 
 import java.util.ArrayList;
 import java.util.List;

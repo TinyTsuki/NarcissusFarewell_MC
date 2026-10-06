@@ -9,12 +9,7 @@ import xin.vanilla.banira.common.util.JsonUtils;
 import xin.vanilla.narcissus.NarcissusComponent;
 import xin.vanilla.narcissus.notification.NarcissusNotificationTypes;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 import static org.junit.Assert.*;
 
@@ -97,7 +92,8 @@ public class NarcissusNetworkSmokeNotificationsTest {
         for (String type : NarcissusNotificationTypes.ALL_TYPE_IDS) {
             assertEquals(NarcissusNetworkSmokeNotifications.expectedDisplay(type),
                     NarcissusNotificationTypes.defaultDisplay(type));
-            if (NarcissusNetworkSmokeNotifications.expectedDisplay(type) == EnumNotificationTypeDisplayMode.VANILLA_CHAT) chat++;
+            if (NarcissusNetworkSmokeNotifications.expectedDisplay(type) == EnumNotificationTypeDisplayMode.VANILLA_CHAT)
+                chat++;
         }
         assertEquals(5, chat);
         assertEquals(EnumNotificationTypeDisplayMode.VANILLA_CHAT,

@@ -25,14 +25,26 @@ import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
 
 public class ConfigViewLifecycleTest {
-    @Rule public TemporaryFolder temporary = new TemporaryFolder();
-    @BeforeClass public static void bootstrap() throws Exception { xin.vanilla.narcissus.test.ForgeUnitTestBootstrap.bootstrap(); }
+    @Rule
+    public TemporaryFolder temporary = new TemporaryFolder();
 
-    @Test public void retainedRuleListFollowsFileReloadAndRebinding() throws Exception { verify(false); }
-    @Test public void retainedClientCategoryFollowsFileReloadAndRebinding() throws Exception { verify(true); }
+    @BeforeClass
+    public static void bootstrap() throws Exception {
+        xin.vanilla.narcissus.test.ForgeUnitTestBootstrap.bootstrap();
+    }
+
+    @Test
+    public void retainedRuleListFollowsFileReloadAndRebinding() throws Exception {
+        verify(false);
+    }
+
+    @Test
+    public void retainedClientCategoryFollowsFileReloadAndRebinding() throws Exception {
+        verify(true);
+    }
 
     private void verify(boolean client) throws Exception {
         Class<?> type = client ? ClientConfig.class : CommonConfig.class;
@@ -77,7 +89,9 @@ public class ConfigViewLifecycleTest {
             assertEquals(writtenValue, second.holder.get(key));
             ConfigBaselineFixture.bind(type, first.holder);
             assertEquals(externalValue, read.get());
-        } finally { ConfigBaselineFixture.bind(type, null); }
+        } finally {
+            ConfigBaselineFixture.bind(type, null);
+        }
     }
 
     private static CommentedConfig parse(Path path) throws Exception {
@@ -124,6 +138,8 @@ public class ConfigViewLifecycleTest {
             return method.invoke(backend, args);
         }
 
-        public void close() { file.close(); }
+        public void close() {
+            file.close();
+        }
     }
 }

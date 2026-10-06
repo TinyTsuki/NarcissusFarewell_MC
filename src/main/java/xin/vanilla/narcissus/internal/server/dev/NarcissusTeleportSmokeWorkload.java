@@ -11,7 +11,9 @@ public final class NarcissusTeleportSmokeWorkload {
     private Step current = Step.SAFE_RANDOM;
     private int cycles;
 
-    public int cycles() { return cycles; }
+    public int cycles() {
+        return cycles;
+    }
 
     public Step current() {
         return current;

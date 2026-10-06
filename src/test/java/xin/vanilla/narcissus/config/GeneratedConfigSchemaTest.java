@@ -10,21 +10,27 @@ import java.util.List;
 import static org.junit.Assert.*;
 
 public class GeneratedConfigSchemaTest {
-    @BeforeClass public static void bootstrap() throws Exception { xin.vanilla.narcissus.test.ForgeUnitTestBootstrap.bootstrap(); }
+    @BeforeClass
+    public static void bootstrap() throws Exception {
+        xin.vanilla.narcissus.test.ForgeUnitTestBootstrap.bootstrap();
+    }
 
-    @Test public void commonSchemaMatchesRegistration() throws Exception {
+    @Test
+    public void commonSchemaMatchesRegistration() throws Exception {
         ConfigBaselineFixture fixture = new ConfigBaselineFixture(CommonConfig.class);
         fixture.bind(CommonConfig.class);
         assertEquals(fixture.defaults, ConfigBaselineFixture.readView(CommonConfigView.get(), CommonConfigView.class));
     }
 
-    @Test public void clientSchemaMatchesRegistration() throws Exception {
+    @Test
+    public void clientSchemaMatchesRegistration() throws Exception {
         ConfigBaselineFixture fixture = new ConfigBaselineFixture(ClientConfig.class);
         fixture.bind(ClientConfig.class);
         assertEquals(fixture.defaults, ConfigBaselineFixture.readView(ClientConfigView.get(), ClientConfigView.class));
     }
 
-    @Test public void generatedSearchSettingsEnforceTheirRegisteredBounds() throws Exception {
+    @Test
+    public void generatedSearchSettingsEnforceTheirRegisteredBounds() throws Exception {
         ConfigBaselineFixture fixture = new ConfigBaselineFixture(CommonConfig.class);
         fixture.bind(CommonConfig.class);
         String prefix = "base.safeTeleport.search.";
@@ -46,7 +52,8 @@ public class GeneratedConfigSchemaTest {
         assertEquals(fixture.defaults, ConfigBaselineFixture.readView(CommonConfigView.get(), CommonConfigView.class));
     }
 
-    @Test public void ruleListsAreIndependentAndKeepCommas() throws Exception {
+    @Test
+    public void ruleListsAreIndependentAndKeepCommas() throws Exception {
         ConfigBaselineFixture.bind(CommonConfig.class, null);
         List<String> original = new ArrayList<>(CommonConfigView.get().base().safeTeleport().unsafeBlocks());
         CommonConfigView.get().base().safeTeleport().unsafeBlocks().clear();

@@ -1,10 +1,13 @@
 package xin.vanilla.narcissus.test;
 
-/** Minimal Forge 52 loading context for real item and hover codecs in JUnit. */
+/**
+ * Minimal Forge 52 loading context for real item and hover codecs in JUnit.
+ */
 public final class ForgeUnitTestBootstrap {
     private static boolean bootstrapped;
 
-    private ForgeUnitTestBootstrap() { }
+    private ForgeUnitTestBootstrap() {
+    }
 
     public static synchronized void bootstrap() throws Exception {
         if (bootstrapped) return;
