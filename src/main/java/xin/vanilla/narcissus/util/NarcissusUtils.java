@@ -49,6 +49,7 @@ import xin.vanilla.narcissus.enums.EnumTeleportType;
 import xin.vanilla.narcissus.internal.server.NarcissusCostService;
 import xin.vanilla.narcissus.internal.server.NarcissusSearchService;
 import xin.vanilla.narcissus.internal.server.teleport.RidingTransfer;
+import xin.vanilla.narcissus.internal.server.teleport.TeleportHistoryScope;
 import xin.vanilla.narcissus.mixin.LivingEntityInvoker;
 import xin.vanilla.narcissus.mixin.MobAccessor;
 import xin.vanilla.narcissus.mixin.TemptGoalAccessor;
@@ -1158,8 +1159,10 @@ public class NarcissusUtils {
         boolean withVehicle = CommonConfig.get().base().teleportTogether().tpWithVehicle();
         Entity root = withVehicle ? player.getRootVehicle() : player;
         Set<Entity> transferred = Collections.newSetFromMap(new IdentityHashMap<>());
+        SafeWorldCoordinate transferBefore = new SafeWorldCoordinate(player);
+        TeleportHistoryScope transferScope = TeleportHistoryScope.track(player);
         boolean moved;
-        try {
+        try (TeleportHistoryScope recordingScope = transferScope) {
             moved = RidingTransfer.transfer(root, player, new RidingTransfer.Backend<Entity>() {
                 public List<Entity> passengers(Entity entity) {
                     return withVehicle ? entity.getPassengers() : Collections.emptyList();
@@ -1186,6 +1189,11 @@ public class NarcissusUtils {
 
                 public Entity move(Entity entity) {
                     transferred.add(entity);
+                    if (entity == player) {
+                        try (TeleportHistoryScope ignored = TeleportHistoryScope.open(player, level.dimension(), after.x(), after.y(), after.z())) {
+                            return doTeleport(entity, after, level);
+                        }
+                    }
                     return doTeleport(entity, after, level);
                 }
 
@@ -1211,6 +1219,19 @@ public class NarcissusUtils {
             moved = false;
         }
         if (!moved) {
+            SafeWorldCoordinate actual = new SafeWorldCoordinate(player);
+            if ((!transferBefore.dimension().equals(actual.dimension()) || transferBefore.x() != actual.x()
+                    || transferBefore.y() != actual.y() || transferBefore.z() != actual.z())
+                    && !transferScope.hasRecordedActualEnd(player, actual.dimension(), actual.x(), actual.y(), actual.z())) {
+                TeleportRecord record = new TeleportRecord();
+                record.setTeleportTime(new Date());
+                record.setTeleportType(EnumTeleportType.OTHER);
+                record.setBefore(transferBefore);
+                record.setAfter(actual);
+                PlayerTeleportData.getData(player).addTeleportRecords(record);
+                TeleportHistoryScope.noteRecorded(player, actual.dimension(), actual.x(), actual.y(), actual.z());
+                PlayerTeleportData.syncPlayerData(player);
+            }
             MessageUtils.sendNotification(player, NarcissusComponent.get().transAuto("teleport_failed"), NarcissusNotificationTypes.TELEPORT_ERROR);
             return false;
         }
@@ -1233,6 +1254,7 @@ public class NarcissusUtils {
         record.setBefore(before);
         record.setAfter(after);
         PlayerTeleportData.getData(player).addTeleportRecords(record);
+        TeleportHistoryScope.noteRecorded(player, after.dimension(), after.x(), after.y(), after.z());
         PlayerTeleportData.syncPlayerData(player);
         return true;
     }
