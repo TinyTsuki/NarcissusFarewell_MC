@@ -1,8 +1,5 @@
 package xin.vanilla.narcissus.config;
 
-import lombok.Getter;
-import lombok.Setter;
-import lombok.experimental.Accessors;
 import xin.vanilla.banira.api.BaniraConfigs;
 import xin.vanilla.banira.common.config.ConfigData;
 import xin.vanilla.banira.common.config.ConfigHolder;
@@ -42,9 +39,6 @@ public class ClientConfig implements ConfigData {
     }
 
 
-    @Getter
-    @Setter
-    @Accessors(chain = true, fluent = true)
     public static class ClientRootCategory {
         @ConfigEntry.Gui.Tooltip(zh_cn = "创建家时同步地图路标", en_us = "Sync map waypoint when setting home")
         private boolean syncHomeMapWaypoint = true;
