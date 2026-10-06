@@ -2,10 +2,10 @@ package xin.vanilla.narcissus.internal.client.dev;
 
 import com.mojang.blaze3d.platform.NativeImage;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.Screenshot;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.events.GuiEventListener;
 import net.minecraft.client.gui.screens.BackupConfirmScreen;
-import net.minecraft.client.Screenshot;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.phys.Vec3;
 import org.apache.logging.log4j.LogManager;
@@ -311,7 +311,9 @@ public final class NarcissusUiSmokeRunner {
         }
     }
 
-    /** 测试世界来自其他开发环境时，自动走原版的“不备份并继续”按钮。 */
+    /**
+     * 测试世界来自其他开发环境时，自动走原版的“不备份并继续”按钮。
+     */
     private void continueWithoutBackupIfNeeded(Minecraft client) {
         if (backupPromptHandled || !(client.screen instanceof BackupConfirmScreen)) {
             return;

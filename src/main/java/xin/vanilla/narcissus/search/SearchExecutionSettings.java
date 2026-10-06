@@ -16,7 +16,15 @@ public final class SearchExecutionSettings {
         this.timeoutSeconds = timeoutSeconds;
     }
 
-    public double timeBudgetMs() { return timeBudgetMs; }
-    public int maxConcurrentSearches() { return maxConcurrentSearches; }
-    public int timeoutSeconds() { return timeoutSeconds; }
+    public double timeBudgetMs() {
+        return timeBudgetMs;
+    }
+
+    public int maxConcurrentSearches() {
+        return maxConcurrentSearches;
+    }
+
+    public int timeoutSeconds() {
+        return timeoutSeconds;
+    }
 }

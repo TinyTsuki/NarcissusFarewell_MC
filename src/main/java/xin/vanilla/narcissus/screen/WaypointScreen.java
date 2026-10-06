@@ -23,18 +23,14 @@ import xin.vanilla.narcissus.config.CommonConfig;
 import xin.vanilla.narcissus.data.SafeWorldCoordinate;
 import xin.vanilla.narcissus.data.TeleportRecord;
 import xin.vanilla.narcissus.data.client.ClientStageData;
+import xin.vanilla.narcissus.data.cost.CostQuote;
+import xin.vanilla.narcissus.data.cost.CostQuoteTarget;
 import xin.vanilla.narcissus.data.player.PlayerTeleportData;
 import xin.vanilla.narcissus.enums.EnumCommandType;
 import xin.vanilla.narcissus.enums.EnumTeleportType;
-import xin.vanilla.narcissus.internal.client.NarcissusClientSyncState;
-import xin.vanilla.narcissus.network.packet.WaypointAddHomeToServer;
-import xin.vanilla.narcissus.network.packet.WaypointAddStageToServer;
-import xin.vanilla.narcissus.network.packet.WaypointDelToServer;
-import xin.vanilla.narcissus.network.packet.WaypointReorderToServer;
-import xin.vanilla.narcissus.network.packet.WaypointTeleportToServer;
-import xin.vanilla.narcissus.data.cost.CostQuoteTarget;
-import xin.vanilla.narcissus.data.cost.CostQuote;
 import xin.vanilla.narcissus.internal.client.ClientCostQuotes;
+import xin.vanilla.narcissus.internal.client.NarcissusClientSyncState;
+import xin.vanilla.narcissus.network.packet.*;
 import xin.vanilla.narcissus.util.NarcissusUtils;
 
 import javax.annotation.Nonnull;
@@ -81,7 +77,9 @@ public class WaypointScreen extends BaniraScreen {
             this.supportsOrdering = supportsOrdering;
         }
 
-        /** 足迹按记录时间固定展示，不参与地标的排序与手动重排。 */
+        /**
+         * 足迹按记录时间固定展示，不参与地标的排序与手动重排。
+         */
         boolean supportsOrdering() {
             return supportsOrdering;
         }
@@ -427,7 +425,9 @@ public class WaypointScreen extends BaniraScreen {
         selectedItem = items.isEmpty() ? null : items.get(0);
     }
 
-    /** 初次打开优先展示有内容的分类，避免把已有地标藏在空页后面。 */
+    /**
+     * 初次打开优先展示有内容的分类，避免把已有地标藏在空页后面。
+     */
     private void selectInitialNonEmptyTab() {
         if (!homeItems.isEmpty()) {
             activeTab = WaypointListTab.PRIVATE;
@@ -970,7 +970,9 @@ public class WaypointScreen extends BaniraScreen {
         applySearchFilter();
     }
 
-    /** 同步完成后重建列表，并尽量保留玩家当前正在查看的条目。 */
+    /**
+     * 同步完成后重建列表，并尽量保留玩家当前正在查看的条目。
+     */
     private void refreshFromSynchronizedPlayerData() {
         WaypointEntry previousSelection = selectedItem;
         WaypointListTab previousTab = activeTab;
@@ -992,8 +994,8 @@ public class WaypointScreen extends BaniraScreen {
     }
 
     static WaypointEntry selectionAfterRefresh(WaypointEntry previousSelection,
-                                                WaypointEntry loadedDefault,
-                                                List<WaypointEntry> candidates) {
+                                               WaypointEntry loadedDefault,
+                                               List<WaypointEntry> candidates) {
         return WaypointSelectionState.afterRefresh(selectionKey(previousSelection), loadedDefault,
                 candidates, WaypointScreen::selectionKey);
     }
@@ -1190,7 +1192,8 @@ public class WaypointScreen extends BaniraScreen {
         if (selectedItem == null) lastSelectedItem = null;
     }
 
-    @Override public void removed() {
+    @Override
+    public void removed() {
         NarcissusClientSyncState.costQuotes().closeView();
         super.removed();
     }
@@ -1205,10 +1208,13 @@ public class WaypointScreen extends BaniraScreen {
                 new xin.vanilla.narcissus.network.packet.CostQuoteToServer(request)));
         return quotes.cached(item.quoteTarget, now).map(quote -> {
             if (quote.status() != CostQuote.Status.READY) return quote.status().enumDescription().toString();
-            if (quote.costType() == xin.vanilla.narcissus.enums.EnumCostType.NONE) return NarcissusComponent.get().transClientAuto("cost_free").toString();
+            if (quote.costType() == xin.vanilla.narcissus.enums.EnumCostType.NONE)
+                return NarcissusComponent.get().transClientAuto("cost_free").toString();
             String result = quote.resourceAmount() + " " + quote.costType().enumDescription().toString();
-            if (quote.cardAmount() > 0) result += " + " + quote.cardAmount() + " " + NarcissusComponent.get().transClientAuto("teleport_card");
-            if (quote.commandPending()) result += " (" + NarcissusComponent.get().transClientAuto("cost_command_pending") + ")";
+            if (quote.cardAmount() > 0)
+                result += " + " + quote.cardAmount() + " " + NarcissusComponent.get().transClientAuto("teleport_card");
+            if (quote.commandPending())
+                result += " (" + NarcissusComponent.get().transClientAuto("cost_command_pending") + ")";
             return result;
         }).orElseGet(() -> NarcissusComponent.get().transClientAuto("cost_unknown").toString());
     }

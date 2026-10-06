@@ -1,12 +1,12 @@
 package xin.vanilla.narcissus.internal.client.dev;
 
-import net.minecraft.client.Minecraft;
-import net.minecraft.core.HolderLookup;
 import net.minecraft.client.GuiMessage;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.ChatComponent;
+import net.minecraft.core.HolderLookup;
 import net.neoforged.fml.util.ObfuscationReflectionHelper;
-import xin.vanilla.banira.api.client.theme.BaniraThemes;
 import xin.vanilla.banira.api.client.notification.BaniraClientNotificationTypes;
+import xin.vanilla.banira.api.client.theme.BaniraThemes;
 import xin.vanilla.banira.client.data.BaniraColorConfig;
 import xin.vanilla.banira.client.data.NotificationLogEntry;
 import xin.vanilla.banira.client.gui.component.Notification;
@@ -30,7 +30,9 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-/** Checks received logs and native chat; themes are public-factory checks, not live queue inspection. */
+/**
+ * Checks received logs and native chat; themes are public-factory checks, not live queue inspection.
+ */
 public final class NarcissusNetworkSmokeNotificationsCheck {
     private boolean verified;
     private final long startedAt = System.currentTimeMillis();
@@ -59,7 +61,7 @@ public final class NarcissusNetworkSmokeNotificationsCheck {
             EnumPosition position = NarcissusNotificationTypes.TELEPORT_SEARCH.equals(type)
                     || NarcissusNotificationTypes.WAYPOINT.equals(type) ? EnumPosition.TOP_RIGHT : EnumPosition.TOP_CENTER;
             require(entry.position() == position && entry.animation() == EnumMoveType.AUTO
-                    && entry.durationTime() == 5000L && entry.style() == EnumNotificationStyle.NORMAL,
+                            && entry.durationTime() == 5000L && entry.style() == EnumNotificationStyle.NORMAL,
                     "Received default layout/style " + type);
 
             Notification normal = Notification.fromData(data(entry, component, entry.style()), true);
@@ -81,12 +83,15 @@ public final class NarcissusNetworkSmokeNotificationsCheck {
         return true;
     }
 
-    public boolean verified() { return verified; }
+    public boolean verified() {
+        return verified;
+    }
 
     static NotificationLogEntry actualEntry(List<NotificationLogEntry> log, String type, long startedAt) {
         NotificationLogEntry found = null;
         for (NotificationLogEntry entry : log) {
-            if (!type.equals(entry.notificationType()) || !"network".equals(entry.source()) || entry.timestamp() < startedAt) continue;
+            if (!type.equals(entry.notificationType()) || !"network".equals(entry.source()) || entry.timestamp() < startedAt)
+                continue;
             Component component = entry.component();
             boolean matches = NarcissusNotificationTypes.INTERACTIVE_HELP.equals(type)
                     ? component.text().contains("Narcissus Farewell")
@@ -208,10 +213,26 @@ public final class NarcissusNetworkSmokeNotificationsCheck {
         int text = data.component().color().argb();
         if (mode == EnumNotificationTypeDisplayMode.OVERLAY) {
             switch (style) {
-                case SUCCESS: bg = theme.notificationSuccessBg(); border = theme.notificationSuccessBorder(); text = theme.notificationSuccessText(); break;
-                case WARNING: bg = theme.notificationWarningBg(); border = theme.notificationWarningBorder(); text = theme.notificationWarningText(); break;
-                case ERROR: bg = theme.notificationErrorBg(); border = theme.notificationErrorBorder(); text = theme.notificationErrorText(); break;
-                default: bg = theme.notificationNormalBg(); border = theme.notificationNormalBorder(); text = theme.notificationNormalText(); break;
+                case SUCCESS:
+                    bg = theme.notificationSuccessBg();
+                    border = theme.notificationSuccessBorder();
+                    text = theme.notificationSuccessText();
+                    break;
+                case WARNING:
+                    bg = theme.notificationWarningBg();
+                    border = theme.notificationWarningBorder();
+                    text = theme.notificationWarningText();
+                    break;
+                case ERROR:
+                    bg = theme.notificationErrorBg();
+                    border = theme.notificationErrorBorder();
+                    text = theme.notificationErrorText();
+                    break;
+                default:
+                    bg = theme.notificationNormalBg();
+                    border = theme.notificationNormalBorder();
+                    text = theme.notificationNormalText();
+                    break;
             }
         }
         require(notification.bgColor().argb() == bg && notification.borderColor().argb() == border

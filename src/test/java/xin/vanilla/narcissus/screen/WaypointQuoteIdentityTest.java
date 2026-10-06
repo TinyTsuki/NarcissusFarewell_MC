@@ -1,7 +1,7 @@
 package xin.vanilla.narcissus.screen;
 
-import org.junit.Test;
 import org.junit.BeforeClass;
+import org.junit.Test;
 import xin.vanilla.narcissus.data.SafeWorldCoordinate;
 import xin.vanilla.narcissus.data.cost.CostQuoteTarget;
 import xin.vanilla.narcissus.enums.EnumTeleportType;
@@ -13,7 +13,8 @@ import static org.junit.Assert.*;
 public class WaypointQuoteIdentityTest {
     @BeforeClass
     public static void bootstrap() {
-        net.minecraft.SharedConstants.tryDetectVersion(); net.minecraft.server.Bootstrap.bootStrap();
+        net.minecraft.SharedConstants.tryDetectVersion();
+        net.minecraft.server.Bootstrap.bootStrap();
     }
 
     @Test

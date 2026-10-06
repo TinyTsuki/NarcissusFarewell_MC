@@ -1,10 +1,10 @@
 package xin.vanilla.narcissus.internal.neoforge.search;
 
-import net.minecraft.server.MinecraftServer;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.level.ChunkPos;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.TicketType;
+import net.minecraft.world.level.ChunkPos;
 import xin.vanilla.banira.common.util.DimensionUtils;
 import xin.vanilla.narcissus.search.SearchChunkPool;
 

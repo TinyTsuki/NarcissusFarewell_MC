@@ -1,45 +1,41 @@
 package xin.vanilla.narcissus.internal.server.dev;
 
-import net.minecraft.world.level.block.Blocks;
+import net.minecraft.core.BlockPos;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.animal.Wolf;
-import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.server.MinecraftServer;
-import net.minecraft.resources.ResourceKey;
-import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.Level;
-import net.minecraft.server.level.ServerLevel;
-import xin.vanilla.narcissus.internal.dev.NarcissusNetworkSmokeNotifications;
+import net.minecraft.world.level.block.Blocks;
 import xin.vanilla.banira.common.data.KeyValue;
 import xin.vanilla.narcissus.config.CommonConfig;
 import xin.vanilla.narcissus.data.SafeWorldCoordinate;
 import xin.vanilla.narcissus.data.TeleportRecord;
 import xin.vanilla.narcissus.data.player.PlayerTeleportData;
-import xin.vanilla.narcissus.internal.dev.NarcissusNetworkSmokeStatus;
 import xin.vanilla.narcissus.enums.EnumTeleportType;
+import xin.vanilla.narcissus.internal.dev.NarcissusNetworkSmokeNotifications;
+import xin.vanilla.narcissus.internal.dev.NarcissusNetworkSmokeStatus;
 import xin.vanilla.narcissus.util.NarcissusUtils;
 import xin.vanilla.narcissus.util.SafeBlockChecker;
 
+import java.io.Reader;
+import java.io.Writer;
 import java.lang.reflect.Method;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.io.Reader;
-import java.io.Writer;
-import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
-import java.util.UUID;
+import java.util.*;
 import java.util.function.BooleanSupplier;
 
-/** Real mod-created players; preparation and asynchronous completion are measured separately. */
+/**
+ * Real mod-created players; preparation and asynchronous completion are measured separately.
+ */
 final class NarcissusMeasuredTeleports {
     static final int PLAYER_COUNT = 4;
     static final int HOMES = 48;
@@ -78,14 +74,15 @@ final class NarcissusMeasuredTeleports {
             world.getGameRules().getRule(net.minecraft.world.level.GameRules.RULE_DOMOBSPAWNING).set(false, server);
             List<ChunkPos> owned = new ArrayList<>();
             ownedTickets.put(world, owned);
-            for (int cx = -2; cx <= 26; cx++) for (int cz = -2; cz <= 4; cz++) {
-                if (cx > 4 && (cz < 0 || cz > 2)) continue;
-                if (!world.getForcedChunks().contains(ChunkPos.asLong(cx, cz))) {
-                    world.setChunkForced(cx, cz, true);
-                    owned.add(new ChunkPos(cx, cz));
+            for (int cx = -2; cx <= 26; cx++)
+                for (int cz = -2; cz <= 4; cz++) {
+                    if (cx > 4 && (cz < 0 || cz > 2)) continue;
+                    if (!world.getForcedChunks().contains(ChunkPos.asLong(cx, cz))) {
+                        world.setChunkForced(cx, cz, true);
+                        owned.add(new ChunkPos(cx, cz));
+                    }
+                    world.getChunk(cx, cz);
                 }
-                world.getChunk(cx, cz);
-            }
             for (int x = -32; x <= 410; x++) {
                 int lo = x <= 64 ? -32 : 0;
                 int hi = x <= 64 ? 64 : 36;
@@ -105,8 +102,9 @@ final class NarcissusMeasuredTeleports {
         require(realRecords.size() == 1, "Fixture teleport did not produce exactly one real player record");
         realRecordSnapshot = realRecords.get(0).writeToNBT();
         Map<KeyValue<String, String>, SafeWorldCoordinate> homes = new LinkedHashMap<>();
-        for (int i = 0; i < HOMES; i++) homes.put(new KeyValue<>("minecraft:overworld", "Smoke home " + i),
-                new SafeWorldCoordinate(i + .5, Y, 8.5, Level.OVERWORLD));
+        for (int i = 0; i < HOMES; i++)
+            homes.put(new KeyValue<>("minecraft:overworld", "Smoke home " + i),
+                    new SafeWorldCoordinate(i + .5, Y, 8.5, Level.OVERWORLD));
         PlayerTeleportData.getData(realPlayer).setHomeCoordinate(homes);
         PlayerTeleportData.syncPlayerData(realPlayer);
         spawnActors();
@@ -123,8 +121,8 @@ final class NarcissusMeasuredTeleports {
             Class<?> type = Class.forName(FAKE_CLASS);
             Class<?> manager = Class.forName("com.advancedfakeplayers.manager.FakePlayerManager");
             require(type.getClassLoader() == manager.getClassLoader()
-                    && type.getProtectionDomain().getCodeSource().getLocation()
-                    .equals(manager.getProtectionDomain().getCodeSource().getLocation()),
+                            && type.getProtectionDomain().getCodeSource().getLocation()
+                            .equals(manager.getProtectionDomain().getCodeSource().getLocation()),
                     "Fake-player manager does not belong to the verified provider");
             Method spawn = manager.getMethod("spawnFakePlayer", MinecraftServer.class,
                     ServerLevel.class, com.mojang.authlib.GameProfile.class);
@@ -177,11 +175,14 @@ final class NarcissusMeasuredTeleports {
                 ServerPlayer actor = actors.get(i);
                 require(System.nanoTime() - submittedAt[i] < 10_000_000_000L, "Teleport timed out " + operation + " actor=" + i);
                 List<TeleportRecord> records = PlayerTeleportData.getData(actor).getTeleportRecords();
-                if (records.size() == recordsBefore[i]) { all = false; continue; }
+                if (records.size() == recordsBefore[i]) {
+                    all = false;
+                    continue;
+                }
                 require(records.size() == recordsBefore[i] + 1, "Unexpected teleport record count");
                 SafeWorldCoordinate target = targets[i];
                 require(actor.serverLevel().dimension().equals(target.dimension())
-                        && actor.distanceToSqr(target.x(), target.y(), target.z()) < 9.0,
+                                && actor.distanceToSqr(target.x(), target.y(), target.z()) < 9.0,
                         "Wrong landing for " + operation + " actor=" + i);
                 require(new SafeBlockChecker(actor.serverLevel(), actor).isSafeBlock(actor.blockPosition(), false), "Unsafe landing");
                 Entity pet = actor.serverLevel().getEntity(pets.get(i));
@@ -249,7 +250,9 @@ final class NarcissusMeasuredTeleports {
         }
     }
 
-    boolean complete() { return plan.current() == NarcissusTeleportSmokeWorkload.Step.COMPLETE; }
+    boolean complete() {
+        return plan.current() == NarcissusTeleportSmokeWorkload.Step.COMPLETE;
+    }
 
     void finish() {
         require(complete() && completedTeleports == PLAYER_COUNT * 3 * NarcissusTeleportSmokeWorkload.REQUIRED_CYCLES,
@@ -276,8 +279,12 @@ final class NarcissusMeasuredTeleports {
         try {
             Path path = checkpointPath();
             Files.createDirectories(path.getParent());
-            try (Writer writer = Files.newBufferedWriter(path, StandardCharsets.UTF_8)) { checkpoint.store(writer, "final measured cycle"); }
-        } catch (java.io.IOException error) { throw new IllegalStateException("Could not write checkpoint", error); }
+            try (Writer writer = Files.newBufferedWriter(path, StandardCharsets.UTF_8)) {
+                checkpoint.store(writer, "final measured cycle");
+            }
+        } catch (java.io.IOException error) {
+            throw new IllegalStateException("Could not write checkpoint", error);
+        }
         NarcissusNetworkSmokeStatus.append("PASS safe-random-teleport count=80");
         NarcissusNetworkSmokeStatus.append("PASS view-end-teleport count=80 min-distance=350");
         NarcissusNetworkSmokeStatus.append("PASS cross-dimension-follower-teleport count=80");
@@ -300,9 +307,11 @@ final class NarcissusMeasuredTeleports {
     static void verifyRestart(ServerPlayer player) {
         try {
             Properties p = new Properties();
-            try (Reader reader = Files.newBufferedReader(checkpointPath(), StandardCharsets.UTF_8)) { p.load(reader); }
+            try (Reader reader = Files.newBufferedReader(checkpointPath(), StandardCharsets.UTF_8)) {
+                p.load(reader);
+            }
             require("20".equals(p.getProperty("cycles")) && "240".equals(p.getProperty("teleports"))
-                    && "48".equals(p.getProperty("homes")) && player.getUUID().toString().equals(p.getProperty("realPlayer")),
+                            && "48".equals(p.getProperty("homes")) && player.getUUID().toString().equals(p.getProperty("realPlayer")),
                     "Checkpoint did not describe the final workload");
             Map<KeyValue<String, String>, SafeWorldCoordinate> homes = PlayerTeleportData.getData(player).getHomeCoordinate();
             require(homes.size() == HOMES, "Homes did not persist");
@@ -313,7 +322,7 @@ final class NarcissusMeasuredTeleports {
             }
             require(PlayerTeleportData.getData(player).getTeleportRecords().size() == 1, "Real player record did not persist");
             require(net.minecraft.nbt.TagParser.parseTag(p.getProperty("realRecord")).equals(
-                    PlayerTeleportData.getData(player).getTeleportRecords().get(0).writeToNBT()),
+                            PlayerTeleportData.getData(player).getTeleportRecords().get(0).writeToNBT()),
                     "Real player record content changed after restart");
             for (int i = 0; i < PLAYER_COUNT; i++) {
                 net.minecraft.nbt.CompoundTag data = xin.vanilla.banira.api.BaniraPlayerData.getOrCreate(

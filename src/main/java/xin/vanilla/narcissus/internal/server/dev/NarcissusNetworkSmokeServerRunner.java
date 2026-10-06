@@ -1,7 +1,7 @@
 package xin.vanilla.narcissus.internal.server.dev;
 
-import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.tick.ServerTickEvent;
 import xin.vanilla.banira.api.BaniraServer;
@@ -14,17 +14,19 @@ import xin.vanilla.narcissus.internal.dev.NarcissusNetworkSmokeStatus;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
-import java.nio.file.Files;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Map;
 import java.util.UUID;
-import java.util.function.Supplier;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Supplier;
 
-/** Dedicated smoke: real remote synchronization, sustained mod-created actors, restart verification. */
+/**
+ * Dedicated smoke: real remote synchronization, sustained mod-created actors, restart verification.
+ */
 public final class NarcissusNetworkSmokeServerRunner {
     private static boolean ready;
     private static boolean finished;
@@ -37,7 +39,8 @@ public final class NarcissusNetworkSmokeServerRunner {
     private static NarcissusNetworkSmokeNotifications notifications;
     private static boolean notificationsVerified;
 
-    private NarcissusNetworkSmokeServerRunner() { }
+    private NarcissusNetworkSmokeServerRunner() {
+    }
 
     public static void register() {
         if (NarcissusNetworkSmokeStatus.enabled()) {
@@ -56,7 +59,10 @@ public final class NarcissusNetworkSmokeServerRunner {
             if (sparkProfile != null && sparkProfile.writeWhenComplete()) {
                 NarcissusNetworkSmokeStatus.append("PASS spark-report-written");
             }
-            if (finished) { shutdownWhenSaved(server); return; }
+            if (finished) {
+                shutdownWhenSaved(server);
+                return;
+            }
             if (!ready) {
                 NarcissusMeasuredTeleports.verifyProvider();
                 ready = true;
@@ -64,7 +70,8 @@ public final class NarcissusNetworkSmokeServerRunner {
             }
             ServerPlayer player = server.getPlayerList().getPlayerByName("NetworkSmoke");
             if (player == null) return;
-            if (notifications == null) notifications = new NarcissusNetworkSmokeNotifications(NarcissusNetworkSmokeStatus.phase());
+            if (notifications == null)
+                notifications = new NarcissusNetworkSmokeNotifications(NarcissusNetworkSmokeStatus.phase());
             if (!notifications.sendWhenReady(player) || !waitForNotificationCheck()) return;
             PlayerTeleportData data = PlayerTeleportData.getData(player);
             if ("phase-two".equals(NarcissusNetworkSmokeStatus.phase())) {
@@ -79,9 +86,13 @@ public final class NarcissusNetworkSmokeServerRunner {
                 throw new IllegalStateException("Unknown smoke phase");
             }
             if (measured == null) {
-                if (data.getTeleportCountdownSeconds(EnumTeleportType.TP_HOME) != NarcissusNetworkSmokeFixture.COUNTDOWN) return;
-                try { NarcissusNetworkSmokeFixture.verifyAccess(data.getAccess()); }
-                catch (IllegalStateException awaitingEcho) { return; }
+                if (data.getTeleportCountdownSeconds(EnumTeleportType.TP_HOME) != NarcissusNetworkSmokeFixture.COUNTDOWN)
+                    return;
+                try {
+                    NarcissusNetworkSmokeFixture.verifyAccess(data.getAccess());
+                } catch (IllegalStateException awaitingEcho) {
+                    return;
+                }
                 measured = new NarcissusMeasuredTeleports(player);
                 fixtureReadyAt = System.nanoTime() + TimeUnit.SECONDS.toNanos(1);
                 return;
@@ -95,7 +106,8 @@ public final class NarcissusNetworkSmokeServerRunner {
             }
             if (!measured.complete()) {
                 measured.tick(sparkProfile::active);
-                if (!sparkProfile.active()) throw new IllegalStateException("Workload exceeded the active sampling window");
+                if (!sparkProfile.active())
+                    throw new IllegalStateException("Workload exceeded the active sampling window");
                 return;
             }
             if (!sparkProfile.written()) return;
@@ -151,14 +163,19 @@ public final class NarcissusNetworkSmokeServerRunner {
     }
 
     private static void shutdownWhenSaved(MinecraftServer server) {
-        if (server.getPlayerList().getPlayerCount() > 0) { shutdownTicks = 0; return; }
+        if (server.getPlayerList().getPlayerCount() > 0) {
+            shutdownTicks = 0;
+            return;
+        }
         if (++shutdownTicks >= 40) {
             NarcissusNetworkSmokeStatus.append("PASS server-shutdown");
             server.halt(false);
         }
     }
 
-    /** Uses the NeoForge 1.21.1 Spark ExportProps API. */
+    /**
+     * Uses the NeoForge 1.21.1 Spark ExportProps API.
+     */
     @SuppressWarnings({"rawtypes", "unchecked"})
     private static final class ReflectiveSparkProfile {
         private final Object sampler;
@@ -214,7 +231,9 @@ public final class NarcissusNetworkSmokeServerRunner {
             }
         }
 
-        private boolean active() { return !future.isDone() && !written; }
+        private boolean active() {
+            return !future.isDone() && !written;
+        }
 
         private boolean written() {
             return written;
@@ -249,7 +268,8 @@ public final class NarcissusNetworkSmokeServerRunner {
             } catch (InterruptedException error) {
                 Thread.currentThread().interrupt();
                 throw new IllegalStateException("Interrupted while exporting sampler", error);
-            } catch (ReflectiveOperationException | java.io.IOException | java.util.concurrent.ExecutionException error) {
+            } catch (ReflectiveOperationException | java.io.IOException |
+                     java.util.concurrent.ExecutionException error) {
                 throw new IllegalStateException("Unable to write Spark report", error);
             }
         }

@@ -1,27 +1,38 @@
 package xin.vanilla.narcissus.config;
 
-import org.junit.*;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
 import xin.vanilla.narcissus.api.cost.CostParameters;
 import xin.vanilla.narcissus.config.migration.CostConfigMigration;
 import xin.vanilla.narcissus.data.cost.CostConfiguration;
-import xin.vanilla.narcissus.enums.*;
+import xin.vanilla.narcissus.enums.EnumCardType;
+import xin.vanilla.narcissus.enums.EnumCostType;
+import xin.vanilla.narcissus.enums.EnumTeleportType;
 
 import static org.junit.Assert.*;
 
 public class CommonCostConfigurationTest {
     private Object previousPlatform;
-    @Before public void rememberPlatform() throws Exception {
+
+    @Before
+    public void rememberPlatform() throws Exception {
         java.lang.reflect.Field field = xin.vanilla.banira.platform.BaniraPlatforms.class.getDeclaredField("platform");
         field.setAccessible(true);
         previousPlatform = field.get(null);
     }
-    @After public void restorePlatform() throws Exception {
+
+    @After
+    public void restorePlatform() throws Exception {
         java.lang.reflect.Field field = xin.vanilla.banira.platform.BaniraPlatforms.class.getDeclaredField("platform");
         field.setAccessible(true);
         field.set(null, previousPlatform);
     }
-    @Test public void allSixteenGroupsRemainIndependentInGeneratedViews() throws Exception {
-        net.minecraft.SharedConstants.tryDetectVersion(); net.minecraft.server.Bootstrap.bootStrap();
+
+    @Test
+    public void allSixteenGroupsRemainIndependentInGeneratedViews() throws Exception {
+        net.minecraft.SharedConstants.tryDetectVersion();
+        net.minecraft.server.Bootstrap.bootStrap();
         ConfigBaselineFixture fixture = new ConfigBaselineFixture(CommonConfig.class);
         fixture.bind(CommonConfig.class);
         CommonCostConfiguration live = new CommonCostConfiguration(fixture.holder);
@@ -41,18 +52,23 @@ public class CommonCostConfigurationTest {
         assertEquals(0, fixture.saves);
     }
 
-    @Test public void selectedGroupDoesNotReadAnInvalidUnrelatedGroup() throws Exception {
+    @Test
+    public void selectedGroupDoesNotReadAnInvalidUnrelatedGroup() throws Exception {
         ConfigBaselineFixture fixture = new ConfigBaselineFixture(CommonConfig.class);
         fixture.bind(CommonConfig.class);
         fixture.holder.set("cost.home.fixedAmount", 3D);
         fixture.values.put("cost.stage.fixedAmount", Double.NaN);
         CommonCostConfiguration live = new CommonCostConfiguration(fixture.holder);
         assertEquals(3, live.selection(EnumTeleportType.TP_HOME).parameters(EnumTeleportType.TP_HOME).fixedAmount(), 0);
-        try { live.snapshot(); fail("Invalid cold snapshot accepted"); }
-        catch (IllegalArgumentException expected) { }
+        try {
+            live.snapshot();
+            fail("Invalid cold snapshot accepted");
+        } catch (IllegalArgumentException expected) {
+        }
     }
 
-    @Test public void unchangedSelectionReusesItsImmutableSnapshot() throws Exception {
+    @Test
+    public void unchangedSelectionReusesItsImmutableSnapshot() throws Exception {
         ConfigBaselineFixture fixture = new ConfigBaselineFixture(CommonConfig.class);
         fixture.bind(CommonConfig.class);
         fixture.holder.set("cost.home.type", EnumCostType.EXP_POINT);
@@ -62,7 +78,8 @@ public class CommonCostConfigurationTest {
         assertEquals(0, fixture.saves);
     }
 
-    @Test public void everyUnsavedDependencyInvalidatesTheCachedSelection() throws Exception {
+    @Test
+    public void everyUnsavedDependencyInvalidatesTheCachedSelection() throws Exception {
         ConfigBaselineFixture fixture = new ConfigBaselineFixture(CommonConfig.class);
         fixture.bind(CommonConfig.class);
         fixture.holder.set("cost.home.type", EnumCostType.EXP_POINT);
@@ -93,7 +110,8 @@ public class CommonCostConfigurationTest {
         assertEquals(0, fixture.saves);
     }
 
-    @Test public void freeSnapshotIgnoresBrokenUnrelatedCardsAndDistance() throws Exception {
+    @Test
+    public void freeSnapshotIgnoresBrokenUnrelatedCardsAndDistance() throws Exception {
         ConfigBaselineFixture fixture = new ConfigBaselineFixture(CommonConfig.class);
         fixture.bind(CommonConfig.class);
         CommonCostConfiguration live = new CommonCostConfiguration(fixture.holder);
@@ -103,26 +121,37 @@ public class CommonCostConfigurationTest {
         fixture.values.put("cost.stage.fixedAmount", Double.NaN);
         assertSame(free, live.selection(EnumTeleportType.TP_HOME));
         fixture.holder.set("cost.home.type", EnumCostType.EXP_POINT);
-        try { live.selection(EnumTeleportType.TP_HOME); fail("Charged selection accepted invalid dependencies"); }
-        catch (IllegalArgumentException expected) { }
+        try {
+            live.selection(EnumTeleportType.TP_HOME);
+            fail("Charged selection accepted invalid dependencies");
+        } catch (IllegalArgumentException expected) {
+        }
     }
 
-    @Test public void reboundHolderCannotUseAnOldCachedSnapshotOrLock() throws Exception {
+    @Test
+    public void reboundHolderCannotUseAnOldCachedSnapshotOrLock() throws Exception {
         ConfigBaselineFixture first = new ConfigBaselineFixture(CommonConfig.class);
         first.bind(CommonConfig.class);
         CommonCostConfiguration live = new CommonCostConfiguration(first.holder);
         live.selection(EnumTeleportType.TP_HOME);
         ConfigBaselineFixture second = new ConfigBaselineFixture(CommonConfig.class);
         second.bind(CommonConfig.class);
-        try { live.selection(EnumTeleportType.TP_HOME); fail("Rebound holder was accepted by old runtime"); }
-        catch (IllegalStateException expected) { }
-        try { live.snapshot(); fail("Rebound holder was accepted by old publication"); }
-        catch (IllegalStateException expected) { }
+        try {
+            live.selection(EnumTeleportType.TP_HOME);
+            fail("Rebound holder was accepted by old runtime");
+        } catch (IllegalStateException expected) {
+        }
+        try {
+            live.snapshot();
+            fail("Rebound holder was accepted by old publication");
+        } catch (IllegalStateException expected) {
+        }
         assertEquals(0, new CommonCostConfiguration(second.holder).selection(EnumTeleportType.TP_HOME)
                 .parameters(EnumTeleportType.TP_HOME).fixedAmount(), 0);
     }
 
-    @Test public void enumNamesInTheBackendMatchWithoutRebuildingAndBadNumbersFailClosed() throws Exception {
+    @Test
+    public void enumNamesInTheBackendMatchWithoutRebuildingAndBadNumbersFailClosed() throws Exception {
         ConfigBaselineFixture fixture = new ConfigBaselineFixture(CommonConfig.class);
         fixture.bind(CommonConfig.class);
         fixture.holder.set("cost.home.type", EnumCostType.EXP_POINT);
@@ -132,8 +161,11 @@ public class CommonCostConfigurationTest {
         fixture.values.put("cost.cards.mode", "WAIVE_COST");
         assertSame(first, live.selection(EnumTeleportType.TP_HOME));
         fixture.values.put("cost.home.fixedAmount", Double.NaN);
-        try { live.selection(EnumTeleportType.TP_HOME); fail("Cached selection hid invalid live amount"); }
-        catch (IllegalArgumentException expected) { }
+        try {
+            live.selection(EnumTeleportType.TP_HOME);
+            fail("Cached selection hid invalid live amount");
+        } catch (IllegalArgumentException expected) {
+        }
         fixture.values.put("cost.home.fixedAmount", 0D);
         assertSame(first, live.selection(EnumTeleportType.TP_HOME));
     }

@@ -17,9 +17,11 @@ import java.util.stream.Stream;
 import static org.junit.Assert.*;
 
 public class CostRegistrationMigrationTest {
-    @Rule public TemporaryFolder temporary = new TemporaryFolder();
+    @Rule
+    public TemporaryFolder temporary = new TemporaryFolder();
 
-    @Test public void firstStartDoesNotCreateACommonFileOrMigrationBackup() throws Exception {
+    @Test
+    public void firstStartDoesNotCreateACommonFileOrMigrationBackup() throws Exception {
         Path parent = temporary.newFolder().toPath(), common = parent.resolve("common.toml"), root = parent.resolve("mod");
         CostConfiguration result = new NeoForgeCostMigrationFile().migrateBeforeRegistration(common, root);
         assertEquals(EnumCostType.NONE, result.parameters(EnumTeleportType.TP_HOME).type());
@@ -27,9 +29,11 @@ public class CostRegistrationMigrationTest {
         assertFalse(Files.exists(root));
     }
 
-    @Test public void realJavaPreflightCompletesBeforeLegacyConfigIsReplaced() throws Exception {
+    @Test
+    public void realJavaPreflightCompletesBeforeLegacyConfigIsReplaced() throws Exception {
         Path common = writeCommon(legacy("max(num, sqrt(distance) * rate)"));
-        byte[] original = Files.readAllBytes(common); Path root = common.getParent().resolve("mod");
+        byte[] original = Files.readAllBytes(common);
+        Path root = common.getParent().resolve("mod");
         CostConfiguration result = new NeoForgeCostMigrationFile().migrateBeforeRegistration(common, root);
         assertEquals("LegacyHomeCost.java", result.parameters(EnumTeleportType.TP_HOME).customFile());
         assertEquals("HEALTH", new TomlParser().parse(read(common)).get("cost.home.type"));
@@ -45,7 +49,8 @@ public class CostRegistrationMigrationTest {
         }
     }
 
-    @Test public void uncompiledActiveCustomSourceCannotEraseTheOriginalConfiguration() throws Exception {
+    @Test
+    public void uncompiledActiveCustomSourceCannotEraseTheOriginalConfiguration() throws Exception {
         Path common = writeCommon(legacy("max(num, sqrt(distance) * rate)"));
         Path root = common.getParent().resolve("mod"), source = root.resolve("cost/sources/helpers/Broken.java");
         write(source, "package xin.vanilla.banira.generated.cost.helpers; public class Broken { invalid Java }");
@@ -55,7 +60,8 @@ public class CostRegistrationMigrationTest {
         assertFalse(Files.exists(root.resolve("cost/migration.json")));
     }
 
-    @Test public void disabledInvalidFormulaIsPreservedWithoutBeingCompiled() throws Exception {
+    @Test
+    public void disabledInvalidFormulaIsPreservedWithoutBeingCompiled() throws Exception {
         Path common = writeCommon(legacy("unknown + '05'").replace("'HEALTH'", "'NONE'"));
         Path root = common.getParent().resolve("mod");
         CostConfiguration result = new NeoForgeCostMigrationFile().migrateBeforeRegistration(common, root);
@@ -64,7 +70,8 @@ public class CostRegistrationMigrationTest {
                 xin.vanilla.banira.common.util.JsonUtils.GSON.toJson("unknown + '05'")));
     }
 
-    @Test public void startupPreflightNeverExecutesUserStaticInitializersOrConstructors() throws Exception {
+    @Test
+    public void startupPreflightNeverExecutesUserStaticInitializersOrConstructors() throws Exception {
         Path common = writeCommon("[cost.home]\ntype='HEALTH'\n[cost.home.custom]\nfile='Cold.java'\n");
         Path root = common.getParent().resolve("mod");
         write(root.resolve("cost/sources/Cold.java"), "package xin.vanilla.banira.generated.cost; "
@@ -77,13 +84,19 @@ public class CostRegistrationMigrationTest {
         assertArrayEquals(original, Files.readAllBytes(common));
     }
 
-    @Test public void helperEditedAfterPreflightCannotPublishTheMigratedConfig() throws Exception {
+    @Test
+    public void helperEditedAfterPreflightCannotPublishTheMigratedConfig() throws Exception {
         Path common = writeCommon(legacy("max(num, sqrt(distance) * rate)"));
         Path root = common.getParent().resolve("mod"), helper = root.resolve("cost/sources/helpers/Helper.java");
-        write(helper, helperSource(1)); byte[] original = Files.readAllBytes(common);
+        write(helper, helperSource(1));
+        byte[] original = Files.readAllBytes(common);
         NeoForgeCostMigrationFile migration = new NeoForgeCostMigrationFile(point -> {
             if (point == NeoForgeCostMigrationFile.Checkpoint.AFTER_SOURCES) {
-                try { write(helper, helperSource(2)); } catch (IOException error) { throw new java.io.UncheckedIOException(error); }
+                try {
+                    write(helper, helperSource(2));
+                } catch (IOException error) {
+                    throw new java.io.UncheckedIOException(error);
+                }
             }
         });
         rejected(() -> migration.migrateBeforeRegistration(common, root));
@@ -91,15 +104,22 @@ public class CostRegistrationMigrationTest {
         assertEquals(helperSource(2), read(helper));
     }
 
-    @Test public void interruptedMigrationIsRecompiledBeforeRecoveryCanReplaceConfig() throws Exception {
+    @Test
+    public void interruptedMigrationIsRecompiledBeforeRecoveryCanReplaceConfig() throws Exception {
         Path common = writeCommon(legacy("max(num, sqrt(distance) * rate)"));
         Path root = common.getParent().resolve("mod"), helper = root.resolve("cost/sources/helpers/Helper.java");
-        write(helper, helperSource(1)); byte[] original = Files.readAllBytes(common);
+        write(helper, helperSource(1));
+        byte[] original = Files.readAllBytes(common);
         NeoForgeCostMigrationFile interrupted = new NeoForgeCostMigrationFile(point -> {
-            if (point == NeoForgeCostMigrationFile.Checkpoint.AFTER_SOURCES) throw new IllegalStateException("interrupted");
+            if (point == NeoForgeCostMigrationFile.Checkpoint.AFTER_SOURCES)
+                throw new IllegalStateException("interrupted");
         });
-        try { interrupted.migrateBeforeRegistration(common, root); fail("No interruption"); }
-        catch (IllegalStateException expected) { assertEquals("interrupted", expected.getMessage()); }
+        try {
+            interrupted.migrateBeforeRegistration(common, root);
+            fail("No interruption");
+        } catch (IllegalStateException expected) {
+            assertEquals("interrupted", expected.getMessage());
+        }
         write(helper, "broken helper");
         rejected(() -> new NeoForgeCostMigrationFile().migrateBeforeRegistration(common, root));
         assertArrayEquals(original, Files.readAllBytes(common));
@@ -108,14 +128,16 @@ public class CostRegistrationMigrationTest {
         assertEquals("HEALTH", new TomlParser().parse(read(common)).get("cost.home.type"));
     }
 
-    @Test public void missingEnabledSourceDoesNotAuthorizeForgeDefaultCorrection() throws Exception {
+    @Test
+    public void missingEnabledSourceDoesNotAuthorizeForgeDefaultCorrection() throws Exception {
         Path common = writeCommon("[cost.home]\ntype='HEALTH'\n[cost.home.custom]\nfile='Missing.java'\n");
         byte[] original = Files.readAllBytes(common);
         rejected(() -> new NeoForgeCostMigrationFile().migrateBeforeRegistration(common, common.getParent().resolve("mod")));
         assertArrayEquals(original, Files.readAllBytes(common));
     }
 
-    @Test public void lowLevelCommitCannotBypassAnInvalidActiveCustomSource() throws Exception {
+    @Test
+    public void lowLevelCommitCannotBypassAnInvalidActiveCustomSource() throws Exception {
         Path common = writeCommon("[cost.stage]\ntype='EXP_POINT'\n[cost.stage.custom]\nfile='Broken.java'\n");
         Path root = common.getParent().resolve("mod");
         write(root.resolve("cost/sources/Broken.java"), "broken Java");
@@ -126,42 +148,66 @@ public class CostRegistrationMigrationTest {
         assertArrayEquals(original, Files.readAllBytes(common));
     }
 
-    @Test public void lowLevelRecoveryCannotBypassAChangedBrokenHelper() throws Exception {
+    @Test
+    public void lowLevelRecoveryCannotBypassAChangedBrokenHelper() throws Exception {
         Path common = writeCommon(legacy("max(num, sqrt(distance) * rate)"));
         Path root = common.getParent().resolve("mod"), helper = root.resolve("cost/sources/helpers/Helper.java");
-        write(helper, helperSource(1)); byte[] original = Files.readAllBytes(common);
+        write(helper, helperSource(1));
+        byte[] original = Files.readAllBytes(common);
         NeoForgeCostMigrationFile interrupted = new NeoForgeCostMigrationFile(point -> {
-            if (point == NeoForgeCostMigrationFile.Checkpoint.AFTER_SOURCES) throw new IllegalStateException("interrupted");
+            if (point == NeoForgeCostMigrationFile.Checkpoint.AFTER_SOURCES)
+                throw new IllegalStateException("interrupted");
         });
-        try { interrupted.migrateBeforeRegistration(common, root); fail("No interruption"); }
-        catch (IllegalStateException expected) { }
+        try {
+            interrupted.migrateBeforeRegistration(common, root);
+            fail("No interruption");
+        } catch (IllegalStateException expected) {
+        }
         write(helper, "broken helper");
         rejected(() -> new NeoForgeCostMigrationFile().recover(common, root));
         assertArrayEquals(original, Files.readAllBytes(common));
     }
 
     private Path writeCommon(String contents) throws IOException {
-        Path common = temporary.newFolder().toPath().resolve("common.toml"); write(common, contents); return common;
+        Path common = temporary.newFolder().toPath().resolve("common.toml");
+        write(common, contents);
+        return common;
     }
+
     private static String legacy(String expression) {
         return "[cost.tpHome]\ncostTpHomeType='HEALTH'\ncostTpHomeNum=4\ncostTpHomeRate=0.01\n"
                 + "costTpHomeNumUpper=20\ncostTpHomeNumLower=0\ncostTpHomeConf=''\ncostTpHomeExp=\"" + expression
                 + "\"\n[integration]\nmarker='untouched'\n";
     }
+
     private static String helperSource(int number) {
         return "package xin.vanilla.banira.generated.cost.helpers; public class Helper { public static final int VALUE=" + number + "; }";
     }
+
     private static void write(Path path, String text) throws IOException {
-        Files.createDirectories(path.getParent()); Files.write(path, text.getBytes(StandardCharsets.UTF_8));
+        Files.createDirectories(path.getParent());
+        Files.write(path, text.getBytes(StandardCharsets.UTF_8));
     }
-    private static String read(Path path) throws IOException { return new String(Files.readAllBytes(path), StandardCharsets.UTF_8); }
+
+    private static String read(Path path) throws IOException {
+        return new String(Files.readAllBytes(path), StandardCharsets.UTF_8);
+    }
+
     private static Path backup(Path root, String name) throws IOException {
         try (Stream<Path> files = Files.walk(root.resolve("backups"))) {
             return files.filter(p -> p.getFileName().toString().equals(name)).findFirst().orElseThrow(() -> new IOException("No backup"));
         }
     }
+
     private static void rejected(Checked operation) throws Exception {
-        try { operation.run(); fail("Expected migration rejection"); } catch (IOException expected) { }
+        try {
+            operation.run();
+            fail("Expected migration rejection");
+        } catch (IOException expected) {
+        }
     }
-    private interface Checked { void run() throws Exception; }
+
+    private interface Checked {
+        void run() throws Exception;
+    }
 }

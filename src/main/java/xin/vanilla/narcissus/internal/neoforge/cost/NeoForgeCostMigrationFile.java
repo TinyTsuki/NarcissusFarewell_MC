@@ -1,35 +1,54 @@
 package xin.vanilla.narcissus.internal.neoforge.cost;
 
-import com.electronwill.nightconfig.core.*;
-import com.electronwill.nightconfig.toml.*;
-import com.google.gson.*;
+import com.electronwill.nightconfig.core.CommentedConfig;
+import com.electronwill.nightconfig.core.UnmodifiableConfig;
+import com.electronwill.nightconfig.toml.TomlParser;
+import com.electronwill.nightconfig.toml.TomlWriter;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 import xin.vanilla.banira.common.util.JsonUtils;
-import xin.vanilla.narcissus.config.migration.*;
+import xin.vanilla.narcissus.config.migration.CostConfigMigration;
+import xin.vanilla.narcissus.config.migration.CostMigrationPlan;
 import xin.vanilla.narcissus.data.cost.CostConfiguration;
 import xin.vanilla.narcissus.internal.server.NarcissusCostRuntime;
 
-import java.io.*;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
-import java.nio.charset.*;
+import java.nio.charset.CodingErrorAction;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
-import java.security.*;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.*;
 import java.util.function.Consumer;
 
-/** Cold startup transaction, called before Forge registers/corrects the new schema. */
+/**
+ * Cold startup transaction, called before Forge registers/corrects the new schema.
+ */
 public final class NeoForgeCostMigrationFile {
     private static final int MAX_CONFIG = 8 * 1024 * 1024, MAX_SOURCE = 256 * 1024, MAX_METADATA = 1024 * 1024;
     private static final String JOURNAL = "cost/migration.json";
-    public enum Checkpoint { AFTER_BACKUP, AFTER_PREPARED, AFTER_SOURCES, AFTER_CONFIG }
+
+    public enum Checkpoint {AFTER_BACKUP, AFTER_PREPARED, AFTER_SOURCES, AFTER_CONFIG}
+
     private final Consumer<Checkpoint> checkpoint;
     private Pending pending;
 
-    public NeoForgeCostMigrationFile() { this(ignored -> { }); }
-    NeoForgeCostMigrationFile(Consumer<Checkpoint> checkpoint) { this.checkpoint = Objects.requireNonNull(checkpoint); }
+    public NeoForgeCostMigrationFile() {
+        this(ignored -> {
+        });
+    }
 
-    /** Complete before registering COMMON; failures must prevent Forge from correcting the old file. */
+    NeoForgeCostMigrationFile(Consumer<Checkpoint> checkpoint) {
+        this.checkpoint = Objects.requireNonNull(checkpoint);
+    }
+
+    /**
+     * Complete before registering COMMON; failures must prevent Forge from correcting the old file.
+     */
     public synchronized CostConfiguration migrateBeforeRegistration(Path commonFile, Path modRoot) throws IOException {
         Path common = absolute(commonFile), root = absolute(modRoot);
         recover(common, root);
@@ -51,7 +70,9 @@ public final class NeoForgeCostMigrationFile {
         try {
             plan = CostConfigMigration.plan(plain(new TomlParser().parse(utf8(original))));
             candidate = new TomlWriter().writeToString(config(plan.configurationValues())).getBytes(StandardCharsets.UTF_8);
-        } catch (RuntimeException error) { throw new IOException("Invalid cost configuration: " + error.getMessage(), error); }
+        } catch (RuntimeException error) {
+            throw new IOException("Invalid cost configuration: " + error.getMessage(), error);
+        }
         if (candidate.length > MAX_CONFIG) throw new IOException("Migrated configuration exceeds size limit");
         if (!plan.migrationRequired()) {
             pending = new Pending(plan, common, root, original, null);
@@ -59,16 +80,20 @@ public final class NeoForgeCostMigrationFile {
         }
         for (Map.Entry<String, String> source : plan.sources().entrySet()) {
             byte[] bytes = source.getValue().getBytes(StandardCharsets.UTF_8);
-            if (bytes.length > MAX_SOURCE) throw new IOException("Migrated source exceeds size limit: " + source.getKey());
+            if (bytes.length > MAX_SOURCE)
+                throw new IOException("Migrated source exceeds size limit: " + source.getKey());
             verifyCompatible(local(root, "cost/sources/" + source.getKey()), bytes, MAX_SOURCE);
         }
         String backup = "backups/cost-migration/" + UUID.randomUUID();
         writeNew(local(root, backup + "/original.toml"), original);
         writeNew(local(root, backup + "/candidate.toml"), candidate);
         JsonObject journal = new JsonObject(), files = new JsonObject();
-        journal.addProperty("version", 1); journal.addProperty("state", "PREPARED");
-        journal.addProperty("commonFile", common.toString()); journal.addProperty("backup", backup);
-        journal.addProperty("originalHash", hash(original)); journal.addProperty("candidateHash", hash(candidate));
+        journal.addProperty("version", 1);
+        journal.addProperty("state", "PREPARED");
+        journal.addProperty("commonFile", common.toString());
+        journal.addProperty("backup", backup);
+        journal.addProperty("originalHash", hash(original));
+        journal.addProperty("candidateHash", hash(candidate));
         for (Map.Entry<String, String> source : plan.sources().entrySet()) {
             byte[] bytes = source.getValue().getBytes(StandardCharsets.UTF_8);
             writeNew(local(root, backup + "/sources/" + source.getKey()), bytes);
@@ -84,7 +109,8 @@ public final class NeoForgeCostMigrationFile {
 
     public synchronized void commit(CostMigrationPlan plan) throws IOException {
         Pending candidate = pending;
-        if (candidate == null || candidate.plan != plan) throw new IllegalStateException("Foreign or consumed cost migration plan");
+        if (candidate == null || candidate.plan != plan)
+            throw new IllegalStateException("Foreign or consumed cost migration plan");
         NarcissusCostRuntime.SourceValidation validation = NarcissusCostRuntime.preflight(
                 plan.configuration(), local(candidate.root, "cost/sources"), plan.sources());
         commit(plan, validation::verify);
@@ -92,10 +118,15 @@ public final class NeoForgeCostMigrationFile {
 
     private void commit(CostMigrationPlan plan, SourceCheck validation) throws IOException {
         Pending candidate = pending;
-        if (candidate == null || candidate.plan != plan) throw new IllegalStateException("Foreign or consumed cost migration plan");
+        if (candidate == null || candidate.plan != plan)
+            throw new IllegalStateException("Foreign or consumed cost migration plan");
         pending = null;
-        if (!Arrays.equals(candidate.original, read(candidate.common, MAX_CONFIG))) throw new IOException("Common configuration changed during migration");
-        if (!plan.migrationRequired()) { validation.verify(); return; }
+        if (!Arrays.equals(candidate.original, read(candidate.common, MAX_CONFIG)))
+            throw new IOException("Common configuration changed during migration");
+        if (!plan.migrationRequired()) {
+            validation.verify();
+            return;
+        }
         verifyEvidence(candidate.root, candidate.journal);
         verifySources(candidate.root, candidate.journal, false);
         Path journal = local(candidate.root, JOURNAL);
@@ -131,8 +162,9 @@ public final class NeoForgeCostMigrationFile {
         try {
             candidate = CostConfigMigration.plan(plain(new TomlParser().parse(
                     utf8(read(local(root, backup + "/candidate.toml"), MAX_CONFIG)))));
+        } catch (RuntimeException error) {
+            throw new IOException("Invalid migration recovery candidate", error);
         }
-        catch (RuntimeException error) { throw new IOException("Invalid migration recovery candidate", error); }
         Map<String, String> overlays = new LinkedHashMap<>();
         for (Map.Entry<String, JsonElement> source : metadata.getAsJsonObject("sources").entrySet()) {
             String file = source.getKey();
@@ -166,12 +198,15 @@ public final class NeoForgeCostMigrationFile {
         Path journal = local(root, JOURNAL);
         byte[] previous = read(journal, MAX_METADATA);
         JsonObject expected = metadata(previous, common);
-        if (!expected.get("backup").equals(metadata.get("backup"))) throw new IOException("Cost migration journal changed");
+        if (!expected.get("backup").equals(metadata.get("backup")))
+            throw new IOException("Cost migration journal changed");
         metadata.addProperty("state", "COMMITTED");
         replace(journal, previous, json(metadata), MAX_METADATA);
     }
 
-    private interface SourceCheck { void verify() throws IOException; }
+    private interface SourceCheck {
+        void verify() throws IOException;
+    }
 
     private static void verifyEvidence(Path root, JsonObject metadata) throws IOException {
         String backup = metadata.get("backup").getAsString();
@@ -207,37 +242,49 @@ public final class NeoForgeCostMigrationFile {
         try {
             JsonObject object = JsonUtils.GSON.fromJson(utf8(bytes), JsonObject.class);
             if (object == null || object.get("version").getAsInt() != 1 || !object.get("commonFile").getAsString().equals(common.toString())
-                    || !Arrays.asList("PREPARED", "COMMITTED").contains(object.get("state").getAsString())) throw new IllegalArgumentException();
+                    || !Arrays.asList("PREPARED", "COMMITTED").contains(object.get("state").getAsString()))
+                throw new IllegalArgumentException();
             String backup = object.get("backup").getAsString(), prefix = "backups/cost-migration/";
             if (!backup.startsWith(prefix) || !UUID.fromString(backup.substring(prefix.length())).toString().equals(backup.substring(prefix.length()))) {
                 throw new IllegalArgumentException();
             }
-            checksum(object.get("originalHash").getAsString()); checksum(object.get("candidateHash").getAsString());
+            checksum(object.get("originalHash").getAsString());
+            checksum(object.get("candidateHash").getAsString());
             if (object.getAsJsonObject("sources").size() > 16) throw new IllegalArgumentException();
             for (Map.Entry<String, JsonElement> source : object.getAsJsonObject("sources").entrySet()) {
                 if (!source.getKey().endsWith(".java") || source.getKey().contains("/") || source.getKey().contains("\\")
-                        || source.getKey().contains(":") || source.getKey().equals(".java")) throw new IllegalArgumentException();
+                        || source.getKey().contains(":") || source.getKey().equals(".java"))
+                    throw new IllegalArgumentException();
                 checksum(source.getValue().getAsString());
             }
             return object;
-        } catch (RuntimeException error) { throw new IOException("Invalid cost migration journal", error); }
+        } catch (RuntimeException error) {
+            throw new IOException("Invalid cost migration journal", error);
+        }
     }
 
     private static void checksum(String value) {
         if (value.length() != 64) throw new IllegalArgumentException();
-        for (char c : value.toCharArray()) if (!(c >= '0' && c <= '9' || c >= 'a' && c <= 'f')) throw new IllegalArgumentException();
+        for (char c : value.toCharArray())
+            if (!(c >= '0' && c <= '9' || c >= 'a' && c <= 'f')) throw new IllegalArgumentException();
     }
 
     private static Path absolute(Path path) throws IOException {
-        Path result = path.toAbsolutePath().normalize(); checkAncestors(result); return result;
+        Path result = path.toAbsolutePath().normalize();
+        checkAncestors(result);
+        return result;
     }
 
     private static Path local(Path root, String relative) throws IOException {
-        if (relative.isEmpty() || relative.startsWith("/") || relative.contains("\\") || relative.contains(":")) throw new IOException("Invalid cost file path");
-        for (String part : relative.split("/", -1)) if (part.isEmpty() || part.equals(".") || part.equals("..")) throw new IOException("Invalid cost file path");
+        if (relative.isEmpty() || relative.startsWith("/") || relative.contains("\\") || relative.contains(":"))
+            throw new IOException("Invalid cost file path");
+        for (String part : relative.split("/", -1))
+            if (part.isEmpty() || part.equals(".") || part.equals(".."))
+                throw new IOException("Invalid cost file path");
         Path result = root.resolve(relative).normalize();
         if (!result.startsWith(root)) throw new IOException("Cost path leaves mod directory");
-        checkAncestors(result); return result;
+        checkAncestors(result);
+        return result;
     }
 
     private static void checkAncestors(Path path) throws IOException {
@@ -257,80 +304,132 @@ public final class NeoForgeCostMigrationFile {
         if (!Files.isRegularFile(file, LinkOption.NOFOLLOW_LINKS)) throw new IOException("Missing cost file: " + file);
         try (FileChannel channel = FileChannel.open(file, StandardOpenOption.READ, LinkOption.NOFOLLOW_LINKS)) {
             if (channel.size() > limit) throw new IOException("Cost file exceeds size limit: " + file);
-            ByteArrayOutputStream bytes = new ByteArrayOutputStream(); ByteBuffer buffer = ByteBuffer.allocate(8192);
+            ByteArrayOutputStream bytes = new ByteArrayOutputStream();
+            ByteBuffer buffer = ByteBuffer.allocate(8192);
             while (channel.read(buffer) != -1) {
-                buffer.flip(); if (bytes.size() + buffer.remaining() > limit) throw new IOException("Cost file grew beyond limit");
-                bytes.write(buffer.array(), 0, buffer.remaining()); buffer.clear();
+                buffer.flip();
+                if (bytes.size() + buffer.remaining() > limit) throw new IOException("Cost file grew beyond limit");
+                bytes.write(buffer.array(), 0, buffer.remaining());
+                buffer.clear();
             }
             return bytes.toByteArray();
         }
     }
+
     private static byte[] optional(Path file, int limit) throws IOException {
         checkAncestors(file);
         return Files.exists(file, LinkOption.NOFOLLOW_LINKS) ? read(file, limit) : null;
     }
+
     private static void verifyCompatible(Path target, byte[] bytes, int limit) throws IOException {
         byte[] current = optional(target, limit);
-        if (current != null && !Arrays.equals(current, bytes)) throw new IOException("Existing cost file differs: " + target);
+        if (current != null && !Arrays.equals(current, bytes))
+            throw new IOException("Existing cost file differs: " + target);
     }
+
     private static void writeNew(Path file, byte[] bytes) throws IOException {
         byte[] current = optional(file, MAX_CONFIG);
-        if (current != null) { verifyCompatible(file, bytes, MAX_CONFIG); return; }
+        if (current != null) {
+            verifyCompatible(file, bytes, MAX_CONFIG);
+            return;
+        }
         write(file, null, bytes, false, MAX_CONFIG);
     }
-    private static void replace(Path file, byte[] expected, byte[] bytes, int limit) throws IOException { write(file, expected, bytes, true, limit); }
+
+    private static void replace(Path file, byte[] expected, byte[] bytes, int limit) throws IOException {
+        write(file, expected, bytes, true, limit);
+    }
+
     private static void write(Path file, byte[] expected, byte[] bytes, boolean replace, int limit) throws IOException {
         if (bytes.length > limit) throw new IOException("Cost write exceeds size limit");
-        checkAncestors(file); Files.createDirectories(file.getParent()); checkAncestors(file);
+        checkAncestors(file);
+        Files.createDirectories(file.getParent());
+        checkAncestors(file);
         Path temporary = Files.createTempFile(file.getParent(), ".cost-", ".tmp");
         try {
             try (FileChannel channel = FileChannel.open(temporary, StandardOpenOption.WRITE, LinkOption.NOFOLLOW_LINKS)) {
-                ByteBuffer buffer = ByteBuffer.wrap(bytes); while (buffer.hasRemaining()) channel.write(buffer); channel.force(true);
+                ByteBuffer buffer = ByteBuffer.wrap(bytes);
+                while (buffer.hasRemaining()) channel.write(buffer);
+                channel.force(true);
             }
-            if (!Arrays.equals(expected, optional(file, limit))) throw new IOException("Cost file changed before write: " + file);
+            if (!Arrays.equals(expected, optional(file, limit)))
+                throw new IOException("Cost file changed before write: " + file);
             checkAncestors(file);
-            if (replace) Files.move(temporary, file, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);
+            if (replace)
+                Files.move(temporary, file, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);
             else Files.move(temporary, file);
             if (!Arrays.equals(bytes, read(file, limit))) throw new IOException("Cost write verification failed");
-        } finally { Files.deleteIfExists(temporary); }
+        } finally {
+            Files.deleteIfExists(temporary);
+        }
     }
 
     private static String hash(byte[] bytes) {
         try {
             StringBuilder result = new StringBuilder(64);
-            for (byte value : MessageDigest.getInstance("SHA-256").digest(bytes)) result.append(String.format(Locale.ROOT, "%02x", value & 255));
+            for (byte value : MessageDigest.getInstance("SHA-256").digest(bytes))
+                result.append(String.format(Locale.ROOT, "%02x", value & 255));
             return result.toString();
-        } catch (NoSuchAlgorithmException impossible) { throw new IllegalStateException(impossible); }
+        } catch (NoSuchAlgorithmException impossible) {
+            throw new IllegalStateException(impossible);
+        }
     }
-    private static byte[] json(JsonObject object) { return JsonUtils.PRETTY_GSON.toJson(object).getBytes(StandardCharsets.UTF_8); }
+
+    private static byte[] json(JsonObject object) {
+        return JsonUtils.PRETTY_GSON.toJson(object).getBytes(StandardCharsets.UTF_8);
+    }
+
     private static String utf8(byte[] bytes) throws IOException {
         return StandardCharsets.UTF_8.newDecoder().onMalformedInput(CodingErrorAction.REPORT)
                 .onUnmappableCharacter(CodingErrorAction.REPORT).decode(ByteBuffer.wrap(bytes)).toString();
     }
+
     private static Map<String, Object> plain(UnmodifiableConfig config) {
         Map<String, Object> result = new LinkedHashMap<>();
-        for (UnmodifiableConfig.Entry entry : config.entrySet()) result.put(entry.getKey(), plainValue(entry.getValue()));
+        for (UnmodifiableConfig.Entry entry : config.entrySet())
+            result.put(entry.getKey(), plainValue(entry.getValue()));
         return result;
     }
+
     private static Object plainValue(Object value) {
         if (value instanceof UnmodifiableConfig) return plain((UnmodifiableConfig) value);
-        if (value instanceof List) { List<Object> result = new ArrayList<>(); for (Object item : (List<?>) value) result.add(plainValue(item)); return result; }
+        if (value instanceof List) {
+            List<Object> result = new ArrayList<>();
+            for (Object item : (List<?>) value) result.add(plainValue(item));
+            return result;
+        }
         return value;
     }
+
     private static CommentedConfig config(Map<String, Object> values) {
         CommentedConfig result = CommentedConfig.inMemory();
         values.forEach((key, value) -> result.set(Collections.singletonList(key), configValue(value)));
         return result;
     }
-    @SuppressWarnings("unchecked") private static Object configValue(Object value) {
+
+    @SuppressWarnings("unchecked")
+    private static Object configValue(Object value) {
         if (value instanceof Map) return config((Map<String, Object>) value);
-        if (value instanceof List) { List<Object> result = new ArrayList<>(); for (Object item : (List<?>) value) result.add(configValue(item)); return result; }
+        if (value instanceof List) {
+            List<Object> result = new ArrayList<>();
+            for (Object item : (List<?>) value) result.add(configValue(item));
+            return result;
+        }
         return value;
     }
+
     private static final class Pending {
-        final CostMigrationPlan plan; final Path common, root; final byte[] original; final JsonObject journal;
+        final CostMigrationPlan plan;
+        final Path common, root;
+        final byte[] original;
+        final JsonObject journal;
+
         Pending(CostMigrationPlan plan, Path common, Path root, byte[] original, JsonObject journal) {
-            this.plan = plan; this.common = common; this.root = root; this.original = original; this.journal = journal;
+            this.plan = plan;
+            this.common = common;
+            this.root = root;
+            this.original = original;
+            this.journal = journal;
         }
     }
 }
