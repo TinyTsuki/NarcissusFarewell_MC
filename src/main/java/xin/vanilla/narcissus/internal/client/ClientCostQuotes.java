@@ -21,6 +21,7 @@ public final class ClientCostQuotes {
     private boolean sent;
     private CostQuoteTarget selected;
     private CostQuoteRequest pending;
+    private Entry confirmedDisplay;
 
     public void capabilities(UUID sessionId, long generationId) {
         checkOwner();
@@ -40,8 +41,12 @@ public final class ClientCostQuotes {
         if (!target.equals(selected)) {
             selected = target;
             pending = null;
+            confirmedDisplay = null;
         }
-        if (pending != null && elapsed(nowNanos, sentAt) >= TIMEOUT) pending = null;
+        if (pending != null && elapsed(nowNanos, sentAt) >= TIMEOUT) {
+            pending = null;
+            confirmedDisplay = null;
+        }
         if (pending != null || cached(target, nowNanos).isPresent() || sent && elapsed(nowNanos, sentAt) < REFRESH)
             return Optional.empty();
         if (sequence == Long.MAX_VALUE) return Optional.empty();
@@ -57,9 +62,11 @@ public final class ClientCostQuotes {
         if (pending == null || !pending.equals(quote.request()) || !pending.target().equals(selected)) return false;
         if (elapsed(nowNanos, sentAt) >= TIMEOUT) {
             pending = null;
+            confirmedDisplay = null;
             return false;
         }
-        values.put(selected, new Entry(quote, nowNanos));
+        confirmedDisplay = new Entry(quote, nowNanos);
+        values.put(selected, confirmedDisplay);
         pending = null;
         if (values.size() > 32) values.remove(values.keySet().iterator().next());
         return true;
@@ -72,12 +79,31 @@ public final class ClientCostQuotes {
         return Optional.of(entry.quote);
     }
 
+    public Optional<CostQuote> display(CostQuoteTarget target, long nowNanos) {
+        checkOwner();
+        if (!Objects.equals(target, selected)) return Optional.empty();
+        Optional<CostQuote> fresh = cached(target, nowNanos);
+        if (fresh.isPresent()) {
+            confirmedDisplay = values.get(target);
+            return fresh;
+        }
+        // Only this selection's confirmed result can bridge a background refresh.
+        if (confirmedDisplay == null) return Optional.empty();
+        if (elapsed(nowNanos, confirmedDisplay.at) >= TIMEOUT
+                || pending == null || elapsed(nowNanos, sentAt) >= TIMEOUT) {
+            confirmedDisplay = null;
+            return Optional.empty();
+        }
+        return Optional.of(confirmedDisplay.quote);
+    }
+
     public void invalidate(CostQuoteTarget target) {
         checkOwner();
         values.remove(target);
         if (target.equals(selected)) {
             selected = null;
             pending = null;
+            confirmedDisplay = null;
         }
     }
 
@@ -85,6 +111,7 @@ public final class ClientCostQuotes {
         checkOwner();
         selected = null;
         pending = null;
+        confirmedDisplay = null;
         values.clear();
     }
 
