@@ -30,14 +30,17 @@ public final class CostConfigMigration {
         Map<String, Object> root = copy(Objects.requireNonNull(legacy, "legacy"));
         Map<String, Object> cost = table(root, "cost");
         Map<String, Object> base = table(root, "base");
+        Map<String, Object> general = table(root, "general");
         Map<String, Object> limits = table(base, "teleportLimit");
-        Map<String, Object> oldCards = table(base, "teleportCard");
+        Map<String, Object> oldCards = legacyCards(base);
         boolean required = EnumTeleportType.countdownConfigurableTypes().stream().anyMatch(type -> {
             String name = groupName(type);
             return cost.containsKey("tp" + Character.toUpperCase(name.charAt(0)) + name.substring(1));
         })
-                || !oldCards.isEmpty() || limits.containsKey("teleportCostDistanceLimit")
-                || limits.containsKey("teleportCostDistanceAcrossDimension");
+                || oldCards.containsKey("teleportCard") || oldCards.containsKey("teleportCardDaily")
+                || oldCards.containsKey("teleportCardType") || limits.containsKey("teleportCostDistanceLimit")
+                || limits.containsKey("teleportCostDistanceAcrossDimension")
+                || general.containsKey("teleportCostDistanceLimit") || general.containsKey("teleportCostDistanceAcrossDimension");
         if (!required) return new CostMigrationPlan(false, currentConfiguration(cost), root,
                 Collections.emptyMap(), Collections.emptyMap());
         Map<String, String> sources = new LinkedHashMap<>(), disabled = new LinkedHashMap<>();
@@ -91,8 +94,8 @@ public final class CostConfigMigration {
                 throw new IllegalArgumentException("cost." + oldName + ": " + error.getMessage(), error);
             }
         }
-        int maxDistance = integer(limits, "teleportCostDistanceLimit", 10000);
-        int crossDistance = integer(limits, "teleportCostDistanceAcrossDimension", 10000);
+        int maxDistance = legacyDistance(limits, general, "teleportCostDistanceLimit", 10000);
+        int crossDistance = legacyDistance(limits, general, "teleportCostDistanceAcrossDimension", 10000);
         if (cost.containsKey("distance") || cost.containsKey("cards"))
             throw new IllegalArgumentException("Conflicting old/new distance or card settings");
         Map<String, Object> distance = new LinkedHashMap<>();
@@ -113,9 +116,14 @@ public final class CostConfigMigration {
         cost.put("cards", cards);
         limits.remove("teleportCostDistanceLimit");
         limits.remove("teleportCostDistanceAcrossDimension");
+        general.remove("teleportCostDistanceLimit");
+        general.remove("teleportCostDistanceAcrossDimension");
+        if (root.containsKey("general")) root.put("general", general);
         oldCards.remove("teleportCard");
         oldCards.remove("teleportCardDaily");
         oldCards.remove("teleportCardType");
+        base.remove("teleportCardDaily");
+        base.remove("teleportCardType");
         if (!limits.isEmpty()) base.put("teleportLimit", limits);
         else base.remove("teleportLimit");
         if (oldCards.isEmpty()) base.remove("teleportCard");
@@ -182,6 +190,33 @@ public final class CostConfigMigration {
         if (value == null) return new LinkedHashMap<>();
         if (!(value instanceof Map)) throw new IllegalArgumentException("Expected table: " + name);
         return (Map<String, Object>) value;
+    }
+
+    private static Map<String, Object> legacyCards(Map<String, Object> base) {
+        Object value = base.get("teleportCard");
+        if (value != null && !(value instanceof Map) && !(value instanceof Boolean))
+            throw new IllegalArgumentException("Expected table or boolean: base.teleportCard");
+        Map<String, Object> cards = value instanceof Map ? table(base, "teleportCard") : new LinkedHashMap<>();
+        if (value instanceof Boolean) cards.put("teleportCard", value);
+        for (String key : Arrays.asList("teleportCardDaily", "teleportCardType")) {
+            if (!base.containsKey(key)) continue;
+            if (cards.containsKey(key)) {
+                boolean same = key.equals("teleportCardDaily")
+                        ? integer(cards, key, 0) == integer(base, key, 0)
+                        : text(cards, key, "").equals(text(base, key, ""));
+                if (!same) throw new IllegalArgumentException("Conflicting legacy card settings: base." + key);
+            }
+            cards.put(key, base.get(key));
+        }
+        return cards;
+    }
+
+    private static int legacyDistance(Map<String, Object> limits, Map<String, Object> general,
+                                      String key, int fallback) {
+        if (limits.containsKey(key) && general.containsKey(key)
+                && integer(limits, key, fallback) != integer(general, key, fallback))
+            throw new IllegalArgumentException("Conflicting legacy distance settings: base.teleportLimit." + key + " and general." + key);
+        return limits.containsKey(key) ? integer(limits, key, fallback) : integer(general, key, fallback);
     }
 
     private static String text(Map<String, Object> map, String key, String fallback) {
