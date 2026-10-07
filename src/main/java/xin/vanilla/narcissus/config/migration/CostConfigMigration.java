@@ -28,6 +28,7 @@ public final class CostConfigMigration {
 
     public static CostMigrationPlan plan(Map<String, Object> legacy) {
         Map<String, Object> root = copy(Objects.requireNonNull(legacy, "legacy"));
+        boolean layoutRequired = LegacyConfigLayoutMigration.migrate(root);
         Map<String, Object> cost = table(root, "cost");
         Map<String, Object> base = table(root, "base");
         Map<String, Object> general = table(root, "general");
@@ -41,7 +42,7 @@ public final class CostConfigMigration {
                 || oldCards.containsKey("teleportCardType") || limits.containsKey("teleportCostDistanceLimit")
                 || limits.containsKey("teleportCostDistanceAcrossDimension")
                 || general.containsKey("teleportCostDistanceLimit") || general.containsKey("teleportCostDistanceAcrossDimension");
-        if (!required) return new CostMigrationPlan(false, currentConfiguration(cost), root,
+        if (!required) return new CostMigrationPlan(layoutRequired, currentConfiguration(cost), root,
                 Collections.emptyMap(), Collections.emptyMap());
         Map<String, String> sources = new LinkedHashMap<>(), disabled = new LinkedHashMap<>();
         EnumMap<EnumTeleportType, CostParameters> groups = new EnumMap<>(EnumTeleportType.class);
