@@ -42,15 +42,16 @@ public class ForgeFlatCostMigrationFileTest {
         migration.commit(plan);
         UnmodifiableConfig after = parse(Files.readAllBytes(common));
         for (UnmodifiableConfig.Entry entry : before.entrySet()) {
-            if (!Arrays.asList("base", "general", "cost").contains(entry.getKey()))
+            if (!Arrays.asList("base", "general", "cost", "commandNames", "conciseCommands").contains(entry.getKey()))
                 assertEquals(entry.getKey(), value(entry.getValue()), value(after.get(entry.getKey())));
         }
-        Map<String, Object> expectedBase = table(before, "base"), expectedGeneral = table(before, "general");
-        for (String key : Arrays.asList("teleportCard", "teleportCardDaily", "teleportCardType")) expectedBase.remove(key);
-        expectedGeneral.remove("teleportCostDistanceLimit");
-        expectedGeneral.remove("teleportCostDistanceAcrossDimension");
-        assertEquals(expectedBase, table(after, "base"));
-        assertEquals(expectedGeneral, table(after, "general"));
+        assertEquals(plan.configurationValues(), value(after));
+        for (String key : Arrays.asList("helpHeader", "helpInfoNumPerPage", "defaultLanguage"))
+            assertEquals(value(before.get("general." + key)), value(after.get("general." + key)));
+        if (before.contains("general.teleportHomeLimit"))
+            assertEquals(before.get("general.teleportHomeLimit"), (Object) after.get("base.teleportLimit.teleportHomeLimit"));
+        if (before.contains("base.removeOriginalTp"))
+            assertEquals(before.get("base.removeOriginalTp"), (Object) after.get("base.other.removeOriginalTp"));
         Path backup;
         try (Stream<Path> paths = Files.walk(root.resolve("backups"))) {
             backup = paths.filter(path -> path.getFileName().toString().equals("original.toml")).findFirst().get();
@@ -60,6 +61,21 @@ public class ForgeFlatCostMigrationFileTest {
         ForgeCostMigrationFile restart = new ForgeCostMigrationFile();
         restart.migrateBeforeRegistration(common, root);
         assertArrayEquals(migrated, Files.readAllBytes(common));
+    }
+
+    @Test
+    public void conflictingLayoutSettingsPreserveOriginalBytes() throws Exception {
+        byte[] original = ("[general]\nteleportHomeLimit=7\n[base.teleportLimit]\nteleportHomeLimit=9\n").getBytes(StandardCharsets.UTF_8);
+        Path parent = temporary.newFolder().toPath(), common = parent.resolve("common.toml"), root = parent.resolve("mod");
+        Files.write(common, original);
+        try {
+            new ForgeCostMigrationFile().migrateBeforeRegistration(common, root);
+            fail("conflicting settings must stop migration");
+        } catch (IOException expected) {
+            assertTrue(expected.getMessage().contains("teleportHomeLimit"));
+        }
+        assertArrayEquals(original, Files.readAllBytes(common));
+        assertFalse(Files.exists(root.resolve("cost/migration.json")));
     }
 
     @Test
