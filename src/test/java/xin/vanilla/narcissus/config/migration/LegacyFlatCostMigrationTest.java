@@ -22,8 +22,9 @@ public class LegacyFlatCostMigrationTest {
         assertEquals(EnumCardType.OFFSET_COST, plan.configuration().cards().mode());
         assertEquals(8123, plan.configuration().maxDistance());
         assertEquals(456, plan.configuration().crossDimensionDistance());
-        assertEquals(Collections.singletonMap("removeOriginalTp", true), plan.configurationValues().get("base"));
-        assertEquals(Collections.singletonMap("teleportHomeLimit", 7), plan.configurationValues().get("general"));
+        assertEquals(map("other", map("removeOriginalTp", true), "teleportLimit", map("teleportHomeLimit", 7)),
+                plan.configurationValues().get("base"));
+        assertEquals(Collections.emptyMap(), plan.configurationValues().get("general"));
         assertEquals(input.get("unrelated"), plan.configurationValues().get("unrelated"));
         assertEquals(Boolean.TRUE, base.get("teleportCard"));
         assertEquals(8123, general.get("teleportCostDistanceLimit"));
