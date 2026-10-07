@@ -44,6 +44,10 @@ final class NarcissusScreenChrome {
      * 计算固定整数坐标，窄窗口下仍保证列表和详情区域可用。
      */
     static Layout layout(int screenWidth, int screenHeight) {
+        return layout(screenWidth, screenHeight, 36);
+    }
+
+    static Layout layout(int screenWidth, int screenHeight, int topHeight) {
         int outerWidth = Math.min(MAX_OUTER_WIDTH, Math.max(MIN_OUTER_WIDTH, screenWidth - OUTER_MARGIN * 2));
         int outerHeight = Math.min(MAX_OUTER_HEIGHT, Math.max(260, screenHeight - OUTER_MARGIN * 2));
         outerWidth = Math.min(screenWidth, outerWidth);
@@ -55,12 +59,19 @@ final class NarcissusScreenChrome {
         int inset = 8;
         Rect content = new Rect(outerX + inset, outerY + inset,
                 outerWidth - inset * 2, outerHeight - inset * 2);
-        Rect top = new Rect(content.x, content.y, content.width, 36);
-        int detailHeight = Math.min(76, Math.max(62, content.height / 5));
+        Rect top = new Rect(content.x, content.y, content.width, topHeight);
+        // Keep the fixed header, three detail lines, and a padded scroll viewport disjoint.
+        int minimumDetail = 44;
+        int minimumList = 7;
+        int gap = Math.min(6, Math.max(0, (content.height - topHeight - minimumDetail - minimumList) / 2));
+        int available = Math.max(0, content.height - topHeight - gap * 2);
+        int preferredDetail = Math.min(76, Math.max(62, content.height / 5));
+        int detailHeight = Math.min(preferredDetail, Math.max(minimumDetail, available - 34));
+        detailHeight = Math.min(detailHeight, Math.max(0, available - minimumList));
         Rect detail = new Rect(content.x, content.y + content.height - detailHeight,
                 content.width, detailHeight);
-        Rect list = new Rect(content.x, top.y + top.height + 6,
-                content.width, detail.y - (top.y + top.height + 6) - 6);
+        Rect list = new Rect(content.x, top.y + top.height + gap,
+                content.width, available - detailHeight);
         return new Layout(outer, content, top, list, detail);
     }
 
