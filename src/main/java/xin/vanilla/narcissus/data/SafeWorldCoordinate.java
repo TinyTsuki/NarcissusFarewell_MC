@@ -65,7 +65,7 @@ public class SafeWorldCoordinate extends WorldCoordinate implements Serializable
                                              int minY, int maxY, int distanceLimit) {
         range = Math.min(Math.max(range, 1), distanceLimit);
         double x = origin.x() + (Math.random() * 2 - 1) * range;
-        double y = randomWithWeight(minY, maxY, (int) origin.y(), 0.75);
+        double y = randomWithWeight(minY, maxY, origin.yInt(), 0.75);
         double z = origin.z() + (Math.random() * 2 - 1) * range;
         return new SafeWorldCoordinate(x, y, z, origin.yaw(), origin.pitch(), dimension);
     }
