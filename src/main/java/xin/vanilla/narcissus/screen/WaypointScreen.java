@@ -161,6 +161,11 @@ public class WaypointScreen extends BaniraScreen {
     private ButtonWidget deleteConfirmButton;
     private NarcissusScreenChrome.Layout journalLayout;
     private NarcissusScreenChrome.Palette journalPalette;
+    private WaypointTopBarLayout topBarLayout;
+    private int headerTicketWidth;
+    private final int[] headerTabWidths = new int[3];
+    private String selectedCostText = "";
+    private NarcissusScreenChrome.Rect selectedCostBounds;
 
     // endregion Data
 
@@ -202,6 +207,8 @@ public class WaypointScreen extends BaniraScreen {
     @Override
     protected void initWidgets() {
         journalLayout = NarcissusScreenChrome.layout(width, height);
+        measureTopBar();
+        journalLayout = NarcissusScreenChrome.layout(width, height, topBarLayout.height);
         journalPalette = NarcissusScreenChrome.palette(getEffectiveTheme());
         activeScrollbar = null;
         addButton = null;
@@ -223,21 +230,16 @@ public class WaypointScreen extends BaniraScreen {
         int cancelX = dlgX + (DIALOG_W - cancelW - deleteW - 10) / 2;
         int deleteX = cancelX + cancelW + 10;
 
-        int addSpace = ADD_BTN_SIZE + 8;
-        int searchX = journalLayout.top().x() + compactTabsEndOffset() + 8;
-        int searchW = Math.max(50,
-                journalLayout.top().x() + journalLayout.top().width() - addSpace - 4 - searchX);
         searchInput = new InputWidget(this);
         searchInput.id("search");
-        searchInput.bounds(new ScreenCoordinate(searchX, journalLayout.top().y() + 6, searchW, 24));
+        searchInput.bounds(headerBounds(topBarLayout.search));
         searchInput.text(Text.literal(NarcissusComponent.get().transClientAuto("waypoint_search_hint").toString()));
         searchInput.onTextChanged(t -> applySearchFilter());
         addWidget(searchInput);
 
         addButton = new ButtonWidget(this);
         addButton.id("add_waypoint");
-        addButton.bounds(new ScreenCoordinate(journalLayout.top().x() + journalLayout.top().width() - ADD_BTN_SIZE - 4,
-                journalLayout.top().y() + 11, ADD_BTN_SIZE, ADD_BTN_SIZE));
+        addButton.bounds(headerBounds(topBarLayout.plus));
         addButton.presetStyle(ButtonWidget.PresetStyle.PLUS);
         addButton.radius(ADD_BTN_SIZE / 4f);
         addButton.padding(1);
@@ -578,6 +580,7 @@ public class WaypointScreen extends BaniraScreen {
             PlayerTeleportData data = PlayerTeleportData.getData(minecraft.player);
             ticketCount = data.getTeleportCard();
         }
+        refreshTopBarLayout();
 
         if (selectedItem != null) {
             long now = System.currentTimeMillis();
@@ -630,6 +633,13 @@ public class WaypointScreen extends BaniraScreen {
         drawActiveList(stack, mouseX, mouseY);
         drawSelectedDetail(stack);
 
+        if (!dialogOpen) {
+            drawHeaderOverflowTooltips(theme, mouseX, mouseY);
+            if (selectedCostBounds != null && contains(selectedCostBounds, mouseX, mouseY)) {
+                addDeferredTooltipRender(s -> drawTextTooltip(s, theme, selectedCostText, mouseX, mouseY));
+            }
+        }
+
         if (hoveredItem != null && !dialogOpen) {
             if (hoveredDragHandle) {
                 addDeferredTooltipRender(s -> drawDragTooltip(s, theme, mouseX, mouseY));
@@ -679,10 +689,10 @@ public class WaypointScreen extends BaniraScreen {
     }
 
     private void drawWaypointTopBar(PoseStack stack) {
-        String ticket = NarcissusComponent.get().transClientAuto("teleport_card").toString() + ": " + ticketCount;
-        drawLimitedTextLine(stack, ticket, journalLayout.top().x() + 8,
-                journalLayout.top().y() + (journalLayout.top().height() - font.lineHeight) / 2,
-                Math.max(72, (int) searchInput.bounds().x() - journalLayout.top().x() - 14), journalPalette.primary());
+        NarcissusScreenChrome.Rect ticket = headerRect(topBarLayout.ticket);
+        drawLimitedTextLine(stack, ticketLabel(), ticket.x(),
+                ticket.y() + (ticket.height() - font.lineHeight) / 2,
+                ticket.width(), journalPalette.primary());
     }
 
     private void drawActiveList(PoseStack stack, int mouseX, int mouseY) {
@@ -767,35 +777,87 @@ public class WaypointScreen extends BaniraScreen {
     }
 
     private NarcissusScreenChrome.Rect tabRect(int index) {
-        WaypointListTab[] tabs = WaypointListTab.values();
-        int offset = compactTabsStartOffset();
-        for (int i = 0; i < index; i++) {
-            offset += compactTabWidth(tabs[i]) + 4;
-        }
-        return NarcissusScreenChrome.compactTabRect(
-                journalLayout.top(), offset, compactTabWidth(tabs[index]));
+        return headerRect(topBarLayout.tab(index));
     }
 
-    private int compactTabsStartOffset() {
-        String ticket = NarcissusComponent.get().transClientAuto("teleport_card").toString() + ": " + ticketCount;
-        return Math.max(64, font.width(ticket) + 14);
+    private String ticketLabel() {
+        return NarcissusComponent.get().transClientAuto("teleport_card").toString() + ": " + ticketCount;
     }
 
-    private int compactTabsEndOffset() {
-        int offset = compactTabsStartOffset();
+    private void measureTopBar() {
+        headerTicketWidth = Math.max(headerTicketWidth, font.width(ticketLabel()) + 4);
         WaypointListTab[] tabs = WaypointListTab.values();
+        int[] counts = {homeItemsAll.size(), stageItemsAll.size(), backItemsAll.size()};
         for (int i = 0; i < tabs.length; i++) {
-            offset += compactTabWidth(tabs[i]);
-            if (i + 1 < tabs.length) {
-                offset += 4;
+            headerTabWidths[i] = Math.max(headerTabWidths[i],
+                    Math.max(44, font.width(waypointTabName(tabs[i]) + "  " + counts[i]) + 12));
+        }
+        topBarLayout = WaypointTopBarLayout.layout(journalLayout.top().width(), headerTicketWidth, headerTabWidths);
+    }
+
+    private NarcissusScreenChrome.Rect headerRect(WaypointTopBarLayout.Rect rect) {
+        return new NarcissusScreenChrome.Rect(journalLayout.top().x() + rect.x,
+                journalLayout.top().y() + rect.y, rect.width, rect.height);
+    }
+
+    private ScreenCoordinate headerBounds(WaypointTopBarLayout.Rect rect) {
+        NarcissusScreenChrome.Rect translated = headerRect(rect);
+        return new ScreenCoordinate(translated.x(), translated.y(), translated.width(), translated.height());
+    }
+
+    private void refreshTopBarLayout() {
+        if (journalLayout == null || searchInput == null || addButton == null) return;
+        WaypointTopBarLayout previous = topBarLayout;
+        measureTopBar();
+        if (previous.height == topBarLayout.height && previous.search.x == topBarLayout.search.x
+                && previous.search.width == topBarLayout.search.width
+                && previous.tab0.width == topBarLayout.tab0.width
+                && previous.tab1.width == topBarLayout.tab1.width
+                && previous.tab2.width == topBarLayout.tab2.width) return;
+        journalLayout = NarcissusScreenChrome.layout(width, height, topBarLayout.height);
+        searchInput.bounds(headerBounds(topBarLayout.search));
+        addButton.bounds(headerBounds(topBarLayout.plus));
+        listAreaY = journalLayout.list().y();
+        listHeight = journalLayout.list().height();
+        footerX = journalLayout.detail().x();
+        footerY = journalLayout.detail().y();
+        footerW = journalLayout.detail().width();
+        footerPanelHeight = journalLayout.detail().height();
+        if (teleportButton != null) {
+            teleportButton.bounds(new ScreenCoordinate(footerX + footerW - TELEPORT_BTN_W - FOOTER_PAD_H,
+                    footerY + (footerPanelHeight - TELEPORT_BTN_H) / 2, TELEPORT_BTN_W, TELEPORT_BTN_H));
+        }
+        if (activeScrollbar != null) {
+            int listX = journalLayout.list().x() + PANEL_PADDING;
+            activeScrollbar.bounds(new ScreenCoordinate(listX + listBodyW - SCROLLBAR_WIDTH,
+                    listAreaY + LIST_PADDING_V, SCROLLBAR_WIDTH, listViewportHeight()));
+            activeScrollbar.scrollingCoordinates(new java.util.ArrayList<>());
+            activeScrollbar.addScrollHoverArea(new ScreenCoordinate(listX,
+                    listAreaY + LIST_PADDING_V, listBodyW, listViewportHeight()));
+            activeScrollbar.visibleSize(listViewportHeight());
+            syncScrollbarLimits();
+        }
+    }
+
+    private void drawHeaderOverflowTooltips(BaniraColorConfig theme, int mouseX, int mouseY) {
+        NarcissusScreenChrome.Rect ticket = headerRect(topBarLayout.ticket);
+        if (contains(ticket, mouseX, mouseY) && font.width(ticketLabel()) > ticket.width()) {
+            addDeferredTooltipRender(s -> drawTextTooltip(s, theme, ticketLabel(), mouseX, mouseY));
+        }
+        for (int i = 0; i < 3; i++) {
+            NarcissusScreenChrome.Rect tab = tabRect(i);
+            String label = waypointTabLabel(WaypointListTab.values()[i]);
+            if (contains(tab, mouseX, mouseY) && font.width(label) > tab.width() - 10) {
+                addDeferredTooltipRender(s -> drawTextTooltip(s, theme, label, mouseX, mouseY));
             }
         }
-        return offset;
     }
 
-    private int compactTabWidth(WaypointListTab tab) {
-        String widestLabel = waypointTabName(tab) + "  999";
-        return Math.max(44, font.width(widestLabel) + 12);
+    private void drawTextTooltip(PoseStack stack, BaniraColorConfig theme, String text, int mouseX, int mouseY) {
+        FontDrawArgs args = FontDrawArgs.ofPopo(Text.literal(text).stack(stack).font(font)
+                        .color(Color.argb(theme.textPrimary())))
+                .x(mouseX).y(mouseY).maxWidth(Math.max(50, Math.min(280, width - 24))).wrap(true).inScreen(true);
+        TooltipWidget.drawPopupMessage(stack, args, theme, season());
     }
 
     private String waypointTabLabel(WaypointListTab tab) {
@@ -1098,7 +1160,10 @@ public class WaypointScreen extends BaniraScreen {
     }
 
     private void drawSelectedDetail(PoseStack stack) {
+        selectedCostBounds = null;
+        selectedCostText = "";
         if (selectedItem == null) {
+            NarcissusClientSyncState.costQuotes().closeView();
             teleportButton.visible(false);
             return;
         }
@@ -1106,9 +1171,6 @@ public class WaypointScreen extends BaniraScreen {
         teleportButton.visible(deleteConfirmItem == null);
 
         String costStr = calculateCostDisplay(selectedItem);
-        if (StringUtils.isNullOrEmptyEx(costStr)) {
-            costStr = NarcissusComponent.get().transClientAuto("cost_free").toString();
-        }
         String costFull = NarcissusComponent.get().transClientAuto("waypoint_detail_cost").toString() + costStr;
         int leftX = footerX + FOOTER_PAD_H;
         int leftZoneW = Math.max(40, footerW - TELEPORT_BTN_W - FOOTER_PAD_H * 3);
@@ -1123,6 +1185,8 @@ public class WaypointScreen extends BaniraScreen {
         drawLimitedTextLine(stack, line2, leftX, y0, leftZoneW, journalPalette.secondary());
         y0 += lineH;
         drawLimitedTextLine(stack, costFull, leftX, y0, leftZoneW, journalPalette.selected());
+        selectedCostText = costFull;
+        selectedCostBounds = new NarcissusScreenChrome.Rect(leftX, y0, leftZoneW, font.lineHeight);
     }
 
     private String formatItemDistanceMeters(WaypointEntry item) {
@@ -1200,13 +1264,13 @@ public class WaypointScreen extends BaniraScreen {
 
     private String calculateCostDisplay(WaypointEntry item) {
         if (item == null || item.safeWorldCoordinate == null || minecraft == null || minecraft.player == null) {
-            return "";
+            return NarcissusComponent.get().transClientAuto("cost_unknown").toString();
         }
         ClientCostQuotes quotes = NarcissusClientSyncState.costQuotes();
         long now = System.nanoTime();
         quotes.request(item.quoteTarget, now).ifPresent(request -> PacketUtils.sendPacketToServer(
                 new xin.vanilla.narcissus.network.packet.CostQuoteToServer(request)));
-        return quotes.cached(item.quoteTarget, now).map(quote -> {
+        return quotes.display(item.quoteTarget, now).map(quote -> {
             if (quote.status() != CostQuote.Status.READY) return quote.status().enumDescription().toString();
             if (quote.costType() == xin.vanilla.narcissus.enums.EnumCostType.NONE)
                 return NarcissusComponent.get().transClientAuto("cost_free").toString();
