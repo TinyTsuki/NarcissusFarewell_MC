@@ -333,6 +333,43 @@ public class ForgeCostPaymentTest {
     }
 
     @Test
+    public void failedCommandRefundsOnlyItsReservationWithoutErasingGrantedCards() {
+        type = EnumCostType.COMMAND;
+        nativePayment = new ForgeCostPayment(() -> now, p -> true, requests::get,
+                (p, c) -> {
+                    commands++;
+                    data.refundTeleportCards(5);
+                    return false;
+                }, p -> syncs++);
+        service = new CostPaymentService(ctx -> CostCalculation.success(5, 5), nativePayment);
+        CostOperation operation = CostOperation.create(context(CostPhase.CHECK));
+        assertEquals(EnumCostFailure.COMMAND_FAILED, service.commit(operation, context(CostPhase.COMMIT)).failure());
+        assertEquals(7, data.peekTeleportCard());
+        assertEquals(1, commands);
+        assertEquals(0, syncs);
+        assertEquals(EnumCostFailure.INVALID_OPERATION, service.commit(operation, context(CostPhase.COMMIT)).failure());
+        assertEquals(7, data.peekTeleportCard());
+    }
+
+    @Test
+    public void thrownCommandRefundsOnlyItsReservationWithoutErasingGrantedCards() {
+        type = EnumCostType.COMMAND;
+        nativePayment = new ForgeCostPayment(() -> now, p -> true, requests::get,
+                (p, c) -> {
+                    commands++;
+                    data.refundTeleportCards(5);
+                    throw new IllegalStateException("Command failed after card grant");
+                }, p -> syncs++);
+        service = new CostPaymentService(ctx -> CostCalculation.success(5, 5), nativePayment);
+        CostOperation operation = CostOperation.create(context(CostPhase.CHECK));
+        assertEquals(EnumCostFailure.PAYMENT_FAILED, service.commit(operation, context(CostPhase.COMMIT)).failure());
+        assertEquals(7, data.peekTeleportCard());
+        assertEquals(1, commands);
+        assertEquals(0, syncs);
+        assertEquals(EnumCostFailure.INVALID_OPERATION, service.commit(operation, context(CostPhase.COMMIT)).failure());
+    }
+
+    @Test
     public void waivedCommandHasNoExternalSideEffects() {
         type = EnumCostType.COMMAND;
         mode = EnumCardType.WAIVE_COST;
@@ -487,6 +524,7 @@ public class ForgeCostPaymentTest {
         BaniraPlatforms.install((BaniraPlatform) Proxy.newProxyInstance(getClass().getClassLoader(),
                 new Class<?>[]{BaniraPlatform.class}, (p, m, a) -> {
                     if (m.getName().equals("playerDataService")) return store;
+                    if (m.getName().equals("costService")) return ForgeCostPlayerFixture.costService();
                     throw new UnsupportedOperationException(m.getName());
                 }));
         return saves;

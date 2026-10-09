@@ -63,6 +63,13 @@ public class ForgeCostPlayerFixture {
         cache.setAccessible(true);
         ((Map<UUID, PlayerTeleportData>) cache.get(null)).put(player.id, data);
         CustomConfig.setPlayerLanguage(player.id.toString(), "en_us");
+        Object delegate = previousPlatform;
+        BaniraPlatforms.install((xin.vanilla.banira.platform.BaniraPlatform) java.lang.reflect.Proxy.newProxyInstance(
+                getClass().getClassLoader(), new Class<?>[]{xin.vanilla.banira.platform.BaniraPlatform.class}, (proxy, method, args) -> {
+                    if (method.getName().equals("costService")) return costService();
+                    if (delegate != null) return method.invoke(delegate, args);
+                    throw new UnsupportedOperationException(method.getName());
+                }));
     }
 
     @After
@@ -80,6 +87,19 @@ public class ForgeCostPlayerFixture {
         if (type == String.class) return "fixture";
         if (type == Optional.class) return Optional.empty();
         return null;
+    }
+
+    static xin.vanilla.banira.platform.BaniraCostService costService() {
+        return (payer, scope) -> {
+            try {
+                java.lang.reflect.Method method = Class.forName("xin.vanilla.banira.internal.forge.cost.ForgeCostResources")
+                        .getDeclaredMethod("access", ServerPlayerEntity.class, xin.vanilla.banira.api.cost.InventoryScope.class,
+                                java.util.function.Predicate.class);
+                method.setAccessible(true);
+                java.util.function.Predicate<ServerPlayerEntity> available = p -> p.isAlive() && !p.removed;
+                return (xin.vanilla.banira.api.cost.CostAccess) method.invoke(null, payer, scope, available);
+            } catch (ReflectiveOperationException error) { throw new IllegalStateException(error); }
+        };
     }
 
     public static <T> T allocate(Class<T> type) throws Exception {
