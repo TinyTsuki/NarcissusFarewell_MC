@@ -245,6 +245,34 @@ public class ForgeCostPaymentTest {
     }
 
     @Test
+    public void rejectedExperienceEventRestoresAllThreeExperienceFields() {
+        for (EnumCostType resource : Arrays.asList(EnumCostType.EXP_POINT, EnumCostType.EXP_LEVEL)) {
+            type = resource;
+            for (boolean cancelled : new boolean[]{true, false}) {
+                payer.totalExperience = 10;
+                payer.experienceLevel = 10;
+                payer.experienceProgress = .625f;
+                payer.cancelExperience = cancelled;
+                payer.experienceFactor = 2;
+                payer.mutateExperienceProgress = true;
+                CostOperation operation = CostOperation.create(context(CostPhase.CHECK));
+                assertEquals(EnumCostFailure.PAYMENT_FAILED, service.commit(operation, context(CostPhase.COMMIT)).failure());
+                assertEquals(10, payer.totalExperience);
+                assertEquals(10, payer.experienceLevel);
+                assertEquals(.625f, payer.experienceProgress, 0);
+                assertEquals(2, data.peekTeleportCard());
+                assertEquals(0, syncs);
+                payer.cancelExperience = false;
+                payer.experienceFactor = 0;
+                payer.mutateExperienceProgress = false;
+                assertEquals(EnumCostFailure.INVALID_OPERATION, service.commit(operation, context(CostPhase.COMMIT)).failure());
+                assertEquals(10, payer.totalExperience);
+                assertEquals(10, payer.experienceLevel);
+            }
+        }
+    }
+
+    @Test
     public void itemPaymentMatchesIdAndEntireNbtAcrossAllInventorySlots() {
         type = EnumCostType.ITEM;
         item = "minecraft:stone{custom:1}";

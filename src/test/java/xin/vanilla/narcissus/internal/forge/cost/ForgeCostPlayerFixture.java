@@ -96,6 +96,7 @@ public class ForgeCostPlayerFixture {
         public ServerWorld world;
         boolean cancelExperience;
         int experienceFactor;
+        boolean mutateExperienceProgress;
 
         private RecordingPlayer() {
             super(null, null, null, null);
@@ -143,11 +144,19 @@ public class ForgeCostPlayerFixture {
         @Override
         public void giveExperiencePoints(int amount) {
             if (!cancelExperience) totalExperience += amount * (experienceFactor == 0 ? 1 : experienceFactor);
+            if (mutateExperienceProgress) {
+                experienceProgress = .125f;
+                experienceLevel++;
+            }
         }
 
         @Override
         public void giveExperienceLevels(int amount) {
             if (!cancelExperience) experienceLevel += amount * (experienceFactor == 0 ? 1 : experienceFactor);
+            if (mutateExperienceProgress) {
+                experienceProgress = .125f;
+                totalExperience++;
+            }
         }
 
         @Override
