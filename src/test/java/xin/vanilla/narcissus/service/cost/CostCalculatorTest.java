@@ -84,6 +84,26 @@ public class CostCalculatorTest {
     }
 
     @Test
+    public void customFormulaKeepsRawValidationBeforeClampingAndIntegerCeiling() {
+        CostParameters bounded = parameters(0, 0, 3, 8);
+        xin.vanilla.narcissus.api.cost.CostContext context = new CostPaymentServiceTest.Fixture().context(
+                xin.vanilla.narcissus.api.cost.CostPhase.CHECK);
+        for (double raw : new double[]{Double.NaN, Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY, -1}) {
+            assertEquals(xin.vanilla.narcissus.enums.EnumCostFailure.INVALID_RESULT,
+                    calculator.calculate(bounded, context, c -> raw).failure());
+        }
+        assertEquals(3, calculator.calculate(bounded, context, c -> .01).amount());
+        assertEquals(4, calculator.calculate(bounded, context, c -> 3.01).amount());
+        assertEquals(8, calculator.calculate(bounded, context, c -> Double.MAX_VALUE).amount());
+        CostParameters unlimited = parameters(0, 0, 0, -1);
+        assertEquals(Integer.MAX_VALUE, calculator.calculate(unlimited, context, c -> Integer.MAX_VALUE).amount());
+        assertEquals(xin.vanilla.narcissus.enums.EnumCostFailure.AMOUNT_OVERFLOW,
+                calculator.calculate(unlimited, context, c -> Integer.MAX_VALUE + .01).failure());
+        assertEquals(xin.vanilla.narcissus.enums.EnumCostFailure.FORMULA_FAILED,
+                calculator.calculate(unlimited, context, c -> { throw new IllegalStateException("Formula failed"); }).failure());
+    }
+
+    @Test
     public void textLimitsAreMeasuredInCharacters() {
         new CostParameters(EnumCostType.COMMAND, 0, 0, 0, 20, "", repeat(8192), "");
         try {

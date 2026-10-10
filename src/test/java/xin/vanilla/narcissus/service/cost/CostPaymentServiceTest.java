@@ -250,6 +250,49 @@ public class CostPaymentServiceTest {
     }
 
     @Test
+    public void sameGenerationRuleContentsCannotAuthorizeChangedPayment() {
+        for (boolean cards : new boolean[]{false, true}) {
+            Fixture f = new Fixture();
+            CostOperation operation = f.operation();
+            if (cards) f.enabled = false;
+            else f.configuredFixed = 6;
+            assertEquals(EnumCostFailure.CONFIGURATION_UNAVAILABLE, f.service.commit(operation, f.context(CostPhase.COMMIT)).failure());
+            assertEquals(EnumCostOperationState.FAILED, operation.state());
+            assertEquals(0, f.payments);
+            assertEquals(2, f.cards);
+            assertEquals(10, f.resource);
+        }
+    }
+
+    @Test
+    public void preparedReceiptFailureStillLeavesOnePaidOperation() {
+        Fixture f = new Fixture();
+        f.service = new CostPaymentService(ctx -> CostCalculation.success(5, 5), new CostPaymentService.PaymentAccess() {
+            public EnumCostFailure validate(CostContext context) { return f.validate(context); }
+            public EnumCostFailure check(CostContext context, CostPaymentPlan plan) { return f.check(context, plan); }
+            public EnumCostFailure pay(CostContext context, CostPaymentPlan plan) { return f.pay(context, plan); }
+            public CostPaymentService.PreparedPayment prepare(CostContext context, CostPaymentPlan plan) {
+                return new CostPaymentService.PreparedPayment() {
+                    public xin.vanilla.banira.api.cost.CostPaymentPlan plan() {
+                        return xin.vanilla.banira.api.cost.CostPaymentPlan.ready(1, java.util.Collections.emptyList(), java.util.Collections.emptyList());
+                    }
+                    public EnumCostFailure pay() { return f.pay(context, plan); }
+                    public java.util.List<xin.vanilla.banira.api.cost.CostPaymentPlan.ResourceSnapshot> receipt() {
+                        throw new IllegalStateException("Receipt unavailable");
+                    }
+                };
+            }
+        });
+        CostOperation operation = f.operation();
+        assertTrue(f.service.commit(operation, f.context(CostPhase.COMMIT)).isCommitted());
+        assertEquals(EnumCostOperationState.PAID, operation.state());
+        assertEquals(EnumCostFailure.INVALID_OPERATION, f.service.commit(operation, f.context(CostPhase.COMMIT)).failure());
+        assertEquals(1, f.payments);
+        assertEquals(1, f.cards);
+        assertEquals(5, f.resource);
+    }
+
+    @Test
     public void saveOrSyncFailureCannotTurnPaidOperationIntoASecondDebit() {
         Fixture f = new Fixture();
         CostOperation op = f.operation();
@@ -267,6 +310,7 @@ public class CostPaymentServiceTest {
         long generation = 1;
         String requestId;
         int cards = 2, resource = 10, amount = 5, cooldown, payments;
+        double configuredFixed = 5;
         boolean enabled = true;
         EnumCostType type = EnumCostType.EXP_POINT;
         EnumCardType mode = EnumCardType.REQUIRE_ONE_WITH_COST;
@@ -323,7 +367,7 @@ public class CostPaymentServiceTest {
                     case "costType":
                         return type;
                     case "parameters":
-                        return new CostParameters(type, 5, 0, 0, -1, "minecraft:stone", "test {amount}", "");
+                        return new CostParameters(type, configuredFixed, 0, 0, -1, "minecraft:stone", "test {amount}", "");
                     case "cardSettings":
                         return new CostCardSettings(enabled, 0, mode);
                     case "cooldownSeconds":

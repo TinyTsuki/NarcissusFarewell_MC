@@ -1,10 +1,6 @@
 package xin.vanilla.narcissus.internal.forge.cost;
 
-import com.mojang.brigadier.StringReader;
-import net.minecraft.commands.arguments.item.ItemInput;
-import net.minecraft.commands.arguments.item.ItemParser;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.item.ItemStack;
 import xin.vanilla.banira.common.util.CommandUtils;
 import xin.vanilla.narcissus.NarcissusFarewell;
@@ -21,6 +17,12 @@ import xin.vanilla.narcissus.enums.EnumTeleportType;
 import xin.vanilla.narcissus.service.cost.CostPaymentService;
 
 import java.util.Objects;
+import java.util.ArrayList;
+import java.util.List;
+import xin.vanilla.banira.api.BaniraCosts;
+import xin.vanilla.banira.api.cost.*;
+import xin.vanilla.narcissus.service.cost.NarcissusPaymentPolicy;
+import net.minecraft.core.registries.BuiltInRegistries;
 import java.util.function.*;
 
 public final class ForgeCostPayment implements CostPaymentService.PaymentAccess {
@@ -106,81 +108,54 @@ public final class ForgeCostPayment implements CostPaymentService.PaymentAccess 
 
     @Override
     public EnumCostFailure check(CostContext context, CostPaymentPlan plan) {
+        return NarcissusPaymentPolicy.failure(prepare(context, plan).plan().failure());
+    }
+
+    @Override
+    public CostPaymentService.PreparedPayment prepare(CostContext context, CostPaymentPlan plan) {
         ServerPlayer player = context.payer().nativePlayer(ServerPlayer.class);
-        if (plan.cardAmount() > 0 && PlayerTeleportData.getData(player).peekTeleportCard() < plan.cardAmount()) {
-            return EnumCostFailure.INSUFFICIENT_CARDS;
+        CostAccess resources = BaniraCosts.access(player, InventoryScope.ALL)
+                .withResource("narcissus:teleport_card", ForgeCostExtras.cards(player));
+        List<CostRequirement> requirements = new ArrayList<>();
+        if (plan.cardAmount() > 0) requirements.add(CostRequirement.leaf(new ResourceCost(
+                "narcissus:teleport_card", plan.cardAmount(), "")));
+        if (plan.resourceAmount() > 0 && context.costType() != EnumCostType.NONE) {
+            if (context.costType() == EnumCostType.COMMAND) {
+                String command = context.parameters().command().replace("{amount}", Integer.toString(plan.resourceAmount()));
+                resources = resources.withResource("narcissus:command", ForgeCostExtras.command(player, command, commands));
+                requirements.add(CostRequirement.leaf(new ResourceCost("narcissus:command", plan.resourceAmount(), command)));
+            } else requirements.add(CostRequirement.leaf(resource(context, plan.resourceAmount())));
         }
-        int amount = plan.resourceAmount();
-        if (amount == 0 || context.costType() == EnumCostType.NONE) return EnumCostFailure.NONE;
-        boolean enough;
+        CostAccess access = resources;
+        xin.vanilla.banira.api.cost.CostPaymentPlan shared = access.preview(CostRequirement.all(requirements), 1);
+        return new CostPaymentService.PreparedPayment() {
+            public xin.vanilla.banira.api.cost.CostPaymentPlan plan() { return shared; }
+            public EnumCostFailure pay() {
+                EnumCostFailure validity = validate(context);
+                return validity == EnumCostFailure.NONE ? NarcissusPaymentPolicy.failure(access.debit(shared)) : validity;
+            }
+            public List<xin.vanilla.banira.api.cost.CostPaymentPlan.ResourceSnapshot> receipt() { return access.receipt(shared).snapshots(); }
+            public void afterPayment() { ForgeCostPayment.this.afterPayment(context, plan.paid()); }
+        };
+    }
+
+    private static ResourceCost resource(CostContext context, int amount) {
+        String id;
         switch (context.costType()) {
-            case EXP_POINT:
-                enough = player.totalExperience >= amount;
-                break;
-            case EXP_LEVEL:
-                enough = player.experienceLevel >= amount;
-                break;
-            case HEALTH:
-                enough = Float.isFinite(player.getHealth()) && player.getHealth() > amount;
-                break;
-            case HUNGER:
-                enough = player.getFoodData().getFoodLevel() >= amount;
-                break;
-            case ITEM:
-                ItemStack required = item(context.parameters().item());
-                if (required == null) return EnumCostFailure.INVALID_PAYMENT;
-                enough = count(player.getInventory(), required) >= amount;
-                break;
-            case COMMAND:
-                return context.parameters().command().trim().isEmpty() ? EnumCostFailure.INVALID_PAYMENT : EnumCostFailure.NONE;
-            default:
-                return EnumCostFailure.INVALID_PAYMENT;
+            case EXP_POINT: id = "banira:xp_point"; break;
+            case EXP_LEVEL: id = "banira:xp_level"; break;
+            case HEALTH: id = "banira:health"; break;
+            case HUNGER: id = "banira:hunger"; break;
+            case ITEM: id = "banira:item"; break;
+            default: throw new IllegalArgumentException("Unsupported teleport resource");
         }
-        return enough ? EnumCostFailure.NONE : EnumCostFailure.INSUFFICIENT_RESOURCE;
+        return new ResourceCost(id, amount, context.costType() == EnumCostType.ITEM ? context.parameters().item() : "");
     }
 
     @Override
     public EnumCostFailure pay(CostContext context, CostPaymentPlan plan) {
-        EnumCostFailure failure = validate(context);
-        if (failure == EnumCostFailure.NONE) failure = check(context, plan);
-        if (failure != EnumCostFailure.NONE) return failure;
-        ServerPlayer player = context.payer().nativePlayer(ServerPlayer.class);
-        PlayerTeleportData data = PlayerTeleportData.getData(player);
-        if (!data.tryConsumeTeleportCards(plan.cardAmount())) return EnumCostFailure.INSUFFICIENT_CARDS;
-        boolean success = false;
-        try {
-            int amount = plan.resourceAmount();
-            if (amount > 0) {
-                switch (context.costType()) {
-                    case EXP_POINT:
-                    case EXP_LEVEL:
-                        if (!debitExperience(player, context.costType(), amount)) return EnumCostFailure.PAYMENT_FAILED;
-                        break;
-                    case HEALTH:
-                        player.setHealth(player.getHealth() - amount);
-                        break;
-                    case HUNGER:
-                        player.getFoodData().setFoodLevel(player.getFoodData().getFoodLevel() - amount);
-                        break;
-                    case ITEM:
-                        remove(player.getInventory(), Objects.requireNonNull(item(context.parameters().item())), amount);
-                        break;
-                    case COMMAND:
-                        if (!commands.test(player, context.parameters().command().replace("{amount}", Integer.toString(amount)))) {
-                            return EnumCostFailure.COMMAND_FAILED;
-                        }
-                        break;
-                    case NONE:
-                        break;
-                    default:
-                        return EnumCostFailure.INVALID_PAYMENT;
-                }
-            }
-            success = true;
-            return EnumCostFailure.NONE;
-        } finally {
-            if (!success) data.refundTeleportCards(plan.cardAmount());
-        }
+        CostPaymentService.PreparedPayment prepared = prepare(context, plan);
+        return prepared.plan().isSuccess() ? prepared.pay() : NarcissusPaymentPolicy.failure(prepared.plan().failure());
     }
 
     @Override
@@ -204,74 +179,12 @@ public final class ForgeCostPayment implements CostPaymentService.PaymentAccess 
 
     public static boolean hasSupportItemAfterPayment(CostContext context, CostPaymentPlan plan, ItemStack support) {
         ServerPlayer moving = context.player().nativePlayer(ServerPlayer.class);
-        long remaining = count(moving.getInventory(), support);
+        List<CostRequirement> requirements = new ArrayList<>();
         if (context.payer().nativePlayer(ServerPlayer.class) == moving && context.costType() == EnumCostType.ITEM
-                && plan.resourceAmount() > 0) {
-            ItemStack fee = item(context.parameters().item());
-            if (fee == null) return false;
-            if (matches(support, fee)) remaining -= plan.resourceAmount();
-        }
-        return remaining >= 1;
-    }
-
-    private static ItemStack item(String specification) {
-        try {
-            StringReader reader = new StringReader(specification.trim());
-            ItemParser.ItemResult parser = ItemParser.parseForItem(net.minecraft.core.registries.BuiltInRegistries.ITEM.asLookup(), reader);
-            if (reader.canRead()) return null;
-            ItemStack item = new ItemInput(parser.item(), parser.nbt()).createItemStack(1, false);
-            return item.isEmpty() ? null : item;
-        } catch (com.mojang.brigadier.exceptions.CommandSyntaxException | IllegalArgumentException error) {
-            return null;
-        }
-    }
-
-    private static boolean debitExperience(ServerPlayer player, EnumCostType type, int amount) {
-        int points = player.totalExperience, levels = player.experienceLevel;
-        float progress = player.experienceProgress;
-        boolean success = false;
-        try {
-            if (type == EnumCostType.EXP_POINT) {
-                player.giveExperiencePoints(-amount);
-                success = player.totalExperience == points - amount;
-            } else {
-                player.giveExperienceLevels(-amount);
-                success = player.experienceLevel == levels - amount;
-            }
-            return success;
-        } finally {
-            // Forge experience events may cancel or alter the debit; never treat that as successful payment.
-            if (!success) {
-                player.totalExperience = points;
-                player.experienceLevel = levels;
-                player.experienceProgress = progress;
-            }
-        }
-    }
-
-    private static boolean matches(ItemStack stack, ItemStack required) {
-        return !stack.isEmpty() && ItemStack.isSameItemSameTags(stack, required);
-    }
-
-    private static long count(Inventory inventory, ItemStack required) {
-        long count = 0;
-        for (int i = 0; i < inventory.getContainerSize(); i++) {
-            ItemStack stack = inventory.getItem(i);
-            if (matches(stack, required)) count += stack.getCount();
-        }
-        return count;
-    }
-
-    private static void remove(Inventory inventory, ItemStack required, int amount) {
-        int remaining = amount;
-        for (int i = 0; i < inventory.getContainerSize() && remaining > 0; i++) {
-            ItemStack stack = inventory.getItem(i);
-            if (matches(stack, required)) {
-                int take = Math.min(remaining, stack.getCount());
-                stack.shrink(take);
-                remaining -= take;
-            }
-        }
-        if (remaining != 0) throw new IllegalStateException("Inventory changed during payment");
+                && plan.resourceAmount() > 0) requirements.add(CostRequirement.leaf(resource(context, plan.resourceAmount())));
+        String specification = BuiltInRegistries.ITEM.getKey(support.getItem()).toString()
+                + (support.hasTag() ? support.getTag().toString() : "");
+        requirements.add(CostRequirement.leaf(new ResourceCost("banira:item", 1, specification)));
+        return BaniraCosts.access(moving, InventoryScope.ALL).preview(CostRequirement.all(requirements), 1).isSuccess();
     }
 }
