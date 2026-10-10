@@ -1,12 +1,12 @@
 package xin.vanilla.narcissus.internal.forge.cost;
 
-import net.minecraft.network.protocol.Packet;
-import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.network.protocol.Packet;
 import net.minecraft.server.network.ServerGamePacketListenerImpl;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.food.FoodData;
 import net.minecraft.world.level.Level;
+import net.minecraft.server.level.ServerLevel;
 import org.junit.After;
 import org.junit.Before;
 import xin.vanilla.banira.common.config.ConfigHolder;
@@ -64,6 +64,13 @@ public class ForgeCostPlayerFixture {
         cache.setAccessible(true);
         ((Map<UUID, PlayerTeleportData>) cache.get(null)).put(player.id, data);
         CustomConfig.setPlayerLanguage(player.id.toString(), "en_us");
+        Object delegate = previousPlatform;
+        BaniraPlatforms.install((xin.vanilla.banira.platform.BaniraPlatform) java.lang.reflect.Proxy.newProxyInstance(
+                getClass().getClassLoader(), new Class<?>[]{xin.vanilla.banira.platform.BaniraPlatform.class}, (proxy, method, args) -> {
+                    if (method.getName().equals("costService")) return costService();
+                    if (delegate != null) return method.invoke(delegate, args);
+                    throw new UnsupportedOperationException(method.getName());
+                }));
     }
 
     @After
@@ -83,6 +90,19 @@ public class ForgeCostPlayerFixture {
         return null;
     }
 
+    static xin.vanilla.banira.platform.BaniraCostService costService() {
+        return (payer, scope) -> {
+            try {
+                java.lang.reflect.Method method = Class.forName("xin.vanilla.banira.internal.forge.cost.ForgeCostResources")
+                        .getDeclaredMethod("access", ServerPlayer.class, xin.vanilla.banira.api.cost.InventoryScope.class,
+                                java.util.function.Predicate.class);
+                method.setAccessible(true);
+                java.util.function.Predicate<ServerPlayer> available = p -> p.isAlive() && !p.isRemoved();
+                return (xin.vanilla.banira.api.cost.CostAccess) method.invoke(null, payer, scope, available);
+            } catch (ReflectiveOperationException error) { throw new IllegalStateException(error); }
+        };
+    }
+
     public static <T> T allocate(Class<T> type) throws Exception {
         Class<?> unsafeType = Class.forName("sun.misc.Unsafe");
         Field field = unsafeType.getDeclaredField("theUnsafe");
@@ -97,6 +117,7 @@ public class ForgeCostPlayerFixture {
         public ServerLevel world;
         boolean cancelExperience;
         int experienceFactor;
+        boolean mutateExperienceProgress;
 
         private RecordingPlayer() {
             super(null, null, null, null);
@@ -144,11 +165,19 @@ public class ForgeCostPlayerFixture {
         @Override
         public void giveExperiencePoints(int amount) {
             if (!cancelExperience) totalExperience += amount * (experienceFactor == 0 ? 1 : experienceFactor);
+            if (mutateExperienceProgress) {
+                experienceProgress = .125f;
+                experienceLevel++;
+            }
         }
 
         @Override
         public void giveExperienceLevels(int amount) {
             if (!cancelExperience) experienceLevel += amount * (experienceFactor == 0 ? 1 : experienceFactor);
+            if (mutateExperienceProgress) {
+                experienceProgress = .125f;
+                totalExperience++;
+            }
         }
 
         @Override
