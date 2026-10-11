@@ -1,9 +1,9 @@
 package xin.vanilla.narcissus.internal.fabric.cost;
 
-import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
+import net.minecraft.nbt.CompoundTag;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -245,6 +245,34 @@ public class FabricCostPaymentTest {
     }
 
     @Test
+    public void rejectedExperienceEventRestoresAllThreeExperienceFields() {
+        for (EnumCostType resource : Arrays.asList(EnumCostType.EXP_POINT, EnumCostType.EXP_LEVEL)) {
+            type = resource;
+            for (boolean cancelled : new boolean[]{true, false}) {
+                payer.totalExperience = 10;
+                payer.experienceLevel = 10;
+                payer.experienceProgress = .625f;
+                payer.cancelExperience = cancelled;
+                payer.experienceFactor = 2;
+                payer.mutateExperienceProgress = true;
+                CostOperation operation = CostOperation.create(context(CostPhase.CHECK));
+                assertEquals(EnumCostFailure.PAYMENT_FAILED, service.commit(operation, context(CostPhase.COMMIT)).failure());
+                assertEquals(10, payer.totalExperience);
+                assertEquals(10, payer.experienceLevel);
+                assertEquals(.625f, payer.experienceProgress, 0);
+                assertEquals(2, data.peekTeleportCard());
+                assertEquals(0, syncs);
+                payer.cancelExperience = false;
+                payer.experienceFactor = 0;
+                payer.mutateExperienceProgress = false;
+                assertEquals(EnumCostFailure.INVALID_OPERATION, service.commit(operation, context(CostPhase.COMMIT)).failure());
+                assertEquals(10, payer.totalExperience);
+                assertEquals(10, payer.experienceLevel);
+            }
+        }
+    }
+
+    @Test
     public void itemPaymentMatchesIdAndEntireNbtAcrossAllInventorySlots() {
         type = EnumCostType.ITEM;
         item = "minecraft:stone{custom:1}";
@@ -320,6 +348,43 @@ public class FabricCostPaymentTest {
         assertEquals(2, data.peekTeleportCard());
         assertEquals(1, commands);
         assertEquals(0, syncs);
+    }
+
+    @Test
+    public void failedCommandRefundsOnlyItsReservationWithoutErasingGrantedCards() {
+        type = EnumCostType.COMMAND;
+        nativePayment = new FabricCostPayment(() -> now, p -> true, requests::get,
+                (p, c) -> {
+                    commands++;
+                    data.refundTeleportCards(5);
+                    return false;
+                }, p -> syncs++);
+        service = new CostPaymentService(ctx -> CostCalculation.success(5, 5), nativePayment);
+        CostOperation operation = CostOperation.create(context(CostPhase.CHECK));
+        assertEquals(EnumCostFailure.COMMAND_FAILED, service.commit(operation, context(CostPhase.COMMIT)).failure());
+        assertEquals(7, data.peekTeleportCard());
+        assertEquals(1, commands);
+        assertEquals(0, syncs);
+        assertEquals(EnumCostFailure.INVALID_OPERATION, service.commit(operation, context(CostPhase.COMMIT)).failure());
+        assertEquals(7, data.peekTeleportCard());
+    }
+
+    @Test
+    public void thrownCommandRefundsOnlyItsReservationWithoutErasingGrantedCards() {
+        type = EnumCostType.COMMAND;
+        nativePayment = new FabricCostPayment(() -> now, p -> true, requests::get,
+                (p, c) -> {
+                    commands++;
+                    data.refundTeleportCards(5);
+                    throw new IllegalStateException("Command failed after card grant");
+                }, p -> syncs++);
+        service = new CostPaymentService(ctx -> CostCalculation.success(5, 5), nativePayment);
+        CostOperation operation = CostOperation.create(context(CostPhase.CHECK));
+        assertEquals(EnumCostFailure.PAYMENT_FAILED, service.commit(operation, context(CostPhase.COMMIT)).failure());
+        assertEquals(7, data.peekTeleportCard());
+        assertEquals(1, commands);
+        assertEquals(0, syncs);
+        assertEquals(EnumCostFailure.INVALID_OPERATION, service.commit(operation, context(CostPhase.COMMIT)).failure());
     }
 
     @Test
@@ -477,6 +542,7 @@ public class FabricCostPaymentTest {
         BaniraPlatforms.install((BaniraPlatform) Proxy.newProxyInstance(getClass().getClassLoader(),
                 new Class<?>[]{BaniraPlatform.class}, (p, m, a) -> {
                     if (m.getName().equals("playerDataService")) return store;
+                    if (m.getName().equals("costService")) return FabricCostPlayerFixture.costService();
                     throw new UnsupportedOperationException(m.getName());
                 }));
         return saves;
