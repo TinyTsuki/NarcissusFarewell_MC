@@ -1,8 +1,8 @@
 package xin.vanilla.narcissus.internal.server;
 
-import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.server.MinecraftServer;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import xin.vanilla.banira.api.BaniraConfigs;
@@ -110,6 +110,20 @@ public final class NarcissusCostService implements AutoCloseable {
 
             public void afterPayment(CostContext context, CostPaymentPlan plan) {
                 nativePayment.afterPayment(context, plan);
+            }
+
+            public CostPaymentService.PreparedPayment prepare(CostContext context, CostPaymentPlan plan) {
+                CostPaymentService.PreparedPayment prepared = nativePayment.prepare(context, plan);
+                return new CostPaymentService.PreparedPayment() {
+                    public xin.vanilla.banira.api.cost.CostPaymentPlan plan() { return prepared.plan(); }
+                    public EnumCostFailure pay() {
+                        EnumCostFailure failure = validate(context);
+                        if (failure == EnumCostFailure.NONE) failure = check(context, plan);
+                        return failure == EnumCostFailure.NONE ? prepared.pay() : failure;
+                    }
+                    public java.util.List<xin.vanilla.banira.api.cost.CostPaymentPlan.ResourceSnapshot> receipt() { return prepared.receipt(); }
+                    public void afterPayment() { prepared.afterPayment(); }
+                };
             }
         };
         payment = new CostPaymentService(runtime::calculate, guarded);
