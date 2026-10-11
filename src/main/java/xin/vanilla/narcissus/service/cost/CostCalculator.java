@@ -30,11 +30,9 @@ public final class CostCalculator {
     }
 
     private CostCalculation finish(CostParameters parameters, double raw) {
-        if (!Double.isFinite(raw) || raw < 0) return CostCalculation.failed(EnumCostFailure.INVALID_RESULT);
-        double bounded = Math.max(parameters.minAmount(), raw);
-        if (parameters.maxAmount() >= 0) bounded = Math.min(bounded, parameters.maxAmount());
-        double rounded = Math.ceil(bounded);
-        if (rounded > Integer.MAX_VALUE) return CostCalculation.failed(EnumCostFailure.AMOUNT_OVERFLOW);
-        return CostCalculation.success(raw, (int) rounded);
+        xin.vanilla.banira.api.cost.CostAmount amount = xin.vanilla.banira.common.cost.CostAmounts.normalize(raw,
+                parameters.minAmount(), parameters.maxAmount());
+        return amount.isSuccess() ? CostCalculation.success(amount.rawAmount(), amount.amount())
+                : CostCalculation.failed(NarcissusPaymentPolicy.failure(amount.failure()));
     }
 }

@@ -6,8 +6,6 @@ import xin.vanilla.narcissus.data.cost.*;
 import xin.vanilla.narcissus.enums.EnumCostFailure;
 import xin.vanilla.narcissus.internal.server.cost.CostEvaluation;
 
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
 import java.util.function.Function;
@@ -26,7 +24,7 @@ public final class CostQuoteService {
     }
 
     private final Thread owner = Thread.currentThread();
-    private final Map<UUID, Connection> connections = new HashMap<>();
+    private final xin.vanilla.banira.api.cost.CostQuoteSessions sessions;
     private final LongSupplier clock, generation;
     private final QuoteAccess access;
     private final Function<CostContext, CostCalculation> calculate;
@@ -41,50 +39,35 @@ public final class CostQuoteService {
         this.calculate = Objects.requireNonNull(calculate);
         this.paymentAccess = Objects.requireNonNull(paymentAccess);
         this.payment = new CostPaymentService(calculate, paymentAccess);
+        this.sessions = new xin.vanilla.banira.api.cost.CostQuoteSessions(clock, generation, access::connected);
     }
 
     public void openConnection(UUID player, UUID session) {
-        checkOwner();
-        Objects.requireNonNull(session);
-        Objects.requireNonNull(player);
-        if (!access.connected(player)) throw new IllegalArgumentException("Quote connection is not live");
-        Connection old = connections.get(player);
-        if (old == null || !old.session.equals(session))
-            connections.put(player, new Connection(session, clock.getAsLong()));
+        sessions.open(player, session);
     }
 
     public void closeConnection(UUID player) {
-        checkOwner();
-        connections.remove(player);
+        sessions.close(player);
     }
 
     public void clear() {
-        checkOwner();
-        connections.clear();
+        sessions.clear();
     }
 
     public int connectionCount() {
-        checkOwner();
-        return connections.size();
+        return sessions.connectionCount();
     }
 
     public CostQuote quote(UUID connectionPlayer, CostQuoteRequest request) {
         checkOwner();
         Objects.requireNonNull(request);
-        Connection connection = connections.get(connectionPlayer);
-        if (connection == null || !connection.session.equals(request.sessionId()))
-            return result(request, CostQuote.Status.REJECTED, EnumCostFailure.ACTOR_UNAVAILABLE);
-        if (!access.connected(connectionPlayer)) {
-            connections.remove(connectionPlayer);
-            return result(request, CostQuote.Status.REJECTED, EnumCostFailure.ACTOR_UNAVAILABLE);
-        }
-        if (!connection.consume(clock.getAsLong()))
+        xin.vanilla.banira.api.cost.CostFailure guard = sessions.accept(connectionPlayer, request.sessionId(),
+                request.requestId(), request.generationId());
+        if (guard.equals(xin.vanilla.banira.api.cost.CostFailure.RATE_LIMITED))
             return result(request, CostQuote.Status.RATE_LIMITED, EnumCostFailure.NONE);
-        if (request.requestId() <= connection.lastRequest)
-            return result(request, CostQuote.Status.REJECTED, EnumCostFailure.INVALID_OPERATION);
-        connection.lastRequest = request.requestId();
-        if (request.generationId() != generation.getAsLong())
-            return result(request, CostQuote.Status.UNAVAILABLE, EnumCostFailure.CONFIGURATION_UNAVAILABLE);
+        if (guard.isFailure())
+            return result(request, guard.equals(xin.vanilla.banira.api.cost.CostFailure.CONFIGURATION_UNAVAILABLE)
+                    ? CostQuote.Status.UNAVAILABLE : CostQuote.Status.REJECTED, NarcissusPaymentPolicy.failure(guard));
         CostQuoteTarget target = request.target();
         if ((target.kind() == CostQuoteTarget.Kind.HOME || target.kind() == CostQuoteTarget.Kind.HISTORY) && !target.owner().equals(connectionPlayer)
                 || !access.permitted(connectionPlayer, target))
@@ -122,25 +105,4 @@ public final class CostQuoteService {
             throw new IllegalStateException("Quote service requires server owner thread");
     }
 
-    private static final class Connection {
-        final UUID session;
-        long updated, lastRequest;
-        double tokens = 8;
-
-        Connection(UUID session, long now) {
-            this.session = session;
-            this.updated = now;
-        }
-
-        boolean consume(long now) {
-            long delta = now - updated;
-            if (delta > 0) {
-                tokens = Math.min(8, tokens + delta / 250_000_000.0);
-                updated = now;
-            }
-            if (tokens < 1) return false;
-            tokens--;
-            return true;
-        }
-    }
 }
