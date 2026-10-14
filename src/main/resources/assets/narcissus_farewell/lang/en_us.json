@@ -387,7 +387,7 @@
   "word.narcissus_farewell.suggest_whitelist_both": "Accept both tpa and tph requests",
   "word.narcissus_farewell.suggest_whitelist_none": "No special permission",
   "word.narcissus_farewell.teleport_btn": "Teleport",
-  "word.narcissus_farewell.teleport_card": "Teleport-card",
+  "word.narcissus_farewell.teleport_card": "TP Card",
   "word.narcissus_farewell.teleport_failed": "Teleport incomplete: entity migration or riding restoration was rejected",
   "word.narcissus_farewell.tp_ask": "Request to teleport yourself to a player",
   "word.narcissus_farewell.tp_ask_cancel": "Cancel a request to be teleported to a player",
