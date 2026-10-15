@@ -24,20 +24,24 @@ public final class MapHelper {
         }
         switch (packet.action()) {
             case ADD:
-                addWaypoint(packet.name(), packet.dimension(), packet.x(), packet.y(), packet.z());
+                addWaypoint(packet.type().name(), packet.name(), packet.dimension(), packet.x(), packet.y(), packet.z());
                 break;
             case REMOVE:
-                removeWaypoint(packet.name(), packet.dimension(), packet.x(), packet.y(), packet.z());
+                removeWaypoint(packet.type().name(), packet.name(), packet.dimension(), packet.x(), packet.y(), packet.z());
                 break;
         }
     }
 
     public static void addWaypoint(final String name, final String dimension, final double x, final double y, final double z) {
+        addWaypoint("WAYPOINT", name, dimension, x, y, z);
+    }
+
+    private static void addWaypoint(final String kind, final String name, final String dimension, final double x, final double y, final double z) {
         if (ModList.get().isLoaded("xaerominimap")) {
             XaeroMinimap.addWaypoint(name, dimension, x, y, z);
         }
         if (ModList.get().isLoaded("journeymap")) {
-            JourneyMap.addWaypoint(name, dimension, x, y, z);
+            JourneyMap.addWaypoint(kind, name, dimension, x, y, z);
         }
         if (ModList.get().isLoaded("ftbchunks")) {
             FtbChunks.addWaypoint(name, dimension, x, y, z);
@@ -45,11 +49,15 @@ public final class MapHelper {
     }
 
     public static void removeWaypoint(final String name, final String dimension, final double x, final double y, final double z) {
+        removeWaypoint("WAYPOINT", name, dimension, x, y, z);
+    }
+
+    private static void removeWaypoint(final String kind, final String name, final String dimension, final double x, final double y, final double z) {
         if (ModList.get().isLoaded("xaerominimap")) {
             XaeroMinimap.removeWaypoint(name, dimension, x, y, z);
         }
         if (ModList.get().isLoaded("journeymap")) {
-            JourneyMap.removeWaypoint(name, dimension, x, y, z);
+            JourneyMap.removeWaypoint(kind, name, dimension, x, y, z);
         }
         if (ModList.get().isLoaded("ftbchunks")) {
             FtbChunks.removeWaypoint(name, dimension, x, y, z);

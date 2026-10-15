@@ -178,6 +178,40 @@ repositories {
     }
 }
 
+configurations.create('journeyMapModernApiSource') { transitive = false }
+configurations.create('journeyMapBetaApiSource') { transitive = false }
+dependencies {
+    journeyMapModernApiSource 'maven.modrinth:journeymap:1y04dWbe'
+    journeyMapBetaApiSource 'curse.maven:journeymap-32274:5777473'
+}
+def journeyMapApiDirectory = file('.gradle/narcissus/journeymap-api')
+journeyMapApiDirectory.mkdirs()
+def extractJourneyMapApi = { configuration, String entryName ->
+    def target = new File(journeyMapApiDirectory, new File(entryName).name)
+    configuration.files.each { artifact ->
+        new java.util.zip.ZipFile(artifact).withCloseable { zip ->
+            def entry = zip.getEntry(entryName)
+            if (entry == null) throw new GradleException('JourneyMap API compile input missing')
+            zip.getInputStream(entry).withCloseable { stream ->
+                java.nio.file.Files.copy(stream, target.toPath(), java.nio.file.StandardCopyOption.REPLACE_EXISTING)
+            }
+        }
+    }
+    target
+}
+def journeyMapModernApi = new File(journeyMapApiDirectory, 'journeymap-api-forge-2.0.0-1.21.1.jar')
+def journeyMapBetaApi = new File(journeyMapApiDirectory, 'journeymap-api-forge-2.0.0-1.21-SNAPSHOT.jar')
+configurations.configureEach { configuration ->
+    if (configuration.name in ['__obfuscated', 'compileClasspath', 'testCompileClasspath', 'testRuntimeClasspath']) {
+        configuration.incoming.beforeResolve {
+            extractJourneyMapApi(configurations.journeyMapModernApiSource,
+                    'META-INF/jarjar/journeymap-api-forge-2.0.0-1.21.1.jar')
+            extractJourneyMapApi(configurations.journeyMapBetaApiSource,
+                    'META-INF/jarjar/journeymap-api-forge-2.0.0-1.21-SNAPSHOT.jar')
+        }
+    }
+}
+
 dependencies {
     runtimeOnly fg.deobf("maven.modrinth:spark:dZASdPFO")
     // Development runtime performance mod; not bundled into published artifacts.
@@ -221,8 +255,8 @@ dependencies {
     compileOnly fg.deobf("curse.maven:corail-tombstone-243707:${corail_tomb_id}")
 
     compileOnly fg.deobf("curse.maven:xaeros-minimap-263420:${xaeros_minimap_id}")
-    compileOnly fg.deobf("curse.maven:journeymap-32274:${journeymap_id}")
-    compileOnly "info.journeymap:journeymap-api-forge:${journeymap_api_version}"
+    compileOnly files(journeyMapBetaApi)
+    testImplementation files(journeyMapModernApi)
 
     // For more info:
     // http://www.gradle.org/docs/current/userguide/artifact_dependencies_tutorial.html
@@ -235,6 +269,12 @@ dependencies {
 // 纯单元测试不需要解析仅供游戏运行的可选联动 mod。
 configurations.testRuntimeOnly.setExtendsFrom(
         configurations.testRuntimeOnly.extendsFrom.findAll { it != configurations.runtimeOnly })
+
+tasks.register('journeyMapBetaTest', Test) {
+    testClassesDirs = sourceSets.test.output.classesDirs
+    classpath = sourceSets.test.runtimeClasspath - files(journeyMapModernApi) + files(journeyMapBetaApi)
+    filter { includeTestsMatching 'xin.vanilla.narcissus.integration.map.*' }
+}
 
 // This block of code expands all declared replace properties in the specified resource targets.
 // A missing property will result in an error. Properties are expanded using ${} Groovy notation.
