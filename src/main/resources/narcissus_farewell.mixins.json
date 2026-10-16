@@ -12,6 +12,7 @@
     "TemptGoalAccessor"
   ],
   "client": [
+    "JourneyMapWaypointFileMixin"
   ],
   "injectors": {
     "defaultRequire": 1
