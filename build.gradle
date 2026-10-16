@@ -123,6 +123,40 @@ repositories {
     }
 }
 
+configurations.create('journeyMapModernApiSource') { transitive = false }
+configurations.create('journeyMapBetaApiSource') { transitive = false }
+dependencies {
+    journeyMapModernApiSource 'maven.modrinth:journeymap:CtFE7hwT'
+    journeyMapBetaApiSource 'curse.maven:journeymap-32274:7824057'
+}
+def journeyMapApiDirectory = file('.gradle/narcissus/journeymap-api')
+journeyMapApiDirectory.mkdirs()
+def extractJourneyMapApi = { configuration, String entryName ->
+    def target = new File(journeyMapApiDirectory, new File(entryName).name)
+    configuration.files.each { artifact ->
+        new java.util.zip.ZipFile(artifact).withCloseable { zip ->
+            def entry = zip.getEntry(entryName)
+            if (entry == null) throw new GradleException('JourneyMap API compile input missing')
+            zip.getInputStream(entry).withCloseable { stream ->
+                java.nio.file.Files.copy(stream, target.toPath(), java.nio.file.StandardCopyOption.REPLACE_EXISTING)
+            }
+        }
+    }
+    target
+}
+def journeyMapModernApi = new File(journeyMapApiDirectory, 'journeymap-api-neoforge-2.0.0-1.21.1.jar')
+def journeyMapBetaApi = new File(journeyMapApiDirectory, 'journeymap-api-neoforge-2.0.0-1.21.1-SNAPSHOT.jar')
+configurations.configureEach { configuration ->
+    if (configuration.name in ['compileClasspath', 'testCompileClasspath', 'testRuntimeClasspath']) {
+        configuration.incoming.beforeResolve {
+            extractJourneyMapApi(configurations.journeyMapModernApiSource,
+                    'META-INF/jarjar/journeymap-api-neoforge-2.0.0-1.21.1.jar')
+            extractJourneyMapApi(configurations.journeyMapBetaApiSource,
+                    'META-INF/jarjar/journeymap-api-neoforge-2.0.0-1.21.1-SNAPSHOT.jar')
+        }
+    }
+}
+
 dependencies {
     runtimeOnly "maven.modrinth:spark:v5qtqRQi"
     runtimeOnly "curse.maven:rubidium-extra-654373:6860464"
@@ -170,7 +204,8 @@ dependencies {
     compileOnly "curse.maven:corail-tombstone-243707:${corail_tomb_id}"
 
     compileOnly "curse.maven:xaeros-minimap-263420:${xaeros_minimap_id}"
-    compileOnly "curse.maven:journeymap-32274:${journeymap_id}"
+    compileOnly files(journeyMapBetaApi)
+    testImplementation files(journeyMapModernApi)
 
     compileOnly "curse.maven:ftb-chunks-forge-314906:${ftb_chunk_id}"
     compileOnly "curse.maven:architectury-api-419699:${architectury_api_id}"
@@ -178,11 +213,19 @@ dependencies {
     compileOnly "curse.maven:ftb-teams-forge-404468:${ftb_teams_id}"
 
     compileOnly "curse.maven:jade-324717:${jade_id}"
-    compileOnly "info.journeymap:journeymap-api-${loader_type}:${journeymap_api_version}"
 
     // For more info:
     // http://www.gradle.org/docs/current/userguide/artifact_dependencies_tutorial.html
     // http://www.gradle.org/docs/current/userguide/dependency_management.html
+}
+
+configurations.testRuntimeOnly.setExtendsFrom(
+        configurations.testRuntimeOnly.extendsFrom.findAll { it != configurations.runtimeOnly })
+
+tasks.register('journeyMapBetaTest', Test) {
+    testClassesDirs = sourceSets.test.output.classesDirs
+    classpath = sourceSets.test.runtimeClasspath - files(journeyMapModernApi) + files(journeyMapBetaApi)
+    filter { includeTestsMatching 'xin.vanilla.narcissus.integration.map.*' }
 }
 
 // This block of code expands all declared replace properties in the specified resource targets.
