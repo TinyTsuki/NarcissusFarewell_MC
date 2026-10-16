@@ -111,6 +111,31 @@ dependencies {
     implementation 'com.google.code.findbugs:jsr305:3.0.2'
 }
 
+configurations.create('journeyMapApiSource') { transitive = false }
+dependencies { journeyMapApiSource 'maven.modrinth:journeymap:i7LuKuDl' }
+def journeyMapApiDirectory = file('.gradle/narcissus/journeymap-api')
+journeyMapApiDirectory.mkdirs()
+def journeyMapApi = new File(journeyMapApiDirectory, 'journeymap-api-fabric-2.0.0-1.21.1.jar')
+configurations.journeyMapApiSource.files.each { artifact ->
+    new java.util.zip.ZipFile(artifact).withCloseable { zip ->
+        def entry = zip.getEntry('META-INF/jars/journeymap-api-fabric-2.0.0-1.21.1.jar')
+        if (entry == null) throw new GradleException('JourneyMap API compile input missing')
+        zip.getInputStream(entry).withCloseable { stream ->
+            java.nio.file.Files.copy(stream, journeyMapApi.toPath(), java.nio.file.StandardCopyOption.REPLACE_EXISTING)
+        }
+    }
+}
+dependencies {
+    modCompileOnly files(journeyMapApi)
+    testImplementation files(providers.provider {
+        sourceSets.main.compileClasspath.files.findAll { it.name.toLowerCase().contains('journeymap-api') }
+    })
+    if (project.findProperty('minimapSmoke') == 'journey') {
+        modRuntimeOnly 'maven.modrinth:journeymap:i7LuKuDl'
+        modRuntimeOnly 'maven.modrinth:common-network:qJXqSlRN'
+    }
+}
+
 // Keeps the development client FPS counter enabled without affecting published artifacts.
 def baniraDevFpsDefaultSettingsKey = 'extraSettings'
 def prepareBaniraDevFpsOverlay = {
