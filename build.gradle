@@ -246,6 +246,7 @@ dependencies {
 
     compileOnly fg.deobf("curse.maven:xaeros-minimap-263420:${xaeros_minimap_id}")
     compileOnly fg.deobf('banira.optional:journeymap-api-forge-1.20.1:2.0.0')
+    compileOnly fg.deobf("curse.maven:journeymap-32274:${journeymap_id}")
     testImplementation fg.deobf('banira.optional:journeymap-api-forge-1.20.1:2.0.0')
 
     compileOnly fg.deobf("curse.maven:ftb-chunks-forge-314906:${ftb_chunk_id}")

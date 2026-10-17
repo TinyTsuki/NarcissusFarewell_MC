@@ -69,6 +69,28 @@ public class LegacyJourneyMapAdapterTest {
     }
 
     @Test
+    public void incompleteHistoricalDisplayIdIsNeverAdoptedOrDeleted() throws Exception {
+        try (URLClassLoader loader = fixture()) {
+            JourneyMap.Adapter adapter = LegacyJourneyMapAdapter.bind(loader);
+            Class<?> api = loader.loadClass("journeymap.client.api.display.Waypoint");
+            Object value = api.getConstructor(String.class, String.class, String.class, String.class, BlockPos.class)
+                    .newInstance("narcissus_farewell", "HOME_old", "home", "minecraft:overworld", new BlockPos(-1, 64, -2));
+            Class<?> point = loader.loadClass("journeymap.client.waypoint.Waypoint");
+            Object historical = point.getConstructor(api).newInstance(value);
+            Class<?> store = loader.loadClass("journeymap.client.waypoint.WaypointStore");
+            Object instance = store.getField("INSTANCE").get(null);
+            store.getMethod("save", point, boolean.class).invoke(instance, historical, true);
+            JourneyMap.Point home = new JourneyMap.Point("HOME", "home", "minecraft:overworld", -1, 64, -2);
+            adapter.add(home);
+            Collection<?> points = (Collection<?>) store.getMethod("getAll").invoke(instance);
+            assertEquals("An unproven old identity must not suppress the new owned point", 2, points.size());
+            adapter.remove(home);
+            assertEquals(1, points.size());
+            assertSame(historical, points.iterator().next());
+        }
+    }
+
+    @Test
     public void netherCoordinatesMatchInTheirOwnDimensionWhileViewingOverworld() throws Exception {
         try(URLClassLoader loader=fixture()) {
             JourneyMap.Adapter adapter=LegacyJourneyMapAdapter.bind(loader);

@@ -37,6 +37,11 @@ public final class LegacyJourneyMapFiles {
         prepare(directory, new FileAccess());
     }
 
+    public static void requireNativeFileIdentity(Path source, String nativeFileName) throws IOException {
+        if (!source.getFileName().toString().equals(nativeFileName))
+            throw new IOException("Unproven waypoint file migration blocked: " + source);
+    }
+
     static void prepare(Path directory, FileAccess access) throws IOException {
         Path root = directory.toAbsolutePath().normalize();
         checkAncestors(root);
