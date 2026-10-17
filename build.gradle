@@ -125,6 +125,7 @@ configurations.journeyMapApiSource.files.each { artifact ->
 }
 dependencies {
     modCompileOnly files(journeyMapApi)
+    modCompileOnly 'maven.modrinth:journeymap:3ZtAeGzV'
     testImplementation files(providers.provider {
         sourceSets.main.compileClasspath.files.findAll { it.name.toLowerCase().contains('journeymap-api') }
     })
