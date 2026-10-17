@@ -54,6 +54,8 @@ public final class ClientModEventHandler {
         BaniraClientEvents.ModLifecycle.onClientSetup(event ->
                 BaniraLogos.register(NarcissusFarewell.MODID, () -> Math.random() > 0.5 ? "logo_.png" : "logo.png"));
         BaniraClientEvents.Client.onClientTick(ClientModEventHandler::onClientTick);
+        BaniraClientEvents.Player.onClientLoggedIn(event -> xin.vanilla.narcissus.integration.map.JourneyMap.startSession());
+        BaniraClientEvents.Player.onClientLoggedOut(event -> xin.vanilla.narcissus.integration.map.JourneyMap.endSession());
         NarcissusUiSmokeRunner.register();
         NarcissusNetworkSmokeClientRunner.register();
         xin.vanilla.narcissus.internal.client.dev.NarcissusCostSmokeClientRunner.register();
@@ -83,6 +85,7 @@ public final class ClientModEventHandler {
     }
 
     private static void onClientTick(xin.vanilla.banira.api.client.event.BaniraClientTickEvent event) {
+        xin.vanilla.narcissus.integration.map.JourneyMap.tick();
         NarcissusUiSmokeRunner.tick(Minecraft.getInstance());
         NarcissusNetworkSmokeClientRunner.tick(Minecraft.getInstance());
         xin.vanilla.narcissus.internal.client.dev.NarcissusCostSmokeClientRunner.tick(Minecraft.getInstance());
