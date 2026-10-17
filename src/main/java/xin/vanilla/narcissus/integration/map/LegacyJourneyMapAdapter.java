@@ -108,6 +108,7 @@ final class LegacyJourneyMapAdapter implements JourneyMap.Adapter {
         Object id = call(displayId, waypoint);
         int scale = "minecraft:the_nether".equals(point.dimension()) ? 8 : 1;
         return id instanceof String && ((String) id).startsWith(point.kind() + "_")
+                && LegacyJourneyMapFiles.fileName(JourneyMap.MOD_ID, (String) id) != null
                 && JourneyMap.matches((String) call(origin, waypoint), (String) call(name, waypoint), strings(call(dimensions, waypoint)),
                 JourneyMap.block((double) call(x, waypoint)), (int) call(y, waypoint), JourneyMap.block((double) call(z, waypoint)),
                 point.name(), point.dimension(), Math.multiplyExact(point.x(), scale), point.y(), Math.multiplyExact(point.z(), scale));
