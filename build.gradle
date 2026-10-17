@@ -35,6 +35,10 @@ configurations.configureEach {
 
 repositories {
     maven { name = "CurseMaven"; url = "https://www.cursemaven.com" }
+    maven {
+        url = 'https://maven.blamejared.com'
+        content { includeGroup 'info.journeymap' }
+    }
     maven { name = 'Fabric'; url = 'https://maven.fabricmc.net/' }
     mavenLocal()
     maven {
@@ -64,6 +68,13 @@ configurations {
 }
 
 dependencies {
+    modCompileOnly 'info.journeymap:journeymap-api-fabric:1.16.5-2.0.0'
+    testImplementation files(providers.provider {
+        sourceSets.main.compileClasspath.files.findAll { it.name.toLowerCase().contains('journeymap-api') }
+    })
+    if (project.findProperty('minimapSmoke') == 'journey') {
+        modRuntimeOnly 'maven.modrinth:journeymap:E1z7XbIe'
+    }
     implementation include('com.electronwill.night-config:core:3.6.4')
     implementation include('com.electronwill.night-config:toml:3.6.4')
     modRuntimeOnly "maven.modrinth:sodium-extra:Et3PybAh"

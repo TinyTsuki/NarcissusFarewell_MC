@@ -15,6 +15,9 @@
   "icon": "logo.png",
   "environment": "*",
   "entrypoints": {
+    "journeymap": [
+      "xin.vanilla.narcissus.integration.map.JourneyMapWaypointPlugin"
+    ],
     "main": [
       "xin.vanilla.narcissus.internal.fabric.FabricNarcissusEntry"
     ],
