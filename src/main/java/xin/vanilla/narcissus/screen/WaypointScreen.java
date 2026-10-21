@@ -1413,14 +1413,6 @@ public class WaypointScreen extends BaniraScreen implements UiNativePage {
         int typeOrdinal = item.type == WaypointEntry.Type.HOME ? 0 : 1;
         String dimension = item.safeWorldCoordinate.getDimensionResourceId();
         PacketUtils.sendPacketToServer(new WaypointDelToServer(typeOrdinal, item.name, dimension));
-        if (item.type == WaypointEntry.Type.HOME) {
-            homeItemsAll.removeIf(e -> e.name.equals(item.name) && e.safeWorldCoordinate != null && dimension.equals(e.safeWorldCoordinate.getDimensionResourceId()));
-        } else if (item.type == WaypointEntry.Type.STAGE) {
-            stageItemsAll.removeIf(e -> e.name.equals(item.name) && e.safeWorldCoordinate != null && dimension.equals(e.safeWorldCoordinate.getDimensionResourceId()));
-        }
-        applySearchFilter();
-        selectedItem = selectionAfterDelete(selectedItem, item);
-        if (selectedItem == null) lastSelectedItem = null;
     }
 
     @Override
