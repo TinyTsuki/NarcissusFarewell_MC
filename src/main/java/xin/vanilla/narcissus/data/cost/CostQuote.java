@@ -4,6 +4,7 @@ import lombok.Value;
 import lombok.experimental.Accessors;
 import xin.vanilla.banira.common.data.Component;
 import xin.vanilla.banira.common.enums.IEnumDescribable;
+import xin.vanilla.banira.common.util.EnumDescriptionHelper;
 import xin.vanilla.narcissus.NarcissusComponent;
 import xin.vanilla.narcissus.enums.EnumCostFailure;
 import xin.vanilla.narcissus.enums.EnumCostType;
@@ -27,7 +28,8 @@ public class CostQuote {
 
         @Override
         public Component enumDescription() {
-            return NarcissusComponent.get().trans("word.narcissus_farewell.enum_cost_quote_status_" + name().toLowerCase(Locale.ROOT));
+            return EnumDescriptionHelper.transAutoDesc(NarcissusComponent.get(),
+                    "enum_cost_quote_status_" + name().toLowerCase(Locale.ROOT));
         }
     }
 
