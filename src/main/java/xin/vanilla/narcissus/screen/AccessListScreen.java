@@ -66,6 +66,9 @@ public class AccessListScreen extends BaniraScreen implements UiNativePage {
         if (CommonUiPages.close(this, UiCloseReason.CANCEL) || uiSession.requestClose()) return;
         uiSession.close(UiCloseReason.CANCEL); super.onClose();
     }
+    private static Texture[] accessHeadTextures(UUID uuid) {
+        return PlayerSkinTextureUtils.headFaceTextures(AccessProfileIcons.location(uuid, PlayerUtils.getPlayerSkin(uuid)));
+    }
     private String uiKey(String uuid) { return activeTab.name() + ":" + uuid; }
     private String uiUuid(String key) {
         return activeTabItems().stream().filter(uuid -> uiKey(uuid).equals(key)).findFirst().orElse("");
@@ -76,7 +79,7 @@ public class AccessListScreen extends BaniraScreen implements UiNativePage {
         else PacketUtils.sendPacketToServer(new AccessListEditToServer(3, EnumWhiteListMode.NONE.name(), deleteConfirmUuid));
         deleteConfirmUuid = null; deleteConfirmColumn = null; uiRevision++;
     }
-    private final class UiPort implements NarcissusListUiSession.Port {
+    private final class UiPort implements AccessListUiSession.PresentationPort {
         public Set<NarcissusListUiSession.Action> actions() {
             return EnumSet.of(NarcissusListUiSession.Action.ADD, NarcissusListUiSession.Action.DELETE,
                     NarcissusListUiSession.Action.EDIT, NarcissusListUiSession.Action.CONFIRM, NarcissusListUiSession.Action.CANCEL);
@@ -84,7 +87,7 @@ public class AccessListScreen extends BaniraScreen implements UiNativePage {
         public long revision() { return uiRevision; }
         public List<NarcissusListUiSession.Entry> entries() {
             return activeTabItems().stream().map(uuid -> new NarcissusListUiSession.Entry(uiKey(uuid),
-                    playerNameForListUuid(uuid), uuid + (activeTab == AccessListTab.WHITE ? " " + whiteMode(uuid) : ""))).toList();
+                    playerNameForListUuid(uuid), uuid)).toList();
         }
         public int tabs() { return 2; }
         public int tab() { return activeTab.ordinal(); }
@@ -102,15 +105,20 @@ public class AccessListScreen extends BaniraScreen implements UiNativePage {
         public String label(String id) {
             if (id.equals("tab0") || id.equals("tab1")) {
                 int index = id.equals("tab0") ? 0 : 1;
-                return (index == tab() ? "> " : "") + NarcissusComponent.get().transClientAuto(index == 0
+                return NarcissusComponent.get().transClientAuto(index == 0
                         ? "access_list_column_black" : "access_list_column_white") + " " + (index == 0 ? blackItemsAll.size() : whiteItemsAll.size());
             }
             return switch (id) {
                 case "title" -> NarcissusComponent.get().transClientAuto("access_list_title").toString();
+                case "subtitle" -> tr("access_personal");
+                case "scope_label" -> tr("access_scope_label");
+                case "player_label" -> tr("access_list_player_name");
+                case "mode_label" -> tr("access_list_white_mode");
+                case "confirm_title" -> tr("del_confirm_title");
                 case "search" -> NarcissusComponent.get().transClientAuto("access_list_search_hint").toString();
                 case "add" -> "+";
                 case "delete" -> "x";
-                case "edit" -> "\u270e";
+                case "edit" -> tr("access_edit");
                 case "add_tip" -> NarcissusComponent.get().transClientAuto(activeTab == AccessListTab.BLACK ? "access_list_add_black_title" : "access_list_add_white_title").toString();
                 case "edit_tip" -> NarcissusComponent.get().transClientAuto(activeTab == AccessListTab.BLACK ? "access_list_edit_black_title" : "access_list_edit_white_title").toString();
                 case "delete_tip", "confirm", "confirm_tip" -> NarcissusComponent.get().transClientAuto("delete").toString();
@@ -125,6 +133,38 @@ public class AccessListScreen extends BaniraScreen implements UiNativePage {
                     + playerNameForListUuid(uuid) + "\n" + uuid + (activeTab == AccessListTab.WHITE ? "\n" + whiteModeValue(uuid).enumDescription() : "");
         }
         public String cost() { return ""; }
+        private String tr(String key) { return NarcissusComponent.get().transClientAuto(key).toString(); }
+        public boolean confirming() { return deleteConfirmUuid != null; }
+        public UiGameElement profileIcon(String key) {
+            String uuid = uiUuid(key);
+            if (uuid.isEmpty()) return null;
+            try { return UiGameElement.option(new DropdownOption("", accessHeadTextures(UUID.fromString(uuid)), null)); }
+            catch (IllegalArgumentException failure) { return null; }
+        }
+        public String modeLabel(String key) {
+            String uuid = uiUuid(key);
+            if (activeTab != AccessListTab.WHITE || uuid.isEmpty()) return "";
+            return whiteModeValue(uuid) == EnumWhiteListMode.NONE ? tr("enum_white_list_mode_none") : whiteMode(uuid);
+        }
+        public AccessUiPresentation presentation() {
+            PlayerAccess access = PlayerTeleportData.getData(Minecraft.getInstance().player).getAccess();
+            String uuid = uiUuid(uiSelected);
+            boolean selected = !uuid.isEmpty();
+            String scope = tr(access.getWhiteList().isEmpty() ? "access_scope_open" : "access_scope_white");
+            AccessPolicyPresentation policy = AccessPolicyPresentation.of(uuid, access.getBlackList(), access.getWhiteList(), access.getAutoTpaList(), access.getAutoTphList());
+            String mode;
+            if (selected) mode = activeTab == AccessListTab.WHITE ? whiteModeValue(uuid).enumDescription().toString() : "";
+            else {
+                long tpa = access.getAutoTpaList().stream().filter(id -> !AccessPolicyPresentation.of(id, access.getBlackList(), access.getWhiteList(), access.getAutoTpaList(), access.getAutoTphList()).tpaKey().equals("access_request_ignored")).count();
+                long tph = access.getAutoTphList().stream().filter(id -> !AccessPolicyPresentation.of(id, access.getBlackList(), access.getWhiteList(), access.getAutoTpaList(), access.getAutoTphList()).tphKey().equals("access_request_ignored")).count();
+                mode = tr("access_auto_tpa") + " " + tpa + "\n" + tr("access_auto_tph") + " " + tph;
+            }
+            int total = activeTab == AccessListTab.BLACK ? blackItemsAll.size() : whiteItemsAll.size();
+            return new AccessUiPresentation(selected ? playerNameForListUuid(uuid) : scope, uuid, mode,
+                    tr("access_black_priority"), selected ? tr(policy.tpaKey()) : scope, selected ? tr(policy.tphKey()) : scope,
+                    activeTabItems().isEmpty() ? uiQuery.trim().isEmpty() ? emptyText(activeTabColumn()) : tr("access_no_match") : "",
+                    activeTabItems().size() + " / " + total, selected, confirming(), activeTab == AccessListTab.WHITE);
+        }
         public boolean enabled(NarcissusListUiSession.Action action) {
             if (!uiConnectionCurrent()) return false;
             if (deleteConfirmUuid != null) return action == NarcissusListUiSession.Action.CONFIRM || action == NarcissusListUiSession.Action.CANCEL;
@@ -454,7 +494,7 @@ public class AccessListScreen extends BaniraScreen implements UiNativePage {
         List<String> labels = new ArrayList<>(nameToUuid.keySet());
         List<DropdownOption> options = new ArrayList<>();
         nameToUuid.forEach((label, uuid) -> {
-            Texture[] textures = PlayerSkinTextureUtils.headFaceTextures(UUID.fromString(uuid));
+            Texture[] textures = accessHeadTextures(UUID.fromString(uuid));
             DropdownOption option = new DropdownOption(label, textures, NarcissusComponent.get().literal(uuid));
             options.add(option);
         });
@@ -492,7 +532,7 @@ public class AccessListScreen extends BaniraScreen implements UiNativePage {
         List<String> labels = new ArrayList<>(nameToUuid.keySet());
         List<DropdownOption> options = new ArrayList<>();
         nameToUuid.forEach((label, uuid) -> {
-            Texture[] textures = PlayerSkinTextureUtils.headFaceTextures(UUID.fromString(uuid));
+            Texture[] textures = accessHeadTextures(UUID.fromString(uuid));
             DropdownOption option = new DropdownOption(label, textures, NarcissusComponent.get().literal(uuid));
             options.add(option);
         });
@@ -535,7 +575,7 @@ public class AccessListScreen extends BaniraScreen implements UiNativePage {
 
         List<DropdownOption> options = new ArrayList<>();
         nameToUuid.forEach((label, uuid) -> options.add(new DropdownOption(label,
-                PlayerSkinTextureUtils.headFaceTextures(UUID.fromString(uuid)),
+                accessHeadTextures(UUID.fromString(uuid)),
                 NarcissusComponent.get().literal(uuid))));
 
         InputFormScreen.Args args = new InputFormScreen.Args()
@@ -808,7 +848,7 @@ public class AccessListScreen extends BaniraScreen implements UiNativePage {
         } catch (IllegalArgumentException e) {
             return;
         }
-        Texture[] tex = PlayerSkinTextureUtils.headFaceTextures(uuid);
+        Texture[] tex = accessHeadTextures(uuid);
         if (tex == null || tex.length < 2 || tex[0] == null) {
             return;
         }

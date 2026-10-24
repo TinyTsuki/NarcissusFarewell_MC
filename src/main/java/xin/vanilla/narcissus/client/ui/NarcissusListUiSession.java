@@ -64,6 +64,7 @@ public abstract class NarcissusListUiSession implements UiPageSession {
     protected boolean structuredPresentation() { return false; }
     protected String rowClass(Entry entry) { return ""; }
     protected String rowName(Entry entry) { return (entry.key().equals(port.selected()) ? "> " : "") + entry.name(); }
+    protected void bindRow(UiView row, Entry entry) { }
     private boolean live(UiView owner) { return !closed && owner != null && view == owner && connection.getAsBoolean(); }
     public boolean requestClose() {
         if (view == null || closed) return false;
@@ -175,6 +176,7 @@ public abstract class NarcissusListUiSession implements UiPageSession {
                 row.tooltip("open", NarcissusComponent.get().literal(entry.name() + "\n" + entry.detail()));
                 row.tooltip("label", NarcissusComponent.get().literal(entry.detail()));
                 row.enabled("open", !selectionLocked());
+                bindRow(row, entry);
                 owned.own(row.onAction("open", () -> {
                     if (live(owner) && token == revision && !selectionLocked()) { port.select(entry.key()); refresh(); }
                 }));

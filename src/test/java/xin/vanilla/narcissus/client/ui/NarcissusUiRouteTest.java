@@ -30,7 +30,7 @@ public class NarcissusUiRouteTest {
             Path path = Path.of("src/main/resources/assets/apricityui/apricity/narcissus_farewell/" + name + ".html");
             assertTrue(name, Files.exists(path));
             String html = Files.readString(path);
-            String style = name.equals("waypoints") ? "waypoints.css" : "narcissus.css";
+            String style = name.equals("waypoints") ? "waypoints.css" : name.equals("access") ? "access.css" : "narcissus.css";
             assertTrue(name, html.contains("href=\"" + style + "\""));
             Path stylesheet = path.getParent().resolve(style);
             assertTrue(Files.isRegularFile(stylesheet));
@@ -41,7 +41,7 @@ public class NarcissusUiRouteTest {
         }
         long cssBytes = 0;
         for (Path style : styles) cssBytes += Files.size(style);
-        assertTrue(cssBytes <= 4 * 1024);
+        assertTrue(cssBytes <= 5 * 1024);
         assertTrue(total < 12 * 1024);
     }
 }

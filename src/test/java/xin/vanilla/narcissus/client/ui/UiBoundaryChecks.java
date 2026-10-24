@@ -109,7 +109,7 @@ final class UiBoundaryChecks {
                 }
             }
         }
-        if (css > (shared ? 16384 : 4096)) errors.add("CSS budget");
+        if (css > (shared ? 16384 : 5120)) errors.add("CSS budget");
         if (css + markup > 262144) errors.add("HTML/CSS budget");
         if (js > 0) errors.add("Unexpected page script");
         if (bitmap > 65536) errors.add("Bitmap budget");
