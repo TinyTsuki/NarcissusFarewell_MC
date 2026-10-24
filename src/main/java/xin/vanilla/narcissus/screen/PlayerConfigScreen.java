@@ -47,6 +47,7 @@ public class PlayerConfigScreen extends xin.vanilla.banira.client.gui.PlayerConf
     private final Object uiConnection = Minecraft.getInstance().getConnection();
     private final TeleportPreferencesUiSession preferences;
     private UiPageSpec page;
+    private xin.vanilla.banira.api.client.ui.UiPageState preferenceUiState;
 
     public PlayerConfigScreen(@Nullable Args args) {
         this(args != null ? args : new Args(), true);
@@ -72,9 +73,33 @@ public class PlayerConfigScreen extends xin.vanilla.banira.client.gui.PlayerConf
         return page;
     }
     @Override public void captureUiState(xin.vanilla.banira.internal.client.ui.UiViewState state) {
-        for (Map.Entry<EnumTeleportType, SliderWidget> entry : sliders.entrySet())
+        for (Map.Entry<EnumTeleportType, SliderWidget> entry : sliders.entrySet()) {
             preferences.draft(entry.getKey(), entry.getValue().editingText());
+            NumericInputWidget input = entry.getValue().inlineInputWidget();
+            if (state != null && input != null && input.focused())
+                state.selection(countdownFocusId(entry.getKey()), input.cursorPosition(), input.highlightPos());
+        }
         super.captureUiState(state);
+    }
+    @Override public void prepareUiState(xin.vanilla.banira.internal.client.ui.UiViewState state) {
+        super.prepareUiState(state);
+        preferenceUiState = state;
+    }
+    @Override protected void afterPlayerConfigBuilt() {
+        super.afterPlayerConfigBuilt();
+        if (preferenceUiState == null) return;
+        for (Map.Entry<EnumTeleportType, SliderWidget> entry : sliders.entrySet()) {
+            NumericInputWidget input = entry.getValue().inlineInputWidget();
+            if (input != null && preferenceUiState.focusedField().equals(countdownFocusId(entry.getKey()))) {
+                requestFocus(input);
+                input.setSelectionRange(preferenceUiState.selectionStart(), preferenceUiState.selectionEnd());
+            }
+        }
+    }
+    static String countdownFocusId(EnumTeleportType type) {
+        if (type == null) return "";
+        int index = EnumTeleportType.countdownConfigurableTypes().indexOf(type);
+        return index < 0 ? "" : "field:" + index + "/input";
     }
 
     @Data
