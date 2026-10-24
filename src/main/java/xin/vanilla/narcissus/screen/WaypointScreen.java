@@ -92,7 +92,8 @@ public class WaypointScreen extends BaniraScreen implements UiNativePage {
                 + " " + entry.getCoordinateName()
                 + (entry.recordTime == null ? "" : " " + DateUtils.toDateTimeString(entry.recordTime));
     }
-    private final class UiPort implements NarcissusListUiSession.Port {
+    private final class UiPort implements WaypointUiSession.PresentationPort {
+        public boolean confirming() { return deleteConfirmItem != null; }
         public Set<NarcissusListUiSession.Action> actions() {
             return EnumSet.complementOf(EnumSet.of(NarcissusListUiSession.Action.EDIT));
         }
@@ -116,19 +117,23 @@ public class WaypointScreen extends BaniraScreen implements UiNativePage {
         public String label(String id) {
             if (id.startsWith("tab")) {
                 int index = Integer.parseInt(id.substring(3));
-                return (index == tab() ? "> " : "") + waypointTabLabel(WaypointListTab.values()[index]);
+                return waypointTabLabel(WaypointListTab.values()[index]);
             }
             return switch (id) {
                 case "title" -> "Narcissus";
+                case "subtitle" -> "WAYPOINTS";
+                case "selection_label" -> NarcissusComponent.get().transClientAuto("waypoint_selected_detail").toString();
+                case "cost_label" -> NarcissusComponent.get().transClientAuto("waypoint_cost_label").toString();
+                case "confirm_title" -> NarcissusComponent.get().transClientAuto("del_confirm_msg").toString();
+                case "history_order" -> NarcissusComponent.get().transClientAuto("waypoint_history_order").toString();
+                case "ordering_hint" -> NarcissusComponent.get().transClientAuto("waypoint_drag_hint").toString();
                 case "status" -> NarcissusComponent.get().transClientAuto("teleport_card") + ": " + ticketCount;
                 case "search" -> NarcissusComponent.get().transClientAuto("waypoint_search_hint").toString();
-                case "add" -> "+";
+                case "add" -> NarcissusComponent.get().transClientAuto("waypoint_add").toString();
                 case "delete" -> "x";
                 case "up" -> "\u2191";
                 case "down" -> "\u2193";
-                case "name" -> "A-Z";
-                case "time" -> "\u25f7";
-                case "distance" -> "\u2194";
+                case "name", "time", "distance" -> NarcissusComponent.get().transClientAuto("waypoint_order_" + id).toString();
                 case "name_tip", "time_tip", "distance_tip" -> NarcissusComponent.get().transClientAuto("waypoint_sort_" + id.replace("_tip", "")).toString();
                 case "add_tip" -> NarcissusComponent.get().transClientAuto(activeTab == WaypointListTab.PUBLIC ? "waypoint_add_stage_title" : "waypoint_add_home_title").toString();
                 case "delete_tip", "confirm", "confirm_tip" -> NarcissusComponent.get().transClientAuto("delete").toString();
@@ -149,6 +154,25 @@ public class WaypointScreen extends BaniraScreen implements UiNativePage {
             return deleteConfirmItem == null ? value : NarcissusComponent.get().transClientAuto("del_confirm_msg") + "\n" + value;
         }
         public String cost() { return uiConnectionCurrent() && selectedItem != null ? NarcissusComponent.get().transClientAuto("waypoint_detail_cost") + calculateCostDisplay(selectedItem) : ""; }
+        public WaypointUiPresentation presentation() {
+            WaypointEntry item = deleteConfirmItem == null ? selectedItem : deleteConfirmItem;
+            SafeWorldCoordinate c = item == null ? null : item.safeWorldCoordinate;
+            String amount = "", note = "";
+            if (item != null && uiConnectionCurrent()) {
+                calculateCostDisplay(item);
+                CostQuote quote = NarcissusClientSyncState.costQuotes().display(item.quoteTarget, System.nanoTime()).orElse(null);
+                WaypointCostPresentation cost = WaypointCostPresentation.from(quote, key -> NarcissusComponent.get().transClientAuto(key).toString());
+                amount = cost.amount(); note = cost.note();
+            }
+            if (item != null && !item.canTeleport) note = NarcissusComponent.get().transClientAuto("back_record_used").toString();
+            long date = item == null ? 0 : item.recordTime != null ? item.recordTime.getTime() : c == null ? 0 : c.createdAt();
+            return new WaypointUiPresentation(item == null ? "" : item.name, item == null ? "" : item.getDimensionName(),
+                    c == null ? "" : c.getDimensionResourceId(), c == null ? "" : String.valueOf(c.xInt()),
+                    c == null ? "" : String.valueOf(c.yInt()), c == null ? "" : String.valueOf(c.zInt()),
+                    item == null ? "" : formatItemDistanceMeters(item), date > 0 ? DateUtils.toDateTimeString(new Date(date)) : "",
+                    amount, note, activeTabItems().isEmpty() ? detail() : "", waypointTabLabel(activeTab),
+                    deleteConfirmItem != null, activeTab == WaypointListTab.FOOTPRINTS);
+        }
         public boolean enabled(NarcissusListUiSession.Action action) {
             if (!uiConnectionCurrent()) return false;
             if (deleteConfirmItem != null) return action == NarcissusListUiSession.Action.CONFIRM || action == NarcissusListUiSession.Action.CANCEL;

@@ -4,6 +4,7 @@ import xin.vanilla.banira.api.client.ui.*;
 import xin.vanilla.banira.client.gui.BaniraScreen;
 import xin.vanilla.banira.internal.client.ui.NativeUiView;
 import xin.vanilla.banira.internal.client.ui.UiOwnedResources;
+import xin.vanilla.banira.internal.client.ui.UiRowPresentation;
 import xin.vanilla.narcissus.NarcissusComponent;
 
 import java.util.*;
@@ -45,13 +46,24 @@ public abstract class NarcissusListUiSession implements UiPageSession {
     private long revision = Long.MIN_VALUE, dragTime, dragRevision;
     private String dragKey;
     private double dragY;
-    private boolean closed, nativeView;
+    private boolean closed, nativeView, rowsLocked;
 
     protected NarcissusListUiSession(Port port, BooleanSupplier connection, LongSupplier clock) {
         this.port = Objects.requireNonNull(port);
         this.connection = Objects.requireNonNull(connection);
         this.clock = Objects.requireNonNull(clock);
     }
+    protected final Port port() { return port; }
+    protected final boolean presentationCurrent() { return live(view) && !nativeView; }
+    protected void bindPresentation(UiView view) { }
+    protected void refreshPresentation(UiView view, boolean connected) { }
+    protected boolean selectionLocked() { return false; }
+    protected int rowHeight() { return 48; }
+    protected boolean textTools() { return false; }
+    protected boolean iconAction(String id) { return false; }
+    protected boolean structuredPresentation() { return false; }
+    protected String rowClass(Entry entry) { return ""; }
+    protected String rowName(Entry entry) { return (entry.key().equals(port.selected()) ? "> " : "") + entry.name(); }
     private boolean live(UiView owner) { return !closed && owner != null && view == owner && connection.getAsBoolean(); }
     public boolean requestClose() {
         if (view == null || closed) return false;
@@ -64,18 +76,18 @@ public abstract class NarcissusListUiSession implements UiPageSession {
         bindings = new UiOwnedResources();
         nativeView = view instanceof NativeUiView && ((NativeUiView) view).screen() instanceof BaniraScreen;
         if (nativeView) return;
-        for (String id : List.of("title", "close")) text(id, port.label(id));
+        for (String id : List.of("title", "close")) if (!iconAction(id)) text(id, port.label(id));
         view.control("search", new UiControlSpec(UiControlSpec.Kind.TEXT, 32767, "", false));
         view.draft("search", port.query());
         view.tooltip("search", NarcissusComponent.get().literal(port.label("search")));
         bindings.own(view.onDraft("search", value -> {
-            if (live(view)) { port.query(value); refresh(); }
+            if (live(view) && !selectionLocked()) { port.query(value); refresh(); }
         }));
         bindings.own(view.onAction("close", () -> { if (this.view == view) view.requestClose(); }));
         for (int index = 0; index < port.tabs(); index++) {
             int tab = index;
             bindings.own(view.onAction("tab" + index, () -> {
-                if (live(view)) {
+                if (live(view) && !selectionLocked()) {
                     if (view instanceof NativeUiView) ((NativeUiView) view).state().rowPosition(0);
                     port.tab(tab); refresh();
                 }
@@ -83,7 +95,7 @@ public abstract class NarcissusListUiSession implements UiPageSession {
         }
         for (Action action : port.actions()) {
             String id = action.name().toLowerCase(Locale.ROOT);
-            text(id, port.label(id));
+            if (!iconAction(id)) text(id, port.label(id));
             view.tooltip(id, NarcissusComponent.get().literal(port.label(id + "_tip")));
             bindings.own(view.onAction(id, () -> {
                 if (live(view) && port.enabled(action)) {
@@ -91,6 +103,7 @@ public abstract class NarcissusListUiSession implements UiPageSession {
                 }
             }));
         }
+        bindPresentation(view);
         refresh();
     }
     @Override public void tick() {
@@ -98,24 +111,32 @@ public abstract class NarcissusListUiSession implements UiPageSession {
         if (connection.getAsBoolean()) port.tick();
         refresh();
     }
-    private void refresh() {
+    protected final void refresh() {
         if (view == null || nativeView || closed) return;
-        if (port.revision() != revision) {
+        boolean locked = selectionLocked();
+        if (port.revision() != revision || rowsLocked != locked) {
+            rowsLocked = locked;
             revision = port.revision(); dragKey = null;
             entries = List.copyOf(port.entries());
             rebuild();
         }
         for (int index = 0; index < port.tabs(); index++) text("tab" + index, port.label("tab" + index));
         text("status", port.label("status"));
-        text("detail", port.detail());
-        text("cost", port.cost());
+        if (!structuredPresentation()) {
+            text("detail", port.detail());
+            text("cost", port.cost());
+        }
         for (Action action : port.actions()) {
             String id = action.name().toLowerCase(Locale.ROOT);
             boolean next = connection.getAsBoolean() && port.enabled(action);
-            if (!Objects.equals(enabled.put(id, next), next)) view.enabled(id, next);
+            if (!Objects.equals(enabled.put(id, next), next)) {
+                view.enabled(id, next);
+                if (next) view.tooltip(id, NarcissusComponent.get().literal(port.label(id + "_tip")));
+            }
         }
+        refreshPresentation(view, connection.getAsBoolean());
     }
-    private void text(String id, String value) {
+    protected final void text(String id, String value) {
         String next = Objects.toString(value, "");
         if (next.isEmpty() && !texts.containsKey(id)) { texts.put(id, next); return; }
         if (!Objects.equals(texts.put(id, next), next)) {
@@ -128,7 +149,10 @@ public abstract class NarcissusListUiSession implements UiPageSession {
         UiView owner = view;
         List<Entry> snapshot = entries;
         long token = revision;
-        view.rows("fields", new UiRowProvider() {
+        view.rows("fields", new UiRowPresentation() {
+            public int rowHeight() { return NarcissusListUiSession.this.rowHeight(); }
+            public boolean textTools() { return NarcissusListUiSession.this.textTools(); }
+            public String rowClass(int index) { return NarcissusListUiSession.this.rowClass(snapshot.get(index)); }
             public int size() { return snapshot.size(); }
             public String key(int index) { return snapshot.get(index).key(); }
             public void bind(UiView row, int index) {
@@ -146,15 +170,16 @@ public abstract class NarcissusListUiSession implements UiPageSession {
                 }
                 UiOwnedResources owned = new UiOwnedResources(); rows.put(row, owned);
                 Entry entry = snapshot.get(index);
-                row.text("open", NarcissusComponent.get().literal((entry.key().equals(port.selected()) ? "> " : "") + entry.name()));
+                row.text("open", NarcissusComponent.get().literal(rowName(entry)));
                 row.text("label", NarcissusComponent.get().literal(entry.detail()));
                 row.tooltip("open", NarcissusComponent.get().literal(entry.name() + "\n" + entry.detail()));
                 row.tooltip("label", NarcissusComponent.get().literal(entry.detail()));
+                row.enabled("open", !selectionLocked());
                 owned.own(row.onAction("open", () -> {
-                    if (live(owner) && token == revision) { port.select(entry.key()); refresh(); }
+                    if (live(owner) && token == revision && !selectionLocked()) { port.select(entry.key()); refresh(); }
                 }));
                 owned.own(row.onPointer("open", pointer -> {
-                    if (!live(owner) || token != revision || !pointer.finite()) return;
+                    if (!live(owner) || token != revision || !pointer.finite() || selectionLocked()) return;
                     if (pointer.kind() == UiPointer.Kind.DOWN && pointer.button() == 0 && port.enabled(Action.UP)) {
                         dragKey = entry.key(); dragY = pointer.y(); dragTime = clock.getAsLong(); dragRevision = revision;
                     } else if (pointer.kind() == UiPointer.Kind.UP && entry.key().equals(dragKey)) {
@@ -164,7 +189,7 @@ public abstract class NarcissusListUiSession implements UiPageSession {
                                 || pointer.y() < content.y() || pointer.y() >= content.y() + content.height())) return;
                         double delta = pointer.y() - dragY;
                         if (dragRevision == revision && clock.getAsLong() - dragTime >= 260_000_000L && Math.abs(delta) >= 24) {
-                            int offset = (int) Math.max(-entries.size(), Math.min(entries.size(), Math.round(delta / 48.0)));
+                            int offset = (int) Math.max(-entries.size(), Math.min(entries.size(), Math.round(delta / rowHeight())));
                             port.move(key, offset); refresh();
                         }
                     }

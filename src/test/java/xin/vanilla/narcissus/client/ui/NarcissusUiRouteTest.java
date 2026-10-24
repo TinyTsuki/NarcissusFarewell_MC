@@ -25,17 +25,23 @@ public class NarcissusUiRouteTest {
     }
     @Test public void threeFinitePagesUseLocalStylesWithoutScript() throws Exception {
         int total = 0;
+        java.util.Set<Path> styles = new java.util.HashSet<>();
         for (String name : new String[]{"waypoints", "access", "player"}) {
             Path path = Path.of("src/main/resources/assets/apricityui/apricity/narcissus_farewell/" + name + ".html");
             assertTrue(name, Files.exists(path));
             String html = Files.readString(path);
-            assertTrue(html.contains("narcissus.css"));
+            String style = name.equals("waypoints") ? "waypoints.css" : "narcissus.css";
+            assertTrue(name, html.contains("href=\"" + style + "\""));
+            Path stylesheet = path.getParent().resolve(style);
+            assertTrue(Files.isRegularFile(stylesheet));
+            styles.add(stylesheet);
             assertFalse(html.contains("<script"));
             assertTrue(Files.size(path) <= 12 * 1024);
             total += Files.size(path);
         }
-        Path css = Path.of("src/main/resources/assets/apricityui/apricity/narcissus_farewell/narcissus.css");
-        assertTrue(Files.size(css) <= 4 * 1024);
+        long cssBytes = 0;
+        for (Path style : styles) cssBytes += Files.size(style);
+        assertTrue(cssBytes <= 4 * 1024);
         assertTrue(total < 12 * 1024);
     }
 }
