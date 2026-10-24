@@ -5,7 +5,10 @@ import net.minecraft.nbt.CompoundTag;
 import xin.vanilla.banira.client.gui.InputFormScreen;
 import xin.vanilla.banira.client.gui.component.Text;
 import xin.vanilla.banira.internal.client.ui.page.PlayerConfigUiSession;
+import xin.vanilla.banira.internal.client.ui.page.PlayerConfigUiPresentation;
+import xin.vanilla.banira.BaniraComponent;
 import xin.vanilla.narcissus.NarcissusComponent;
+import xin.vanilla.narcissus.NarcissusFarewell;
 import xin.vanilla.narcissus.config.TeleportCountdownHelper;
 import xin.vanilla.narcissus.enums.EnumTeleportType;
 
@@ -37,7 +40,12 @@ public final class TeleportPreferencesUiSession {
                     .validator(result -> valid(result.value(type.name())) ? "" : xin.vanilla.banira.BaniraComponent.get()
                             .transClientAuto("config_editor_validation_failed").toString()));
         }
-        shared = new PlayerConfigUiSession(args);
+        shared = new PlayerConfigUiSession(args).presentation(new PlayerConfigUiPresentation(
+                NarcissusFarewell.MODID, NarcissusComponent.get().literal("NARCISSUS FAREWELL"),
+                NarcissusComponent.get().transClientAuto("tp_prefs_countdown_title"),
+                BaniraComponent.get().transClientAuto("player_config_seconds"),
+                () -> BaniraComponent.get().transClientAuto("player_config_seconds_range",
+                        TeleportCountdownHelper.playerRangeLo(), TeleportCountdownHelper.playerRangeHi())));
     }
     public static boolean valid(String value) {
         try {

@@ -26,7 +26,6 @@ import xin.vanilla.narcissus.config.TeleportCountdownHelper;
 import xin.vanilla.narcissus.data.player.PlayerTeleportData;
 import xin.vanilla.narcissus.enums.EnumTeleportType;
 import xin.vanilla.narcissus.network.packet.PlayerConfigSyncToServer;
-import xin.vanilla.narcissus.client.ui.NarcissusUiPages;
 import xin.vanilla.narcissus.client.ui.TeleportPreferencesUiSession;
 import xin.vanilla.banira.api.client.ui.UiPageSpec;
 import xin.vanilla.banira.internal.client.ui.page.PlayerConfigUiSession;
@@ -69,7 +68,7 @@ public class PlayerConfigScreen extends xin.vanilla.banira.client.gui.PlayerConf
     @Override public String uiSurfaceId() { return "narcissus_farewell:player"; }
     @Override public UiPageSpec uiPage() {
         if (getClass() != PlayerConfigScreen.class) return null;
-        if (page == null) page = NarcissusUiPages.page("player", this, preferences.shared());
+        if (page == null) page = preferences.shared().spec(this, uiSurfaceId());
         return page;
     }
     @Override public void captureUiState(xin.vanilla.banira.internal.client.ui.UiViewState state) {
