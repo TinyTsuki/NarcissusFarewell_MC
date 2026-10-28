@@ -1,15 +1,20 @@
 package xin.vanilla.narcissus.client.ui;
 
 import org.junit.Test;
+
 import java.nio.file.Files;
 import java.nio.file.Path;
-import static org.junit.Assert.*;
+
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 public class NarcissusUiRouteTest {
     private String source(String path) throws Exception {
         return Files.readString(Path.of("src/main/" + path));
     }
-    @Test public void allPagesUseSharedHostAndKeepNativeFallbacks() throws Exception {
+
+    @Test
+    public void allPagesUseSharedHostAndKeepNativeFallbacks() throws Exception {
         String waypoint = source("java/xin/vanilla/narcissus/screen/WaypointScreen.java");
         String access = source("java/xin/vanilla/narcissus/screen/AccessListScreen.java");
         String player = source("java/xin/vanilla/narcissus/screen/PlayerConfigScreen.java");
@@ -17,13 +22,17 @@ public class NarcissusUiRouteTest {
         assertTrue(access.contains("implements UiNativePage"));
         assertTrue(player.contains("playerUiSession()"));
     }
-    @Test public void legacyBackendAndDependencyAreRemoved() throws Exception {
+
+    @Test
+    public void legacyBackendAndDependencyAreRemoved() throws Exception {
         assertFalse(source("java/xin/vanilla/narcissus/integration/ScreenHelper.java").contains("new ApricityUI"));
         assertFalse(Files.exists(Path.of("src/main/java/xin/vanilla/narcissus/integration/ui/ApricityUI.java")));
         assertFalse(Files.readString(Path.of("build.gradle")).contains("curse.maven:apricityui"));
         assertFalse(Files.readString(Path.of("gradle.properties")).contains("apricityui_id"));
     }
-    @Test public void threeFinitePagesUseLocalStylesWithoutScript() throws Exception {
+
+    @Test
+    public void threeFinitePagesUseLocalStylesWithoutScript() throws Exception {
         int total = 0;
         java.util.Set<Path> styles = new java.util.HashSet<>();
         for (String name : new String[]{"waypoints", "access", "player"}) {

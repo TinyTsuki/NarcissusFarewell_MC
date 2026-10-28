@@ -77,7 +77,8 @@ public final class JourneyMapWaypointPlugin implements IClientPlugin {
             for (Waypoint waypoint : api.getWaypoints(JourneyMap.MOD_ID)) if (matches(waypoint, point)) return;
             Waypoint waypoint = WaypointFactory.createWaypoint(JourneyMap.MOD_ID,
                     new BlockPos(point.x(), point.y(), point.z()), point.name(), point.dimension(), true);
-            if (!JourneyMap.MOD_ID.equals(waypoint.getModId())) throw new IllegalStateException("Waypoint owner mismatch");
+            if (!JourneyMap.MOD_ID.equals(waypoint.getModId()))
+                throw new IllegalStateException("Waypoint owner mismatch");
             waypoint.setColor(0x00FF00);
             waypoint.setCustomData(KIND, point.kind());
             WaypointGroup group = group(point.kind());
@@ -99,7 +100,8 @@ public final class JourneyMapWaypointPlugin implements IClientPlugin {
             };
             WaypointGroup group = WaypointFactory.createWaypointGroup(JourneyMap.MOD_ID,
                     Component.translatable("word.narcissus_farewell." + key).getString());
-            if (!JourneyMap.MOD_ID.equals(group.getModId())) throw new IllegalStateException("Waypoint group owner mismatch");
+            if (!JourneyMap.MOD_ID.equals(group.getModId()))
+                throw new IllegalStateException("Waypoint group owner mismatch");
             group.setPersistent(true);
             group.setCustomData(KIND, kind);
             api.addWaypointGroup(group);

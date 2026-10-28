@@ -5,6 +5,8 @@ import lombok.experimental.Accessors;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.world.entity.player.Player;
+import xin.vanilla.banira.api.client.ui.UiCloseReason;
+import xin.vanilla.banira.api.client.ui.UiPageSpec;
 import xin.vanilla.banira.client.data.*;
 import xin.vanilla.banira.client.enums.EnumAlignment;
 import xin.vanilla.banira.client.enums.EnumOrientation;
@@ -17,8 +19,12 @@ import xin.vanilla.banira.common.data.Color;
 import xin.vanilla.banira.common.data.KeyValue;
 import xin.vanilla.banira.common.enums.EnumI18nType;
 import xin.vanilla.banira.common.util.*;
+import xin.vanilla.banira.internal.client.ui.CommonUiPages;
+import xin.vanilla.banira.internal.client.ui.UiNativePage;
+import xin.vanilla.banira.internal.client.ui.UiViewState;
 import xin.vanilla.narcissus.NarcissusComponent;
 import xin.vanilla.narcissus.NarcissusLang;
+import xin.vanilla.narcissus.client.ui.*;
 import xin.vanilla.narcissus.config.CommonConfig;
 import xin.vanilla.narcissus.data.SafeWorldCoordinate;
 import xin.vanilla.narcissus.data.TeleportRecord;
@@ -32,9 +38,6 @@ import xin.vanilla.narcissus.internal.client.ClientCostQuotes;
 import xin.vanilla.narcissus.internal.client.NarcissusClientSyncState;
 import xin.vanilla.narcissus.network.packet.*;
 import xin.vanilla.narcissus.util.NarcissusUtils;
-import xin.vanilla.narcissus.client.ui.*;
-import xin.vanilla.banira.api.client.ui.*;
-import xin.vanilla.banira.internal.client.ui.*;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -54,23 +57,42 @@ public class WaypointScreen extends BaniraScreen implements UiNativePage {
         return uiConnection != null && Minecraft.getInstance().getConnection() == uiConnection
                 && Minecraft.getInstance().player != null;
     }
-    @Override public String uiSurfaceId() { return "narcissus_farewell:waypoints"; }
-    @Override public WaypointUiSession uiSession() { return uiSession; }
-    @Override public UiPageSpec uiPage() {
+
+    @Override
+    public String uiSurfaceId() {
+        return "narcissus_farewell:waypoints";
+    }
+
+    @Override
+    public WaypointUiSession uiSession() {
+        return uiSession;
+    }
+
+    @Override
+    public UiPageSpec uiPage() {
         if (getClass() != WaypointScreen.class) return null;
         if (uiPage == null) uiPage = NarcissusUiPages.page("waypoints", this, uiSession);
         return uiPage;
     }
-    @Override public void captureUiState(UiViewState state) {
+
+    @Override
+    public void captureUiState(UiViewState state) {
         clearDragState();
         if (searchInput != null) uiQuery = searchInput.value();
         if (state != null) {
             if (activeScrollbar != null) state.rowPosition(activeScrollbar.value() / ITEM_HEIGHT);
-            if (searchInput != null && searchInput.focused()) state.selection("search", searchInput.cursorPosition(), searchInput.highlightPos());
+            if (searchInput != null && searchInput.focused())
+                state.selection("search", searchInput.cursorPosition(), searchInput.highlightPos());
         }
     }
-    @Override public void prepareUiState(UiViewState state) { uiState = state; }
-    @Override public void onClose() {
+
+    @Override
+    public void prepareUiState(UiViewState state) {
+        uiState = state;
+    }
+
+    @Override
+    public void onClose() {
         if (CommonUiPages.close(this, UiCloseReason.CANCEL) || uiSession.requestClose()) return;
         uiSession.close(UiCloseReason.CANCEL);
         super.onClose();
@@ -82,9 +104,11 @@ public class WaypointScreen extends BaniraScreen implements UiNativePage {
         return entry.type.name() + ":" + dimension.length() + ":" + dimension + entry.name.length() + ":"
                 + entry.name + ":" + (entry.recordTime == null ? "" : entry.recordTime.getTime());
     }
+
     private WaypointEntry uiEntry(String key) {
         return activeTabItems().stream().filter(entry -> uiKey(entry).equals(key)).findFirst().orElse(null);
     }
+
     private String uiMeta(WaypointEntry entry) {
         if (entry == null) return "";
         String dimension = entry.safeWorldCoordinate == null ? "" : entry.safeWorldCoordinate.getDimensionResourceId();
@@ -92,28 +116,59 @@ public class WaypointScreen extends BaniraScreen implements UiNativePage {
                 + " " + entry.getCoordinateName()
                 + (entry.recordTime == null ? "" : " " + DateUtils.toDateTimeString(entry.recordTime));
     }
+
     private final class UiPort implements WaypointUiSession.PresentationPort {
-        public boolean confirming() { return deleteConfirmItem != null; }
+        public boolean confirming() {
+            return deleteConfirmItem != null;
+        }
+
         public Set<NarcissusListUiSession.Action> actions() {
             return EnumSet.complementOf(EnumSet.of(NarcissusListUiSession.Action.EDIT));
         }
-        public long revision() { return uiRevision; }
+
+        public long revision() {
+            return uiRevision;
+        }
+
         public List<NarcissusListUiSession.Entry> entries() {
             return activeTabItems().stream().map(entry -> new NarcissusListUiSession.Entry(uiKey(entry), entry.name, uiMeta(entry))).toList();
         }
-        public int tabs() { return 3; }
-        public int tab() { return activeTab.ordinal(); }
-        public void tab(int index) {
-            if (index >= 0 && index < 3) { deleteConfirmItem = null; onTabSelected(WaypointListTab.values()[index]); uiRevision++; }
+
+        public int tabs() {
+            return 3;
         }
-        public String query() { return uiQuery; }
+
+        public int tab() {
+            return activeTab.ordinal();
+        }
+
+        public void tab(int index) {
+            if (index >= 0 && index < 3) {
+                deleteConfirmItem = null;
+                onTabSelected(WaypointListTab.values()[index]);
+                uiRevision++;
+            }
+        }
+
+        public String query() {
+            return uiQuery;
+        }
+
         public void query(String value) {
             uiQuery = value;
             if (searchInput != null) searchInput.value(value);
             applySearchFilter();
         }
-        public String selected() { return uiKey(selectedItem); }
-        public void select(String key) { selectedItem = uiEntry(key); uiRevision++; }
+
+        public String selected() {
+            return uiKey(selectedItem);
+        }
+
+        public void select(String key) {
+            selectedItem = uiEntry(key);
+            uiRevision++;
+        }
+
         public String label(String id) {
             if (id.startsWith("tab")) {
                 int index = Integer.parseInt(id.substring(3));
@@ -122,7 +177,8 @@ public class WaypointScreen extends BaniraScreen implements UiNativePage {
             return switch (id) {
                 case "title" -> "Narcissus";
                 case "subtitle" -> "WAYPOINTS";
-                case "selection_label" -> NarcissusComponent.get().transClientAuto("waypoint_selected_detail").toString();
+                case "selection_label" ->
+                        NarcissusComponent.get().transClientAuto("waypoint_selected_detail").toString();
                 case "cost_label" -> NarcissusComponent.get().transClientAuto("waypoint_cost_label").toString();
                 case "confirm_title" -> NarcissusComponent.get().transClientAuto("del_confirm_msg").toString();
                 case "history_order" -> NarcissusComponent.get().transClientAuto("waypoint_history_order").toString();
@@ -133,16 +189,21 @@ public class WaypointScreen extends BaniraScreen implements UiNativePage {
                 case "delete" -> "x";
                 case "up" -> "\u2191";
                 case "down" -> "\u2193";
-                case "name", "time", "distance" -> NarcissusComponent.get().transClientAuto("waypoint_order_" + id).toString();
-                case "name_tip", "time_tip", "distance_tip" -> NarcissusComponent.get().transClientAuto("waypoint_sort_" + id.replace("_tip", "")).toString();
-                case "add_tip" -> NarcissusComponent.get().transClientAuto(activeTab == WaypointListTab.PUBLIC ? "waypoint_add_stage_title" : "waypoint_add_home_title").toString();
-                case "delete_tip", "confirm", "confirm_tip" -> NarcissusComponent.get().transClientAuto("delete").toString();
+                case "name", "time", "distance" ->
+                        NarcissusComponent.get().transClientAuto("waypoint_order_" + id).toString();
+                case "name_tip", "time_tip", "distance_tip" ->
+                        NarcissusComponent.get().transClientAuto("waypoint_sort_" + id.replace("_tip", "")).toString();
+                case "add_tip" ->
+                        NarcissusComponent.get().transClientAuto(activeTab == WaypointListTab.PUBLIC ? "waypoint_add_stage_title" : "waypoint_add_home_title").toString();
+                case "delete_tip", "confirm", "confirm_tip" ->
+                        NarcissusComponent.get().transClientAuto("delete").toString();
                 case "teleport", "teleport_tip" -> NarcissusComponent.get().transClientAuto("teleport_btn").toString();
                 case "cancel", "cancel_tip", "close" -> NarcissusComponent.get().transClientAuto("cancel").toString();
                 case "up_tip", "down_tip" -> NarcissusComponent.get().transClientAuto("waypoint_drag_hint").toString();
                 default -> "";
             };
         }
+
         public String detail() {
             WaypointEntry item = deleteConfirmItem == null ? selectedItem : deleteConfirmItem;
             if (item == null && activeTabItems().isEmpty()) return activeTab == WaypointListTab.PRIVATE
@@ -153,7 +214,11 @@ public class WaypointScreen extends BaniraScreen implements UiNativePage {
                     + (item.canTeleport ? "" : "\n" + NarcissusComponent.get().transClientAuto("back_record_used"));
             return deleteConfirmItem == null ? value : NarcissusComponent.get().transClientAuto("del_confirm_msg") + "\n" + value;
         }
-        public String cost() { return uiConnectionCurrent() && selectedItem != null ? NarcissusComponent.get().transClientAuto("waypoint_detail_cost") + calculateCostDisplay(selectedItem) : ""; }
+
+        public String cost() {
+            return uiConnectionCurrent() && selectedItem != null ? NarcissusComponent.get().transClientAuto("waypoint_detail_cost") + calculateCostDisplay(selectedItem) : "";
+        }
+
         public WaypointUiPresentation presentation() {
             WaypointEntry item = deleteConfirmItem == null ? selectedItem : deleteConfirmItem;
             SafeWorldCoordinate c = item == null ? null : item.safeWorldCoordinate;
@@ -162,9 +227,11 @@ public class WaypointScreen extends BaniraScreen implements UiNativePage {
                 calculateCostDisplay(item);
                 CostQuote quote = NarcissusClientSyncState.costQuotes().display(item.quoteTarget, System.nanoTime()).orElse(null);
                 WaypointCostPresentation cost = WaypointCostPresentation.from(quote, key -> NarcissusComponent.get().transClientAuto(key).toString());
-                amount = cost.amount(); note = cost.note();
+                amount = cost.amount();
+                note = cost.note();
             }
-            if (item != null && !item.canTeleport) note = NarcissusComponent.get().transClientAuto("back_record_used").toString();
+            if (item != null && !item.canTeleport)
+                note = NarcissusComponent.get().transClientAuto("back_record_used").toString();
             long date = item == null ? 0 : item.recordTime != null ? item.recordTime.getTime() : c == null ? 0 : c.createdAt();
             return new WaypointUiPresentation(item == null ? "" : item.name, item == null ? "" : item.getDimensionName(),
                     c == null ? "" : c.getDimensionResourceId(), c == null ? "" : String.valueOf(c.xInt()),
@@ -173,35 +240,55 @@ public class WaypointScreen extends BaniraScreen implements UiNativePage {
                     amount, note, activeTabItems().isEmpty() ? detail() : "", waypointTabLabel(activeTab),
                     deleteConfirmItem != null, activeTab == WaypointListTab.FOOTPRINTS);
         }
+
         public boolean enabled(NarcissusListUiSession.Action action) {
             if (!uiConnectionCurrent()) return false;
-            if (deleteConfirmItem != null) return action == NarcissusListUiSession.Action.CONFIRM || action == NarcissusListUiSession.Action.CANCEL;
+            if (deleteConfirmItem != null)
+                return action == NarcissusListUiSession.Action.CONFIRM || action == NarcissusListUiSession.Action.CANCEL;
             return switch (action) {
-                case ADD -> activeTab == WaypointListTab.PRIVATE ? canAddHomeClient() : activeTab == WaypointListTab.PUBLIC && canAddStageClient();
+                case ADD ->
+                        activeTab == WaypointListTab.PRIVATE ? canAddHomeClient() : activeTab == WaypointListTab.PUBLIC && canAddStageClient();
                 case DELETE -> selectedItem != null && selectedItem.type != WaypointEntry.Type.BACK;
                 case TELEPORT -> selectedItem != null && selectedItem.canTeleport;
                 case NAME, TIME, DISTANCE, UP, DOWN -> activeTab.supportsOrdering();
                 default -> false;
             };
         }
+
         public void action(NarcissusListUiSession.Action action) {
             if (!enabled(action)) return;
             switch (action) {
                 case ADD -> onTabAddClick();
-                case DELETE -> { deleteConfirmItem = selectedItem; uiRevision++; }
-                case CONFIRM -> { WaypointEntry item = deleteConfirmItem; deleteConfirmItem = null; doActualDelete(item); }
-                case CANCEL -> { deleteConfirmItem = null; uiRevision++; }
-                case TELEPORT -> { onTeleportClick(); Minecraft.getInstance().setScreen(null); }
+                case DELETE -> {
+                    deleteConfirmItem = selectedItem;
+                    uiRevision++;
+                }
+                case CONFIRM -> {
+                    WaypointEntry item = deleteConfirmItem;
+                    deleteConfirmItem = null;
+                    doActualDelete(item);
+                }
+                case CANCEL -> {
+                    deleteConfirmItem = null;
+                    uiRevision++;
+                }
+                case TELEPORT -> {
+                    onTeleportClick();
+                    Minecraft.getInstance().setScreen(null);
+                }
                 case NAME -> applySort(SortMode.NAME);
                 case TIME -> applySort(SortMode.TIME);
                 case DISTANCE -> applySort(SortMode.DISTANCE);
                 case UP -> move(selected(), -1);
                 case DOWN -> move(selected(), 1);
-                default -> { }
+                default -> {
+                }
             }
         }
+
         public void move(String key, int offset) {
-            if (!uiConnectionCurrent() || !activeTab.supportsOrdering() || deleteConfirmItem != null || offset == 0) return;
+            if (!uiConnectionCurrent() || !activeTab.supportsOrdering() || deleteConfirmItem != null || offset == 0)
+                return;
             WaypointEntry item = uiEntry(key);
             List<WaypointEntry> visible = activeTabItems();
             int source = visible.indexOf(item);
@@ -211,14 +298,24 @@ public class WaypointScreen extends BaniraScreen implements UiNativePage {
             int slot = WaypointDragModel.insertionIndex(visible.size(), source,
                     (target > source ? target + 1 : target) * (double) ITEM_HEIGHT, ITEM_HEIGHT);
             sortStates.remove(activeTab);
-            draggingItem = item; dragInsertionIndex = slot;
-            try { finishDrag(); } finally { clearDragState(); }
+            draggingItem = item;
+            dragInsertionIndex = slot;
+            try {
+                finishDrag();
+            } finally {
+                clearDragState();
+            }
         }
+
         public void tick() {
             refreshUiData();
-            if (minecraft != null && minecraft.player != null) ticketCount = PlayerTeleportData.getData(minecraft.player).getTeleportCard();
+            if (minecraft != null && minecraft.player != null)
+                ticketCount = PlayerTeleportData.getData(minecraft.player).getTeleportCard();
         }
-        public void close() { NarcissusClientSyncState.costQuotes().closeView(); }
+
+        public void close() {
+            NarcissusClientSyncState.costQuotes().closeView();
+        }
     }
 
     // region Constants
@@ -365,7 +462,10 @@ public class WaypointScreen extends BaniraScreen implements UiNativePage {
         if (minecraft == null || minecraft.player == null) {
             return;
         }
-        if (initialDataLoaded) { refreshUiData(); return; }
+        if (initialDataLoaded) {
+            refreshUiData();
+            return;
+        }
         observedWaypointDataGeneration = NarcissusClientSyncState.waypointDataGeneration();
         WaypointEntry previousSelection = selectedItem;
         loadData();

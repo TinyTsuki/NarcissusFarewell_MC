@@ -5,7 +5,9 @@ import xin.vanilla.banira.api.client.ui.UiPageSpec;
 import xin.vanilla.banira.client.gui.BaniraScreen;
 
 public final class NarcissusUiPages {
-    private NarcissusUiPages() { }
+    private NarcissusUiPages() {
+    }
+
     public static UiPageSpec page(String name, BaniraScreen screen, UiPageSession session) {
         if (!name.equals("waypoints") && !name.equals("access") && !name.equals("player"))
             throw new IllegalArgumentException("Unknown Narcissus page");

@@ -7,6 +7,7 @@ import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.nbt.CompoundTag;
+import xin.vanilla.banira.api.client.ui.UiPageSpec;
 import xin.vanilla.banira.client.data.BaniraColorConfig;
 import xin.vanilla.banira.client.data.ScreenCoordinate;
 import xin.vanilla.banira.client.enums.EnumAlignment;
@@ -20,15 +21,14 @@ import xin.vanilla.banira.common.data.Component;
 import xin.vanilla.banira.common.enums.EnumPosition;
 import xin.vanilla.banira.common.enums.EnumSeason;
 import xin.vanilla.banira.common.util.PacketUtils;
+import xin.vanilla.banira.internal.client.ui.page.PlayerConfigUiSession;
 import xin.vanilla.narcissus.NarcissusComponent;
 import xin.vanilla.narcissus.NarcissusFarewell;
+import xin.vanilla.narcissus.client.ui.TeleportPreferencesUiSession;
 import xin.vanilla.narcissus.config.TeleportCountdownHelper;
 import xin.vanilla.narcissus.data.player.PlayerTeleportData;
 import xin.vanilla.narcissus.enums.EnumTeleportType;
 import xin.vanilla.narcissus.network.packet.PlayerConfigSyncToServer;
-import xin.vanilla.narcissus.client.ui.TeleportPreferencesUiSession;
-import xin.vanilla.banira.api.client.ui.UiPageSpec;
-import xin.vanilla.banira.internal.client.ui.page.PlayerConfigUiSession;
 
 import javax.annotation.Nullable;
 import java.util.EnumMap;
@@ -65,14 +65,26 @@ public class PlayerConfigScreen extends xin.vanilla.banira.client.gui.PlayerConf
     private boolean uiConnectionCurrent() {
         return uiConnection != null && Minecraft.getInstance().getConnection() == uiConnection && Minecraft.getInstance().player != null;
     }
-    @Override protected PlayerConfigUiSession playerUiSession() { return preferences.shared(); }
-    @Override public String uiSurfaceId() { return "narcissus_farewell:player"; }
-    @Override public UiPageSpec uiPage() {
+
+    @Override
+    protected PlayerConfigUiSession playerUiSession() {
+        return preferences.shared();
+    }
+
+    @Override
+    public String uiSurfaceId() {
+        return "narcissus_farewell:player";
+    }
+
+    @Override
+    public UiPageSpec uiPage() {
         if (getClass() != PlayerConfigScreen.class) return null;
         if (page == null) page = preferences.shared().spec(this, uiSurfaceId());
         return page;
     }
-    @Override public void captureUiState(xin.vanilla.banira.internal.client.ui.UiViewState state) {
+
+    @Override
+    public void captureUiState(xin.vanilla.banira.internal.client.ui.UiViewState state) {
         for (Map.Entry<EnumTeleportType, SliderWidget> entry : sliders.entrySet()) {
             preferences.draft(entry.getKey(), entry.getValue().editingText());
             NumericInputWidget input = entry.getValue().inlineInputWidget();
@@ -81,11 +93,15 @@ public class PlayerConfigScreen extends xin.vanilla.banira.client.gui.PlayerConf
         }
         super.captureUiState(state);
     }
-    @Override public void prepareUiState(xin.vanilla.banira.internal.client.ui.UiViewState state) {
+
+    @Override
+    public void prepareUiState(xin.vanilla.banira.internal.client.ui.UiViewState state) {
         super.prepareUiState(state);
         preferenceUiState = state;
     }
-    @Override protected void afterPlayerConfigBuilt() {
+
+    @Override
+    protected void afterPlayerConfigBuilt() {
         super.afterPlayerConfigBuilt();
         if (preferenceUiState == null) return;
         for (Map.Entry<EnumTeleportType, SliderWidget> entry : sliders.entrySet()) {
@@ -96,6 +112,7 @@ public class PlayerConfigScreen extends xin.vanilla.banira.client.gui.PlayerConf
             }
         }
     }
+
     static String countdownFocusId(EnumTeleportType type) {
         if (type == null) return "";
         int index = EnumTeleportType.countdownConfigurableTypes().indexOf(type);

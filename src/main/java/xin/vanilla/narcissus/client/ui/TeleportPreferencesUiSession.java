@@ -2,11 +2,11 @@ package xin.vanilla.narcissus.client.ui;
 
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.nbt.CompoundTag;
+import xin.vanilla.banira.BaniraComponent;
 import xin.vanilla.banira.client.gui.InputFormScreen;
 import xin.vanilla.banira.client.gui.component.Text;
-import xin.vanilla.banira.internal.client.ui.page.PlayerConfigUiSession;
 import xin.vanilla.banira.internal.client.ui.page.PlayerConfigUiPresentation;
-import xin.vanilla.banira.BaniraComponent;
+import xin.vanilla.banira.internal.client.ui.page.PlayerConfigUiSession;
 import xin.vanilla.narcissus.NarcissusComponent;
 import xin.vanilla.narcissus.NarcissusFarewell;
 import xin.vanilla.narcissus.config.TeleportCountdownHelper;
@@ -21,7 +21,7 @@ public final class TeleportPreferencesUiSession {
     private final BooleanSupplier connection;
 
     public TeleportPreferencesUiSession(Screen owner, ToIntFunction<EnumTeleportType> initial,
-                                         BooleanSupplier connection, Consumer<CompoundTag> save) {
+                                        BooleanSupplier connection, Consumer<CompoundTag> save) {
         this.connection = connection;
         InputFormScreen.Args args = new InputFormScreen.Args().setParentScreen(owner)
                 .setTitle(Text.from(NarcissusComponent.get().transClientAuto("tp_prefs_screen_title")))
@@ -47,19 +47,41 @@ public final class TeleportPreferencesUiSession {
                 () -> BaniraComponent.get().transClientAuto("player_config_seconds_range",
                         TeleportCountdownHelper.playerRangeLo(), TeleportCountdownHelper.playerRangeHi())));
     }
+
     public static boolean valid(String value) {
         try {
             int integer = Integer.parseInt(value);
             return integer >= TeleportCountdownHelper.playerRangeLo() && integer <= TeleportCountdownHelper.playerRangeHi();
-        } catch (NumberFormatException invalid) { return false; }
+        } catch (NumberFormatException invalid) {
+            return false;
+        }
     }
-    public PlayerConfigUiSession shared() { return shared; }
-    public String draft(EnumTeleportType type) { return shared.fields().draft(type.name()); }
-    public void draft(EnumTeleportType type, String value) { shared.fields().draft(type.name(), value); }
+
+    public PlayerConfigUiSession shared() {
+        return shared;
+    }
+
+    public String draft(EnumTeleportType type) {
+        return shared.fields().draft(type.name());
+    }
+
+    public void draft(EnumTeleportType type, String value) {
+        shared.fields().draft(type.name(), value);
+    }
+
     public int seconds(EnumTeleportType type) {
-        try { return TeleportCountdownHelper.clampToPlayerAllowedRange(Integer.parseInt(draft(type))); }
-        catch (NumberFormatException invalid) { return 0; }
+        try {
+            return TeleportCountdownHelper.clampToPlayerAllowedRange(Integer.parseInt(draft(type)));
+        } catch (NumberFormatException invalid) {
+            return 0;
+        }
     }
-    public void seconds(EnumTeleportType type, int value) { shared.fields().draft(type.name(), Integer.toString(value)); }
-    public boolean submit() { return connection.getAsBoolean() && shared.fields().submit(); }
+
+    public void seconds(EnumTeleportType type, int value) {
+        shared.fields().draft(type.name(), Integer.toString(value));
+    }
+
+    public boolean submit() {
+        return connection.getAsBoolean() && shared.fields().submit();
+    }
 }

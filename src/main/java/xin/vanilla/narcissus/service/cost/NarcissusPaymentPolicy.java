@@ -4,36 +4,50 @@ import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import xin.vanilla.banira.api.cost.CostFailure;
 import xin.vanilla.banira.api.cost.CostIdentity;
-import xin.vanilla.narcissus.api.cost.*;
+import xin.vanilla.narcissus.api.cost.CostContext;
+import xin.vanilla.narcissus.api.cost.CostRequestInfo;
 import xin.vanilla.narcissus.data.cost.CostCalculation;
 import xin.vanilla.narcissus.data.cost.CostPaymentPlan;
-import xin.vanilla.narcissus.enums.*;
+import xin.vanilla.narcissus.enums.EnumCardType;
+import xin.vanilla.narcissus.enums.EnumCostFailure;
+import xin.vanilla.narcissus.enums.EnumCostType;
+
 import java.util.Locale;
 
 public final class NarcissusPaymentPolicy {
     private static final Gson GSON = new Gson();
-    private NarcissusPaymentPolicy() { }
+
+    private NarcissusPaymentPolicy() {
+    }
+
     public static CostIdentity identity(CostContext context) {
         JsonObject business = new JsonObject();
         business.addProperty("moving", context.player().uuid().toString());
         business.addProperty("type", context.teleportType().name());
         business.addProperty("request", context.request().map(CostRequestInfo::id).orElse(null));
         business.addProperty("target", context.targetPlayer().map(p -> p.uuid().toString()).orElse(null));
-        if (!context.targetPlayer().isPresent()) business.add("destination", GSON.toJsonTree(context.destination().orElse(null)));
+        if (!context.targetPlayer().isPresent())
+            business.add("destination", GSON.toJsonTree(context.destination().orElse(null)));
         JsonObject configuration = new JsonObject();
         configuration.add("parameters", GSON.toJsonTree(context.parameters()));
         configuration.add("cards", GSON.toJsonTree(context.cardSettings()));
         return new CostIdentity("narcissus:teleport", context.payer().uuid(), context.operationId(), context.generationId(),
                 business.toString(), configuration.toString());
     }
+
     public static CostFailure sharedFailure(EnumCostFailure failure) {
         return failure == EnumCostFailure.NONE ? CostFailure.NONE : CostFailure.of("narcissus:" + failure.name().toLowerCase(Locale.ROOT));
     }
+
     public static EnumCostFailure failure(CostFailure failure) {
         if (!failure.isFailure()) return EnumCostFailure.NONE;
-        try { return EnumCostFailure.valueOf(failure.code().substring(failure.code().indexOf(':') + 1).toUpperCase(Locale.ROOT)); }
-        catch (IllegalArgumentException invalid) { return EnumCostFailure.PAYMENT_FAILED; }
+        try {
+            return EnumCostFailure.valueOf(failure.code().substring(failure.code().indexOf(':') + 1).toUpperCase(Locale.ROOT));
+        } catch (IllegalArgumentException invalid) {
+            return EnumCostFailure.PAYMENT_FAILED;
+        }
     }
+
     public static CostPaymentPlan plan(CostCalculation calculation, CostContext context) {
         if (!calculation.isSuccess()) return CostPaymentPlan.failed(calculation.failure());
         boolean free = context.costType() == EnumCostType.NONE;

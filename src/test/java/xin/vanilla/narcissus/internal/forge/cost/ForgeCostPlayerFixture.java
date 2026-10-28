@@ -1,12 +1,12 @@
 package xin.vanilla.narcissus.internal.forge.cost;
 
-import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.network.protocol.Packet;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.network.ServerGamePacketListenerImpl;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.food.FoodData;
 import net.minecraft.world.level.Level;
-import net.minecraft.server.level.ServerLevel;
 import org.junit.After;
 import org.junit.Before;
 import xin.vanilla.banira.common.config.ConfigHolder;
@@ -99,7 +99,9 @@ public class ForgeCostPlayerFixture {
                 method.setAccessible(true);
                 java.util.function.Predicate<ServerPlayer> available = p -> p.isAlive() && !p.isRemoved();
                 return (xin.vanilla.banira.api.cost.CostAccess) method.invoke(null, payer, scope, available);
-            } catch (ReflectiveOperationException error) { throw new IllegalStateException(error); }
+            } catch (ReflectiveOperationException error) {
+                throw new IllegalStateException(error);
+            }
         };
     }
 

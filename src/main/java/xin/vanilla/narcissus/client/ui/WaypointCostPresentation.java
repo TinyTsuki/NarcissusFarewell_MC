@@ -3,6 +3,7 @@ package xin.vanilla.narcissus.client.ui;
 import xin.vanilla.narcissus.data.cost.CostQuote;
 import xin.vanilla.narcissus.enums.EnumCostFailure;
 import xin.vanilla.narcissus.enums.EnumCostType;
+
 import java.util.ArrayList;
 import java.util.Locale;
 import java.util.function.Function;

@@ -4,8 +4,10 @@ import org.junit.Test;
 import xin.vanilla.narcissus.config.CommonConfig;
 
 import java.lang.reflect.Field;
-
-import java.util.*;
+import java.util.Arrays;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 
 import static org.junit.Assert.*;
 
@@ -49,7 +51,7 @@ public class LegacyConfigLayoutMigrationTest {
     @Test
     public void oldSettingsMoveToTheirActivePathsAndRemovedOrUnknownDataStays() {
         Map<String, Object> input = map("commandNames", map("commandPrefix", "legacycheck", "unknown", "keep",
-                "tpHome", map("commandSetHome", "oldsethome")),
+                        "tpHome", map("commandSetHome", "oldsethome")),
                 "conciseCommands", map("conciseLanguage", true, "tpAsk", map("conciseTpAsk", false)),
                 "base", map("flySpeedMax", 7.5, "removeOriginalTp", true),
                 "general", map("teleportHomeLimit", 17, "tpWithVehicle", false, "tpSound", "minecraft:block.note_block.bell",
