@@ -8,6 +8,7 @@ plugins {
 }
 
 def javaVer = 21
+apply from: 'gradle/aui-validation-output.gradle'
 
 group = mod_group_id
 version = mod_version
@@ -18,6 +19,7 @@ base {
 
 java {
     toolchain.languageVersion = JavaLanguageVersion.of(javaVer)
+    withSourcesJar()
 }
 
 // minecraft.accessTransformers.file rootProject.file('src/main/resources/META-INF/accesstransformer.cfg')
@@ -197,7 +199,6 @@ dependencies {
         jarJar.ranged(it, baniraArtifactVersionRange)
     }
 
-    compileOnly "curse.maven:apricityui-1470115:${apricityui_id}"
     compileOnly "curse.maven:gravestone-mod-238551:${gravestone_id}"
     compileOnly "curse.maven:corpse-316582:${corpse_id}"
     compileOnly "curse.maven:simple-tomb-399669:${simple_tomb_id}"
@@ -262,7 +263,7 @@ tasks.named('jar', Jar).configure {
     // 自定义打包路径与输出格式
     archiveBaseName.set(mod_id)
     archiveVersion.set("${loader_type}-${minecraft_version}-${mod_version}")
-    destinationDirectory.set(file("${projectDir}/builds/${mod_version}"))
+    destinationDirectory.set(baniraDistributionDirectory)
     manifest {
         attributes([
                 "Implementation-Title"  : project.name,
@@ -277,7 +278,7 @@ def narcissusCopyFatJar = { File fat, String destName ->
     if (fat != null && fat.exists()) {
         copy {
             from fat
-            into file("${projectDir}/builds/${mod_version}")
+            into baniraDistributionDirectory
             rename { destName }
         }
     }
@@ -303,6 +304,8 @@ afterEvaluate {
     }
 }
 // endregion
+
+apply from: 'gradle/aui-validation-publication.gradle'
 
 // Keeps the development client FPS counter enabled without affecting published artifacts.
 def baniraDevFpsDefaultSettingsKey = 'extra_settings'
