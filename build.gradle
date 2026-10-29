@@ -251,3 +251,5 @@ apply from: 'gradle/network-smoke.gradle'
 apply from: 'gradle/spark-profile-report.gradle'
 
 apply from: 'gradle/fabric-dev-runtime.gradle'
+apply from: 'gradle/aui-validation-publication.gradle'
+apply from: 'gradle/aui-validation-output.gradle'
