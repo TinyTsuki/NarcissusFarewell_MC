@@ -1,6 +1,8 @@
 package xin.vanilla.narcissus.screen;
 
-/** Fixed-pixel waypoint header geometry, with measured label widths supplied by the screen. */
+/**
+ * Fixed-pixel waypoint header geometry, with measured label widths supplied by the screen.
+ */
 final class WaypointTopBarLayout {
     final Rect ticket, tab0, tab1, tab2, search, plus;
     final int height;
