@@ -1,12 +1,13 @@
 package xin.vanilla.narcissus.screen;
 
-import com.mojang.blaze3d.matrix.MatrixStack;
 import lombok.Data;
 import lombok.experimental.Accessors;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.entity.player.ClientPlayerEntity;
+import com.mojang.blaze3d.matrix.MatrixStack;
 import net.minecraft.client.gui.screen.Screen;
+import net.minecraft.client.entity.player.ClientPlayerEntity;
 import net.minecraft.nbt.CompoundNBT;
+import xin.vanilla.banira.api.client.ui.UiPageSpec;
 import xin.vanilla.banira.client.data.BaniraColorConfig;
 import xin.vanilla.banira.client.data.ScreenCoordinate;
 import xin.vanilla.banira.client.enums.EnumAlignment;
@@ -20,8 +21,10 @@ import xin.vanilla.banira.common.data.Component;
 import xin.vanilla.banira.common.enums.EnumPosition;
 import xin.vanilla.banira.common.enums.EnumSeason;
 import xin.vanilla.banira.common.util.PacketUtils;
+import xin.vanilla.banira.internal.client.ui.page.PlayerConfigUiSession;
 import xin.vanilla.narcissus.NarcissusComponent;
 import xin.vanilla.narcissus.NarcissusFarewell;
+import xin.vanilla.narcissus.client.ui.TeleportPreferencesUiSession;
 import xin.vanilla.narcissus.config.TeleportCountdownHelper;
 import xin.vanilla.narcissus.data.player.PlayerTeleportData;
 import xin.vanilla.narcissus.enums.EnumTeleportType;
@@ -41,6 +44,10 @@ public class PlayerConfigScreen extends xin.vanilla.banira.client.gui.PlayerConf
     private static final double VALUE_AREA_MIN_WIDTH = 56;
 
     private final Map<EnumTeleportType, SliderWidget> sliders = new EnumMap<>(EnumTeleportType.class);
+    private final Object uiConnection = Minecraft.getInstance().getConnection();
+    private final TeleportPreferencesUiSession preferences;
+    private UiPageSpec page;
+    private xin.vanilla.banira.api.client.ui.UiPageState preferenceUiState;
 
     public PlayerConfigScreen(@Nullable Args args) {
         this(args != null ? args : new Args(), true);
@@ -49,6 +56,67 @@ public class PlayerConfigScreen extends xin.vanilla.banira.client.gui.PlayerConf
     private PlayerConfigScreen(Args args, boolean ignored) {
         super(NarcissusFarewell.MODID, NarcissusComponent.get().transClientAuto("tp_prefs_screen_title"),
                 args.parentScreen(), args.theme(), args.season());
+        preferences = new TeleportPreferencesUiSession(this, type -> {
+            ClientPlayerEntity player = Minecraft.getInstance().player;
+            return player == null ? 0 : PlayerTeleportData.getData(player).getTeleportCountdownSeconds(type);
+        }, this::uiConnectionCurrent, this::savePreferences);
+    }
+
+    private boolean uiConnectionCurrent() {
+        return uiConnection != null && Minecraft.getInstance().getConnection() == uiConnection && Minecraft.getInstance().player != null;
+    }
+
+    @Override
+    protected PlayerConfigUiSession playerUiSession() {
+        return preferences.shared();
+    }
+
+    @Override
+    public String uiSurfaceId() {
+        return "narcissus_farewell:player";
+    }
+
+    @Override
+    public UiPageSpec uiPage() {
+        if (getClass() != PlayerConfigScreen.class) return null;
+        if (page == null) page = preferences.shared().spec(this, uiSurfaceId());
+        return page;
+    }
+
+    @Override
+    public void captureUiState(xin.vanilla.banira.internal.client.ui.UiViewState state) {
+        for (Map.Entry<EnumTeleportType, SliderWidget> entry : sliders.entrySet()) {
+            preferences.draft(entry.getKey(), entry.getValue().editingText());
+            NumericInputWidget input = entry.getValue().inlineInputWidget();
+            if (state != null && input != null && input.focused())
+                state.selection(countdownFocusId(entry.getKey()), input.cursorPosition(), input.highlightPos());
+        }
+        super.captureUiState(state);
+    }
+
+    @Override
+    public void prepareUiState(xin.vanilla.banira.internal.client.ui.UiViewState state) {
+        super.prepareUiState(state);
+        preferenceUiState = state;
+    }
+
+    @Override
+    protected void afterPlayerConfigBuilt() {
+        super.afterPlayerConfigBuilt();
+        if (preferenceUiState == null) return;
+        for (Map.Entry<EnumTeleportType, SliderWidget> entry : sliders.entrySet()) {
+            NumericInputWidget input = entry.getValue().inlineInputWidget();
+            if (input != null && preferenceUiState.focusedField().equals(countdownFocusId(entry.getKey()))) {
+                requestFocus(input);
+                input.setSelectionRange(preferenceUiState.selectionStart(), preferenceUiState.selectionEnd());
+            }
+        }
+    }
+
+    static String countdownFocusId(EnumTeleportType type) {
+        if (type == null) return "";
+        int index = EnumTeleportType.countdownConfigurableTypes().indexOf(type);
+        return index < 0 ? "" : "field:" + index + "/input";
     }
 
     @Data
@@ -66,18 +134,14 @@ public class PlayerConfigScreen extends xin.vanilla.banira.client.gui.PlayerConf
     protected void buildPlayerConfig(CollapsiblePanelWidget root) {
         sliders.clear();
         Component sectionTitle = NarcissusComponent.get().transClientAuto("tp_prefs_countdown_title");
-        CollapsiblePanelWidget countdown = addPlayerSection(root, "teleport_countdown",
-                sectionTitle, null);
-        ClientPlayerEntity player = Minecraft.getInstance().player;
-        PlayerTeleportData data = player != null ? PlayerTeleportData.getData(player) : null;
+        CollapsiblePanelWidget countdown = addPlayerSection(root, "teleport_countdown", sectionTitle, null);
         for (EnumTeleportType type : EnumTeleportType.countdownConfigurableTypes()) {
-            addCountdownRow(countdown, type, data);
+            addCountdownRow(countdown, type);
         }
         countdown.refreshLayout();
     }
 
-    private void addCountdownRow(CollapsiblePanelWidget section, EnumTeleportType type,
-                                 @Nullable PlayerTeleportData data) {
+    private void addCountdownRow(CollapsiblePanelWidget section, EnumTeleportType type) {
         double rowWidth = section.getContentWidth();
         EntryRowWidget row = new EntryRowWidget(this);
         row.id("tp_prefs_" + type.name().toLowerCase(java.util.Locale.ROOT));
@@ -91,15 +155,16 @@ public class PlayerConfigScreen extends xin.vanilla.banira.client.gui.PlayerConf
         label.textWrap(false);
         label.textVerticalAlign(EnumAlignment.CENTER);
 
-        int current = data != null ? data.getTeleportCountdownSeconds(type) : 0;
+        int current = preferences.seconds(type);
         SliderWidget slider = new SliderWidget(this);
         slider.id("tp_prefs_sl_" + type.name());
-        slider.bounds(new ScreenCoordinate(valueStartX(rowWidth), 0,
-                valueWidgetWidth(rowWidth), ROW_HEIGHT));
+        slider.bounds(new ScreenCoordinate(valueStartX(rowWidth), 0, valueWidgetWidth(rowWidth), ROW_HEIGHT));
         slider.minValue(TeleportCountdownHelper.playerRangeLo())
                 .maxValue(TeleportCountdownHelper.playerRangeHi())
                 .step(1).decimalPlaces(0)
                 .value(TeleportCountdownHelper.clampToPlayerAllowedRange(current));
+        slider.onValueChanged(value -> preferences.seconds(type, (int) Math.round(value)));
+        slider.editingText(preferences.draft(type));
         sliders.put(type, slider);
 
         row.addChild(label);
@@ -127,33 +192,33 @@ public class PlayerConfigScreen extends xin.vanilla.banira.client.gui.PlayerConf
         return Math.max(1, rowWidth - labelColumnEndX(rowWidth));
     }
 
-    private CompoundNBT buildFullCountdownTag() {
-        CompoundNBT tag = new CompoundNBT();
-        for (EnumTeleportType type : EnumTeleportType.countdownConfigurableTypes()) {
-            SliderWidget slider = sliders.get(type);
-            int value = slider != null ? (int) Math.round(slider.value()) : 0;
-            tag.putInt(type.name(), TeleportCountdownHelper.clampToPlayerAllowedRange(value));
-        }
-        return tag;
-    }
-
     @Override
     protected void savePlayerConfig() {
-        if (Minecraft.getInstance().getConnection() == null) {
+        if (!uiConnectionCurrent()) {
             showNotification("tp_prefs_sync_not_connected", 3500, null);
             return;
         }
+        captureUiState(null);
+        if (!preferences.shared().fields().canSubmit()) {
+            showNotification("tp_prefs_sync_failed", 4000,
+                    xin.vanilla.banira.BaniraComponent.get().transClientAuto("config_editor_validation_failed").toString());
+            return;
+        }
+        if (preferences.submit()) onClose();
+    }
+
+    private void savePreferences(CompoundNBT payload) {
+        if (!uiConnectionCurrent()) throw new IllegalStateException(
+                NarcissusComponent.get().transClientAuto("tp_prefs_sync_not_connected").toString());
         ClientPlayerEntity player = Minecraft.getInstance().player;
-        if (player == null) return;
         try {
-            CompoundNBT payload = buildFullCountdownTag();
             PacketUtils.sendPacketToServer(new PlayerConfigSyncToServer(payload));
             PlayerTeleportData.getData(player).replaceAllTeleportCountdownsFromTag(payload);
             showNotification("tp_prefs_sync_ok", 2500, null);
-            onClose();
         } catch (Exception exception) {
             showNotification("tp_prefs_sync_failed", 4000,
                     exception.getMessage() != null ? exception.getMessage() : "");
+            throw new IllegalStateException(exception);
         }
     }
 
@@ -186,8 +251,8 @@ public class PlayerConfigScreen extends xin.vanilla.banira.client.gui.PlayerConf
         }
 
         @Override
-        public void render(MatrixStack stack, float partialTicks) {
-            if (visible()) renderChildren(stack, partialTicks);
+        public void render(MatrixStack graphics, float partialTicks) {
+            if (visible()) renderChildren(graphics, partialTicks);
         }
     }
 }
