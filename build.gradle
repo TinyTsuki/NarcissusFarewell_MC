@@ -159,7 +159,7 @@ tasks.register('prepareDevFpsOverlay') {
 // to the loader. Sodium and Sodium Extra need those jars when launched from Gradle.
 
 
-prepareBaniraDevFpsOverlay()
+tasks.named('runClient').configure { dependsOn 'prepareDevFpsOverlay' }
 processResources {
     inputs.property 'mod_id', project.mod_id
     inputs.property 'mod_name', project.mod_name
@@ -239,12 +239,12 @@ publishing {
 afterEvaluate {
     publishing.publications.named('mavenJava', MavenPublication) {
         artifact tasks.named('remapJar')
-        artifact tasks.named('sourcesJar')
+        artifact tasks.named('remapSourcesJar')
     }
 }
 
 tasks.withType(PublishToMavenLocal).configureEach {
-    dependsOn 'remapJar', 'sourcesJar'
+    dependsOn 'remapJar', 'remapSourcesJar'
 }
 
 apply from: 'gradle/network-smoke.gradle'
