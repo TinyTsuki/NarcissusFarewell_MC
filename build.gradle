@@ -5,6 +5,9 @@ plugins {
 
 def javaVer = 8
 
+apply from: 'gradle/aui-validation-output.gradle'
+apply from: 'gradle/aui-artifact-check.gradle'
+
 group = project.mod_group_id
 version = project.mod_version
 
@@ -130,7 +133,9 @@ tasks.register('prepareDevFpsOverlay') {
     doLast prepareBaniraDevFpsOverlay
 }
 
-prepareBaniraDevFpsOverlay()
+tasks.named('runClient').configure {
+    dependsOn 'prepareDevFpsOverlay'
+}
 processResources {
     inputs.property 'mod_id', project.mod_id
     inputs.property 'mod_name', project.mod_name
@@ -191,7 +196,7 @@ tasks.named('jar', Jar).configure {
 tasks.named('remapJar') {
     archiveBaseName.set(project.mod_id)
     archiveVersion.set("${loader_type}-${minecraft_version}-${mod_version}")
-    destinationDirectory.set(file("${projectDir}/builds/${mod_version}"))
+    destinationDirectory.set(baniraDistributionDirectory)
 }
 
 publishing {
@@ -210,12 +215,12 @@ publishing {
 afterEvaluate {
     publishing.publications.named('mavenJava', MavenPublication) {
         artifact tasks.named('remapJar')
-        artifact tasks.named('sourcesJar')
+        artifact tasks.named('remapSourcesJar')
     }
 }
 
 tasks.withType(PublishToMavenLocal).configureEach {
-    dependsOn 'remapJar', 'sourcesJar'
+    dependsOn 'remapJar', 'remapSourcesJar'
 }
 
 apply from: 'gradle/network-smoke.gradle'
