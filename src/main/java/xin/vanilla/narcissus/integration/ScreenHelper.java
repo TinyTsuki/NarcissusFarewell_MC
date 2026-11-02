@@ -6,7 +6,7 @@ import xin.vanilla.narcissus.screen.PlayerConfigScreen;
 import xin.vanilla.narcissus.screen.WaypointScreen;
 
 /**
- * 客户端界面入口；Fabric 基线始终使用内置 Banira UI。
+ * 共用界面入口，由 Banira 选择外观后端。
  */
 public final class ScreenHelper {
     private ScreenHelper() {
