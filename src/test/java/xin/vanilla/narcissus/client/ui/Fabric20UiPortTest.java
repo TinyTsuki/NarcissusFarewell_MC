@@ -82,7 +82,9 @@ public class Fabric20UiPortTest {
     public void buildsAndOldUnroutedTemplateStayOutsideValidation() throws Exception {
         String build = Files.readString(Path.of("build.gradle"));
         assertTrue(build.contains("destinationDirectory.set(baniraDistributionDirectory)"));
-        assertTrue(build.contains("if (providers.gradleProperty('banira.validationOutputRoot').orNull == null) prepareBaniraDevFpsOverlay()"));
+        assertTrue(build.contains("tasks.named('runClient').configure { dependsOn 'prepareDevFpsOverlay' }"));
+        assertTrue(build.contains("doLast prepareBaniraDevFpsOverlay"));
+        assertFalse(build.contains("orNull == null) prepareBaniraDevFpsOverlay()"));
         assertTrue(build.contains("artifact tasks.named('remapSourcesJar')"));
         assertFalse(Files.exists(Path.of("src/main/resources/assets/apricityui/apricity/narcissus_farewell/index.html")));
         String isolation = Files.readString(Path.of("gradle/aui-validation-output.gradle"));

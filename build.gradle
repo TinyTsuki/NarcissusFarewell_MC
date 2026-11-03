@@ -159,7 +159,7 @@ tasks.register('prepareDevFpsOverlay') {
 // to the loader. Sodium and Sodium Extra need those jars when launched from Gradle.
 
 
-if (providers.gradleProperty('banira.validationOutputRoot').orNull == null) prepareBaniraDevFpsOverlay()
+tasks.named('runClient').configure { dependsOn 'prepareDevFpsOverlay' }
 processResources {
     inputs.property 'mod_id', project.mod_id
     inputs.property 'mod_name', project.mod_name
