@@ -41,11 +41,11 @@ public abstract class CombatTrackerMixin {
 
 
         String language = NarcissusLang.getServerPlayerLanguage(player);
-        Component message = NarcissusComponent.get().transAuto("died_of_narcissus_" + (new Random().nextInt(4) + 1), player.getDisplayName().getString());
+        Component message = NarcissusComponent.get().transAuto("died_of_narcissus_" + (new Random().nextInt(4) + 1), player.getDisplayName());
         Entity entity = combatEntry.source().getEntity();
 
         cir.setReturnValue(NarcissusComponent.get().literal("[%s] %s")
-                .appendArg(entity != null ? entity.getDisplayName().getString() : NarcissusComponent.get().literal("Server"))
+                .appendArg(entity != null ? entity.getDisplayName() : NarcissusComponent.get().literal("Server"))
                 .appendArg(message).toChat(language));
     }
 }
