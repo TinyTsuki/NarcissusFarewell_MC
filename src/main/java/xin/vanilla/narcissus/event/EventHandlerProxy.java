@@ -39,9 +39,9 @@ public class EventHandlerProxy {
                         TeleportRequest request = NarcissusFarewell.getTeleportRequest().remove(entry.getKey());
                         if (request != null) {
                             if (request.getTeleportType() == EnumTeleportType.TP_ASK) {
-                                MessageUtils.sendNotification(request.getRequester(), NarcissusComponent.get().transAuto("tp_ask_expired", request.getTarget().getDisplayName().getString()), NarcissusNotificationTypes.TELEPORT_REQUEST);
+                                MessageUtils.sendNotification(request.getRequester(), NarcissusComponent.get().transAuto("tp_ask_expired", request.getTarget().getDisplayName()), NarcissusNotificationTypes.TELEPORT_REQUEST);
                             } else if (request.getTeleportType() == EnumTeleportType.TP_HERE) {
-                                MessageUtils.sendNotification(request.getRequester(), NarcissusComponent.get().transAuto("tp_here_expired", request.getTarget().getDisplayName().getString()), NarcissusNotificationTypes.TELEPORT_REQUEST);
+                                MessageUtils.sendNotification(request.getRequester(), NarcissusComponent.get().transAuto("tp_here_expired", request.getTarget().getDisplayName()), NarcissusNotificationTypes.TELEPORT_REQUEST);
                             }
                         }
                     });
