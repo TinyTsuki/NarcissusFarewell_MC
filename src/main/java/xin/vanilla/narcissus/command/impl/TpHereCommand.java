@@ -75,11 +75,11 @@ public final class TpHereCommand {
             Component noButton = NarcissusComponent.get().transAuto("no_button")
                     .clickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, String.format("/%s %s %s", NarcissusUtils.getCommandPrefix(), CommonConfig.get().command().tpHere().commandTpHereNo(), request.getRequestId())));
             MessageUtils.sendNotification(target, NarcissusComponent.get().transAuto("tp_here_request_received",
-                    player.getDisplayName().getString(), NarcissusComponent.get().transAuto(request.isSafe() ? "tp_here_safe" : "tp_here_unsafe"), yesButton, noButton), NarcissusNotificationTypes.INTERACTIVE_TP_FLOW);
+                    player.getDisplayName(), NarcissusComponent.get().transAuto(request.isSafe() ? "tp_here_safe" : "tp_here_unsafe"), yesButton, noButton), NarcissusNotificationTypes.INTERACTIVE_TP_FLOW);
         }
         Component cancelButton = NarcissusComponent.get().transAuto("cancel_button")
                 .clickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, String.format("/%s %s %s", NarcissusUtils.getCommandPrefix(), CommonConfig.get().command().tpHere().commandTpHereCancel(), request.getRequestId())));
-        MessageUtils.sendNotification(player, NarcissusComponent.get().transAuto("tp_here_request_sent", target.getDisplayName().getString(), cancelButton), NarcissusNotificationTypes.INTERACTIVE_TP_FLOW);
+        MessageUtils.sendNotification(player, NarcissusComponent.get().transAuto("tp_here_request_sent", target.getDisplayName(), cancelButton), NarcissusNotificationTypes.INTERACTIVE_TP_FLOW);
         if (autoAccept) {
             ServerPlayer finalTarget = target;
             player.server.execute(() -> xin.vanilla.banira.common.util.CommandUtils.executeCommand(finalTarget, NarcissusUtils.getCommand(EnumCommandType.TP_HERE_YES) + " " + request.getRequestId()));
