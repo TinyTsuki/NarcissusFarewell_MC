@@ -35,9 +35,9 @@ public final class TpAskCancelCommand {
             return 0;
         }
         TeleportRequest request = NarcissusFarewell.getTeleportRequest().remove(id);
-        MessageUtils.sendNotification(request.getRequester(), NarcissusComponent.get().transAuto("tp_ask_cancelled", request.getRequester().getDisplayName().getString()), NarcissusNotificationTypes.TELEPORT_REQUEST);
+        MessageUtils.sendNotification(request.getRequester(), NarcissusComponent.get().transAuto("tp_ask_cancelled", request.getRequester().getDisplayName()), NarcissusNotificationTypes.TELEPORT_REQUEST);
         if (!request.isIgnore() && !request.getRequester().getUUID().equals(request.getTarget().getUUID())) {
-            MessageUtils.sendNotification(request.getTarget(), NarcissusComponent.get().transAuto("tp_ask_cancelled", request.getRequester().getDisplayName().getString()), NarcissusNotificationTypes.TELEPORT_REQUEST);
+            MessageUtils.sendNotification(request.getTarget(), NarcissusComponent.get().transAuto("tp_ask_cancelled", request.getRequester().getDisplayName()), NarcissusNotificationTypes.TELEPORT_REQUEST);
         }
         return 1;
     }
