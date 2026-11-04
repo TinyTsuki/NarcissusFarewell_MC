@@ -47,7 +47,7 @@ public final class CardCommand {
                 throw new IllegalArgumentException("Type " + type + " is not supported");
         }
         Component component = NarcissusComponent.get().transAuto("player_card"
-                , target.getDisplayName().getString()
+                , target.getDisplayName()
                 , data.getTeleportCard());
         if (source.getEntity() instanceof ServerPlayerEntity) {
             MessageUtils.sendDefaultNotification((ServerPlayerEntity) source.getEntity(), component, EnumPosition.TOP_RIGHT, EnumMoveType.AUTO);

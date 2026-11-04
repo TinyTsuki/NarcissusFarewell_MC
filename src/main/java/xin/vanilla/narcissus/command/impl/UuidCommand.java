@@ -32,7 +32,7 @@ public final class UuidCommand {
         uuid.color(EnumMCColor.GREEN.getColor())
                 .clickEvent(new ClickEvent(ClickEvent.Action.COPY_TO_CLIPBOARD, target.getStringUUID()))
                 .hoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, NarcissusComponent.get().transAuto("chat_copy_click").toVanilla(language)));
-        Component component = NarcissusComponent.get().transAuto("player_uuid", target.getDisplayName().getString(), uuid);
+        Component component = NarcissusComponent.get().transAuto("player_uuid", target.getDisplayName(), uuid);
         if (source.getEntity() instanceof ServerPlayerEntity) {
             MessageUtils.sendNotification((ServerPlayerEntity) source.getEntity(), component, NarcissusNotificationTypes.INTERACTIVE_QUERY);
         } else {

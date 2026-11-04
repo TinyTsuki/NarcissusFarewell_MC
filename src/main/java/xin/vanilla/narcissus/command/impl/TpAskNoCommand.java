@@ -35,7 +35,7 @@ public final class TpAskNoCommand {
             return 0;
         }
         TeleportRequest request = NarcissusFarewell.getTeleportRequest().remove(id);
-        MessageUtils.sendNotification(request.getRequester(), NarcissusComponent.get().transAuto("tp_ask_rejected", request.getTarget().getDisplayName().getString()), NarcissusNotificationTypes.TELEPORT_REQUEST);
+        MessageUtils.sendNotification(request.getRequester(), NarcissusComponent.get().transAuto("tp_ask_rejected", request.getTarget().getDisplayName()), NarcissusNotificationTypes.TELEPORT_REQUEST);
         return 1;
     }
 

@@ -103,7 +103,7 @@ public final class ShareCommand {
         }
 
         Component component = NarcissusComponent.get().transAuto("shared_coordinates"
-                , player.getDisplayName().getString()
+                , player.getDisplayName()
                 , nameComponent
                 , tpButton
                 , copyButton);
