@@ -29,8 +29,7 @@ public class NarcissusNetworkSmokeConfigsTest {
 
     @BeforeClass
     public static void bootstrap() {
-        net.minecraft.SharedConstants.tryDetectVersion();
-        net.minecraft.server.Bootstrap.bootStrap();
+        xin.vanilla.narcissus.test.NativeBootstrap.initialize();
     }
 
     @Before

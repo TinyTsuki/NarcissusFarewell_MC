@@ -52,7 +52,7 @@ public final class FabricCostQuoteAccess implements CostQuoteService.QuoteAccess
     }
 
     private boolean live(ServerPlayer player) {
-        return player != null && player.server == currentServer() && !player.hasDisconnected() && !player.isRemoved() && player.isAlive();
+        return player != null && player.level().getServer() == currentServer() && !player.hasDisconnected() && !player.isRemoved() && player.isAlive();
     }
 
     @Override

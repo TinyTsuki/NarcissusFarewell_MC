@@ -27,8 +27,7 @@ import static org.junit.Assert.assertNotNull;
  */
 public final class ConfigBaselineFixture implements ConfigValueStore {
     static {
-        net.minecraft.SharedConstants.tryDetectVersion();
-        net.minecraft.server.Bootstrap.bootStrap();
+        xin.vanilla.narcissus.test.NativeBootstrap.initialize();
     }
 
     private static final Gson JSON = new GsonBuilder().setPrettyPrinting().serializeNulls().create();

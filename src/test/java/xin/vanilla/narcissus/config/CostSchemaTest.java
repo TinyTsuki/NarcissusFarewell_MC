@@ -16,8 +16,7 @@ import static org.junit.Assert.*;
 public class CostSchemaTest {
     @BeforeClass
     public static void bootstrap() {
-        net.minecraft.SharedConstants.tryDetectVersion();
-        net.minecraft.server.Bootstrap.bootStrap();
+        xin.vanilla.narcissus.test.NativeBootstrap.initialize();
     }
 
     @Test

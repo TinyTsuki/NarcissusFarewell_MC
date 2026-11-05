@@ -3,7 +3,7 @@ package xin.vanilla.narcissus.screen;
 import lombok.Data;
 import lombok.experimental.Accessors;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.nbt.CompoundTag;
@@ -251,7 +251,7 @@ public class PlayerConfigScreen extends xin.vanilla.banira.client.gui.PlayerConf
         }
 
         @Override
-        public void render(GuiGraphics graphics, float partialTicks) {
+        public void render(GuiGraphicsExtractor graphics, float partialTicks) {
             if (visible()) renderChildren(graphics, partialTicks);
         }
     }

@@ -11,6 +11,9 @@ import java.util.concurrent.atomic.AtomicInteger;
 import static org.junit.Assert.*;
 
 public class TeleportPreferencesUiSessionTest extends HeadlessUiEnvironment {
+    @org.junit.Rule
+    public final xin.vanilla.narcissus.test.NativeClientRule nativeClient = new xin.vanilla.narcissus.test.NativeClientRule();
+
     @BeforeClass
     public static void bootstrap() {
         WaypointUiParityTest.bootstrap();
@@ -45,8 +48,8 @@ public class TeleportPreferencesUiSessionTest extends HeadlessUiEnvironment {
         AtomicBoolean connected = new AtomicBoolean(true);
         TeleportPreferencesUiSession session = new TeleportPreferencesUiSession(owner(), type -> 0, connected::get, payload -> {
             for (EnumTeleportType type : EnumTeleportType.countdownConfigurableTypes())
-                assertEquals(TeleportCountdownHelper.clampToPlayerAllowedRange(0), payload.getInt(type.name()));
-            assertEquals(EnumTeleportType.countdownConfigurableTypes().size(), payload.getAllKeys().size());
+                assertEquals(TeleportCountdownHelper.clampToPlayerAllowedRange(0), payload.getIntOr(type.name(), Integer.MIN_VALUE));
+            assertEquals(EnumTeleportType.countdownConfigurableTypes().size(), payload.keySet().size());
             sends.incrementAndGet();
         });
         connected.set(false);

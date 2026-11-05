@@ -1,9 +1,9 @@
 package xin.vanilla.narcissus.screen;
 
-import com.mojang.blaze3d.vertex.PoseStack;
+import org.joml.Matrix3x2fStack;
 import lombok.experimental.Accessors;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.world.entity.player.Player;
 import xin.vanilla.banira.api.client.ui.UiCloseReason;
 import xin.vanilla.banira.api.client.ui.UiPageSpec;
@@ -692,7 +692,7 @@ public class WaypointScreen extends BaniraScreen implements UiNativePage {
             return true;
         }
         if (e.safeWorldCoordinate != null) {
-            String dimId = e.safeWorldCoordinate.dimension().location().toString().toLowerCase(Locale.ROOT);
+            String dimId = e.safeWorldCoordinate.dimension().identifier().toString().toLowerCase(Locale.ROOT);
             if (dimId.contains(qLower)) {
                 return true;
             }
@@ -748,7 +748,7 @@ public class WaypointScreen extends BaniraScreen implements UiNativePage {
         }
         Player p = minecraft.player;
         int need = NarcissusUtils.getCommandPermissionLevel(EnumCommandType.TP_HOME);
-        if (!p.hasPermissions(need) && !CommandUtils.hasVirtualPermission(p, EnumCommandType.TP_HOME)) {
+        if (!NarcissusUtils.hasNativePermission(p.permissions(), need) && !CommandUtils.hasVirtualPermission(p, EnumCommandType.TP_HOME)) {
             return false;
         }
         return homeItemsAll.size() < CommonConfig.get().base().teleportLimit().teleportHomeLimit();
@@ -763,7 +763,7 @@ public class WaypointScreen extends BaniraScreen implements UiNativePage {
         }
         Player p = minecraft.player;
         int need = NarcissusUtils.getCommandPermissionLevel(EnumCommandType.SET_STAGE);
-        return p.hasPermissions(need) || CommandUtils.hasVirtualPermission(p, EnumCommandType.SET_STAGE);
+        return NarcissusUtils.hasNativePermission(p.permissions(), need) || CommandUtils.hasVirtualPermission(p, EnumCommandType.SET_STAGE);
     }
 
     private void openAddHomeDialog() {
@@ -801,7 +801,7 @@ public class WaypointScreen extends BaniraScreen implements UiNativePage {
         if (minecraft == null || minecraft.player == null || !canAddStageClient()) {
             return;
         }
-        String dim = minecraft.player.level().dimension().location().toString();
+        String dim = minecraft.player.level().dimension().identifier().toString();
         String dx = NumberUtils.toFixedEx(minecraft.player.getX(), 1);
         String dy = NumberUtils.toFixedEx(minecraft.player.getY(), 1);
         String dz = NumberUtils.toFixedEx(minecraft.player.getZ(), 1);
@@ -865,9 +865,8 @@ public class WaypointScreen extends BaniraScreen implements UiNativePage {
     }
 
     @Override
-    protected void onRender(@Nonnull GuiGraphics graphics, int mouseX, int mouseY, float partialTicks) {
-        renderBackground(graphics, mouseX, mouseY, partialTicks);
-        PoseStack stack = graphics.pose();
+    protected void onRender(@Nonnull GuiGraphicsExtractor graphics, int mouseX, int mouseY, float partialTicks) {
+        Matrix3x2fStack stack = graphics.pose();
 
         if (minecraft != null && minecraft.player != null) {
             PlayerTeleportData data = PlayerTeleportData.getData(minecraft.player);
@@ -946,7 +945,7 @@ public class WaypointScreen extends BaniraScreen implements UiNativePage {
         renderWidgets(graphics, partialTicks);
     }
 
-    private void drawLimitedTextLine(PoseStack stack, String text, double x, double y, int maxWidth, int colorArgb) {
+    private void drawLimitedTextLine(Matrix3x2fStack stack, String text, double x, double y, int maxWidth, int colorArgb) {
         LabelWidget.drawLimitedText(FontDrawArgs.of(Text.literal(text).stack(stack).font(font).color(Color.argb(colorArgb)))
                 .x(x).y(y)
                 .maxWidth(maxWidth)
@@ -955,7 +954,7 @@ public class WaypointScreen extends BaniraScreen implements UiNativePage {
                 .inScreen(false));
     }
 
-    private void drawLimitedTextCentered(PoseStack stack, String text, double x, double y, int maxWidth, int colorArgb) {
+    private void drawLimitedTextCentered(Matrix3x2fStack stack, String text, double x, double y, int maxWidth, int colorArgb) {
         LabelWidget.drawLimitedText(FontDrawArgs.of(Text.literal(text).stack(stack).font(font).color(Color.argb(colorArgb)))
                 .x(x).y(y)
                 .maxWidth(maxWidth)
@@ -964,7 +963,7 @@ public class WaypointScreen extends BaniraScreen implements UiNativePage {
                 .inScreen(false));
     }
 
-    private void drawWaypointTabs(PoseStack stack, int mouseX, int mouseY) {
+    private void drawWaypointTabs(Matrix3x2fStack stack, int mouseX, int mouseY) {
         WaypointListTab[] tabs = WaypointListTab.values();
         for (int i = 0; i < tabs.length; i++) {
             WaypointListTab tab = tabs[i];
@@ -979,14 +978,14 @@ public class WaypointScreen extends BaniraScreen implements UiNativePage {
         }
     }
 
-    private void drawWaypointTopBar(PoseStack stack) {
+    private void drawWaypointTopBar(Matrix3x2fStack stack) {
         NarcissusScreenChrome.Rect ticket = headerRect(topBarLayout.ticket);
         drawLimitedTextLine(stack, ticketLabel(), ticket.x(),
                 ticket.y() + (ticket.height() - font.lineHeight) / 2,
                 ticket.width(), journalPalette.primary());
     }
 
-    private void drawActiveList(PoseStack stack, int mouseX, int mouseY) {
+    private void drawActiveList(Matrix3x2fStack stack, int mouseX, int mouseY) {
         List<WaypointEntry> items = activeTabItems();
         int listX = journalLayout.list().x() + PANEL_PADDING;
         NarcissusScreenChrome.ListViewport viewport = activeViewport(items);
@@ -1144,7 +1143,7 @@ public class WaypointScreen extends BaniraScreen implements UiNativePage {
         }
     }
 
-    private void drawTextTooltip(PoseStack stack, BaniraColorConfig theme, String text, int mouseX, int mouseY) {
+    private void drawTextTooltip(Matrix3x2fStack stack, BaniraColorConfig theme, String text, int mouseX, int mouseY) {
         FontDrawArgs args = FontDrawArgs.ofPopo(Text.literal(text).stack(stack).font(font)
                         .color(Color.argb(theme.textPrimary())))
                 .x(mouseX).y(mouseY).maxWidth(Math.max(50, Math.min(280, width - 24))).wrap(true).inScreen(true);
@@ -1241,20 +1240,20 @@ public class WaypointScreen extends BaniraScreen implements UiNativePage {
     }
 
     @Override
-    public boolean mouseDragged(double mouseX, double mouseY, int button, double dragX, double dragY) {
-        if (button == 0 && activeTab.supportsOrdering() && dragCandidate != null) {
+    public boolean mouseDragged(net.minecraft.client.input.MouseButtonEvent event, double dragX, double dragY) {
+        if (event.button() == 0 && activeTab.supportsOrdering() && dragCandidate != null) {
             if (draggingItem == null && System.currentTimeMillis() - dragPressedAt >= DRAG_HOLD_MS) {
                 draggingItem = dragCandidate;
                 selectedItem = draggingItem;
                 sortStates.remove(activeTab);
             }
             if (draggingItem != null) {
-                dragMouseY = mouseY;
-                updateDragInsertion(mouseY);
+                dragMouseY = event.y();
+                updateDragInsertion(event.y());
             }
             return true;
         }
-        return super.mouseDragged(mouseX, mouseY, button, dragX, dragY);
+        return super.mouseDragged(event, dragX, dragY);
     }
 
     @Override
@@ -1418,14 +1417,14 @@ public class WaypointScreen extends BaniraScreen implements UiNativePage {
         }
     }
 
-    private void drawDragTooltip(PoseStack stack, BaniraColorConfig theme, int mouseX, int mouseY) {
+    private void drawDragTooltip(Matrix3x2fStack stack, BaniraColorConfig theme, int mouseX, int mouseY) {
         Text text = Text.literal(NarcissusComponent.get().transClientAuto("waypoint_drag_hint").toString())
                 .stack(stack).font(font).color(Color.argb(theme.textPrimary()));
         TooltipWidget.drawPopupMessage(stack,
                 FontDrawArgs.ofPopo(text).x(mouseX).y(mouseY).inScreen(true), theme, season());
     }
 
-    private void drawCustomTooltip(PoseStack stack, BaniraColorConfig theme, WaypointEntry item, int mouseX, int mouseY) {
+    private void drawCustomTooltip(Matrix3x2fStack stack, BaniraColorConfig theme, WaypointEntry item, int mouseX, int mouseY) {
         List<String> lines = new ArrayList<>();
         lines.add(item.name);
         lines.add(item.getDetailTypeName() + "  " + item.getDimensionName());
@@ -1450,7 +1449,7 @@ public class WaypointScreen extends BaniraScreen implements UiNativePage {
         TooltipWidget.drawPopupMessage(stack, args, theme, season());
     }
 
-    private void drawSelectedDetail(PoseStack stack) {
+    private void drawSelectedDetail(Matrix3x2fStack stack) {
         selectedCostBounds = null;
         selectedCostText = "";
         if (selectedItem == null) {
@@ -1488,7 +1487,7 @@ public class WaypointScreen extends BaniraScreen implements UiNativePage {
         return NumberUtils.toFixedEx(item.safeWorldCoordinate.distanceFrom(new SafeWorldCoordinate(minecraft.player)), 1) + "m";
     }
 
-    private void drawDeleteConfirmOverlay(PoseStack stack, BaniraColorConfig theme) {
+    private void drawDeleteConfirmOverlay(Matrix3x2fStack stack, BaniraColorConfig theme) {
         ShapeDrawArgs dim = ShapeDrawArgs.rect(stack, 0, 0, width, height, ColorUtils.applyAlphaToArgb(theme.bgQuaternary(), 0x78));
         BaseShapeWidget.drawShape(dim);
 
@@ -1621,7 +1620,7 @@ public class WaypointScreen extends BaniraScreen implements UiNativePage {
         return listX + rowWidth - 32;
     }
 
-    private static void drawDragHandle(PoseStack stack, int x, int y, int color) {
+    private static void drawDragHandle(Matrix3x2fStack stack, int x, int y, int color) {
         for (int row = 0; row < 3; row++) {
             AbstractGuiUtils.fill(stack, x + 2, y + row * 3, 1, 1, color);
             AbstractGuiUtils.fill(stack, x + 5, y + row * 3, 1, 1, color);
@@ -1680,7 +1679,7 @@ public class WaypointScreen extends BaniraScreen implements UiNativePage {
         return next;
     }
 
-    private void drawDragPreview(PoseStack stack, int listX, int rowWidth,
+    private void drawDragPreview(Matrix3x2fStack stack, int listX, int rowWidth,
                                  NarcissusScreenChrome.ListViewport viewport) {
         if (draggingItem == null || dragInsertionIndex < 0) return;
         double targetY = listAreaY + LIST_PADDING_V
@@ -1863,11 +1862,11 @@ public class WaypointScreen extends BaniraScreen implements UiNativePage {
             if (safeWorldCoordinate == null) {
                 return "";
             }
-            String key = "dim." + safeWorldCoordinate.dimension().location().toString().replaceAll(":", ".");
+            String key = "dim." + safeWorldCoordinate.dimension().identifier().toString().replaceAll(":", ".");
             if (NarcissusLang.hasTranslation(EnumI18nType.WORD, key)) {
                 return NarcissusComponent.get().transClientAuto(key).toString();
             }
-            return safeWorldCoordinate.dimension().location().toString();
+            return safeWorldCoordinate.dimension().identifier().toString();
         }
 
         public String getCoordinateName() {

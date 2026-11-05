@@ -168,12 +168,12 @@ public final class CommandUtils {
                     Component flag = NarcissusComponent.get().literal(PlayerUtils.getPlayerNameString(PlayerUtils.getPlayerByUUID(s)));
                     if (access.getAutoTpaList().contains(s)) {
                         flag.append(NarcissusComponent.get().literal("A")
-                                .hoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT,
+                                .hoverEvent(new HoverEvent.ShowText(
                                         NarcissusComponent.get().transAuto("auto_accept_tpa").toChat(language))));
                     }
                     if (access.getAutoTphList().contains(s)) {
                         flag.append(NarcissusComponent.get().literal("H")
-                                .hoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT,
+                                .hoverEvent(new HoverEvent.ShowText(
                                         NarcissusComponent.get().transAuto("auto_accept_tph").toChat(language))));
                     }
                     if (CollectionUtils.isNotNullOrEmpty(flag.getChildren())) {
@@ -186,7 +186,7 @@ public final class CommandUtils {
 
     public static Component getBlacklistOrWhitelistHelp(Player player, boolean black) {
         return NarcissusComponent.get().transAuto(black ? "blacklist_tag" : "whitelist_tag")
-                .hoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT,
+                .hoverEvent(new HoverEvent.ShowText(
                         NarcissusComponent.get().transAuto(black ? "blacklist_help" : "whitelist_help")
                                 .toChat(NarcissusLang.getPlayerLanguage(player))));
     }

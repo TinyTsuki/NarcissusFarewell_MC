@@ -255,7 +255,7 @@ public class AccessListEditToServer implements NetworkPacket {
     }
 
     private static ServerPlayer findOnlinePlayer(ServerPlayer sender, String name) {
-        for (ServerPlayer p : sender.server.getPlayerList().getPlayers()) {
+        for (ServerPlayer p : sender.level().getServer().getPlayerList().getPlayers()) {
             if (p.getName().getString().equalsIgnoreCase(name)) {
                 return p;
             }

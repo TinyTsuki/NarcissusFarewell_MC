@@ -56,10 +56,10 @@ public class TeleportRecord implements Serializable, Cloneable {
      */
     public static TeleportRecord readFromNBT(CompoundTag tag) {
         TeleportRecord record = new TeleportRecord();
-        record.teleportTime = DateUtils.format(tag.getString("teleportTime"));
-        record.teleportType = EnumTeleportType.valueOf(tag.getString("teleportType"));
-        record.before = SafeWorldCoordinate.fromTag(tag.getCompound("before"));
-        record.after = SafeWorldCoordinate.fromTag(tag.getCompound("after"));
+        record.teleportTime = DateUtils.format(tag.getStringOr("teleportTime", ""));
+        record.teleportType = EnumTeleportType.valueOf(tag.getStringOr("teleportType", ""));
+        record.before = SafeWorldCoordinate.fromTag(tag.getCompoundOrEmpty("before"));
+        record.after = SafeWorldCoordinate.fromTag(tag.getCompoundOrEmpty("after"));
         return record;
     }
 

@@ -37,8 +37,7 @@ public class FabricCostPlayerFixture {
         Field platform = BaniraPlatforms.class.getDeclaredField("platform");
         platform.setAccessible(true);
         previousPlatform = platform.get(null);
-        net.minecraft.SharedConstants.tryDetectVersion();
-        net.minecraft.server.Bootstrap.bootStrap();
+        xin.vanilla.narcissus.test.NativeBootstrap.initialize();
         player = allocate(RecordingPlayer.class);
         player.id = UUID.randomUUID();
         player.food = new FoodData();
@@ -46,7 +45,11 @@ public class FabricCostPlayerFixture {
         player.health = 10;
         Field inventory = net.minecraft.world.entity.player.Player.class.getDeclaredField("inventory");
         inventory.setAccessible(true);
-        inventory.set(player, new net.minecraft.world.entity.player.Inventory(player));
+        var equipment = new net.minecraft.world.entity.EntityEquipment();
+        Field equipmentField = net.minecraft.world.entity.LivingEntity.class.getDeclaredField("equipment");
+        equipmentField.setAccessible(true);
+        equipmentField.set(player, equipment);
+        inventory.set(player, new net.minecraft.world.entity.player.Inventory(player, equipment));
         player.totalExperience = 10;
         player.experienceLevel = 10;
         player.world = allocate(ServerLevel.class);
@@ -99,7 +102,9 @@ public class FabricCostPlayerFixture {
                 method.setAccessible(true);
                 java.util.function.Predicate<ServerPlayer> available = p -> p.isAlive() && !p.isRemoved();
                 return (xin.vanilla.banira.api.cost.CostAccess) method.invoke(null, payer, scope, available);
-            } catch (ReflectiveOperationException error) { throw new IllegalStateException(error); }
+            } catch (ReflectiveOperationException error) {
+                throw new IllegalStateException(error);
+            }
         };
     }
 
@@ -129,7 +134,7 @@ public class FabricCostPlayerFixture {
         }
 
         @Override
-        public ServerLevel serverLevel() {
+        public ServerLevel level() {
             return world;
         }
 
@@ -186,7 +191,7 @@ public class FabricCostPlayerFixture {
         }
 
         @Override
-        public boolean hurt(DamageSource source, float amount) {
+        public boolean hurtServer(ServerLevel level, DamageSource source, float amount) {
             health -= amount;
             return true;
         }

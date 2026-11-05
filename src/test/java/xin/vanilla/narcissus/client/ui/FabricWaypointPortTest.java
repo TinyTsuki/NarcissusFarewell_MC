@@ -27,11 +27,12 @@ public class FabricWaypointPortTest {
         var entry = read("internal/fabric/client/FabricNarcissusClientEntry");
         assertTrue(entry.interfaces.contains("net/fabricmc/api/ClientModInitializer"));
         int bootstraps = 0;
-        for (var method : entry.methods) for (var instruction : method.instructions)
-            if (instruction instanceof MethodInsnNode call) {
-                assertFalse(call.owner, call.owner.startsWith("net/minecraftforge/") || call.owner.startsWith("net/neoforged/"));
-                if (call.owner.endsWith("/NarcissusClientBootstrap") && call.name.equals("init")) bootstraps++;
-            }
+        for (var method : entry.methods)
+            for (var instruction : method.instructions)
+                if (instruction instanceof MethodInsnNode call) {
+                    assertFalse(call.owner, call.owner.startsWith("net/minecraftforge/") || call.owner.startsWith("net/neoforged/"));
+                    if (call.owner.endsWith("/NarcissusClientBootstrap") && call.name.equals("init")) bootstraps++;
+                }
         assertEquals(1, bootstraps);
         for (String screen : new String[]{"WaypointScreen", "AccessListScreen", "PlayerConfigScreen"}) {
             var node = read("screen/" + screen);
@@ -53,31 +54,30 @@ public class FabricWaypointPortTest {
         assertFalse(Files.readString(Path.of("gradle.properties")).contains("apricityui_id"));
         var helper = read("integration/ScreenHelper");
         int routes = 0;
-        for (var method : helper.methods) for (var instruction : method.instructions)
-            if (instruction instanceof MethodInsnNode call && method.name.equals("openScreen")) {
-                assertFalse(call.owner, call.owner.contains("ApricityUI") || call.owner.contains("ModList"));
-                if (call.owner.endsWith("/WaypointScreen") && call.name.equals("<init>")) routes++;
-            }
+        for (var method : helper.methods)
+            for (var instruction : method.instructions)
+                if (instruction instanceof MethodInsnNode call && method.name.equals("openScreen")) {
+                    assertFalse(call.owner, call.owner.contains("ApricityUI") || call.owner.contains("ModList"));
+                    if (call.owner.endsWith("/WaypointScreen") && call.name.equals("<init>")) routes++;
+                }
         assertEquals(1, routes);
     }
 
     @Test
-    public void nativeBackgroundAndIconsKeepMinecraft21PublicContracts() throws Exception {
-        int backgrounds = 0, factories = 0;
+    public void nativeBackgroundAndIconsKeepPublicContracts() throws Exception {
+        assertTrue(read("screen/WaypointScreen").superName.endsWith("/BaniraScreen"));
+        int factories = 0;
         for (String name : new String[]{"screen/WaypointScreen", "client/ui/WaypointUiSession", "client/ui/AccessListUiSession"})
-            for (var method : read(name).methods) for (var instruction : method.instructions)
-                if (instruction instanceof MethodInsnNode call) {
-                    assertFalse(call.owner, call.owner.startsWith("com/sighs/"));
-                    if (call.name.equals("renderBackground")) {
-                        assertEquals("(Lnet/minecraft/client/gui/GuiGraphics;IIF)V", call.desc);
-                        backgrounds++;
+            for (var method : read(name).methods)
+                for (var instruction : method.instructions)
+                    if (instruction instanceof MethodInsnNode call) {
+                        assertFalse(call.owner, call.owner.startsWith("com/sighs/"));
+                        assertFalse(call.name, call.name.equals("renderBackground") || call.name.equals("extractBackground"));
+                        if (call.owner.equals("net/minecraft/resources/Identifier")) {
+                            assertNotEquals("<init>", call.name);
+                            if (call.name.equals("fromNamespaceAndPath")) factories++;
+                        }
                     }
-                    if (call.owner.equals("net/minecraft/resources/ResourceLocation")) {
-                        assertNotEquals("<init>", call.name);
-                        if (call.name.equals("fromNamespaceAndPath")) factories++;
-                    }
-                }
-        assertEquals(1, backgrounds);
         assertEquals(4, factories);
     }
 

@@ -38,7 +38,7 @@ public final class DelHomeCommand {
         String dimension;
         try {
             ResourceKey<Level> targetLevel = DimensionUtils.parse(StringArgumentType.getString(context, "dimension"));
-            dimension = targetLevel.location().toString();
+            dimension = targetLevel.identifier().toString();
         } catch (IllegalArgumentException ignored) {
             dimension = NarcissusUtils.getHomeDimensionByName(player, name);
         }
@@ -58,7 +58,7 @@ public final class DelHomeCommand {
         PacketUtils.sendPacketToPlayer(new WaypointSyncToClient(WaypointSyncToClient.Action.REMOVE, WaypointSyncToClient.Type.HOME, name, remove), player);
         PlayerTeleportData.syncPlayerData(player);
         Component dimensionComponent = NarcissusComponent.get().literal(dimension)
-                .hoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, NarcissusComponent.get().literal(remove.xyzString()).toVanilla()));
+                .hoverEvent(new HoverEvent.ShowText(NarcissusComponent.get().literal(remove.xyzString()).toVanilla()));
         MessageUtils.sendNotification(player, NarcissusComponent.get().transAuto("home_del", dimensionComponent, name), NarcissusNotificationTypes.WAYPOINT);
         return 1;
     }

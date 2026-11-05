@@ -26,11 +26,11 @@ public final class DimensionCommand {
         CommandUtils.notifyHelp(context);
         if (CommandUtils.checkTeleportPre(context.getSource(), EnumCommandType.DIMENSION)) return 0;
         ServerPlayer player = context.getSource().getPlayerOrException();
-        String dimString = player.level().dimension().location().toString();
+        String dimString = player.level().dimension().identifier().toString();
         Component dim = NarcissusComponent.get().literal(dimString);
         dim.color(EnumMCColor.GREEN.getColor())
-                .clickEvent(new ClickEvent(ClickEvent.Action.COPY_TO_CLIPBOARD, dimString))
-                .hoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, NarcissusComponent.get().transAuto("chat_copy_click").toVanilla(NarcissusLang.getPlayerLanguage(player))));
+                .clickEvent(new ClickEvent.CopyToClipboard(dimString))
+                .hoverEvent(new HoverEvent.ShowText(NarcissusComponent.get().transAuto("chat_copy_click").toVanilla(NarcissusLang.getPlayerLanguage(player))));
         Component msg = NarcissusComponent.get().transAuto("dimension_info", dim);
         MessageUtils.sendNotification(player, msg, NarcissusNotificationTypes.INTERACTIVE_QUERY);
         return 1;

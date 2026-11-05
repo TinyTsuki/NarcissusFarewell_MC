@@ -52,7 +52,8 @@ public class RequestSelectionAuthorizationTest {
                     selection.set(CommandUtils.getRequestId(ctx, type, target));
                     return 1;
                 })));
-        CommandSourceStack source = new CommandSourceStack(null, Vec3.ZERO, Vec2.ZERO, null, 4,
+        CommandSourceStack source = new CommandSourceStack(null, Vec3.ZERO, Vec2.ZERO, null,
+                net.minecraft.server.permissions.LevelBasedPermissionSet.OWNER,
                 "fixture", net.minecraft.network.chat.Component.empty(), null, fixture.player());
         dispatcher.execute("select " + id, source);
         return selection.get();

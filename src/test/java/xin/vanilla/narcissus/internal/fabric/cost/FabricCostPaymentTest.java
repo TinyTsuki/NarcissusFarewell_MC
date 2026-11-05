@@ -105,7 +105,7 @@ public class FabricCostPaymentTest {
                                 throw new UnsupportedOperationException();
                             }));
                 case "nativeServer":
-                    return payer.server;
+                    return payer.level().getServer();
                 case "cooldownSeconds":
                     return 0;
                 default:
@@ -502,7 +502,7 @@ public class FabricCostPaymentTest {
         assertEquals(0, saves.size());
         assertTrue(commit().isCommitted());
         assertEquals(1, saves.size());
-        assertEquals(1, saves.get(0).getInt("teleportCard"));
+        assertEquals(1, saves.get(0).getIntOr("teleportCard", Integer.MIN_VALUE));
         assertFalse(data.isDirty());
         assertEquals(1, syncs);
     }

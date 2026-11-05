@@ -4,19 +4,20 @@ import lombok.NonNull;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
-import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.protocol.game.ClientboundPlayerAbilitiesPacket;
 import net.minecraft.resources.ResourceKey;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.level.TicketType;
+import net.minecraft.server.permissions.PermissionSet;
+import net.minecraft.server.permissions.Permissions;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.damagesource.DamageType;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntitySpawnReason;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.TamableAnimal;
@@ -635,7 +636,23 @@ public class NarcissusUtils {
     }
 
     public static boolean hasCommandPermission(CommandSourceStack source, EnumCommandType type) {
-        return source.hasPermission(getCommandPermissionLevel(type)) || CommandUtils.hasVirtualPermission(source.getEntity(), type);
+        return hasNativePermission(source, getCommandPermissionLevel(type)) || CommandUtils.hasVirtualPermission(source.getEntity(), type);
+    }
+
+    public static boolean hasNativePermission(CommandSourceStack source, int level) {
+        return hasNativePermission(source.permissions(), level);
+    }
+
+    public static boolean hasNativePermission(PermissionSet permissions, int level) {
+        if (level <= 0) return true;
+        var permission = switch (level) {
+            case 1 -> Permissions.COMMANDS_MODERATOR;
+            case 2 -> Permissions.COMMANDS_GAMEMASTER;
+            case 3 -> Permissions.COMMANDS_ADMIN;
+            case 4 -> Permissions.COMMANDS_OWNER;
+            default -> null;
+        };
+        return permission != null && permissions.hasPermission(permission);
     }
 
     // endregion 指令相关
@@ -916,7 +933,7 @@ public class NarcissusUtils {
      * 在真正执行传送前按玩家配置进行倒计时；{@code teleportAction} 在倒计时结束时于服务端主线程执行（调用方应自行解析在线玩家等）。
      */
     private static TeleportCountdownTracker.Session executeTeleportWithCountdown(ServerPlayer player, EnumTeleportType type, Runnable teleportAction, Runnable cancelAction) {
-        MinecraftServer server = player.getServer();
+        MinecraftServer server = player.level().getServer();
         int sec = TeleportCountdownHelper.getEffectiveCountdownSeconds(player, type);
         if (sec <= 0 || server == null) {
             teleportAction.run();
@@ -1100,7 +1117,7 @@ public class NarcissusUtils {
         }
         SafeWorldCoordinate after = session.destination();
         SafeWorldCoordinate before = new SafeWorldCoordinate(player);
-        ServerLevel level = player.server.getLevel(after.dimension());
+        ServerLevel level = player.level().getServer().getLevel(after.dimension());
         if (level == null) {
             session.cancel();
             return;
@@ -1153,7 +1170,7 @@ public class NarcissusUtils {
     }
 
     private static boolean teleportPlayer(@NonNull ServerPlayer player, @NonNull SafeWorldCoordinate after, EnumTeleportType type, SafeWorldCoordinate before, ServerLevel level) {
-        ResourceLocation sound = Identifier.id().parse(CommonConfig.get().base().other().tpSound());
+        var sound = Identifier.id().parse(CommonConfig.get().base().other().tpSound());
         NarcissusUtils.playSound(player, sound, 1.0f, 1.0f);
         after.y(Math.floor(after.y()) + 0.1);
 
@@ -1202,7 +1219,7 @@ public class NarcissusUtils {
                 }
 
                 public boolean attach(Entity entity, Entity vehicle) {
-                    return entity.startRiding(vehicle, true);
+                    return entity.startRiding(vehicle, true, true);
                 }
             });
         } catch (RuntimeException error) {
@@ -1261,7 +1278,8 @@ public class NarcissusUtils {
 
         // 传送主动跟随的实体
         for (TamableAnimal entity : player.level().getEntitiesOfClass(TamableAnimal.class, player.getBoundingBox().inflate(followerRange))) {
-            if (entity.getOwnerUUID() != null && entity.getOwnerUUID().equals(player.getUUID()) && !entity.isOrderedToSit()) {
+            var owner = entity.getOwnerReference();
+            if (owner != null && owner.getUUID().equals(player.getUUID()) && !entity.isOrderedToSit()) {
                 followers.add(entity);
             }
         }
@@ -1292,22 +1310,22 @@ public class NarcissusUtils {
     private static Entity doTeleport(@NonNull Entity entity, @NonNull SafeWorldCoordinate safeWorldCoordinate, ServerLevel level) {
         if (entity instanceof ServerPlayer) {
             ServerPlayer player = (ServerPlayer) entity;
-            player.teleportTo(level, safeWorldCoordinate.x(), safeWorldCoordinate.y(), safeWorldCoordinate.z()
+            boolean moved = player.teleportTo(level, safeWorldCoordinate.x(), safeWorldCoordinate.y(), safeWorldCoordinate.z(), Set.of()
                     , safeWorldCoordinate.yaw() == 0 ? player.getYRot() : (float) safeWorldCoordinate.yaw()
-                    , safeWorldCoordinate.pitch() == 0 ? player.getXRot() : (float) safeWorldCoordinate.pitch());
+                    , safeWorldCoordinate.pitch() == 0 ? player.getXRot() : (float) safeWorldCoordinate.pitch(), true);
+            return moved ? player : null;
         } else {
             if (level == entity.level()) {
                 entity.teleportTo(safeWorldCoordinate.x(), safeWorldCoordinate.y(), safeWorldCoordinate.z());
             } else {
-                level.getChunkSource().addRegionTicket(
-                        TicketType.POST_TELEPORT,
+                level.getChunkSource().addTicketWithRadius(
+                        FOLLOWER_TELEPORT_TICKET,
                         new ChunkPos(safeWorldCoordinate.chunkX(), safeWorldCoordinate.chunkZ()),
-                        4,
-                        entity.getId());
+                        4);
                 Entity moved = moveEntityAcrossDimensions(entity, level);
                 if (moved == null) return null;
                 if (moved != null) {
-                    moved.moveTo(safeWorldCoordinate.x(), safeWorldCoordinate.y(), safeWorldCoordinate.z(),
+                    moved.snapTo(safeWorldCoordinate.x(), safeWorldCoordinate.y(), safeWorldCoordinate.z(),
                             safeWorldCoordinate.yaw() == 0 ? moved.getYRot() : (float) safeWorldCoordinate.yaw(),
                             safeWorldCoordinate.pitch() == 0 ? moved.getXRot() : (float) safeWorldCoordinate.pitch());
                     entity = moved;
@@ -1317,17 +1335,21 @@ public class NarcissusUtils {
         return entity;
     }
 
+    private static final TicketType FOLLOWER_TELEPORT_TICKET = new TicketType(5,
+            TicketType.FLAG_LOADING | TicketType.FLAG_KEEP_DIMENSION_ACTIVE);
+
     /**
      * 坐标传送不应依赖原版传送门入口；保留实体 NBT 后在目标维度重建，避免跟随者跨维时被静默留在原世界。
      */
     @Nullable
     private static Entity moveEntityAcrossDimensions(@NonNull Entity entity, @NonNull ServerLevel destination) {
-        CompoundTag tag = new CompoundTag();
-        if (!entity.save(tag)) {
+        var output = net.minecraft.world.level.storage.TagValueOutput.createWithContext(
+                net.minecraft.util.ProblemReporter.DISCARDING, entity.registryAccess());
+        if (!entity.save(output)) {
             LOGGER.warn("Unable to serialize follower {} for cross-dimension teleport", entity.getType());
             return null;
         }
-        Entity moved = EntityType.loadEntityRecursive(tag, destination, candidate -> candidate);
+        Entity moved = EntityType.loadEntityRecursive(output.buildResult(), destination, EntitySpawnReason.LOAD, candidate -> candidate);
         if (moved == null) {
             LOGGER.warn("Unable to restore follower {} for cross-dimension teleport", entity.getType());
             return null;
@@ -1401,7 +1423,7 @@ public class NarcissusUtils {
                 permission = 0;
                 break;
         }
-        return permission > -1 && player.hasPermissions(permission);
+        return permission > -1 && hasNativePermission(player.permissions(), permission);
     }
 
     // endregion 跨维度传送
@@ -1511,7 +1533,7 @@ public class NarcissusUtils {
 
     public static DamageSource getModDamageSource(Level level, @Nullable ServerPlayer player) {
         return new DamageSource(
-                level.registryAccess().registryOrThrow(Registries.DAMAGE_TYPE).getHolderOrThrow(MOD_DAMAGE_TYPE),
+                level.registryAccess().lookupOrThrow(Registries.DAMAGE_TYPE).getOrThrow(MOD_DAMAGE_TYPE),
                 player
         );
     }
@@ -1521,7 +1543,7 @@ public class NarcissusUtils {
      */
     public static boolean killPlayer(@Nullable ServerPlayer source, ServerPlayer target) {
         try {
-            if (target.isSleeping() && !target.level().isClientSide) {
+            if (target.isSleeping() && !target.level().isClientSide()) {
                 target.stopSleeping();
             }
             float lethal = target.getHealth() + target.getAbsorptionAmount();
@@ -1546,11 +1568,10 @@ public class NarcissusUtils {
      * @param volume 音量
      * @param pitch  音调
      */
-    public static void playSound(ServerPlayer player, ResourceLocation sound, float volume, float pitch) {
-        SoundEvent soundEvent = BuiltInRegistries.SOUND_EVENT.get(sound);
-        if (soundEvent != null) {
-            player.playNotifySound(soundEvent, SoundSource.PLAYERS, volume, pitch);
-        }
+    public static void playSound(ServerPlayer player, net.minecraft.resources.Identifier sound, float volume, float pitch) {
+        BuiltInRegistries.SOUND_EVENT.get(sound).ifPresent(event -> player.connection.send(
+                new net.minecraft.network.protocol.game.ClientboundSoundPacket(event, SoundSource.PLAYERS,
+                        player.getX(), player.getY(), player.getZ(), volume, pitch, player.getRandom().nextLong())));
     }
 
     /**
@@ -1574,14 +1595,10 @@ public class NarcissusUtils {
     }
 
     public static void setPlayerFlightMode(ServerPlayer player, Boolean enable, Float speed) {
-        CompoundTag root = new CompoundTag();
-        player.getAbilities().addSaveData(root);
-        CompoundTag abilities = root.getCompound("abilities");
-        if (enable == null) enable = !abilities.getBoolean("mayfly");
-        abilities.putBoolean("mayfly", enable);
-        if (!enable) abilities.putBoolean("flying", false);
-        if (speed != null) abilities.putFloat("flySpeed", speed);
-        player.getAbilities().loadSaveData(root);
+        var abilities = player.getAbilities();
+        abilities.mayfly = enable == null ? !abilities.mayfly : enable;
+        if (!abilities.mayfly) abilities.flying = false;
+        if (speed != null) abilities.setFlyingSpeed(speed);
         player.connection.send(new ClientboundPlayerAbilitiesPacket(player.getAbilities()));
     }
 

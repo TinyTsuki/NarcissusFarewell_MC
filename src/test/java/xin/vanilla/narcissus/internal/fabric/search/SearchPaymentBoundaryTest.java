@@ -175,14 +175,14 @@ public class SearchPaymentBoundaryTest {
 
     private SearchChunkPool pool() {
         return new SearchChunkPool(new SearchChunkPool.Backend() {
-            public boolean isReady(net.minecraft.resources.ResourceLocation d, int x, int z) {
+            public boolean isReady(net.minecraft.resources.Identifier d, int x, int z) {
                 return false;
             }
 
-            public void retain(net.minecraft.resources.ResourceLocation d, int x, int z) {
+            public void retain(net.minecraft.resources.Identifier d, int x, int z) {
             }
 
-            public void release(net.minecraft.resources.ResourceLocation d, int x, int z) {
+            public void release(net.minecraft.resources.Identifier d, int x, int z) {
             }
         }, server::isSameThread);
     }
@@ -201,18 +201,18 @@ public class SearchPaymentBoundaryTest {
     public void failedNativeReleaseDoesNotAbortRemainingServerStopCallbacks() throws Exception {
         boolean[] failRelease = {true};
         SearchChunkPool pool = new SearchChunkPool(new SearchChunkPool.Backend() {
-            public boolean isReady(net.minecraft.resources.ResourceLocation d, int x, int z) {
+            public boolean isReady(net.minecraft.resources.Identifier d, int x, int z) {
                 return true;
             }
 
-            public void retain(net.minecraft.resources.ResourceLocation d, int x, int z) {
+            public void retain(net.minecraft.resources.Identifier d, int x, int z) {
             }
 
-            public void release(net.minecraft.resources.ResourceLocation d, int x, int z) {
+            public void release(net.minecraft.resources.Identifier d, int x, int z) {
                 if (failRelease[0]) throw new IllegalStateException("native release failed");
             }
         }, server::isSameThread);
-        pool.open(Level.OVERWORLD.location()).require(0, 0);
+        pool.open(Level.OVERWORLD.identifier()).require(0, 0);
         NarcissusSearchService search = service(null, pool);
         Field current = NarcissusSearchService.class.getDeclaredField("current");
         current.setAccessible(true);

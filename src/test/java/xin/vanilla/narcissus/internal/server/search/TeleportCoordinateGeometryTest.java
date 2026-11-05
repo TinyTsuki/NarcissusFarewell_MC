@@ -1,7 +1,7 @@
 package xin.vanilla.narcissus.internal.server.search;
 
 import net.minecraft.core.BlockPos;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
@@ -43,8 +43,7 @@ public class TeleportCoordinateGeometryTest {
 
     @Before
     public void setup() throws Exception {
-        net.minecraft.SharedConstants.tryDetectVersion();
-        net.minecraft.server.Bootstrap.bootStrap();
+        xin.vanilla.narcissus.test.NativeBootstrap.initialize();
         platform = BaniraPlatforms.class.getDeclaredField("platform");
         platform.setAccessible(true);
         previousPlatform = platform.get(null);
@@ -57,15 +56,15 @@ public class TeleportCoordinateGeometryTest {
         bind.invoke(null, CommonConfig.class, holder);
         config = new CommonSearchConfiguration(holder);
         pool = new SearchChunkPool(new SearchChunkPool.Backend() {
-            public boolean isReady(ResourceLocation dimension, int x, int z) {
+            public boolean isReady(Identifier dimension, int x, int z) {
                 return true;
             }
 
-            public void retain(ResourceLocation dimension, int x, int z) {
+            public void retain(Identifier dimension, int x, int z) {
                 retainedChunks.add(x + "," + z);
             }
 
-            public void release(ResourceLocation dimension, int x, int z) {
+            public void release(Identifier dimension, int x, int z) {
                 retainedChunks.remove(x + "," + z);
             }
         }, () -> true);
@@ -142,7 +141,8 @@ public class TeleportCoordinateGeometryTest {
         assertEquals(Collections.singleton("0,0"), retainedChunks);
         assertEquals(1, callbacks);
         assertFalse(access.viewNotFound);
-        assertTrue(request.complete(() -> {}));
+        assertTrue(request.complete(() -> {
+        }));
         assertTrue(retainedChunks.isEmpty());
     }
 
@@ -168,7 +168,8 @@ public class TeleportCoordinateGeometryTest {
         assertEquals(NarcissusSearchRequest.ResultKind.EXHAUSTED_FALLBACK, request.kind());
         assertPosition(request.destination(), -.5, -16.1, -16.1);
         assertEquals(Collections.singleton("-1,-2"), retainedChunks);
-        assertTrue(request.complete(() -> {}));
+        assertTrue(request.complete(() -> {
+        }));
         assertTrue(retainedChunks.isEmpty());
     }
 
@@ -183,7 +184,8 @@ public class TeleportCoordinateGeometryTest {
         assertPosition(request.destination(), expectedX, expectedY, expectedZ);
         assertEquals(Collections.singleton(chunk), retainedChunks);
         assertEquals(1, callbacks);
-        assertTrue(request.complete(() -> {}));
+        assertTrue(request.complete(() -> {
+        }));
         assertTrue(retainedChunks.isEmpty());
         assertEquals(0, pool.leaseCount());
     }
@@ -202,7 +204,7 @@ public class TeleportCoordinateGeometryTest {
 
     private void open(SafeWorldCoordinate origin, EnumTeleportType type, boolean view) {
         request = new NarcissusSearchRequest(UUID.randomUUID(), origin, config.capture(type, view), access,
-                pool.open(Level.OVERWORLD.location()), resolved -> callbacks++);
+                pool.open(Level.OVERWORLD.identifier()), resolved -> callbacks++);
     }
 
     private void advance() {
@@ -219,20 +221,54 @@ public class TeleportCoordinateGeometryTest {
         boolean safe = true;
         boolean viewNotFound;
 
-        public boolean live() { return true; }
-        public boolean policyMatches() { return true; }
-        public void beginSlice() {}
-        public boolean safe(BlockPos pos, boolean belowAir) { return safe; }
-        public boolean blocksMotion(BlockPos pos) { return false; }
-        public int minY() { return -64; }
-        public int maxY() { return 319; }
-        public BlockState supportState() { return null; }
-        public boolean hasSupportItem(ItemStack item) { return false; }
+        public boolean live() {
+            return true;
+        }
+
+        public boolean policyMatches() {
+            return true;
+        }
+
+        public void beginSlice() {
+        }
+
+        public boolean safe(BlockPos pos, boolean belowAir) {
+            return safe;
+        }
+
+        public boolean blocksMotion(BlockPos pos) {
+            return false;
+        }
+
+        public int minY() {
+            return -64;
+        }
+
+        public int maxY() {
+            return 319;
+        }
+
+        public BlockState supportState() {
+            return null;
+        }
+
+        public boolean hasSupportItem(ItemStack item) {
+            return false;
+        }
+
         public SafeWorldCoordinate random(SafeWorldCoordinate origin, int range) {
             throw new AssertionError("This geometry test must not retry a random destination");
         }
-        public void cancelTicket() {}
-        public void failed(SearchTask.Failure reason) { fail("Unexpected search failure: " + reason); }
-        public void viewNotFound(boolean safe) { viewNotFound = true; }
+
+        public void cancelTicket() {
+        }
+
+        public void failed(SearchTask.Failure reason) {
+            fail("Unexpected search failure: " + reason);
+        }
+
+        public void viewNotFound(boolean safe) {
+            viewNotFound = true;
+        }
     }
 }

@@ -12,8 +12,7 @@ public abstract class HeadlessUiEnvironment {
 
         @Override
         protected void before() {
-            net.minecraft.SharedConstants.tryDetectVersion();
-            net.minecraft.server.Bootstrap.bootStrap();
+            xin.vanilla.narcissus.test.NativeBootstrap.initialize();
             previous = BaniraPlatforms.get();
             BaniraPlatforms.install((BaniraPlatform) java.lang.reflect.Proxy.newProxyInstance(
                     BaniraPlatform.class.getClassLoader(), new Class<?>[]{BaniraPlatform.class},

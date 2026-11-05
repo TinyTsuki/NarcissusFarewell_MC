@@ -1,7 +1,7 @@
 package xin.vanilla.narcissus.internal.server;
 
 import net.minecraft.core.BlockPos;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Blocks;
@@ -39,8 +39,7 @@ public class NarcissusSearchServiceTest {
 
     @Before
     public void setup() throws Exception {
-        net.minecraft.SharedConstants.tryDetectVersion();
-        net.minecraft.server.Bootstrap.bootStrap();
+        xin.vanilla.narcissus.test.NativeBootstrap.initialize();
         java.lang.reflect.Field platform = xin.vanilla.banira.platform.BaniraPlatforms.class.getDeclaredField("platform");
         platform.setAccessible(true);
         previousPlatform = platform.get(null);
@@ -58,15 +57,15 @@ public class NarcissusSearchServiceTest {
         ready = true;
         retainedChunks = new HashSet<>();
         pool = new SearchChunkPool(new SearchChunkPool.Backend() {
-            public boolean isReady(ResourceLocation d, int x, int z) {
+            public boolean isReady(Identifier d, int x, int z) {
                 return ready;
             }
 
-            public void retain(ResourceLocation d, int x, int z) {
+            public void retain(Identifier d, int x, int z) {
                 retainedChunks.add(x + "," + z);
             }
 
-            public void release(ResourceLocation d, int x, int z) {
+            public void release(Identifier d, int x, int z) {
                 retainedChunks.remove(x + "," + z);
             }
         }, () -> true);
@@ -89,7 +88,7 @@ public class NarcissusSearchServiceTest {
 
     private NarcissusSearchRequest request(Consumer<NarcissusSearchRequest> callback) {
         NarcissusSearchRequest result = new NarcissusSearchRequest(access.id, point(), config.capture(EnumTeleportType.TP_HOME, false),
-                access, pool.open(Level.OVERWORLD.location()), callback);
+                access, pool.open(Level.OVERWORLD.identifier()), callback);
         result.destination(point(), EnumTeleportType.TP_HOME, -1);
         return result;
     }
@@ -127,7 +126,7 @@ public class NarcissusSearchServiceTest {
     public void changingInputCoordinateCannotMoveCapturedSearch() {
         SafeWorldCoordinate input = point();
         NarcissusSearchRequest r = new NarcissusSearchRequest(access.id, input, config.capture(EnumTeleportType.TP_HOME, false),
-                access, pool.open(Level.OVERWORLD.location()), value -> {
+                access, pool.open(Level.OVERWORLD.identifier()), value -> {
             resolved = value;
             value.waitForCountdown();
         });
@@ -191,7 +190,7 @@ public class NarcissusSearchServiceTest {
                 .safe(true).safeMode(EnumSafeMode.Y_C_OFFSET_3);
         ready = false;
         NarcissusSearchRequest request = new NarcissusSearchRequest(access.id, point(),
-                config.capture(EnumTeleportType.TP_HOME, false), access, pool.open(Level.OVERWORLD.location()),
+                config.capture(EnumTeleportType.TP_HOME, false), access, pool.open(Level.OVERWORLD.identifier()),
                 value -> {
                     resolved = value;
                     value.waitForCountdown();
@@ -276,7 +275,7 @@ public class NarcissusSearchServiceTest {
     @Test
     public void viewSafeFlagDoesNotStartAnotherSafeSearch() {
         NarcissusSearchRequest r = new NarcissusSearchRequest(access.id, point().safeMode(EnumSafeMode.NONE),
-                config.capture(EnumTeleportType.TP_VIEW, true), access, pool.open(Level.OVERWORLD.location()),
+                config.capture(EnumTeleportType.TP_VIEW, true), access, pool.open(Level.OVERWORLD.identifier()),
                 value -> {
                     callbacks++;
                     resolved = value;
@@ -394,7 +393,7 @@ public class NarcissusSearchServiceTest {
         access.safe = false;
         access.air = false;
         NarcissusSearchRequest r = new NarcissusSearchRequest(access.id, point(), config.capture(EnumTeleportType.TP_RANDOM, false),
-                access, pool.open(Level.OVERWORLD.location()), value -> {
+                access, pool.open(Level.OVERWORLD.identifier()), value -> {
             resolved = value;
             value.waitForCountdown();
         });
@@ -413,7 +412,7 @@ public class NarcissusSearchServiceTest {
             SafeWorldCoordinate target = point();
             target.x(coordinate).z(coordinate);
             NarcissusSearchRequest r = new NarcissusSearchRequest(access.id, point(), config.capture(EnumTeleportType.TP_HOME, false),
-                    access, pool.open(Level.OVERWORLD.location()), value -> {
+                    access, pool.open(Level.OVERWORLD.identifier()), value -> {
                 resolved = value;
                 value.waitForCountdown();
             });
@@ -458,7 +457,7 @@ public class NarcissusSearchServiceTest {
         access.heightFilter = (chunk, min, max) -> Long.MAX_VALUE;
         SafeWorldCoordinate target = point().safeMode(EnumSafeMode.NONE);
         NarcissusSearchRequest r = new NarcissusSearchRequest(access.id, target, config.capture(EnumTeleportType.TP_HOME, false),
-                access, pool.open(Level.OVERWORLD.location()), value -> {
+                access, pool.open(Level.OVERWORLD.identifier()), value -> {
             resolved = value;
             value.waitForCountdown();
         });

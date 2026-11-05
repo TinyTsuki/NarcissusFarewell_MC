@@ -17,8 +17,7 @@ import static org.junit.Assert.*;
 public class WaypointUiParityTest extends HeadlessUiEnvironment {
     @BeforeClass
     public static void bootstrap() {
-        net.minecraft.SharedConstants.tryDetectVersion();
-        net.minecraft.server.Bootstrap.bootStrap();
+        xin.vanilla.narcissus.test.NativeBootstrap.initialize();
     }
 
     static class View extends NativeUiView {

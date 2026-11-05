@@ -1,6 +1,6 @@
 package xin.vanilla.narcissus.search;
 
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import org.junit.Test;
 
 import java.util.HashMap;
@@ -13,8 +13,8 @@ import static org.junit.Assert.*;
 import static xin.vanilla.narcissus.search.SearchChunkPool.Availability.*;
 
 public class SearchChunkPoolTest {
-    private static final ResourceLocation OVERWORLD = ResourceLocation.parse("minecraft:overworld");
-    private static final ResourceLocation NETHER = ResourceLocation.parse("minecraft:the_nether");
+    private static final Identifier OVERWORLD = Identifier.parse("minecraft:overworld");
+    private static final Identifier NETHER = Identifier.parse("minecraft:the_nether");
 
     @Test
     public void sharedChunkIsRetainedOnceAndReleasedOnlyAfterItsLastLease() {
@@ -399,7 +399,7 @@ public class SearchChunkPoolTest {
         return new SearchChunkPool(backend, () -> true);
     }
 
-    private static String key(ResourceLocation dimension, int x, int z) {
+    private static String key(Identifier dimension, int x, int z) {
         return dimension + ":" + x + ":" + z;
     }
 
@@ -415,7 +415,7 @@ public class SearchChunkPoolTest {
         private int maxLive;
 
         @Override
-        public boolean isReady(ResourceLocation dimension, int cx, int cz) {
+        public boolean isReady(Identifier dimension, int cx, int cz) {
             String key = key(dimension, cx, cz);
             readinessCalls.merge(key, 1, Integer::sum);
             if (key.equals(failCheck)) throw new IllegalStateException("readiness failed");
@@ -423,7 +423,7 @@ public class SearchChunkPoolTest {
         }
 
         @Override
-        public void retain(ResourceLocation dimension, int cx, int cz) {
+        public void retain(Identifier dimension, int cx, int cz) {
             String key = key(dimension, cx, cz);
             retainCalls.merge(key, 1, Integer::sum);
             if (!live.add(key)) throw new AssertionError("Duplicate native retain: " + key);
@@ -432,22 +432,22 @@ public class SearchChunkPoolTest {
         }
 
         @Override
-        public void release(ResourceLocation dimension, int cx, int cz) {
+        public void release(Identifier dimension, int cx, int cz) {
             String key = key(dimension, cx, cz);
             releaseCalls.merge(key, 1, Integer::sum);
             if (key.equals(failRelease)) throw new IllegalStateException("release failed");
             live.remove(key);
         }
 
-        private int retains(ResourceLocation dimension, int cx, int cz) {
+        private int retains(Identifier dimension, int cx, int cz) {
             return retainCalls.getOrDefault(key(dimension, cx, cz), 0);
         }
 
-        private int releases(ResourceLocation dimension, int cx, int cz) {
+        private int releases(Identifier dimension, int cx, int cz) {
             return releaseCalls.getOrDefault(key(dimension, cx, cz), 0);
         }
 
-        private int checks(ResourceLocation dimension, int cx, int cz) {
+        private int checks(Identifier dimension, int cx, int cz) {
             return readinessCalls.getOrDefault(key(dimension, cx, cz), 0);
         }
     }

@@ -1,6 +1,6 @@
 package xin.vanilla.narcissus.search;
 
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.level.ChunkPos;
 import xin.vanilla.banira.common.data.Component;
 import xin.vanilla.banira.common.enums.IEnumDescribable;
@@ -20,11 +20,11 @@ public final class SearchChunkPool implements AutoCloseable {
     }
 
     public interface Backend {
-        boolean isReady(ResourceLocation dimension, int cx, int cz);
+        boolean isReady(Identifier dimension, int cx, int cz);
 
-        void retain(ResourceLocation dimension, int cx, int cz);
+        void retain(Identifier dimension, int cx, int cz);
 
-        void release(ResourceLocation dimension, int cx, int cz);
+        void release(Identifier dimension, int cx, int cz);
     }
 
     private static final int LIMIT = 4;
@@ -52,7 +52,7 @@ public final class SearchChunkPool implements AutoCloseable {
         }
     }
 
-    public Lease open(ResourceLocation dimension) {
+    public Lease open(Identifier dimension) {
         checkOpen();
         Lease lease = new Lease(Objects.requireNonNull(dimension, "dimension"));
         leases.add(lease);
@@ -135,12 +135,12 @@ public final class SearchChunkPool implements AutoCloseable {
     }
 
     public final class Lease implements AutoCloseable {
-        private final ResourceLocation dimension;
+        private final Identifier dimension;
         private final Map<Key, Entry> holds = new LinkedHashMap<>(LIMIT, .75f, true);
         private List<Entry> failedReleases;
         private boolean closed;
 
-        private Lease(ResourceLocation dimension) {
+        private Lease(Identifier dimension) {
             this.dimension = dimension;
         }
 
@@ -296,16 +296,16 @@ public final class SearchChunkPool implements AutoCloseable {
     }
 
     private static final class Key {
-        private final ResourceLocation dimension;
+        private final Identifier dimension;
         private final int x;
         private final int z;
         private final long position;
 
-        private Key(ResourceLocation dimension, int x, int z) {
+        private Key(Identifier dimension, int x, int z) {
             this.dimension = dimension;
             this.x = x;
             this.z = z;
-            this.position = ChunkPos.asLong(x, z);
+            this.position = ChunkPos.pack(x, z);
         }
 
         @Override

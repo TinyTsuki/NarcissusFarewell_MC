@@ -14,7 +14,7 @@ public final class CostReloadCommand {
     }
 
     public static boolean permitted(CommandSourceStack source) {
-        return source.getEntity() == null ? source.hasPermission(4)
+        return source.getEntity() == null ? xin.vanilla.narcissus.util.NarcissusUtils.hasNativePermission(source, 4)
                 : source.getEntity() instanceof ServerPlayer && ConfigEditPermission.canAccessServerConfigEditor(source.getEntity());
     }
 

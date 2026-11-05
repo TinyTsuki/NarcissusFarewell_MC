@@ -17,6 +17,9 @@ import java.util.concurrent.atomic.AtomicInteger;
 import static org.junit.Assert.*;
 
 public class TeleportPreferencesUiPresentationTest extends HeadlessUiEnvironment {
+    @org.junit.Rule
+    public final xin.vanilla.narcissus.test.NativeClientRule nativeClient = new xin.vanilla.narcissus.test.NativeClientRule();
+
     private static final class EditorView extends WaypointUiParityTest.View {
         UiRowProvider categories() {
             return rowProviders.get("categories");
@@ -75,10 +78,10 @@ public class TeleportPreferencesUiPresentationTest extends HeadlessUiEnvironment
         for (String value : List.of("0", "+1", "01", "-0", "12", "\uff11\uff12", "\u0661\u0662")) {
             AtomicInteger sends = new AtomicInteger();
             var session = session(payload -> {
-                assertEquals(16, payload.getAllKeys().size());
+                assertEquals(16, payload.keySet().size());
                 assertFalse(payload.contains("DEATH"));
                 assertFalse(payload.contains("OTHER"));
-                assertEquals(Integer.parseInt(value), payload.getInt("TP_COORDINATE"));
+                assertEquals(Integer.parseInt(value), payload.getIntOr("TP_COORDINATE", Integer.MIN_VALUE));
                 sends.incrementAndGet();
             });
             session.draft(EnumTeleportType.TP_COORDINATE, value);

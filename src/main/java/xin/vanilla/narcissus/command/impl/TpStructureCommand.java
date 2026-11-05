@@ -10,9 +10,9 @@ import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.commands.arguments.DimensionArgument;
-import net.minecraft.commands.arguments.ResourceLocationArgument;
+import net.minecraft.commands.arguments.IdentifierArgument;
 import net.minecraft.resources.ResourceKey;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -47,7 +47,7 @@ public final class TpStructureCommand {
         CommandUtils.notifyHelp(context);
         ServerPlayer player = context.getSource().getPlayerOrException();
         if (CommandUtils.checkTeleportPre(context.getSource(), EnumCommandType.TP_STRUCTURE)) return 0;
-        ResourceLocation structId = ResourceLocationArgument.getId(context, "struct");
+        Identifier structId = IdentifierArgument.getId(context, "struct");
         boolean hasStructure = StructureUtils.hasStructure(structId);
         Biome biome = BiomeUtils.getBiome(structId);
         if (!hasStructure && biome == null) {
@@ -89,7 +89,7 @@ public final class TpStructureCommand {
                             : null;
                 }
                 if (safeWorldCoordinate == null) {
-                    player.server.execute(() -> {
+                    player.level().getServer().execute(() -> {
                         if (!ticket.live()) return;
                         ticket.cancel();
                         String notFoundKey = isBiome ? "biome_not_found_in_range" : "structure_not_found_in_range";
@@ -98,7 +98,7 @@ public final class TpStructureCommand {
                     return;
                 }
                 safeWorldCoordinate.safe(safe);
-                player.server.submit(() -> {
+                player.level().getServer().submit(() -> {
                     if (!ticket.live()) return;
                     if (CommandUtils.checkTeleportPost(player, safeWorldCoordinate, EnumTeleportType.TP_STRUCTURE)) {
                         ticket.cancel();
@@ -108,7 +108,7 @@ public final class TpStructureCommand {
                 });
             } catch (RuntimeException error) {
                 org.apache.logging.log4j.LogManager.getLogger(TpStructureCommand.class).error("Teleport destination search failed", error);
-                player.server.execute(() -> {
+                player.level().getServer().execute(() -> {
                     if (!ticket.live()) return;
                     ticket.cancel();
                     MessageUtils.sendNotification(player, NarcissusComponent.get().transAuto("cost_unavailable"), NarcissusNotificationTypes.TELEPORT_ERROR);
@@ -140,7 +140,7 @@ public final class TpStructureCommand {
     public static LiteralArgumentBuilder<CommandSourceStack> create() {
         return Commands.literal(CommonConfig.get().command().commandTpStructure())
                 .requires(source -> NarcissusUtils.hasCommandPermission(source, EnumCommandType.TP_STRUCTURE))
-                .then(Commands.argument("struct", ResourceLocationArgument.id())
+                .then(Commands.argument("struct", IdentifierArgument.id())
                         .suggests(TpStructureCommand::suggestion)
                         .executes(TpStructureCommand::execute)
                         .then(Commands.argument("range", IntegerArgumentType.integer(1))

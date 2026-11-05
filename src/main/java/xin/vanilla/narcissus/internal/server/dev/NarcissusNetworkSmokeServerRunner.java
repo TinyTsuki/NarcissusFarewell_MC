@@ -5,7 +5,7 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.EntityType;
-import net.minecraft.world.entity.animal.Wolf;
+import net.minecraft.world.entity.animal.wolf.Wolf;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
@@ -81,7 +81,7 @@ public final class NarcissusNetworkSmokeServerRunner {
             List<ServerPlayer> players = server.getPlayerList().getPlayers();
             ServerPlayer player = players.stream()
                     .filter(candidate -> fakePlayers == null
-                            || !fakePlayers.isFixturePlayerName(candidate.getGameProfile().getName()))
+                            || !fakePlayers.isFixturePlayerName(candidate.getGameProfile().name()))
                     .findFirst()
                     .orElse(null);
             if (player == null) {
@@ -113,7 +113,7 @@ public final class NarcissusNetworkSmokeServerRunner {
         if (++gameplayTicks > GAMEPLAY_TIMEOUT_TICKS) {
             throw new IllegalStateException("Teleport gameplay smoke timed out in " + gameplayStep);
         }
-        ServerLevel level = player.serverLevel();
+        ServerLevel level = player.level();
         switch (gameplayStep) {
             case PREPARE_RANDOM:
                 if (sparkProfile == null) {
@@ -121,7 +121,7 @@ public final class NarcissusNetworkSmokeServerRunner {
                     NarcissusNetworkSmokeStatus.append("PASS spark-profiler-active");
                 }
                 prepareSafeGround(level);
-                player.teleportTo(level, 0.5D, 70.0D, 0.5D, -90.0F, 0.0F);
+                player.teleportTo(level, 0.5D, 70.0D, 0.5D, java.util.Set.of(), -90.0F, 0.0F, true);
                 gameplayOriginX = player.getX();
                 gameplayOriginZ = player.getZ();
                 // 保留真实的随机横向坐标与异步安全搜索，但固定在烟测铺设地面的相邻高度。
@@ -142,7 +142,7 @@ public final class NarcissusNetworkSmokeServerRunner {
                 }
                 assertSafeGround(player);
                 NarcissusNetworkSmokeStatus.append("PASS random-safe-teleport");
-                player.teleportTo(level, 0.5D, 70.0D, 0.5D, -90.0F, 0.0F);
+                player.teleportTo(level, 0.5D, 70.0D, 0.5D, java.util.Set.of(), -90.0F, 0.0F, true);
                 gameplayOriginX = player.getX();
                 gameplayOriginZ = player.getZ();
                 prepareViewCollisionRing(level);
@@ -167,7 +167,7 @@ public final class NarcissusNetworkSmokeServerRunner {
                     return false;
                 }
                 NarcissusNetworkSmokeStatus.append("PASS view-end-teleport");
-                player.teleportTo(level, 0.5D, 70.0D, 0.5D, -90.0F, 0.0F);
+                player.teleportTo(level, 0.5D, 70.0D, 0.5D, java.util.Set.of(), -90.0F, 0.0F, true);
                 fakePlayers = new NarcissusCarpetFakePlayers();
                 fakePlayers.spawn(server);
                 NarcissusNetworkSmokeStatus.append("START carpet-fake-player-fixture");
@@ -232,7 +232,7 @@ public final class NarcissusNetworkSmokeServerRunner {
     }
 
     private static void runSustainedCoordinateSearches(ServerPlayer player, boolean includeViewSearch) {
-        ServerLevel level = player.serverLevel();
+        ServerLevel level = player.level();
         SafeWorldCoordinate seed = new SafeWorldCoordinate(0.5D, PREPARED_GROUND_PLAYER_Y, 0.5D, level.dimension()).safe(true);
         for (int index = 0; index < WORKLOAD_SEARCHES_PER_TICK; index++) {
             if (NarcissusUtils.findSafeCoordinate(seed.clone(), player, false) == null) {
@@ -261,13 +261,13 @@ public final class NarcissusNetworkSmokeServerRunner {
         for (int index = 0; index < players.size(); index++) {
             ServerPlayer player = players.get(index);
             double x = 2.5D + index * 4.0D;
-            player.teleportTo(overworld, x, 70.0D, 2.5D, -90.0F, 0.0F);
+            player.teleportTo(overworld, x, 70.0D, 2.5D, java.util.Set.of(), -90.0F, 0.0F, true);
             PlayerTeleportData.getData(player).setTeleportCountdownSeconds(EnumTeleportType.TP_COORDINATE, 0);
 
             Wolf follower = new Wolf(EntityType.WOLF, overworld);
             follower.tame(player);
             follower.setOrderedToSit(false);
-            follower.moveTo(x + 1.0D, 70.0D, 2.5D, 0.0F, 0.0F);
+            follower.snapTo(x + 1.0D, 70.0D, 2.5D, 0.0F, 0.0F);
             overworld.addFreshEntity(follower);
 
             SafeWorldCoordinate target = new SafeWorldCoordinate(x, 70.0D, 2.5D, nether.dimension()).safe(false);
@@ -281,7 +281,7 @@ public final class NarcissusNetworkSmokeServerRunner {
         List<ServerPlayer> players = fakePlayers.resolve(server);
         if (players.size() != 2) return false;
         for (ServerPlayer player : players) {
-            if (player.serverLevel() != nether || !hasTeleportedFollower(nether, player)) {
+            if (player.level() != nether || !hasTeleportedFollower(nether, player)) {
                 return false;
             }
         }
@@ -290,7 +290,7 @@ public final class NarcissusNetworkSmokeServerRunner {
 
     private static boolean hasTeleportedFollower(ServerLevel level, ServerPlayer player) {
         for (Wolf wolf : level.getEntitiesOfClass(Wolf.class, player.getBoundingBox().inflate(8.0D))) {
-            if (player.getUUID().equals(wolf.getOwnerUUID())) {
+            if (wolf.getOwnerReference() != null && player.getUUID().equals(wolf.getOwnerReference().getUUID())) {
                 return true;
             }
         }
@@ -305,8 +305,8 @@ public final class NarcissusNetworkSmokeServerRunner {
             if (result.length() > 0) result.append("; ");
             int netherFollowers = countOwnedFollowers(nether, player);
             int overworldFollowers = countOwnedFollowers(overworld, player);
-            result.append(player.getGameProfile().getName())
-                    .append(" dimension=").append(player.serverLevel().dimension().location())
+            result.append(player.getGameProfile().name())
+                    .append(" dimension=").append(player.level().dimension().identifier())
                     .append(" followersInNether=").append(netherFollowers)
                     .append(" followersInOverworld=").append(overworldFollowers);
         }
@@ -317,7 +317,8 @@ public final class NarcissusNetworkSmokeServerRunner {
         if (level == null) return 0;
         int count = 0;
         for (Wolf wolf : level.getEntitiesOfClass(Wolf.class, player.getBoundingBox().inflate(128.0D))) {
-            if (player.getUUID().equals(wolf.getOwnerUUID())) count++;
+            if (wolf.getOwnerReference() != null && player.getUUID().equals(wolf.getOwnerReference().getUUID()))
+                count++;
         }
         return count;
     }
@@ -366,7 +367,7 @@ public final class NarcissusNetworkSmokeServerRunner {
 
     private static void assertSafeGround(ServerPlayer player) {
         BlockPos below = player.blockPosition().below();
-        if (!player.serverLevel().getBlockState(below).blocksMotion()) {
+        if (!player.level().getBlockState(below).blocksMotion()) {
             throw new IllegalStateException("Teleport did not land on solid ground: " + below);
         }
     }

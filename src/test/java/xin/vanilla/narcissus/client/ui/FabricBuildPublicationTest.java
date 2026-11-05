@@ -28,15 +28,15 @@ public class FabricBuildPublicationTest {
     }
 
     @Test
-    public void publicationUsesTheRemappedSourceArtifact() throws Exception {
+    public void publicationUsesTheUnobfuscatedArtifacts() throws Exception {
         String build = buildScript();
-        assertTrue(build.contains("artifact tasks.named('remapJar')"));
-        assertTrue(build.contains("artifact tasks.named('remapSourcesJar')"));
-        assertFalse(build.contains("artifact tasks.named('sourcesJar')"));
+        assertTrue(build.contains("artifact tasks.named('jar')"));
+        assertTrue(build.contains("artifact tasks.named('sourcesJar')"));
+        assertFalse(build.contains("artifact tasks.named('remapJar')"));
     }
 
     @Test
-    public void localPublicationWaitsForBothRemappedArchives() throws Exception {
-        assertTrue(buildScript().contains("dependsOn 'remapJar', 'remapSourcesJar'"));
+    public void localPublicationWaitsForBothArchives() throws Exception {
+        assertTrue(buildScript().contains("dependsOn 'jar', 'sourcesJar'"));
     }
 }

@@ -1,21 +1,32 @@
 package xin.vanilla.narcissus.data.world;
 
+import com.mojang.serialization.Codec;
 import lombok.Getter;
-import lombok.NonNull;
-import net.minecraft.core.HolderLookup;
+import net.minecraft.SharedConstants;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.ReportedNbtException;
+import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.datafix.DataFixTypes;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.dimension.DimensionType;
 import net.minecraft.world.level.saveddata.SavedData;
+import net.minecraft.world.level.saveddata.SavedDataType;
+import net.minecraft.world.level.storage.LevelResource;
+import net.minecraft.world.level.storage.SavedDataStorage;
 import xin.vanilla.banira.api.BaniraServer;
 import xin.vanilla.banira.common.data.KeyValue;
 import xin.vanilla.narcissus.data.SafeWorldCoordinate;
 import xin.vanilla.narcissus.data.WaypointOrder;
 
-import javax.annotation.ParametersAreNonnullByDefault;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.LinkOption;
+import java.nio.file.Path;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -25,6 +36,9 @@ import java.util.Map;
 @Getter
 public class WorldStageData extends SavedData {
     private static final String DATA_NAME = "world_stage_data";
+    private static final Codec<WorldStageData> CODEC = CompoundTag.CODEC.xmap(WorldStageData::load, WorldStageData::save);
+    private static final SavedDataType<WorldStageData> TYPE = new SavedDataType<>(
+            Identifier.withDefaultNamespace(DATA_NAME), WorldStageData::new, CODEC, DataFixTypes.SAVED_DATA_MAP_DATA);
 
     // dimension:name coordinate
     private Map<KeyValue<String, String>, SafeWorldCoordinate> stageCoordinate = new LinkedHashMap<>();
@@ -32,23 +46,21 @@ public class WorldStageData extends SavedData {
     public WorldStageData() {
     }
 
-    public static WorldStageData load(CompoundTag nbt, HolderLookup.Provider provider) {
+    static WorldStageData load(CompoundTag nbt) {
         WorldStageData data = new WorldStageData();
-        ListTag stageCoordinateNBT = nbt.getList("stageCoordinate", 10);
+        ListTag stageCoordinateNBT = nbt.getListOrEmpty("stageCoordinate");
         Map<KeyValue<String, String>, SafeWorldCoordinate> stageCoordinate = new LinkedHashMap<>();
         for (int i = 0; i < stageCoordinateNBT.size(); i++) {
-            CompoundTag stageCoordinateTag = stageCoordinateNBT.getCompound(i);
-            stageCoordinate.put(new KeyValue<>(stageCoordinateTag.getString("key"), stageCoordinateTag.getString("value")),
-                    SafeWorldCoordinate.fromTag(stageCoordinateTag.getCompound("coordinate")));
+            CompoundTag stageCoordinateTag = stageCoordinateNBT.getCompoundOrEmpty(i);
+            stageCoordinate.put(new KeyValue<>(stageCoordinateTag.getStringOr("key", ""), stageCoordinateTag.getStringOr("value", "")),
+                    SafeWorldCoordinate.fromTag(stageCoordinateTag.getCompoundOrEmpty("coordinate")));
         }
-        data.setCoordinate(stageCoordinate);
+        data.stageCoordinate = stageCoordinate;
         return data;
     }
 
-    @Override
-    @NonNull
-    @ParametersAreNonnullByDefault
-    public CompoundTag save(CompoundTag nbt, HolderLookup.Provider provider) {
+    private CompoundTag save() {
+        CompoundTag nbt = new CompoundTag();
         ListTag stageCoordinateNBT = new ListTag();
         for (Map.Entry<KeyValue<String, String>, SafeWorldCoordinate> entry : this.getStageCoordinate().entrySet()) {
             CompoundTag stageCoordinateTag = new CompoundTag();
@@ -98,10 +110,45 @@ public class WorldStageData extends SavedData {
     }
 
     public static WorldStageData get(ServerPlayer player) {
-        return get(player.serverLevel());
+        return get(player.level());
     }
 
     public static WorldStageData get(ServerLevel world) {
-        return world.getDataStorage().computeIfAbsent(new Factory<>(WorldStageData::new, WorldStageData::load, DataFixTypes.SAVED_DATA_MAP_DATA), DATA_NAME);
+        return get(world.getDataStorage(), world.getServer().getWorldPath(LevelResource.ROOT), world.dimension());
+    }
+
+    static WorldStageData get(SavedDataStorage storage, Path root, ResourceKey<Level> dimension) {
+        WorldStageData existing = storage.get(TYPE);
+        if (existing != null) return existing;
+
+        Path dataDir = DimensionType.getStorageFolder(dimension, root).resolve("data");
+        Path current = TYPE.id().withSuffix(".dat").resolveAgainst(dataDir);
+        if (!Files.notExists(current, LinkOption.NOFOLLOW_LINKS)) {
+            throw new IllegalStateException("Cannot read waypoint storage: " + current);
+        }
+
+        Path flatFile = dataDir.resolve(DATA_NAME + ".dat");
+        Path legacy = Files.notExists(flatFile, LinkOption.NOFOLLOW_LINKS)
+                ? legacyDataFile(root, dimension, flatFile) : flatFile;
+        if (Files.notExists(legacy, LinkOption.NOFOLLOW_LINKS)) return storage.computeIfAbsent(TYPE);
+
+        try {
+            CompoundTag tag = storage.readTagFromDisk(legacy, TYPE.dataFixType(),
+                    SharedConstants.getCurrentVersion().dataVersion().version());
+            WorldStageData imported = load(tag.getCompound("data")
+                    .orElseThrow(() -> new IOException("Missing waypoint data in " + legacy)));
+            imported.setDirty();
+            storage.set(TYPE, imported);
+            return imported;
+        } catch (IOException | ReportedNbtException e) {
+            throw new IllegalStateException("Cannot read legacy waypoint storage: " + legacy, e);
+        }
+    }
+
+    private static Path legacyDataFile(Path root, ResourceKey<Level> dimension, Path flatFile) {
+        if (Level.OVERWORLD.equals(dimension)) return root.resolve("data").resolve(flatFile.getFileName());
+        if (Level.NETHER.equals(dimension)) return root.resolve("DIM-1/data").resolve(flatFile.getFileName());
+        if (Level.END.equals(dimension)) return root.resolve("DIM1/data").resolve(flatFile.getFileName());
+        return flatFile;
     }
 }

@@ -22,26 +22,25 @@ public class FabricAccessPreferencesPortTest {
     }
 
     @Test
-    public void accessUsesMinecraft21BackgroundAndPublicSkinContracts() throws Exception {
-        int backgrounds = 0, defaults = 0, textures = 0;
+    public void accessUsesSharedBackgroundAndPublicSkinContracts() throws Exception {
+        assertTrue(read("screen/AccessListScreen").superName.endsWith("/BaniraScreen"));
+        int defaults = 0, textures = 0;
         for (String name : new String[]{"screen/AccessListScreen", "client/ui/AccessProfileIcons"})
-            for (var method : read(name).methods) for (var instruction : method.instructions)
-                if (instruction instanceof MethodInsnNode call) {
-                    assertFalse(call.owner, call.owner.startsWith("com/sighs/"));
-                    if (call.name.equals("renderBackground")) {
-                        assertEquals("(Lnet/minecraft/client/gui/GuiGraphics;IIF)V", call.desc);
-                        backgrounds++;
+            for (var method : read(name).methods)
+                for (var instruction : method.instructions)
+                    if (instruction instanceof MethodInsnNode call) {
+                        assertFalse(call.owner, call.owner.startsWith("com/sighs/"));
+                        assertFalse(call.name, call.name.equals("renderBackground") || call.name.equals("extractBackground"));
+                        if (call.owner.equals("net/minecraft/resources/Identifier"))
+                            assertNotEquals("<init>", call.name);
+                        if (call.owner.equals("net/minecraft/client/resources/DefaultPlayerSkin")) {
+                            assertEquals("get", call.name);
+                            assertEquals("(Ljava/util/UUID;)Lnet/minecraft/world/entity/player/PlayerSkin;", call.desc);
+                            defaults++;
+                        }
+                        if (call.owner.equals("net/minecraft/core/ClientAsset$Texture") && call.name.equals("texturePath"))
+                            textures++;
                     }
-                    if (call.owner.equals("net/minecraft/resources/ResourceLocation"))
-                        assertNotEquals("<init>", call.name);
-                    if (call.owner.equals("net/minecraft/client/resources/DefaultPlayerSkin")) {
-                        assertEquals("get", call.name);
-                        assertEquals("(Ljava/util/UUID;)Lnet/minecraft/client/resources/PlayerSkin;", call.desc);
-                        defaults++;
-                    }
-                    if (call.owner.equals("net/minecraft/client/resources/PlayerSkin") && call.name.equals("texture")) textures++;
-                }
-        assertEquals(1, backgrounds);
         assertEquals(1, defaults);
         assertEquals(1, textures);
     }

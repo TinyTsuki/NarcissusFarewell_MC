@@ -51,8 +51,8 @@ public final class GetHomeCommand {
                     ));
             for (Map.Entry<String, List<KeyValue<String, SafeWorldCoordinate>>> entry : map.entrySet()) {
                 Component dimension = NarcissusComponent.get().literal(entry.getKey()).color(EnumMCColor.DARK_GREEN.getColor());
-                dimension.clickEvent(new ClickEvent(ClickEvent.Action.COPY_TO_CLIPBOARD, entry.getKey()));
-                dimension.hoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, NarcissusComponent.get().literal(entry.getKey()).toVanilla()));
+                dimension.clickEvent(new ClickEvent.CopyToClipboard(entry.getKey()));
+                dimension.hoverEvent(new HoverEvent.ShowText(NarcissusComponent.get().literal(entry.getKey()).toVanilla()));
                 dimension.append(NarcissusComponent.get().literal(": ").color(EnumMCColor.GRAY.getColor()));
                 for (KeyValue<String, SafeWorldCoordinate> coordinates : entry.getValue()) {
                     Component defHome;
@@ -74,8 +74,8 @@ public final class GetHomeCommand {
                             , coordinates.value().zString()
                             , defHome);
                     name.color(EnumMCColor.GREEN.getColor());
-                    name.clickEvent(new ClickEvent(ClickEvent.Action.COPY_TO_CLIPBOARD, name_hover.getString(language, true, true)));
-                    name.hoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, name_hover.toChat(language)));
+                    name.clickEvent(new ClickEvent.CopyToClipboard(name_hover.getString(language, true, true)));
+                    name.hoverEvent(new HoverEvent.ShowText(name_hover.toChat(language)));
                     dimension.append(name);
                     dimension.append(NarcissusComponent.get().literal(", ").color(EnumMCColor.GRAY.getColor()));
                 }

@@ -1,9 +1,12 @@
 plugins {
-    id 'fabric-loom' version '1.17.21'
+    id 'net.fabricmc.fabric-loom' version '1.17.21'
     id 'maven-publish'
 }
 
-def javaVer = 21
+def javaVer = 25
+if (JavaVersion.current() < JavaVersion.toVersion(javaVer)) {
+    throw new GradleException('Minecraft 26.1 requires a Java 25 or newer Gradle JVM')
+}
 
 group = project.mod_group_id
 version = project.mod_version
@@ -85,54 +88,54 @@ repositories {
 dependencies {
     implementation include('com.electronwill.night-config:core:3.6.4')
     implementation include('com.electronwill.night-config:toml:3.6.4')
-    modRuntimeOnly "maven.modrinth:fabric-permissions-api:62DUD085"
-    // Sodium Extra 0.6.x targets the bundled Sodium 0.6 line for Minecraft 1.21.1.
-    modRuntimeOnly "maven.modrinth:sodium-extra:anDafurZ"
-    modRuntimeOnly "maven.modrinth:spark:cALUj9l1"
-    // Development runtime performance mod; not bundled into published artifacts.
-    modRuntimeOnly "maven.modrinth:AANobbMI:u1OEbNKx"
-    // Dedicated-server smoke uses Carpet fake players for bounded multiplayer load.
-    modRuntimeOnly "maven.modrinth:carpet:f2mvlGrg"
     minecraft "com.mojang:minecraft:${project.minecraft_version}"
-    mappings loom.officialMojangMappings()
-    modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
-    modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
+    implementation("net.fabricmc:fabric-loader:${project.loader_version}") {
+        version { strictly(project.loader_version.toString()) }
+    }
+    implementation("net.fabricmc.fabric-api:fabric-api:${project.fabric_version}") {
+        version { strictly(project.fabric_version.toString()) }
+    }
+    implementation fabricApi.module('fabric-networking-api-v1', project.fabric_version)
+    implementation fabricApi.module('fabric-lifecycle-events-v1', project.fabric_version)
 
-    modImplementation("xin.vanilla.banira:banira_codex:${loader_type}-${minecraft_version}-${banira_version}") {
+    implementation("xin.vanilla.banira:banira_codex:${loader_type}-${minecraft_version}-${banira_version}") {
         changing = true
     }
-    modImplementation "com.terraformersmc:modmenu:${modmenu_version}"
+    compileOnly "com.terraformersmc:modmenu:${modmenu_version}"
 
     testImplementation 'junit:junit:4.13.2'
-    compileOnly 'org.projectlombok:lombok:1.18.34'
-    annotationProcessor 'org.projectlombok:lombok:1.18.34'
-    testCompileOnly 'org.projectlombok:lombok:1.18.34'
-    testAnnotationProcessor 'org.projectlombok:lombok:1.18.34'
+    compileOnly 'org.projectlombok:lombok:1.18.48'
+    annotationProcessor 'org.projectlombok:lombok:1.18.48'
+    testCompileOnly 'org.projectlombok:lombok:1.18.48'
+    testAnnotationProcessor 'org.projectlombok:lombok:1.18.48'
     implementation 'com.google.code.findbugs:jsr305:3.0.2'
 }
 
 configurations.create('journeyMapApiSource') { transitive = false }
-dependencies { journeyMapApiSource 'maven.modrinth:journeymap:i7LuKuDl' }
-def journeyMapApiDirectory = file('.gradle/narcissus/journeymap-api')
-journeyMapApiDirectory.mkdirs()
-def journeyMapApi = new File(journeyMapApiDirectory, 'journeymap-api-fabric-2.0.0-1.21.1.jar')
-configurations.journeyMapApiSource.files.each { artifact ->
-    new java.util.zip.ZipFile(artifact).withCloseable { zip ->
-        def entry = zip.getEntry('META-INF/jars/journeymap-api-fabric-2.0.0-1.21.1.jar')
-        if (entry == null) throw new GradleException('JourneyMap API compile input missing')
-        zip.getInputStream(entry).withCloseable { stream ->
-            java.nio.file.Files.copy(stream, journeyMapApi.toPath(), java.nio.file.StandardCopyOption.REPLACE_EXISTING)
+def journeyMapCoordinate = 'maven.modrinth:journeymap:tHO89MsT'
+dependencies { journeyMapApiSource journeyMapCoordinate }
+def journeyMapApiName = 'journeymap-api-fabric-2.0.0-26.1-SNAPSHOT.jar'
+def journeyMapApi = layout.buildDirectory.file("journeymap-api/${journeyMapApiName}")
+def extractJourneyMapApi = tasks.register('extractJourneyMapApi') {
+    inputs.files(configurations.journeyMapApiSource)
+    outputs.file(journeyMapApi)
+    doLast {
+        def target = journeyMapApi.get().asFile
+        target.parentFile.mkdirs()
+        new java.util.zip.ZipFile(configurations.journeyMapApiSource.singleFile).withCloseable { zip ->
+            def entry = zip.getEntry("META-INF/jars/${journeyMapApiName}")
+            if (entry == null) throw new GradleException('JourneyMap 26.1 API compile input missing')
+            zip.getInputStream(entry).withCloseable { stream ->
+                java.nio.file.Files.copy(stream, target.toPath(), java.nio.file.StandardCopyOption.REPLACE_EXISTING)
+            }
         }
     }
 }
 dependencies {
-    modCompileOnly files(journeyMapApi)
-    testImplementation files(providers.provider {
-        sourceSets.main.compileClasspath.files.findAll { it.name.toLowerCase().contains('journeymap-api') }
-    })
+    compileOnly files(journeyMapApi).builtBy(extractJourneyMapApi)
+    testImplementation files(journeyMapApi).builtBy(extractJourneyMapApi)
     if (project.findProperty('minimapSmoke') == 'journey') {
-        modRuntimeOnly 'maven.modrinth:journeymap:i7LuKuDl'
-        modRuntimeOnly 'maven.modrinth:common-network:qJXqSlRN'
+        localRuntime(journeyMapCoordinate) { transitive = false }
     }
 }
 
@@ -152,6 +155,12 @@ def prepareBaniraDevFpsOverlay = {
 }
 
 tasks.register('prepareDevFpsOverlay') {
+    onlyIf { providers.gradleProperty('banira.devFpsOverlay').getOrElse('false').toBoolean() }
+    doFirst {
+        if (!project.baniraDevOptionalRuntimeProjects.contains('sodium-extra')) {
+            throw new GradleException('Development FPS overlay requires a verified exact-version sodium-extra pin')
+        }
+    }
     doLast prepareBaniraDevFpsOverlay
 }
 
@@ -217,7 +226,7 @@ tasks.named('jar', Jar).configure {
     }
 }
 
-tasks.named('remapJar') {
+tasks.named('jar') {
     archiveBaseName.set(project.mod_id)
     archiveVersion.set("${loader_type}-${minecraft_version}-${mod_version}")
     destinationDirectory.set(file("${projectDir}/builds/${mod_version}"))
@@ -238,13 +247,13 @@ publishing {
 
 afterEvaluate {
     publishing.publications.named('mavenJava', MavenPublication) {
-        artifact tasks.named('remapJar')
-        artifact tasks.named('remapSourcesJar')
+        artifact tasks.named('jar')
+        artifact tasks.named('sourcesJar')
     }
 }
 
 tasks.withType(PublishToMavenLocal).configureEach {
-    dependsOn 'remapJar', 'remapSourcesJar'
+    dependsOn 'jar', 'sourcesJar'
 }
 
 apply from: 'gradle/network-smoke.gradle'

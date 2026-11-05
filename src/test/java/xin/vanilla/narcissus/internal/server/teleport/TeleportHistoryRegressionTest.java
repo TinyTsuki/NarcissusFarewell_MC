@@ -27,7 +27,9 @@ import java.util.*;
 
 import static org.junit.Assert.*;
 
-/** Exercises the real transaction and history handler; only native movement/network are isolated. */
+/**
+ * Exercises the real transaction and history handler; only native movement/network are isolated.
+ */
 public class TeleportHistoryRegressionTest {
     private final FabricCostPlayerFixture fixture = new FabricCostPlayerFixture();
     private HookPlayer player;
@@ -54,7 +56,8 @@ public class TeleportHistoryRegressionTest {
                 (p, m, a) -> m.getName().equals("handle") ? holder : null);
         BaniraNetworkService network = (BaniraNetworkService) proxy(BaniraNetworkService.class,
                 (p, m, a) -> {
-                    if (throwOnSync && m.getName().equals("sendToPlayer")) throw new IllegalStateException("sync failed");
+                    if (throwOnSync && m.getName().equals("sendToPlayer"))
+                        throw new IllegalStateException("sync failed");
                     return m.getReturnType() == boolean.class ? false : null;
                 });
         BaniraPlatforms.install((BaniraPlatform) proxy(BaniraPlatform.class, (p, m, a) -> {
@@ -94,7 +97,7 @@ public class TeleportHistoryRegressionTest {
 
     @Test
     public void externalTeleportStillRecordsOther() {
-        player.teleportTo(player.world, 4, 70, 8, 0, 0);
+        player.teleportTo(player.world, 4, 70, 8, java.util.Set.of(), 0, 0, true);
         assertTypes(EnumTeleportType.OTHER);
     }
 
@@ -104,7 +107,7 @@ public class TeleportHistoryRegressionTest {
         assertFalse(teleport(EnumTeleportType.TP_COORDINATE, player.world));
         assertTypes();
         player.failMove = false;
-        player.teleportTo(player.world, 4, 70.1, 8, 0, 0);
+        player.teleportTo(player.world, 4, 70.1, 8, java.util.Set.of(), 0, 0, true);
         assertTypes(EnumTeleportType.OTHER);
     }
 
@@ -114,7 +117,7 @@ public class TeleportHistoryRegressionTest {
         assertFalse(teleport(EnumTeleportType.TP_COORDINATE, player.world));
         assertTypes();
         player.throwMove = false;
-        player.teleportTo(player.world, 4, 70.1, 8, 0, 0);
+        player.teleportTo(player.world, 4, 70.1, 8, java.util.Set.of(), 0, 0, true);
         assertTypes(EnumTeleportType.OTHER);
     }
 
@@ -153,7 +156,7 @@ public class TeleportHistoryRegressionTest {
         Field cache = PlayerTeleportData.class.getDeclaredField("CACHE");
         cache.setAccessible(true);
         ((Map<UUID, PlayerTeleportData>) cache.get(null)).put(passenger.id, passengerData);
-        player.nested = () -> passenger.teleportTo(player.world, 4, 70.1, 8, 0, 0);
+        player.nested = () -> passenger.teleportTo(player.world, 4, 70.1, 8, java.util.Set.of(), 0, 0, true);
         assertTrue(teleport(EnumTeleportType.TP_COORDINATE, player.world));
         assertTypes(EnumTeleportType.TP_COORDINATE);
         assertEquals(1, passengerData.peekTeleportRecords().size());
@@ -335,11 +338,23 @@ public class TeleportHistoryRegressionTest {
             super(null, null, null, null);
         }
 
-        @Override public UUID getUUID() { return id; }
-        @Override public Level level() { return world; }
-        @Override public ServerLevel serverLevel() { return world; }
-        @Override public Entity getRootVehicle() { return root == null ? this : root; }
-        @Override public void stopRiding() {
+        @Override
+        public UUID getUUID() {
+            return id;
+        }
+
+        @Override
+        public ServerLevel level() {
+            return world;
+        }
+
+        @Override
+        public Entity getRootVehicle() {
+            return root == null ? this : root;
+        }
+
+        @Override
+        public void stopRiding() {
             Entity vehicle = getVehicle();
             if (vehicle == null) return;
             try {
@@ -351,7 +366,9 @@ public class TeleportHistoryRegressionTest {
                 throw new IllegalStateException(error);
             }
         }
-        @Override public boolean startRiding(Entity vehicle, boolean force) {
+
+        @Override
+        public boolean startRiding(Entity vehicle, boolean force, boolean sendEvent) {
             attachmentAttempts++;
             if (rejectAttachment) return false;
             try {
@@ -364,18 +381,25 @@ public class TeleportHistoryRegressionTest {
                 throw new IllegalStateException(error);
             }
         }
-        @Override public net.minecraft.core.RegistryAccess registryAccess() { return net.minecraft.core.RegistryAccess.EMPTY; }
-        @Override public void sendSystemMessage(net.minecraft.network.chat.Component message) { }
 
         @Override
-        public void teleportTo(ServerLevel target, double x, double y, double z, float yaw, float pitch) {
+        public net.minecraft.core.RegistryAccess registryAccess() {
+            return net.minecraft.core.RegistryAccess.EMPTY;
+        }
+
+        @Override
+        public void sendSystemMessage(net.minecraft.network.chat.Component message) {
+        }
+
+        @Override
+        public boolean teleportTo(ServerLevel target, double x, double y, double z, java.util.Set<net.minecraft.world.entity.Relative> relatives, float yaw, float pitch, boolean resetCamera) {
             Vec3 destination = new Vec3(x, y, z);
             Runnable callback = nested;
             nested = null;
             if (callback != null) callback.run();
             EventHandlerProxy.onPlayerTeleport(this, position(), destination, target.dimension());
             if (throwMove) throw new IllegalStateException("native move failed");
-            if (failMove) return;
+            if (failMove) return false;
             world = target;
             try {
                 set(Entity.class, this, "position", destination);
@@ -384,6 +408,7 @@ public class TeleportHistoryRegressionTest {
             } catch (Exception error) {
                 throw new IllegalStateException(error);
             }
+            return true;
         }
     }
 }

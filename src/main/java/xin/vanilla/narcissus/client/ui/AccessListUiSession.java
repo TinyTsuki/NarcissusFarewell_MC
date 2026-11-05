@@ -1,6 +1,6 @@
 package xin.vanilla.narcissus.client.ui;
 
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import xin.vanilla.banira.api.client.ui.UiGameElement;
 import xin.vanilla.banira.api.client.ui.UiView;
 import xin.vanilla.banira.client.data.Texture;
@@ -78,8 +78,8 @@ public final class AccessListUiSession extends NarcissusListUiSession {
         for (String id : new String[]{"subtitle", "scope_label", "mode_label", "confirm_title"})
             text(id, port().label(id));
         text("search_hint", port().label("search"));
-        view.gameElement("brand", UiGameElement.sprite(Texture.of(ResourceLocation.fromNamespaceAndPath("narcissus_farewell", "gui/quick_icon.png"), 64, 64)));
-        view.gameElement("delete_icon", UiGameElement.sprite(Texture.of(ResourceLocation.fromNamespaceAndPath("apricityui", "apricity/narcissus_farewell/icons/delete.png"), 16, 16)));
+        view.gameElement("brand", UiGameElement.sprite(Texture.of(Identifier.fromNamespaceAndPath("narcissus_farewell", "gui/quick_icon.png"), 64, 64)));
+        view.gameElement("delete_icon", UiGameElement.sprite(Texture.of(Identifier.fromNamespaceAndPath("apricityui", "apricity/narcissus_farewell/icons/delete.png"), 16, 16)));
         view.tooltip("close", NarcissusComponent.get().literal(port().label("close")));
     }
 

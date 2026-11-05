@@ -226,7 +226,7 @@ tasks.register('networkSmoke') {
                             new File(evidence, 'client-runtime-preparation.log'))
                     // Loom refreshes mapped jars during preparation; capture the files the game will load.
                     def jars = [:]
-                    (configurations.runtimeClasspath.files + configurations.modRuntimeOnly.files).findAll {
+                    configurations.runtimeClasspath.files.findAll {
                         it.isFile() && it.name.endsWith('.jar')
                     }.each { jars[it.absolutePath] = sha256(it) }
                     ['server', 'client'].each { side ->

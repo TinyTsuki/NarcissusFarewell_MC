@@ -17,8 +17,7 @@ import static org.junit.Assert.assertEquals;
 public class SectionSearchPrunerTest {
     @BeforeClass
     public static void bootstrap() {
-        net.minecraft.SharedConstants.tryDetectVersion();
-        net.minecraft.server.Bootstrap.bootStrap();
+        xin.vanilla.narcissus.test.NativeBootstrap.initialize();
     }
 
     @Test
@@ -97,7 +96,7 @@ public class SectionSearchPrunerTest {
     @Test
     public void globalOrUnknownPaletteDoesNotClaimAbsence() {
         Terrain terrain = new Terrain();
-        terrain.sections.put("0,0,5", new LevelChunkSection(biomes()) {
+        terrain.sections.put("0,0,5", new LevelChunkSection(sectionFactory()) {
             @Override
             public boolean maybeHas(java.util.function.Predicate<BlockState> predicate) {
                 return true;
@@ -117,16 +116,17 @@ public class SectionSearchPrunerTest {
         assertEquals(Long.MAX_VALUE, pruner.filter(0, 15, false).next(-1, 80, 80));
     }
 
-    private static net.minecraft.core.Registry<net.minecraft.world.level.biome.Biome> biomes() {
+    private static net.minecraft.world.level.chunk.PalettedContainerFactory sectionFactory() {
         net.minecraft.core.MappedRegistry<net.minecraft.world.level.biome.Biome> registry = new net.minecraft.core.MappedRegistry<>(
                 net.minecraft.core.registries.Registries.BIOME, com.mojang.serialization.Lifecycle.stable());
         net.minecraft.core.Registry.register(registry, net.minecraft.world.level.biome.Biomes.PLAINS,
                 new net.minecraft.world.level.biome.Biome.BiomeBuilder().hasPrecipitation(true).temperature(.8f).downfall(.4f)
                         .specialEffects(new net.minecraft.world.level.biome.BiomeSpecialEffects.Builder()
-                                .waterColor(4159204).waterFogColor(329011).fogColor(12638463).skyColor(7907327).build())
+                                .waterColor(4159204).build())
                         .mobSpawnSettings(net.minecraft.world.level.biome.MobSpawnSettings.EMPTY)
                         .generationSettings(net.minecraft.world.level.biome.BiomeGenerationSettings.EMPTY).build());
-        return registry;
+        return net.minecraft.world.level.chunk.PalettedContainerFactory.create(
+                new net.minecraft.core.RegistryAccess.ImmutableRegistryAccess(java.util.List.of(registry.freeze())));
     }
 
     private static SafeBlockPolicy policy() {
@@ -148,7 +148,7 @@ public class SectionSearchPrunerTest {
         }
 
         void put(int x, int y, int z, BlockState state) {
-            sections.computeIfAbsent((x >> 4) + "," + (z >> 4) + "," + (y >> 4), k -> new LevelChunkSection(biomes()))
+            sections.computeIfAbsent((x >> 4) + "," + (z >> 4) + "," + (y >> 4), k -> new LevelChunkSection(sectionFactory()))
                     .setBlockState(x & 15, y & 15, z & 15, state);
         }
 

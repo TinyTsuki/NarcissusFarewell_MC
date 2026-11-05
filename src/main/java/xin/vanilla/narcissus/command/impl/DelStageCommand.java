@@ -42,7 +42,7 @@ public final class DelStageCommand {
         String dimension;
         try {
             ResourceKey<Level> targetLevel = DimensionUtils.parse(StringArgumentType.getString(context, "dimension"));
-            dimension = targetLevel.location().toString();
+            dimension = targetLevel.identifier().toString();
         } catch (IllegalArgumentException ignored) {
             dimension = NarcissusUtils.getStageDimensionByName(player, name);
         }
@@ -60,7 +60,7 @@ public final class DelStageCommand {
         PacketUtils.broadcastPacket(new WaypointSyncToClient(WaypointSyncToClient.Action.REMOVE, WaypointSyncToClient.Type.STAGE, name, remove));
         PacketUtils.broadcastPacket(new StageDataSyncToClient(stageData.getStageCoordinate()));
         Component dimensionComponent = NarcissusComponent.get().literal(dimension)
-                .hoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, NarcissusComponent.get().literal(remove.xyzString()).toVanilla()));
+                .hoverEvent(new HoverEvent.ShowText(NarcissusComponent.get().literal(remove.xyzString()).toVanilla()));
         if (player != null) {
             MessageUtils.sendNotification(player, NarcissusComponent.get().transAuto("stage_del", dimensionComponent, name), NarcissusNotificationTypes.INTERACTIVE_QUERY);
         } else {

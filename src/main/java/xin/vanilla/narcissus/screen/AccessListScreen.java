@@ -1,9 +1,9 @@
 package xin.vanilla.narcissus.screen;
 
-import com.mojang.blaze3d.vertex.PoseStack;
+import org.joml.Matrix3x2fStack;
 import lombok.experimental.Accessors;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.multiplayer.PlayerInfo;
 import xin.vanilla.banira.BaniraComponent;
 import xin.vanilla.banira.api.client.ui.UiCloseReason;
@@ -737,16 +737,16 @@ public class AccessListScreen extends BaniraScreen implements UiNativePage {
             return map;
         }
         List<PlayerInfo> list = new ArrayList<>(minecraft.player.connection.getOnlinePlayers());
-        list.sort(Comparator.comparing(a -> a.getProfile().getName(), String.CASE_INSENSITIVE_ORDER));
+        list.sort(Comparator.comparing(a -> a.getProfile().name(), String.CASE_INSENSITIVE_ORDER));
         for (PlayerInfo info : list) {
-            if (info.getProfile() == null || info.getProfile().getId() == null) {
+            if (info.getProfile() == null || info.getProfile().id() == null) {
                 continue;
             }
-            String name = info.getProfile().getName();
+            String name = info.getProfile().name();
             if (StringUtils.isNullOrEmptyEx(name)) {
                 continue;
             }
-            map.put(name, info.getProfile().getId().toString());
+            map.put(name, info.getProfile().id().toString());
         }
         return map;
     }
@@ -755,13 +755,12 @@ public class AccessListScreen extends BaniraScreen implements UiNativePage {
         if (minecraft == null || minecraft.gui == null) {
             return;
         }
-        minecraft.gui.getChat().addMessage(NarcissusComponent.get().transClientAuto("access_list_no_online_players").toChat());
+        minecraft.gui.getChat().addClientSystemMessage(NarcissusComponent.get().transClientAuto("access_list_no_online_players").toChat());
     }
 
     @Override
-    protected void onRender(@Nonnull GuiGraphics graphics, int mouseX, int mouseY, float partialTicks) {
-        renderBackground(graphics, mouseX, mouseY, partialTicks);
-        PoseStack stack = graphics.pose();
+    protected void onRender(@Nonnull GuiGraphicsExtractor graphics, int mouseX, int mouseY, float partialTicks) {
+        Matrix3x2fStack stack = graphics.pose();
 
         refreshListsIfNeeded();
 
@@ -800,7 +799,7 @@ public class AccessListScreen extends BaniraScreen implements UiNativePage {
         renderWidgets(graphics, partialTicks);
     }
 
-    private void drawLimitedTextLine(PoseStack stack, String text, double x, double y, int maxWidth, int colorArgb) {
+    private void drawLimitedTextLine(Matrix3x2fStack stack, String text, double x, double y, int maxWidth, int colorArgb) {
         LabelWidget.drawLimitedText(FontDrawArgs.of(Text.literal(text).stack(stack).font(font).color(Color.argb(colorArgb)))
                 .x(x).y(y)
                 .maxWidth(maxWidth)
@@ -809,7 +808,7 @@ public class AccessListScreen extends BaniraScreen implements UiNativePage {
                 .inScreen(false));
     }
 
-    private void drawLimitedTextCentered(PoseStack stack, String text, double x, double y, int maxWidth, int colorArgb) {
+    private void drawLimitedTextCentered(Matrix3x2fStack stack, String text, double x, double y, int maxWidth, int colorArgb) {
         LabelWidget.drawLimitedText(FontDrawArgs.of(Text.literal(text).stack(stack).font(font).color(Color.argb(colorArgb)))
                 .x(x).y(y)
                 .maxWidth(maxWidth)
@@ -818,7 +817,7 @@ public class AccessListScreen extends BaniraScreen implements UiNativePage {
                 .inScreen(false));
     }
 
-    private void drawAccessTabs(PoseStack stack, int mouseX, int mouseY) {
+    private void drawAccessTabs(Matrix3x2fStack stack, int mouseX, int mouseY) {
         AccessListTab[] tabs = AccessListTab.values();
         for (int i = 0; i < tabs.length; i++) {
             AccessListTab tab = tabs[i];
@@ -836,7 +835,7 @@ public class AccessListScreen extends BaniraScreen implements UiNativePage {
         }
     }
 
-    private void drawActiveList(PoseStack stack, int mouseX, int mouseY) {
+    private void drawActiveList(Matrix3x2fStack stack, int mouseX, int mouseY) {
         List<String> items = activeTabItems();
         Column column = activeTabColumn();
         int listX = accessListRect.x() + PANEL_PADDING;
@@ -952,7 +951,7 @@ public class AccessListScreen extends BaniraScreen implements UiNativePage {
                 && y >= rect.y() && y < rect.y() + rect.height();
     }
 
-    private static void drawPlayerHeadFace(PoseStack stack, String uuidStr, int x, int y, int size) {
+    private static void drawPlayerHeadFace(Matrix3x2fStack stack, String uuidStr, int x, int y, int size) {
         UUID uuid;
         try {
             uuid = UUID.fromString(uuidStr);
@@ -969,7 +968,7 @@ public class AccessListScreen extends BaniraScreen implements UiNativePage {
         }
     }
 
-    private void drawAccessTooltip(PoseStack stack, BaniraColorConfig theme, String uuid,
+    private void drawAccessTooltip(Matrix3x2fStack stack, BaniraColorConfig theme, String uuid,
                                    Column column, int mouseX, int mouseY) {
         List<String> lines = new ArrayList<>();
         lines.add(playerNameForListUuid(uuid));
@@ -1008,7 +1007,7 @@ public class AccessListScreen extends BaniraScreen implements UiNativePage {
         return EnumWhiteListMode.NONE;
     }
 
-    private void drawDeleteConfirmOverlay(PoseStack stack, BaniraColorConfig theme) {
+    private void drawDeleteConfirmOverlay(Matrix3x2fStack stack, BaniraColorConfig theme) {
         ShapeDrawArgs dim = ShapeDrawArgs.rect(stack, 0, 0, width, height, ColorUtils.applyAlphaToArgb(theme.bgQuaternary(), 0x78));
         BaseShapeWidget.drawShape(dim);
 

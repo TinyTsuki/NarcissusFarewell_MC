@@ -46,7 +46,7 @@ final class NarcissusCarpetFakePlayers {
 
     List<ServerPlayer> resolve(MinecraftServer server) {
         return server.getPlayerList().getPlayers().stream()
-                .filter(player -> isFixturePlayerName(player.getGameProfile().getName()))
+                .filter(player -> isFixturePlayerName(player.getGameProfile().name()))
                 .collect(Collectors.toList());
     }
 
@@ -59,7 +59,7 @@ final class NarcissusCarpetFakePlayers {
     private static void executeAll(MinecraftServer server, List<String> commands) {
         for (String command : commands) {
             server.getCommands().performPrefixedCommand(
-                    server.createCommandSourceStack().withPermission(4), command);
+                    server.createCommandSourceStack().withPermission(net.minecraft.server.permissions.LevelBasedPermissionSet.OWNER), command);
         }
     }
 }

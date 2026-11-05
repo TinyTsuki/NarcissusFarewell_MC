@@ -40,9 +40,10 @@ public class JourneyMapFabricBoundaryTest {
     }
 
     @Test
-    public void apiInputIsRemappedAndNeverBundled() throws Exception {
+    public void apiInputUsesNativeNamesAndIsNeverBundled() throws Exception {
         String build = source("build.gradle");
-        assertTrue(build.contains("modCompileOnly files(journeyMapApi)"));
+        assertTrue(build.contains("compileOnly files(journeyMapApi)"));
+        assertFalse(build.contains("modCompileOnly files(journeyMapApi)"));
         assertFalse(build.contains("include files(journeyMapApi)"));
         assertFalse(build.contains("journeyMapBeta"));
     }
