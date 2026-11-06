@@ -53,7 +53,7 @@ public final class GravestoneModGraveIntegration {
 
     public static SafeWorldCoordinate parseObituary(ServerPlayer player) {
         try {
-            ItemStack selected = player.getInventory().getSelected();
+            ItemStack selected = player.getInventory().getSelectedItem();
             if (selected.getItem() instanceof ObituaryItem item) {
                 Death death = item.fromStack(player, selected);
                 if (death != null) {

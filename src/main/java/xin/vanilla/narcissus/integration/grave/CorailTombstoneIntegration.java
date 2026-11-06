@@ -50,7 +50,7 @@ public final class CorailTombstoneIntegration {
 
     public static SafeWorldCoordinate parseObituary(ServerPlayer player) {
         try {
-            ItemStack selected = player.getInventory().getSelected();
+            ItemStack selected = player.getInventory().getSelectedItem();
             if (selected.getItem() instanceof ItemGraveKey item) {
                 Location pos = item.getTombPos(selected);
                 if (!pos.isOrigin()) {

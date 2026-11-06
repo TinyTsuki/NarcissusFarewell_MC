@@ -170,42 +170,43 @@ public final class PlayerTeleportData implements IPlayerData<PlayerTeleportData>
 
     @Override
     public void deserializeNBT(CompoundTag nbt, boolean dirty) {
-        this.notified = nbt.getBoolean("notified");
-        this.lastCardTime = DateUtils.format(nbt.getString("lastCardTime"));
-        this.lastTpTime = DateUtils.format(nbt.getString("lastTpTime"));
-        this.teleportCard.set(nbt.getInt("teleportCard"));
+        this.notified = nbt.getBooleanOr("notified", false);
+
+        this.lastCardTime = DateUtils.format(nbt.getStringOr("lastCardTime", ""));
+        this.lastTpTime = DateUtils.format(nbt.getStringOr("lastTpTime", ""));
+        this.teleportCard.set(nbt.getIntOr("teleportCard", 0));
 
         // 反序列化传送记录
-        ListTag recordsNBT = nbt.getList("teleportRecords", 10);
+        ListTag recordsNBT = nbt.getListOrEmpty("teleportRecords");
         List<TeleportRecord> records = new ArrayList<>();
         for (int i = 0; i < recordsNBT.size(); i++) {
-            records.add(TeleportRecord.readFromNBT(recordsNBT.getCompound(i)));
+            records.add(TeleportRecord.readFromNBT(recordsNBT.getCompoundOrEmpty(i)));
         }
         this.teleportRecords = records;
 
         // 反序列化家坐标
-        ListTag homeCoordinateNBT = nbt.getList("homeCoordinate", 10);
+        ListTag homeCoordinateNBT = nbt.getListOrEmpty("homeCoordinate");
         Map<KeyValue<String, String>, SafeWorldCoordinate> homeCoordinateMap = new LinkedHashMap<>();
         for (int i = 0; i < homeCoordinateNBT.size(); i++) {
-            CompoundTag homeCoordinateTag = homeCoordinateNBT.getCompound(i);
-            homeCoordinateMap.put(new KeyValue<>(homeCoordinateTag.getString("key"), homeCoordinateTag.getString("value")),
-                    SafeWorldCoordinate.fromTag(homeCoordinateTag.getCompound("coordinate")));
+            CompoundTag homeCoordinateTag = homeCoordinateNBT.getCompoundOrEmpty(i);
+            homeCoordinateMap.put(new KeyValue<>(homeCoordinateTag.getStringOr("key", ""), homeCoordinateTag.getStringOr("value", "")),
+                    SafeWorldCoordinate.fromTag(homeCoordinateTag.getCompoundOrEmpty("coordinate")));
         }
         this.homeCoordinate = homeCoordinateMap;
 
         // 反序列化默认家
-        ListTag defaultHomeNBT = nbt.getList("defaultHome", 10);
+        ListTag defaultHomeNBT = nbt.getListOrEmpty("defaultHome");
         Map<String, String> defaultHomeMap = new HashMap<>();
         for (int i = 0; i < defaultHomeNBT.size(); i++) {
-            CompoundTag defaultHomeTag = defaultHomeNBT.getCompound(i);
-            defaultHomeMap.put(defaultHomeTag.getString("key"), defaultHomeTag.getString("value"));
+            CompoundTag defaultHomeTag = defaultHomeNBT.getCompoundOrEmpty(i);
+            defaultHomeMap.put(defaultHomeTag.getStringOr("key", ""), defaultHomeTag.getStringOr("value", ""));
         }
         this.defaultHome = defaultHomeMap;
 
         // 反序列化黑白名单
-        this.access = PlayerAccess.readFromNBT(nbt.getCompound("access"));
+        this.access = PlayerAccess.readFromNBT(nbt.getCompoundOrEmpty("access"));
 
-        readTeleportCountdownFromNbt(nbt.contains("tpCountdowns", 10) ? nbt.getCompound("tpCountdowns") : new CompoundTag());
+        readTeleportCountdownFromNbt(nbt.getCompoundOrEmpty("tpCountdowns"));
 
         if (dirty) {
             this.save();
@@ -289,7 +290,7 @@ public final class PlayerTeleportData implements IPlayerData<PlayerTeleportData>
             if (!cd.contains(t.name())) {
                 continue;
             }
-            int v = TeleportCountdownHelper.clampToPlayerAllowedRange(cd.getInt(t.name()));
+            int v = TeleportCountdownHelper.clampToPlayerAllowedRange(cd.getIntOr(t.name(), 0));
             if (v > 0) {
                 this.teleportCountdownSeconds.put(t, v);
             }
@@ -350,7 +351,7 @@ public final class PlayerTeleportData implements IPlayerData<PlayerTeleportData>
                 if (!tag.contains(t.name())) {
                     continue;
                 }
-                int v = TeleportCountdownHelper.clampToPlayerAllowedRange(tag.getInt(t.name()));
+                int v = TeleportCountdownHelper.clampToPlayerAllowedRange(tag.getIntOr(t.name(), 0));
                 if (v > 0) {
                     this.teleportCountdownSeconds.put(t, v);
                 }

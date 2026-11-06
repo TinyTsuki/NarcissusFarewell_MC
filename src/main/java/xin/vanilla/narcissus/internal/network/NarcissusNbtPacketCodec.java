@@ -28,7 +28,7 @@ public final class NarcissusNbtPacketCodec {
 
     public static CompoundTag deserialize(String value) {
         try {
-            return TagParser.parseTag(value == null || value.isEmpty() ? "{}" : value);
+            return TagParser.parseCompoundFully(value == null || value.isEmpty() ? "{}" : value);
         } catch (CommandSyntaxException e) {
             throw new IllegalArgumentException("Invalid Narcissus packet SNBT", e);
         }

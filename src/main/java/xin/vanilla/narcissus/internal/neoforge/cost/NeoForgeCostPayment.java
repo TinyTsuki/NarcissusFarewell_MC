@@ -19,9 +19,11 @@ import xin.vanilla.narcissus.service.cost.CostPaymentService;
 import java.util.Objects;
 import java.util.ArrayList;
 import java.util.List;
+
 import xin.vanilla.banira.api.BaniraCosts;
 import xin.vanilla.banira.api.cost.*;
 import xin.vanilla.narcissus.service.cost.NarcissusPaymentPolicy;
+
 import java.util.function.*;
 
 public final class NeoForgeCostPayment implements CostPaymentService.PaymentAccess {
@@ -32,8 +34,8 @@ public final class NeoForgeCostPayment implements CostPaymentService.PaymentAcce
     private final Consumer<ServerPlayer> sync;
 
     public NeoForgeCostPayment() {
-        this(System::currentTimeMillis, player -> player.server != null && player.server.isSameThread()
-                        && !player.hasDisconnected() && player.server.getPlayerList().getPlayer(player.getUUID()) == player,
+        this(System::currentTimeMillis, player -> player.level().getServer().isSameThread()
+                        && !player.hasDisconnected() && player.level().getServer().getPlayerList().getPlayer(player.getUUID()) == player,
                 id -> NarcissusFarewell.getTeleportRequest().get(id), CommandUtils::executeCommand,
                 PlayerTeleportData::syncPlayerData);
     }
@@ -51,8 +53,8 @@ public final class NeoForgeCostPayment implements CostPaymentService.PaymentAcce
     public EnumCostFailure validate(CostContext context) {
         ServerPlayer moving = context.player().nativePlayer(ServerPlayer.class);
         ServerPlayer paying = context.payer().nativePlayer(ServerPlayer.class);
-        if (!available(moving) || !available(paying) || moving.server != paying.server
-                || moving.server != context.nativeServer(net.minecraft.server.MinecraftServer.class)
+        if (!available(moving) || !available(paying) || moving.level().getServer() != paying.level().getServer()
+                || moving.level().getServer() != context.nativeServer(net.minecraft.server.MinecraftServer.class)
                 || !moving.getUUID().equals(context.player().uuid()) || !paying.getUUID().equals(context.payer().uuid())
                 || context.requester().filter(view -> !actor(view, moving)).isPresent()
                 || context.targetPlayer().filter(view -> !actor(view, moving)).isPresent()) {
@@ -65,7 +67,7 @@ public final class NeoForgeCostPayment implements CostPaymentService.PaymentAcce
         if (context.targetPlayer().isPresent()) {
             ServerPlayer endpoint = context.teleportType() == EnumTeleportType.TP_HERE ? paying
                     : context.targetPlayer().get().nativePlayer(ServerPlayer.class);
-            if (!context.destination().get().dimensionId().equals(endpoint.serverLevel().dimension().location().toString())) {
+            if (!context.destination().get().dimensionId().equals(endpoint.level().dimension().identifier().toString())) {
                 return EnumCostFailure.UNKNOWN_TARGET;
             }
         }
@@ -88,7 +90,7 @@ public final class NeoForgeCostPayment implements CostPaymentService.PaymentAcce
                     || !context.requester().isPresent() || !context.targetPlayer().isPresent()
                     || context.requester().get().nativePlayer(ServerPlayer.class) != request.getRequester()
                     || context.targetPlayer().get().nativePlayer(ServerPlayer.class) != request.getTarget()
-                    || !available(request.getTarget()) || request.getTarget().server != paying.server
+                    || !available(request.getTarget()) || request.getTarget().level().getServer() != paying.level().getServer()
                     || (request.getTeleportType() == EnumTeleportType.TP_HERE ? request.getTarget() : request.getRequester()) != moving) {
                 return EnumCostFailure.REQUEST_UNAVAILABLE;
             }
@@ -98,7 +100,22 @@ public final class NeoForgeCostPayment implements CostPaymentService.PaymentAcce
 
     private boolean actor(CostPlayerView view, ServerPlayer moving) {
         ServerPlayer player = view.nativePlayer(ServerPlayer.class);
-        return available(player) && player.server == moving.server && player.getUUID().equals(view.uuid());
+        return available(player) && player.level().getServer() == moving.level().getServer() && player.getUUID().equals(view.uuid());
+    }
+
+    static String itemSpecification(ItemStack stack, net.minecraft.core.HolderLookup.Provider registries) {
+        String id = stack.typeHolder().unwrapKey().orElseThrow().identifier().toString();
+        if (stack.getComponentsPatch().isEmpty()) return id;
+        var ops = registries.createSerializationContext(net.minecraft.nbt.NbtOps.INSTANCE);
+        var encoded = net.minecraft.core.component.DataComponentPatch.CODEC.encodeStart(ops, stack.getComponentsPatch()).getOrThrow();
+        if (!(encoded instanceof net.minecraft.nbt.CompoundTag components)) {
+            throw new IllegalStateException("Expected an item component map");
+        }
+        java.util.StringJoiner entries = new java.util.StringJoiner(",", id + "[", "]");
+        for (String key : components.keySet()) {
+            entries.add(key.startsWith("!") ? key : key + "=" + components.get(key));
+        }
+        return entries.toString();
     }
 
     private boolean available(ServerPlayer player) {
@@ -128,25 +145,45 @@ public final class NeoForgeCostPayment implements CostPaymentService.PaymentAcce
         CostAccess access = resources;
         xin.vanilla.banira.api.cost.CostPaymentPlan shared = access.preview(CostRequirement.all(requirements), 1);
         return new CostPaymentService.PreparedPayment() {
-            public xin.vanilla.banira.api.cost.CostPaymentPlan plan() { return shared; }
+            public xin.vanilla.banira.api.cost.CostPaymentPlan plan() {
+                return shared;
+            }
+
             public EnumCostFailure pay() {
                 EnumCostFailure validity = validate(context);
                 return validity == EnumCostFailure.NONE ? NarcissusPaymentPolicy.failure(access.debit(shared)) : validity;
             }
-            public List<xin.vanilla.banira.api.cost.CostPaymentPlan.ResourceSnapshot> receipt() { return access.receipt(shared).snapshots(); }
-            public void afterPayment() { NeoForgeCostPayment.this.afterPayment(context, plan.paid()); }
+
+            public List<xin.vanilla.banira.api.cost.CostPaymentPlan.ResourceSnapshot> receipt() {
+                return access.receipt(shared).snapshots();
+            }
+
+            public void afterPayment() {
+                NeoForgeCostPayment.this.afterPayment(context, plan.paid());
+            }
         };
     }
 
     private static ResourceCost resource(CostContext context, int amount) {
         String id;
         switch (context.costType()) {
-            case EXP_POINT: id = "banira:xp_point"; break;
-            case EXP_LEVEL: id = "banira:xp_level"; break;
-            case HEALTH: id = "banira:health"; break;
-            case HUNGER: id = "banira:hunger"; break;
-            case ITEM: id = "banira:item"; break;
-            default: throw new IllegalArgumentException("Unsupported teleport resource");
+            case EXP_POINT:
+                id = "banira:xp_point";
+                break;
+            case EXP_LEVEL:
+                id = "banira:xp_level";
+                break;
+            case HEALTH:
+                id = "banira:health";
+                break;
+            case HUNGER:
+                id = "banira:hunger";
+                break;
+            case ITEM:
+                id = "banira:item";
+                break;
+            default:
+                throw new IllegalArgumentException("Unsupported teleport resource");
         }
         return new ResourceCost(id, amount, context.costType() == EnumCostType.ITEM ? context.parameters().item() : "");
     }
@@ -180,9 +217,9 @@ public final class NeoForgeCostPayment implements CostPaymentService.PaymentAcce
         ServerPlayer moving = context.player().nativePlayer(ServerPlayer.class);
         List<CostRequirement> requirements = new ArrayList<>();
         if (context.payer().nativePlayer(ServerPlayer.class) == moving && context.costType() == EnumCostType.ITEM
-                && plan.resourceAmount() > 0) requirements.add(CostRequirement.leaf(resource(context, plan.resourceAmount())));
-        String specification = new net.minecraft.commands.arguments.item.ItemInput(support.getItemHolder(),
-                support.getComponentsPatch()).serialize(moving.registryAccess());
+                && plan.resourceAmount() > 0)
+            requirements.add(CostRequirement.leaf(resource(context, plan.resourceAmount())));
+        String specification = itemSpecification(support, moving.registryAccess());
         requirements.add(CostRequirement.leaf(new ResourceCost("banira:item", 1, specification)));
         return BaniraCosts.access(moving, InventoryScope.ALL).preview(CostRequirement.all(requirements), 1).isSuccess();
     }

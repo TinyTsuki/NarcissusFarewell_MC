@@ -136,7 +136,7 @@ public final class TpGraveCommand {
         ServerPlayer player = context.getSource().getPlayerOrException();
         PlayerTeleportData.getData(player).getTeleportRecords().stream()
                 .filter(r -> r.getTeleportType() == EnumTeleportType.DEATH)
-                .map(r -> r.getBefore().dimension().location().toString())
+                .map(r -> r.getBefore().dimension().identifier().toString())
                 .filter(StringUtils::isNotNullOrEmpty)
                 .forEach(builder::suggest);
         return builder.buildFuture();

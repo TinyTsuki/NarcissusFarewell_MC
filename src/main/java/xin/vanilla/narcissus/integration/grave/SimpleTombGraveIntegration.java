@@ -3,8 +3,8 @@ package xin.vanilla.narcissus.integration.grave;
 import com.lothrazar.simpletomb.block.BlockEntityTomb;
 import com.lothrazar.simpletomb.block.BlockTomb;
 import com.lothrazar.simpletomb.data.DeathHelper;
-import com.lothrazar.simpletomb.item.GraveKeyItem;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.GlobalPos;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -55,10 +55,12 @@ public final class SimpleTombGraveIntegration {
 
     public static SafeWorldCoordinate parseObituary(ServerPlayer player) {
         try {
-            ItemStack selected = player.getInventory().getSelected();
-            if (selected.getItem() instanceof GraveKeyItem item) {
-                var pos = item.getTombPos(selected);
-                if (pos != null && pos != DeathHelper.ORIGIN) {
+            ItemStack selected = player.getInventory().getSelectedItem();
+            // Older Simple Tomb jars link the key to a vanilla class removed in 26.1.
+            Class<?> keyType = Class.forName("com.lothrazar.simpletomb.item.GraveKeyItem");
+            if (keyType.isInstance(selected.getItem())) {
+                Object location = keyType.getMethod("getTombPos", ItemStack.class).invoke(selected.getItem(), selected);
+                if (location instanceof GlobalPos pos && !pos.equals(DeathHelper.ORIGIN)) {
                     return new SafeWorldCoordinate(pos.pos().getX(), pos.pos().getY(), pos.pos().getZ(), pos.dimension());
                 }
             }

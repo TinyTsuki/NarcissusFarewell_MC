@@ -1,6 +1,6 @@
 package xin.vanilla.narcissus.screen;
 
-import com.mojang.blaze3d.vertex.PoseStack;
+import org.joml.Matrix3x2fStack;
 import xin.vanilla.banira.client.data.BaniraColorConfig;
 import xin.vanilla.banira.client.data.ShapeDrawArgs;
 import xin.vanilla.banira.client.gui.widget.BaseShapeWidget;
@@ -75,7 +75,7 @@ final class NarcissusScreenChrome {
         return new Layout(outer, content, top, list, detail);
     }
 
-    static void drawJournal(PoseStack stack, Palette palette, Layout layout) {
+    static void drawJournal(Matrix3x2fStack stack, Palette palette, Layout layout) {
         drawRounded(stack, layout.outer.x, layout.outer.y, layout.outer.width, layout.outer.height,
                 palette.paper, OUTER_RADIUS, 0);
         drawRounded(stack, layout.outer.x, layout.outer.y, layout.outer.width, layout.outer.height,
@@ -84,7 +84,7 @@ final class NarcissusScreenChrome {
                 palette.content, INNER_RADIUS, 0);
     }
 
-    static void drawCompactTab(PoseStack stack, Palette palette, Rect rect,
+    static void drawCompactTab(Matrix3x2fStack stack, Palette palette, Rect rect,
                                boolean hovered, boolean selected) {
         if (hovered) {
             int fill = ColorUtils.applyAlphaToArgb(palette.softLine, 0x30);
@@ -104,7 +104,7 @@ final class NarcissusScreenChrome {
         return new Rect(top.x + xOffset, top.y + (top.height - height) / 2, width, height);
     }
 
-    static void drawJournalListRow(PoseStack stack, Palette palette, Rect rect,
+    static void drawJournalListRow(Matrix3x2fStack stack, Palette palette, Rect rect,
                                    boolean enabled, boolean hovered, boolean selected) {
         int fill = palette.content;
         if (!enabled) {
@@ -119,20 +119,20 @@ final class NarcissusScreenChrome {
         drawRounded(stack, rect.x, rect.y, rect.width, rect.height, border, INNER_RADIUS, 1);
     }
 
-    static void drawDetailSurface(PoseStack stack, Palette palette, Rect rect) {
+    static void drawDetailSurface(Matrix3x2fStack stack, Palette palette, Rect rect) {
         drawRounded(stack, rect.x, rect.y, rect.width, rect.height,
                 ColorUtils.applyAlphaToArgb(palette.sidebar, 0x58), INNER_RADIUS, 0);
         drawRounded(stack, rect.x, rect.y, rect.width, rect.height,
                 palette.softLine, INNER_RADIUS, 1);
     }
 
-    static void drawDialog(PoseStack stack, Palette palette,
+    static void drawDialog(Matrix3x2fStack stack, Palette palette,
                            int x, int y, int width, int height) {
         drawRounded(stack, x, y, width, height, palette.paper, OUTER_RADIUS, 0);
         drawRounded(stack, x, y, width, height, palette.strongLine, OUTER_RADIUS, 1);
     }
 
-    private static void drawRounded(PoseStack stack, int x, int y, int width, int height,
+    private static void drawRounded(Matrix3x2fStack stack, int x, int y, int width, int height,
                                     int color, float radius, int borderWidth) {
         if (width <= 0 || height <= 0) {
             return;

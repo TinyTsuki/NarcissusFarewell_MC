@@ -3,11 +3,14 @@ plugins {
     id 'eclipse'
     id 'idea'
     id 'maven-publish'
-    id 'net.neoforged.gradle.userdev' version '7.0.181'
+    id 'net.neoforged.gradle.userdev' version '7.1.39'
     // 若以上行报错则大概率为网络问题, 请切换网络并刷新Gradle
 }
 
-def javaVer = 21
+def javaVer = 25
+if (JavaVersion.current() < JavaVersion.toVersion(javaVer)) {
+    throw new GradleException('Minecraft 26.1 requires a Java 25 or newer Gradle JVM')
+}
 apply from: 'gradle/aui-validation-output.gradle'
 
 group = mod_group_id
@@ -20,6 +23,10 @@ base {
 java {
     toolchain.languageVersion = JavaLanguageVersion.of(javaVer)
     withSourcesJar()
+}
+
+if (providers.gradleProperty('banira.neoForgeDependencyRepo').isPresent()) {
+    minecraftArtifactCache.cacheDirectory.set(layout.projectDirectory.dir('.gradle/caches/minecraft'))
 }
 
 // minecraft.accessTransformers.file rootProject.file('src/main/resources/META-INF/accesstransformer.cfg')
@@ -99,6 +106,25 @@ configurations {
 
 repositories {
     mavenLocal()
+    def offlineSupplement = providers.gradleProperty('banira.neoForgeOfflineSupplement').orNull
+    if (offlineSupplement != null) {
+        named('Mojang LWJGL Free Type Repository') {
+            url = uri(offlineSupplement)
+        }
+    }
+    def verifiedRepository = providers.gradleProperty('banira.neoForgeDependencyRepo').orNull
+    if (verifiedRepository != null) {
+        def verified = maven {
+            url = uri(verifiedRepository)
+            metadataSources {
+                gradleMetadata()
+                mavenPom()
+                artifact()
+            }
+        }
+        remove(verified)
+        addFirst(verified)
+    }
 
     maven {
         name = "JourneyMap (Public)"
@@ -125,45 +151,43 @@ repositories {
     }
 }
 
-configurations.create('journeyMapModernApiSource') { transitive = false }
-configurations.create('journeyMapBetaApiSource') { transitive = false }
+configurations.create('narcissusMapApiSources') { transitive = false }
+def journeyMapContract = 'maven.modrinth:journeymap:5YEj4JLa'
+def xaeroCompileReference = 'maven.modrinth:xaeros-minimap:ktORDOcM'
 dependencies {
-    journeyMapModernApiSource 'maven.modrinth:journeymap:CtFE7hwT'
-    journeyMapBetaApiSource 'curse.maven:journeymap-32274:7824057'
+    narcissusMapApiSources journeyMapContract
+    narcissusMapApiSources xaeroCompileReference
 }
-def journeyMapApiDirectory = file('.gradle/narcissus/journeymap-api')
-journeyMapApiDirectory.mkdirs()
-def extractJourneyMapApi = { configuration, String entryName ->
-    def target = new File(journeyMapApiDirectory, new File(entryName).name)
-    configuration.files.each { artifact ->
+def mapApiDirectory = layout.buildDirectory.dir('narcissus/map-api')
+def journeyMapApiName = 'journeymap-api-neoforge-2.0.0-26.1-SNAPSHOT.jar'
+def xaeroApiName = 'xaerolib-neoforge-26.1.2-1.8.5.jar'
+def extractMapApis = tasks.register('extractMapApis') {
+    inputs.files(configurations.narcissusMapApiSources)
+    outputs.files(mapApiDirectory.map { it.file(journeyMapApiName) }, mapApiDirectory.map { it.file(xaeroApiName) })
+    doLast {
+        def remaining = [journeyMapApiName, xaeroApiName] as Set
+        def directory = mapApiDirectory.get().asFile
+        directory.mkdirs()
+        configurations.narcissusMapApiSources.files.each { artifact ->
         new java.util.zip.ZipFile(artifact).withCloseable { zip ->
-            def entry = zip.getEntry(entryName)
-            if (entry == null) throw new GradleException('JourneyMap API compile input missing')
-            zip.getInputStream(entry).withCloseable { stream ->
-                java.nio.file.Files.copy(stream, target.toPath(), java.nio.file.StandardCopyOption.REPLACE_EXISTING)
+                [journeyMapApiName, xaeroApiName].each { name ->
+                    def entry = zip.getEntry("META-INF/jarjar/${name}")
+                    if (entry != null) {
+                        if (!remaining.remove(name)) throw new GradleException("Duplicate map API: ${name}")
+                        zip.getInputStream(entry).withCloseable { stream ->
+                            java.nio.file.Files.copy(stream, new File(directory, name).toPath(), java.nio.file.StandardCopyOption.REPLACE_EXISTING)
+                        }
+                    }
+                }
             }
         }
-    }
-    target
-}
-def journeyMapModernApi = new File(journeyMapApiDirectory, 'journeymap-api-neoforge-2.0.0-1.21.1.jar')
-def journeyMapBetaApi = new File(journeyMapApiDirectory, 'journeymap-api-neoforge-2.0.0-1.21.1-SNAPSHOT.jar')
-configurations.configureEach { configuration ->
-    if (configuration.name in ['compileClasspath', 'testCompileClasspath', 'testRuntimeClasspath']) {
-        configuration.incoming.beforeResolve {
-            extractJourneyMapApi(configurations.journeyMapModernApiSource,
-                    'META-INF/jarjar/journeymap-api-neoforge-2.0.0-1.21.1.jar')
-            extractJourneyMapApi(configurations.journeyMapBetaApiSource,
-                    'META-INF/jarjar/journeymap-api-neoforge-2.0.0-1.21.1-SNAPSHOT.jar')
-        }
+        if (!remaining.isEmpty()) throw new GradleException("Missing map API: ${remaining}")
     }
 }
+def journeyMapApi = files(mapApiDirectory.map { it.file(journeyMapApiName) }).builtBy(extractMapApis)
+def xaeroApi = files(mapApiDirectory.map { it.file(xaeroApiName) }).builtBy(extractMapApis)
 
 dependencies {
-    runtimeOnly "maven.modrinth:spark:v5qtqRQi"
-    runtimeOnly "curse.maven:rubidium-extra-654373:6860464"
-    // Development runtime performance mod; not bundled into published artifacts.
-    runtimeOnly "maven.modrinth:embeddium:J7b96IEd"
     // Specify the version of Minecraft to use.
     // Depending on the plugin applied there are several options. We will assume you applied the userdev plugin as shown above.
     // The group for userdev is net.neoforge, the module name is neoforge, and the version is the same as the neoforge version.
@@ -176,10 +200,10 @@ dependencies {
 
     testImplementation 'junit:junit:4.13.2'
 
-    compileOnly 'org.projectlombok:lombok:1.18.34'
-    annotationProcessor 'org.projectlombok:lombok:1.18.34'
-    testCompileOnly 'org.projectlombok:lombok:1.18.34'
-    testAnnotationProcessor 'org.projectlombok:lombok:1.18.34'
+    compileOnly 'org.projectlombok:lombok:1.18.48'
+    annotationProcessor 'org.projectlombok:lombok:1.18.48'
+    testCompileOnly 'org.projectlombok:lombok:1.18.48'
+    testAnnotationProcessor 'org.projectlombok:lombok:1.18.48'
 
     // Example mod dependency with JEI
     // The JEI API is declared for compile time use, while the full JEI artifact is used at runtime
@@ -204,16 +228,12 @@ dependencies {
     compileOnly "curse.maven:simple-tomb-399669:${simple_tomb_id}"
     compileOnly "curse.maven:corail-tombstone-243707:${corail_tomb_id}"
 
-    compileOnly "curse.maven:xaeros-minimap-263420:${xaeros_minimap_id}"
-    compileOnly files(journeyMapBetaApi)
-    testImplementation files(journeyMapModernApi)
-
-    compileOnly "curse.maven:ftb-chunks-forge-314906:${ftb_chunk_id}"
-    compileOnly "curse.maven:architectury-api-419699:${architectury_api_id}"
-    compileOnly "curse.maven:ftb-library-forge-404465:${ftb_library_id}"
-    compileOnly "curse.maven:ftb-teams-forge-404468:${ftb_teams_id}"
-
-    compileOnly "curse.maven:jade-324717:${jade_id}"
+    compileOnly(xaeroCompileReference) { transitive = false }
+    compileOnly xaeroApi
+    compileOnly journeyMapApi
+    testImplementation journeyMapApi
+    compileOnly('dev.ftb.mods:ftb-chunks:26.1.2.10') { transitive = false }
+    compileOnly('dev.ftb.mods:ftb-library:26.1.2.11') { transitive = false }
 
     // For more info:
     // http://www.gradle.org/docs/current/userguide/artifact_dependencies_tutorial.html
@@ -225,7 +245,7 @@ configurations.testRuntimeOnly.setExtendsFrom(
 
 tasks.register('journeyMapBetaTest', Test) {
     testClassesDirs = sourceSets.test.output.classesDirs
-    classpath = sourceSets.test.runtimeClasspath - files(journeyMapModernApi) + files(journeyMapBetaApi)
+    classpath = sourceSets.test.runtimeClasspath
     filter { includeTestsMatching 'xin.vanilla.narcissus.integration.map.*' }
 }
 

@@ -52,11 +52,11 @@ public final class TpHomeCommand {
             if (targetLevel == null && name == null) {
                 MessageUtils.sendNotification(player, NarcissusComponent.get().transAuto("home_not_found"), NarcissusNotificationTypes.TELEPORT_ERROR);
             } else if (targetLevel != null && name == null) {
-                MessageUtils.sendNotification(player, NarcissusComponent.get().transAuto("home_not_found_in_dimension", targetLevel.location().toString()), NarcissusNotificationTypes.TELEPORT_ERROR);
+                MessageUtils.sendNotification(player, NarcissusComponent.get().transAuto("home_not_found_in_dimension", targetLevel.identifier().toString()), NarcissusNotificationTypes.TELEPORT_ERROR);
             } else if (targetLevel == null) {
                 MessageUtils.sendNotification(player, NarcissusComponent.get().transAuto("home_not_found_with_name", name), NarcissusNotificationTypes.TELEPORT_ERROR);
             } else {
-                MessageUtils.sendNotification(player, NarcissusComponent.get().transAuto("home_not_found_with_name_in_dimension", targetLevel.location().toString(), name), NarcissusNotificationTypes.TELEPORT_ERROR);
+                MessageUtils.sendNotification(player, NarcissusComponent.get().transAuto("home_not_found_with_name_in_dimension", targetLevel.identifier().toString(), name), NarcissusNotificationTypes.TELEPORT_ERROR);
             }
             return 0;
         }

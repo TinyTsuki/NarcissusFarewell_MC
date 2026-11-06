@@ -5,7 +5,6 @@ import lombok.NonNull;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.StringTag;
-import net.minecraft.nbt.Tag;
 
 import java.util.Arrays;
 import java.util.HashSet;
@@ -101,17 +100,17 @@ public class PlayerAccess {
     public static PlayerAccess readFromNBT(CompoundTag tag) {
         PlayerAccess result = new PlayerAccess();
 
-        tag.getList("blackList", 8).stream()
-                .map(Tag::getAsString).forEach(result.blackList::add);
+        tag.getListOrEmpty("blackList").stream()
+                .flatMap(entry -> entry.asString().stream()).forEach(result.blackList::add);
 
-        tag.getList("whiteList", 8).stream()
-                .map(Tag::getAsString).forEach(result.whiteList::add);
+        tag.getListOrEmpty("whiteList").stream()
+                .flatMap(entry -> entry.asString().stream()).forEach(result.whiteList::add);
 
-        tag.getList("autoTpaList", 8).stream()
-                .map(Tag::getAsString).forEach(result.autoTpaList::add);
+        tag.getListOrEmpty("autoTpaList").stream()
+                .flatMap(entry -> entry.asString().stream()).forEach(result.autoTpaList::add);
 
-        tag.getList("autoTphList", 8).stream()
-                .map(Tag::getAsString).forEach(result.autoTphList::add);
+        tag.getListOrEmpty("autoTphList").stream()
+                .flatMap(entry -> entry.asString().stream()).forEach(result.autoTphList::add);
 
         return result;
     }

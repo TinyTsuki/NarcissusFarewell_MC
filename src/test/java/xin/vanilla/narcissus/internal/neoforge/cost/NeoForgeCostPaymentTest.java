@@ -105,7 +105,7 @@ public class NeoForgeCostPaymentTest {
                                 throw new UnsupportedOperationException();
                             }));
                 case "nativeServer":
-                    return payer.server;
+                    return payer.level().getServer();
                 case "cooldownSeconds":
                     return 0;
                 default:
@@ -496,13 +496,28 @@ public class NeoForgeCostPaymentTest {
     }
 
     @Test
+    public void supportItemSpecificationPreservesItsExactNativeComponents() throws Exception {
+        var registries = net.minecraft.core.RegistryAccess.fromRegistryOfRegistries(
+                net.minecraft.core.registries.BuiltInRegistries.REGISTRY);
+        ItemStack stack = new ItemStack(Items.PAPER);
+        assertEquals("minecraft:paper", NeoForgeCostPayment.itemSpecification(stack, registries));
+        stack.set(net.minecraft.core.component.DataComponents.CUSTOM_NAME,
+                net.minecraft.network.chat.Component.literal("Named teleport support"));
+        var reader = new com.mojang.brigadier.StringReader(NeoForgeCostPayment.itemSpecification(stack, registries));
+        var parsed = new net.minecraft.commands.arguments.item.ItemParser(registries).parse(reader);
+        assertFalse(reader.canRead());
+        assertEquals(stack.typeHolder(), parsed.item());
+        assertEquals(stack.getComponentsPatch(), parsed.components());
+    }
+
+    @Test
     public void paidCardsWriteOneActualNbtSnapshotAfterCommit() throws Exception {
         List<CompoundTag> saves = bindPlayerStore(false);
         assertTrue(service.plan(CostCalculation.success(5, 5), context(CostPhase.PREVIEW)).isSuccess());
         assertEquals(0, saves.size());
         assertTrue(commit().isCommitted());
         assertEquals(1, saves.size());
-        assertEquals(1, saves.get(0).getInt("teleportCard"));
+        assertEquals(1, saves.get(0).getInt("teleportCard").orElseThrow().intValue());
         assertFalse(data.isDirty());
         assertEquals(1, syncs);
     }

@@ -1,6 +1,6 @@
 package xin.vanilla.narcissus.client.ui;
 
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import xin.vanilla.banira.api.client.ui.UiGameElement;
 import xin.vanilla.banira.api.client.ui.UiView;
 import xin.vanilla.banira.client.data.Texture;
@@ -70,7 +70,7 @@ public final class WaypointUiSession extends NarcissusListUiSession {
         for (String id : new String[]{"subtitle", "selection_label", "cost_label", "confirm_title"})
             text(id, port().label(id));
         text("search_hint", port().label("search"));
-        view.gameElement("brand", UiGameElement.sprite(Texture.of(ResourceLocation.fromNamespaceAndPath("narcissus_farewell", "gui/quick_icon.png"), 64, 64)));
+        view.gameElement("brand", UiGameElement.sprite(Texture.of(Identifier.fromNamespaceAndPath("narcissus_farewell", "gui/quick_icon.png"), 64, 64)));
         view.gameElement("close_icon", icon("close"));
         view.gameElement("delete_icon", icon("delete"));
         view.tooltip("close", xin.vanilla.narcissus.NarcissusComponent.get().literal(port().label("close")));
@@ -78,7 +78,7 @@ public final class WaypointUiSession extends NarcissusListUiSession {
     }
 
     private static UiGameElement icon(String name) {
-        return UiGameElement.sprite(Texture.of(ResourceLocation.fromNamespaceAndPath("apricityui", "apricity/narcissus_farewell/icons/" + name + ".png"), 16, 16));
+        return UiGameElement.sprite(Texture.of(Identifier.fromNamespaceAndPath("apricityui", "apricity/narcissus_farewell/icons/" + name + ".png"), 16, 16));
     }
 
     @Override

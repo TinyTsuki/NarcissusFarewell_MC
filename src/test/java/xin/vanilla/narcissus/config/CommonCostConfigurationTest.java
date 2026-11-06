@@ -31,8 +31,7 @@ public class CommonCostConfigurationTest {
 
     @Test
     public void allSixteenGroupsRemainIndependentInGeneratedViews() throws Exception {
-        net.minecraft.SharedConstants.tryDetectVersion();
-        net.minecraft.server.Bootstrap.bootStrap();
+        xin.vanilla.narcissus.test.NativeBootstrap.initialize();
         ConfigBaselineFixture fixture = new ConfigBaselineFixture(CommonConfig.class);
         fixture.bind(CommonConfig.class);
         CommonCostConfiguration live = new CommonCostConfiguration(fixture.holder);

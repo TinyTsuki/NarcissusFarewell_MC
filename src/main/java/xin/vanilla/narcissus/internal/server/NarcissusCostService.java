@@ -115,14 +115,23 @@ public final class NarcissusCostService implements AutoCloseable {
             public CostPaymentService.PreparedPayment prepare(CostContext context, CostPaymentPlan plan) {
                 CostPaymentService.PreparedPayment prepared = nativePayment.prepare(context, plan);
                 return new CostPaymentService.PreparedPayment() {
-                    public xin.vanilla.banira.api.cost.CostPaymentPlan plan() { return prepared.plan(); }
+                    public xin.vanilla.banira.api.cost.CostPaymentPlan plan() {
+                        return prepared.plan();
+                    }
+
                     public EnumCostFailure pay() {
                         EnumCostFailure failure = validate(context);
                         if (failure == EnumCostFailure.NONE) failure = check(context, plan);
                         return failure == EnumCostFailure.NONE ? prepared.pay() : failure;
                     }
-                    public java.util.List<xin.vanilla.banira.api.cost.CostPaymentPlan.ResourceSnapshot> receipt() { return prepared.receipt(); }
-                    public void afterPayment() { prepared.afterPayment(); }
+
+                    public java.util.List<xin.vanilla.banira.api.cost.CostPaymentPlan.ResourceSnapshot> receipt() {
+                        return prepared.receipt();
+                    }
+
+                    public void afterPayment() {
+                        prepared.afterPayment();
+                    }
                 };
             }
         };
@@ -209,7 +218,7 @@ public final class NarcissusCostService implements AutoCloseable {
 
     public Ticket begin(ServerPlayer moving, ServerPlayer payer, ServerPlayer target,
                         TeleportRequest request, EnumTeleportType type) {
-        if (!server.isSameThread() || moving.server != server || payer.server != server)
+        if (!server.isSameThread() || moving.level().getServer() != server || payer.level().getServer() != server)
             throw new IllegalStateException("Teleport requires owner thread");
         if (request != null && pending.values().stream().anyMatch(t -> t.request == request && !t.cancelled))
             return null;

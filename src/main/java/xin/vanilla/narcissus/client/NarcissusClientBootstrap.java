@@ -1,6 +1,5 @@
 package xin.vanilla.narcissus.client;
 
-import net.minecraft.resources.ResourceLocation;
 import xin.vanilla.banira.api.client.event.BaniraClientEvents;
 import xin.vanilla.banira.client.gui.ConfigEditorScreen;
 import xin.vanilla.banira.client.gui.quickaction.QuickActionContext;
@@ -38,7 +37,7 @@ public final class NarcissusClientBootstrap {
     }
 
     private static void registerQuickAction() {
-        ResourceLocation texture = Identifier.id().create("gui/quick_icon.png");
+        var texture = Identifier.id().create("gui/quick_icon.png");
         Component label = NarcissusComponent.get().transClient("key.narcissus_farewell.categories");
         Consumer<QuickActionContext> action = ctx -> ScreenHelper.openScreen();
         QuickActionContextMenuItem editClientConfig = new QuickActionContextMenuItem(

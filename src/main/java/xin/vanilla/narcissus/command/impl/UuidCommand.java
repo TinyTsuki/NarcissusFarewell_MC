@@ -30,8 +30,8 @@ public final class UuidCommand {
         String language = xin.vanilla.banira.common.util.CommandUtils.getLanguage(source);
         Component uuid = NarcissusComponent.get().literal(target.getStringUUID());
         uuid.color(EnumMCColor.GREEN.getColor())
-                .clickEvent(new ClickEvent(ClickEvent.Action.COPY_TO_CLIPBOARD, target.getStringUUID()))
-                .hoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, NarcissusComponent.get().transAuto("chat_copy_click").toVanilla(language)));
+                .clickEvent(new ClickEvent.CopyToClipboard(target.getStringUUID()))
+                .hoverEvent(new HoverEvent.ShowText(NarcissusComponent.get().transAuto("chat_copy_click").toVanilla(language)));
         Component component = NarcissusComponent.get().transAuto("player_uuid", target.getDisplayName(), uuid);
         if (source.getEntity() instanceof ServerPlayer player) {
             MessageUtils.sendNotification(player, component, NarcissusNotificationTypes.INTERACTIVE_QUERY);

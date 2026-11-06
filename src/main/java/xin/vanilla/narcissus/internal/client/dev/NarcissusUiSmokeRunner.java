@@ -191,6 +191,7 @@ public final class NarcissusUiSmokeRunner {
     }
 
     private void runUiTick(Minecraft client) {
+        if (capturePending) return;
         stepTick++;
         List<ScreenStep> steps = phase == Phase.PRE_WORLD_UI ? preWorldSteps : worldSteps;
         ScreenStep step = steps.get(stepIndex);
@@ -325,7 +326,7 @@ public final class NarcissusUiSmokeRunner {
             }
             if (buttonIndex++ == 1) {
                 backupPromptHandled = true;
-                ((Button) child).onPress();
+                ((Button) child).onPress(new net.minecraft.client.input.KeyEvent(GLFW.GLFW_KEY_ENTER, 0, 0));
                 appendStatus("PASS backup-confirm-skip");
                 return;
             }
@@ -359,7 +360,7 @@ public final class NarcissusUiSmokeRunner {
 
     private void beginHomeAdd(Minecraft client) {
         homePosition = client.player.position();
-        homeDimension = client.player.level().dimension().location().toString();
+        homeDimension = client.player.level().dimension().identifier().toString();
         if (hasSmokeHome(client)) {
             PacketUtils.sendPacketToServer(new WaypointDelToServer(0, HOME_NAME, homeDimension));
         }
@@ -437,7 +438,7 @@ public final class NarcissusUiSmokeRunner {
             throw new IllegalStateException("Notification type config disappeared before ESC");
         }
         Object openedScreen = client.screen;
-        boolean handled = client.screen.keyPressed(GLFW.GLFW_KEY_ESCAPE, 0, 0);
+        boolean handled = client.screen.keyPressed(new net.minecraft.client.input.KeyEvent(GLFW.GLFW_KEY_ESCAPE, 0, 0));
         if (!handled || client.screen == openedScreen) {
             throw new IllegalStateException("Clean notification type config did not close on ESC"
                     + " (handled=" + handled + ", current="
@@ -445,14 +446,21 @@ public final class NarcissusUiSmokeRunner {
         }
     }
 
+    private volatile boolean capturePending;
+
     private void capture(Minecraft client, String name) {
         Path file = outputDir.resolve(name + ".png");
-        try (NativeImage image = Screenshot.takeScreenshot(client.getMainRenderTarget())) {
-            image.writeToFile(file);
-            appendStatus("PASS " + name);
-        } catch (IOException error) {
-            throw new IllegalStateException("Could not save screenshot " + name, error);
-        }
+        capturePending = true;
+        Screenshot.takeScreenshot(client.getMainRenderTarget(), screenshot -> {
+            try (NativeImage image = screenshot) {
+                image.writeToFile(file);
+                appendStatus("PASS " + name);
+            } catch (IOException error) {
+                client.execute(() -> fail(client, name, error));
+            } finally {
+                capturePending = false;
+            }
+        });
     }
 
     private void finish(Minecraft client) {

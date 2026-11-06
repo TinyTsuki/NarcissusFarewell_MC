@@ -26,8 +26,8 @@ public final class NeoForgeCostContext {
                                       CostConfiguration configuration, ServerPlayer moving, ServerPlayer paying,
                                       ServerPlayer requester, ServerPlayer targetPlayer,
                                       SafeWorldCoordinate destination, TeleportRequest request, int cooldownSeconds) {
-        MinecraftServer server = Objects.requireNonNull(moving, "moving").server;
-        if (server == null || !server.isSameThread() || Objects.requireNonNull(paying, "paying").server != server) {
+        MinecraftServer server = Objects.requireNonNull(moving, "moving").level().getServer();
+        if (!server.isSameThread() || Objects.requireNonNull(paying, "paying").level().getServer() != server) {
             throw new IllegalStateException("Cost context requires the owning server thread");
         }
         if (request != null) {
@@ -51,13 +51,13 @@ public final class NeoForgeCostContext {
                 .source(from).destination(to).rawDistance(rawDistance)
                 .distance(configuration.distance(rawDistance, across))
                 .cooldownSeconds(cooldownSeconds).countdownSeconds(PlayerTeleportData.getData(moving).peekTeleportCountdownSeconds(type))
-                .sourceWorld(new NativeWorld(moving.serverLevel()))
+                .sourceWorld(new NativeWorld(moving.level()))
                 .targetWorld(to == null ? null : world(server, to.dimensionId()))
                 .server(new NativeServer(server)).build());
     }
 
     private static CostPosition position(ServerPlayer player) {
-        return new CostPosition(player.level().dimension().location().toString(), player.getX(), player.getY(), player.getZ(),
+        return new CostPosition(player.level().dimension().identifier().toString(), player.getX(), player.getY(), player.getZ(),
                 player.getYRot(), player.getXRot(), false, EnumSafeMode.NONE);
     }
 
@@ -153,7 +153,7 @@ public final class NeoForgeCostContext {
         }
 
         public String dimensionId() {
-            return world.dimension().location().toString();
+            return world.dimension().identifier().toString();
         }
 
         public long gameTime() {
@@ -161,7 +161,7 @@ public final class NeoForgeCostContext {
         }
 
         public long dayTime() {
-            return world.getDayTime();
+            return world.getDefaultClockTime();
         }
 
         public boolean raining() {

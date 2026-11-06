@@ -16,8 +16,7 @@ public class SafeBlockCheckerTest {
 
     @BeforeClass
     public static void bootstrap() {
-        net.minecraft.SharedConstants.tryDetectVersion();
-        net.minecraft.server.Bootstrap.bootStrap();
+        xin.vanilla.narcissus.test.NativeBootstrap.initialize();
         for (net.minecraft.world.level.block.Block block : Arrays.asList(Blocks.STONE, Blocks.DIRT, Blocks.WATER, Blocks.LAVA, Blocks.AIR, Blocks.CAVE_AIR, Blocks.VOID_AIR))
             block.getStateDefinition().getPossibleStates().forEach(net.minecraft.world.level.block.state.BlockState::initCache);
     }

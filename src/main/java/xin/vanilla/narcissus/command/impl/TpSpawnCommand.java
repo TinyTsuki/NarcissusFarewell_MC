@@ -29,21 +29,22 @@ public final class TpSpawnCommand {
         ServerPlayer target = xin.vanilla.banira.common.util.CommandUtils.getPlayerOptional(context, "player");
         if (target == null) target = player;
         SafeWorldCoordinate safeWorldCoordinate = new SafeWorldCoordinate(target);
-        BlockPos respawnPosition = target.getRespawnPosition();
-        safeWorldCoordinate.dimension(target.getRespawnDimension());
+        var config = target.getRespawnConfig();
+        BlockPos respawnPosition = config == null ? null : config.respawnData().pos();
+        if (config != null) safeWorldCoordinate.dimension(config.respawnData().dimension());
         if (respawnPosition == null) {
             String raw = CommonConfig.get().base().teleportLimit().tpSpawnNoBedWorldDimension();
             String s = raw == null ? "" : raw.trim();
             ServerLevel level;
             if (s.isEmpty() || "CURRENT".equalsIgnoreCase(s) || "AUTO".equalsIgnoreCase(s)) {
-                level = target.serverLevel();
+                level = target.level();
             } else {
                 level = DimensionUtils.getLevel(s);
             }
             if (level == null) {
-                level = target.serverLevel();
+                level = target.level();
             }
-            respawnPosition = level.getSharedSpawnPos();
+            respawnPosition = level.getRespawnData().pos();
             safeWorldCoordinate.dimension(level.dimension());
         }
         safeWorldCoordinate.fromBlockPos(respawnPosition);

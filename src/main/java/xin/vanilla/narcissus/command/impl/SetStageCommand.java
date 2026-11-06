@@ -47,7 +47,7 @@ public final class SetStageCommand {
 
     private static int addStage(CommandSourceStack source, String name, ResourceKey<Level> targetLevel, SafeWorldCoordinate safeWorldCoordinate) {
         WorldStageData stageData = WorldStageData.get();
-        String dimension = targetLevel.location().toString();
+        String dimension = targetLevel.identifier().toString();
         KeyValue<String, String> key = new KeyValue<>(dimension, name);
         if (stageData.getStageCoordinate().containsKey(key)) {
             sendStageMessage(source, NarcissusComponent.get().transAuto("stage_already_exists", key.key(), key.value()), false, NarcissusNotificationTypes.WAYPOINT);

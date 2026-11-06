@@ -7,7 +7,8 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
-import net.minecraft.world.entity.animal.Wolf;
+import net.minecraft.world.entity.EntitySpawnReason;
+import net.minecraft.world.entity.animal.wolf.Wolf;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.Level;
@@ -62,7 +63,7 @@ final class NarcissusMeasuredTeleports {
 
     NarcissusMeasuredTeleports(ServerPlayer realPlayer) {
         this.realPlayer = realPlayer;
-        this.server = realPlayer.getServer();
+        this.server = realPlayer.level().getServer();
         long started = System.nanoTime();
         CommonConfig.get().base().teleportTogether().tpWithFollower(true).tpWithFollowerRange(32);
         CommonConfig.get().base().teleportLimit().teleportAcrossDimension(true);
@@ -71,13 +72,13 @@ final class NarcissusMeasuredTeleports {
         for (ResourceKey<Level> key : Arrays.asList(Level.OVERWORLD, Level.NETHER)) {
             ServerLevel world = server.getLevel(key);
             require(world != null, "Missing fixture dimension " + key);
-            world.getGameRules().getRule(net.minecraft.world.level.GameRules.RULE_DOMOBSPAWNING).set(false, server);
+            world.getGameRules().set(net.minecraft.world.level.gamerules.GameRules.SPAWN_MOBS, false, server);
             List<ChunkPos> owned = new ArrayList<>();
             ownedTickets.put(world, owned);
             for (int cx = -2; cx <= 26; cx++)
                 for (int cz = -2; cz <= 4; cz++) {
                     if (cx > 4 && (cz < 0 || cz > 2)) continue;
-                    if (!world.getForcedChunks().contains(ChunkPos.asLong(cx, cz))) {
+                    if (!world.getForceLoadedChunks().contains(ChunkPos.pack(cx, cz))) {
                         world.setChunkForced(cx, cz, true);
                         owned.add(new ChunkPos(cx, cz));
                     }
@@ -136,13 +137,13 @@ final class NarcissusMeasuredTeleports {
                 actors.add(actor);
                 observedRecords.add(new net.minecraft.nbt.ListTag());
                 require(PlayerTeleportData.getData(actor).getTeleportRecords().isEmpty(), "Nonempty isolated fake player data");
-                Wolf pet = EntityType.WOLF.create(actor.serverLevel());
+                Wolf pet = EntityType.WOLF.create(actor.level(), EntitySpawnReason.COMMAND);
                 require(pet != null, "Could not create pet");
-                pet.setOwnerUUID(actor.getUUID());
+                pet.setOwner(actor);
                 pet.setNoAi(true);
                 pet.setNoGravity(true);
-                pet.moveTo(actor.getX() + 1, Y, actor.getZ(), 0, 0);
-                require(actor.serverLevel().addFreshEntity(pet), "Could not add pet");
+                pet.snapTo(actor.getX() + 1, Y, actor.getZ(), 0, 0);
+                require(actor.level().addFreshEntity(pet), "Could not add pet");
                 pets.add(pet.getUUID());
             }
         } catch (ReflectiveOperationException error) {
@@ -157,7 +158,7 @@ final class NarcissusMeasuredTeleports {
                 new com.mojang.authlib.GameProfile(uuid, name));
         require(actor != null && uuid.equals(actor.getUUID()), "Provider did not create the requested offline actor");
         actor.setGameMode(GameType.CREATIVE);
-        actor.teleportTo(server.overworld(), 16.5, Y, 4.5 + index * 8, -90.0F, 0.0F);
+        actor.teleportTo(server.overworld(), 16.5, Y, 4.5 + index * 8, java.util.Set.of(), -90.0F, 0.0F, true);
         return actor;
     }
 
@@ -181,15 +182,16 @@ final class NarcissusMeasuredTeleports {
                 }
                 require(records.size() == recordsBefore[i] + 1, "Unexpected teleport record count");
                 SafeWorldCoordinate target = targets[i];
-                require(actor.serverLevel().dimension().equals(target.dimension())
+                require(actor.level().dimension().equals(target.dimension())
                                 && actor.distanceToSqr(target.x(), target.y(), target.z()) < 9.0,
                         "Wrong landing for " + operation + " actor=" + i);
-                require(new SafeBlockChecker(actor.serverLevel(), actor).isSafeBlock(actor.blockPosition(), false), "Unsafe landing");
-                Entity pet = actor.serverLevel().getEntity(pets.get(i));
-                require(pet instanceof Wolf && actor.getUUID().equals(((Wolf) pet).getOwnerUUID())
+                require(new SafeBlockChecker(actor.level(), actor).isSafeBlock(actor.blockPosition(), false), "Unsafe landing");
+                Entity pet = actor.level().getEntity(pets.get(i));
+                require(pet instanceof Wolf wolf && wolf.getOwnerReference() != null
+                        && actor.getUUID().equals(wolf.getOwnerReference().getUUID())
                         && pet.distanceToSqr(actor) < 16, "Pet did not follow " + operation + " actor=" + i);
                 if ("cross".equals(operation)) {
-                    ServerLevel previous = server.getLevel(actor.serverLevel().dimension().equals(Level.OVERWORLD) ? Level.NETHER : Level.OVERWORLD);
+                    ServerLevel previous = server.getLevel(actor.level().dimension().equals(Level.OVERWORLD) ? Level.NETHER : Level.OVERWORLD);
                     require(previous.getEntity(pets.get(i)) == null, "Pet duplicated across dimensions");
                 }
                 require(active.getAsBoolean(), "Completion fell outside the sample window");
@@ -214,14 +216,14 @@ final class NarcissusMeasuredTeleports {
             EnumTeleportType type;
             if ("cross".equals(operation)) {
                 target = new SafeWorldCoordinate(16.5, Y, 4.5 + i * 8,
-                        actor.serverLevel().dimension().equals(Level.OVERWORLD) ? Level.NETHER : Level.OVERWORLD);
+                        actor.level().dimension().equals(Level.OVERWORLD) ? Level.NETHER : Level.OVERWORLD);
                 type = EnumTeleportType.OTHER;
             } else {
                 // Reposition only the fixture actors, not the real client that is rendering the UI.
-                actor.teleportTo(actor.serverLevel(), 16.5, Y, 4.5 + i * 8, -90, 0);
-                Entity pet = actor.serverLevel().getEntity(pets.get(i));
+                actor.teleportTo(actor.level(), 16.5, Y, 4.5 + i * 8, java.util.Set.of(), -90, 0, true);
+                Entity pet = actor.level().getEntity(pets.get(i));
                 require(pet != null, "Pet absent before dispatch");
-                pet.moveTo(actor.getX() + 1, Y, actor.getZ(), 0, 0);
+                pet.snapTo(actor.getX() + 1, Y, actor.getZ(), 0, 0);
                 if ("random".equals(operation)) {
                     target = SafeWorldCoordinate.random(actor, RANDOM_RANGE);
                     target.y(Y + 8);
@@ -292,12 +294,13 @@ final class NarcissusMeasuredTeleports {
         NarcissusNetworkSmokeStatus.append("PASS final-checkpoint cycles=" + plan.cycles() + " homes=" + HOMES + " actors=" + PLAYER_COUNT);
         for (ServerPlayer actor : actors) {
             int[] result = {0};
-            server.getCommands().performPrefixedCommand(server.createCommandSourceStack().withPermission(4)
+            server.getCommands().performPrefixedCommand(server.createCommandSourceStack()
+                            .withPermission(net.minecraft.server.permissions.PermissionSet.ALL_PERMISSIONS)
                             .withCallback((success, value) -> result[0] = success ? value : 0),
-                    "fakeplayer remove " + actor.getGameProfile().getName());
+                    "fakeplayer remove " + actor.getGameProfile().name());
             require(result[0] > 0, "Could not disconnect Advanced Fake Players actor");
         }
-        ownedTickets.forEach((world, tickets) -> tickets.forEach(pos -> world.setChunkForced(pos.x, pos.z, false)));
+        ownedTickets.forEach((world, tickets) -> tickets.forEach(pos -> world.setChunkForced(pos.x(), pos.z(), false)));
     }
 
     boolean actorsRemoved() {
@@ -321,20 +324,20 @@ final class NarcissusMeasuredTeleports {
                         && home.x() == i + .5 && home.y() == Y && home.z() == 8.5, "Home content did not persist " + i);
             }
             require(PlayerTeleportData.getData(player).getTeleportRecords().size() == 1, "Real player record did not persist");
-            require(net.minecraft.nbt.TagParser.parseTag(p.getProperty("realRecord")).equals(
+            require(net.minecraft.nbt.TagParser.parseCompoundFully(p.getProperty("realRecord")).equals(
                             PlayerTeleportData.getData(player).getTeleportRecords().get(0).writeToNBT()),
                     "Real player record content changed after restart");
             for (int i = 0; i < PLAYER_COUNT; i++) {
                 net.minecraft.nbt.CompoundTag data = xin.vanilla.banira.api.BaniraPlayerData.getOrCreate(
                         UUID.fromString(p.getProperty("actor." + i)), "narcissus_farewell", net.minecraft.nbt.CompoundTag.class);
-                net.minecraft.nbt.ListTag records = data.getList("teleportRecords", 10);
+                net.minecraft.nbt.ListTag records = data.getListOrEmpty("teleportRecords");
                 require(records.size() == 60, "Fake player records did not persist actor=" + i);
-                net.minecraft.nbt.ListTag expected = net.minecraft.nbt.TagParser.parseTag(
-                        "{records:" + p.getProperty("records." + i) + "}").getList("records", 10);
+                net.minecraft.nbt.ListTag expected = net.minecraft.nbt.TagParser.parseCompoundFully(
+                        "{records:" + p.getProperty("records." + i) + "}").getListOrEmpty("records");
                 require(expected.size() == 60 && expected.equals(records), "Full ordered teleport records changed actor=" + i);
                 int random = 0, view = 0, cross = 0;
                 for (int r = 0; r < records.size(); r++) {
-                    TeleportRecord record = TeleportRecord.readFromNBT(records.getCompound(r));
+                    TeleportRecord record = TeleportRecord.readFromNBT(records.getCompound(r).orElseThrow());
                     SafeWorldCoordinate after = record.getAfter();
                     require(Math.abs(after.y() - Y) < .3, "Persisted landing height mismatch");
                     if (record.getTeleportType() == EnumTeleportType.TP_RANDOM) random++;

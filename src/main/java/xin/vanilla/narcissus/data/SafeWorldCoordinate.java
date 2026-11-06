@@ -80,7 +80,7 @@ public class SafeWorldCoordinate extends WorldCoordinate implements Serializable
     public static SafeWorldCoordinate fromTag(CompoundTag tag) {
         WorldCoordinate w = WorldCoordinate.fromTag(tag);
         SafeWorldCoordinate coordinate = copyFromWorldCoordinate(w);
-        coordinate.createdAt(tag.contains("createdAt") ? tag.getLong("createdAt") : 0L);
+        coordinate.createdAt(tag.getLongOr("createdAt", 0L));
         return coordinate;
     }
 

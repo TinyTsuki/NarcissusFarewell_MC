@@ -1,7 +1,7 @@
 package xin.vanilla.narcissus.internal.client.dev;
 
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.Screen;
 import net.neoforged.bus.api.EventPriority;
 import net.neoforged.bus.api.SubscribeEvent;
@@ -136,7 +136,7 @@ public final class NarcissusNetworkSmokeScreens {
         frame.metrics.render(frame.wallNanos, frame.cpuNanos, frame.content, frame.sampled);
     }
 
-    private void render(Screen screen, Metrics metrics, GuiGraphics graphics, int mouseX, int mouseY,
+    private void render(Screen screen, Metrics metrics, GuiGraphicsExtractor graphics, int mouseX, int mouseY,
                         float partialTicks, int x, int y, BooleanSupplier content, RenderCall actualRender) {
         updateRenderInput((BaniraScreen) screen, x, y);
         try {
@@ -216,7 +216,7 @@ public final class NarcissusNetworkSmokeScreens {
         private final Field hovered = contentField(WaypointScreen.class, "hoveredItem");
 
         @Override
-        public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTicks) {
+        public void render(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float partialTicks) {
             renderList(this, waypoints, hovered, "active_waypoint_scrollbar",
                     graphics, mouseX, mouseY, partialTicks, super::render);
         }
@@ -232,7 +232,7 @@ public final class NarcissusNetworkSmokeScreens {
         }
 
         @Override
-        public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTicks) {
+        public void render(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float partialTicks) {
             PlayerTeleportData data = PlayerTeleportData.getData(Minecraft.getInstance().player);
             // The real access renderer reads player data directly. Scope its fixture to this synchronous call.
             withRenderFixture(data::getAccess, data::setAccess, accessFixture, () ->
@@ -252,7 +252,7 @@ public final class NarcissusNetworkSmokeScreens {
     }
 
     private void renderList(BaniraScreen screen, Metrics metrics, Field hovered, String scrollbarId,
-                            GuiGraphics graphics, int mouseX, int mouseY, float partialTicks, RenderCall actualRender) {
+                            GuiGraphicsExtractor graphics, int mouseX, int mouseY, float partialTicks, RenderCall actualRender) {
         ScrollbarWidget bar = listScrollbar(screen, scrollbarId);
         int x = bar == null ? mouseX : (int) bar.absoluteX() - 40;
         int y = bar == null ? mouseY : (int) bar.absoluteY() + 14;
@@ -293,7 +293,7 @@ public final class NarcissusNetworkSmokeScreens {
         }
 
         @Override
-        public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTicks) {
+        public void render(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float partialTicks) {
             IWidget content = contentWidget(this, widgets(), false);
             renderEditor(this, clientConfig, content, graphics, mouseX, mouseY, partialTicks, super::render);
         }
@@ -305,13 +305,13 @@ public final class NarcissusNetworkSmokeScreens {
         }
 
         @Override
-        public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTicks) {
+        public void render(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float partialTicks) {
             IWidget content = contentWidget(this, widgets(), true);
             renderEditor(this, playerConfig, content, graphics, mouseX, mouseY, partialTicks, super::render);
         }
     }
 
-    private void renderEditor(Screen screen, Metrics metrics, IWidget content, GuiGraphics graphics,
+    private void renderEditor(Screen screen, Metrics metrics, IWidget content, GuiGraphicsExtractor graphics,
                               int mouseX, int mouseY, float partialTicks, RenderCall actualRender) {
         int x = content == null ? mouseX : (int) (content.absoluteX() + content.bounds().width() / 2.0D);
         int y = content == null ? mouseY : (int) (content.absoluteY() + content.bounds().height() / 2.0D);
@@ -342,7 +342,7 @@ public final class NarcissusNetworkSmokeScreens {
     }
 
     private interface RenderCall {
-        void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTicks);
+        void render(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float partialTicks);
     }
 
     private static final class PendingFrame {

@@ -80,7 +80,7 @@ public final class TpBackCommand {
         data.getTeleportRecords().stream()
                 .filter(record -> type == null || record.getTeleportType().equals(type))
                 .filter(java.util.Objects::nonNull)
-                .map(record -> record.getBefore().dimension().location().toString())
+                .map(record -> record.getBefore().dimension().identifier().toString())
                 .filter(StringUtils::isNotNullOrEmpty)
                 .forEach(builder::suggest);
         return builder.buildFuture();

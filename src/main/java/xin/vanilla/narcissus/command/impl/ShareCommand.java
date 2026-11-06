@@ -64,11 +64,11 @@ public final class ShareCommand {
             nameComponent = NarcissusComponent.get().literal(split[0]);
             String tpCommand = buildTpCommand(safeWorldCoordinate);
             tpButton.color(EnumMCColor.GREEN.getColor())
-                    .clickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, tpCommand))
-                    .hoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, NarcissusComponent.get().literal(tpCommand).toVanilla()));
+                    .clickEvent(new ClickEvent.RunCommand(tpCommand))
+                    .hoverEvent(new HoverEvent.ShowText(NarcissusComponent.get().literal(tpCommand).toVanilla()));
             copyButton.color(EnumMCColor.GREEN.getColor())
-                    .clickEvent(new ClickEvent(ClickEvent.Action.COPY_TO_CLIPBOARD, tpCommand))
-                    .hoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, NarcissusComponent.get().literal(tpCommand).toVanilla()));
+                    .clickEvent(new ClickEvent.CopyToClipboard(tpCommand))
+                    .hoverEvent(new HoverEvent.ShowText(NarcissusComponent.get().literal(tpCommand).toVanilla()));
         } else if (name.contains(">>")) {
             KeyValue<String, SafeWorldCoordinate> keyValue = WorldStageData.get().getStageCoordinate().entrySet().stream()
                     .map(entry -> new KeyValue<>(entry.getKey().value() + ">>" + entry.getKey().key(), entry.getValue()))
@@ -85,21 +85,21 @@ public final class ShareCommand {
             nameComponent = NarcissusComponent.get().literal(split[0]);
             String tpCommand = buildTpCommand(safeWorldCoordinate);
             tpButton.color(EnumMCColor.GREEN.getColor())
-                    .clickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, tpCommand))
-                    .hoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, NarcissusComponent.get().literal(tpCommand).toVanilla()));
+                    .clickEvent(new ClickEvent.RunCommand(tpCommand))
+                    .hoverEvent(new HoverEvent.ShowText(NarcissusComponent.get().literal(tpCommand).toVanilla()));
             copyButton.color(EnumMCColor.GREEN.getColor())
-                    .clickEvent(new ClickEvent(ClickEvent.Action.COPY_TO_CLIPBOARD, tpCommand))
-                    .hoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, NarcissusComponent.get().literal(tpCommand).toVanilla()));
+                    .clickEvent(new ClickEvent.CopyToClipboard(tpCommand))
+                    .hoverEvent(new HoverEvent.ShowText(NarcissusComponent.get().literal(tpCommand).toVanilla()));
         } else {
             nameComponent = NarcissusComponent.get().literal(name);
             SafeWorldCoordinate safeWorldCoordinate = new SafeWorldCoordinate(player);
             String tpCommand = buildTpCommand(safeWorldCoordinate);
             tpButton.color(EnumMCColor.GREEN.getColor())
-                    .clickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, tpCommand))
-                    .hoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, NarcissusComponent.get().literal(tpCommand).toVanilla()));
+                    .clickEvent(new ClickEvent.RunCommand(tpCommand))
+                    .hoverEvent(new HoverEvent.ShowText(NarcissusComponent.get().literal(tpCommand).toVanilla()));
             copyButton.color(EnumMCColor.GREEN.getColor())
-                    .clickEvent(new ClickEvent(ClickEvent.Action.COPY_TO_CLIPBOARD, tpCommand))
-                    .hoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, NarcissusComponent.get().literal(tpCommand).toVanilla()));
+                    .clickEvent(new ClickEvent.CopyToClipboard(tpCommand))
+                    .hoverEvent(new HoverEvent.ShowText(NarcissusComponent.get().literal(tpCommand).toVanilla()));
         }
 
         Component component = NarcissusComponent.get().transAuto("shared_coordinates"

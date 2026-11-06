@@ -33,9 +33,7 @@ public class ConfigViewLifecycleTest {
 
     @BeforeClass
     public static void bootstrap() {
-        net.neoforged.fml.loading.LoadingModList.of(java.util.List.of(), java.util.List.of(), java.util.List.of(), java.util.List.of(), java.util.Map.of());
-        net.minecraft.SharedConstants.tryDetectVersion();
-        net.minecraft.server.Bootstrap.bootStrap();
+        xin.vanilla.narcissus.test.NativeBootstrap.initialize();
     }
 
     @Test

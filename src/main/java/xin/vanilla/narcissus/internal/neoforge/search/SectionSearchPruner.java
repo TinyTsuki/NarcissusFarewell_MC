@@ -60,7 +60,7 @@ public final class SectionSearchPruner {
     }
 
     private int flags(int x, int z, int sectionY) {
-        Map<Integer, Integer> column = flags.computeIfAbsent(ChunkPos.asLong(x, z), k -> new HashMap<>());
+        Map<Integer, Integer> column = flags.computeIfAbsent(ChunkPos.pack(x, z), k -> new HashMap<>());
         Integer cached = column.get(sectionY);
         if (cached != null) return cached;
         LevelChunkSection section = access.section(x, z, sectionY);

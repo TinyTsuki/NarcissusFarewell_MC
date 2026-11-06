@@ -59,9 +59,8 @@ public class HelpCommand {
                     commandTips.color(EnumMCColor.GRAY.getColor());
                     String com = "/" + keyValue.key();
                     helpInfo.append(NarcissusComponent.get().literal(com)
-                                    .clickEvent(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, com))
-                                    .hoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT
-                                            , NarcissusComponent.get().transLang(Translator.getServerPlayerLanguage(player), EnumI18nType.WORD, "click_to_suggest").toVanilla()))
+                                    .clickEvent(new ClickEvent.SuggestCommand(com))
+                                    .hoverEvent(new HoverEvent.ShowText(NarcissusComponent.get().transLang(Translator.getServerPlayerLanguage(player), EnumI18nType.WORD, "click_to_suggest").toVanilla()))
                             )
                             .append(NarcissusComponent.get().literal(" -> ").color(EnumMCColor.YELLOW.getColor()))
                             .append(commandTips);
@@ -75,9 +74,9 @@ public class HelpCommand {
                     Component prevButton = NarcissusComponent.get().literal("<<< ");
                     if (page > 1) {
                         prevButton.color(EnumMCColor.AQUA.getColor())
-                                .clickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND,
+                                .clickEvent(new ClickEvent.RunCommand(
                                         String.format("/%s %s %d", NarcissusUtils.getCommandPrefix(), "help", page - 1)))
-                                .hoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT,
+                                .hoverEvent(new HoverEvent.ShowText(
                                         NarcissusComponent.get().transLang(Translator.getServerPlayerLanguage(player), EnumI18nType.WORD, "previous_page").toVanilla()));
                     } else {
                         prevButton.color(EnumMCColor.DARK_AQUA.getColor());
@@ -92,9 +91,9 @@ public class HelpCommand {
                     Component nextButton = NarcissusComponent.get().literal(" >>>");
                     if (page < pages) {
                         nextButton.color(EnumMCColor.AQUA.getColor())
-                                .clickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND,
+                                .clickEvent(new ClickEvent.RunCommand(
                                         String.format("/%s %s %d", NarcissusUtils.getCommandPrefix(), "help", page + 1)))
-                                .hoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT,
+                                .hoverEvent(new HoverEvent.ShowText(
                                         NarcissusComponent.get().transLang(Translator.getServerPlayerLanguage(player), EnumI18nType.WORD, "next_page").toVanilla()));
                     } else {
                         nextButton.color(EnumMCColor.DARK_AQUA.getColor());
@@ -106,9 +105,8 @@ public class HelpCommand {
                 helpInfo = NarcissusComponent.get().empty();
                 String com = "/" + NarcissusUtils.getCommand(type);
                 helpInfo.append(NarcissusComponent.get().literal(com)
-                                .clickEvent(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, com))
-                                .hoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT
-                                        , NarcissusComponent.get().transLang(Translator.getServerPlayerLanguage(player), EnumI18nType.WORD, "click_to_suggest").toVanilla()))
+                                .clickEvent(new ClickEvent.SuggestCommand(com))
+                                .hoverEvent(new HoverEvent.ShowText(NarcissusComponent.get().transLang(Translator.getServerPlayerLanguage(player), EnumI18nType.WORD, "click_to_suggest").toVanilla()))
                         )
                         .append("\n")
                         .append(NarcissusComponent.get().transLang(Translator.getServerPlayerLanguage(player), EnumI18nType.WORD, command.toLowerCase() + "_detail").color(EnumMCColor.GRAY.getColor()));

@@ -126,10 +126,10 @@ public final class NarcissusSearchService implements AutoCloseable {
         try {
             CommonSearchConfiguration.Snapshot config = configuration.capture(type, view);
             ServerLevel world = server.getLevel(target.dimension());
-            if (world == null || player.server != server)
+            if (world == null || player.level().getServer() != server)
                 throw new IllegalStateException("Teleport world is unavailable");
             NativeAccess access = new NativeAccess(player, world, config, ticket);
-            lease = pool.open(target.dimension().location());
+            lease = pool.open(target.dimension().identifier());
             NarcissusSearchRequest request = new NarcissusSearchRequest(player.getUUID(), new SafeWorldCoordinate(player),
                     config, access, lease, r -> callback.accept(new Session(this, r)));
             setup.accept(request);
@@ -219,7 +219,7 @@ public final class NarcissusSearchService implements AutoCloseable {
     }
 
     public static boolean validActor(ServerPlayer captured, ServerPlayer online, ServerLevel source, boolean ticketLive) {
-        return ticketLive && online == captured && captured.isAlive() && !captured.isRemoved() && captured.serverLevel() == source;
+        return ticketLive && online == captured && captured.isAlive() && !captured.isRemoved() && captured.level() == source;
     }
 
     private final class NativeAccess implements NarcissusSearchRequest.Access {
@@ -234,14 +234,14 @@ public final class NarcissusSearchService implements AutoCloseable {
 
         NativeAccess(ServerPlayer player, ServerLevel world, CommonSearchConfiguration.Snapshot config, NarcissusCostService.Ticket ticket) {
             this.player = player;
-            this.source = player.serverLevel();
+            this.source = player.level();
             this.world = world;
             this.config = config;
             this.ticket = ticket;
             checker = new SafeBlockChecker(world, player, config.policy());
             pruner = new SectionSearchPruner(new SectionSearchPruner.ChunkAccess() {
                 public boolean ready(int x, int z) {
-                    long key = ChunkPos.asLong(x, z);
+                    long key = ChunkPos.pack(x, z);
                     if (sectionChunks.containsKey(key)) return true;
                     LevelChunk chunk = world.getChunkSource().getChunkNow(x, z);
                     if (chunk == null) return false;
@@ -250,10 +250,10 @@ public final class NarcissusSearchService implements AutoCloseable {
                 }
 
                 public LevelChunkSection section(int x, int z, int y) {
-                    LevelChunk chunk = sectionChunks.get(ChunkPos.asLong(x, z));
+                    LevelChunk chunk = sectionChunks.get(ChunkPos.pack(x, z));
                     if (chunk == null) throw new IllegalStateException("Section requested without ready chunk");
                     LevelChunkSection[] sections = chunk.getSections();
-                    int index = y - (world.getMinBuildHeight() >> 4);
+                    int index = y - (world.getMinY() >> 4);
                     return index < 0 || index >= sections.length ? null : sections[index];
                 }
             }, config.policy());
@@ -265,7 +265,7 @@ public final class NarcissusSearchService implements AutoCloseable {
         public boolean live() {
             checkOwner();
             return validActor(player, server.getPlayerList().getPlayer(player.getUUID()), source, ticket.live())
-                    && player.server == server && server.getLevel(world.dimension()) == world;
+                    && player.level().getServer() == server && server.getLevel(world.dimension()) == world;
         }
 
         public boolean policyMatches() {

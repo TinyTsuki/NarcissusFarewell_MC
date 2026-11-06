@@ -61,14 +61,14 @@ public final class NarcissusNetworkSmokeNotifications {
         PlayerTeleportData playerData = PlayerTeleportData.getData(player);
         boolean notified = playerData.isNotified();
         Vec3 position = player.position();
-        Object dimension = player.serverLevel().dimension();
+        Object dimension = player.level().dimension();
         try {
-            int help = player.getServer().getCommands().getDispatcher().execute(
+            int help = player.level().getServer().getCommands().getDispatcher().execute(
                     NarcissusUtils.getCommand(EnumCommandType.HELP), player.createCommandSourceStack());
-            int missing = player.getServer().getCommands().getDispatcher().execute(
+            int missing = player.level().getServer().getCommands().getDispatcher().execute(
                     NarcissusUtils.getCommand(EnumCommandType.TP_ASK_YES), player.createCommandSourceStack());
             if (help != 1 || missing != 0 || !NarcissusFarewell.getTeleportRequest().isEmpty()
-                    || !position.equals(player.position()) || !dimension.equals(player.serverLevel().dimension())) {
+                    || !position.equals(player.position()) || !dimension.equals(player.level().dimension())) {
                 throw new IllegalStateException("Read-only notification command contract changed");
             }
         } catch (com.mojang.brigadier.exceptions.CommandSyntaxException error) {
@@ -164,8 +164,8 @@ public final class NarcissusNetworkSmokeNotifications {
     public static Component payload(String phase, String type) {
         String token = token(phase, type);
         Component child = NarcissusComponent.get().literal("explicit-child").color(EXPLICIT_COLOR)
-                .clickEvent(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, "/narcissus-smoke " + token))
-                .hoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, net.minecraft.network.chat.Component.literal("hover " + token)));
+                .clickEvent(new ClickEvent.SuggestCommand("/narcissus-smoke " + token))
+                .hoverEvent(new HoverEvent.ShowText(net.minecraft.network.chat.Component.literal("hover " + token)));
         return NarcissusComponent.get().literal(token)
                 .append(NarcissusComponent.get().literal(" nested ").append(child));
     }

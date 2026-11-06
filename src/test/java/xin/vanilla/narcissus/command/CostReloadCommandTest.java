@@ -3,6 +3,8 @@ package xin.vanilla.narcissus.command;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.server.permissions.LevelBasedPermissionSet;
+import net.minecraft.server.permissions.PermissionLevel;
 import net.minecraft.world.phys.Vec2;
 import net.minecraft.world.phys.Vec3;
 import org.junit.Test;
@@ -13,7 +15,7 @@ import static org.junit.Assert.*;
 
 public class CostReloadCommandTest {
     private CommandSourceStack console(int permission) {
-        return new CommandSourceStack(null, Vec3.ZERO, Vec2.ZERO, null, permission,
+        return new CommandSourceStack(null, Vec3.ZERO, Vec2.ZERO, null, LevelBasedPermissionSet.forLevel(PermissionLevel.byId(permission)),
                 "console", net.minecraft.network.chat.Component.empty(), null, null);
     }
 

@@ -17,9 +17,7 @@ import static org.junit.Assert.*;
 public class WaypointUiParityTest {
     @BeforeClass
     public static void bootstrap() {
-        net.neoforged.fml.loading.LoadingModList.of(List.of(), List.of(), List.of(), List.of(), Map.of());
-        net.minecraft.SharedConstants.tryDetectVersion();
-        net.minecraft.server.Bootstrap.bootStrap();
+        xin.vanilla.narcissus.test.NativeBootstrap.initialize();
     }
 
     static class View extends NativeUiView {

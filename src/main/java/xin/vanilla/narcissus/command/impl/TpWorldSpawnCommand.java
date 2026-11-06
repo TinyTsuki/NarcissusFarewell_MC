@@ -25,10 +25,10 @@ public final class TpWorldSpawnCommand {
         if (CommandUtils.checkTeleportPre(context.getSource(), EnumCommandType.TP_WORLD_SPAWN)) return 0;
         ServerPlayer player = context.getSource().getPlayerOrException();
         SafeWorldCoordinate safeWorldCoordinate = new SafeWorldCoordinate(player);
-        BlockPos respawnPosition = player.level().getSharedSpawnPos();
+        BlockPos respawnPosition = player.level().getRespawnData().pos();
         safeWorldCoordinate.dimension(player.level().dimension());
         if (respawnPosition == null) {
-            respawnPosition = player.getServer().getLevel(Level.OVERWORLD).getSharedSpawnPos();
+            respawnPosition = player.level().getServer().getLevel(Level.OVERWORLD).getRespawnData().pos();
             safeWorldCoordinate.dimension(Level.OVERWORLD);
         }
         safeWorldCoordinate.fromBlockPos(respawnPosition);

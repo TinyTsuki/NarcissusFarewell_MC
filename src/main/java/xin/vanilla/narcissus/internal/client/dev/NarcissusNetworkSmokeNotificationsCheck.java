@@ -1,6 +1,6 @@
 package xin.vanilla.narcissus.internal.client.dev;
 
-import net.minecraft.client.GuiMessage;
+import net.minecraft.client.multiplayer.chat.GuiMessage;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.ChatComponent;
 import net.minecraft.core.HolderLookup;
@@ -114,8 +114,7 @@ public final class NarcissusNetworkSmokeNotificationsCheck {
         for (net.minecraft.network.chat.Component message : chat) {
             require(!missingText.equals(message.getString()), "Actual overlay feedback leaked into chat");
             if (!expected.getString().equals(message.getString())) continue;
-            require(net.minecraft.network.chat.Component.Serializer.toJson(expected, registries)
-                            .equals(net.minecraft.network.chat.Component.Serializer.toJson(message, registries)),
+            require(componentJson(expected, registries).equals(componentJson(message, registries)),
                     "Actual HELP native chat lost rich text");
             count++;
         }
@@ -165,8 +164,7 @@ public final class NarcissusNetworkSmokeNotificationsCheck {
                 found++;
                 require(chat, "Overlay notification leaked into native chat " + token);
                 net.minecraft.network.chat.Component expected = NarcissusNetworkSmokeNotifications.payload(phase, type).toChat("en_us");
-                require(net.minecraft.network.chat.Component.Serializer.toJson(expected, registries)
-                                .equals(net.minecraft.network.chat.Component.Serializer.toJson(message, registries)),
+                require(componentJson(expected, registries).equals(componentJson(message, registries)),
                         "Native chat text/color/click/hover changed " + token);
             }
             require(found == (chat ? 1 : 0), "Native chat destination count=" + found + " " + token);
@@ -250,6 +248,11 @@ public final class NarcissusNetworkSmokeNotificationsCheck {
                     .animationName(before.animationName()).displayMode(before.displayMode())
                     .displayModeCustomized(before.displayModeCustomized());
         }
+    }
+
+    private static com.google.gson.JsonElement componentJson(net.minecraft.network.chat.Component component, HolderLookup.Provider registries) {
+        return net.minecraft.network.chat.ComponentSerialization.CODEC
+                .encodeStart(registries.createSerializationContext(com.mojang.serialization.JsonOps.INSTANCE), component).getOrThrow();
     }
 
     private static void require(boolean condition, String message) {
