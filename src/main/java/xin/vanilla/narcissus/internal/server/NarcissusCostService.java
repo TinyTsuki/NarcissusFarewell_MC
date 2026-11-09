@@ -179,8 +179,12 @@ public final class NarcissusCostService implements AutoCloseable {
     }
 
     public void connect(ServerPlayer player) {
-        UUID session = connections.computeIfAbsent(player.getUUID(), id -> UUID.randomUUID());
-        quotes.openConnection(player.getUUID(), session);
+        if (!FabricCostQuoteAccess.connected(server, player)) return;
+        UUID id = player.getUUID();
+        UUID session = connections.get(id);
+        if (session == null) session = UUID.randomUUID();
+        quotes.openConnection(id, session);
+        connections.put(id, session);
         sendCapabilities(player, session);
     }
 

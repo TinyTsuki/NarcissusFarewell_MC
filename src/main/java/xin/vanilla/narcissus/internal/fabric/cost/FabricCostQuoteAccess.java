@@ -52,12 +52,19 @@ public final class FabricCostQuoteAccess implements CostQuoteService.QuoteAccess
     }
 
     private boolean live(ServerPlayer player) {
-        return player != null && player.level().getServer() == currentServer() && !player.hasDisconnected() && !player.isRemoved() && player.isAlive();
+        return connected(currentServer(), player) && player.isAlive();
+    }
+
+    public static boolean connected(MinecraftServer server, ServerPlayer player) {
+        if (!server.isSameThread()) throw new IllegalStateException("Quote connection requires server owner thread");
+        return player != null && player.level().getServer() == server
+                && server.getPlayerList().getPlayer(player.getUUID()) == player
+                && !player.hasDisconnected() && !player.isRemoved();
     }
 
     @Override
     public boolean connected(UUID id) {
-        return live(player(id));
+        return connected(currentServer(), player(id));
     }
 
     @Override
