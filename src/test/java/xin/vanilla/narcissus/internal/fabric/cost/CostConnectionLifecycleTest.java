@@ -136,8 +136,18 @@ public class CostConnectionLifecycleTest {
     }
 
     @Test
-    public void removedPlayerCannotRegisterEvenWhileStillInPlayerList() throws Exception {
+    public void removedBodyKeepsTransportButCannotResolveQuotes() throws Exception {
         set(player, "removalReason", Entity.RemovalReason.KILLED);
+        assertTrue(access.connected(player.getUUID()));
+        assertFalse(access.permitted(player.getUUID(), CostQuoteTarget.home(player.getUUID(), "minecraft:overworld", "home")));
+        service.connect(player);
+        assertEquals(1, registrations.size());
+        assertEquals(1, quotes.connectionCount());
+    }
+
+    @Test
+    public void playerRemovedFromThePlayerListCannotRegister() {
+        players.remove(player.getUUID());
         assertFalse(access.connected(player.getUUID()));
         connectWithoutFailure();
         assertTrue(registrations.isEmpty());
