@@ -120,6 +120,7 @@ public class ForgeCostPlayerFixture {
         boolean cancelExperience;
         int experienceFactor;
         boolean mutateExperienceProgress;
+        boolean disconnected;
 
         private RecordingPlayer() {
             super(null, null, null);
@@ -148,6 +149,11 @@ public class ForgeCostPlayerFixture {
         @Override
         public boolean isAlive() {
             return health > 0 && !isRemoved();
+        }
+
+        @Override
+        public boolean hasDisconnected() {
+            return disconnected;
         }
 
         @Override
