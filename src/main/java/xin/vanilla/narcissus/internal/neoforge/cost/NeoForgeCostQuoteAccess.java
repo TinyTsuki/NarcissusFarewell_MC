@@ -52,12 +52,19 @@ public final class NeoForgeCostQuoteAccess implements CostQuoteService.QuoteAcce
     }
 
     private boolean live(ServerPlayer player) {
-        return player != null && player.server == currentServer() && !player.hasDisconnected() && !player.isRemoved() && player.isAlive();
+        return connected(currentServer(), player) && !player.isRemoved() && player.isAlive();
+    }
+
+    public static boolean connected(MinecraftServer server, ServerPlayer player) {
+        if (!server.isSameThread()) throw new IllegalStateException("Quote connection requires server owner thread");
+        return player != null && player.server == server
+                && server.getPlayerList().getPlayer(player.getUUID()) == player
+                && !player.hasDisconnected();
     }
 
     @Override
     public boolean connected(UUID id) {
-        return live(player(id));
+        return connected(currentServer(), player(id));
     }
 
     @Override
