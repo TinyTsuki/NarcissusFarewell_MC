@@ -115,14 +115,23 @@ public final class NarcissusCostService implements AutoCloseable {
             public CostPaymentService.PreparedPayment prepare(CostContext context, CostPaymentPlan plan) {
                 CostPaymentService.PreparedPayment prepared = nativePayment.prepare(context, plan);
                 return new CostPaymentService.PreparedPayment() {
-                    public xin.vanilla.banira.api.cost.CostPaymentPlan plan() { return prepared.plan(); }
+                    public xin.vanilla.banira.api.cost.CostPaymentPlan plan() {
+                        return prepared.plan();
+                    }
+
                     public EnumCostFailure pay() {
                         EnumCostFailure failure = validate(context);
                         if (failure == EnumCostFailure.NONE) failure = check(context, plan);
                         return failure == EnumCostFailure.NONE ? prepared.pay() : failure;
                     }
-                    public java.util.List<xin.vanilla.banira.api.cost.CostPaymentPlan.ResourceSnapshot> receipt() { return prepared.receipt(); }
-                    public void afterPayment() { prepared.afterPayment(); }
+
+                    public java.util.List<xin.vanilla.banira.api.cost.CostPaymentPlan.ResourceSnapshot> receipt() {
+                        return prepared.receipt();
+                    }
+
+                    public void afterPayment() {
+                        prepared.afterPayment();
+                    }
                 };
             }
         };
@@ -170,8 +179,12 @@ public final class NarcissusCostService implements AutoCloseable {
     }
 
     public void connect(ServerPlayer player) {
-        UUID session = connections.computeIfAbsent(player.getUUID(), id -> UUID.randomUUID());
-        quotes.openConnection(player.getUUID(), session);
+        if (!ForgeCostQuoteAccess.connected(server, player)) return;
+        UUID id = player.getUUID();
+        UUID session = connections.get(id);
+        if (session == null) session = UUID.randomUUID();
+        quotes.openConnection(id, session);
+        connections.put(id, session);
         sendCapabilities(player, session);
     }
 

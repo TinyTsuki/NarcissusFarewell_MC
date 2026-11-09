@@ -99,7 +99,9 @@ public class ForgeCostPlayerFixture {
                 method.setAccessible(true);
                 java.util.function.Predicate<ServerPlayer> available = p -> p.isAlive() && !p.isRemoved();
                 return (xin.vanilla.banira.api.cost.CostAccess) method.invoke(null, payer, scope, available);
-            } catch (ReflectiveOperationException error) { throw new IllegalStateException(error); }
+            } catch (ReflectiveOperationException error) {
+                throw new IllegalStateException(error);
+            }
         };
     }
 
@@ -118,6 +120,7 @@ public class ForgeCostPlayerFixture {
         boolean cancelExperience;
         int experienceFactor;
         boolean mutateExperienceProgress;
+        boolean disconnected;
 
         private RecordingPlayer() {
             super(null, null, null);
@@ -146,6 +149,11 @@ public class ForgeCostPlayerFixture {
         @Override
         public boolean isAlive() {
             return health > 0 && !isRemoved();
+        }
+
+        @Override
+        public boolean hasDisconnected() {
+            return disconnected;
         }
 
         @Override
