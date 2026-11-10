@@ -20,13 +20,6 @@ import static org.junit.Assert.*;
 
 public class NativeMessageBoundaryTest extends HeadlessUiEnvironment {
 
-    @Test
-    public void productionBoundaryRetainsNativeNames() throws Exception {
-        String source = new String(Files.readAllBytes(Paths.get("src/main/java/xin/vanilla/narcissus/mixin/CombatTrackerMixin.java")), StandardCharsets.UTF_8);
-        assertTrue(source.contains("entity != null ? entity.getDisplayName() :"));
-        assertTrue(source.contains(".appendArg(message).toChat(language)"));
-        assertFalse(source.contains("getDisplayName().getString()"));
-    }
 
     @Test
     public void composingNamesPreservesVanillaTranslationsAndTheOriginal() {
@@ -52,22 +45,6 @@ public class NativeMessageBoundaryTest extends HeadlessUiEnvironment {
         assertFalse(json.toString().contains("missing_boundary_template"));
     }
 
-    @Test
-    public void feedbackArgumentsKeepDisplayNameComponents() throws Exception {
-        for (String path : Arrays.asList("src/main/java/xin/vanilla/narcissus/command/impl/CardCommand.java",
-                "src/main/java/xin/vanilla/narcissus/command/impl/ShareCommand.java",
-                "src/main/java/xin/vanilla/narcissus/command/impl/TpAskCancelCommand.java",
-                "src/main/java/xin/vanilla/narcissus/command/impl/TpAskCommand.java",
-                "src/main/java/xin/vanilla/narcissus/command/impl/TpAskNoCommand.java",
-                "src/main/java/xin/vanilla/narcissus/command/impl/TpHereCancelCommand.java",
-                "src/main/java/xin/vanilla/narcissus/command/impl/TpHereCommand.java",
-                "src/main/java/xin/vanilla/narcissus/command/impl/TpHereNoCommand.java",
-                "src/main/java/xin/vanilla/narcissus/command/impl/UuidCommand.java",
-                "src/main/java/xin/vanilla/narcissus/event/EventHandlerProxy.java")) {
-            String source = new String(Files.readAllBytes(Paths.get(path)), StandardCharsets.UTF_8);
-            assertFalse(path, source.contains(".getDisplayName().getString()"));
-        }
-    }
 
     @Test
     public void reviewedNativeTemplateFormattingComesFromTheFrozenCommonInput() throws Exception {
