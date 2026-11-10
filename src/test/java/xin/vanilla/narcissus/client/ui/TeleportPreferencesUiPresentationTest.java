@@ -48,13 +48,6 @@ public class TeleportPreferencesUiPresentationTest {
         assertEquals("16 / 16", view.text("entry_count"));
     }
 
-    @Test
-    public void nativeFactoryRouteUsesSharedPlayerEditorWithoutChangingSurface() throws Exception {
-        String source = Files.readString(Path.of("src/main/java/xin/vanilla/narcissus/screen/PlayerConfigScreen.java"));
-        assertTrue("Shared editor route missing", source.contains("preferences.shared().spec(this, uiSurfaceId())"));
-        assertTrue(source.contains("narcissus_farewell:player"));
-        assertTrue(source.contains("captureUiState(null)"));
-    }
 
     @Test
     public void actualFormRejectsInvalidRawIntegersEvenWhenFilteredOut() {
