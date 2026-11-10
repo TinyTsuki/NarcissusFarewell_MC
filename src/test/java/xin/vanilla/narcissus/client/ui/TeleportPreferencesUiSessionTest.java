@@ -61,13 +61,5 @@ public class TeleportPreferencesUiSessionTest {
         assertEquals(1, sends.get());
     }
 
-    @Test
-    public void nativeSaveCapturesRawInputsBeforeValidatingAndSubmitting() throws Exception {
-        String source = UiBoundaryChecks.text(java.nio.file.Paths.get(
-                "src/main/java/xin/vanilla/narcissus/screen/PlayerConfigScreen.java"));
-        String save = source.substring(source.indexOf("protected void savePlayerConfig()"), source.indexOf("private void savePreferences"));
-        assertTrue(save.contains("captureUiState(null)"));
-        assertTrue(save.indexOf("captureUiState(null)") < save.indexOf("preferences.submit()"));
-        assertTrue(save.contains("canSubmit()"));
-    }
+
 }

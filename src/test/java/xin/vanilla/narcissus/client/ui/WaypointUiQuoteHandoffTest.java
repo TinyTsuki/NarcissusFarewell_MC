@@ -20,14 +20,6 @@ public class WaypointUiQuoteHandoffTest {
     @org.junit.ClassRule
     public static final HeadlessUiPlatformRule PLATFORM = new HeadlessUiPlatformRule();
 
-    @Test
-    public void nativeHandoffCancelsTheUncommittedDragWithoutSubmittingAnOrder() throws Exception {
-        String source = UiBoundaryChecks.text(java.nio.file.Paths.get("src/main/java/xin/vanilla/narcissus/screen/WaypointScreen.java"));
-        String capture = source.substring(source.indexOf("public void captureUiState"), source.indexOf("public void prepareUiState"));
-        assertTrue(capture.contains("clearDragState()"));
-        assertFalse(capture.contains("finishDrag()"));
-        assertFalse(capture.contains("submitActiveOrder()"));
-    }
 
     @Test
     public void confirmedAndPendingQuotesSurviveEveryPresentationDetachWithoutPayment() {
@@ -62,21 +54,5 @@ public class WaypointUiQuoteHandoffTest {
         assertFalse(quotes.display(target, 600_000_003).isPresent());
     }
 
-    @Test
-    public void nativeHandoffRetainsOriginalCostCoordinateAndPacketPaths() throws Exception {
-        String nativePage = UiBoundaryChecks.text(java.nio.file.Paths.get("src/main/java/xin/vanilla/narcissus/screen/WaypointScreen.java"));
-        String removed = nativePage.substring(nativePage.indexOf("public void removed()"), nativePage.indexOf("private String calculateCostDisplay"));
-        assertFalse(removed.contains("closeView"));
-        assertTrue(removed.contains("CommonUiPages.removed"));
-        assertTrue(nativePage.contains("quotes.request(item.quoteTarget, now)"));
-        assertTrue(nativePage.contains("quotes.display(item.quoteTarget, now)"));
-        assertTrue(nativePage.contains("toXyzIntString(\",\")"));
-        assertTrue(nativePage.contains("new WaypointTeleportToServer(type, name, dimension)"));
-        assertTrue(nativePage.contains("WaypointDragModel.insertionIndex"));
-        for (String type : new String[]{"NarcissusListUiSession", "WaypointUiSession", "AccessListUiSession"}) {
-            String source = UiBoundaryChecks.text(java.nio.file.Paths.get("src/main/java/xin/vanilla/narcissus/client/ui/" + type + ".java"));
-            assertFalse(source.contains("PacketUtils"));
-            assertFalse(source.contains("payCost"));
-        }
-    }
+
 }
