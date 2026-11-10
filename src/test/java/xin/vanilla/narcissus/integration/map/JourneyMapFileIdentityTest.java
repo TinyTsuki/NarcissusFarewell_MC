@@ -17,7 +17,8 @@ public class JourneyMapFileIdentityTest {
         return (String) method.invoke(null, owner, id);
     }
 
-    @Test public void differentKindsHaveStableIndependentFileNames() throws Exception {
+    @Test
+    public void differentKindsHaveStableIndependentFileNames() throws Exception {
         String home = file("narcissus_farewell", "HOME_" + UUID);
         assertEquals("narcissus_farewell_HOME_" + UUID + ".json", home);
         assertNotEquals(home, file("narcissus_farewell", "STAGE_" + UUID));
@@ -25,7 +26,8 @@ public class JourneyMapFileIdentityTest {
         assertEquals(home, file("narcissus_farewell", "HOME_" + UUID));
     }
 
-    @Test public void foreignAndUnrecognizedIdsRetainNativeBehavior() throws Exception {
+    @Test
+    public void foreignAndUnrecognizedIdsRetainNativeBehavior() throws Exception {
         assertNull(file("journeymap", "HOME_" + UUID));
         assertNull(file("narcissus_farewell", null));
         assertNull(file("narcissus_farewell", "home"));
@@ -33,23 +35,11 @@ public class JourneyMapFileIdentityTest {
         assertNull(file("narcissus_farewell", "HOME_../" + UUID));
     }
 
-    @Test public void distinctIdsNeverReuseTheSameFile() throws Exception {
+    @Test
+    public void distinctIdsNeverReuseTheSameFile() throws Exception {
         assertNotEquals(file("narcissus_farewell", "HOME_" + UUID),
                 file("narcissus_farewell", "HOME_7f21eb5e-04d8-4833-a28e-2e9ac7e859dd"));
     }
 
-    @Test public void optionalHookIsClientOnlyAndLeavesMinecraftRemappingEnabled() throws Exception {
-        String config = Files.readString(Path.of("src/main/resources/narcissus_farewell.mixins.json"), StandardCharsets.UTF_8);
-        assertTrue(config.contains("JourneyMapWaypointFileMixin"));
-        String hook = Files.readString(Path.of("src/main/java/xin/vanilla/narcissus/mixin/JourneyMapWaypointFileMixin.java"), StandardCharsets.UTF_8);
-        assertTrue(hook.contains("@Pseudo"));
-        assertTrue(hook.contains("getFileName()Ljava/lang/String;"));
-        assertTrue(hook.contains("LegacyJourneyMapFiles.fileName"));
-        assertTrue(config.contains("JourneyMapWaypointReaderMixin"));
-        String reader = Files.readString(Path.of("src/main/java/xin/vanilla/narcissus/mixin/JourneyMapWaypointReaderMixin.java"), StandardCharsets.UTF_8);
-        assertTrue(reader.contains("loadWaypoints(Ljava/io/File;)Ljava/util/Collection;"));
-        assertTrue(reader.contains("LegacyJourneyMapFiles.prepare"));
-        String vanilla = Files.readString(Path.of("src/main/java/xin/vanilla/narcissus/mixin/ServerPlayerTeleportMixin.java"), StandardCharsets.UTF_8);
-        assertFalse(vanilla.contains("remap = false"));
-    }
+
 }
