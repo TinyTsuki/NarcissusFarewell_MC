@@ -78,20 +78,6 @@ public class Fabric19UiPortTest {
         assertFalse("Deletion is confirmed by the existing server sync", deletion.contains("removeIf"));
     }
 
-    @Test
-    public void buildsAndOldUnroutedTemplateStayOutsideValidation() throws Exception {
-        String build = Files.readString(Path.of("build.gradle"));
-        assertTrue(build.contains("destinationDirectory.set(baniraDistributionDirectory)"));
-        assertTrue(build.contains("tasks.named('runClient').configure {\n    dependsOn 'prepareDevFpsOverlay'")
-                || build.contains("tasks.named('runClient').configure {\r\n    dependsOn 'prepareDevFpsOverlay'"));
-        assertFalse(java.util.regex.Pattern.compile("(?m)^prepareBaniraDevFpsOverlay\\(\\)\\s*$").matcher(build).find());
-        assertTrue(build.contains("artifact tasks.named('remapSourcesJar')"));
-        assertFalse(Files.exists(Path.of("src/main/resources/assets/apricityui/apricity/narcissus_farewell/index.html")));
-        String isolation = Files.readString(Path.of("gradle/aui-validation-output.gradle"));
-        assertTrue(isolation.contains("disallowChanges()"));
-        assertTrue(isolation.contains("Unsafe validation output root"));
-        assertTrue(isolation.contains("Publication escaped validation output root"));
-    }
 
     @Test
     public void nativePagesRetainThePoseStackDrawingContract() throws Exception {

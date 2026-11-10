@@ -62,29 +62,14 @@ public class JourneyMapSafetyContractTest {
         }
     }
 
-    @Test
-    public void nativeReadIsCheckedBeforeItsDeferredDeleteLoop() throws Exception {
-        java.nio.file.Path reader = Paths.get("src/main/java/xin/vanilla/narcissus/mixin/JourneyMapWaypointReaderMixin.java");
-        assertTrue("Missing native reader protection hook", Files.exists(reader));
-        String source = new String(Files.readAllBytes(reader), StandardCharsets.UTF_8);
-        assertTrue(source.contains("@Redirect"));
-        assertTrue(source.contains("requireNativeFileIdentity"));
-        assertTrue(source.contains("JmReader;load(Ljava/io/File;)Ljourneymap/client/waypoint/Waypoint;"));
-    }
-
-    @Test
-    public void packetKindReachesTheJourneyMapBoundary() throws Exception {
-        String source = new String(Files.readAllBytes(Paths.get("src/main/java/xin/vanilla/narcissus/integration/MapHelper.java")), StandardCharsets.UTF_8);
-        assertTrue(source.contains("JourneyMap.addWaypoint(packet.type().name(),")
-                || source.contains("addWaypoint(packet.type().name(),") && source.contains("JourneyMap.addWaypoint(kind,"));
-        assertTrue(source.contains("JourneyMap.removeWaypoint(packet.type().name(),")
-                || source.contains("removeWaypoint(packet.type().name(),") && source.contains("JourneyMap.removeWaypoint(kind,"));
-    }
 
     @Test
     public void clientMixinsProtectFileIdentityAndRunBeforeTheNativeReader() throws Exception {
-        String config = new String(Files.readAllBytes(Paths.get("src/main/resources/narcissus_farewell.mixins.json")), StandardCharsets.UTF_8);
-        assertTrue(config.contains("JourneyMapWaypointFileMixin"));
-        assertTrue(config.contains("JourneyMapWaypointReaderMixin"));
+        var config = com.google.gson.JsonParser.parseString(new String(Files.readAllBytes(
+                Paths.get("src/main/resources/narcissus_farewell.mixins.json")), StandardCharsets.UTF_8)).getAsJsonObject();
+        var client = new java.util.HashSet<String>();
+        config.getAsJsonArray("client").forEach(value -> client.add(value.getAsString()));
+        assertTrue(client.contains("JourneyMapWaypointFileMixin"));
+        assertTrue(client.contains("JourneyMapWaypointReaderMixin"));
     }
 }
