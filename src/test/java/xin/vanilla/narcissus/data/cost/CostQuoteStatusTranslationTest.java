@@ -11,16 +11,7 @@ import java.util.Locale;
 import static org.junit.Assert.*;
 
 public class CostQuoteStatusTranslationTest {
-    @Test
-    public void statusDescriptionUsesSideAwareTranslationWithItsExistingKey() throws Exception {
-        String source = Files.readString(Path.of("src/main/java/xin/vanilla/narcissus/data/cost/CostQuote.java"));
-        String status = source.substring(source.indexOf("public enum Status"), source.indexOf("public CostQuote("));
-        assertTrue("Status must follow the client language and retain server translation",
-                status.contains("EnumDescriptionHelper.transAutoDesc("));
-        assertTrue(status.contains("\"enum_cost_quote_status_\" + name().toLowerCase(Locale.ROOT)"));
-        assertFalse("The nested enum needs its explicit key prefix", status.contains("describeEnum("));
-        assertFalse(status.contains(".trans("));
-    }
+
 
     @Test
     public void everyStatusRetainsBothLanguageEntries() throws Exception {

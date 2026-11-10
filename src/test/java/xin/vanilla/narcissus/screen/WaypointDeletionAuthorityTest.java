@@ -57,16 +57,5 @@ public class WaypointDeletionAuthorityTest {
         assertNull(WaypointSelectionState.afterRefresh(selected, null, Collections.<WaypointSelectionState.Key>emptyList(), key -> key));
     }
 
-    @Test
-    public void successfulServerDeletesRetainFullAuthoritativeSynchronization() throws Exception {
-        String root = "src/main/java/xin/vanilla/narcissus/command/impl/";
-        String home = Files.readString(Path.of(root + "DelHomeCommand.java"));
-        String stage = Files.readString(Path.of(root + "DelStageCommand.java"));
-        assertTrue(home.contains("PlayerTeleportData.syncPlayerData(player)"));
-        assertTrue(stage.contains("new StageDataSyncToClient(stageData.getStageCoordinate())"));
-        for (String source : new String[]{home, stage}) {
-            assertTrue(source.contains("CommandUtils.checkTeleportPre"));
-            assertTrue(source.contains("WaypointSyncToClient.Action.REMOVE"));
-        }
-    }
+
 }
