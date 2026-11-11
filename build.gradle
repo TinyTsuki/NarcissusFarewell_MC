@@ -103,11 +103,8 @@ dependencies {
     }
     modImplementation "com.terraformersmc:modmenu:${modmenu_version}"
 
-    testImplementation 'junit:junit:4.13.2'
     compileOnly 'org.projectlombok:lombok:1.18.34'
     annotationProcessor 'org.projectlombok:lombok:1.18.34'
-    testCompileOnly 'org.projectlombok:lombok:1.18.34'
-    testAnnotationProcessor 'org.projectlombok:lombok:1.18.34'
     implementation 'com.google.code.findbugs:jsr305:3.0.2'
 }
 
@@ -127,9 +124,6 @@ configurations.journeyMapApiSource.files.each { artifact ->
 }
 dependencies {
     modCompileOnly files(journeyMapApi)
-    testImplementation files(providers.provider {
-        sourceSets.main.compileClasspath.files.findAll { it.name.toLowerCase().contains('journeymap-api') }
-    })
     if (project.findProperty('minimapSmoke') == 'journey') {
         modRuntimeOnly 'maven.modrinth:journeymap:i7LuKuDl'
         modRuntimeOnly 'maven.modrinth:common-network:qJXqSlRN'
