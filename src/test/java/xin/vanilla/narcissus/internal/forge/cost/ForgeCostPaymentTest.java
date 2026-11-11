@@ -1,9 +1,9 @@
 package xin.vanilla.narcissus.internal.forge.cost;
 
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
-import net.minecraft.nbt.CompoundTag;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;

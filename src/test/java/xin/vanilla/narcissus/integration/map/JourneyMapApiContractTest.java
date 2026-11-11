@@ -6,7 +6,8 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
 public class JourneyMapApiContractTest {
-    @Test public void installedPublicApiSatisfiesProductionContract() throws Throwable {
+    @Test
+    public void installedPublicApiSatisfiesProductionContract() throws Throwable {
         Method validate = JourneyMapWaypointPlugin.class.getDeclaredMethod("validateContract");
         validate.setAccessible(true);
         try {

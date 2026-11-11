@@ -9,7 +9,10 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import xin.vanilla.banira.common.config.ConfigHolder;
-import xin.vanilla.banira.platform.*;
+import xin.vanilla.banira.platform.BaniraConfigService;
+import xin.vanilla.banira.platform.BaniraNetworkService;
+import xin.vanilla.banira.platform.BaniraPlatform;
+import xin.vanilla.banira.platform.BaniraPlatforms;
 import xin.vanilla.narcissus.config.CommonConfig;
 import xin.vanilla.narcissus.config.ConfigBaselineFixture;
 import xin.vanilla.narcissus.data.SafeWorldCoordinate;
@@ -27,7 +30,9 @@ import java.util.*;
 
 import static org.junit.Assert.*;
 
-/** Exercises the real transaction and history handler; only native movement/network are isolated. */
+/**
+ * Exercises the real transaction and history handler; only native movement/network are isolated.
+ */
 public class TeleportHistoryRegressionTest {
     private final ForgeCostPlayerFixture fixture = new ForgeCostPlayerFixture();
     private HookPlayer player;
@@ -54,7 +59,8 @@ public class TeleportHistoryRegressionTest {
                 (p, m, a) -> m.getName().equals("handle") ? holder : null);
         BaniraNetworkService network = (BaniraNetworkService) proxy(BaniraNetworkService.class,
                 (p, m, a) -> {
-                    if (throwOnSync && m.getName().equals("sendToPlayer")) throw new IllegalStateException("sync failed");
+                    if (throwOnSync && m.getName().equals("sendToPlayer"))
+                        throw new IllegalStateException("sync failed");
                     return m.getReturnType() == boolean.class ? false : null;
                 });
         BaniraPlatforms.install((BaniraPlatform) proxy(BaniraPlatform.class, (p, m, a) -> {
@@ -335,11 +341,28 @@ public class TeleportHistoryRegressionTest {
             super(null, null, null, null);
         }
 
-        @Override public UUID getUUID() { return id; }
-        @Override public Level level() { return world; }
-        @Override public ServerLevel serverLevel() { return world; }
-        @Override public Entity getRootVehicle() { return root == null ? this : root; }
-        @Override public void stopRiding() {
+        @Override
+        public UUID getUUID() {
+            return id;
+        }
+
+        @Override
+        public Level level() {
+            return world;
+        }
+
+        @Override
+        public ServerLevel serverLevel() {
+            return world;
+        }
+
+        @Override
+        public Entity getRootVehicle() {
+            return root == null ? this : root;
+        }
+
+        @Override
+        public void stopRiding() {
             Entity vehicle = getVehicle();
             if (vehicle == null) return;
             try {
@@ -351,7 +374,9 @@ public class TeleportHistoryRegressionTest {
                 throw new IllegalStateException(error);
             }
         }
-        @Override public boolean startRiding(Entity vehicle, boolean force) {
+
+        @Override
+        public boolean startRiding(Entity vehicle, boolean force) {
             attachmentAttempts++;
             if (rejectAttachment) return false;
             try {
@@ -364,8 +389,15 @@ public class TeleportHistoryRegressionTest {
                 throw new IllegalStateException(error);
             }
         }
-        @Override public net.minecraft.core.RegistryAccess registryAccess() { return net.minecraft.core.RegistryAccess.EMPTY; }
-        @Override public void sendSystemMessage(net.minecraft.network.chat.Component message) { }
+
+        @Override
+        public net.minecraft.core.RegistryAccess registryAccess() {
+            return net.minecraft.core.RegistryAccess.EMPTY;
+        }
+
+        @Override
+        public void sendSystemMessage(net.minecraft.network.chat.Component message) {
+        }
 
         @Override
         public void teleportTo(ServerLevel target, double x, double y, double z, float yaw, float pitch) {

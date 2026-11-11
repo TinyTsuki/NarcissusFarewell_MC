@@ -2,6 +2,11 @@ package xin.vanilla.narcissus.internal.forge.cost;
 
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
+import xin.vanilla.banira.api.BaniraCosts;
+import xin.vanilla.banira.api.cost.CostAccess;
+import xin.vanilla.banira.api.cost.CostRequirement;
+import xin.vanilla.banira.api.cost.InventoryScope;
+import xin.vanilla.banira.api.cost.ResourceCost;
 import xin.vanilla.banira.common.util.CommandUtils;
 import xin.vanilla.narcissus.NarcissusFarewell;
 import xin.vanilla.narcissus.api.cost.CostContext;
@@ -15,13 +20,11 @@ import xin.vanilla.narcissus.enums.EnumCostFailure;
 import xin.vanilla.narcissus.enums.EnumCostType;
 import xin.vanilla.narcissus.enums.EnumTeleportType;
 import xin.vanilla.narcissus.service.cost.CostPaymentService;
+import xin.vanilla.narcissus.service.cost.NarcissusPaymentPolicy;
 
-import java.util.Objects;
 import java.util.ArrayList;
 import java.util.List;
-import xin.vanilla.banira.api.BaniraCosts;
-import xin.vanilla.banira.api.cost.*;
-import xin.vanilla.narcissus.service.cost.NarcissusPaymentPolicy;
+import java.util.Objects;
 import java.util.function.*;
 
 public final class ForgeCostPayment implements CostPaymentService.PaymentAccess {
@@ -128,25 +131,45 @@ public final class ForgeCostPayment implements CostPaymentService.PaymentAccess 
         CostAccess access = resources;
         xin.vanilla.banira.api.cost.CostPaymentPlan shared = access.preview(CostRequirement.all(requirements), 1);
         return new CostPaymentService.PreparedPayment() {
-            public xin.vanilla.banira.api.cost.CostPaymentPlan plan() { return shared; }
+            public xin.vanilla.banira.api.cost.CostPaymentPlan plan() {
+                return shared;
+            }
+
             public EnumCostFailure pay() {
                 EnumCostFailure validity = validate(context);
                 return validity == EnumCostFailure.NONE ? NarcissusPaymentPolicy.failure(access.debit(shared)) : validity;
             }
-            public List<xin.vanilla.banira.api.cost.CostPaymentPlan.ResourceSnapshot> receipt() { return access.receipt(shared).snapshots(); }
-            public void afterPayment() { ForgeCostPayment.this.afterPayment(context, plan.paid()); }
+
+            public List<xin.vanilla.banira.api.cost.CostPaymentPlan.ResourceSnapshot> receipt() {
+                return access.receipt(shared).snapshots();
+            }
+
+            public void afterPayment() {
+                ForgeCostPayment.this.afterPayment(context, plan.paid());
+            }
         };
     }
 
     private static ResourceCost resource(CostContext context, int amount) {
         String id;
         switch (context.costType()) {
-            case EXP_POINT: id = "banira:xp_point"; break;
-            case EXP_LEVEL: id = "banira:xp_level"; break;
-            case HEALTH: id = "banira:health"; break;
-            case HUNGER: id = "banira:hunger"; break;
-            case ITEM: id = "banira:item"; break;
-            default: throw new IllegalArgumentException("Unsupported teleport resource");
+            case EXP_POINT:
+                id = "banira:xp_point";
+                break;
+            case EXP_LEVEL:
+                id = "banira:xp_level";
+                break;
+            case HEALTH:
+                id = "banira:health";
+                break;
+            case HUNGER:
+                id = "banira:hunger";
+                break;
+            case ITEM:
+                id = "banira:item";
+                break;
+            default:
+                throw new IllegalArgumentException("Unsupported teleport resource");
         }
         return new ResourceCost(id, amount, context.costType() == EnumCostType.ITEM ? context.parameters().item() : "");
     }
@@ -180,7 +203,8 @@ public final class ForgeCostPayment implements CostPaymentService.PaymentAccess 
         ServerPlayer moving = context.player().nativePlayer(ServerPlayer.class);
         List<CostRequirement> requirements = new ArrayList<>();
         if (context.payer().nativePlayer(ServerPlayer.class) == moving && context.costType() == EnumCostType.ITEM
-                && plan.resourceAmount() > 0) requirements.add(CostRequirement.leaf(resource(context, plan.resourceAmount())));
+                && plan.resourceAmount() > 0)
+            requirements.add(CostRequirement.leaf(resource(context, plan.resourceAmount())));
         String specification = new net.minecraft.commands.arguments.item.ItemInput(support.getItemHolder(),
                 support.getComponentsPatch()).serialize(moving.registryAccess());
         requirements.add(CostRequirement.leaf(new ResourceCost("banira:item", 1, specification)));
