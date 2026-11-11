@@ -2,11 +2,7 @@ package xin.vanilla.narcissus.integration.map;
 
 import net.minecraft.core.BlockPos;
 
-import java.lang.reflect.Constructor;
-import java.lang.reflect.Field;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.lang.reflect.Modifier;
+import java.lang.reflect.*;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
