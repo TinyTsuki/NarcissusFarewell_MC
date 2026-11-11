@@ -8,7 +8,9 @@ import java.io.File;
 
 public final class JourneyMapWaypointPlugin implements IClientPlugin {
     @Override
-    public String getModId() { return JourneyMap.MOD_ID; }
+    public String getModId() {
+        return JourneyMap.MOD_ID;
+    }
 
     @Override
     public void initialize(IClientAPI api) {
@@ -23,7 +25,8 @@ public final class JourneyMapWaypointPlugin implements IClientPlugin {
     }
 
     @Override
-    public void onEvent(ClientEvent event) { }
+    public void onEvent(ClientEvent event) {
+    }
 
     static final class ApiAdapter implements JourneyMap.Adapter {
         private final IClientAPI api;
@@ -40,9 +43,13 @@ public final class JourneyMapWaypointPlugin implements IClientPlugin {
         }
 
         @Override
-        public void add(JourneyMap.Point point) throws ReflectiveOperationException { store.add(point); }
+        public void add(JourneyMap.Point point) throws ReflectiveOperationException {
+            store.add(point);
+        }
 
         @Override
-        public void remove(JourneyMap.Point point) throws ReflectiveOperationException { store.remove(point); }
+        public void remove(JourneyMap.Point point) throws ReflectiveOperationException {
+            store.remove(point);
+        }
     }
 }

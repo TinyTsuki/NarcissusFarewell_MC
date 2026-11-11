@@ -4,7 +4,8 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 
 final class JourneyMapApiContract {
-    private JourneyMapApiContract() { }
+    private JourneyMapApiContract() {
+    }
 
     static Method method(Class<?> type, String name, Class<?> result, Class<?>... arguments)
             throws NoSuchMethodException {

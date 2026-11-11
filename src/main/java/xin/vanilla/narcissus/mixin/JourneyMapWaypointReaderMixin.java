@@ -19,7 +19,9 @@ import java.util.Collection;
 @Mixin(targets = "journeymap.client.waypoint.JmReader", remap = false)
 public abstract class JourneyMapWaypointReaderMixin {
     @Shadow(remap = false)
-    private Waypoint load(File file) { throw new AssertionError(); }
+    private Waypoint load(File file) {
+        throw new AssertionError();
+    }
 
     @Inject(method = "loadWaypoints(Ljava/io/File;)Ljava/util/Collection;", at = @At("HEAD"), remap = false)
     private void narcissus$prepareWaypointFiles(File directory, CallbackInfoReturnable<Collection<?>> callback) throws IOException {

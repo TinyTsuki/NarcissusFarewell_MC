@@ -10,7 +10,6 @@ import org.junit.Test;
 import xin.vanilla.narcissus.api.cost.CostContext;
 import xin.vanilla.narcissus.data.cost.*;
 import xin.vanilla.narcissus.enums.EnumCostFailure;
-import xin.vanilla.narcissus.enums.EnumTeleportType;
 import xin.vanilla.narcissus.internal.server.NarcissusCostRuntime;
 import xin.vanilla.narcissus.internal.server.NarcissusCostService;
 import xin.vanilla.narcissus.internal.server.cost.CostEvaluation;
