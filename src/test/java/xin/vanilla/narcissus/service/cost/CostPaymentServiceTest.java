@@ -268,15 +268,28 @@ public class CostPaymentServiceTest {
     public void preparedReceiptFailureStillLeavesOnePaidOperation() {
         Fixture f = new Fixture();
         f.service = new CostPaymentService(ctx -> CostCalculation.success(5, 5), new CostPaymentService.PaymentAccess() {
-            public EnumCostFailure validate(CostContext context) { return f.validate(context); }
-            public EnumCostFailure check(CostContext context, CostPaymentPlan plan) { return f.check(context, plan); }
-            public EnumCostFailure pay(CostContext context, CostPaymentPlan plan) { return f.pay(context, plan); }
+            public EnumCostFailure validate(CostContext context) {
+                return f.validate(context);
+            }
+
+            public EnumCostFailure check(CostContext context, CostPaymentPlan plan) {
+                return f.check(context, plan);
+            }
+
+            public EnumCostFailure pay(CostContext context, CostPaymentPlan plan) {
+                return f.pay(context, plan);
+            }
+
             public CostPaymentService.PreparedPayment prepare(CostContext context, CostPaymentPlan plan) {
                 return new CostPaymentService.PreparedPayment() {
                     public xin.vanilla.banira.api.cost.CostPaymentPlan plan() {
                         return xin.vanilla.banira.api.cost.CostPaymentPlan.ready(1, java.util.Collections.emptyList(), java.util.Collections.emptyList());
                     }
-                    public EnumCostFailure pay() { return f.pay(context, plan); }
+
+                    public EnumCostFailure pay() {
+                        return f.pay(context, plan);
+                    }
+
                     public java.util.List<xin.vanilla.banira.api.cost.CostPaymentPlan.ResourceSnapshot> receipt() {
                         throw new IllegalStateException("Receipt unavailable");
                     }

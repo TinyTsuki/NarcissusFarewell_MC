@@ -7,7 +7,8 @@ import java.io.File;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Proxy;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 public class JourneyMapApiReadinessTest {
     private JourneyMap.Adapter adapter(File mappingPath, String optionalWorldId) throws Exception {

@@ -34,8 +34,10 @@ public class SharedCostMigrationContractTest {
     @Test
     public void captureOriginalPublicEntryPointResults() throws Exception {
         JsonObject snapshots = new JsonObject();
-        for (EnumCardType mode : EnumCardType.values()) snapshots.add("mode:" + mode.name(), SharedCostParityFixture.captureScenario("mode:" + mode.name()));
-        for (EnumCostType type : EnumCostType.values()) snapshots.add("type:" + type.name(), SharedCostParityFixture.captureScenario("type:" + type.name()));
+        for (EnumCardType mode : EnumCardType.values())
+            snapshots.add("mode:" + mode.name(), SharedCostParityFixture.captureScenario("mode:" + mode.name()));
+        for (EnumCostType type : EnumCostType.values())
+            snapshots.add("type:" + type.name(), SharedCostParityFixture.captureScenario("type:" + type.name()));
         for (String name : new String[]{"repeat", "cancel", "generation", "payer", "moving-target", "fixed-target", "command-failure", "notification-failure", "lost-resource"})
             snapshots.add(name, SharedCostParityFixture.captureScenario(name));
         System.out.println("PARITY_SNAPSHOT=" + snapshots);

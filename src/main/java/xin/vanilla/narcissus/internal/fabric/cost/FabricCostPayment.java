@@ -2,6 +2,11 @@ package xin.vanilla.narcissus.internal.fabric.cost;
 
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
+import xin.vanilla.banira.api.BaniraCosts;
+import xin.vanilla.banira.api.cost.CostAccess;
+import xin.vanilla.banira.api.cost.CostRequirement;
+import xin.vanilla.banira.api.cost.InventoryScope;
+import xin.vanilla.banira.api.cost.ResourceCost;
 import xin.vanilla.banira.common.util.CommandUtils;
 import xin.vanilla.narcissus.NarcissusFarewell;
 import xin.vanilla.narcissus.api.cost.CostContext;
@@ -15,15 +20,11 @@ import xin.vanilla.narcissus.enums.EnumCostFailure;
 import xin.vanilla.narcissus.enums.EnumCostType;
 import xin.vanilla.narcissus.enums.EnumTeleportType;
 import xin.vanilla.narcissus.service.cost.CostPaymentService;
-
-import java.util.Objects;
-import java.util.ArrayList;
-import java.util.List;
-
-import xin.vanilla.banira.api.BaniraCosts;
-import xin.vanilla.banira.api.cost.*;
 import xin.vanilla.narcissus.service.cost.NarcissusPaymentPolicy;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
 import java.util.function.*;
 
 public final class FabricCostPayment implements CostPaymentService.PaymentAccess {

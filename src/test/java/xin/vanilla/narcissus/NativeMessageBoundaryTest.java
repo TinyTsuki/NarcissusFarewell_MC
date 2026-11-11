@@ -1,20 +1,16 @@
 package xin.vanilla.narcissus;
 
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 import org.junit.Test;
 import xin.vanilla.banira.BaniraComponent;
 import xin.vanilla.banira.common.data.Component;
 import xin.vanilla.banira.common.enums.EnumI18nType;
 import xin.vanilla.narcissus.client.ui.HeadlessUiEnvironment;
 
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
 
 import static org.junit.Assert.*;
 

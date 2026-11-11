@@ -6,7 +6,7 @@ import org.objectweb.asm.Opcodes;
 
 import java.util.Map;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertTrue;
 
 public class UiBoundaryClassVersionTest {
     private Map<String, byte[]> archive(int version) {
