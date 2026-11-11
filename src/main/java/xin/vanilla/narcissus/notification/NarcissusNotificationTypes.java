@@ -75,6 +75,9 @@ public final class NarcissusNotificationTypes {
     };
 
     public static void registerAllOnServer() {
+        for (String type : ALL_TYPE_IDS) {
+            ServerNotificationTypeRegistry.registerImportance(type, defaultImportant(type));
+        }
         ServerNotificationTypeRegistry.register(TELEPORT_SEARCH);
         ServerNotificationTypeRegistry.register(WAYPOINT);
         ServerNotificationTypeRegistry.register(TELEPORT_REQUEST, EnumPosition.TOP_CENTER, EnumMoveType.AUTO);
@@ -100,5 +103,10 @@ public final class NarcissusNotificationTypes {
     }
 
     private NarcissusNotificationTypes() {
+    }
+
+    public static boolean defaultImportant(String typeId) {
+        return TELEPORT_REQUEST.equals(typeId) || TELEPORT_GUARD.equals(typeId) || TELEPORT_ERROR.equals(typeId)
+                || INTERACTIVE_TP_FLOW.equals(typeId) || INTERACTIVE_SHARE.equals(typeId);
     }
 }
