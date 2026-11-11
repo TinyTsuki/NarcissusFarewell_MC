@@ -131,6 +131,11 @@ repositories {
         url = "https://jm.gserv.me/repository/maven-public/"
     }
     maven {
+        name = "FTB Releases"
+        url = "https://maven.ftb.dev/releases"
+        content { includeGroup "dev.ftb.mods" }
+    }
+    maven {
         url "https://cursemaven.com/"
         content { includeGroup "curse.maven" }
     }
