@@ -11,8 +11,11 @@ import xin.vanilla.narcissus.integration.map.LegacyJourneyMapFiles;
 @Pseudo
 @Mixin(targets = "journeymap.client.waypoint.Waypoint", remap = false)
 public abstract class JourneyMapWaypointFileMixin {
-    @Shadow(remap = false) public abstract String getOrigin();
-    @Shadow(remap = false) public abstract String getDisplayId();
+    @Shadow(remap = false)
+    public abstract String getOrigin();
+
+    @Shadow(remap = false)
+    public abstract String getDisplayId();
 
     @Inject(method = "getFileName()Ljava/lang/String;", at = @At("HEAD"), cancellable = true, remap = false)
     private void narcissus$waypointFileName(CallbackInfoReturnable<String> callback) {
