@@ -1,8 +1,8 @@
 package xin.vanilla.narcissus.internal.client.dev;
 
-import net.minecraft.client.multiplayer.chat.GuiMessage;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.ChatComponent;
+import net.minecraft.client.multiplayer.chat.GuiMessage;
 import net.minecraft.core.HolderLookup;
 import net.neoforged.fml.util.ObfuscationReflectionHelper;
 import xin.vanilla.banira.api.client.notification.BaniraClientNotificationTypes;
