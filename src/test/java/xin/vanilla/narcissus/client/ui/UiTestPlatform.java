@@ -35,20 +35,31 @@ final class UiTestPlatform extends ExternalResource {
         BaniraPlatforms.install((BaniraPlatform) Proxy.newProxyInstance(
                 getClass().getClassLoader(), new Class<?>[]{BaniraPlatform.class}, (proxy, method, args) -> {
                     switch (method.getName()) {
-                        case "loaderType": return "test";
-                        case "minecraftVersion": return "1.16.5";
-                        case "isClient": return false;
+                        case "loaderType":
+                            return "test";
+                        case "minecraftVersion":
+                            return "1.16.5";
+                        case "isClient":
+                            return false;
                         case "isDedicatedServer":
-                        case "isDevelopment": return true;
-                        case "isModLoaded": return "narcissus_farewell".equals(args[0]) || "banira_codex".equals(args[0]);
-                        case "modDisplayName": return args[0];
-                        case "modIdFromMainClass": return args[0] == xin.vanilla.narcissus.NarcissusFarewell.class
-                                ? "narcissus_farewell" : "banira_codex";
-                        case "modMainClass": return "narcissus_farewell".equals(args[0])
-                                ? xin.vanilla.narcissus.NarcissusComponent.class : xin.vanilla.banira.BaniraComponent.class;
-                        case "configService": return config;
-                        case "configDir": return Paths.get("build", "ui-test-config");
-                        default: throw new UnsupportedOperationException(method.toString());
+                        case "isDevelopment":
+                            return true;
+                        case "isModLoaded":
+                            return "narcissus_farewell".equals(args[0]) || "banira_codex".equals(args[0]);
+                        case "modDisplayName":
+                            return args[0];
+                        case "modIdFromMainClass":
+                            return args[0] == xin.vanilla.narcissus.NarcissusFarewell.class
+                                    ? "narcissus_farewell" : "banira_codex";
+                        case "modMainClass":
+                            return "narcissus_farewell".equals(args[0])
+                                    ? xin.vanilla.narcissus.NarcissusComponent.class : xin.vanilla.banira.BaniraComponent.class;
+                        case "configService":
+                            return config;
+                        case "configDir":
+                            return Paths.get("build", "ui-test-config");
+                        default:
+                            throw new UnsupportedOperationException(method.toString());
                     }
                 }));
     }

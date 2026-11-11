@@ -145,7 +145,8 @@ public abstract class NarcissusListUiSession implements UiPageSession {
         bindings = new UiOwnedResources();
         nativeView = view instanceof NativeUiView && ((NativeUiView) view).screen() instanceof BaniraScreen;
         if (nativeView) return;
-        for (String id : com.google.common.collect.ImmutableList.of("title", "close")) if (!iconAction(id)) text(id, port.label(id));
+        for (String id : com.google.common.collect.ImmutableList.of("title", "close"))
+            if (!iconAction(id)) text(id, port.label(id));
         view.control("search", new UiControlSpec(UiControlSpec.Kind.TEXT, 32767, "", false));
         view.draft("search", port.query());
         view.tooltip("search", NarcissusComponent.get().literal(port.label("search")));

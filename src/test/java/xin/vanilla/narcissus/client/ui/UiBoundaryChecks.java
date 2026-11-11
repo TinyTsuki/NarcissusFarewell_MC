@@ -106,7 +106,8 @@ final class UiBoundaryChecks {
                     boolean approved = depth == 0 && libraries.containsKey(name)
                             && libraries.get(name).equals(libraryFingerprint(bytes));
                     if ((!merged && !approved) || depth >= 3) errors.add("Unexpected embedded archive " + name);
-                    else errors.addAll(artifact(readZip(new ByteArrayInputStream(bytes)), owner, merged, com.google.common.collect.ImmutableMap.of(), depth + 1));
+                    else
+                        errors.addAll(artifact(readZip(new ByteArrayInputStream(bytes)), owner, merged, com.google.common.collect.ImmutableMap.of(), depth + 1));
                 } catch (IOException failure) {
                     errors.add("Malformed embedded archive " + name);
                 }

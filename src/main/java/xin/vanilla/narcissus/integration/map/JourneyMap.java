@@ -16,28 +16,56 @@ public final class JourneyMap {
     private static boolean connected;
     private static boolean disabled;
 
-    private JourneyMap() { }
+    private JourneyMap() {
+    }
 
     interface Adapter {
         boolean ready() throws ReflectiveOperationException;
+
         void add(Point point) throws ReflectiveOperationException;
+
         void remove(Point point) throws ReflectiveOperationException;
     }
 
     static final class Point {
         private final String kind, name, dimension;
         private final int x, y, z;
+
         Point(String kind, String name, String dimension, int x, int y, int z) {
-            this.kind = kind; this.name = name; this.dimension = dimension;
-            this.x = x; this.y = y; this.z = z;
+            this.kind = kind;
+            this.name = name;
+            this.dimension = dimension;
+            this.x = x;
+            this.y = y;
+            this.z = z;
         }
-        String kind() { return kind; }
-        String name() { return name; }
-        String dimension() { return dimension; }
-        int x() { return x; }
-        int y() { return y; }
-        int z() { return z; }
-        @Override public boolean equals(Object other) {
+
+        String kind() {
+            return kind;
+        }
+
+        String name() {
+            return name;
+        }
+
+        String dimension() {
+            return dimension;
+        }
+
+        int x() {
+            return x;
+        }
+
+        int y() {
+            return y;
+        }
+
+        int z() {
+            return z;
+        }
+
+        @Override
+        public boolean equals(Object other) {
             if (this == other) return true;
             if (!(other instanceof Point)) return false;
             Point point = (Point) other;
@@ -46,10 +74,16 @@ public final class JourneyMap {
                     && java.util.Objects.equals(name, point.name)
                     && java.util.Objects.equals(dimension, point.dimension);
         }
-        @Override public int hashCode() { return java.util.Objects.hash(kind, name, dimension, x, y, z); }
+
+        @Override
+        public int hashCode() {
+            return java.util.Objects.hash(kind, name, dimension, x, y, z);
+        }
     }
 
-    static int block(double value) { return (int) Math.floor(value); }
+    static int block(double value) {
+        return (int) Math.floor(value);
+    }
 
     static boolean matches(String owner, String name, Collection<String> dimensions, int x, int y, int z,
                            String expectedName, String dimension, int expectedX, int expectedY, int expectedZ) {

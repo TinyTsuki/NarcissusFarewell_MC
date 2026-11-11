@@ -2,7 +2,9 @@ package xin.vanilla.narcissus.internal.server.teleport;
 
 import java.util.Objects;
 
-/** Ownership of one initiating player's synchronous native move, not the whole riding graph. */
+/**
+ * Ownership of one initiating player's synchronous native move, not the whole riding graph.
+ */
 public final class TeleportHistoryScope implements AutoCloseable {
     private static final ThreadLocal<TeleportHistoryScope> ACTIVE = new ThreadLocal<>();
     private final Thread owner = Thread.currentThread();

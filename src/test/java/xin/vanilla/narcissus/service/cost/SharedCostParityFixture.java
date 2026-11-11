@@ -4,7 +4,9 @@ import com.google.gson.JsonObject;
 import xin.vanilla.narcissus.api.cost.CostPhase;
 import xin.vanilla.narcissus.data.cost.CostOperation;
 import xin.vanilla.narcissus.data.cost.CostPaymentPlan;
-import xin.vanilla.narcissus.enums.*;
+import xin.vanilla.narcissus.enums.EnumCardType;
+import xin.vanilla.narcissus.enums.EnumCostFailure;
+import xin.vanilla.narcissus.enums.EnumCostType;
 
 import java.util.UUID;
 
@@ -36,16 +38,27 @@ final class SharedCostParityFixture {
         int beforeCards = f.cards, beforeResource = f.resource;
         CostOperation operation = f.operation();
         switch (scenario) {
-            case "cancel": operation.cancel(); break;
-            case "generation": f.generation++; break;
-            case "payer": f.payerId = new UUID(0, 4); break;
+            case "cancel":
+                operation.cancel();
+                break;
+            case "generation":
+                f.generation++;
+                break;
+            case "payer":
+                f.payerId = new UUID(0, 4);
+                break;
             case "moving-target":
                 f.destination = CostPaymentServiceTest.Fixture.position("minecraft:the_nether", 60);
                 f.amount = 8;
                 break;
-            case "fixed-target": f.destination = CostPaymentServiceTest.Fixture.position("minecraft:overworld", 20); break;
-            case "lost-resource": f.resource = 4; break;
-            default: break;
+            case "fixed-target":
+                f.destination = CostPaymentServiceTest.Fixture.position("minecraft:overworld", 20);
+                break;
+            case "lost-resource":
+                f.resource = 4;
+                break;
+            default:
+                break;
         }
         CostPaymentPlan result = f.service.commit(operation, f.context(CostPhase.COMMIT));
         CostPaymentPlan repeated = f.service.commit(operation, f.context(CostPhase.COMMIT));

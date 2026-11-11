@@ -22,12 +22,7 @@ import xin.vanilla.narcissus.search.SearchTask;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 
 import static org.junit.Assert.*;
 
@@ -141,7 +136,8 @@ public class TeleportCoordinateGeometryTest {
         assertEquals(Collections.singleton("0,0"), retainedChunks);
         assertEquals(1, callbacks);
         assertFalse(access.viewNotFound);
-        assertTrue(request.complete(() -> {}));
+        assertTrue(request.complete(() -> {
+        }));
         assertTrue(retainedChunks.isEmpty());
     }
 
@@ -167,7 +163,8 @@ public class TeleportCoordinateGeometryTest {
         assertEquals(NarcissusSearchRequest.ResultKind.EXHAUSTED_FALLBACK, request.kind());
         assertPosition(request.destination(), -.5, -16.1, -16.1);
         assertEquals(Collections.singleton("-1,-2"), retainedChunks);
-        assertTrue(request.complete(() -> {}));
+        assertTrue(request.complete(() -> {
+        }));
         assertTrue(retainedChunks.isEmpty());
     }
 
@@ -182,7 +179,8 @@ public class TeleportCoordinateGeometryTest {
         assertPosition(request.destination(), expectedX, expectedY, expectedZ);
         assertEquals(Collections.singleton(chunk), retainedChunks);
         assertEquals(1, callbacks);
-        assertTrue(request.complete(() -> {}));
+        assertTrue(request.complete(() -> {
+        }));
         assertTrue(retainedChunks.isEmpty());
         assertEquals(0, pool.leaseCount());
     }
@@ -218,20 +216,54 @@ public class TeleportCoordinateGeometryTest {
         boolean safe = true;
         boolean viewNotFound;
 
-        public boolean live() { return true; }
-        public boolean policyMatches() { return true; }
-        public void beginSlice() {}
-        public boolean safe(BlockPos pos, boolean belowAir) { return safe; }
-        public boolean blocksMotion(BlockPos pos) { return false; }
-        public int minY() { return -64; }
-        public int maxY() { return 319; }
-        public BlockState supportState() { return null; }
-        public boolean hasSupportItem(ItemStack item) { return false; }
+        public boolean live() {
+            return true;
+        }
+
+        public boolean policyMatches() {
+            return true;
+        }
+
+        public void beginSlice() {
+        }
+
+        public boolean safe(BlockPos pos, boolean belowAir) {
+            return safe;
+        }
+
+        public boolean blocksMotion(BlockPos pos) {
+            return false;
+        }
+
+        public int minY() {
+            return -64;
+        }
+
+        public int maxY() {
+            return 319;
+        }
+
+        public BlockState supportState() {
+            return null;
+        }
+
+        public boolean hasSupportItem(ItemStack item) {
+            return false;
+        }
+
         public SafeWorldCoordinate random(SafeWorldCoordinate origin, int range) {
             throw new AssertionError("This geometry test must not retry a random destination");
         }
-        public void cancelTicket() {}
-        public void failed(SearchTask.Failure reason) { fail("Unexpected search failure: " + reason); }
-        public void viewNotFound(boolean safe) { viewNotFound = true; }
+
+        public void cancelTicket() {
+        }
+
+        public void failed(SearchTask.Failure reason) {
+            fail("Unexpected search failure: " + reason);
+        }
+
+        public void viewNotFound(boolean safe) {
+            viewNotFound = true;
+        }
     }
 }
