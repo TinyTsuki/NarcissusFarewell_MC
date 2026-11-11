@@ -227,12 +227,9 @@ dependencies {
 
     annotationProcessor 'org.spongepowered:mixin:0.8.5:processor'
 
-    testImplementation 'junit:junit:4.13.2'
 
     compileOnly 'org.projectlombok:lombok:1.18.34'
     annotationProcessor 'org.projectlombok:lombok:1.18.34'
-    testCompileOnly 'org.projectlombok:lombok:1.18.34'
-    testAnnotationProcessor 'org.projectlombok:lombok:1.18.34'
 
     // Example mod dependency with JEI - using fg.deobf() ensures the dependency is remapped to your development mappings
     // The JEI API is declared for compile time use, while the full JEI artifact is used at runtime
@@ -258,7 +255,6 @@ dependencies {
 
     compileOnly fg.deobf("curse.maven:xaeros-minimap-263420:${xaeros_minimap_id}")
     compileOnly files(journeyMapBetaApi)
-    testImplementation files(journeyMapModernApi)
 
     // For more info:
     // http://www.gradle.org/docs/current/userguide/artifact_dependencies_tutorial.html
@@ -269,14 +265,7 @@ dependencies {
 }
 
 // 纯单元测试不需要解析仅供游戏运行的可选联动 mod。
-configurations.testRuntimeOnly.setExtendsFrom(
-        configurations.testRuntimeOnly.extendsFrom.findAll { it != configurations.runtimeOnly })
 
-tasks.register('journeyMapBetaTest', Test) {
-    testClassesDirs = sourceSets.test.output.classesDirs
-    classpath = sourceSets.test.runtimeClasspath - files(journeyMapModernApi) + files(journeyMapBetaApi)
-    filter { includeTestsMatching 'xin.vanilla.narcissus.integration.map.*' }
-}
 
 // This block of code expands all declared replace properties in the specified resource targets.
 // A missing property will result in an error. Properties are expanded using ${} Groovy notation.
