@@ -198,12 +198,9 @@ dependencies {
 
     // implementation "com.alibaba.fastjson2:fastjson2:2.0.53"
 
-    testImplementation 'junit:junit:4.13.2'
 
     compileOnly 'org.projectlombok:lombok:1.18.48'
     annotationProcessor 'org.projectlombok:lombok:1.18.48'
-    testCompileOnly 'org.projectlombok:lombok:1.18.48'
-    testAnnotationProcessor 'org.projectlombok:lombok:1.18.48'
 
     // Example mod dependency with JEI
     // The JEI API is declared for compile time use, while the full JEI artifact is used at runtime
@@ -231,7 +228,6 @@ dependencies {
     compileOnly(xaeroCompileReference) { transitive = false }
     compileOnly xaeroApi
     compileOnly journeyMapApi
-    testImplementation journeyMapApi
     compileOnly('dev.ftb.mods:ftb-chunks:26.1.2.10') { transitive = false }
     compileOnly('dev.ftb.mods:ftb-library:26.1.2.11') { transitive = false }
 
@@ -240,14 +236,7 @@ dependencies {
     // http://www.gradle.org/docs/current/userguide/dependency_management.html
 }
 
-configurations.testRuntimeOnly.setExtendsFrom(
-        configurations.testRuntimeOnly.extendsFrom.findAll { it != configurations.runtimeOnly })
 
-tasks.register('journeyMapBetaTest', Test) {
-    testClassesDirs = sourceSets.test.output.classesDirs
-    classpath = sourceSets.test.runtimeClasspath
-    filter { includeTestsMatching 'xin.vanilla.narcissus.integration.map.*' }
-}
 
 // This block of code expands all declared replace properties in the specified resource targets.
 // A missing property will result in an error. Properties are expanded using ${} Groovy notation.
