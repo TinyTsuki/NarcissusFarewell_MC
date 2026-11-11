@@ -1,9 +1,9 @@
 package xin.vanilla.narcissus.integration;
 
-import xin.vanilla.narcissus.network.packet.WaypointSyncToClient;
 import net.fabricmc.loader.api.FabricLoader;
 import xin.vanilla.narcissus.config.ClientConfig;
 import xin.vanilla.narcissus.integration.map.JourneyMap;
+import xin.vanilla.narcissus.network.packet.WaypointSyncToClient;
 
 /**
  * 地图路标同步入口。

@@ -16,17 +16,23 @@ public final class JourneyMap {
     private static boolean connected;
     private static boolean disabled;
 
-    private JourneyMap() { }
+    private JourneyMap() {
+    }
 
     interface Adapter {
         boolean ready() throws ReflectiveOperationException;
+
         void add(Point point) throws ReflectiveOperationException;
+
         void remove(Point point) throws ReflectiveOperationException;
     }
 
-    record Point(String kind, String name, String dimension, int x, int y, int z) { }
+    record Point(String kind, String name, String dimension, int x, int y, int z) {
+    }
 
-    static int block(double value) { return (int) Math.floor(value); }
+    static int block(double value) {
+        return (int) Math.floor(value);
+    }
 
     public static String waypointFileName(String owner, String id) {
         return LegacyJourneyMapFiles.fileName(owner, id);

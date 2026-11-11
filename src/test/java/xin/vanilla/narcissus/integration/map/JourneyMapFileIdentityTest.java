@@ -3,9 +3,6 @@ package xin.vanilla.narcissus.integration.map;
 import org.junit.Test;
 
 import java.lang.reflect.Method;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
 
 import static org.junit.Assert.*;
 

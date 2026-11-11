@@ -7,20 +7,23 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 public class JourneyMapFabricBoundaryTest {
     private static String source(String path) throws Exception {
         return Files.readString(Path.of(path), StandardCharsets.UTF_8);
     }
 
-    @Test public void journeyMapDiscoversOptionalClientPlugin() throws Exception {
+    @Test
+    public void journeyMapDiscoversOptionalClientPlugin() throws Exception {
         var metadata = JsonParser.parseString(source("src/main/resources/fabric.mod.json")).getAsJsonObject();
         assertTrue(metadata.getAsJsonObject("entrypoints").has("journeymap"));
         assertFalse(metadata.getAsJsonObject("depends").has("journeymap"));
     }
 
-    @Test public void packetBridgeHonorsBothExistingPreferences() throws Exception {
+    @Test
+    public void packetBridgeHonorsBothExistingPreferences() throws Exception {
         String bridge = source("src/main/java/xin/vanilla/narcissus/integration/MapHelper.java");
         assertTrue(bridge.contains("syncHomeMapWaypoint()"));
         assertTrue(bridge.contains("syncStageMapWaypoint()"));
@@ -31,14 +34,16 @@ public class JourneyMapFabricBoundaryTest {
         assertFalse(bridge.contains("isModLoaded(\"journeymap\")"));
     }
 
-    @Test public void connectionLifecycleDrainsAndClearsPendingMapWork() throws Exception {
+    @Test
+    public void connectionLifecycleDrainsAndClearsPendingMapWork() throws Exception {
         String events = source("src/main/java/xin/vanilla/narcissus/event/ClientModEventHandler.java");
         assertTrue(events.contains("JourneyMap.startSession()"));
         assertTrue(events.contains("JourneyMap.endSession()"));
         assertTrue(events.contains("JourneyMap.tick()"));
     }
 
-    @Test public void apiInputIsRemappedAndNeverBundled() throws Exception {
+    @Test
+    public void apiInputIsRemappedAndNeverBundled() throws Exception {
         String build = source("build.gradle");
         assertTrue(build.contains("modCompileOnly files(journeyMapApi)"));
         assertTrue(build.contains("WY3WPcG7"));

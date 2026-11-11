@@ -12,13 +12,7 @@ import java.nio.file.Files;
 import java.nio.file.LinkOption;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 import java.util.regex.Pattern;
 
 public final class LegacyJourneyMapFiles {
@@ -26,7 +20,8 @@ public final class LegacyJourneyMapFiles {
     private static final int MAX_FILE_BYTES = 1024 * 1024;
     private static final LinkOption[] NO_LINKS = {LinkOption.NOFOLLOW_LINKS};
 
-    private LegacyJourneyMapFiles() { }
+    private LegacyJourneyMapFiles() {
+    }
 
     public static String fileName(String owner, String id) {
         return "narcissus_farewell".equals(owner) && id != null && OWNED_ID.matcher(id).matches()
@@ -59,7 +54,8 @@ public final class LegacyJourneyMapFiles {
                 if (name == null) continue;
                 Path target = root.resolve(name);
                 byte[] previous = targets.putIfAbsent(target, bytes);
-                if (previous != null && !Arrays.equals(previous, bytes)) throw new IOException("Conflicting owned waypoint: " + target);
+                if (previous != null && !Arrays.equals(previous, bytes))
+                    throw new IOException("Conflicting owned waypoint: " + target);
                 if (source.equals(target)) continue;
                 if (Files.exists(target, NO_LINKS) && !Arrays.equals(bytes, read(target)))
                     throw new IOException("Waypoint destination already exists: " + target);
@@ -157,8 +153,11 @@ public final class LegacyJourneyMapFiles {
             }
         }
 
-        void delete(Path file) throws IOException { Files.delete(file); }
+        void delete(Path file) throws IOException {
+            Files.delete(file);
+        }
     }
 
-    private record Migration(Path source, Path target, byte[] bytes) { }
+    private record Migration(Path source, Path target, byte[] bytes) {
+    }
 }

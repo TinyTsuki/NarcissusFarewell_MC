@@ -3,7 +3,10 @@ package xin.vanilla.narcissus.config.migration;
 import org.junit.Test;
 import xin.vanilla.narcissus.enums.EnumCardType;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 import static org.junit.Assert.*;
 
