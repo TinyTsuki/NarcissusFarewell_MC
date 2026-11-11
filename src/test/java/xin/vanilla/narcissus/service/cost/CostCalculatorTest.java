@@ -100,7 +100,9 @@ public class CostCalculatorTest {
         assertEquals(xin.vanilla.narcissus.enums.EnumCostFailure.AMOUNT_OVERFLOW,
                 calculator.calculate(unlimited, context, c -> Integer.MAX_VALUE + .01).failure());
         assertEquals(xin.vanilla.narcissus.enums.EnumCostFailure.FORMULA_FAILED,
-                calculator.calculate(unlimited, context, c -> { throw new IllegalStateException("Formula failed"); }).failure());
+                calculator.calculate(unlimited, context, c -> {
+                    throw new IllegalStateException("Formula failed");
+                }).failure());
     }
 
     @Test

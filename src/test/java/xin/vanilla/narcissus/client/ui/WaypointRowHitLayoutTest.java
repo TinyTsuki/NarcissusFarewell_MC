@@ -5,7 +5,7 @@ import org.junit.Test;
 import java.nio.charset.StandardCharsets;
 import java.util.regex.Pattern;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertTrue;
 
 public class WaypointRowHitLayoutTest {
     private String rule(String selector) throws Exception {
