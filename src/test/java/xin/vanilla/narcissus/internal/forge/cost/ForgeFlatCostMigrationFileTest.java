@@ -9,7 +9,9 @@ import xin.vanilla.narcissus.config.migration.CostMigrationPlan;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 import java.util.stream.Stream;
 
@@ -121,7 +123,8 @@ public class ForgeFlatCostMigrationFileTest {
     private static Object value(Object value) {
         if (value instanceof UnmodifiableConfig) {
             Map<String, Object> result = new LinkedHashMap<>();
-            for (UnmodifiableConfig.Entry entry : ((UnmodifiableConfig) value).entrySet()) result.put(entry.getKey(), value(entry.getValue()));
+            for (UnmodifiableConfig.Entry entry : ((UnmodifiableConfig) value).entrySet())
+                result.put(entry.getKey(), value(entry.getValue()));
             return result;
         }
         if (value instanceof List) {

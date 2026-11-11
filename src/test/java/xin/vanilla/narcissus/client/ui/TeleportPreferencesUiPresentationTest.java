@@ -8,8 +8,6 @@ import xin.vanilla.banira.api.client.ui.UiDetachReason;
 import xin.vanilla.banira.api.client.ui.UiRowProvider;
 import xin.vanilla.narcissus.enums.EnumTeleportType;
 
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;

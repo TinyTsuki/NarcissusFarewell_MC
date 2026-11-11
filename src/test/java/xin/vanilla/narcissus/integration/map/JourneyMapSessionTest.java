@@ -100,9 +100,17 @@ public class JourneyMapSessionTest {
     }
 
     public static class Contract {
-        public boolean ready() { return true; }
-        public int wrong() { return 1; }
-        public static boolean statik() { return true; }
+        public boolean ready() {
+            return true;
+        }
+
+        public int wrong() {
+            return 1;
+        }
+
+        public static boolean statik() {
+            return true;
+        }
     }
 
     private static final class RecordingAdapter implements JourneyMap.Adapter {
@@ -110,13 +118,21 @@ public class JourneyMapSessionTest {
         Error failure;
         int attempts;
         final List<String> operations = new ArrayList<>();
-        public boolean ready() { return ready; }
+
+        public boolean ready() {
+            return ready;
+        }
+
         public void add(JourneyMap.Point point) {
             attempts++;
             if (failure != null) throw failure;
             operations.add("ADD:" + key(point));
         }
-        public void remove(JourneyMap.Point point) { operations.add("REMOVE:" + key(point)); }
+
+        public void remove(JourneyMap.Point point) {
+            operations.add("REMOVE:" + key(point));
+        }
+
         private String key(JourneyMap.Point point) {
             return point.kind() + ":" + point.name() + ":" + point.x() + ":" + point.y() + ":" + point.z();
         }

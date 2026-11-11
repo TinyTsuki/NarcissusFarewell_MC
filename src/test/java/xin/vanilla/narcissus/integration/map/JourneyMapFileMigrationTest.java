@@ -15,7 +15,8 @@ import static org.junit.Assert.*;
 
 public class JourneyMapFileMigrationTest {
     private static final String ID = "7f21eb5e-04d8-4833-a28e-2e9ac7e859dc";
-    @Rule public TemporaryFolder temporary = new TemporaryFolder();
+    @Rule
+    public TemporaryFolder temporary = new TemporaryFolder();
 
     private static String filename(String owner, String id) throws Exception {
         return (String) Class.forName("xin.vanilla.narcissus.integration.map.LegacyJourneyMapFiles")
@@ -43,7 +44,8 @@ public class JourneyMapFileMigrationTest {
         return root.resolve("narcissus_farewell_" + kind + "_" + ID + ".json");
     }
 
-    @Test public void stableFilesSeparateKindsAndRejectUnprovenOwnership() throws Exception {
+    @Test
+    public void stableFilesSeparateKindsAndRejectUnprovenOwnership() throws Exception {
         assertEquals("narcissus_farewell_HOME_" + ID + ".json", filename("narcissus_farewell", "HOME_" + ID));
         assertNotEquals(filename("narcissus_farewell", "HOME_" + ID), filename("narcissus_farewell", "STAGE_" + ID));
         assertNull(filename("journeymap", "HOME_" + ID));
@@ -53,7 +55,8 @@ public class JourneyMapFileMigrationTest {
         assertNull(filename("narcissus_farewell", null));
     }
 
-    @Test public void conversionBacksUpExactBytesAndPreservesManualPoint() throws Exception {
+    @Test
+    public void conversionBacksUpExactBytesAndPreservesManualPoint() throws Exception {
         Path root = temporary.newFolder().toPath();
         byte[] home = json("narcissus_farewell", "HOME_" + ID, "home");
         byte[] stage = json("narcissus_farewell", "STAGE_" + ID, "home");
@@ -71,7 +74,8 @@ public class JourneyMapFileMigrationTest {
             List<Path> backups = paths.filter(Files::isRegularFile).toList();
             assertEquals(2, backups.size());
             assertTrue(backups.stream().anyMatch(path -> path.getFileName().toString().equals("old-home.json")));
-            for (Path path : backups) assertArrayEquals(path.getFileName().toString().equals("old-home.json") ? home : stage, Files.readAllBytes(path));
+            for (Path path : backups)
+                assertArrayEquals(path.getFileName().toString().equals("old-home.json") ? home : stage, Files.readAllBytes(path));
         }
         prepare(root);
         Files.delete(target(root, "HOME"));
@@ -81,7 +85,8 @@ public class JourneyMapFileMigrationTest {
         assertArrayEquals(manual, Files.readAllBytes(root.resolve("home_-1-64-2.json")));
     }
 
-    @Test public void backupFailureKeepsEveryOriginalAndCreatesNoCanonicalFile() throws Exception {
+    @Test
+    public void backupFailureKeepsEveryOriginalAndCreatesNoCanonicalFile() throws Exception {
         Path root = temporary.newFolder().toPath();
         byte[] bytes = json("narcissus_farewell", "HOME_" + ID, "home");
         Files.write(root.resolve("old.json"), bytes);
@@ -91,7 +96,8 @@ public class JourneyMapFileMigrationTest {
         assertFalse(Files.exists(target(root, "HOME")));
     }
 
-    @Test public void existingTargetNeverOverwritesEitherRecord() throws Exception {
+    @Test
+    public void existingTargetNeverOverwritesEitherRecord() throws Exception {
         Path root = temporary.newFolder().toPath();
         byte[] old = json("narcissus_farewell", "HOME_" + ID, "home");
         byte[] existing = json("journeymap", "", "manual");
@@ -102,7 +108,8 @@ public class JourneyMapFileMigrationTest {
         assertArrayEquals(existing, Files.readAllBytes(target(root, "HOME")));
     }
 
-    @Test public void blockedDestinationKeepsAllOriginalsBeforeAnyConversion() throws Exception {
+    @Test
+    public void blockedDestinationKeepsAllOriginalsBeforeAnyConversion() throws Exception {
         Path root = temporary.newFolder().toPath();
         byte[] home = json("narcissus_farewell", "HOME_" + ID, "home");
         byte[] stage = json("narcissus_farewell", "STAGE_" + ID, "home");
@@ -115,7 +122,8 @@ public class JourneyMapFileMigrationTest {
         assertFalse(Files.exists(target(root, "HOME")));
     }
 
-    @Test public void interruptedCopyWithIdenticalCanonicalCanResumeAfterBackup() throws Exception {
+    @Test
+    public void interruptedCopyWithIdenticalCanonicalCanResumeAfterBackup() throws Exception {
         Path root = temporary.newFolder().toPath();
         byte[] bytes = json("narcissus_farewell", "HOME_" + ID, "home");
         Files.write(root.resolve("old.json"), bytes);
@@ -129,18 +137,21 @@ public class JourneyMapFileMigrationTest {
         }
     }
 
-    @Test public void foreignMalformedAndUnrecognizedFilesStayByteIdentical() throws Exception {
+    @Test
+    public void foreignMalformedAndUnrecognizedFilesStayByteIdentical() throws Exception {
         Path root = temporary.newFolder().toPath();
         List<byte[]> data = List.of(json("journeymap", "HOME_" + ID, "manual"),
                 json("narcissus_farewell", "HOME_old", "old"), "{broken".getBytes(StandardCharsets.UTF_8),
                 "{\"origin\":[],\"displayId\":42}".getBytes(StandardCharsets.UTF_8));
         for (int i = 0; i < data.size(); i++) Files.write(root.resolve(i + ".json"), data.get(i));
         prepare(root);
-        for (int i = 0; i < data.size(); i++) assertArrayEquals(data.get(i), Files.readAllBytes(root.resolve(i + ".json")));
+        for (int i = 0; i < data.size(); i++)
+            assertArrayEquals(data.get(i), Files.readAllBytes(root.resolve(i + ".json")));
         assertFalse(Files.exists(root.resolve("narcissus-waypoint-backups")));
     }
 
-    @Test public void missingDirectoryDoesNotCreateMapState() throws Exception {
+    @Test
+    public void missingDirectoryDoesNotCreateMapState() throws Exception {
         Path missing = temporary.getRoot().toPath().resolve("missing");
         prepare(missing);
         assertFalse(Files.exists(missing));
@@ -151,7 +162,8 @@ public class JourneyMapFileMigrationTest {
         byte[] bytes = json("narcissus_farewell", "HOME_" + ID, "home");
         Files.write(root.resolve("old.json"), bytes);
         LegacyJourneyMapFiles.FileAccess access = new LegacyJourneyMapFiles.FileAccess() {
-            @Override void write(Path file, byte[] value) throws IOException {
+            @Override
+            void write(Path file, byte[] value) throws IOException {
                 boolean isBackup = file.startsWith(root.resolve("narcissus-waypoint-backups"));
                 if (isBackup == backup) {
                     super.write(file, partial ? java.util.Arrays.copyOf(value, value.length / 2) : value);
@@ -173,10 +185,25 @@ public class JourneyMapFileMigrationTest {
         assertArrayEquals(bytes, Files.readAllBytes(target(root, "HOME")));
     }
 
-    @Test public void partialCanonicalWriteLeavesNoTargetAndRetrySucceeds() throws Exception { failedWriteCanResume(false, true); }
-    @Test public void canonicalForceOrCloseFailureLeavesNoTargetAndRetrySucceeds() throws Exception { failedWriteCanResume(false, false); }
-    @Test public void partialBackupWriteLeavesOriginalUntouchedAndRetrySucceeds() throws Exception { failedWriteCanResume(true, true); }
-    @Test public void backupForceOrCloseFailureLeavesOriginalUntouchedAndRetrySucceeds() throws Exception { failedWriteCanResume(true, false); }
+    @Test
+    public void partialCanonicalWriteLeavesNoTargetAndRetrySucceeds() throws Exception {
+        failedWriteCanResume(false, true);
+    }
+
+    @Test
+    public void canonicalForceOrCloseFailureLeavesNoTargetAndRetrySucceeds() throws Exception {
+        failedWriteCanResume(false, false);
+    }
+
+    @Test
+    public void partialBackupWriteLeavesOriginalUntouchedAndRetrySucceeds() throws Exception {
+        failedWriteCanResume(true, true);
+    }
+
+    @Test
+    public void backupForceOrCloseFailureLeavesOriginalUntouchedAndRetrySucceeds() throws Exception {
+        failedWriteCanResume(true, false);
+    }
 
     private static void junction(Path link, Path destination) throws Exception {
         if (System.getProperty("os.name").startsWith("Windows")) {
@@ -187,7 +214,8 @@ public class JourneyMapFileMigrationTest {
         } else Files.createSymbolicLink(link, destination);
     }
 
-    @Test public void backupDirectoryJunctionCannotWriteOutsideMapDirectory() throws Exception {
+    @Test
+    public void backupDirectoryJunctionCannotWriteOutsideMapDirectory() throws Exception {
         Path root = temporary.newFolder().toPath();
         Path outside = temporary.newFolder().toPath();
         Path link = root.resolve("narcissus-waypoint-backups");
@@ -198,11 +226,16 @@ public class JourneyMapFileMigrationTest {
             assertThrows(IOException.class, () -> prepare(root));
             assertArrayEquals(bytes, Files.readAllBytes(root.resolve("old.json")));
             assertFalse(Files.exists(target(root, "HOME")));
-            try (var entries = Files.list(outside)) { assertEquals(0, entries.count()); }
-        } finally { Files.delete(link); }
+            try (var entries = Files.list(outside)) {
+                assertEquals(0, entries.count());
+            }
+        } finally {
+            Files.delete(link);
+        }
     }
 
-    @Test public void waypointDirectoryJunctionCannotModifyExternalFiles() throws Exception {
+    @Test
+    public void waypointDirectoryJunctionCannotModifyExternalFiles() throws Exception {
         Path parent = temporary.newFolder().toPath();
         Path outside = temporary.newFolder().toPath();
         Path link = parent.resolve("waypoints");
@@ -212,11 +245,16 @@ public class JourneyMapFileMigrationTest {
         try {
             assertThrows(IOException.class, () -> prepare(link));
             assertArrayEquals(bytes, Files.readAllBytes(outside.resolve("old.json")));
-            try (var entries = Files.list(outside)) { assertEquals(1, entries.count()); }
-        } finally { Files.delete(link); }
+            try (var entries = Files.list(outside)) {
+                assertEquals(1, entries.count());
+            }
+        } finally {
+            Files.delete(link);
+        }
     }
 
-    @Test public void laterCanonicalFailureRetainsAllOriginalsAndEarlierVerifiedCopies() throws Exception {
+    @Test
+    public void laterCanonicalFailureRetainsAllOriginalsAndEarlierVerifiedCopies() throws Exception {
         Path root = temporary.newFolder().toPath();
         byte[] home = json("narcissus_farewell", "HOME_" + ID, "home");
         byte[] stage = json("narcissus_farewell", "STAGE_" + ID, "home");
@@ -224,7 +262,9 @@ public class JourneyMapFileMigrationTest {
         Files.write(root.resolve("2-stage.json"), stage);
         LegacyJourneyMapFiles.FileAccess access = new LegacyJourneyMapFiles.FileAccess() {
             int canonical;
-            @Override void write(Path file, byte[] bytes) throws IOException {
+
+            @Override
+            void write(Path file, byte[] bytes) throws IOException {
                 if (!file.startsWith(root.resolve("narcissus-waypoint-backups")) && ++canonical == 2) {
                     super.write(file, java.util.Arrays.copyOf(bytes, 7));
                     throw new IOException("second canonical failed");
@@ -241,7 +281,8 @@ public class JourneyMapFileMigrationTest {
         assertArrayEquals(stage, Files.readAllBytes(target(root, "STAGE")));
     }
 
-    @Test public void laterDeleteFailureRetainsVerifiedBackupsAndCanResume() throws Exception {
+    @Test
+    public void laterDeleteFailureRetainsVerifiedBackupsAndCanResume() throws Exception {
         Path root = temporary.newFolder().toPath();
         byte[] home = json("narcissus_farewell", "HOME_" + ID, "home");
         byte[] stage = json("narcissus_farewell", "STAGE_" + ID, "home");
@@ -249,7 +290,9 @@ public class JourneyMapFileMigrationTest {
         Files.write(root.resolve("2-stage.json"), stage);
         LegacyJourneyMapFiles.FileAccess access = new LegacyJourneyMapFiles.FileAccess() {
             int deletions;
-            @Override void delete(Path file) throws IOException {
+
+            @Override
+            void delete(Path file) throws IOException {
                 if (++deletions == 2) throw new IOException("second delete failed");
                 super.delete(file);
             }

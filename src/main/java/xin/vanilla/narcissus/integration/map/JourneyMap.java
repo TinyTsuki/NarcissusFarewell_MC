@@ -23,13 +23,18 @@ public final class JourneyMap {
 
     interface Adapter {
         boolean ready() throws ReflectiveOperationException;
+
         void add(Point point) throws ReflectiveOperationException;
+
         void remove(Point point) throws ReflectiveOperationException;
     }
 
-    record Point(String kind, String name, String dimension, int x, int y, int z) { }
+    record Point(String kind, String name, String dimension, int x, int y, int z) {
+    }
 
-    static int block(double value) { return (int) Math.floor(value); }
+    static int block(double value) {
+        return (int) Math.floor(value);
+    }
 
     static boolean matches(String owner, String name, Collection<String> dimensions, int x, int y, int z,
                            String expectedName, String dimension, int expectedX, int expectedY, int expectedZ) {

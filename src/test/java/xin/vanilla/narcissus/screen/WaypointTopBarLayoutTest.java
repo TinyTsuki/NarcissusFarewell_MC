@@ -1,10 +1,12 @@
 package xin.vanilla.narcissus.screen;
 
 import org.junit.Test;
+
 import static org.junit.Assert.*;
 
 public class WaypointTopBarLayoutTest {
-    @Test public void shortGuiAllocatesPositiveScrollViewportAndContainedFooter() {
+    @Test
+    public void shortGuiAllocatesPositiveScrollViewportAndContainedFooter() {
         for (int height : new int[]{128, 144, 150, 160, 180, 200}) {
             NarcissusScreenChrome.Layout chrome = NarcissusScreenChrome.layout(320, height, 60);
             assertEquals(60, chrome.top().height());
@@ -45,22 +47,26 @@ public class WaypointTopBarLayoutTest {
         assertEquals(24, model.search.height);
     }
 
-    @Test public void english854By480UsesTwoRowsWithDedicatedSearchAndPlus() throws Exception {
+    @Test
+    public void english854By480UsesTwoRowsWithDedicatedSearchAndPlus() throws Exception {
         fits(324, 88, 70, 66, 85);
         assertEquals(60, layout(324, 88, 70, 66, 85).height);
     }
 
-    @Test public void shortLabelsKeepCompactSingleRow() throws Exception {
+    @Test
+    public void shortLabelsKeepCompactSingleRow() throws Exception {
         fits(324, 38, 44, 44, 50);
         assertEquals(36, layout(324, 38, 44, 44, 50).height);
     }
 
-    @Test public void longTranslationsAndLargeCountsFitScaledViewports() throws Exception {
+    @Test
+    public void longTranslationsAndLargeCountsFitScaledViewports() throws Exception {
         for (int width : new int[]{144, 197, 240, 304, 324, 420, 838})
             fits(width, 400, 250, 350, 500);
     }
 
-    @Test public void measuredLabelsDetermineWidthsWhenSpaceIsAvailable() throws Exception {
+    @Test
+    public void measuredLabelsDetermineWidthsWhenSpaceIsAvailable() throws Exception {
         WaypointTopBarLayout model = layout(838, 90, 60, 70, 80);
         assertEquals(90, model.ticket.width);
         assertEquals(60, model.tab0.width);
@@ -68,7 +74,8 @@ public class WaypointTopBarLayoutTest {
         assertEquals(80, model.tab2.width);
     }
 
-    @Test public void oneVeryLongTranslationDoesNotEraseOtherTabs() {
+    @Test
+    public void oneVeryLongTranslationDoesNotEraseOtherTabs() {
         WaypointTopBarLayout model = layout(144, 400, 44, 44, 10000);
         assertTrue(model.tab0.width >= 24);
         assertTrue(model.tab1.width >= 24);
@@ -76,7 +83,8 @@ public class WaypointTopBarLayoutTest {
         fits(144, 400, 44, 44, 10000);
     }
 
-    @Test public void headerLeavesListAndDetailSeparateAtSupportedGuiSizes() {
+    @Test
+    public void headerLeavesListAndDetailSeparateAtSupportedGuiSizes() {
         for (int[] size : new int[][]{{320, 240}, {427, 240}, {854, 480}, {960, 540}, {1920, 1080}}) {
             NarcissusScreenChrome.Layout chrome = NarcissusScreenChrome.layout(size[0], size[1], 60);
             assertTrue(chrome.outer().x() >= 0);
