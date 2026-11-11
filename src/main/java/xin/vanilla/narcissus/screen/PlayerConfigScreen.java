@@ -1,11 +1,11 @@
 package xin.vanilla.narcissus.screen;
 
+import com.mojang.blaze3d.matrix.MatrixStack;
 import lombok.Data;
 import lombok.experimental.Accessors;
 import net.minecraft.client.Minecraft;
-import com.mojang.blaze3d.matrix.MatrixStack;
-import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.entity.player.ClientPlayerEntity;
+import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.nbt.CompoundNBT;
 import xin.vanilla.banira.api.client.ui.UiPageSpec;
 import xin.vanilla.banira.client.data.BaniraColorConfig;

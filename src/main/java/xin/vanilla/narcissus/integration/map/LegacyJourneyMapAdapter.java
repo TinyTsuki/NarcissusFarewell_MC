@@ -2,11 +2,7 @@ package xin.vanilla.narcissus.integration.map;
 
 import net.minecraft.util.math.BlockPos;
 
-import java.lang.reflect.Constructor;
-import java.lang.reflect.Field;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.lang.reflect.Modifier;
+import java.lang.reflect.*;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -63,7 +59,8 @@ final class LegacyJourneyMapAdapter implements JourneyMap.Adapter {
             return method.invoke(target, args);
         } catch (InvocationTargetException error) {
             // Reflection must not hide VM failures behind an optional integration error.
-            if (error.getCause() instanceof Error && !(error.getCause() instanceof LinkageError)) throw (Error) error.getCause();
+            if (error.getCause() instanceof Error && !(error.getCause() instanceof LinkageError))
+                throw (Error) error.getCause();
             throw error;
         }
     }
@@ -84,7 +81,8 @@ final class LegacyJourneyMapAdapter implements JourneyMap.Adapter {
                     id, point.dimension(), new BlockPos(point.x(), point.y(), point.z()));
             waypoint = constructor.newInstance(apiPoint);
         } catch (InvocationTargetException error) {
-            if (error.getCause() instanceof Error && !(error.getCause() instanceof LinkageError)) throw (Error) error.getCause();
+            if (error.getCause() instanceof Error && !(error.getCause() instanceof LinkageError))
+                throw (Error) error.getCause();
             throw error;
         }
         call(rename, waypoint, point.name());

@@ -174,28 +174,59 @@ public class WaypointScreen extends BaniraScreen implements UiNativePage {
                 return waypointTabLabel(WaypointListTab.values()[index]);
             }
             switch (id) {
-case "title": return "Narcissus";
-case "subtitle": return "WAYPOINTS";
-case "selection_label": return NarcissusComponent.get().transClientAuto("waypoint_selected_detail").toString();
-case "cost_label": return NarcissusComponent.get().transClientAuto("waypoint_cost_label").toString();
-case "confirm_title": return NarcissusComponent.get().transClientAuto("del_confirm_msg").toString();
-case "history_order": return NarcissusComponent.get().transClientAuto("waypoint_history_order").toString();
-case "ordering_hint": return NarcissusComponent.get().transClientAuto("waypoint_drag_hint").toString();
-case "status": return NarcissusComponent.get().transClientAuto("teleport_card") + ": " + ticketCount;
-case "search": return NarcissusComponent.get().transClientAuto("waypoint_search_hint").toString();
-case "add": return NarcissusComponent.get().transClientAuto("waypoint_add").toString();
-case "delete": return "x";
-case "up": return "\u2191";
-case "down": return "\u2193";
-case "name": case "time": case "distance": return NarcissusComponent.get().transClientAuto("waypoint_order_" + id).toString();
-case "name_tip": case "time_tip": case "distance_tip": return NarcissusComponent.get().transClientAuto("waypoint_sort_" + id.replace("_tip", "")).toString();
-case "add_tip": return NarcissusComponent.get().transClientAuto(activeTab == WaypointListTab.PUBLIC ? "waypoint_add_stage_title" : "waypoint_add_home_title").toString();
-case "delete_tip": case "confirm": case "confirm_tip": return NarcissusComponent.get().transClientAuto("delete").toString();
-case "teleport": case "teleport_tip": return NarcissusComponent.get().transClientAuto("teleport_btn").toString();
-case "cancel": case "cancel_tip": case "close": return NarcissusComponent.get().transClientAuto("cancel").toString();
-case "up_tip": case "down_tip": return NarcissusComponent.get().transClientAuto("waypoint_drag_hint").toString();
-default: return "";
-}
+                case "title":
+                    return "Narcissus";
+                case "subtitle":
+                    return "WAYPOINTS";
+                case "selection_label":
+                    return NarcissusComponent.get().transClientAuto("waypoint_selected_detail").toString();
+                case "cost_label":
+                    return NarcissusComponent.get().transClientAuto("waypoint_cost_label").toString();
+                case "confirm_title":
+                    return NarcissusComponent.get().transClientAuto("del_confirm_msg").toString();
+                case "history_order":
+                    return NarcissusComponent.get().transClientAuto("waypoint_history_order").toString();
+                case "ordering_hint":
+                    return NarcissusComponent.get().transClientAuto("waypoint_drag_hint").toString();
+                case "status":
+                    return NarcissusComponent.get().transClientAuto("teleport_card") + ": " + ticketCount;
+                case "search":
+                    return NarcissusComponent.get().transClientAuto("waypoint_search_hint").toString();
+                case "add":
+                    return NarcissusComponent.get().transClientAuto("waypoint_add").toString();
+                case "delete":
+                    return "x";
+                case "up":
+                    return "\u2191";
+                case "down":
+                    return "\u2193";
+                case "name":
+                case "time":
+                case "distance":
+                    return NarcissusComponent.get().transClientAuto("waypoint_order_" + id).toString();
+                case "name_tip":
+                case "time_tip":
+                case "distance_tip":
+                    return NarcissusComponent.get().transClientAuto("waypoint_sort_" + id.replace("_tip", "")).toString();
+                case "add_tip":
+                    return NarcissusComponent.get().transClientAuto(activeTab == WaypointListTab.PUBLIC ? "waypoint_add_stage_title" : "waypoint_add_home_title").toString();
+                case "delete_tip":
+                case "confirm":
+                case "confirm_tip":
+                    return NarcissusComponent.get().transClientAuto("delete").toString();
+                case "teleport":
+                case "teleport_tip":
+                    return NarcissusComponent.get().transClientAuto("teleport_btn").toString();
+                case "cancel":
+                case "cancel_tip":
+                case "close":
+                    return NarcissusComponent.get().transClientAuto("cancel").toString();
+                case "up_tip":
+                case "down_tip":
+                    return NarcissusComponent.get().transClientAuto("waypoint_drag_hint").toString();
+                default:
+                    return "";
+            }
         }
 
         public String detail() {
@@ -240,43 +271,69 @@ default: return "";
             if (deleteConfirmItem != null)
                 return action == NarcissusListUiSession.Action.CONFIRM || action == NarcissusListUiSession.Action.CANCEL;
             switch (action) {
-case ADD: return activeTab == WaypointListTab.PRIVATE ? canAddHomeClient() : activeTab == WaypointListTab.PUBLIC && canAddStageClient();
-case DELETE: return selectedItem != null && selectedItem.type != WaypointEntry.Type.BACK;
-case TELEPORT: return selectedItem != null && selectedItem.canTeleport;
-case NAME: case TIME: case DISTANCE: case UP: case DOWN: return activeTab.supportsOrdering();
-default: return false;
-}
+                case ADD:
+                    return activeTab == WaypointListTab.PRIVATE ? canAddHomeClient() : activeTab == WaypointListTab.PUBLIC && canAddStageClient();
+                case DELETE:
+                    return selectedItem != null && selectedItem.type != WaypointEntry.Type.BACK;
+                case TELEPORT:
+                    return selectedItem != null && selectedItem.canTeleport;
+                case NAME:
+                case TIME:
+                case DISTANCE:
+                case UP:
+                case DOWN:
+                    return activeTab.supportsOrdering();
+                default:
+                    return false;
+            }
         }
 
         public void action(NarcissusListUiSession.Action action) {
             if (!enabled(action)) return;
             switch (action) {
-case ADD: onTabAddClick(); break;
-case DELETE: {
+                case ADD:
+                    onTabAddClick();
+                    break;
+                case DELETE: {
                     deleteConfirmItem = selectedItem;
                     uiRevision++;
-                } break;
-case CONFIRM: {
+                }
+                break;
+                case CONFIRM: {
                     WaypointEntry item = deleteConfirmItem;
                     deleteConfirmItem = null;
                     doActualDelete(item);
-                } break;
-case CANCEL: {
+                }
+                break;
+                case CANCEL: {
                     deleteConfirmItem = null;
                     uiRevision++;
-                } break;
-case TELEPORT: {
+                }
+                break;
+                case TELEPORT: {
                     onTeleportClick();
                     Minecraft.getInstance().setScreen(null);
-                } break;
-case NAME: applySort(SortMode.NAME); break;
-case TIME: applySort(SortMode.TIME); break;
-case DISTANCE: applySort(SortMode.DISTANCE); break;
-case UP: move(selected(), -1); break;
-case DOWN: move(selected(), 1); break;
-default: {
-                } break;
-}
+                }
+                break;
+                case NAME:
+                    applySort(SortMode.NAME);
+                    break;
+                case TIME:
+                    applySort(SortMode.TIME);
+                    break;
+                case DISTANCE:
+                    applySort(SortMode.DISTANCE);
+                    break;
+                case UP:
+                    move(selected(), -1);
+                    break;
+                case DOWN:
+                    move(selected(), 1);
+                    break;
+                default: {
+                }
+                break;
+            }
         }
 
         public void move(String key, int offset) {

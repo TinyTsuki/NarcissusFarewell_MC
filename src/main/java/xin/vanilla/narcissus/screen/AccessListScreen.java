@@ -178,22 +178,41 @@ public class AccessListScreen extends BaniraScreen implements UiNativePage {
                         ? "access_list_column_black" : "access_list_column_white") + " " + (index == 0 ? blackItemsAll.size() : whiteItemsAll.size());
             }
             switch (id) {
-case "title": return NarcissusComponent.get().transClientAuto("access_list_title").toString();
-case "subtitle": return tr("access_personal");
-case "scope_label": return tr("access_scope_label");
-case "player_label": return tr("access_list_player_name");
-case "mode_label": return tr("access_list_white_mode");
-case "confirm_title": return tr("del_confirm_title");
-case "search": return NarcissusComponent.get().transClientAuto("access_list_search_hint").toString();
-case "add": return "+";
-case "delete": return "x";
-case "edit": return tr("access_edit");
-case "add_tip": return NarcissusComponent.get().transClientAuto(activeTab == AccessListTab.BLACK ? "access_list_add_black_title" : "access_list_add_white_title").toString();
-case "edit_tip": return NarcissusComponent.get().transClientAuto(activeTab == AccessListTab.BLACK ? "access_list_edit_black_title" : "access_list_edit_white_title").toString();
-case "delete_tip": case "confirm": case "confirm_tip": return NarcissusComponent.get().transClientAuto("delete").toString();
-case "cancel": case "cancel_tip": case "close": return NarcissusComponent.get().transClientAuto("cancel").toString();
-default: return "";
-}
+                case "title":
+                    return NarcissusComponent.get().transClientAuto("access_list_title").toString();
+                case "subtitle":
+                    return tr("access_personal");
+                case "scope_label":
+                    return tr("access_scope_label");
+                case "player_label":
+                    return tr("access_list_player_name");
+                case "mode_label":
+                    return tr("access_list_white_mode");
+                case "confirm_title":
+                    return tr("del_confirm_title");
+                case "search":
+                    return NarcissusComponent.get().transClientAuto("access_list_search_hint").toString();
+                case "add":
+                    return "+";
+                case "delete":
+                    return "x";
+                case "edit":
+                    return tr("access_edit");
+                case "add_tip":
+                    return NarcissusComponent.get().transClientAuto(activeTab == AccessListTab.BLACK ? "access_list_add_black_title" : "access_list_add_white_title").toString();
+                case "edit_tip":
+                    return NarcissusComponent.get().transClientAuto(activeTab == AccessListTab.BLACK ? "access_list_edit_black_title" : "access_list_edit_white_title").toString();
+                case "delete_tip":
+                case "confirm":
+                case "confirm_tip":
+                    return NarcissusComponent.get().transClientAuto("delete").toString();
+                case "cancel":
+                case "cancel_tip":
+                case "close":
+                    return NarcissusComponent.get().transClientAuto("cancel").toString();
+                default:
+                    return "";
+            }
         }
 
         public String detail() {
@@ -263,22 +282,31 @@ default: return "";
         public void action(NarcissusListUiSession.Action action) {
             if (!enabled(action)) return;
             switch (action) {
-case ADD: onTabAddClick(); break;
-case EDIT: openEditDialog(uiUuid(uiSelected), activeTabColumn()); break;
-case DELETE: {
+                case ADD:
+                    onTabAddClick();
+                    break;
+                case EDIT:
+                    openEditDialog(uiUuid(uiSelected), activeTabColumn());
+                    break;
+                case DELETE: {
                     deleteConfirmUuid = uiUuid(uiSelected);
                     deleteConfirmColumn = activeTabColumn();
                     uiRevision++;
-                } break;
-case CONFIRM: deleteConfirmed(); break;
-case CANCEL: {
+                }
+                break;
+                case CONFIRM:
+                    deleteConfirmed();
+                    break;
+                case CANCEL: {
                     deleteConfirmUuid = null;
                     deleteConfirmColumn = null;
                     uiRevision++;
-                } break;
-default: {
-                } break;
-}
+                }
+                break;
+                default: {
+                }
+                break;
+            }
         }
 
         public void move(String key, int offset) {
