@@ -156,6 +156,10 @@ configurations.configureEach {
 
 repositories {
     mavenLocal()
+    maven {
+        url = 'https://maven.blamejared.com'
+        content { includeGroup 'info.journeymap' }
+    }
 
     maven {
         url "https://cursemaven.com/"
@@ -228,6 +232,9 @@ dependencies {
     compileOnly fg.deobf("curse.maven:xaeros-world-map-317780:${xaeros_world_map_id}")
     compileOnly fg.deobf("curse.maven:xaerolib-1417462:${xaerolib_id}")
     compileOnly fg.deobf("curse.maven:journeymap-32274:${journeymap_id}")
+    compileOnly fg.deobf(dependencies.create('info.journeymap:journeymap-api-forge:1.16.5-2.0.0') {
+        transitive = false
+    })
 
     compileOnly fg.deobf("curse.maven:ftb-chunks-forge-314906:${ftb_chunk_id}")
     compileOnly fg.deobf("curse.maven:architectury-api-419699:${architectury_api_id}")

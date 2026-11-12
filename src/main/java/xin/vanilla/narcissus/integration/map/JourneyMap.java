@@ -142,6 +142,9 @@ public final class JourneyMap {
         if (!connected || disabled || PENDING.isEmpty()) return;
         try {
             if (!checked) {
+                // A v2 plugin installs itself; keep queued updates until its initialization completes.
+                if (JourneyMap.class.getClassLoader().getResource("journeymap/api/v2/client/IClientAPI.class") != null)
+                    return;
                 checked = true;
                 adapter = LegacyJourneyMapAdapter.bind(JourneyMap.class.getClassLoader());
             }
