@@ -28,11 +28,12 @@ public final class FeedCommand {
         CommandUtils.notifyHelp(context);
         CommandSourceStack source = context.getSource();
         if (CommandUtils.checkTeleportPre(source, EnumCommandType.FEED)) return 0;
+        int affected = 0;
         if (source.getEntity() == null) {
             List<ServerPlayer> targetList = new ArrayList<>(xin.vanilla.banira.common.util.CommandUtils.getPlayersOptional(context, "player", new ArrayList<>()));
             if (targetList.isEmpty()) throw CommandSourceStack.ERROR_NOT_PLAYER.create();
             for (ServerPlayer target : targetList) {
-                NarcissusUtils.killPlayer(null, target);
+                if (NarcissusUtils.killPlayer(null, target)) affected++;
             }
         } else if (source.getEntity() instanceof ServerPlayer) {
             ServerPlayer player = source.getPlayerOrException();
@@ -42,10 +43,10 @@ public final class FeedCommand {
             }
             List<ServerPlayer> targetList = new ArrayList<>(xin.vanilla.banira.common.util.CommandUtils.getPlayersOptional(context, "player", Collections.singletonList(player)));
             for (ServerPlayer target : targetList) {
-                NarcissusUtils.killPlayer(player, target);
+                if (NarcissusUtils.killPlayer(player, target)) affected++;
             }
         }
-        return 1;
+        return affected;
     }
 
     public static LiteralArgumentBuilder<CommandSourceStack> create() {

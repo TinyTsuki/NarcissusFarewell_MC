@@ -1394,7 +1394,8 @@ public class NarcissusUtils {
             target.getEntityData().set(((LivingEntityInvoker) target).narcissus$dataHealthId(), 0f);
             ((LivingEntityInvoker) target).narcissus$invokeDie(damageSource);
             return true;
-        } catch (Exception ignored) {
+        } catch (Exception error) {
+            LOGGER.error("Unable to apply feed command to {}", target.getUUID(), error);
             return false;
         }
     }
