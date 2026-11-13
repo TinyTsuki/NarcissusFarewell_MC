@@ -3,6 +3,7 @@ package xin.vanilla.narcissus.integration;
 import net.fabricmc.loader.api.FabricLoader;
 import xin.vanilla.narcissus.config.ClientConfig;
 import xin.vanilla.narcissus.integration.map.JourneyMap;
+import xin.vanilla.narcissus.integration.map.MapWaypointSync;
 import xin.vanilla.narcissus.network.packet.WaypointSyncToClient;
 
 /**
@@ -13,6 +14,7 @@ public final class MapHelper {
     }
 
     public static void handle(WaypointSyncToClient packet) {
+        MapWaypointSync.increment(packet);
         boolean enabled = switch (packet.type()) {
             case HOME -> ClientConfig.get().client().syncHomeMapWaypoint();
             case STAGE -> ClientConfig.get().client().syncStageMapWaypoint();
@@ -32,5 +34,20 @@ public final class MapHelper {
     public static void removeWaypoint(String name, String dimension, double x, double y, double z) {
         if (FabricLoader.getInstance().isModLoaded("journeymap-fabric"))
             JourneyMap.removeWaypoint("WAYPOINT", name, dimension, x, y, z);
+    }
+
+    public static void startSession() {
+        JourneyMap.startSession();
+        MapWaypointSync.startSession();
+    }
+
+    public static void endSession() {
+        MapWaypointSync.endSession();
+        JourneyMap.endSession();
+    }
+
+    public static void tick() {
+        MapWaypointSync.tick();
+        JourneyMap.tick();
     }
 }
