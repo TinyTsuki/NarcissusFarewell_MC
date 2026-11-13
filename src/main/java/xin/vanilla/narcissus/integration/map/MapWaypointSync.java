@@ -114,6 +114,8 @@ public final class MapWaypointSync {
         playerId = currentPlayer;
         if (FabricLoader.getInstance().isModLoaded("xaerominimap"))
             register(new XaeroWaypointAdapter());
+        if (FabricLoader.getInstance().isModLoaded("ftbchunks"))
+            register(new FtbEventWaypointAdapter());
     }
 
     public static boolean accepts(Object transport) {
