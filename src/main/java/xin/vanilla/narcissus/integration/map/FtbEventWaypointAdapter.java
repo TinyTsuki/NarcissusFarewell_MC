@@ -19,6 +19,7 @@ import java.util.function.Consumer;
 public final class FtbEventWaypointAdapter implements MapWaypointSync.Adapter {
     private static final Logger LOGGER = LogManager.getLogger();
     private static final Map<Object, Boolean> ICONS = Collections.synchronizedMap(new WeakHashMap<>());
+    private static final java.util.List<java.lang.ref.WeakReference<Object>> WAYPOINTS = new java.util.ArrayList<>();
     private static FtbEventWaypointAdapter active;
     private static boolean minimapRegistered, largeMapRegistered;
     private final Map<MapWaypointSync.Key, Owned> owned = new LinkedHashMap<>();
@@ -30,12 +31,13 @@ public final class FtbEventWaypointAdapter implements MapWaypointSync.Adapter {
 
     private static final class Owned {
         final MapWaypointSync.Point point;
-        final Object dimension, icon;
+        final Object dimension, icon, waypoint;
 
-        Owned(MapWaypointSync.Point point, Object dimension, Object icon) {
+        Owned(MapWaypointSync.Point point, Object dimension, Object icon, Object waypoint) {
             this.point = point;
             this.dimension = dimension;
             this.icon = icon;
+            this.waypoint = waypoint;
         }
     }
 
@@ -106,17 +108,7 @@ public final class FtbEventWaypointAdapter implements MapWaypointSync.Adapter {
                 Owned current = owned.get(point.key());
                 if (current == null || current.dimension != target) {
                     if (additions++ >= 64) continue;
-                    if (current != null) ICONS.put(current.icon, false);
-                    Object waypoint = constructor.newInstance(target, point.x(), point.y(), point.z());
-                    name.set(waypoint, point.label());
-                    color.setInt(waypoint, 0xF3A8C2);
-                    update.invoke(waypoint);
-                    Object projection = icon.get(waypoint);
-                    if (!(projection instanceof ReadOnlyFtbIcon))
-                        throw new IllegalStateException("FTB read-only hooks unavailable");
-                    current = new Owned(point, target, projection);
-                    ICONS.put(projection, true);
-                    owned.put(point.key(), current);
+                    current = projection(point, target);
                 }
                 add.invoke(event, current.icon);
             }
@@ -125,6 +117,51 @@ public final class FtbEventWaypointAdapter implements MapWaypointSync.Adapter {
             close();
             LOGGER.warn("FTB waypoint event projection disabled for this connection", error);
         }
+    }
+
+
+    private Owned projection(MapWaypointSync.Point point, Object target) throws ReflectiveOperationException {
+        Owned current = owned.get(point.key());
+        if (current != null && current.dimension == target) return current;
+        if (current != null) ICONS.put(current.icon, false);
+        Object waypoint = constructor.newInstance(target, point.x(), point.y(), point.z());
+        name.set(waypoint, point.label());
+        color.setInt(waypoint, 0xF3A8C2);
+        update.invoke(waypoint);
+        Object projection = icon.get(waypoint);
+        if (!(projection instanceof ReadOnlyFtbIcon))
+            throw new IllegalStateException("FTB read-only hooks unavailable");
+        current = new Owned(point, target, projection, waypoint);
+        WAYPOINTS.removeIf(reference -> reference.get() == null);
+        WAYPOINTS.add(new java.lang.ref.WeakReference<>(waypoint));
+        ICONS.put(projection, true);
+        owned.put(point.key(), current);
+        return current;
+    }
+
+    static Map<ResourceKey<?>, java.util.List<Object>> editorWaypoints() throws ReflectiveOperationException {
+        Map<ResourceKey<?>, java.util.List<Object>> result = new LinkedHashMap<>();
+        FtbEventWaypointAdapter adapter = active;
+        if (adapter == null || adapter.failed) return result;
+        Class<?> managers = Class.forName("dev.ftb.mods.ftbchunks.client.map.MapManager");
+        Object map = managers.getField("inst").get(null);
+        if (map == null) return result;
+        Method findDimension = managers.getMethod("getDimension", ResourceKey.class);
+        for (MapWaypointSync.Point point : adapter.desired.values()) {
+            ResourceKey<?> key = ResourceKey.create(net.minecraft.core.Registry.DIMENSION_REGISTRY,
+                    new net.minecraft.resources.ResourceLocation(point.key().dimension()));
+            Object target = findDimension.invoke(map, key);
+            if (target != null) result.computeIfAbsent(key, ignored -> new java.util.ArrayList<>())
+                    .add(adapter.projection(point, target).waypoint);
+        }
+        return result;
+    }
+
+    public static boolean isOwnedWaypoint(Object waypoint) {
+        for (java.lang.ref.WeakReference<Object> reference : WAYPOINTS) {
+            if (reference.get() == waypoint && waypoint != null) return true;
+        }
+        return false;
     }
 
     @Override
