@@ -16,6 +16,7 @@ import xin.vanilla.narcissus.data.player.PlayerTeleportData;
 import xin.vanilla.narcissus.internal.client.NarcissusClientSyncState;
 import xin.vanilla.narcissus.internal.network.NarcissusNbtPacketCodec;
 import xin.vanilla.narcissus.network.NetworkPacket;
+import xin.vanilla.narcissus.integration.map.MapWaypointSync;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -33,6 +34,7 @@ public class PlayerDataSyncToClient extends SplitPacket
     private final List<TeleportRecord> teleportRecords;
     private final Map<KeyValue<String, String>, SafeWorldCoordinate> homeCoordinate;
     private final Map<String, String> defaultHome;
+    private boolean assembledSnapshot;
     /**
      * 黑白名单等；分片时仅首片携带完整内容，合并时取首片。
      */
@@ -92,6 +94,7 @@ public class PlayerDataSyncToClient extends SplitPacket
 
     public PlayerDataSyncToClient(List<PlayerDataSyncToClient> packets) {
         super();
+        this.assembledSnapshot = true;
         this.playerUUID = packets.get(0).playerUUID;
         this.lastCardTime = packets.get(0).lastCardTime;
         this.lastTpTime = packets.get(0).lastTpTime;
@@ -153,7 +156,10 @@ public class PlayerDataSyncToClient extends SplitPacket
 
     public static void handle(PlayerDataSyncToClient packet, BaniraNetworkContext ctx) {
         if (ctx.isClientSide()) {
-            ctx.enqueueWork(() -> ClientSide.handle(packet));
+            ctx.enqueueWork(() -> {
+                if (MapWaypointSync.accepts(ctx.connectionKey())
+                        && (packet.assembledSnapshot || packet.getTotal() == 1)) ClientSide.handle(packet);
+            });
         }
         ctx.markHandled();
     }
@@ -221,11 +227,12 @@ public class PlayerDataSyncToClient extends SplitPacket
 
         public static void handle(PlayerDataSyncToClient packet) {
             net.minecraft.client.player.LocalPlayer player = net.minecraft.client.Minecraft.getInstance().player;
-            if (player != null) {
+            if (player != null && player.getUUID().equals(packet.playerUUID)) {
                 try {
                     PlayerTeleportData clientData = PlayerTeleportData.getData(player);
                     clientData.copyFrom(getData(packet));
                     NarcissusClientSyncState.markPlayerDataReceived();
+                    MapWaypointSync.snapshot(WaypointSyncToClient.Type.HOME, packet.homeCoordinate);
                     LOGGER.debug("Client: Player data received successfully.");
                 } catch (Exception ignored) {
                     LOGGER.debug("Client: Player data received failed.");
