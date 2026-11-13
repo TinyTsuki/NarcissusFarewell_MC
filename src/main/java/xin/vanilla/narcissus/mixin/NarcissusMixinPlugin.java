@@ -50,11 +50,18 @@ public final class NarcissusMixinPlugin implements IMixinConfigPlugin {
 
     @Override
     public boolean shouldApplyMixin(String target, String mixin) {
-        if (!mixin.endsWith(".FtbWaypointIconMixin")) return true;
+        boolean list = mixin.endsWith(".FtbWaypointListMixin");
+        boolean row = mixin.endsWith(".FtbWaypointRowMixin");
+        if (!list && !row && !mixin.endsWith(".FtbWaypointIconMixin")) return true;
         try (InputStream input = getClass().getClassLoader().getResourceAsStream(target.replace('.', '/') + ".class")) {
             if (input == null) return false;
             ClassNode node = new ClassNode();
             new ClassReader(input).accept(node, ClassReader.SKIP_CODE | ClassReader.SKIP_DEBUG);
+            if (list) return has(node, "collectWaypoints", "()Ljava/util/Map;");
+            if (row) return node.fields.stream().anyMatch(field -> field.name.equals("wp")
+                    && field.desc.equals("Ldev/ftb/mods/ftbchunks/client/map/WaypointImpl;"))
+                    && has(node, "mousePressed", "(Ldev/ftb/mods/ftblibrary/ui/input/MouseButton;)Z")
+                    && has(node, "keyPressed", "(Ldev/ftb/mods/ftblibrary/ui/input/Key;)Z");
             return supportsFtb(node);
         } catch (Exception | LinkageError failure) {
             return false;
