@@ -2,6 +2,7 @@
   "required": true,
   "minVersion": "0.8",
   "package": "xin.vanilla.narcissus.mixin",
+  "plugin": "xin.vanilla.narcissus.mixin.NarcissusMixinPlugin",
   "compatibilityLevel": "JAVA_17",
   "mixins": [
     "CombatTrackerMixin",
@@ -12,6 +13,7 @@
     "TemptGoalAccessor"
   ],
   "client": [
+    "FtbWaypointIconMixin",
     "JourneyMapWaypointFileMixin",
     "JourneyMapWaypointReaderMixin"
   ],
