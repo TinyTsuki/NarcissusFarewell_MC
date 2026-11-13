@@ -6,6 +6,7 @@ import xin.vanilla.banira.common.network.BaniraNetworkContext;
 import xin.vanilla.banira.common.network.BaniraPacketBuffer;
 import xin.vanilla.narcissus.data.SafeWorldCoordinate;
 import xin.vanilla.narcissus.integration.MapHelper;
+import xin.vanilla.narcissus.integration.map.MapWaypointSync;
 import xin.vanilla.narcissus.network.NetworkPacket;
 
 
@@ -63,7 +64,7 @@ public class WaypointSyncToClient implements NetworkPacket {
 
     public static void handle(WaypointSyncToClient packet, BaniraNetworkContext ctx) {
         ctx.enqueueWork(() -> {
-            if (ctx.isClientSide()) {
+            if (ctx.isClientSide() && MapWaypointSync.accepts(ctx.connectionKey())) {
                 MapHelper.handle(packet);
             }
         });
