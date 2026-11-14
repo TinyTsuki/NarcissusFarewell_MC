@@ -28,6 +28,23 @@ public final class LegacyJourneyMapFiles {
                 ? "narcissus_farewell_" + id + ".json" : null;
     }
 
+    public static void prepareSafely(Path directory) {
+        try {
+            prepare(directory);
+        } catch (IOException | RuntimeException unavailable) {
+            org.apache.logging.log4j.LogManager.getLogger().warn("Owned JourneyMap migration deferred; original files retained", unavailable);
+        }
+    }
+
+    public static boolean safePath(Path source) {
+        try {
+            checkAncestors(source);
+            return Files.isRegularFile(source, NO_LINKS);
+        } catch (IOException | RuntimeException unavailable) {
+            return false;
+        }
+    }
+
     public static synchronized void prepare(Path directory) throws IOException {
         prepare(directory, new FileAccess());
     }
@@ -47,9 +64,14 @@ public final class LegacyJourneyMapFiles {
         try (var files = Files.list(root)) {
             for (Path source : files.sorted(Comparator.comparing(Path::toString)).toList()) {
                 if (!source.getFileName().toString().endsWith(".json")) continue;
-                if (Files.isSymbolicLink(source)) throw new IOException("Linked waypoint file: " + source);
-                if (!Files.isRegularFile(source, NO_LINKS)) continue;
-                byte[] bytes = read(source);
+                if (!safePath(source)) continue;
+                byte[] bytes;
+                try {
+                    bytes = read(source);
+                } catch (IOException | RuntimeException unavailable) {
+                    // An unrelated unreadable file must not abort this module's migration.
+                    continue;
+                }
                 String name = ownedName(bytes);
                 if (name == null) continue;
                 Path target = root.resolve(name);

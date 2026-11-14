@@ -25,7 +25,13 @@ public final class FtbChunks {
             Waypoint waypoint = new Waypoint(map, (int) x, (int) y, (int) z);
             waypoint.name = name;
             waypoint.color = EnumMCColor.GREEN.getColor();
+            for (Waypoint existing : map.getWaypointManager()) {
+                if (existing.name.equals(name)
+                        && existing.dimension.dimension.equals(dim)
+                        && existing.x == (int) x && existing.y == (int) y && existing.z == (int) z) return;
+            }
             map.getWaypointManager().add(waypoint);
+            WaypointOwnership.remember(waypoint);
         } catch (Exception e) {
             LOGGER.warn("Failed to add FtbChunks waypoint: {}", e.getMessage());
         }
@@ -36,11 +42,12 @@ public final class FtbChunks {
             ResourceKey<Level> dim = DimensionUtils.parse(dimension);
             MapDimension map = MapManager.inst.getDimension(dim);
             for (Waypoint waypoint : map.getWaypointManager()) {
-                if (waypoint.name.equals(name)
+                if (WaypointOwnership.owns(waypoint) && waypoint.name.equals(name)
                         && waypoint.dimension.dimension.equals(dim)
                         && waypoint.x == (int) x && waypoint.y == (int) y && waypoint.z == (int) z
                 ) {
                     map.getWaypointManager().remove(waypoint);
+                    WaypointOwnership.forget(waypoint);
                     break;
                 }
             }
