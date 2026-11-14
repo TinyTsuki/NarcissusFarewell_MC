@@ -41,7 +41,11 @@ public final class XaeroMinimap {
             MinimapWorld world = session.getWorldManager().getWorld(resolved);
 
             WaypointSet waypointSet = world.getCurrentWaypointSet();
+            for (Waypoint existing : waypointSet.getWaypoints()) {
+                if (existing.compareTo(waypoint) == 0) return;
+            }
             waypointSet.add(waypoint);
+            WaypointOwnership.remember(waypoint);
             session.getWorldManagerIO().saveWorld(world);
         } catch (Exception e) {
             LOGGER.warn("Failed to add Xaero waypoint: {}", e.getMessage());
@@ -62,8 +66,9 @@ public final class XaeroMinimap {
 
             WaypointSet waypointSet = world.getCurrentWaypointSet();
             for (Waypoint w : waypointSet.getWaypoints()) {
-                if (w.compareTo(waypoint) == 0) {
+                if (WaypointOwnership.owns(w) && w.compareTo(waypoint) == 0) {
                     waypointSet.remove(w);
+                    WaypointOwnership.forget(w);
                     break;
                 }
             }
