@@ -25,15 +25,20 @@ public abstract class JourneyMapWaypointReaderMixin {
 
     @Inject(method = "loadWaypoints(Ljava/io/File;)Ljava/util/Collection;", at = @At("HEAD"), remap = false)
     private void narcissus$prepareWaypointFiles(File directory, CallbackInfoReturnable<Collection<?>> callback) throws IOException {
-        LegacyJourneyMapFiles.prepare(directory.toPath());
+        LegacyJourneyMapFiles.prepareSafely(directory.toPath());
     }
 
     @Redirect(method = "loadWaypoints(Ljava/io/File;)Ljava/util/Collection;",
             at = @At(value = "INVOKE", target = "Ljourneymap/client/waypoint/JmReader;load(Ljava/io/File;)Ljourneymap/client/waypoint/Waypoint;"), remap = false)
     private Waypoint narcissus$loadWithoutUnprovenRename(JmReader reader, File source) throws IOException {
+        if (!LegacyJourneyMapFiles.safePath(source.toPath())) return null;
         Waypoint point = load(source);
         // The reader deletes mismatched sources after collecting every loaded point.
-        if (point != null) LegacyJourneyMapFiles.requireNativeFileIdentity(source.toPath(), point.getFileName());
+        if (point != null && LegacyJourneyMapFiles.fileName(point.getOrigin(), point.getDisplayId()) != null
+                && !source.getName().equals(point.getFileName())) {
+            // Keep a failed owned migration on disk; do not interrupt unrelated native waypoints.
+            return null;
+        }
         return point;
     }
 }

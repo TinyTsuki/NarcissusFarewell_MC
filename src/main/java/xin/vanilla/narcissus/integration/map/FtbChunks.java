@@ -29,7 +29,13 @@ public final class FtbChunks {
             waypoint.x = (int) x;
             waypoint.y = (int) y;
             waypoint.z = (int) z;
+            for (Waypoint existing : map.getWaypoints()) {
+                if (existing.name.equals(name)
+                        && existing.dimension.dimension.equals(dim)
+                        && existing.x == (int) x && existing.y == (int) y && existing.z == (int) z) return;
+            }
             map.getWaypoints().add(waypoint);
+            WaypointOwnership.remember(waypoint);
             waypoint.update();
             map.saveData = true;
             RefreshMinimapIconsEvent.trigger();
@@ -43,11 +49,12 @@ public final class FtbChunks {
             RegistryKey<World> dim = DimensionUtils.parse(dimension);
             MapDimension map = MapManager.inst.getDimension(dim);
             for (Waypoint waypoint : map.getWaypoints()) {
-                if (waypoint.name.equals(name)
+                if (WaypointOwnership.owns(waypoint) && waypoint.name.equals(name)
                         && waypoint.dimension.dimension.equals(dim)
                         && waypoint.x == (int) x && waypoint.y == (int) y && waypoint.z == (int) z
                 ) {
                     map.getWaypoints().remove(waypoint);
+                    WaypointOwnership.forget(waypoint);
                     break;
                 }
             }
