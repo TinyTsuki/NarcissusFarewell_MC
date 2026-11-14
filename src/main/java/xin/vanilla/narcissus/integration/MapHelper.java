@@ -8,6 +8,18 @@ import xin.vanilla.narcissus.integration.map.XaeroMinimap;
 import xin.vanilla.narcissus.network.packet.WaypointSyncToClient;
 
 public final class MapHelper {
+    private static final java.util.Set<String> DISABLED = new java.util.HashSet<>();
+
+    private static void run(String backend, Runnable action) {
+        if (DISABLED.contains(backend)) return;
+        try {
+            action.run();
+        } catch (RuntimeException | LinkageError unavailable) {
+            DISABLED.add(backend);
+            org.apache.logging.log4j.LogManager.getLogger().warn("Waypoint integration disabled: " + backend, unavailable);
+        }
+    }
+
     private MapHelper() {
     }
 
@@ -38,13 +50,13 @@ public final class MapHelper {
 
     private static void addWaypoint(final String kind, final String name, final String dimension, final double x, final double y, final double z) {
         if (ModList.get().isLoaded("xaerominimap")) {
-            XaeroMinimap.addWaypoint(name, dimension, x, y, z);
+            run("XaeroMinimap", () -> XaeroMinimap.addWaypoint(name, dimension, x, y, z));
         }
         if (ModList.get().isLoaded("journeymap")) {
-            JourneyMap.addWaypoint(kind, name, dimension, x, y, z);
+            run("JourneyMap", () -> JourneyMap.addWaypoint(kind, name, dimension, x, y, z));
         }
         if (ModList.get().isLoaded("ftbchunks")) {
-            FtbChunks.addWaypoint(name, dimension, x, y, z);
+            run("FtbChunks", () -> FtbChunks.addWaypoint(name, dimension, x, y, z));
         }
     }
 
@@ -54,13 +66,13 @@ public final class MapHelper {
 
     private static void removeWaypoint(final String kind, final String name, final String dimension, final double x, final double y, final double z) {
         if (ModList.get().isLoaded("xaerominimap")) {
-            XaeroMinimap.removeWaypoint(name, dimension, x, y, z);
+            run("XaeroMinimap", () -> XaeroMinimap.removeWaypoint(name, dimension, x, y, z));
         }
         if (ModList.get().isLoaded("journeymap")) {
-            JourneyMap.removeWaypoint(kind, name, dimension, x, y, z);
+            run("JourneyMap", () -> JourneyMap.removeWaypoint(kind, name, dimension, x, y, z));
         }
         if (ModList.get().isLoaded("ftbchunks")) {
-            FtbChunks.removeWaypoint(name, dimension, x, y, z);
+            run("FtbChunks", () -> FtbChunks.removeWaypoint(name, dimension, x, y, z));
         }
     }
 
