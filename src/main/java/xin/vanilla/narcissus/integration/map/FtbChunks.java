@@ -26,7 +26,14 @@ public final class FtbChunks {
             WaypointImpl waypoint = new WaypointImpl(WaypointType.DEFAULT, map, new BlockPos((int) x, (int) y, (int) z));
             waypoint.setName(name);
             waypoint.setColor(EnumMCColor.GREEN.getColor());
+            for (WaypointImpl existing : map.getWaypointManager()) {
+                if (existing.getName().equals(name)
+                        && existing.getDimension().equals(dim)
+                        && existing.getPos().getX() == (int) x && existing.getPos().getY() == (int) y && existing.getPos().getZ() == (int) z)
+                    return;
+            }
             map.getWaypointManager().add(waypoint);
+            WaypointOwnership.remember(waypoint);
         } catch (Exception e) {
             LOGGER.warn("Failed to add FtbChunks waypoint: {}", e.getMessage());
         }
@@ -37,11 +44,12 @@ public final class FtbChunks {
             ResourceKey<Level> dim = DimensionUtils.parse(dimension);
             MapDimension map = MapManager.getInstance().get().getDimension(dim);
             for (WaypointImpl waypoint : map.getWaypointManager()) {
-                if (waypoint.getName().equals(name)
+                if (WaypointOwnership.owns(waypoint) && waypoint.getName().equals(name)
                         && waypoint.getDimension().equals(dim)
                         && waypoint.getPos().getX() == (int) x && waypoint.getPos().getY() == (int) y && waypoint.getPos().getZ() == (int) z
                 ) {
                     map.getWaypointManager().remove(waypoint);
+                    WaypointOwnership.forget(waypoint);
                     break;
                 }
             }
