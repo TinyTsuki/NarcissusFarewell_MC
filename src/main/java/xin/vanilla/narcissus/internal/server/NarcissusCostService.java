@@ -66,7 +66,7 @@ public final class NarcissusCostService implements AutoCloseable {
             t.setDaemon(true);
             return t;
         });
-        runtime = new NarcissusCostRuntime(BaniraDataPaths.configPath().resolve("narcissus_farewell/cost/sources"),
+        runtime = new NarcissusCostRuntime(BaniraDataPaths.configPath().resolve("narcissus_farewell/scripts"),
                 config, worker, server::execute, error -> LOGGER.error("Narcissus cost reload failed", error));
         CostPaymentService.PaymentAccess guarded = new CostPaymentService.PaymentAccess() {
             public EnumCostFailure validate(CostContext context) {
