@@ -563,8 +563,8 @@ public class WaypointScreen extends BaniraScreen implements UiNativePage {
         int cancelW = Math.max(72, font.width(NarcissusComponent.get().transClientAuto("cancel").toString()) + 20);
         int deleteW = Math.max(72, font.width(NarcissusComponent.get().transClientAuto("delete").toString()) + 20);
         int btnY = dlgY + DIALOG_H - 30;
-        int cancelX = dlgX + (DIALOG_W - cancelW - deleteW - 10) / 2;
-        int deleteX = cancelX + cancelW + 10;
+        int deleteX = dlgX + (DIALOG_W - cancelW - deleteW - 10) / 2;
+        int cancelX = deleteX + deleteW + 10;
 
         searchInput = new InputWidget(this);
         searchInput.id("search");
