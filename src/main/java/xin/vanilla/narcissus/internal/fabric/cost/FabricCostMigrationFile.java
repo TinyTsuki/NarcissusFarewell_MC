@@ -55,7 +55,7 @@ public final class FabricCostMigrationFile {
         if (!Files.exists(common, LinkOption.NOFOLLOW_LINKS)) return CostConfiguration.defaults();
         CostMigrationPlan plan = prepare(common, root);
         NarcissusCostRuntime.SourceValidation validation = NarcissusCostRuntime.preflight(
-                plan.configuration(), local(root, "cost/sources"), plan.sources());
+                plan.configuration(), local(root, "scripts"), plan.sources());
         commit(plan, validation::verify);
         return plan.configuration();
     }
@@ -83,6 +83,7 @@ public final class FabricCostMigrationFile {
             if (bytes.length > MAX_SOURCE)
                 throw new IOException("Migrated source exceeds size limit: " + source.getKey());
             verifyCompatible(local(root, "cost/sources/" + source.getKey()), bytes, MAX_SOURCE);
+            verifyCompatible(local(root, "scripts/" + source.getKey()), bytes, MAX_SOURCE);
         }
         String backup = "backups/cost-migration/" + UUID.randomUUID();
         writeNew(local(root, backup + "/original.toml"), original);
@@ -112,7 +113,7 @@ public final class FabricCostMigrationFile {
         if (candidate == null || candidate.plan != plan)
             throw new IllegalStateException("Foreign or consumed cost migration plan");
         NarcissusCostRuntime.SourceValidation validation = NarcissusCostRuntime.preflight(
-                plan.configuration(), local(candidate.root, "cost/sources"), plan.sources());
+                plan.configuration(), local(candidate.root, "scripts"), plan.sources());
         commit(plan, validation::verify);
     }
 
@@ -171,7 +172,7 @@ public final class FabricCostMigrationFile {
             overlays.put(file, utf8(read(local(root, backup + "/sources/" + file), MAX_SOURCE)));
         }
         NarcissusCostRuntime.SourceValidation compiled = NarcissusCostRuntime.preflight(
-                candidate.configuration(), local(root, "cost/sources"), overlays);
+                candidate.configuration(), local(root, "scripts"), overlays);
         complete(common, root, metadata, false, compiled::verify);
     }
 
@@ -224,7 +225,10 @@ public final class FabricCostMigrationFile {
     private static void verifySources(Path root, JsonObject metadata, boolean allowExistingEdits) throws IOException {
         for (Map.Entry<String, JsonElement> source : metadata.getAsJsonObject("sources").entrySet()) {
             byte[] live = optional(local(root, "cost/sources/" + source.getKey()), MAX_SOURCE);
-            if (!allowExistingEdits && live != null && !hash(live).equals(source.getValue().getAsString())) {
+            byte[] preferred = optional(local(root, "scripts/" + source.getKey()), MAX_SOURCE);
+            String expected = source.getValue().getAsString();
+            if (!allowExistingEdits && (live != null && !hash(live).equals(expected)
+                    || preferred != null && !hash(preferred).equals(expected))) {
                 throw new IOException("Existing cost source differs: " + source.getKey());
             }
         }
@@ -233,7 +237,8 @@ public final class FabricCostMigrationFile {
     private static void installSources(Path root, JsonObject metadata) throws IOException {
         for (Map.Entry<String, JsonElement> source : metadata.getAsJsonObject("sources").entrySet()) {
             Path target = local(root, "cost/sources/" + source.getKey());
-            if (optional(target, MAX_SOURCE) != null) continue;
+            if (optional(target, MAX_SOURCE) != null || optional(local(root, "scripts/" + source.getKey()), MAX_SOURCE) != null)
+                continue;
             writeNew(target, read(local(root, metadata.get("backup").getAsString() + "/sources/" + source.getKey()), MAX_SOURCE));
         }
     }
