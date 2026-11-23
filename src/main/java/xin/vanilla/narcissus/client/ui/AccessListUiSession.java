@@ -98,6 +98,7 @@ public final class AccessListUiSession extends NarcissusListUiSession {
         if (!typed()) return;
         if (!connected) {
             view.enabled("confirmation", false);
+            view.enabled("selection_detail", false);
             view.enabled("search", false);
             view.enabled("close", false);
             for (int i = 0; i < port().tabs(); i++) view.enabled("tab" + i, false);
@@ -115,6 +116,7 @@ public final class AccessListUiSession extends NarcissusListUiSession {
         text("footer_status", p.footer());
         text("detail", p.confirming() ? port().detail() : "");
         view.enabled("identity", p.selected());
+        view.enabled("selection_detail", p.selected());
         view.enabled("mode_label", p.selected() && p.whitelist());
         view.enabled("mode", !p.mode().isEmpty());
         view.enabled("empty", !p.empty().isEmpty());

@@ -112,6 +112,8 @@ public final class WaypointUiSession extends NarcissusListUiSession {
         text("ordering_hint", p.history() ? port().label("history_order") : "");
         view.enabled("cost_note", connected && !p.note().isEmpty());
         view.enabled("empty", !p.empty().isEmpty());
+        view.enabled("ordering", p.empty().isEmpty());
+        view.enabled("selection_detail", connected && !p.dimension().isEmpty());
         view.enabled("confirmation", p.confirming());
         lombok.var viewport = view.bounds("content");
         boolean roomy = viewport != null && viewport.height() >= 150;
