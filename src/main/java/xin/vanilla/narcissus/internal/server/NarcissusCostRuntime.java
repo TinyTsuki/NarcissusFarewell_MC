@@ -505,7 +505,7 @@ public final class NarcissusCostRuntime implements AutoCloseable {
             for (String name : names) {
                 if (name.equals(BUNDLE + ".java")) throw new IOException("Reserved cost filename");
                 className(name);
-                byte[] code = overlays.containsKey(name) ? overlays.get(name).getBytes(StandardCharsets.UTF_8) : read(local(root, name));
+                byte[] code = overlays.containsKey(name) ? overlays.get(name).getBytes(StandardCharsets.UTF_8) : read(source(root, name));
                 if (code.length > SOURCE_BYTES || (bytes += code.length) > BATCH_BYTES)
                     throw new IOException("Cost sources exceed byte limits");
                 files.put(name, StandardCharsets.UTF_8.newDecoder().onMalformedInput(CodingErrorAction.REPORT)
@@ -522,7 +522,7 @@ public final class NarcissusCostRuntime implements AutoCloseable {
             if (!helpers.equals(helpers(root)))
                 throw new IOException("Cost helper file selection changed during preparation");
             for (Map.Entry<String, String> file : fingerprints.entrySet()) {
-                if (!file.getValue().equals(hash(read(local(root, file.getKey())))))
+                if (!file.getValue().equals(hash(read(source(root, file.getKey())))))
                     throw new IOException("Cost source changed during preparation: " + file.getKey());
             }
         }
@@ -553,9 +553,16 @@ public final class NarcissusCostRuntime implements AutoCloseable {
         }
 
         private static Set<String> helpers(Path root) throws IOException {
-            Path directory = local(root, "helpers");
             Set<String> files = new TreeSet<>();
-            if (!Files.exists(directory, LinkOption.NOFOLLOW_LINKS)) return files;
+            collectHelpers(root, files);
+            Path legacy = legacyDirectory(root);
+            if (legacy != null) collectHelpers(legacy, files);
+            return files;
+        }
+
+        private static void collectHelpers(Path root, Set<String> files) throws IOException {
+            Path directory = local(root, "helpers");
+            if (!Files.exists(directory, LinkOption.NOFOLLOW_LINKS)) return;
             Files.walkFileTree(directory, Collections.emptySet(), 16, new SimpleFileVisitor<Path>() {
                 int visited;
 
@@ -581,7 +588,17 @@ public final class NarcissusCostRuntime implements AutoCloseable {
                     return FileVisitResult.CONTINUE;
                 }
             });
-            return files;
+        }
+
+        private static Path source(Path root, String name) throws IOException {
+            Path preferred = local(root, name);
+            Path legacy = legacyDirectory(root);
+            return legacy == null || Files.exists(preferred, LinkOption.NOFOLLOW_LINKS) ? preferred : local(legacy, name);
+        }
+
+        private static Path legacyDirectory(Path root) {
+            return root.getFileName() != null && root.getFileName().toString().equals("scripts")
+                    ? root.resolveSibling("cost").resolve("sources") : null;
         }
 
         private static Path local(Path root, String name) throws IOException {
