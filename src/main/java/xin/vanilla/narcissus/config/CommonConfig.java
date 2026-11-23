@@ -829,7 +829,7 @@ public class CommonConfig implements ConfigData {
     }
 
     public static class CustomCostSettings {
-        @ConfigEntry.Gui.Tooltip(zh_cn = "cost/sources 下的 Java 文件相对路径，留空使用默认计算\n最多 128 个字符，修改源码后使用 cost reload", en_us = "Relative Java file under cost/sources; blank uses default arithmetic\nUp to 128 characters; use cost reload after editing code")
+        @ConfigEntry.Gui.Tooltip(zh_cn = "scripts 下的 Java 文件相对路径，留空使用默认计算\n最多 128 个字符，修改源码后使用 cost reload", en_us = "Relative Java file under scripts; blank uses default arithmetic\nUp to 128 characters; use cost reload after editing code")
         private String file = "";
     }
 
